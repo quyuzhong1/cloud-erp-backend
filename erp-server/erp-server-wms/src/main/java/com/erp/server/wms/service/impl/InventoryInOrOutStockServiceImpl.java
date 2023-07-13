@@ -43,17 +43,21 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
     @Autowired
     private WarehouseLocationService warehouseLocationService;
 
-    @Autowired
-    private PlmTaskFeign plmTaskFeign;
-
     @Override
     public <T extends InventoryStockBaseDTO> void checkParam(List<T> paramList, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules) {
         Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         Map<String, WarehouseLocationEntity> warehouseLocationMap = Maps.newHashMap();
+        // 判断是否需要忽略计算库存的sku
+        List<String>  ignoreInventorySkuIds = inventoryHelper.getIgnoreSkuIds();
         for(InventoryStockBaseDTO baseParam : paramList) {
             if(baseParam instanceof InOutStockDTO) { // 出入库业务-走交易规则
                 InOutStockDTO param = (InOutStockDTO) baseParam;
                 ValidatorUtil.validateEntity(param);
+
+                if(ignoreInventorySkuIds.contains(param.getSkuId())) {
+                    log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", param.getSkuId(), param.getSkuNo());
+                    continue;
+                }
 
                 WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getWarehouseId(), (v) -> warehouseService.detailWithCache(v));
                 if (Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
