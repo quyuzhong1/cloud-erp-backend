@@ -990,7 +990,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 //即时库存
                 Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).
                         mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
-                if (qty > curInventoryQty && ignoreInventorySkuIds.contains(skuId)) {
+                if (qty > curInventoryQty && !ignoreInventorySkuIds.contains(skuId)) {
                     String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                             flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
                     scarceSkuList.add(skuNo);
