@@ -47,10 +47,17 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
     public <T extends InventoryStockBaseDTO> void checkParam(List<T> paramList, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules) {
         Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         Map<String, WarehouseLocationEntity> warehouseLocationMap = Maps.newHashMap();
+        // 判断是否需要忽略计算库存的sku
+        List<String>  ignoreInventorySkuIds = inventoryHelper.getIgnoreSkuIds();
         for(InventoryStockBaseDTO baseParam : paramList) {
             if(baseParam instanceof TransferDTO) { // 调拨走交易规则
                 TransferDTO param = (TransferDTO)baseParam;
                 ValidatorUtil.validateEntity(param);
+
+                if(ignoreInventorySkuIds.contains(param.getSkuId())) {
+                    log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", param.getSkuId(), param.getSkuNo());
+                    continue;
+                }
 
                 //当前仓和目的仓不能一样
                 ValidatorUtil.isTrue(!Objects.equals(param.getCurWarehouseId(), param.getTargetWarehouseId()),()->new ServiceException(ApiError.ERROR_99039));
