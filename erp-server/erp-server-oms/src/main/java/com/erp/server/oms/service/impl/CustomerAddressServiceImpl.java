@@ -1,11 +1,13 @@
 package com.erp.server.oms.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -171,6 +173,16 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
             this.saveOrUpdateBatch(saveOrUpdateList);
         }
 
+    }
+
+    @Override
+    public CustomerAddressDTO.ViewDTO getCustomerAddressById(String customerAddressId) {
+        CustomerAddressEntity entity = this.getById(customerAddressId);
+        if (ObjectUtils.isEmpty(entity)) {
+            return new CustomerAddressDTO.ViewDTO();
+        }
+        CustomerAddressDTO.ViewDTO viewDTO = BeanMapperUtils.map(CustomerAddressDTO.ViewDTO.class, entity);
+        return viewDTO;
     }
 
 
