@@ -449,11 +449,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             //审核通过后生成拣货明细
             generatePickingDetail(Arrays.asList(entity));
 
-            //获取需要自动生成加工单的数据
-            List<TransferApplicationDetailEntity> transferApplicationDetailEntities = transferApplicationDetailService.listByMainIds(Arrays.asList(id));
-            List<String> infoIds = transferApplicationDetailEntities.stream().filter(req -> req.getIsAutoMachine().equals(Boolean.TRUE)).map(TransferApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
-            List<TransferApplicationDTO.ViewGenerateMachineInfo> viewGenerateMachineInfoList = viewGenerateMachineInfo(infoIds, Boolean.TRUE, singleApproveParamDTO.getQty());
-            saveGenerateMachineInfo(viewGenerateMachineInfoList);
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("调拨申请单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
             //中止当前审核流程
