@@ -159,6 +159,10 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(entity.getDeliveryWarehouseId());
+
+        List<String> soKingdeeDetailIdList = purchaseOrderDetailEntities.stream().map(req -> req.getKingdeeDetailId()).collect(Collectors.toList());
+        resultMap.put("poKingdeeDetailIds", String.join(",", soKingdeeDetailIdList));
+        resultMap.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
         List<JSONObject> list = new ArrayList<>();
         for (PoInstockDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
@@ -189,9 +193,27 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
 
             //计价数量
             jsonObject.set("priceBaseQty", detail.getStockInQty());
-
+            //含税单价
+            jsonObject.set("taxPrice", purchaseOrderDetailEntity.getTaxPrice());
             //采购编号
             jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
+
+            //明细id
+            jsonObject.set("detailId", detail.getId());
+            //销售订单金蝶id
+            jsonObject.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
+            //明细id
+            jsonObject.set("kingdeeDetailId", detail.getKingdeeDetailId());
+            //销售单金蝶明细id
+            jsonObject.set("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
+
+            List<Map<String,Object>> mapList = new ArrayList<>();
+            Map<String,Object> map = new HashMap<>();
+            map.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
+            map.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
+            mapList.add(map);
+            //销售单金蝶明细id
+            jsonObject.set("FInStockEntry_Link", mapList);
 
             list.add(jsonObject);
         }

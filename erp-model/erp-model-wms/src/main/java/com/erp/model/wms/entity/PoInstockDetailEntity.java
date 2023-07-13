@@ -95,6 +95,12 @@ public class PoInstockDetailEntity extends BaseEntity<PoInstockDetailEntity> {
     @TableField("purchase_order_detail_id")
     private String purchaseOrderDetailId;
 
+    /**
+     * 金蝶明细id
+     */
+    @TableField("kingdee_detail_id")
+    private String KingdeeDetailId;
+
     @TableField(exist = false)
     private String approveStatus;
 
