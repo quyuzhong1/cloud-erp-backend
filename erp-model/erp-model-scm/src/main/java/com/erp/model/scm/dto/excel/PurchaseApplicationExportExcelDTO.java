@@ -53,62 +53,68 @@ public class PurchaseApplicationExportExcelDTO implements Serializable {
     private String  productName;
 
     /**
+     * 供应商名称
+     */
+    @ExcelProperty(value = "供应商名称", index = 6)
+    private String  supplierName;
+
+    /**
      * 计划交期
      */
-    @ExcelProperty(value = "计划交期", index = 6)
+    @ExcelProperty(value = "计划交期", index = 7)
     private String planDeliveryDate;
 
     /**
      * 申请数量
      */
-    @ExcelProperty(value = "申请数量", index = 7)
+    @ExcelProperty(value = "申请数量", index = 8)
     private String applyQty;
 
     /**
      * 实际采购数量
      */
-    @ExcelProperty(value = "实际采购数量", index = 8)
+    @ExcelProperty(value = "实际采购数量", index = 9)
     private String realPurchaseQty;
 
     /**
      * 签收数量
      */
-    @ExcelProperty(value = "签收数量", index = 9)
+    @ExcelProperty(value = "签收数量", index = 10)
     private String receiveQty;
 
     /**
      * 入库数量
      */
-    @ExcelProperty(value = "入库数量", index = 10)
+    @ExcelProperty(value = "入库数量", index = 11)
     private String stockInQty;
 
     /**
      * 目的仓库名称
      */
-    @ExcelProperty(value = "目的仓库名称", index = 11)
+    @ExcelProperty(value = "目的仓库名称", index = 12)
     private String destWarehouseName;
 
     /**
      * 备注
      */
-    @ExcelProperty(value = "备注", index = 12)
+    @ExcelProperty(value = "备注", index = 13)
     private String remark;
 
     /**
      * 审核人
      */
-    @ExcelProperty(value = "审核人", index = 13)
+    @ExcelProperty(value = "审核人", index = 14)
     private String approveUserName;
 
     /**
      * 创建人
      */
-    @ExcelProperty(value = "创建人", index = 14)
+    @ExcelProperty(value = "创建人", index = 15)
     private String createUserName;
 
     /**
      * 创建时间
      */
-    @ExcelProperty(value = "创建时间", index = 15 ,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 16 ,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 }
