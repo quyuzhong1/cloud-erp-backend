@@ -44,7 +44,7 @@ public class SyncFbaDeliveryConsumer implements RocketMQListener<DmpSyncMqDTO> {
         DmpSyncMqDTO.ParamDTO paramDTO = new DmpSyncMqDTO.ParamDTO();
         paramDTO.setDmpSyncTaskId(dmpSyncMqDTO.getDmpSyncTaskId());
         String dataJson = dmpSyncMqDTO.getMqData();
-        log.info("监听到马帮FBA发货单需要同步生成加工单：entity={}", dataJson);
+        log.warn("监听到马帮FBA发货单需要同步生成加工单：entity={}", dataJson);
         try {
             DmpFbaDeliveryEntity dmpFbaDeliveryEntity = JSONObject.parseObject(dataJson, DmpFbaDeliveryEntity.class);
             syncFbaDeliveryService.syncFbaDelivery(dmpFbaDeliveryEntity, SourceTypeEnum.MABANG_FBA_DELIVERY.getCode(), dmpSyncMqDTO.getDmpSyncTaskId());
