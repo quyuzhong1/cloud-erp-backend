@@ -99,6 +99,16 @@ public class PurchaseApplicationDTO implements Serializable {
         private String variantProperty;
 
         /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
          * 计划交期
          */
         private String planDeliveryDate;
@@ -168,6 +178,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * 采购申请单号
          */
         private String code;
+
+        /**
+         * 供应商id集合
+         */
+        private List<String> supplierIdList;
 
         /**
          * 审核状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
