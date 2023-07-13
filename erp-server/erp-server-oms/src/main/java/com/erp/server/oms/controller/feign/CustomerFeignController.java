@@ -9,6 +9,7 @@ import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.CustomerSellerService;
 import com.erp.server.oms.service.DictBasicService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -51,11 +53,17 @@ public class CustomerFeignController {
 
     @PostMapping("/ListCustomerAddressByIds")
     List<CustomerAddressEntity> ListCustomerAddressByIds(@RequestBody List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
         return customerAddressService.listByIds(ids);
     }
 
     @PostMapping("/listCustomerByIds")
     List<CustomerInfoEntity> listCustomerByIds(@RequestBody List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
         return customerInfoService.listByIds(ids);
     }
 

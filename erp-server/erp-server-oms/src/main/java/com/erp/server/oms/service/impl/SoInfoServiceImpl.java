@@ -2001,4 +2001,44 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             ValidatorUtil.isTrue(Objects.nonNull(bankAccountEntity), () -> new ServiceException("收款账号错误"));
         }
     }
+
+    @Override
+    public List<SoInfoDTO.PrintDTO> print(List<String> ids) {
+        List<SoInfoDTO.PrintDTO> printDTOList = new ArrayList<>();
+        List<SoInfoEntity> soInfoEntities = this.listByIds(ids);
+        //获取客户id集合
+        List<String> customerIds = soInfoEntities.stream().map(SoInfoEntity::getCustomerId).distinct().collect(Collectors.toList());
+        //根据客户id集合查询客户信息
+        List<CustomerInfoEntity> customerInfoEntities = customerInfoService.listByIds(customerIds);
+        //获取销售单详情
+        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByMainIds(ids);
+        //获取sku的id集合
+        List<String> skuIdList = soDetailEntities.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
+        //根据skuId查询sku信息
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        for (SoInfoEntity soInfoEntity : soInfoEntities) {
+            //根据客户id获取客户信息
+            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+            SoInfoDTO.PrintDTO printDTO = new SoInfoDTO.PrintDTO();
+            printDTO.setCustomerName(customerInfoEntity.getName());
+            printDTO.setSellerName(soInfoEntity.getSellerName());
+            printDTO.setReceiveAddress(soInfoEntity.getReceiveAddress());
+            printDTO.setTelNumber(soInfoEntity.getTelNumber());
+            List<SoDetailEntity> soDetailEntityList = soDetailEntities.stream().filter(req -> req.getMainId().equals(soInfoEntity.getId())).collect(Collectors.toList());
+            printDTO.setSumNumber(soDetailEntityList.stream().mapToInt(SoDetailEntity::getQty).sum());
+            List<SoInfoDTO.PrintDetailDTO> printDetailDTOList = new ArrayList<>();
+            for (SoDetailEntity soDetailEntity : soDetailEntityList) {
+                SoInfoDTO.PrintDetailDTO printDetailDTO = new SoInfoDTO.PrintDetailDTO();
+                printDetailDTO.setPlatformSkuNo(soDetailEntity.getPlatformSkuNo());
+                printDetailDTO.setProductSkuNo(soDetailEntity.getSkuNo());
+                SkuVO skuVO = skuList.stream().filter(req -> req.getSkuId().equals(soDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
+                printDetailDTO.setProductName(skuVO.getSkuName());
+                printDetailDTO.setRemark(soDetailEntity.getRemark());
+                printDetailDTOList.add(printDetailDTO);
+            }
+            printDTO.setPrintDetailList(printDetailDTOList);
+            printDTOList.add(printDTO);
+        }
+        return printDTOList;
+    }
 }

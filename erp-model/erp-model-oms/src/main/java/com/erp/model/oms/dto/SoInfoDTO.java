@@ -1638,4 +1638,69 @@ public class SoInfoDTO implements Serializable {
 
     }
 
+    /**
+     * 打印
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PrintDTO {
+        /**
+         * 客户
+         */
+        private String customerName;
+
+        /**
+         * 销售员
+         */
+        private String sellerName;
+
+        /**
+         * 收货地址
+         */
+        private String receiveAddress;
+
+        /**
+         * 联系电话
+         */
+        private String telNumber;
+
+        /**
+         * 合计数量
+         */
+        private Integer sumNumber;
+
+        /**
+         * 打印明细
+         */
+        private List<PrintDetailDTO> printDetailList;
+
+    }
+
+    /**
+     * 打印明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PrintDetailDTO {
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+
+        /**
+         * ERP系统sku
+         */
+        private String productSkuNo;
+
+        /**
+         * sku名称
+         */
+        private String productName;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
 }

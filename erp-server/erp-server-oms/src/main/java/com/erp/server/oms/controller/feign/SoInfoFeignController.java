@@ -7,6 +7,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SkuMapingEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.server.oms.service.SoDetailService;
@@ -48,6 +49,18 @@ public class SoInfoFeignController extends BaseController {
     @PostMapping("/getSoInfoById")
     public SoInfoEntity getSoInfoById(@RequestBody String id) {
         return soInfoService.getById(id);
+    }
+
+    /**
+     * 根据ids获取销售订单
+     * @Author Luo_WG
+     * @Date 2023/7/13 11:26
+     * @param ids
+     * @return java.util.List<com.erp.model.oms.entity.SoInfoEntity>
+     **/
+    @PostMapping("/listSoInfoByIds")
+    public List<SoInfoEntity> listSoInfoByIds(@RequestBody List<String> ids) {
+        return soInfoService.listByIds(ids);
     }
 
     /**
@@ -125,5 +138,4 @@ public class SoInfoFeignController extends BaseController {
     public Boolean approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         return soInfoService.approve(dto);
     }
-
 }
