@@ -135,35 +135,6 @@ public class DmpFbaDeliveryDetailEntity extends BaseEntity<DmpFbaDeliveryDetailE
     @TableField("package_cost")
     private BigDecimal packageCost;
 
-    /**
-    * 库存锁定状态 1无需锁定 2锁定中 3 锁定成功 4部分成功 5锁定失败
-    */
-    @TableField("lock_state")
-    private Integer lockState;
-
-    /**
-    * 锁定数量
-    */
-    @TableField("lock_qty")
-    private Integer lockQty;
-
-    /**
-    * 锁定时间
-    */
-    @TableField("lock_time")
-    private String lockTime;
-
-    /**
-    * 失败或成功备注
-    */
-    @TableField("lock_remark")
-    private String lockRemark;
-
-    /**
-    * 0锁定 默认值0 每次更新+1
-    */
-    @TableField("lock_version")
-    private Integer lockVersion;
 
     /**
     * 销售名称
@@ -311,16 +282,6 @@ public class DmpFbaDeliveryDetailEntity extends BaseEntity<DmpFbaDeliveryDetailE
 
     public static final String PACKAGE_COST = "package_cost";
 
-    public static final String LOCK_STATE = "lock_state";
-
-    public static final String LOCK_QTY = "lock_qty";
-
-    public static final String LOCK_TIME = "lock_time";
-
-    public static final String LOCK_REMARK = "lock_remark";
-
-    public static final String LOCK_VERSION = "lock_version";
-
     public static final String SALENAME = "salename";
 
     public static final String PACKTYPE = "packtype";
@@ -381,11 +342,6 @@ public class DmpFbaDeliveryDetailEntity extends BaseEntity<DmpFbaDeliveryDetailE
                 ", customComputeCost=" + customComputeCost +
                 ", saleId='" + saleId + '\'' +
                 ", packageCost=" + packageCost +
-                ", lockState=" + lockState +
-                ", lockQty=" + lockQty +
-                ", lockTime='" + lockTime + '\'' +
-                ", lockRemark='" + lockRemark + '\'' +
-                ", lockVersion=" + lockVersion +
                 ", salename='" + salename + '\'' +
                 ", packtype='" + packtype + '\'' +
                 ", asin='" + asin + '\'' +
