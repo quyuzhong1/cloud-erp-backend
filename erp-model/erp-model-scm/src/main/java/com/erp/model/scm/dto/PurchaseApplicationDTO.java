@@ -395,6 +395,26 @@ public class PurchaseApplicationDTO implements Serializable {
         private Integer deliveryDay;
 
         /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
          * 申请数量
          */
         private Integer applyQty;

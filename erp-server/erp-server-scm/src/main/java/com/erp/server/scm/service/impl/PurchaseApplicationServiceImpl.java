@@ -116,6 +116,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     @Resource
     private SubcontractOrderService subcontractOrderService;
 
+    @Resource
+    private PurchasePriceDetailService purchasePriceDetailService;
 
     @Override
     public PagingVO<PurchaseApplicationDTO.ListDTO> paging(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> pagingDTO) {
@@ -362,6 +364,20 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             dto.setPurchaseUserName(skuPurchase.getPurchaseUserName());
             dto.setSupplierId(skuPurchase.getSupplierId());
             dto.setSupplierName(skuPurchase.getSupplierName());
+
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO  = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+            searchDTO.setSkuId(entity.getSkuId());
+            searchDTO.setSkuNo(entity.getSkuNo());
+            searchDTO.setSupplierId(skuPurchase.getSupplierId());
+            searchDTO.setPurchaseQty(entity.getApplyQty().intValue() - purchaseQty.intValue());
+            Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> pair = purchasePriceDetailService.listPurchaseTaxPriceView(searchDTO);
+            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> value = pair.getValue();
+            if (CollectionUtils.isNotEmpty(value)) {
+                dto.setTaxPrice(value.get(0).getTaxPrice());
+                dto.setTaxRate(value.get(0).getTaxRate());
+                dto.setCurrency(value.get(0).getCurrency());
+                dto.setCurrencySymbol(value.get(0).getCurrencySymbol());
+            }
 
             //清空第一条明细后其他明细中的单号
             boolean contains = strList.contains(entity.getPurchaseApplicationId());
