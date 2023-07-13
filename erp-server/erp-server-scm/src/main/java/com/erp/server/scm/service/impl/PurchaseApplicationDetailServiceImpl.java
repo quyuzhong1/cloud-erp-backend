@@ -189,6 +189,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             if (ObjectUtils.isNotEmpty(skuVO)) {
                 entity.setProductName(skuVO.getSkuName());
                 entity.setVariantProperty(skuVO.getVariantProperty());
+                entity.setSupplierId(skuVO.getSupplierId());
             }
 
             //修改操作日志

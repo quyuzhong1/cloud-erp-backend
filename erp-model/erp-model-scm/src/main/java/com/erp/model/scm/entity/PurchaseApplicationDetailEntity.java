@@ -49,6 +49,12 @@ public class PurchaseApplicationDetailEntity extends BaseEntity<PurchaseApplicat
     private String productName;
 
     /**
+     * 供应商id
+     */
+    @TableField("supplierId")
+    private String supplierId;
+
+    /**
      * 单箱数量
      */
     @TableField("unit_qty")
