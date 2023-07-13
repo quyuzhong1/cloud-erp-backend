@@ -147,6 +147,7 @@
             </foreach>
 
         </if>
+        ORDER BY sd.id ASC
     </select>
 
     <select id="listApproveCount" resultType="com.erp.model.oms.dto.SoDetailDTO$TypeCountDTO">
