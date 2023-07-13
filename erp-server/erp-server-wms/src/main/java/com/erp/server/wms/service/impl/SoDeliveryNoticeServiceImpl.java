@@ -731,7 +731,20 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             //根据ids查询sku信息
             List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
 
+            // 忽略库存计算SKU
+            List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+            List<String> ignoreInventorySkuIds = Lists.newArrayList();
+            if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+                ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+            }
+
             for (SoDeliveryNoticeDetailEntity detailEntity : detailEntities) {
+
+                if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
+                    log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detailEntity.getSkuId(), detailEntity.getSkuNo());
+                    continue;
+                }
+
                 //获取核算公司
                 SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
                 //查询可用库存生成拣货明细
