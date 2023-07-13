@@ -2034,6 +2034,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 SkuVO skuVO = skuList.stream().filter(req -> req.getSkuId().equals(soDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
                 printDetailDTO.setProductName(skuVO.getSkuName());
                 printDetailDTO.setRemark(soDetailEntity.getRemark());
+                printDetailDTO.setQty(soDetailEntity.getQty());
                 printDetailDTOList.add(printDetailDTO);
             }
             printDTO.setPrintDetailList(printDetailDTOList);

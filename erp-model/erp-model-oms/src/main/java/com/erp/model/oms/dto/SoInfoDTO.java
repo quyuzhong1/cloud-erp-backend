@@ -1701,6 +1701,11 @@ public class SoInfoDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
     }
 
 }
