@@ -176,8 +176,6 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));
-        queryFilters.add(StrUtil.format("FApproveDate >= '{}'", sdf.format(lastTime)));
-        queryFilters.add(StrUtil.format("FApproveDate < '{}'", sdf.format(nextTime)));
         // 退货单拉全类型的单据
 //        queryFilters.add(StrUtil.format("FBillTypeID in ('{}','{}')", "73383412199a402bb58439509e089077","559351ce1d0252"));
 //        queryFilters.add(String.format("FOrderNo <> '%s'", ""));
