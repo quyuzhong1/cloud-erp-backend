@@ -286,32 +286,31 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 Integer planQty = item.getPlanQty();
                 if(ignoreInventorySkuIds.contains(item.getSkuId())) {
                     log.warn("sku id: {}产品属性是费用或服务，不参与库存出入库，不做库存验证", item.getSkuId());
-                    continue;
-                }
+                } else {
+                    if (actualQty > planQty) {
+                        throw new ServiceException(ApiError.ERROR_92027);
+                    }
 
-                if (actualQty > planQty) {
-                    throw new ServiceException(ApiError.ERROR_92027);
-                }
+                    String sourceDetailId = item.getSourceDetailId();
+                    //这个是销售数量
+                    Integer soQty = soDetailList.stream().filter(s -> s.getId().equals(sourceDetailId)).findFirst().
+                            flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(0);
 
-                String sourceDetailId = item.getSourceDetailId();
-                //这个是销售数量
-                Integer soQty = soDetailList.stream().filter(s -> s.getId().equals(sourceDetailId)).findFirst().
-                        flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(0);
-
-                //这个是已出的数量 这个对应的就是销售订单的详情id
-                Integer outStockQty = soOutstockDetailList.stream().filter(s ->
-                        s.getSoDetailId().equals(sourceDetailId)
-                ).mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
+                    //这个是已出的数量 这个对应的就是销售订单的详情id
+                    Integer outStockQty = soOutstockDetailList.stream().filter(s ->
+                            s.getSoDetailId().equals(sourceDetailId)
+                    ).mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
 
 
-                if (outStockQty + planQty > soQty) {
-                    throw new ServiceException(ApiError.ERROR_92028);
-                }
-                //即时库存
-                Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
-                        equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
-                if (planQty > inventory) {
-                    throw new ServiceException(ApiError.ERROR_92030);
+                    if (outStockQty + planQty > soQty) {
+                        throw new ServiceException(ApiError.ERROR_92028);
+                    }
+                    //即时库存
+                    Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
+                            equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+                    if (planQty > inventory) {
+                        throw new ServiceException(ApiError.ERROR_92030);
+                    }
                 }
             }
         }
