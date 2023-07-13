@@ -927,7 +927,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(entity.getOutOrgId(),entity.getOutOrgName(),entity.getOutWarehouseId(),
                         entity.getOutWarehouseName(),detailEntity.getSkuId(),detailEntity.getSkuNo(),detailEntity.getQty());
 
-                List<InventoryEntity> inventoryList = null;
+                List<InventoryEntity> inventoryList = Lists.newArrayList();
                 if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
                     InventoryEntity inventoryEntity = new InventoryEntity();
                     inventoryEntity.setWarehouseId(dto.getWarehouseId());
