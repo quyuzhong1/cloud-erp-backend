@@ -1289,6 +1289,11 @@ public class SoInfoDTO implements Serializable {
         private String soRemark;
 
         private String syncKingdeeId;
+
+        /**
+         * 纳税登记号
+         */
+        private String taxRegisterCode;
     }
 
 
