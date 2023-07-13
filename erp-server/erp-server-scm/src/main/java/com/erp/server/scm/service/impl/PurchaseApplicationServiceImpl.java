@@ -304,20 +304,22 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     @Override
     public List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrder(List<String> ids) {
         List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> resultList = new ArrayList<>();
-        //主表数据
-        List<PurchaseApplicationEntity> purchaseApplicationList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(purchaseApplicationList)) {
-            throw new ServiceException(ApiError.ERROR_98016);
-        }
-        //必须为审核通过的单据
-        ids = purchaseApplicationList.stream().filter(r->Objects.equals(r.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())).map(PurchaseApplicationEntity::getId).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(ids)) {
+
+        //明细数据
+        List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = purchaseApplicationDetailService.listByIds(ids);
+        if (CollectionUtils.isEmpty(purchaseApplicationDetailList)) {
             throw new ServiceException(ApiError.ERROR_98015);
         }
         //可以生成采购订单的明细（未生成、部分生成）
-        List<PurchaseApplicationDetailEntity> list = purchaseApplicationDetailService.listCreatePurchaseOrderDetail(ids);
-        if (CollectionUtils.isEmpty(list)) {
+        List<PurchaseApplicationDetailEntity> list = purchaseApplicationDetailList.stream().filter(obj -> !CreatePoTypeEnum.ALL_GENERATED.getStatus().equals(obj.getCreatePoType())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(purchaseApplicationDetailList)) {
             throw new ServiceException(ApiError.ERROR_98015);
+        }
+        List<String> mainIds = list.stream().map(PurchaseApplicationDetailEntity::getPurchaseApplicationId).collect(Collectors.toList());
+        //主表数据
+        List<PurchaseApplicationEntity> purchaseApplicationList = this.listByIds(mainIds);
+        if (CollectionUtils.isEmpty(purchaseApplicationList)) {
+            throw new ServiceException(ApiError.ERROR_98016);
         }
 
         List<String> detailIds = list.stream().map(PurchaseApplicationDetailEntity::getId).collect(Collectors.toList());
@@ -342,6 +344,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             if (ObjectUtils.isEmpty(purchaseApplicationEntity)) {
                 throw new ServiceException(ApiError.ERROR_98016);
             }
+            //必须为审核通过的单据
+            if (!ApproveStatusEnum.APPROVE.getStatus().equals(purchaseApplicationEntity.getApproveStatus())) {
+                continue;
+            }
+
             dto.setCode(purchaseApplicationEntity.getCode());
             Integer purchaseQty = MathUtil.ZERO;
             //查询已采购数量
