@@ -2095,9 +2095,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PurchaseOrderDTO.PurchaseContractDetailDTO> contractDetailList = new ArrayList<>();
         List<String> skuIdList = purchaseOrderDetailEntityList.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        Integer sort = MathUtil.ZERO;
         for (PurchaseOrderDetailEntity detailEntity : purchaseOrderDetailEntityList) {
+            sort++;
             SkuVO skuVO = skuList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             PurchaseOrderDTO.PurchaseContractDetailDTO detailDTO = new PurchaseOrderDTO.PurchaseContractDetailDTO();
+            detailDTO.setSort(sort);
             detailDTO.setSkuNo(detailEntity.getSkuNo());
             detailDTO.setProductName(skuVO.getSkuName());
             detailDTO.setRemark(detailEntity.getRemark());
@@ -2109,7 +2112,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         contractDTO.setList(contractDetailList);
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/SalesContract.xlsx";
+        String excelPath = "excel/purchaseContractExportBBBBBBBBBBBB.xlsx";
         String name = "采购单网采合同";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);

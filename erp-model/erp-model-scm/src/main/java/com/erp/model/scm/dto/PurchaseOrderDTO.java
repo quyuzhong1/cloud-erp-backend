@@ -1155,6 +1155,10 @@ public class PurchaseOrderDTO implements Serializable {
     @NoArgsConstructor
     public static class PurchaseContractDetailDTO {
         /**
+         * 序号
+         */
+        private Integer sort;
+        /**
          * 物料编码
          */
         private String skuNo;
