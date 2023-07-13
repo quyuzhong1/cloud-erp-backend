@@ -318,7 +318,7 @@ public class SoOutstockController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
      **/
-    @GetMapping("/print")
+    @PostMapping("/print")
     public ApiResult<List<SoOutstockDTO.PrintDTO>> print(@RequestBody BaseIdsDTO.IdsDTO dto) {
         List<SoOutstockDTO.PrintDTO> printDTOList = soOutstockService.print(dto.getIds());
         return success(printDTOList);

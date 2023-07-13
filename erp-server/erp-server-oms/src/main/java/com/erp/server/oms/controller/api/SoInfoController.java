@@ -454,7 +454,7 @@ public class SoInfoController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
      **/
-    @GetMapping("/print")
+    @PostMapping("/print")
     public ApiResult<List<SoInfoDTO.PrintDTO>> print(@RequestBody BaseIdsDTO.IdsDTO dto) {
         List<SoInfoDTO.PrintDTO> printDTOList = soInfoService.print(dto.getIds());
         return success(printDTOList);
