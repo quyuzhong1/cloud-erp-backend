@@ -4,13 +4,17 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.entity.InventoryDetailEntity;
 import com.erp.server.wms.mapper.InventoryDetailMapper;
+import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.InventoryDetailService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +33,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetailMapper, InventoryDetailEntity> implements InventoryDetailService {
+
+    @Autowired
+    private CommonService commonService;
 
     @Override
     public InventoryDetailEntity findOneDetail(String inventoryInfoId, LocalDate instockBatchDate) {
@@ -52,7 +59,12 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean updateQtyById(String id, Integer qty) {
-        boolean flag = lambdaUpdate().setSql(StrUtil.format("{}={}+{}", "qty","qty", qty)).eq(InventoryDetailEntity::getId, id).update();
+        LoginUser loginUser = commonService.getUserInfo();
+        boolean flag = lambdaUpdate().setSql(StrUtil.format("{}={}+{}", "qty","qty", qty))
+                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
+                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
+                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
+                .eq(InventoryDetailEntity::getId, id).update();
         return flag;
         // return inventoryDetailMapper.updateQtyById(id, qty, version, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
     }

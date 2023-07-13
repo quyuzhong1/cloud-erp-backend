@@ -9,14 +9,17 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.*;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.config.InventoryHelper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.InventoryUtils;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Lists;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -61,6 +64,9 @@ public abstract class AbstractInventoryServiceImpl {
 
     @Autowired
     private WarehouseService warehouseService;
+
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
 
     /**
      *
@@ -115,6 +121,19 @@ public abstract class AbstractInventoryServiceImpl {
      */
     public abstract <T extends InventoryStockBaseDTO> void singleHandler(T baseParam,  InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams,
                                String transactionNo);
+
+    /**
+     * 获取忽略库存计算的sku
+     * @return
+     */
+    public List<String> getIgnoreSkuIds() {
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        }
+        return ignoreInventorySkuIds;
+    }
 
     /**
      * 反审核
@@ -423,5 +442,4 @@ public abstract class AbstractInventoryServiceImpl {
             }
         }
     }
-
 }
