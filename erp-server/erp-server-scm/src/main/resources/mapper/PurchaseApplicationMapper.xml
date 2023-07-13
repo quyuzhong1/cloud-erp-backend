@@ -290,7 +290,7 @@
         <where>
             pa.is_deleted = false
             <if test="ids != null and ids.size > 0">
-                and pa.id in
+                and pad.id in
                 <foreach collection="ids" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
