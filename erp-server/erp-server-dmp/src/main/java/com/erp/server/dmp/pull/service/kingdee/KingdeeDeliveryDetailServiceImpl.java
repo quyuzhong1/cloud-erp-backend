@@ -216,6 +216,8 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
 
         //审核状态
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'A','B','C','D'"));
+        // 过滤组织内订单
+        queryFilters.add(StrUtil.format("FISGENFORIOS = {}", "0"));
 
         String filterStr = String.join(" and ", queryFilters);
         log.info("拉取金蝶条件为>>>>>>>>>>{}", filterStr);
