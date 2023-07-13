@@ -42,8 +42,8 @@ public enum InventoryInOutEnum {
      * @param code
      * @return
      */
-    public static InventoryModeEnum getByCode(String code) {
-        return Arrays.stream(InventoryModeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
+    public static InventoryInOutEnum getByCode(String code) {
+        return Arrays.stream(InventoryInOutEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 
 }
