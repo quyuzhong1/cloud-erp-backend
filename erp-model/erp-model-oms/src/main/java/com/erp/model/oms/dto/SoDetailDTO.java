@@ -289,6 +289,10 @@ public class SoDetailDTO implements Serializable {
         private BigDecimal saleProfitRate;
 
 
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
     }
 
     /**
