@@ -177,17 +177,34 @@
 
     <select id="listExport" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingViewDTO">
         SELECT
-        si.code,si.order_type,
-        si.approve_status, si.customer_id,
-        si.invalid_status, si.sales_org_name,
-        si.seller_name,sod.delivery_status,
-        si.require_date,si.create_user_name,
-        si.create_time,si.warehouse_id,
-        si.id,sod.id AS detailId,
-        si.approve_user_name,
-        sod.sku_id,sod.sku_no,
-        sod.qty,sod.amount,
-        sod.currency,sod.currency_symbol
+            si.code,
+            si.order_type,
+            si.approve_status,
+            si.customer_id,
+            si.invalid_status,
+            si.sales_org_name,
+            si.seller_name,
+            sod.delivery_status,
+            si.require_date,
+            si.create_user_name,
+            si.create_time,
+            si.warehouse_id,
+            si.sales_dept_id,
+            si.id,
+            sod.id AS detailId,
+            si.approve_user_name,
+            sod.sku_id,
+            sod.sku_no,
+            sod.qty,
+            sod.amount,
+            sod.currency,
+            sod.currency_symbol,
+            sod.price,
+            sod.tax_amount,
+            sod.purchase_price,
+            sod.sale_cost,
+            sod.sale_profit,
+            sod.sale_profit_rate
         FROM so_detail sod
         INNER JOIN so_info si
         ON sod.main_id =si.id AND si.is_deleted=false

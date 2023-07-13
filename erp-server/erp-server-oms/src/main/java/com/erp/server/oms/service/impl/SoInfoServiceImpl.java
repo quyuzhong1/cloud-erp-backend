@@ -852,6 +852,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         //审核流程
         approveProcess(list, dto);
+
+        //添加日志
+        List<Pair<String, String>> pairList = list.stream().
+                map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个销售订单", ApproveTypeEnum.getName(dto.getType())).concat("【%s】").concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.SO.getCode(), pairList, "审核操作");
         return Boolean.TRUE;
     }
 
@@ -910,28 +915,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             return Boolean.TRUE;
         }
         //意见
-        String comment = dto.getComment();
-        String content = "";
         String userName = commonService.getUserInfo().getUserName();
         String approveStatus = "";
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
             approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            content = String.format("状态由[%s]变更为[%s] , 意见:%s", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.APPROVE.getName(), comment);
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT.getStatus();
-            content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.REJECT.getName(), comment);
         }
         Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(approveStatus), userName);
-        if (result) {
-            //添加日志
-            List<Pair<String, String>> pairList = list.stream().
-                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "状态变更");
-        }
         return result;
     }
 
@@ -1182,6 +1177,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         skuInventoryDTO.setWarehouseIdList(warehouseIdList);
         skuInventoryDTO.setSkuIdList(skuIdList);
 
+        //销售部门id
+        List<String> salesDeptIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSalesDeptId).distinct().collect(Collectors.toList());
+        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(salesDeptIdList);
 
         //从wms 获取到sku 的即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventoryByParam(skuInventoryDTO);
@@ -1198,6 +1196,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String deliveryStatus = item.getDeliveryStatus();
             String deliveryStatusName = DeliveryStatusEnum.getName(deliveryStatus);
             item.setDeliveryStatusName(deliveryStatusName);
+
+            //部门名称
+            String deptName = departmentList.stream().filter(d -> d.getId().equals(item.getSalesDeptId())).
+                    map(SysDepartmentEntity::getName).findFirst().orElse("");
+            item.setSalesDeptName(deptName);
+
             //作废状态
             Boolean invalidStatus = item.getInvalidStatus();
             String invalidStatusName = invalidStatus != null && invalidStatus ? "已作废" : "未作废";
