@@ -746,7 +746,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(warehouseEntity.getOrgId(), sysAccountingCompanyEntity.getCompanyName(), entity.getWarehouseId(),
                         entity.getWarehouseName(), detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getDeliveryQty());
 
-                List<InventoryEntity> inventoryList = null;
+                List<InventoryEntity> inventoryList = Lists.newArrayList();
                 if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
                     InventoryEntity inventoryEntity = new InventoryEntity();
                     inventoryEntity.setWarehouseId(dto.getWarehouseId());
