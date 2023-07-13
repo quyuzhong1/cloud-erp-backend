@@ -34,8 +34,8 @@ public class SingleApproveParamDTO extends PermissionsDTO {
     /**
      * 批准数量
      */
-    @NotNull(message = "批准数量不能为空")
+/*    @NotNull(message = "批准数量不能为空")
     @Min(value = 1,message = "批准数量最小值为1")
     @Max(value = 99999999,message = "批准数量最大值为99999999")
-    private Integer qty;
+    private Integer qty;*/
 }
