@@ -550,7 +550,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      */
     private List<SoOutstockDetailEntity> listBaseByMainId(String mainId) {
         if (StringUtils.isNotBlank(mainId)) {
-            return this.lambdaQuery().eq(SoOutstockDetailEntity::getMainId, mainId).list();
+            return this.lambdaQuery().eq(SoOutstockDetailEntity::getMainId, mainId).orderByAsc(SoOutstockDetailEntity::getId).list();
         }
         return Collections.emptyList();
 
