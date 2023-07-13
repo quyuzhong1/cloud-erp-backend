@@ -61,6 +61,7 @@ public class DmpFbaDeliveryDetailServiceImpl extends SuperServiceImpl<DmpFbaDeli
                 }
             } else {
                 if (detail.getIsDeleted()){
+                    log.warn("FBA发货单主单id：【{}】明细id：【{}】已被删除，忽略", mainId, detail.getId());
                     continue;
                 }
                 detail.setMainId(mainId);

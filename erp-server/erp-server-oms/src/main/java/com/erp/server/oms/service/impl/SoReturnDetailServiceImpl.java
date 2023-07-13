@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -13,6 +14,7 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
@@ -30,6 +32,8 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.mapper.SoReturnDetailMapper;
 import com.erp.server.oms.service.*;
+import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -51,6 +55,7 @@ import java.util.stream.Collectors;
  * @author LUO_WG
  * @since 2023-05-10
  */
+@Slf4j
 @Service
 public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMapper, SoReturnDetailEntity> implements SoReturnDetailService {
 
@@ -100,14 +105,26 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             throw new ServiceException(ApiError.ERROR_92003);
         }
         List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailBySourceId(Arrays.asList(dto.getSourceId()));
+
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        }
+
         List<SoReturnDetailEntity> list = new ArrayList<>();
         for (SoReturnDetailDTO.Add detailDto : dto.getDetailList()) {
             SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(soDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (actualQty < detailDto.getReturnQty() + returnQty) {
-                throw new ServiceException(ApiError.ERROR_92009);
+
+            if(ignoreInventorySkuIds.contains(soDetailEntity.getSkuId())) {
+                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", soDetailEntity.getSkuId(), soDetailEntity.getSkuNo());
+            } else {
+                if (actualQty < detailDto.getReturnQty() + returnQty) {
+                    throw new ServiceException(ApiError.ERROR_92009);
+                }
             }
 
             soReturnDetailEntity.setMainId(id);
@@ -149,6 +166,13 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
 
         List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailBySourceId(Arrays.asList(dto.getSourceId()));
         List<SoReturnDetailEntity> list = new ArrayList<>();
+
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        }
+
         for (SoReturnDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
@@ -158,9 +182,15 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                 soReturnDetailEntity.setId(detailDto.getId());
                 returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            if (actualQty < detailDto.getReturnQty() + returnQty) {
-                throw new ServiceException(ApiError.ERROR_92009);
+
+            if(ignoreInventorySkuIds.contains(soDetailEntity.getSkuId())) {
+                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", soDetailEntity.getSkuId(), soDetailEntity.getSkuNo());
+            } else {
+                if (actualQty < detailDto.getReturnQty() + returnQty) {
+                    throw new ServiceException(ApiError.ERROR_92009);
+                }
             }
+
             soReturnDetailEntity.setMainId(dto.getId());
             soReturnDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soReturnDetailEntity.setSkuNo(soDetailEntity.getSkuNo());

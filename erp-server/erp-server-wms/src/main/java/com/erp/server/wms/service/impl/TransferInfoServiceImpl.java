@@ -421,11 +421,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
             //发送马帮（非马帮平台的才需要推送）
             // TODO 正式上线时需注释掉
+            log.warn("直接调拨单同步马帮开关：【{}】", transferSyncToMb);
             if(Objects.equals(transferSyncToMb, Boolean.TRUE)) {
                 list.forEach(obj->{
                     // 直接调拨单发送马帮出入库
-                    if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_KINGDEE.getCode())) {
-                        log.info("审核直接调拨单【{}】是非马帮平台的，需要同步到马帮平台出入库，直接调拨单参数：{}", obj.getCode(), JSONObject.toJSONString(obj));
+                    log.warn("审核直接调拨单【{}】第三方平台类型：【{}】", obj.getCode(), obj.getThirdPartySystem());
+                    if(!Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_MB.getCode())) {
+                        log.warn("审核直接调拨单【{}】是非马帮平台的，需要同步到马帮平台出入库，直接调拨单参数：{}", obj.getCode(), JSONObject.toJSONString(obj));
                         syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
                     }
                 });
@@ -467,12 +469,18 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
 
         //发送马帮（非马帮平台的才需要推送）
-        list.forEach(obj->{
-            // 直接调拨单发送马帮出入库
-            if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_KINGDEE.getCode())) {
-                syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode());
-            }
-        });
+        // TODO 正式上线时需注释掉
+        log.warn("直接调拨单同步马帮开关：【{}】", transferSyncToMb);
+        if(Objects.equals(transferSyncToMb, Boolean.TRUE)) {
+            list.forEach(obj->{
+                // 直接调拨单发送马帮出入库
+                log.warn("反审核直接调拨单【{}】第三方平台类型：【{}】", obj.getCode(), obj.getThirdPartySystem());
+                if(!Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_MB.getCode())) {
+                    log.warn("反审核直接调拨单【{}】是非马帮平台的，需要同步到马帮平台出入库，直接调拨单参数：{}", obj.getCode(), JSONObject.toJSONString(obj));
+                    syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode());
+                }
+            });
+        }
 
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());

@@ -114,7 +114,7 @@ public abstract class AbstractInventoryServiceImpl {
      * @param transactionNo
      */
     public abstract <T extends InventoryStockBaseDTO> void singleHandler(T baseParam,  InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams,
-                                                                         String transactionNo);
+                               String transactionNo);
 
     /**
      * 反审核
@@ -127,7 +127,12 @@ public abstract class AbstractInventoryServiceImpl {
         log.warn("库存交易反审核，单据类型：{}, 单据id：{}", dto.getSourceType().getName(), dto.getBillId());
         // 根据单据类型和单据id查询出未反审核过的对应的交易流水，一个单据对应多个SKU， 按创建时间正序排序
         List<TransactionFlowEntity> txnFlows = transactionFlowService.getUnApprovedTxnFlows(dto.getSourceType().getCode(), dto.getBillId());
-        ValidatorUtil.isTrue(CollUtil.isNotEmpty(txnFlows),()->new ServiceException(ApiError.ERROR_99040));
+        if(CollUtil.isEmpty(txnFlows)) {
+            // 产品属性为费用或服务的sku没有交易流水
+            log.warn("库存交易反审核，单据类型：{}, 单据id：{}，未找到未审核过的交易流水，不处理", dto.getSourceType().getName(), dto.getBillId());
+            return;
+        }
+        // ValidatorUtil.isTrue(CollUtil.isNotEmpty(txnFlows),()->new ServiceException(ApiError.ERROR_99040));
         // 先按交易时间升序排
         txnFlows = txnFlows.stream().sorted(Comparator.comparing(TransactionFlowEntity::getTradeTime).thenComparing(TransactionFlowEntity::getId)).collect(Collectors.toList());
         // 关联交易号
@@ -298,7 +303,7 @@ public abstract class AbstractInventoryServiceImpl {
      */
     @SneakyThrows
     public  void outStockCore (InOutStockCoreDTO param, InventoryBusinessTypeEnum businessType, InventoryStatusEnum inventoryStatusEnum, String tansactionRuleId,
-                               String transactionNo) {
+                              String transactionNo) {
         // 仓库
         String warehouseId = param.getWarehouseId();
         // SKU
@@ -423,5 +428,4 @@ public abstract class AbstractInventoryServiceImpl {
             }
         }
     }
-
 }

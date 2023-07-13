@@ -17,11 +17,13 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.sync.MabangTransferInfoDTO;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
+import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.push.service.mabang.MabangInOutStockService;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpWarehouseMappingService;
 import com.erp.server.dmp.utils.MabangUtil;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -79,31 +81,23 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
         // 数据过滤处理
         String value = cfgSettingService.getValue(SettingEnum.ERP_TO_MB_WAREHOUSE_NAME);
         if(StrUtils.isEmpty(value)) {
-            log.error("ERP直接调拨单同步到马帮出入库未配置监控仓库");
-            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
-            warnMsgInfoDTO.setTitle(StrUtil.format("ERP{}推送马帮出入库未配置监控仓库", sourceTypeName));
-            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
-            warnMsgInfoDTO.setBizName(StrUtil.format("ERP{}推送马帮手工入库", sourceTypeName));
-            warnMsgInfoDTO.setTableName("");
-            warnMsgInfoDTO.setTableId("");
-            warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP{}单据编号: {}",sourceTypeName, transferInfo.getCode()));
-            mqProducerService.sendWarnMsg(warnMsgInfoDTO);
+            sendNotice(sourceTypeName);
             return;
         }
-        List<String> warehouseCodeList = Arrays.asList(value.split(","));
-        log.info("ERP直接调拨单同步到马帮出入库配置的监控仓库为：【{}】", JSONObject.toJSONString(warehouseCodeList));
+        List<String> warehouseCodeList = Arrays.asList(value.split(MabangUtil.SEPARATOR));
+        log.warn("ERP直接调拨单同步到马帮出入库配置的监控仓库为：【{}】", JSONObject.toJSONString(warehouseCodeList));
         // 调入仓
         String inWarehouseCode =  StrUtils.null2EmptyWithTrim(transferInfo.getInWarehouseCode());
         // 调出仓
         String outWarehouseCode = StrUtils.null2EmptyWithTrim(transferInfo.getOutWarehouseCode());
         Map<String, DmpWarehouseMappingEntity> warehouseMap = dmpWarehouseMappingService.getByWarehouseCodes(Arrays.asList(inWarehouseCode, outWarehouseCode));
         Map<String, Object> warehouseCheckMap = MabangUtil.checkTransferInOutWarehouse(inWarehouseCode, outWarehouseCode, warehouseMap, warehouseCodeList);
-        boolean warehouseStop = (boolean) warehouseCheckMap.get("stop");
+        boolean warehouseStop = (boolean) warehouseCheckMap.get(MabangUtil.SEND_STOP);
         if(warehouseStop) {
             return;
         }
-        String inWarehouseName = StrUtils.null2EmptyWithTrim(warehouseCheckMap.get("inWarehouseCode"));
-        String outWarehouseName =  StrUtils.null2EmptyWithTrim(warehouseCheckMap.get("outWarehouseCode"));
+        String inWarehouseName = StrUtils.null2EmptyWithTrim(warehouseCheckMap.get(MabangUtil.IN_WAREHOUSE_CODE));
+        String outWarehouseName =  StrUtils.null2EmptyWithTrim(warehouseCheckMap.get(MabangUtil.OUT_WAREHOUSE_CODE));
 
         // 操作人
         String employeeName = cfgSettingService.getValue(SettingEnum.ERP_TO_MB_EMPLOYEE_NAME);
@@ -111,41 +105,62 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
             employeeName = MabangUtil.MABANG_EMPLOYEE_NAME;
         }
 
+        // SKU ID集合，获取SKU信息
         List<String> skuIds = transferDetailList.stream().map(TransferInfoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
 
+        List<MabangInOutStockDTO> mabangInOutStockDTOList = null;
         // 审核
         if (Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), operate)) {
+            mabangInOutStockDTOList = Lists.newArrayList();
             if(warehouseCodeList.contains(inWarehouseCode)) {
                 // 手工入库
-                log.info("ERP直接调拨单审核同步到马帮出入库：入库仓库【{}】", transferInfo.getCode(), inWarehouseCode);
-                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, "in", operate);
-                mabangInOutStockService.inOutStock(mabangInOutStockDTO, transferInfo.getId(),  transferInfo.getCode(), sourceType, operate);
+                log.warn("ERP直接调拨单【{}】审核同步到马帮出入库：入库仓库【{}】", transferInfo.getCode(), inWarehouseCode);
+                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, InventoryInOutEnum.IN_STOCK.getCode(), operate);
+                mabangInOutStockDTOList.add(mabangInOutStockDTO);
             }
             if(warehouseCodeList.contains(outWarehouseCode)) {
                 // 手工出库
-                log.info("ERP直接调拨单审核同步到马帮出入库：出库仓库【{}】", transferInfo.getCode(), outWarehouseCode);
-                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, "out", operate);
-                mabangInOutStockService.inOutStock(mabangInOutStockDTO, transferInfo.getId(),  transferInfo.getCode(), sourceType, operate);
+                log.warn("ERP直接调拨单【{}】审核同步到马帮出入库：出库仓库【{}】", transferInfo.getCode(), outWarehouseCode);
+                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, InventoryInOutEnum.OUT_STOCK.getCode(), operate);
+                mabangInOutStockDTOList.add(mabangInOutStockDTO);
             }
         }
         // 反审核
         if (Objects.equals(SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode(), operate)) {
+            mabangInOutStockDTOList = Lists.newArrayList();
             // 操作跟审核相反，审核的入库为出库，审核的出库为入库
             if(warehouseCodeList.contains(inWarehouseCode)) {
                 // 手工出库
-                log.info("ERP直接调拨单反审核同步到马帮出入库：出库仓库【{}】", transferInfo.getCode(), inWarehouseCode);
-                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, "out", operate);
-                mabangInOutStockService.inOutStock(mabangInOutStockDTO, transferInfo.getId(),  transferInfo.getCode(), sourceType, operate);
+                log.warn("ERP直接调拨单【{}】反审核同步到马帮出入库：出库仓库【{}】", transferInfo.getCode(), inWarehouseCode);
+                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, InventoryInOutEnum.OUT_STOCK.getCode(), operate);
+                mabangInOutStockDTOList.add(mabangInOutStockDTO);
             }
             if(warehouseCodeList.contains(outWarehouseCode)) {
                 // 手工入库
-                log.info("ERP直接调拨单反审核同步到马帮出入库：入库仓库【{}】", transferInfo.getCode(), outWarehouseCode);
-                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, "in", operate);
-                mabangInOutStockService.inOutStock(mabangInOutStockDTO, transferInfo.getId(),  transferInfo.getCode(), sourceType, operate);
+                log.warn("ERP直接调拨单【{}】反审核同步到马帮出入库：入库仓库【{}】", transferInfo.getCode(), outWarehouseCode);
+                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, InventoryInOutEnum.IN_STOCK.getCode(), operate);
+                mabangInOutStockDTOList.add(mabangInOutStockDTO);
             }
         }
+        mabangInOutStockService.batchInOutStock(mabangInOutStockDTOList, transferInfo.getId(),  transferInfo.getCode(), sourceType, operate);
 
+    }
+
+    /**
+     * 未配置监控仓库发送提醒
+     * @param sourceTypeName
+     */
+    private void sendNotice(String sourceTypeName) {
+        log.warn(StrUtil.format("ERP{}同步到马帮出入库未配置监控仓库", sourceTypeName));
+        WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+        warnMsgInfoDTO.setTitle(StrUtil.format("ERP{}推送马帮出入库未配置监控仓库", sourceTypeName));
+        warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+        warnMsgInfoDTO.setBizName(StrUtil.format("ERP{}推送马帮手工入库", sourceTypeName));
+        warnMsgInfoDTO.setTableName("");
+        warnMsgInfoDTO.setTableId("");
+        warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP{}同步到马帮出入库未配置监控仓库，请在cfg_setting表erp_to_mb_direct_transfer配置", sourceTypeName));
+        mqProducerService.sendWarnMsg(warnMsgInfoDTO);
     }
 
 

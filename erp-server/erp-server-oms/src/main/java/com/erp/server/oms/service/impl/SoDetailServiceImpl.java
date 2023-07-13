@@ -45,6 +45,7 @@ import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import com.erp.server.oms.service.SoReturnDetailService;
 import com.erp.server.oms.utils.SoUtils;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -973,6 +974,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Override
     public List<String> checkSkuQty(String warehouseId, List<SoDetailDTO.AddDTO> detailList) {
         List<String> scarceSkuList = new ArrayList<>(10);
+        // 忽略库存计算SKU
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        }
         if (CollectionUtils.isNotEmpty(detailList)) {
             List<String> skuIdList = detailList.stream().map(SoDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
             List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
@@ -983,7 +990,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 //即时库存
                 Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).
                         mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
-                if (qty > curInventoryQty) {
+                if (qty > curInventoryQty && !ignoreInventorySkuIds.contains(skuId)) {
                     String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                             flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
                     scarceSkuList.add(skuNo);

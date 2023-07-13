@@ -342,7 +342,7 @@ public class MabangApiUtils {
         return new ParamHeaderVO(paramStr, headerMap);
     }
 
-    public static Map<String,Object> inStorage(String method, MabangInOutStockDTO mabangInOutStockDTO) {
+    public static Map<String,Object> inOutStorage(String method, MabangInOutStockDTO mabangInOutStockDTO) {
         Map<String,Object> resultMap = Maps.newHashMap();
         resultMap.put("success", false);
 
@@ -356,43 +356,17 @@ public class MabangApiUtils {
         ParamHeaderVO paramVo = getParamMap(method, params);
         resultMap.put("request", paramVo.getParamsStr());
 
-        log.info("开始调用马帮手工入库请求内容【{}】", paramVo.getParamsStr());
+        log.warn("开始调用马帮【{}】手工出入库请求内容【{}】", paramVo.getParamsStr());
         JSONObject response = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
-        log.info("调用马帮手工入库响应内容【{}】", JSONObject.toJSONString(response));
-        if (!Objects.equals(response.getInteger("code"), 200)) {
-            log.error("调用url={} param={} {}，马帮手工入库失败 response={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response));
-            resultMap.put("msg", JSONUtil.toJsonStr(response));
-        } else {
-            resultMap.put("success", true);
-        }
-        resultMap.put("result", response.getJSONObject("data"));
-        return resultMap;
-    }
-
-    public static Map<String,Object> outStorage(String method, MabangInOutStockDTO mabangInOutStockDTO) {
-        Map<String,Object> resultMap = Maps.newHashMap();
-        resultMap.put("success", false);
-
-        HashMap<String, Object> params = new HashMap<>(10);
-        params.put("warehouseName", mabangInOutStockDTO.getWarehouseName());
-        params.put("employeeName", mabangInOutStockDTO.getEmployeeName());
-        // params.put("typeName", "");
-        params.put("remark", mabangInOutStockDTO.getRemark());
-        params.put("data", mabangInOutStockDTO.getData());
-
-        ParamHeaderVO paramVo = getParamMap(method, params);
-        resultMap.put("request", paramVo.getParamsStr());
-
-        log.info("开始调用马帮手工出库请求内容【{}】", paramVo.getParamsStr());
-        JSONObject response = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
-        log.info("调用马帮手工出库响应内容【{}】", JSONObject.toJSONString(response));
+        log.warn("调用马帮【{}】手工出入库响应内容【{}】", JSONObject.toJSONString(response));
         if (!Objects.equals(response.getInteger("code"), 200)) {
             log.error("调用url={} param={} {}，马帮手工出库失败 response={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response));
             resultMap.put("msg", JSONUtil.toJsonStr(response));
         } else {
+            log.warn("调用马帮【{}】手工出入库成功，请求内容【{}】", paramVo.getParamsStr());
             resultMap.put("success", true);
+            resultMap.put("result", response.getJSONObject("data"));
         }
-        resultMap.put("result", response.getJSONObject("data"));
         return resultMap;
     }
 
@@ -419,8 +393,9 @@ public class MabangApiUtils {
             params.put("last_time_end", sdf.format(endDate));
             params.put("prePage", pageSize);
             ParamHeaderVO paramVo = getParamMap(method, pageIndex, params);
+            log.warn("马帮FBA发货单请求参数：{}", paramVo.getParamsStr());
             JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
-            log.info("FBA发货单响应信息：{}", JSONObject.toJSONString(responseMap));
+            log.warn("马帮FBA发货单响应信息：{}", JSONObject.toJSONString(responseMap));
             if (!Objects.equals(responseMap.getInteger("code"), 200)) {
                 log.error("调用url={} param={}马帮FBA发货单数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
                 throw new RuntimeException(StrUtil.format("调用url={} param={}，马帮FBA发货单数据失败 responseMap={}",

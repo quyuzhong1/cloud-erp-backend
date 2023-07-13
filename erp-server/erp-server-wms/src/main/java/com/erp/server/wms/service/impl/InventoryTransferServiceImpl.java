@@ -15,6 +15,7 @@ import com.erp.server.wms.service.InventoryStockService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.utils.InventoryUtils;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,10 +47,17 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
     public <T extends InventoryStockBaseDTO> void checkParam(List<T> paramList, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules) {
         Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         Map<String, WarehouseLocationEntity> warehouseLocationMap = Maps.newHashMap();
+        // 判断是否需要忽略计算库存的sku
+        List<String>  ignoreInventorySkuIds = inventoryHelper.getIgnoreSkuIds();
         for(InventoryStockBaseDTO baseParam : paramList) {
             if(baseParam instanceof TransferDTO) { // 调拨走交易规则
                 TransferDTO param = (TransferDTO)baseParam;
                 ValidatorUtil.validateEntity(param);
+
+                if(ignoreInventorySkuIds.contains(param.getSkuId())) {
+                    log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", param.getSkuId(), param.getSkuNo());
+                    continue;
+                }
 
                 //当前仓和目的仓不能一样
                 ValidatorUtil.isTrue(!Objects.equals(param.getCurWarehouseId(), param.getTargetWarehouseId()),()->new ServiceException(ApiError.ERROR_99039));
@@ -119,6 +127,12 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
      */
     @Override
     public <T extends InventoryStockBaseDTO> void stockHandler(List<T> paramLis, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo) {
+        List<String> skuIds = Lists.newArrayList();
+        paramLis.stream().forEach(param->skuIds.add(((TransferDTO)param).getSkuId()));
+
+        // 获取忽略库存计算的sku
+        List<String> ignoreInventorySkuIds = inventoryHelper.getIgnoreSkuIds();
+
         for(InventoryStockBaseDTO baseParam : paramLis) {
             // 当前仓出入库业务处理
             TransferDTO param = (TransferDTO)baseParam;
@@ -129,6 +143,10 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                 param.setTargetWarehouseLocation(StrUtils.null2EmptyWithTrim(param.getTargetWarehouseLocation()));
             }
             InOutStockTransformDTO curWareInOrOutStock = InventoryUtils.wrapInOutStockByTransfer(param, InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryOperationModeEnum.APPROVE);
+            if(ignoreInventorySkuIds.contains(param.getSkuId())) {
+                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库", param.getSkuId(), param.getSkuNo());
+                continue;
+            }
             this.singleHandler(curWareInOrOutStock, businessType, transactionRuleParams, transactionNo);
             // 目的仓出入库业务处理
             InOutStockTransformDTO targetWareInOrOutStock = InventoryUtils.wrapInOutStockByTransfer(param, InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryOperationModeEnum.APPROVE);

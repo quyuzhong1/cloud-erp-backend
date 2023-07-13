@@ -819,8 +819,8 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 主键id
          */
-        @NotEmpty(message = "主键id不能为空")
-        private List<String> idList;
+        @NotBlank(message = "主键id不能为空")
+        private String id;
 
         /**
          * 运输单号
@@ -1016,7 +1016,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 合计数量
          */
-        private Integer sumNumber;
+        private String sumNumber;
 
         /**
          * 打印明细
@@ -1050,10 +1050,5 @@ public class SoOutstockDTO implements Serializable {
          * 备注
          */
         private String remark;
-
-        /**
-         * 数量
-         */
-        private Integer qty;
     }
 }

@@ -25,6 +25,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
@@ -32,6 +33,13 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.oms.dto.CustomerAddressDTO;
+import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
@@ -87,6 +95,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -190,7 +199,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         PurchaseOrderEntity entity = new PurchaseOrderEntity();
         BeanMapperUtils.copy(dto, entity);
         //校验明细是否有重复sku
-        checkAddDetailsRepeatSku(dto.getDetails());
+        //checkAddDetailsRepeatSku(dto.getDetails());
         //处理数据id
         doOpHandleDataId(dto.getPurchaseUserId(), dto.getPurchaseDeptId(), dto.getPurchaseOrgId(), dto.getReceiveOrgId(), dto.getDeliveryWarehouseId(), entity);
         log.info("采购订单新增");
@@ -228,7 +237,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         PurchaseOrderEntity entity = new PurchaseOrderEntity();
         BeanMapperUtils.copy(dto, entity);
         //校验明细是否有重复sku
-        checkUpdateDetailsRepeatSku(dto.getDetails(), dto.getId());
+        //checkUpdateDetailsRepeatSku(dto.getDetails(), dto.getId());
         //处理数据id
         doOpHandleDataId(dto.getPurchaseUserId(), dto.getPurchaseDeptId(), dto.getPurchaseOrgId(), dto.getReceiveOrgId(), dto.getDeliveryWarehouseId(), entity);
 
@@ -576,14 +585,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98036);
         }
         exportPdfDTO.setSupplierTel(purchaseOrderSupplier.getContactTelNumber());
-        // 采购订单供应商付款条件
-        if(StrUtils.isNotEmpty(purchaseOrderSupplier.getPaymentCondition())) {
-            List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
-            Map<String, List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO>> paymentConditionMap = paymentConditionList.stream().collect(Collectors.groupingBy(com.erp.model.sys.dto.DictBasicDTO.ViewDTO::getValue));
-            if(paymentConditionMap.containsKey(purchaseOrderSupplier.getPaymentCondition())) {
-                exportPdfDTO.setPaymentConditionName(paymentConditionMap.get(purchaseOrderSupplier.getPaymentCondition()).get(0).getName());
-            }
-        }
 
         //结算方式
         DictBasicEntity payMethod = dictBasicService.getById(purchaseOrderSupplier.getPayMethodId());
@@ -599,6 +600,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         exportPdfDTO.setSupplierName(supplier.getName());
         exportPdfDTO.setSupplierAddress(supplier.getCompanyAddress());
 
+        // 供应商付款条件
+        if(StrUtils.isNotEmpty(supplier.getPaymentCondition())) {
+            List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+            Map<String, List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO>> paymentConditionMap = paymentConditionList.stream().collect(Collectors.groupingBy(com.erp.model.sys.dto.DictBasicDTO.ViewDTO::getValue));
+            if(paymentConditionMap.containsKey(supplier.getPaymentCondition())) {
+                exportPdfDTO.setPaymentConditionName(paymentConditionMap.get(supplier.getPaymentCondition()).get(0).getName());
+            }
+        }
 
         //供应商联系人信息
         if (StringUtils.isNotBlank(purchaseOrderSupplier.getSupplierContactId())) {
@@ -627,8 +636,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             BeanMapperUtils.copy(purchaseOrderDetailEntity, detailDTO);
             //明细数据处理
             detailDTO.setUnitName("个");
-            //不含税单价（不含税价格=含税价格/（1+增值税税率））
-            detailDTO.setPrice(MathUtil.divide(detailDTO.getTaxPrice(),MathUtil.add(BigDecimal.ONE,detailDTO.getTaxRate())));
             detailDTO.setTaxRate(MathUtil.multiply(detailDTO.getTaxRate(), MathUtil.BigDecimal_100));
             details.add(detailDTO);
         }
@@ -2060,5 +2067,62 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
     }
 
-
+    /**
+     * 导出网采合同
+     * @Author Luo_WG
+     * @Date 2023/7/13 15:09
+     * @param id
+     * @param response
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean exportPurchaseContract(String id, HttpServletResponse response) {
+        PurchaseOrderDTO.ExportPurchaseContractDTO contractDTO = new PurchaseOrderDTO.ExportPurchaseContractDTO();
+        PurchaseOrderEntity purchaseOrderEntity = this.getById(id);
+        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderEntity.getId());
+        contractDTO.setCreateTime(purchaseOrderEntity.getCreateTime());
+        contractDTO.setApproveUserName(purchaseOrderEntity.getApproveUserName());
+        contractDTO.setCode(purchaseOrderEntity.getCode());
+        contractDTO.setCreateUserName(purchaseOrderEntity.getCreateUserName());
+        List<DictBasicDTO> supplierPayMode = dictBasicService.getByKey("supplierPayMode");
+        DictBasicDTO dictBasicDTO = supplierPayMode.stream().filter(req -> req.getId().equals(supplierEntity.getPayMethodId())).findFirst().orElse(new DictBasicDTO());
+        contractDTO.setSettleMethod(dictBasicDTO.getValue());
+        contractDTO.setSupplierName(supplierEntity.getSupplierName());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderEntity.getId());
+        contractDTO.setSumQty(purchaseOrderDetailEntityList.stream().mapToInt(PurchaseOrderDetailEntity::getPurchaseQty).sum());
+        BigDecimal sumAmount = purchaseOrderDetailEntityList.stream().map(PurchaseOrderDetailEntity::getPurchaseAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        contractDTO.setSumAmount(sumAmount);
+        List<PurchaseOrderDTO.PurchaseContractDetailDTO> contractDetailList = new ArrayList<>();
+        List<String> skuIdList = purchaseOrderDetailEntityList.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        Integer sort = MathUtil.ZERO;
+        for (PurchaseOrderDetailEntity detailEntity : purchaseOrderDetailEntityList) {
+            sort++;
+            SkuVO skuVO = skuList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
+            PurchaseOrderDTO.PurchaseContractDetailDTO detailDTO = new PurchaseOrderDTO.PurchaseContractDetailDTO();
+            detailDTO.setSort(sort);
+            detailDTO.setSkuNo(detailEntity.getSkuNo());
+            detailDTO.setProductName(skuVO.getSkuName());
+            detailDTO.setRemark(detailEntity.getRemark());
+            detailDTO.setQty(detailEntity.getPurchaseQty());
+            detailDTO.setPrice(detailEntity.getTaxPrice());
+            detailDTO.setUnit(skuVO.getUnitName());
+            detailDTO.setAmount(detailEntity.getPurchaseAmount());
+            contractDetailList.add(detailDTO);
+        }
+        contractDTO.setList(contractDetailList);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/purchaseContractExportBBBBBBBBBBBB.xlsx";
+        String name = "采购单网采合同";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(contractDetailList, contractDTO, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("销售单发票导出出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
 }

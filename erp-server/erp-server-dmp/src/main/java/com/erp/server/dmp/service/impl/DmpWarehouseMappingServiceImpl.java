@@ -40,7 +40,7 @@ public class DmpWarehouseMappingServiceImpl extends SuperServiceImpl<DmpWarehous
         queryWrapper.in(DmpWarehouseMappingEntity::getWarehouseCode, warehouseCodes);
         List<DmpWarehouseMappingEntity> warehouseList = this.baseMapper.selectList(queryWrapper);
         if(CollUtil.isNotEmpty(warehouseList)) {
-            return warehouseList.stream().collect(Collectors.toMap(DmpWarehouseMappingEntity::getWarehouseCode, Function.identity()));
+            return warehouseList.stream().collect(Collectors.toMap(DmpWarehouseMappingEntity::getWarehouseCode, Function.identity(), (o1, o2) -> o1));
         }
         return Maps.newHashMap();
     }

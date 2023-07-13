@@ -6,11 +6,13 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.CfgTransactionRulesEntity;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.enums.inventory.*;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.CfgTransactionRulesService;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.InventoryStockService;
@@ -54,6 +56,9 @@ public class InventoryHelper {
     @Resource
     private ApplicationContext applicationContext;
 
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
+
     private static Map<InventoryBizTypeEnum, InventoryStockService> inventoryServiceMap;
 
     @PostConstruct
@@ -89,6 +94,19 @@ public class InventoryHelper {
         // TODO 检查是否盘点中
         log.info("开始检查是否盘点中，仓库：【{}】，单据类型：【{}】，SKU：【{}】", warehouseId, sourceTypeEnum.getName(), skuNo);
         log.info("通过检查是否盘点中，仓库：【{}】，单据类型：【{}】，SKU：【{}】", warehouseId, sourceTypeEnum.getName(), skuNo);
+    }
+
+    /**
+     * 获取忽略库存计算的sku
+     * @return
+     */
+    public List<String> getIgnoreSkuIds() {
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        }
+        return ignoreInventorySkuIds;
     }
 
     /**

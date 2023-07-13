@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.FieldConstant;
 import com.common.core.controller.vo.ApiResult;
@@ -33,6 +34,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.InventoryMapper;
+import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
@@ -78,6 +80,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
+
+    @Autowired
+    private CommonService commonService;
 
     @Override
     public InventoryEntity findInventory(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
@@ -326,12 +331,18 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean updateQtyById(String id, Integer qty) {
-        boolean flag = lambdaUpdate().setSql(StrUtil.format("{}={}+{}", "qty","qty", qty)).eq(InventoryEntity::getId, id).update();
+        LoginUser loginUser = commonService.getUserInfo();
+        boolean flag = lambdaUpdate().setSql(StrUtil.format("{}={}+{}", "qty","qty", qty))
+                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
+                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
+                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
+                .eq(InventoryEntity::getId, id).update();
         return flag;
     }
 
     @Override
     public List<InventoryEntity> listPickingDetailInventory(PickingDetailDTO.InventoryParamDTO dto) {
+
         //根据组织、仓库、sku查询可用库存（没有传库位，则不带库位查询条件，主要是用于选择出库位）
         List<InventoryEntity> inventoryList = this.findInventoryCheckLocation(dto.getOrgId(), dto.getWarehouseId(), dto.getSkuId(), null, InventoryStatusEnum.USABLE.getCode());
 

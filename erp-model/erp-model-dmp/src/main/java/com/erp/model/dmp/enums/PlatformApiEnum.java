@@ -55,7 +55,7 @@ public enum PlatformApiEnum {
      */
     MABANG_SHIPMENT(33,"hwc-shippbatch-get-shipment-list", MongoTableNameContant.ORIGINAL_MABANG_SHIPMENT, TaskConstant.MABANG_PULL_DATA_TASK_24),
 
-    MABANG_DELIVERY(35,"hwc-get-batch-delivery-list", MongoTableNameContant.ORIGINAL_MABANG_SHIPMENT, TaskConstant.MABANG_PULL_DATA_TASK_24),
+    MABANG_DELIVERY(35,"hwc-get-batch-delivery-list", MongoTableNameContant.ORIGINAL_MABANG_DELIVERY, TaskConstant.MABANG_PULL_DATA_TASK_24),
 
 
     /**

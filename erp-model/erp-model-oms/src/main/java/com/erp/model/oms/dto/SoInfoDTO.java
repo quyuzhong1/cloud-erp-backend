@@ -230,11 +230,6 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal price;
 
         /**
-         * 含税销售单价
-         */
-        private BigDecimal taxPrice;
-
-        /**
          * 税率
          */
         private BigDecimal taxRate;
@@ -245,29 +240,14 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal amount;
 
         /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
          * 含税销售金额
          */
         private BigDecimal taxAmount;
-
-        /**
-         * 采购单价
-         */
-        private BigDecimal purchasePrice;
-
-        /**
-         * 销售总成本
-         */
-        private BigDecimal saleCost;
-
-        /**
-         * 销售毛利
-         */
-        private BigDecimal saleProfit;
-
-        /**
-         * 销售毛利率
-         */
-        private BigDecimal saleProfitRate;
 
         /**
          * 最新审核人
@@ -286,11 +266,6 @@ public class SoInfoDTO implements Serializable {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
 
-        /**
-         * 审核时间
-         */
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        private LocalDateTime approveTime;
 
     }
 
@@ -1736,11 +1711,6 @@ public class SoInfoDTO implements Serializable {
          * 备注
          */
         private String remark;
-
-        /**
-         * 数量
-         */
-        private Integer qty;
     }
 
 }

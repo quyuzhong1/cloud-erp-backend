@@ -1,5 +1,9 @@
 package com.common.business.enums;
 
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+
 /**
  * @author Will
  * @version 1.0
@@ -29,6 +33,16 @@ public enum SyncKingdeeStatusEnum {
     }
     public String getName() {
         return name;
+    }
+
+    /**
+     * 根据代码获取名称
+     * @param code
+     * @return
+     */
+    public static String getNameByCode(String code) {
+        SyncKingdeeStatusEnum syncKingdeeStatusEnum = Arrays.stream(SyncKingdeeStatusEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
+        return Optional.ofNullable(syncKingdeeStatusEnum).map(SyncKingdeeStatusEnum::getName).orElse("");
     }
 
 }
