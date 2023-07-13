@@ -303,17 +303,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //启动审核流程
         startProcess(list);
 
-        List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
-        List<String> curApproveName = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
-        String approveName = StringUtils.join(curApproveName, ",");
-
         List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
-        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(ingStatus), approveName);
+        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(ingStatus), "");
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", BillApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
@@ -1601,6 +1597,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             for (SoInfoEntity item : list) {
                 item.setApproveStatus(statusEnum);
                 item.setApproveUserName(approveUserName);
+                if (StringUtils.isNotBlank(approveUserName)) {
+                    item.setApproveTime(LocalDateTime.now());
+                } else {
+                    item.setApproveTime(null);
+                }
             }
             return this.updateBatchById(list);
         }

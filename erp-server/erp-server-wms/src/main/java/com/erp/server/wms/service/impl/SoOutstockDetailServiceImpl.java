@@ -399,7 +399,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (CollectionUtils.isEmpty(mainIds)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(SoOutstockDetailEntity::getMainId, mainIds).list();
+        return this.lambdaQuery().in(SoOutstockDetailEntity::getMainId, mainIds).orderByAsc(SoOutstockDetailEntity::getId).list();
     }
 
 

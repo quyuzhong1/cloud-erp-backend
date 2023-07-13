@@ -136,7 +136,8 @@
         sd.remark,
         sd.delivery_status,
         si.approve_status,
-        sd.kingdee_detail_id
+        sd.kingdee_detail_id,
+        sd.platform_sku_no
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         WHERE si.is_deleted = FALSE
@@ -147,6 +148,7 @@
             </foreach>
 
         </if>
+        ORDER BY sd.id ASC
     </select>
 
     <select id="listApproveCount" resultType="com.erp.model.oms.dto.SoDetailDTO$TypeCountDTO">

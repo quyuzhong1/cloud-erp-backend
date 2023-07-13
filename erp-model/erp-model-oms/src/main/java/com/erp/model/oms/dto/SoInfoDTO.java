@@ -369,6 +369,11 @@ public class SoInfoDTO implements Serializable {
         private List<String> createUserIdList;
 
         /**
+         * 审核时间
+         */
+        private List<LocalDate> approveTimeList;
+
+        /**
          * 创建时间
          */
         private List<LocalDate> createTimeList;
