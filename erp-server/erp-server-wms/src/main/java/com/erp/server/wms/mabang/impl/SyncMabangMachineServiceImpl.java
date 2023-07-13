@@ -1,6 +1,7 @@
 package com.erp.server.wms.mabang.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -107,8 +108,8 @@ public class SyncMabangMachineServiceImpl implements SyncMabangMachineService {
         // 异步推送MQ
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_WMS_TO_DMP_TOPIC, RocketMqTagEnum.ERP_DMP_MACHINE_INFO_TAG.getName(), mabangMachineInfoDTO, entity.getId());
-            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-
+            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
+                log.error("发送消息异常，消息内容：【{}】", JSONObject.toJSONString(mabangMachineInfoDTO));
             }
             return Boolean.TRUE;
         });

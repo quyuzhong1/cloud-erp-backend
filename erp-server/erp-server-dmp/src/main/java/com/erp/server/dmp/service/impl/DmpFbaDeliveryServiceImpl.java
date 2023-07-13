@@ -57,6 +57,7 @@ public class DmpFbaDeliveryServiceImpl extends SuperServiceImpl<DmpFbaDeliveryMa
                 .one();
 
         if(null != dmpFbaDeliveryEntity && dmpFbaDeliveryEntity.getIsDeleted()){
+            log.warn("FBA发货单【{}】已经被删除，不处理", dmpFbaDeliveryEntity.getDeliveryNo());
             return;
         }
 
@@ -66,8 +67,8 @@ public class DmpFbaDeliveryServiceImpl extends SuperServiceImpl<DmpFbaDeliveryMa
         } else {
             // 如果数据有变动需要更新数据库订单信息
             if (!fbaDeliveryEntity.toString().equals(dmpFbaDeliveryEntity.toString())) {
-                dmpFbaDeliveryEntity.setId(dmpFbaDeliveryEntity.getId());
-                updateById(dmpFbaDeliveryEntity);
+                fbaDeliveryEntity.setId(dmpFbaDeliveryEntity.getId());
+                updateById(fbaDeliveryEntity);
             }
             // 判断明细是否发生变化
             dmpFbaDeliveryDetailService.update(fbaDeliveryEntity.getItemList(), dmpFbaDeliveryEntity.getId());
