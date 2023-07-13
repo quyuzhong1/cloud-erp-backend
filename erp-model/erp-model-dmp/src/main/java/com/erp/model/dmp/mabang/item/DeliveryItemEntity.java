@@ -131,31 +131,6 @@ public class DeliveryItemEntity implements Serializable {
     private BigDecimal package_cost;
 
     /**
-     * 库存锁定状态 1无需锁定 2锁定中 3 锁定成功 4部分成功 5锁定失败
-     */
-    private Integer lock_state;
-
-    /**
-     * 锁定数量
-     */
-    private Integer lock_qty;
-
-    /**
-     * 锁定时间
-     */
-    private String lock_time;
-
-    /**
-     * 失败或成功备注
-     */
-    private String lock_remark;
-
-    /**
-     * 0锁定 默认值0 每次更新+1
-     */
-    private Integer lock_version;
-
-    /**
      * 销售名称
      */
     private String saleName;

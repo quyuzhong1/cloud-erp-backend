@@ -215,7 +215,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
         String warehouseId = StrUtils.null2EmptyWithTrim(deliveryMongo.getWarehouse_id());
         DmpWarehouseMappingEntity dmpWarehouseMappingEntity = dmpWarehouseMappingService.getSourceWarehouseId(warehouseId, PlatformEnum.MABANG.getDesc());
         if(Objects.isNull(dmpWarehouseMappingEntity)) {
-            log.info("马帮FBA发货单在表中未找到仓库信息，不推送，仓库id：{}", JSONObject.toJSONString(deliveryMongo));
+            log.warn("马帮FBA发货单在表中未找到仓库信息，不推送，仓库id：{}, 原始马帮发货单号：{}", warehouseId, deliveryMongo.getDelivery_no());
             return null;
         }
         dmpDeliveryEntity.setWarehouseCode(dmpWarehouseMappingEntity.getWarehouseCode());
@@ -224,7 +224,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
 
         // 没有BOM的明细，则不添加
         if(CollUtil.isEmpty(dmpDeliveryEntity.getItemList())) {
-            log.info("马帮FBA发货单产品信息没有组合品，不需要推送，FBA发货单信息：{}", JSONObject.toJSONString(deliveryMongo));
+            log.warn("马帮FBA发货单产品信息没有组合品，不需要推送，FBA发货单信息：{}", JSONObject.toJSONString(deliveryMongo));
             return null;
         }
         return dmpDeliveryEntity;
@@ -236,7 +236,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
     public List<DmpFbaDeliveryDetailEntity> initItem(DeliveryEntity deliveryMongo) {
         List<DeliveryItemEntity> mongoItems = deliveryMongo.getStockList();
         if(CollectionUtil.isEmpty(mongoItems)){
-            log.warn("调拨发货单详情列表为空 {}", JSONUtil.toJsonStr(mongoItems));
+            log.warn("调拨发货单，发货单号：【{}】详情列表为空", deliveryMongo.getDelivery_no());
             return null;
         }
         List<DmpFbaDeliveryDetailEntity> items = new ArrayList<>();
@@ -254,8 +254,11 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
             // 只取组合品的（因为马帮那边的sku不能修改，所以不用判断sku种类的变化）
             List<DmpBomEntity> bomList = dmpBomService.findBom(skuNo, PlatformEnum.MABANG.getDesc(), "machining");
             if(CollUtil.isNotEmpty(bomList)) {
+                log.warn("SKU：{}是组合品，需要推送到ERP生成加工单", skuNo);
                 dmpFbaDeliveryDetailEntity.setBomList(bomList);
                 items.add(dmpFbaDeliveryDetailEntity);
+            } else {
+                log.warn("SKU：{}不是组合品，不需要推送到ERP生成加工单", skuNo);
             }
         }
         return items;
