@@ -8,6 +8,7 @@ import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.entity.DmpWarehouseMappingEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +24,30 @@ import java.util.Objects;
 @Slf4j
 public class MabangUtil {
 
+    /**
+     * 马帮出入库操作员
+     */
     public static final String MABANG_EMPLOYEE_NAME = "API同步";
+
+    /**
+     * 直接调拨单同步马帮出入库是否在监控仓库
+     */
+    public static final String SEND_STOP = "stop";
+
+    /**
+     * 调入仓编码
+     */
+    public static final String IN_WAREHOUSE_CODE = "inWarehouseCode";
+
+    /**
+     * 调出仓编码
+     */
+    public static final String OUT_WAREHOUSE_CODE = "outWarehouseCode";
+
+    /**
+     * 分隔符
+     */
+    public static final String SEPARATOR = ",";
 
     /**
      * 验证直接调拨单同步马帮出入库是否在监控仓库
@@ -40,8 +64,8 @@ public class MabangUtil {
         String inWarehouseName = "", outWarehouseName = "";
         if(Objects.isNull(warehouseMap.get(inWarehouseCode)) && Objects.isNull(warehouseMap.get(outWarehouseCode))) {
             String msg = StrUtil.format("ERP直接调拨单同步到马帮出入库调入仓和调出仓在马帮未找到映射，调入仓【{}】，调出仓【{}】,不需要推送马帮出入库", inWarehouseCode, outWarehouseCode);
-            log.info(msg);
-            resultMap.put("stop", true);
+            log.warn(msg);
+            resultMap.put(SEND_STOP, true);
             return resultMap;
         }
         if(Objects.nonNull(warehouseMap.get(inWarehouseCode))) {
@@ -51,14 +75,14 @@ public class MabangUtil {
             outWarehouseName = warehouseMap.get(outWarehouseCode).getWarehouseName();
         }
         if(!warehouseCodeList.contains(inWarehouseCode) && !warehouseCodeList.contains(outWarehouseCode)) {
-            String msg = StrUtil.format("ERP直接调拨单同步到马帮出入库调入仓和调出仓不在监控仓库范围内，调入仓【{}】，调出仓【{}】,不需要推送马帮出入库", inWarehouseCode, outWarehouseCode);
-            log.info(msg);
-            resultMap.put("stop", true);
+            String msg = StrUtil.format("ERP直接调拨单同步到马帮出入库调入仓和调出仓都不在监控仓库范围内，调入仓【{}】，调出仓【{}】,不需要推送马帮出入库", inWarehouseCode, outWarehouseCode);
+            log.warn(msg);
+            resultMap.put(SEND_STOP, true);
             return resultMap;
         }
-        resultMap.put("stop", false);
-        resultMap.put("inWarehouseCode", inWarehouseName);
-        resultMap.put("outWarehouseCode", outWarehouseName);
+        resultMap.put(SEND_STOP, false);
+        resultMap.put(IN_WAREHOUSE_CODE, inWarehouseName);
+        resultMap.put(OUT_WAREHOUSE_CODE, outWarehouseName);
         return resultMap;
     }
 
@@ -86,6 +110,7 @@ public class MabangUtil {
         mabangInOutStockDTO.setType(inOutType);
         mabangInOutStockDTO.setEmployeeName(StrUtils.null2EmptyWithTrim(employeeName));
         mabangInOutStockDTO.setRemark(StrUtil.format("ERP同步：{}", StrUtils.null2EmptyWithTrim(transferInfo.getCode()) ));
+        mabangInOutStockDTO.setApproveType(opType);
 
         transferDetailList.stream().forEach(transferSku->{
             MabangInOutStockDTO.SkuItem skuItem = new MabangInOutStockDTO.SkuItem();
@@ -95,10 +120,12 @@ public class MabangUtil {
                 skuItem.setProductName(productName);
             }
             skuItem.setQuantity(StrUtils.null2EmptyWithTrim(transferSku.getQty()));
+            // 审核
             if(Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), opType)) {
-                skuItem.setGridCode(StrUtils.null2EmptyWithTrim(Objects.equals(inOutType, "in")? transferSku.getInWarehouseLocation() : transferSku.getOutWarehouseLocation()));
+                skuItem.setGridCode(StrUtils.null2EmptyWithTrim(Objects.equals(inOutType, InventoryInOutEnum.IN_STOCK.getCode() )? StrUtils.null2EmptyWithTrim(transferSku.getInWarehouseLocation()) : StrUtils.null2EmptyWithTrim(transferSku.getOutWarehouseLocation())));
             } else if(Objects.equals(SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode(), opType)) {
-                skuItem.setGridCode(StrUtils.null2EmptyWithTrim(Objects.equals(inOutType, "in")? transferSku.getOutWarehouseLocation() : transferSku.getInWarehouseLocation()));
+                // 反审核
+                skuItem.setGridCode(StrUtils.null2EmptyWithTrim(Objects.equals(inOutType, InventoryInOutEnum.IN_STOCK.getCode() )? StrUtils.null2EmptyWithTrim(transferSku.getOutWarehouseLocation()) : StrUtils.null2EmptyWithTrim(transferSku.getInWarehouseLocation())));
             }
             skuItem.setSourceDetailId(transferSku.getId());
             data.add(skuItem);
