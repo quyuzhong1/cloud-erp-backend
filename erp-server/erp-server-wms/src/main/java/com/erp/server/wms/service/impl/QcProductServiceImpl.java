@@ -117,7 +117,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
             SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(productView.getSkuId())).findFirst().orElse(null);
             if(skuVO!=null){
                 productView.setProductGrade(skuVO.getProductGrade());
-                productView.setProductName(skuVO.getSpuName());
+                productView.setProductName(skuVO.getSkuName());
                 productView.setSkuNo(skuVO.getSkuNo());
                 productView.setVariantProperty(skuVO.getVariantProperty());
             }
