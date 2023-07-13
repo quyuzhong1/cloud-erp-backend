@@ -1016,7 +1016,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 合计数量
          */
-        private String sumNumber;
+        private Integer sumNumber;
 
         /**
          * 打印明细
