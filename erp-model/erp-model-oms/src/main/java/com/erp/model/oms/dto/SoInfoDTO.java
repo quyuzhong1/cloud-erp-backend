@@ -250,6 +250,26 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal taxAmount;
 
         /**
+         * 采购单价
+         */
+        private BigDecimal purchasePrice;
+
+        /**
+         * 销售总成本
+         */
+        private BigDecimal saleCost;
+
+        /**
+         * 销售毛利
+         */
+        private BigDecimal saleProfit;
+
+        /**
+         * 销售毛利率
+         */
+        private BigDecimal saleProfitRate;
+
+        /**
          * 最新审核人
          */
         private String approveUserName;

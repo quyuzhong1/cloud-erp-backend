@@ -9,7 +9,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
-import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -111,15 +110,6 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
                 .eq(PurchaseApplicationDetailEntity::getPurchaseApplicationId,purchaseApplicationId)
                 .eq(PurchaseApplicationDetailEntity::getSkuId,skuId)
                 .one();
-    }
-
-    @Override
-    public List<PurchaseApplicationDetailEntity> listCreatePurchaseOrderDetail(List<String> purchaseApplicationIds) {
-        return  lambdaQuery()
-                .in(PurchaseApplicationDetailEntity::getPurchaseApplicationId,purchaseApplicationIds)
-                .ne(PurchaseApplicationDetailEntity::getCreatePoType, CreatePoTypeEnum.ALL_GENERATED.getStatus())
-                .orderByAsc(PurchaseApplicationDetailEntity::getPurchaseApplicationId)
-                .list();
     }
 
     /**
