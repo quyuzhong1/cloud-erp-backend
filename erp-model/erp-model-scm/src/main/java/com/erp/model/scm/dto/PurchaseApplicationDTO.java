@@ -400,6 +400,11 @@ public class PurchaseApplicationDTO implements Serializable {
         private BigDecimal taxPrice;
 
         /**
+         * 含税金额
+         */
+        private BigDecimal taxAmount;
+
+        /**
          * 税率
          */
         private BigDecimal taxRate;
