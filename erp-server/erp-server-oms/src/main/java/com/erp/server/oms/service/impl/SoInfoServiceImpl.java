@@ -32,16 +32,14 @@ import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.model.oms.dto.CustomerAddressDTO;
-import com.erp.model.oms.dto.OmsAttachmentDTO;
-import com.erp.model.oms.dto.SoDetailDTO;
-import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.CustomerAddressTypeEnum;
 import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
@@ -173,6 +171,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Autowired
     private OmsAttachmentService omsAttachmentService;
+
+    @Autowired
+    private CustomerInvoiceService customerInvoiceService;
 
     /**
      * 添加销售订单
@@ -1337,7 +1338,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 receiverAddressName = addressEntity.getAddress();
             }
         }
-
+        List<InvoiceDTO.ViewDTO> viewDTOS = customerInvoiceService.listByMainId(customerId);
+        if (CollectionUtils.isNotEmpty(viewDTOS)) {
+            List<InvoiceDTO.ViewDTO> collect = viewDTOS.stream().sorted(Comparator.comparing(InvoiceDTO.ViewDTO::getIsDefault).reversed()).collect(Collectors.toList());
+            customer.setTaxRegisterCode(collect.get(MathUtil.ZERO).getTaxRegisterCode());
+        }
         customer.setReceiveAddress(receiverAddressName);
         customer.setCustomerName(customerName);
         String deliveryMode = customer.getDeliveryMode();
@@ -1397,7 +1402,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         result.setCode(customer.getCode());
         result.setCustomerName(customer.getCustomerName());
-        result.setTaxpayerId("");
+        result.setTaxpayerId(customer.getTaxRegisterCode());
         result.setContactPerson(customer.getReceiverName());
         result.setContactTelNumber(customer.getTelNumber());
         result.setContactAddress(customer.getReceiveAddress());
