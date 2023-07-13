@@ -11,12 +11,14 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.*;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.InventoryStockService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.utils.InventoryUtils;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +42,9 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
 
     @Autowired
     private WarehouseLocationService warehouseLocationService;
+
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
 
     @Override
     public <T extends InventoryStockBaseDTO> void checkParam(List<T> paramList, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules) {
@@ -88,14 +93,22 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
     @Transactional(rollbackFor = Exception.class)
     @Override
     public <T extends InventoryStockBaseDTO> void stockHandler(List<T> paramLis, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo) {
+        List<String> skuIds = Lists.newArrayList();
+        paramLis.stream().forEach(param->skuIds.add(((InOutStockDTO)param).getSkuId()));
+
+        // 获取忽略库存计算的sku
+        List<String> ignoreInventorySkuIds = getIgnoreSkuIds();
 
         for(InventoryStockBaseDTO baseParam : paramLis) {
             InOutStockDTO param = (InOutStockDTO)baseParam;
-            if(Objects.nonNull(param.getWarehouseLocation())) {
-                param.setWarehouseLocation(StrUtils.null2EmptyWithTrim(param.getWarehouseLocation()));
+            if(ignoreInventorySkuIds.contains(param.getSkuId())) {
+                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库", param.getSkuId(), param.getSkuNo());
+                continue;
             }
             this.singleHandler(param, businessType, transactionRuleParams, transactionNo);
         }
+
+
     }
 
     @Transactional(rollbackFor = Exception.class)
