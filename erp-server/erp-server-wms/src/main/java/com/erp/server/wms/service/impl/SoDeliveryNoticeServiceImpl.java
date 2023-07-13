@@ -737,11 +737,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
             for (SoDeliveryNoticeDetailEntity detailEntity : detailEntities) {
 
-                if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
-                    log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detailEntity.getSkuId(), detailEntity.getSkuNo());
-                    continue;
-                }
-
                 //获取核算公司
                 SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
                 //查询可用库存生成拣货明细
