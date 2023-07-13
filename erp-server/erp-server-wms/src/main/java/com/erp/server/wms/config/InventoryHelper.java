@@ -117,14 +117,6 @@ public class InventoryHelper {
         String sourceId = param.getSourceId();
         LocalDate billDate = param.getBillDate();
         List<TransactionRuleDTO> outTransactionRules;
-
-        // 判断是否需要忽略计算库存的sku
-        List<String>  ignoreInventorySkuIds = getIgnoreSkuIds();
-        if(ignoreInventorySkuIds.contains(param.getSkuId())) {
-            log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", param.getSkuId(), param.getSkuNo());
-            return;
-        }
-
         log.info("库存状态从配置中取，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】，SKU编号：【{}】", businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
         if(CollUtil.isEmpty(transactionRules)) {
             throw new ServiceException(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
