@@ -171,6 +171,7 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'B','C','D'"));
         queryFilters.add(StrUtil.format("FThirdSystem != '{}'", CommonConstants.SYSTEM));
         String filterStr = String.join(" and ",  queryFilters );
+        filterStr = filterStr.concat(StrUtil.format(" OR (FApproveDate >= '{}' and FApproveDate < '{}')", sdf.format(lastTime), sdf.format(nextTime)));
         String fieldKeys = "FId,FBillNo,FBizType,FTransferDirect,FTransferBizType,FSaleOrgId,FSaleOrgId.FName," +
                 "FSettleOrgId,FSettleOrgId.FName,FStockOutOrgId,FStockOutOrgId.FName,FOwnerOutIdHead,FOwnerOutIdHead.FName," +
                 "FStockOrgId,FStockOrgId.FName,FSettleCurrId,FSettleCurrId.FName,FExchangeTypeId,FExchangeTypeId.FName,FExchangeRate," +

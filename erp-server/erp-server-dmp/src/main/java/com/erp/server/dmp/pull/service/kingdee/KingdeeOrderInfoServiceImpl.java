@@ -196,8 +196,6 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));
-        queryFilters.add(StrUtil.format("FApproveDate >= '{}'", sdf.format(lastTime)));
-        queryFilters.add(StrUtil.format("FApproveDate < '{}'", sdf.format(nextTime)));
 //            queryFilters.add(String.format("fCreateDate >= '%s'", "2023-01-05 00:00:00"));
 //            queryFilters.add(String.format("fCreateDate <= '%s'", "2023-01-06 00:00:00"));
 //            queryFilters.add(StrUtil.format("FBillNo ='{}'", "XSD-20230105-33831"));
@@ -205,6 +203,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
 //            queryFilters.add(String.format("fBillTypeID = '%s'", "eacb50844fc84a10b03d7b841f3a6278"));
         queryFilters.add(String.format("FDocumentStatus = '%s'", "C"));
         String filterStr = String.join(" and ",  queryFilters );
+        filterStr = filterStr.concat(StrUtil.format(" OR (FApproveDate >= '{}' and FApproveDate < '{}')", sdf.format(lastTime), sdf.format(nextTime)));
         String fieldKeys = "FID,FBillNo,FDate,FBillTypeId.FName,FBillTypeId.FNumber,FBillTypeId," +
                 "FDocumentStatus,FCustId.FName,FSaleDeptId.FName,FSalerId.FName,FReceiveAddress,FLinkMan,FLinkPhone," +
                 "FApproverId.FName,FApproveDate,FCloseStatus,FCloseDate,FCancelStatus,FChangerId," +
