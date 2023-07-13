@@ -241,4 +241,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return String
      */
     Boolean pagingUpdate(SoOutstockDTO.PagingUpdateDTO dto);
+
+    /**
+     * 打印
+     * @Author Luo_WG
+     * @Date 2023/7/13 10:44
+     * @param ids
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
+     **/
+    List<SoOutstockDTO.PrintDTO> print(List<String> ids);
 }

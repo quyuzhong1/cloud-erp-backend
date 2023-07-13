@@ -28,6 +28,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -38,12 +39,10 @@ import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
-import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -81,6 +80,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private CustomerFeign customerFeign;
 
     @Resource
     private SoInfoFeign soInfoFeign;
@@ -1190,4 +1192,57 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return update;
     }
 
+    @Override
+    public List<SoOutstockDTO.PrintDTO> print(List<String> ids) {
+        List<SoOutstockDTO.PrintDTO> printDTOList = new ArrayList<>();
+        List<SoOutstockEntity> soOutstockEntities = this.listByIds(ids);
+        //获取客户id集合
+        List<String> customerIds = soOutstockEntities.stream().map(SoOutstockEntity::getCustomerId).distinct().collect(Collectors.toList());
+        //根据客户id集合查询客户信息
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(customerIds);
+        //获取销售出库单详情
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listByMainIds(ids);
+        //获取销售单id集合
+        List<String> soList = soOutstockEntities.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
+        //获取销售单集合
+        List<SoInfoEntity> soInfoEntities = soInfoFeign.listSoInfoByIds(soList);
+        //获取sku的id集合
+        List<String> skuIdList = soOutstockDetailEntities.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        //根据skuId查询sku信息
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        //获取销售单详情id
+        List<String> SoDeliveryNoticeDetailIds = soOutstockDetailEntities.stream().map(SoOutstockDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listByIds(SoDeliveryNoticeDetailIds);
+        List<String> soDetailIds = noticeDetailEntities.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(soDetailIds);
+        for (SoOutstockEntity soOutstockEntity : soOutstockEntities) {
+            //根据客户id获取客户信息
+            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soOutstockEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+            //根据销售单id获取销售单信息
+            SoInfoEntity soInfoEntity = soInfoEntities.stream().filter(req -> req.getId().equals(soOutstockEntity.getSoId())).findFirst().orElse(new SoInfoEntity());
+            SoOutstockDTO.PrintDTO printDTO = new SoOutstockDTO.PrintDTO();
+            printDTO.setCustomerName(customerInfoEntity.getName());
+            printDTO.setSellerName(soInfoEntity.getSellerName());
+            printDTO.setReceiveAddress(soInfoEntity.getReceiveAddress());
+            printDTO.setTelNumber(soInfoEntity.getTelNumber());
+            List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailEntities.stream().filter(req -> req.getMainId().equals(soOutstockEntity.getId())).collect(Collectors.toList());
+            printDTO.setSumNumber(soOutstockDetailEntityList.stream().mapToInt(SoOutstockDetailEntity::getActualQty).sum());
+            List<SoOutstockDTO.PrintDetailDTO> printDetailDTOList = new ArrayList<>();
+            for (SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
+                SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = noticeDetailEntities.stream().filter(req -> req.getId().equals(soOutstockDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDeliveryNoticeDetailEntity());
+                SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(req -> req.getId().equals(soDeliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+                SoOutstockDTO.PrintDetailDTO printDetailDTO = new SoOutstockDTO.PrintDetailDTO();
+                printDetailDTO.setPlatformSkuNo(soDetailEntity.getPlatformSkuNo());
+                printDetailDTO.setProductSkuNo(soOutstockDetailEntity.getSkuNo());
+                SkuVO skuVO = skuList.stream().filter(req -> req.getSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
+                printDetailDTO.setProductName(skuVO.getSkuName());
+                printDetailDTO.setRemark(soOutstockDetailEntity.getRemark());
+                printDetailDTO.setQty(soOutstockDetailEntity.getActualQty());
+                printDetailDTOList.add(printDetailDTO);
+            }
+            printDTO.setPrintDetailList(printDetailDTOList);
+            printDTOList.add(printDTO);
+        }
+        return printDTOList;
+    }
 }

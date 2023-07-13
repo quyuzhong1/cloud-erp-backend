@@ -311,5 +311,16 @@ public class SoOutstockController extends BaseController {
         return success(list);
     }
 
-
+    /**
+     * 打印
+     * @Author Luo_WG
+     * @Date 2023/7/13 10:44
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
+     **/
+    @PostMapping("/print")
+    public ApiResult<List<SoOutstockDTO.PrintDTO>> print(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<SoOutstockDTO.PrintDTO> printDTOList = soOutstockService.print(dto.getIds());
+        return success(printDTOList);
+    }
 }

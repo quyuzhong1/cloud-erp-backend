@@ -314,4 +314,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      */
     void brushCostData(String id);
 
+    /**
+     * 打印
+     * @Author Luo_WG
+     * @Date 2023/7/13 10:47
+     * @param ids
+     * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.PrintDTO>
+     **/
+    List<SoInfoDTO.PrintDTO> print(List<String> ids);
 }
