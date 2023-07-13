@@ -105,6 +105,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     @Resource
     private SyncKingdeeOtherOutstockService syncKingdeeOtherOutstockService;
 
+    @Resource
+    private InventoryService inventoryService;
 
     @Override
     public PagingVO<OtherOutstockDTO.ListDTO> paging(PagingDTO<OtherOutstockDTO.SearchParamDTO> pagingDTO) {
@@ -307,6 +309,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 String productName = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
                 viewDetailDTO.setProductName(productName);
             }
+            //根据组织、仓库、sku查询可用库存
+            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getWarehouseId(), viewDetailDTO.getSkuId());
+            viewDetailDTO.setCurInventoryQty(curInventoryQty);
         }
         viewDTO.setDetailList(viewDetailList);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
