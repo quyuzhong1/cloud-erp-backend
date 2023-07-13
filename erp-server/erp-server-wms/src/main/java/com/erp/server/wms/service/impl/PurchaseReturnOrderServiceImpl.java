@@ -18,6 +18,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
@@ -183,21 +184,32 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
 
+        // 产品属性为费用或服务的sku忽略库存计算
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        }
+
         // 增加库存数量验证（库存退货）
         String sourceType = dto.getSourceType();
         if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) {
             String returnMode = dto.getReturnMode();
             List<PurchaseReturnOrderDetailDTO.AddDTO> purchasePriceDetailList = dto.getPurchasePriceDetailList();
-            purchasePriceDetailList.stream().forEach(detail->{
+            for(PurchaseReturnOrderDetailDTO.AddDTO detail : purchasePriceDetailList) {
+                if(ignoreInventorySkuIds.contains(detail.getSkuId())) {
+                    log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detail.getSkuId(), detail.getSkuNo());
+                    continue;
+                }
                 Integer usableQty = inventoryService.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), detail.getSkuId(), detail.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
                 if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())
-                   && usableQty < detail.getReplenishQty()) {
-                    throw new ServiceException("可用库存数量不足");
+                        && usableQty < detail.getReplenishQty()) {
+                    throw new ServiceException(ApiError.ERROR_99070);
                 } else if (Objects.equals(returnMode, ReturnModeEnum.DEDUCTION.getCode())
                         && usableQty < detail.getDeductAmountQty()) {
-                    throw new ServiceException("可用库存数量不足");
+                    throw new ServiceException(ApiError.ERROR_99070);
                 }
-            });
+            }
         }
 
         //生成单号
@@ -266,21 +278,32 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
 
+        // 产品属性为费用或服务的sku忽略库存计算
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        }
+
         // 增加库存数量验证（库存退货）
         String sourceType = dto.getSourceType();
         if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) {
             String returnMode = dto.getReturnMode();
             List<PurchaseReturnOrderDetailDTO.UpdateDTO> purchasePriceDetailList = dto.getPurchasePriceDetailList();
-            purchasePriceDetailList.stream().forEach(detail->{
+            for (PurchaseReturnOrderDetailDTO.UpdateDTO detail : purchasePriceDetailList) {
+                if(ignoreInventorySkuIds.contains(detail.getSkuId())) {
+                    log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detail.getSkuId(), detail.getSkuNo());
+                    continue;
+                }
                 Integer usableQty = inventoryService.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), detail.getSkuId(), detail.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
                 if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())
                         && usableQty < detail.getReplenishQty()) {
-                    throw new ServiceException("可用库存数量不足");
+                    throw new ServiceException(ApiError.ERROR_99070);
                 } else if (Objects.equals(returnMode, ReturnModeEnum.DEDUCTION.getCode())
                         && usableQty < detail.getDeductAmountQty()) {
-                    throw new ServiceException("可用库存数量不足");
+                    throw new ServiceException(ApiError.ERROR_99070);
                 }
-            });
+            }
         }
 
         //设置收货单主表
