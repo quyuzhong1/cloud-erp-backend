@@ -196,6 +196,8 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format("FApproveDate >= '{}'", sdf.format(lastTime)));
+        queryFilters.add(StrUtil.format("FApproveDate < '{}'", sdf.format(nextTime)));
 //            queryFilters.add(String.format("fCreateDate >= '%s'", "2023-01-05 00:00:00"));
 //            queryFilters.add(String.format("fCreateDate <= '%s'", "2023-01-06 00:00:00"));
 //            queryFilters.add(StrUtil.format("FBillNo ='{}'", "XSD-20230105-33831"));

@@ -166,6 +166,8 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(StrUtil.format("FModifyDate >= '{}'", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(StrUtil.format("FModifyDate < '{}'", sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format("FApproveDate >= '{}'", sdf.format(lastTime)));
+        queryFilters.add(StrUtil.format("FApproveDate < '{}'", sdf.format(nextTime)));
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'B','C','D'"));
         queryFilters.add(StrUtil.format("FThirdSystem != '{}'", CommonConstants.SYSTEM));
         String filterStr = String.join(" and ",  queryFilters );
