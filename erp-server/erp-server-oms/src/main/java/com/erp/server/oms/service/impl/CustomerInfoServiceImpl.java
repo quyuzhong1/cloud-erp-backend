@@ -23,7 +23,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
@@ -960,18 +962,15 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         base.setCode(customer.getCode());
         //币别
         base.setCurrency(customer.getCurrency());
-        List<CustomerContactDTO.ViewDTO> contactList = customerContactService.listByMainId(customerId);
-        CustomerContactDTO.ViewDTO contact = contactList.stream().filter(c -> c.getIsDefault()).findFirst().orElse(null);
-        if (contact != null) {
-            base.setPerson(contact.getPerson());
-            base.setTelNumber(contact.getTelNumber());
-        }
+
         List<CustomerAddressDTO.ViewDTO> addressList = customerAddressService.listByMainId(customerId);
         CustomerAddressDTO.ViewDTO address = addressList.stream().filter(c -> c.getIsDefault()).findFirst().orElse(null);
         if (address != null) {
             base.setAddress(address.getAddress());
             base.setAddressId(address.getId());
             base.setAddressType(address.getType());
+            base.setPerson(address.getPerson());
+            base.setTelNumber(address.getTelNumber());
         }
         List<SellerDTO.ViewDTO> sellerList = customerSellerService.listByMainId(customerId);
         if (CollectionUtils.isNotEmpty(sellerList)) {

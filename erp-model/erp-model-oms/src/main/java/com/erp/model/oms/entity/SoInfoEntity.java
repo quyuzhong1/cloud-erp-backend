@@ -1,5 +1,6 @@
 package com.erp.model.oms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.BillApproveStatusEnum;
@@ -280,7 +281,7 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     /**
      * 报关费
      */
-    @TableField("customs_fee")
+    @TableField(value = "customs_fee",updateStrategy = FieldStrategy.IGNORED)
     private BigDecimal customsFee;
 
     public static final String CODE = "code";
