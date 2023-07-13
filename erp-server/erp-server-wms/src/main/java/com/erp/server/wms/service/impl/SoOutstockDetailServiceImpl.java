@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -22,6 +23,8 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoOutstockDetailMapper;
 import com.erp.server.wms.service.*;
+import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -40,6 +43,7 @@ import java.util.stream.Collectors;
  * @author lambda
  * @since 2023-05-10
  */
+@Slf4j
 @Service
 public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDetailMapper, SoOutstockDetailEntity> implements SoOutstockDetailService {
 
@@ -223,6 +227,14 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         List<String> warehouseLocationList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getWarehouseLocation).collect(Collectors.toList());
         //这个是已出数量
         List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = this.listDetailByDetailIds(sourceDetailIdList, excludedIdList);
+
+        // 忽略库存计算SKU
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        }
+
         //发货通知到
         if (soDeliveryNotice.equals(sourceType)) {
             //表示是发货通知单的
@@ -244,9 +256,15 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 Integer outStockQty = soOutstockDetailList.stream().filter(s ->
                         s.getSoDetailId().equals(soDetailId)
                 ).mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
-                if (outStockQty + planQty > deliveryQty) {
-                    throw new ServiceException(ApiError.ERROR_92028);
+
+                if(ignoreInventorySkuIds.contains(item.getSkuId())) {
+                    log.warn("sku id: {}产品属性是费用或服务，不参与库存出入库，不做库存验证", item.getSkuId());
+                } else {
+                    if (outStockQty + planQty > deliveryQty) {
+                        throw new ServiceException(ApiError.ERROR_92028);
+                    }
                 }
+
             }
         } else {
             InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
@@ -266,6 +284,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 Integer actualQty = item.getActualQty();
                 //应发数量
                 Integer planQty = item.getPlanQty();
+                if(ignoreInventorySkuIds.contains(item.getSkuId())) {
+                    log.warn("sku id: {}产品属性是费用或服务，不参与库存出入库，不做库存验证", item.getSkuId());
+                    continue;
+                }
+
                 if (actualQty > planQty) {
                     throw new ServiceException(ApiError.ERROR_92027);
                 }
@@ -279,6 +302,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 Integer outStockQty = soOutstockDetailList.stream().filter(s ->
                         s.getSoDetailId().equals(sourceDetailId)
                 ).mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
+
+
                 if (outStockQty + planQty > soQty) {
                     throw new ServiceException(ApiError.ERROR_92028);
                 }
@@ -550,7 +575,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      */
     private List<SoOutstockDetailEntity> listBaseByMainId(String mainId) {
         if (StringUtils.isNotBlank(mainId)) {
-            return this.lambdaQuery().eq(SoOutstockDetailEntity::getMainId, mainId).list();
+            return this.lambdaQuery().eq(SoOutstockDetailEntity::getMainId, mainId).orderByAsc(SoOutstockDetailEntity::getId).list();
         }
         return Collections.emptyList();
 

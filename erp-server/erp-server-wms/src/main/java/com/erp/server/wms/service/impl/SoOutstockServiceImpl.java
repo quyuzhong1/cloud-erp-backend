@@ -26,6 +26,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.entity.DmpSyncTaskEntity;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
@@ -1193,6 +1194,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public List<SoOutstockDTO.PrintDTO> print(List<String> ids) {
         List<SoOutstockDTO.PrintDTO> printDTOList = new ArrayList<>();
         List<SoOutstockEntity> soOutstockEntities = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(soOutstockEntities)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
         //获取客户id集合
         List<String> customerIds = soOutstockEntities.stream().map(SoOutstockEntity::getCustomerId).distinct().collect(Collectors.toList());
         //根据客户id集合查询客户信息
@@ -1224,6 +1228,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             printDTO.setTelNumber(soInfoEntity.getTelNumber());
             List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailEntities.stream().filter(req -> req.getMainId().equals(soOutstockEntity.getId())).collect(Collectors.toList());
             printDTO.setSumNumber(soOutstockDetailEntityList.stream().mapToInt(SoOutstockDetailEntity::getActualQty).sum());
+            soOutstockDetailEntityList.sort(Comparator.comparing(SoOutstockDetailEntity::getId));
             List<SoOutstockDTO.PrintDetailDTO> printDetailDTOList = new ArrayList<>();
             for (SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
                 SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = noticeDetailEntities.stream().filter(req -> req.getId().equals(soOutstockDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDeliveryNoticeDetailEntity());
@@ -1237,6 +1242,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 printDetailDTO.setQty(soOutstockDetailEntity.getActualQty());
                 printDetailDTOList.add(printDetailDTO);
             }
+
             printDTO.setPrintDetailList(printDetailDTOList);
             printDTOList.add(printDTO);
         }
