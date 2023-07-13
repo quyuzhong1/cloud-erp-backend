@@ -1,5 +1,6 @@
 package com.erp.model.oms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -40,9 +41,17 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("approve_status")
     private BillApproveStatusEnum approveStatus;
 
-
+    /**
+     * 最后审核人名称
+     */
     @TableField("approve_user_name")
     private String approveUserName;
+
+    /**
+     * 最后审核时间
+     */
+    @TableField(value = "approve_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime approveTime;
 
     /**
      * 订单类型
