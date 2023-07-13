@@ -78,5 +78,9 @@ public class OtherOutstockDetailDTO implements Serializable {
          */
         private String unit;
 
+        /**
+         * 即时库存
+         */
+        private Integer curInventoryQty;
     }
 }
