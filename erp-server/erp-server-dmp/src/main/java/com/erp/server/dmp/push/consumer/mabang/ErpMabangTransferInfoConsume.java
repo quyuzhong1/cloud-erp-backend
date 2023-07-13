@@ -85,7 +85,7 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
             return;
         }
         List<String> warehouseCodeList = Arrays.asList(value.split(MabangUtil.SEPARATOR));
-        log.info("ERP直接调拨单同步到马帮出入库配置的监控仓库为：【{}】", JSONObject.toJSONString(warehouseCodeList));
+        log.warn("ERP直接调拨单同步到马帮出入库配置的监控仓库为：【{}】", JSONObject.toJSONString(warehouseCodeList));
         // 调入仓
         String inWarehouseCode =  StrUtils.null2EmptyWithTrim(transferInfo.getInWarehouseCode());
         // 调出仓
@@ -115,13 +115,13 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
             mabangInOutStockDTOList = Lists.newArrayList();
             if(warehouseCodeList.contains(inWarehouseCode)) {
                 // 手工入库
-                log.info("ERP直接调拨单【{}】审核同步到马帮出入库：入库仓库【{}】", transferInfo.getCode(), inWarehouseCode);
+                log.warn("ERP直接调拨单【{}】审核同步到马帮出入库：入库仓库【{}】", transferInfo.getCode(), inWarehouseCode);
                 MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, InventoryInOutEnum.IN_STOCK.getCode(), operate);
                 mabangInOutStockDTOList.add(mabangInOutStockDTO);
             }
             if(warehouseCodeList.contains(outWarehouseCode)) {
                 // 手工出库
-                log.info("ERP直接调拨单【{}】审核同步到马帮出入库：出库仓库【{}】", transferInfo.getCode(), outWarehouseCode);
+                log.warn("ERP直接调拨单【{}】审核同步到马帮出入库：出库仓库【{}】", transferInfo.getCode(), outWarehouseCode);
                 MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, InventoryInOutEnum.OUT_STOCK.getCode(), operate);
                 mabangInOutStockDTOList.add(mabangInOutStockDTO);
             }
@@ -132,13 +132,13 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
             // 操作跟审核相反，审核的入库为出库，审核的出库为入库
             if(warehouseCodeList.contains(inWarehouseCode)) {
                 // 手工出库
-                log.info("ERP直接调拨单【{}】反审核同步到马帮出入库：出库仓库【{}】", transferInfo.getCode(), inWarehouseCode);
+                log.warn("ERP直接调拨单【{}】反审核同步到马帮出入库：出库仓库【{}】", transferInfo.getCode(), inWarehouseCode);
                 MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, InventoryInOutEnum.OUT_STOCK.getCode(), operate);
                 mabangInOutStockDTOList.add(mabangInOutStockDTO);
             }
             if(warehouseCodeList.contains(outWarehouseCode)) {
                 // 手工入库
-                log.info("ERP直接调拨单【{}】反审核同步到马帮出入库：入库仓库【{}】", transferInfo.getCode(), outWarehouseCode);
+                log.warn("ERP直接调拨单【{}】反审核同步到马帮出入库：入库仓库【{}】", transferInfo.getCode(), outWarehouseCode);
                 MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, InventoryInOutEnum.IN_STOCK.getCode(), operate);
                 mabangInOutStockDTOList.add(mabangInOutStockDTO);
             }
@@ -152,14 +152,14 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
      * @param sourceTypeName
      */
     private void sendNotice(String sourceTypeName) {
-        log.error("ERP直接调拨单同步到马帮出入库未配置监控仓库");
+        log.warn(StrUtil.format("ERP{}同步到马帮出入库未配置监控仓库", sourceTypeName));
         WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
         warnMsgInfoDTO.setTitle(StrUtil.format("ERP{}推送马帮出入库未配置监控仓库", sourceTypeName));
         warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
         warnMsgInfoDTO.setBizName(StrUtil.format("ERP{}推送马帮手工入库", sourceTypeName));
         warnMsgInfoDTO.setTableName("");
         warnMsgInfoDTO.setTableId("");
-        warnMsgInfoDTO.setKeyInfo("ERP直接调拨单同步到马帮出入库未配置监控仓库，请在cfg_setting表erp_to_mb_direct_transfer配置");
+        warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP{}同步到马帮出入库未配置监控仓库，请在cfg_setting表erp_to_mb_direct_transfer配置", sourceTypeName));
         mqProducerService.sendWarnMsg(warnMsgInfoDTO);
     }
 

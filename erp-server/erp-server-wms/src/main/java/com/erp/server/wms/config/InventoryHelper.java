@@ -6,11 +6,13 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.CfgTransactionRulesEntity;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.enums.inventory.*;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.CfgTransactionRulesService;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.InventoryStockService;
@@ -54,6 +56,9 @@ public class InventoryHelper {
     @Resource
     private ApplicationContext applicationContext;
 
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
+
     private static Map<InventoryBizTypeEnum, InventoryStockService> inventoryServiceMap;
 
     @PostConstruct
@@ -92,6 +97,19 @@ public class InventoryHelper {
     }
 
     /**
+     * 获取忽略库存计算的sku
+     * @return
+     */
+    public List<String> getIgnoreSkuIds() {
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        }
+        return ignoreInventorySkuIds;
+    }
+
+    /**
      * 出库检查库存是否足够（走交易规则，不能手工传输库存状态）
      */
     public void checkStockByRule(InventoryBaseInfoDTO param, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules) {
@@ -99,6 +117,14 @@ public class InventoryHelper {
         String sourceId = param.getSourceId();
         LocalDate billDate = param.getBillDate();
         List<TransactionRuleDTO> outTransactionRules;
+
+        // 判断是否需要忽略计算库存的sku
+        List<String>  ignoreInventorySkuIds = getIgnoreSkuIds();
+        if(ignoreInventorySkuIds.contains(param.getSkuId())) {
+            log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", param.getSkuId(), param.getSkuNo());
+            return;
+        }
+
         log.info("库存状态从配置中取，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】，SKU编号：【{}】", businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
         if(CollUtil.isEmpty(transactionRules)) {
             throw new ServiceException(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));

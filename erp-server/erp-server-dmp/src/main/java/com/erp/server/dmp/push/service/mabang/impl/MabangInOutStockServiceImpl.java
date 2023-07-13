@@ -91,7 +91,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
     @Override
     public void batchInOutStock(List<MabangInOutStockDTO> mabangInOutStockDTOList, String sourceId, String sourceCode, String sourceType, String approveType) {
         if(CollUtil.isEmpty(mabangInOutStockDTOList)) {
-            log.info("没有出入库数据，来源单据类型：【{}】,来源单据id：【{}】,来源单据编码：【{}】，操作类型：【{}】", sourceType, sourceId, sourceCode, approveType);
+            log.warn("没有出入库数据，来源单据类型：【{}】,来源单据id：【{}】,来源单据编码：【{}】，操作类型：【{}】", sourceType, sourceId, sourceCode, approveType);
             return;
         }
 
@@ -119,7 +119,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
             @Override
             public void afterCommit() {
                 for(DmpSyncTaskEntity dmpSyncTaskEntity : dmpSyncTaskList) {
-                    log.info("保存同步任务成功，待同步的内容为：{}", JSONObject.toJSONString(dmpSyncTaskEntity));
+                    log.warn("保存同步任务成功，目标平台：{}, 待同步的单据类型：{}，单据编号：{}", dmpSyncTaskEntity.getTargetPlatformName(), dmpSyncTaskEntity.getSourceType(), dmpSyncTaskEntity.getSourceCode());
 
                     // 发送MQ消息处理发送到马帮
                     DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), dmpSyncTaskEntity.getMqData());
@@ -137,63 +137,6 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void sendToMabangInStock(DmpSyncTaskEntity dmpSyncTaskEntity, MabangInOutStockDTO mabangInOutStock) {
-        // 调用马帮手工入库接口
-        Map<String,Object> resultMap = MabangApiUtils.inStorage(PlatformApiEnum.MABANG_IN_STORAGE.getTaskName(), mabangInOutStock);
-        boolean isSuccess = (boolean)resultMap.get("success");
-        if (isSuccess) {
-            JSONObject resultJson = (JSONObject)resultMap.get("result");
-            // 更新出入库同步信息
-            dmpSyncTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(), resultJson.toJSONString());
-        } else {
-            String msg = StrUtils.null2EmptyWithTrim(resultMap.get("msg"));
-            // 更新出入库同步信息
-            dmpSyncTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode(), msg);
-
-            String sourceType = dmpSyncTaskEntity.getSourceType();
-            String sourceTypeName = StrUtils.null2EmptyWithTrim(SourceTypeEnum.getName(sourceType));
-
-            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
-            warnMsgInfoDTO.setTitle(StrUtil.format("ERP{}推送马帮手工入库异常", sourceTypeName));
-            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
-            warnMsgInfoDTO.setBizName(StrUtil.format("ERP{}推送马帮手工入库", sourceTypeName));
-            warnMsgInfoDTO.setTableName("dmp_sync_task");
-            warnMsgInfoDTO.setTableId(dmpSyncTaskEntity.getId());
-            warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP{}单据编号: {}，失败原因：{}",sourceTypeName, mabangInOutStock.getErpSourceCode(), msg));
-            mqProducerService.sendWarnMsg(warnMsgInfoDTO);
-        }
-    }
-
-    @Override
-    public void sendToMabangOutStock(DmpSyncTaskEntity dmpSyncTaskEntity, MabangInOutStockDTO mabangInOutStock) {
-        // 调用马帮手工出库接口
-        Map<String,Object> resultMap = MabangApiUtils.outStorage(PlatformApiEnum.MABANG_OUT_STORAGE.getTaskName(), mabangInOutStock);
-        boolean isSuccess = (boolean)resultMap.get("success");
-        if(isSuccess) {
-            JSONObject resultJson = (JSONObject)resultMap.get("result");
-            // 更新出入库同步信息
-            dmpSyncTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(), resultJson.toJSONString());
-        } else {
-            String msg = StrUtils.null2EmptyWithTrim(resultMap.get("msg"));
-            // 更新出入库同步信息
-            dmpSyncTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode(), msg);
-
-            String sourceType = dmpSyncTaskEntity.getSourceType();
-            String sourceTypeName = StrUtils.null2EmptyWithTrim(SourceTypeEnum.getName(sourceType));
-
-            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
-            warnMsgInfoDTO.setTitle(StrUtil.format("ERP{}推送马帮手工出库异常", sourceTypeName));
-            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
-            warnMsgInfoDTO.setBizName(StrUtil.format("ERP{}推送马帮手工出库", sourceTypeName));
-            warnMsgInfoDTO.setTableName("dmp_sync_task");
-            warnMsgInfoDTO.setTableId(dmpSyncTaskEntity.getId());
-            warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP{}单据编号: {}，失败原因：{}",sourceTypeName, mabangInOutStock.getErpSourceCode(), msg));
-            mqProducerService.sendWarnMsg(warnMsgInfoDTO);
-        }
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    @Override
     public void sendToMabangInOutStock(DmpSyncTaskEntity dmpSyncTaskEntity, MabangInOutStockDTO mabangInOutStock, InventoryInOutEnum inventoryInOutEnum) {
         String taskName = "";
         if(Objects.equals(inventoryInOutEnum, InventoryInOutEnum.IN_STOCK)) {
@@ -201,8 +144,8 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         } else if(Objects.equals(inventoryInOutEnum, InventoryInOutEnum.OUT_STOCK)) {
             taskName = PlatformApiEnum.MABANG_OUT_STORAGE.getTaskName();
         }
-        // 调用马帮手工出库接口
-        Map<String,Object> resultMap = MabangApiUtils.outStorage(taskName, mabangInOutStock);
+        // 调用马帮手工出入库接口
+        Map<String,Object> resultMap = MabangApiUtils.inOutStorage(taskName, mabangInOutStock);
         boolean isSuccess = (boolean)resultMap.get("success");
         if(isSuccess) {
             JSONObject resultJson = (JSONObject)resultMap.get("result");

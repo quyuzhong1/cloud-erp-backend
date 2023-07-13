@@ -64,7 +64,7 @@ public class MabangUtil {
         String inWarehouseName = "", outWarehouseName = "";
         if(Objects.isNull(warehouseMap.get(inWarehouseCode)) && Objects.isNull(warehouseMap.get(outWarehouseCode))) {
             String msg = StrUtil.format("ERP直接调拨单同步到马帮出入库调入仓和调出仓在马帮未找到映射，调入仓【{}】，调出仓【{}】,不需要推送马帮出入库", inWarehouseCode, outWarehouseCode);
-            log.info(msg);
+            log.warn(msg);
             resultMap.put(SEND_STOP, true);
             return resultMap;
         }
@@ -76,7 +76,7 @@ public class MabangUtil {
         }
         if(!warehouseCodeList.contains(inWarehouseCode) && !warehouseCodeList.contains(outWarehouseCode)) {
             String msg = StrUtil.format("ERP直接调拨单同步到马帮出入库调入仓和调出仓都不在监控仓库范围内，调入仓【{}】，调出仓【{}】,不需要推送马帮出入库", inWarehouseCode, outWarehouseCode);
-            log.info(msg);
+            log.warn(msg);
             resultMap.put(SEND_STOP, true);
             return resultMap;
         }

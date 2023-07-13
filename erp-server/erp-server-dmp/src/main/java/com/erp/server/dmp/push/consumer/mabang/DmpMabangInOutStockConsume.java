@@ -52,18 +52,18 @@ public class DmpMabangInOutStockConsume implements RocketMQListener<DmpSyncMqDTO
         String syncTaskId = dtoDmpSyncMqDTO.getDmpSyncTaskId();
         DmpSyncTaskEntity dmpSyncTaskEntity = dmpSyncTaskService.getById(syncTaskId);
         if(Objects.isNull(dmpSyncTaskEntity)) {
-            log.info("未查询到同步数据，同步任务数据id:{}，待同步内容：{}", syncTaskId, dtoDmpSyncMqDTO.getMqData());
+            log.warn("未查询到同步到马帮数据，同步任务数据id:{}，待同步内容：{}", syncTaskId, dtoDmpSyncMqDTO.getMqData());
             this.sendNotice(syncTaskId, erpSourceCode);
             return;
         }
         String sourceType = dmpSyncTaskEntity.getSourceType();
         String sourceTypeName = SourceTypeEnum.getName(sourceType);
         String syncStatusName = SyncKingdeeStatusEnum.getNameByCode(dmpSyncTaskEntity.getStatus());
-        log.info("ERP【{}】id：【{}】，同步马帮状态【{}】", sourceTypeName, dmpSyncTaskEntity.getSourceId(), syncStatusName);
+        log.warn("ERP【{}】原单据id：【{}】，同步马帮状态【{}】", sourceTypeName, dmpSyncTaskEntity.getSourceId(), syncStatusName);
 
         // 同步成功的不处理
         if(Objects.equals(dmpSyncTaskEntity.getStatus(), SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())) {
-            log.info("ERP【{}】同步到马帮已经同步，不处理", sourceTypeName);
+            log.warn("ERP【{}】同步到马帮已经同步，不处理", sourceTypeName);
             return;
         }
 

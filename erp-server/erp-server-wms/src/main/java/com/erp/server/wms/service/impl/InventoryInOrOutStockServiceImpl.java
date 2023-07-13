@@ -97,7 +97,7 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
         paramLis.stream().forEach(param->skuIds.add(((InOutStockDTO)param).getSkuId()));
 
         // 获取忽略库存计算的sku
-        List<String> ignoreInventorySkuIds = getIgnoreSkuIds();
+        List<String> ignoreInventorySkuIds = inventoryHelper.getIgnoreSkuIds();
 
         for(InventoryStockBaseDTO baseParam : paramLis) {
             InOutStockDTO param = (InOutStockDTO)baseParam;

@@ -124,7 +124,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
         paramLis.stream().forEach(param->skuIds.add(((TransferDTO)param).getSkuId()));
 
         // 获取忽略库存计算的sku
-        List<String> ignoreInventorySkuIds = getIgnoreSkuIds();
+        List<String> ignoreInventorySkuIds = inventoryHelper.getIgnoreSkuIds();
 
         for(InventoryStockBaseDTO baseParam : paramLis) {
             // 当前仓出入库业务处理

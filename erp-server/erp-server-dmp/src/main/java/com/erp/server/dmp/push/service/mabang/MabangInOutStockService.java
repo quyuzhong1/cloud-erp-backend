@@ -38,20 +38,6 @@ public interface MabangInOutStockService {
                          String sourceType, String approveType);
 
 
-    /**
-     * 手工入库
-     * @param dmpSyncTaskEntity
-     * @param mabangInOutStock
-     */
-    void sendToMabangInStock(DmpSyncTaskEntity dmpSyncTaskEntity, MabangInOutStockDTO mabangInOutStock);
-
-    /**
-     * 手工出库
-     * @param dmpSyncTaskEntity
-     * @param mabangInOutStock
-     */
-    void sendToMabangOutStock(DmpSyncTaskEntity dmpSyncTaskEntity, MabangInOutStockDTO mabangInOutStock);
-
 
     /**
      * 手工出入库
