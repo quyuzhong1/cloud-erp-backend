@@ -29,7 +29,6 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.SkuMapingEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -44,7 +43,6 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
-import com.erp.rpc.oms.feign.SkuMapingFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -119,9 +117,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private RedisService redisService;
-
-    @Resource
-    private SkuMapingFeign skuMapingFeign;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
