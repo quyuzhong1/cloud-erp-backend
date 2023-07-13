@@ -213,7 +213,8 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         queryFilters.add(StrUtil.format("FModifyDate >= '{}'", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(StrUtil.format("FModifyDate <= '{}'", sdf.format(nextTime)));
-
+        queryFilters.add(StrUtil.format("FApproveDate >= '{}'", sdf.format(lastTime)));
+        queryFilters.add(StrUtil.format("FApproveDate < '{}'", sdf.format(nextTime)));
         //审核状态
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'A','B','C','D'"));
         // 过滤组织内订单
