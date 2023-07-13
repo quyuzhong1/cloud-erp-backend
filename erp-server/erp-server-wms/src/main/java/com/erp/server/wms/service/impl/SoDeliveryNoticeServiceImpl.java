@@ -728,13 +728,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             //根据ids查询sku信息
             List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
 
-            // 忽略库存计算SKU
-            List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
-            List<String> ignoreInventorySkuIds = Lists.newArrayList();
-            if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
-                ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
-            }
-
             for (SoDeliveryNoticeDetailEntity detailEntity : detailEntities) {
 
                 //获取核算公司
