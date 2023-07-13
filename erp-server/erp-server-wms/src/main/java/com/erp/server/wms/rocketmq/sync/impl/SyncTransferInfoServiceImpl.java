@@ -184,6 +184,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         resultEntity.setTransferDirection(TransferDirectionEnum.getCodeByKingdeeCode(entity.getTransferDirection()));
 
         resultEntity.setSourceId(entity.getSourceId());
+        resultEntity.setSyncKingdeeId(entity.getSourceId());
         resultEntity.setSourceCode(entity.getCode());
         resultEntity.setSourceType(SourceTypeEnum.STK_TRANSFERDIRECT.getCode());
         resultEntity.setBillDate(entity.getBillDate().toLocalDate());
