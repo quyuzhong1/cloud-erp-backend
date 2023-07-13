@@ -39,7 +39,6 @@ import com.erp.model.oms.enums.CustomerAddressTypeEnum;
 import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
@@ -437,6 +436,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
 
         List<SoDetailDTO.ViewDTO> detailList = soDetailService.listByMainId(id, warehouseId);
+        List<String> skuIds = detailList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        for (SoDetailDTO.ViewDTO viewDTO : detailList) {
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(skuVO)) {
+                viewDTO.setWarehouseLocation(skuVO.getWarehouseLocation());
+            }
+        }
         view.setDetailList(detailList);
         return view;
     }
@@ -1280,7 +1287,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setProductName(sku.getSkuName());
                 String unit = sku.getUnitName();
                 item.setUnit(StringUtils.isNotBlank(unit) ? unit : "");
-                item.setWarehouseLocation(sku.getWarehouseLocation());
             }
         }
         StringBuffer sb = new StringBuffer();
