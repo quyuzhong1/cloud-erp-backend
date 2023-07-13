@@ -1230,7 +1230,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             printDTO.setSellerName(soInfoEntity.getSellerName());
             printDTO.setReceiveAddress(soInfoEntity.getReceiveAddress());
             printDTO.setTelNumber(soInfoEntity.getTelNumber());
-            List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailEntities.stream().filter(req -> req.getMainId().equals(soInfoEntity.getId())).collect(Collectors.toList());
+            List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailEntities.stream().filter(req -> req.getMainId().equals(soOutstockEntity.getId())).collect(Collectors.toList());
             printDTO.setSumNumber(soOutstockDetailEntityList.stream().mapToInt(SoOutstockDetailEntity::getActualQty).sum());
             List<SoOutstockDTO.PrintDetailDTO> printDetailDTOList = new ArrayList<>();
             for (SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
