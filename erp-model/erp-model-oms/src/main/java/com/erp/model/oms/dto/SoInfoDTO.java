@@ -287,6 +287,12 @@ public class SoInfoDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
+         * 审核时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime approveTime;
+
+        /**
          * 仓位
          */
         private String warehouseLocation;
