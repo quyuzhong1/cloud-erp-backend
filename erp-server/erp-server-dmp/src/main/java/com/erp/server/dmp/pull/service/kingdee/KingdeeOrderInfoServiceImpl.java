@@ -203,6 +203,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
 //            queryFilters.add(String.format("fBillTypeID = '%s'", "eacb50844fc84a10b03d7b841f3a6278"));
         queryFilters.add(String.format("FDocumentStatus = '%s'", "C"));
         String filterStr = String.join(" and ",  queryFilters );
+        filterStr = filterStr.concat(StrUtil.format(" OR (FApproveDate >= '{}' and FApproveDate < '{}')", sdf.format(lastTime), sdf.format(nextTime)));
         String fieldKeys = "FID,FBillNo,FDate,FBillTypeId.FName,FBillTypeId.FNumber,FBillTypeId," +
                 "FDocumentStatus,FCustId.FName,FSaleDeptId.FName,FSalerId.FName,FReceiveAddress,FLinkMan,FLinkPhone," +
                 "FApproverId.FName,FApproveDate,FCloseStatus,FCloseDate,FCancelStatus,FChangerId," +
