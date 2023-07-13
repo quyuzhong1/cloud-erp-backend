@@ -51,7 +51,7 @@ public class PurchaseApplicationDetailEntity extends BaseEntity<PurchaseApplicat
     /**
      * 供应商id
      */
-    @TableField("supplierId")
+    @TableField("supplier_id")
     private String supplierId;
 
     /**
