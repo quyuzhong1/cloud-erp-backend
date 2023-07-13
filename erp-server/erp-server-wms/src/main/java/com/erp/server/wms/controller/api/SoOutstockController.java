@@ -206,7 +206,7 @@ public class SoOutstockController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soOutstockService.disApprove(dto);
+        Boolean result = soOutstockService.disApprove(dto, Boolean.TRUE);
         return result ? success() : failure();
     }
 
