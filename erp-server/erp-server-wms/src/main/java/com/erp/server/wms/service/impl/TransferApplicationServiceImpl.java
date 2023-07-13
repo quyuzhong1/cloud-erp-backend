@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -45,11 +46,13 @@ import com.erp.model.wms.enums.MachineTypeEnum;
 import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.TransferApplicationMapper;
 import com.erp.server.wms.service.*;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -919,6 +922,14 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
         //拣货明细集合
         List<PickingDetailDTO.CommonDTO> addList = new ArrayList<>();
+
+        // 忽略库存计算SKU
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        }
+
         for (TransferApplicationEntity entity :list) {
             List<TransferApplicationDetailEntity> detailEntities = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(detailEntities)) {
@@ -928,7 +939,21 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 //查询可用库存生成拣货明细
                 PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(entity.getOutOrgId(),entity.getOutOrgName(),entity.getOutWarehouseId(),
                         entity.getOutWarehouseName(),detailEntity.getSkuId(),detailEntity.getSkuNo(),detailEntity.getQty());
-                List<InventoryEntity> inventoryList = inventoryService.listPickingDetailInventory(dto);
+
+                List<InventoryEntity> inventoryList = null;
+                if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
+                    InventoryEntity inventoryEntity = new InventoryEntity();
+                    inventoryEntity.setWarehouseId(dto.getWarehouseId());
+                    inventoryEntity.setOrgId(dto.getOrgId());
+                    inventoryEntity.setWarehouseLocation("");
+                    inventoryEntity.setQty(detailEntity.getQty());
+                    inventoryEntity.setSkuId(detailEntity.getSkuId());
+                    inventoryEntity.setSkuNo(detailEntity.getSkuNo());
+                    inventoryEntity.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+                    inventoryList.add(inventoryEntity);
+                } else {
+                    inventoryList = inventoryService.listPickingDetailInventory(dto);
+                }
 
                 List<PickingDetailDTO.CommonDTO> pickingDetailList = BeanMapperUtils.copyList(PickingDetailDTO.CommonDTO.class, inventoryList);
 

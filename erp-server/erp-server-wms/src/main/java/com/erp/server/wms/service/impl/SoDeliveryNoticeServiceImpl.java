@@ -731,6 +731,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             //根据ids查询sku信息
             List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
 
+            // 忽略库存计算SKU
+            List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+            List<String> ignoreInventorySkuIds = Lists.newArrayList();
+            if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+                ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+            }
+
             for (SoDeliveryNoticeDetailEntity detailEntity : detailEntities) {
 
                 //获取核算公司
@@ -738,7 +745,21 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 //查询可用库存生成拣货明细
                 PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(warehouseEntity.getOrgId(), sysAccountingCompanyEntity.getCompanyName(), entity.getWarehouseId(),
                         entity.getWarehouseName(), detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getDeliveryQty());
-                List<InventoryEntity> inventoryList = inventoryService.listPickingDetailInventory(dto);
+
+                List<InventoryEntity> inventoryList = null;
+                if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
+                    InventoryEntity inventoryEntity = new InventoryEntity();
+                    inventoryEntity.setWarehouseId(dto.getWarehouseId());
+                    inventoryEntity.setOrgId(dto.getOrgId());
+                    inventoryEntity.setWarehouseLocation("");
+                    inventoryEntity.setQty(dto.getQty());
+                    inventoryEntity.setSkuId(dto.getSkuId());
+                    inventoryEntity.setSkuNo(dto.getSkuNo());
+                    inventoryEntity.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+                    inventoryList.add(inventoryEntity);
+                } else {
+                    inventoryList = inventoryService.listPickingDetailInventory(dto);
+                }
 
                 List<PickingDetailDTO.CommonDTO> pickingDetailList = BeanMapperUtils.copyList(PickingDetailDTO.CommonDTO.class, inventoryList);
 
