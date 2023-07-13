@@ -378,6 +378,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 dto.setTaxRate(value.get(0).getTaxRate());
                 dto.setCurrency(value.get(0).getCurrency());
                 dto.setCurrencySymbol(value.get(0).getCurrencySymbol());
+                dto.setTaxAmount(MathUtil.multiply(value.get(0).getTaxPrice(),searchDTO.getPurchaseQty()));
             }
 
             //清空第一条明细后其他明细中的单号
