@@ -447,4 +447,17 @@ public class SoInfoController extends BaseController {
         return success();
     }
 
+    /**
+     * 打印
+     * @Author Luo_WG
+     * @Date 2023/7/13 10:44
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
+     **/
+    @GetMapping("/print")
+    public ApiResult<List<SoInfoDTO.PrintDTO>> print(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<SoInfoDTO.PrintDTO> printDTOList = soInfoService.print(dto.getIds());
+        return success(printDTOList);
+    }
+
 }
