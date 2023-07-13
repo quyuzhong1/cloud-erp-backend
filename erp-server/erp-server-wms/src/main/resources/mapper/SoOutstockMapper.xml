@@ -270,4 +270,9 @@
         </if>
          GROUP BY approve_status
     </select>
+    <select id="getIdsByTemp" resultType="java.lang.String">
+        SELECT trr.id FROM "temp_recovry_record" trr
+          left join so_outstock so on trr.id = so.id
+        where so.approve_status = 'approve' limit 1000
+    </select>
 </mapper>

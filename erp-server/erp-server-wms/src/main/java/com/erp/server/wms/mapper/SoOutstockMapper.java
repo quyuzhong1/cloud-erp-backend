@@ -31,4 +31,11 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     List<SoOutstockDTO.SoRefDTO> listSoRefSoOutstockBySoId(@Param("soId") String soId);
 
     List<SoOutstockDTO.ApproveCountDTO> listApproveCount(@Param("permissionSql")String permissionSql);
+
+    /**
+     * 根据来源id查询出库id 临时使用修复数据
+     * @return
+     */
+    List<String> getIdsByTemp();
+
 }

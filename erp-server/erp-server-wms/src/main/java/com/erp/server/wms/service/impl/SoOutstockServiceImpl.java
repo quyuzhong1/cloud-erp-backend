@@ -1247,4 +1247,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         return printDTOList;
     }
+
+    @Override
+    public List<String> getIdsByTemp() {
+        return baseMapper.getIdsByTemp();
+    }
 }
