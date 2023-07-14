@@ -9,10 +9,10 @@ package com.common.business.enums;
 public enum SkuApproveConfigureEnum {
 
     FIRST_APPROVE(1, "firstApproveIdList",""),
-    SECOND_APPROVE(2, "secondApproveIdList","产品部"),
+    SECOND_APPROVE(2, "secondApproveIdList","产品一组,产品二组"),
     THIRD_APPROVE(3, "thirdApproveIdList","品质部,采购开发组,采购执行组,物流部"),
-    FOURTH_APPROVE(4, "fourthApproveIdList","产品研发中心,供应链中心"),
-    FIVE_APPROVE(5, "fiveApproveIdList","产品研发中心");
+    FOURTH_APPROVE(4, "fourthApproveIdList","产品中心,供应链管理中心"),
+    FIVE_APPROVE(5, "fiveApproveIdList","研发中心");
 
     private Integer code;
     private String name;

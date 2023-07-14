@@ -1,12 +1,11 @@
 package com.erp.rpc.oms.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.sys.dto.DictBasicDTO;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 

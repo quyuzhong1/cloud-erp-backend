@@ -316,15 +316,20 @@ public class SoDetailDTO implements Serializable {
 
         private BigDecimal price;
 
+        private BigDecimal taxPrice;
+
         private String currencySymbol;
 
         private String priceStr;
 
         private BigDecimal amount;
 
+        private BigDecimal taxAmount;
         private String amountStr;
 
         private String skuId;
+
+        private String desc;
 
 
     }

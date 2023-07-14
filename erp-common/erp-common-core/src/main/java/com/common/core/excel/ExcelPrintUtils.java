@@ -4,11 +4,13 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.converters.ConverterKeyBuild;
+import com.alibaba.excel.enums.WriteDirectionEnum;
 import com.alibaba.excel.support.ExcelTypeEnum;
 import com.alibaba.excel.util.IoUtils;
 import com.alibaba.excel.write.builder.ExcelWriterBuilder;
 import com.alibaba.excel.write.merge.OnceAbsoluteMergeStrategy;
 import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
@@ -632,7 +634,6 @@ public class ExcelPrintUtils {
 		}
 	}
 
-
 	/**
 	 * 方法说明
 	 * @author yl
@@ -668,12 +669,14 @@ public class ExcelPrintUtils {
 			EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
 			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
 			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
-			WriteSheet writeSheet = EasyExcel.writerSheet().build();
 
+			WriteSheet writeSheet = EasyExcel.writerSheet().build();
+			FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
 			//列表数据
-			excelWriter.fill(list, writeSheet);
+			excelWriter.fill(list, fillConfig , writeSheet);
+
 			if (obj != null) {
-				excelWriter.fill(obj, writeSheet);
+				excelWriter.fill(obj , writeSheet);
 			}
 			excelWriter.finish();
 

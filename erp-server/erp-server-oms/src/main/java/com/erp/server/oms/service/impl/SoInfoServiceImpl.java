@@ -1868,10 +1868,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             viewPi.setQty(qty);
             BigDecimal price = item.getPrice();
             viewPi.setPrice(price);
+            viewPi.setTaxAmount(item.getTaxAmount());
             viewPi.setPriceStr(symbol + price);
             viewPi.setAmountStr(symbol + amount);
             String model = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().map(SkuVO::getDeclareModel).orElse("");
             viewPi.setModel(model);
+            viewPi.setDesc("");
             i++;
             viewPiList.add(viewPi);
 
@@ -1880,9 +1882,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //总金额
         BigDecimal totalAmount = viewPiList.stream().map(SoDetailDTO.ViewPiDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        //总含税金额
+        BigDecimal totalTaxAmount = viewPiList.stream().map(SoDetailDTO.ViewPiDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+
         //总数量
         Integer totalQty = viewPiList.stream().mapToInt(SoDetailDTO.ViewPiDTO::getQty).sum();
-        soPi.setTotalAmountStr(currencySymbol + totalAmount);
+        soPi.setTotalAmountStr(currencySymbol + totalTaxAmount);
         soPi.setTotalQty(totalQty);
         //总费用
         BigDecimal totalFee = totalAmount.add(shippingFee);

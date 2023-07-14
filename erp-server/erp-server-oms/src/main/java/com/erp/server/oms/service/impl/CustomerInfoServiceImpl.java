@@ -27,6 +27,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AddressTypeEnum;
@@ -189,8 +190,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         addEntity.setCode(code);
         //销售员
         String sellerId = dto.getSellerId();
-        SysDepartmentUserNumberDTO userDept = sysUserFeign.getDeptByUserId(sellerId);
-        addEntity.setSellerName(userDept.getUserName());
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(sellerId);
+        addEntity.setSellerName(findUserDTO.getUserName());
         //对应组织
         String innerOrgId = dto.getInnerOrgId();
 
@@ -534,6 +535,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String groupName = customerGroupList.stream().filter(d -> d.getId().equals(groupId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         customer.setGroupName(groupName);
+
+        //销售员
+        String sellerId = dto.getSellerId();
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(sellerId);
+        customer.setSellerName(findUserDTO.getUserName());
 
         //对应组织
         String innerOrgId = dto.getInnerOrgId();

@@ -1287,6 +1287,11 @@ public class QcInfoDTO implements Serializable {
         private BigDecimal boxHeight;
 
         /**
+         * 整单数量
+         */
+        private Integer boxQty;
+
+        /**
          * 产品净重
          */
         private BigDecimal productNetWeight;

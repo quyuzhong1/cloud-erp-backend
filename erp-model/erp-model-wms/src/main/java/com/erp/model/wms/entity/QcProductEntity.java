@@ -85,6 +85,12 @@ public class QcProductEntity extends BaseEntity<QcProductEntity> {
     private BigDecimal boxHeight;
 
     /**
+     * 整箱数量
+     */
+    @TableField("box_qty")
+    private Integer boxQty;
+
+    /**
      * 产品净重
      */
     @TableField("product_net_weight")

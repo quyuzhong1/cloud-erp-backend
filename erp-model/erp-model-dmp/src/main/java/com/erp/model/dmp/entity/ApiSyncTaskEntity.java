@@ -102,6 +102,12 @@ public class ApiSyncTaskEntity implements Serializable {
     private String requestParamJson;
 
     /**
+     * 返回信息
+     */
+    @TableField(value = "msg")
+    private String msg;
+
+    /**
      * 请求次数(重试)
      */
     @TableField(value = "retry_count")

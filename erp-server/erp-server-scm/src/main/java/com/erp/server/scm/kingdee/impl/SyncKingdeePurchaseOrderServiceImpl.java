@@ -12,7 +12,10 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.scm.entity.*;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -119,12 +122,9 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         //是否是新品首批
         resultMap.put("isFirstMassProduct",entity.getIsFirstMassProduct());
 
-        if (ObjectUtils.isNotEmpty(purchaseOrderSupplierEntity.getPayMethodId())) {
-            DictBasicEntity dictBasicEntity = dictBasicService.getById(purchaseOrderSupplierEntity.getPayMethodId());
-            if (ObjectUtils.isNotEmpty(dictBasicEntity)) {
-                //付款方式
-                resultMap.put("payMethodId",dictBasicEntity.getValue());
-            }
+        if (ObjectUtils.isNotEmpty(purchaseOrderSupplierEntity.getPaymentCondition())) {
+            //付款条件
+            resultMap.put("paymentCondition",purchaseOrderSupplierEntity.getPaymentCondition());
         }
 
         //采购明细

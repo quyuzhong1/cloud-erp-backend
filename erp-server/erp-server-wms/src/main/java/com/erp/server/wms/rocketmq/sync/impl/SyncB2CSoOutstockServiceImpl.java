@@ -1,13 +1,10 @@
 package com.erp.server.wms.rocketmq.sync.impl;
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.service.RedisService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
@@ -35,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -62,9 +58,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
 
-    @Resource
-    private RedisService redisService;
-
 
     /**
      * 同步金蝶的销售出库单
@@ -82,19 +75,18 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             return;
         }
 
-        String code = entity.getFBillNo();
-        String redisKey = StrUtil.format(RedisKeyConstant.KINGDEE_XSCK,code);
-
-        //根据仓库分组
-        Map<String, List<KingdeeDeliveryDetailItemEntity>> map = kingdeeDetailList.stream().collect(Collectors.groupingBy(KingdeeDeliveryDetailItemEntity::getFStockNumber));
-        for (Map.Entry<String, List<KingdeeDeliveryDetailItemEntity>> item : map.entrySet()) {
-            SyncKingdeeDTO.B2CSoOutstockDTO info = handleWmsSoOutstock(entity, item.getKey(), item.getValue());
+        //不需要管的sku
+        List<SkuVO> noInventorySkuList = plmTaskFeign.getNoInventorySku();
+        //对应不需要的验证的sku no list
+        List<String> noInventorySkuNoList = noInventorySkuList.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
+        //获取到销售出库单的信息
+        SyncKingdeeDTO.B2CSoOutstockDTO info = handleWmsSoOutstock(entity, noInventorySkuNoList);
             SoOutstockEntity soOutstock = info.getSoOutstockEntity();
             List<SoOutstockDetailEntity> detailList = soOutstock.getDetailList();
             String flagId = info.getFlagId();
             if (CollectionUtils.isNotEmpty(detailList)) {
                 //当是审核通过的时候
-                if (entity.getFDocumentStatus().equals("C")) {
+            if ("C".equals(entity.getFDocumentStatus())) {
                     //当已存在 就删除以前的  并回滚库存
                     if (StringUtils.isNotBlank(flagId)) {
                         //回滚库存
@@ -102,10 +94,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
                         soOutstockService.removeById(flagId);
                         soOutstockDetailService.removeByMainIdList(Arrays.asList(flagId));
-                        redisService.deleteObject(redisKey);
                     }
 
-                }
                 //保存销售出库单
                 soOutstockService.save(soOutstock);
                 //保存销售出库单详情
@@ -114,39 +104,26 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getMembers())) {
                     inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
                 }
-
-                redisService.setCacheObject(redisKey, soOutstock.getId(), 7L, TimeUnit.DAYS);
-
-            } else {
-                //当有的情况下
-                if (StringUtils.isNotBlank(flagId)) {
-                    //回滚库存
-                    InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_OUTSTOCK, Arrays.asList(flagId));
-                    inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-                    soOutstockService.removeById(flagId);
-                    soOutstockDetailService.removeByMainIdList(Arrays.asList(flagId));
-                    redisService.deleteObject(redisKey);
-                }
             }
 
         }
     }
 
 
-
-
-
     /**
      * 处理wms 销售出库单需要的数据
      *
-     * @param detailList
+     * @param noInventorySkuNoList 不需要的校验的skuno
      * @return com.erp.model.wms.entity.SoOutstockEntity
      * @author yl
      * @date 2023-07-01 10:56
      */
-    private SyncKingdeeDTO.B2CSoOutstockDTO handleWmsSoOutstock(KingdeeDeliveryDetailEntity entity, String fStockNumber, List<KingdeeDeliveryDetailItemEntity> detailList) {
+    private SyncKingdeeDTO.B2CSoOutstockDTO handleWmsSoOutstock(KingdeeDeliveryDetailEntity entity, List<String> noInventorySkuNoList) {
         SyncKingdeeDTO.B2CSoOutstockDTO result = new SyncKingdeeDTO.B2CSoOutstockDTO();
         List<KingdeeDeliveryDetailItemEntity> kingdeeDetailList = entity.getKingdeeOutStockItemEntityList();
+        //仓库编码
+        String fStockNumber = entity.getFStockerNumber();
+
         //金蝶的仓库code
         List<String> kingdeeWarehouseCodeList = kingdeeDetailList.stream().map(KingdeeDeliveryDetailItemEntity::getFStockNumber).distinct().collect(Collectors.toList());
         /**
@@ -154,34 +131,16 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
          */
         List<String> skuNoList = kingdeeDetailList.stream().map(KingdeeDeliveryDetailItemEntity::getFMaterialNumber).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
-        //仓库的
-        List<WarehouseEntity> warehouseList = warehouseService.listByKingdeeCodeList(kingdeeWarehouseCodeList);
-
-        WarehouseEntity warehouse = warehouseList.stream().filter(w -> w.getKingdeeWarehouseCode().
-                equals(fStockNumber)).findFirst().orElse(null);
-        if (Objects.isNull(warehouse)) {
-            throw new ServiceException(ApiError.ERROR_92054, fStockNumber);
-        }
-
-
         String b2c = BillTypeEnum.B2C.getCode();
         ApproveStatusEnum statusEnum = ApproveStatusEnum.APPROVE;
         String sourceType = SourceTypeEnum.SAL_OUTSTOCK.getCode();
-
         //销售出库单
         InventorySourceTypeEnum sourceTypeEnum = InventorySourceTypeEnum.SO_OUTSTOCK;
         String code = entity.getFBillNo();
-        String redisKey = StrUtil.format(RedisKeyConstant.KINGDEE_XSCK,code);
-        String flagId = redisService.getCacheObject(redisKey);
-        if (StringUtils.isBlank(flagId)) {
-            flagId = soOutstockService.getByCode(code);
-        }
-
+        String flagId = soOutstockService.getByCode(code);
         result.setFlagId(flagId);
         SoOutstockEntity soOutstock = new SoOutstockEntity();
         soOutstock.setOrderType(b2c);
-        String warehouseId = warehouse.getId();
-
         //单据编号
         soOutstock.setCode(code);
         //运输单号
@@ -191,15 +150,17 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setWarehouseKeeperName(warehouseKeeperName);
         soOutstock.setApproveStatus(statusEnum);
         soOutstock.setSourceType(sourceType);
-        soOutstock.setWarehouseName(warehouse.getName());
-        soOutstock.setWarehouseId(warehouseId);
-        soOutstock.setWarehouseOrgId(warehouse.getOrgId());
+        String warehouseOrgId = "";
+        soOutstock.setWarehouseOrgId(warehouseOrgId);
         String id = IdWorker.getIdStr();
         soOutstock.setId(id);
-        List<SoOutstockDetailEntity> addDetailList = new ArrayList<>(detailList.size());
+        LocalDate now = LocalDate.now();
+        List<SoOutstockDetailEntity> addDetailList = new ArrayList<>(kingdeeDetailList.size());
         List<InOutStockDTO> inOutStockList = new ArrayList<>();
-        for (KingdeeDeliveryDetailItemEntity detail : detailList) {
+        for (KingdeeDeliveryDetailItemEntity detail : kingdeeDetailList) {
             String skuNo = detail.getFMaterialNumber();
+            //是否扣减库存 true 就要
+            Boolean isDeduction = !noInventorySkuNoList.contains(skuNo);
             String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).
                     findFirst().map(SkuVO::getSkuId).orElse("");
             if (StringUtils.isBlank(skuId)) {
@@ -216,19 +177,39 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             Integer actualQty = Integer.parseInt(realQty.split("\\.")[0]);
             detailEntity.setActualQty(actualQty);
             detailEntity.setPlanQty(actualQty);
+            String warehouseId = "";
+            String warehouseName = "";
+            //表示要
+            if (isDeduction) {
+                //仓库的
+                List<WarehouseEntity> warehouseList = warehouseService.listByKingdeeCodeList(kingdeeWarehouseCodeList);
+                WarehouseEntity warehouse = warehouseList.stream().filter(w -> w.getKingdeeWarehouseCode().
+                        equals(fStockNumber)).findFirst().orElse(null);
+                //并且扣库存 才执行
+                if (Objects.isNull(warehouse)) {
+                    throw new ServiceException(ApiError.ERROR_92054, fStockNumber);
+                } else {
+                    warehouseId = warehouse.getId();
+                    warehouseName = warehouse.getName();
+                }
+            }
+            detailEntity.setWarehouseId(warehouseId);
+            detailEntity.setWarehouseName(warehouseName);
             addDetailList.add(detailEntity);
-
+            //要扣除库存
+            if (isDeduction) {
             InOutStockDTO inOutStock = new InOutStockDTO();
             inOutStock.setSourceId(id);
             inOutStock.setSourceDetailId(detailId);
             inOutStock.setSourceType(sourceTypeEnum);
-            inOutStock.setBillDate(LocalDate.now());
+                inOutStock.setBillDate(now);
             inOutStock.setQty(actualQty);
             inOutStock.setSkuId(skuId);
             inOutStock.setSkuNo(skuNo);
             inOutStock.setSourceCode(code);
             inOutStock.setWarehouseId(warehouseId);
             inOutStockList.add(inOutStock);
+            }
 
         }
 
@@ -239,7 +220,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         InventoryInOutStockRuleDTO inventoryInOutStockRuleDTO = new InventoryInOutStockRuleDTO();
         inventoryInOutStockRuleDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
         inventoryInOutStockRuleDTO.setMembers(inOutStockList);
-
         List<TransactionRuleDTO> ruleList = new ArrayList<>(1);
         TransactionRuleDTO transactionRule = new TransactionRuleDTO();
         transactionRule.setInventoryStatus(InventoryStatusEnum.USABLE);

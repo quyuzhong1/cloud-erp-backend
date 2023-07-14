@@ -72,6 +72,10 @@ public class CustomerDTO implements Serializable {
          */
         private List<String> useOrgIdList;
 
+        /**
+         * 销售人 id 集合
+         */
+        private List<String> sellerIdList;
 
         /**
          * 创建人 id 集合
@@ -127,6 +131,10 @@ public class CustomerDTO implements Serializable {
          */
         private String shortName;
 
+        /**
+         * 销售员
+         */
+        private String sellerName;
 
         /**
          * 审核状态code

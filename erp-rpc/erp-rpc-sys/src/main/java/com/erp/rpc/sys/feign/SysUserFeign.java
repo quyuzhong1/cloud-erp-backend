@@ -448,4 +448,12 @@ public interface SysUserFeign {
     @GetMapping("/feign/currency/list")
     List<DictCurrencyEntity> currencyList();
 
+
+    /**
+     * 根据用户 获取到部门的负责人
+     * @param userIdList
+     * @return
+     */
+    @PostMapping("/feign/dept/listLeadByUserIdList")
+    List<String> listLeadByUserIdList(List<String> userIdList);
 }
