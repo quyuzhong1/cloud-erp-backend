@@ -36,5 +36,10 @@ public class SysDepartmentUserNumberDTO implements Serializable {
      */
     private String userHeadIcon;
 
+    /**
+     * 部门id 的父id
+     */
+    private String deptPid;
+
 
 }

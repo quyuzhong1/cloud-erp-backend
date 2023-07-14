@@ -570,6 +570,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             }
             // 判断是否在明细表中已经存在的sku（增加仓位判断）
             String skuId = updateDTO.getSkuId();
+            /*
             List<InitStockDetailEntity> detailEntities = initStockDetailService.findDetail(mainId, skuId);
             if(CollUtil.isNotEmpty(detailEntities)) {
                 for(InitStockDetailEntity initStockDetailEntity : detailEntities) {
@@ -578,6 +579,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                     }
                 }
             }
+             */
             // 同一个仓库同一个仓位相同SKU仅可添加一次（不包括已作废单据）,修改需排除本身
             String warehouseLocationCode = StrUtils.null2EmptyWithTrim(updateDTO.getWarehouseLocation());
             if(StrUtils.isNotEmpty(warehouseLocationCode)) {

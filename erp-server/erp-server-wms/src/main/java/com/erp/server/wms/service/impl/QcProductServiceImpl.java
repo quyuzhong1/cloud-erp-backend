@@ -3,6 +3,8 @@ package com.erp.server.wms.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.QcProductDTO;
@@ -53,7 +55,10 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void add(String billId, QcProductDTO.AddDTO qcProduct) {
+    public void add(String billId, QcProductDTO.AddDTO qcProduct,String skuId) {
+        if(StringUtils.isBlank(skuId)){
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
         QcProductEntity qcProductEntity = new QcProductEntity();
         BeanMapper.copy(qcProduct, qcProductEntity);
         String id = qcProduct.getId();
@@ -61,10 +66,11 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
             id = IdWorker.getIdStr();
         }
         qcProductEntity.setMainId(billId);
+        qcProductEntity.setSkuId(skuId);
         qcProductEntity.setId(id);
-        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(qcProduct.getSkuId()));
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(skuId));
 
-        SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(qcProduct.getSkuId())).findFirst().orElse(null);
+        SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
         if(skuVO!=null){
             qcProductEntity.setProductGrade(skuVO.getProductGrade());
             qcProductEntity.setVariantProperty(skuVO.getVariantProperty());

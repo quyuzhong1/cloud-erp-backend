@@ -212,7 +212,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         LinkedList<String> queryFilters = new LinkedList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         //审核状态
-        queryFilters.add(StrUtil.format(" FDocumentStatus in ({})", "'B','C','D'"));
+        queryFilters.add(StrUtil.format(" FDocumentStatus in ({})", "'C'"));
         // 过滤组织内订单
         queryFilters.add(StrUtil.format(" FISGENFORIOS = {}", "0"));
         String filterStr = String.join(" and ", queryFilters);
@@ -227,8 +227,8 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
                 "FEntity_FENTRYID,FBillAllAmount,FBillAllAmount_LC,FAllAmount,FAllAmount_LC,FAmount_LC,FTaxAmount,FTaxAmount_LC,FBillTaxAmount,FEntryTaxAmount," +
                 "FSrcBillNo,FCustMatName,F_ulz_BaseProperty1,FMaterialID,FMaterialID.FNumber,FMaterialID.FName,FStockLocID," +
                 "FBarcode,FMateriaModel,FMateriaType,FRealQty,FUnitID.FName,FPrice,FIsFree,FArrivalStatus,FArrivalDate," +
-                "FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,FStockID.FNumber,F_ulz_Text1,FEntryCostAmount,FEntrynote,FSrcBillNo,FSrcType,FTaxPrice," +
-                "FCostPrice,FCostAmount_LC,FSalCostPrice,FDocumentStatus,F_ULZ_data_sources";
+                "FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,FStockID.FNumber,F_ulz_Text1,FEntryCostAmount,FEntrynote,FSrcType,FTaxPrice," +
+                "FCostPrice,FCostAmount_LC,FSalCostPrice,F_ULZ_data_sources";
 
         Boolean dataSign = true;
         //当前页数
@@ -238,7 +238,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         Integer pageSize = 10000;
         List<Map<String, Object>> resultAll = new ArrayList<>();
         while (dataSign) {
-            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(),1);
+            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
             List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
             XxlJobHelper.log("获取金蝶发货数据第[{}]页 有{}条记录", pageIndex, pageSize);
             if (result.size() < pageSize) {
