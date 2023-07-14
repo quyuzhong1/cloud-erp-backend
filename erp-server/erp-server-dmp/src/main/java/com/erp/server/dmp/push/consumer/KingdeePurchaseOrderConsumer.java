@@ -68,8 +68,8 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
 
     }
 
-        @Override
-        public void onMessage(Map<String, Object> map) {
+    @Override
+    public void onMessage(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.PURCHASE_ORDER.getCode();
         //业务id
@@ -142,7 +142,13 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
             ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            if (isAdd) {
+                //给明细id赋值
+                JSONArray jsonArray = setDetailIdForJSONObject(apiUtils,platformEntity, map, type);
+                //更新明细id
+                updateKingdeeDetailId(jsonArray);
+            }
         }
     }
 
