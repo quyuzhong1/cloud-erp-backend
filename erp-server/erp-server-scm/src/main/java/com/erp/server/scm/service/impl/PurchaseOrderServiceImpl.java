@@ -191,7 +191,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         PurchaseOrderEntity entity = new PurchaseOrderEntity();
         BeanMapperUtils.copy(dto, entity);
         //校验明细是否有重复sku
-        checkAddDetailsRepeatSku(dto.getDetails());
+        //checkAddDetailsRepeatSku(dto.getDetails());
         //处理数据id
         doOpHandleDataId(dto.getPurchaseUserId(), dto.getPurchaseDeptId(), dto.getPurchaseOrgId(), dto.getReceiveOrgId(), dto.getDeliveryWarehouseId(), entity);
         log.info("采购订单新增");
@@ -229,7 +229,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         PurchaseOrderEntity entity = new PurchaseOrderEntity();
         BeanMapperUtils.copy(dto, entity);
         //校验明细是否有重复sku
-        checkUpdateDetailsRepeatSku(dto.getDetails(), dto.getId());
+        //checkUpdateDetailsRepeatSku(dto.getDetails(), dto.getId());
         //处理数据id
         doOpHandleDataId(dto.getPurchaseUserId(), dto.getPurchaseDeptId(), dto.getPurchaseOrgId(), dto.getReceiveOrgId(), dto.getDeliveryWarehouseId(), entity);
 
