@@ -786,4 +786,16 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public List<SoReturnInstockEntity> listByCode(List<String> codeList) {
         return lambdaQuery().in(SoReturnInstockEntity::getCode, codeList).list();
     }
+
+
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId,String operate) {
+        return this.lambdaUpdate()
+                .eq(SoReturnInstockEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SoReturnInstockEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SoReturnInstockEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), SoReturnInstockEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(operate), SoReturnInstockEntity::getSyncOperate, operate)
+                .update();
+    }
 }
