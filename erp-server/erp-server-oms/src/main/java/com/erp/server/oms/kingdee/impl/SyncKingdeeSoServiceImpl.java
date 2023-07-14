@@ -1,6 +1,5 @@
 package com.erp.server.oms.kingdee.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
@@ -12,8 +11,9 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
-import com.erp.model.sys.dto.KingdeePostDTO;
+import com.erp.model.sys.entity.DeptKingdeeEntity;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -125,6 +125,17 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //销售组织的金蝶code
         String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
                 map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
+
+        //部门id
+        String salesDeptId = entity.getSalesDeptId();
+        DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdee = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+        findDeptKingdee.setOrgCode(salesOrgCode);
+        findDeptKingdee.setDeptId(salesDeptId);
+        DeptKingdeeEntity kingdeePost = kingdeeFeign.getDeptKingdee(findDeptKingdee);
+        if (kingdeePost != null) {
+            resultMap.put("deptCode", kingdeePost.getKingdeeDeptCode());
+        }
+
 
         //销售员
         String sellerId = entity.getSellerId();
