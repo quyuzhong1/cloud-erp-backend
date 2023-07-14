@@ -164,7 +164,7 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'B','C','D'"));
+        queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'C'"));
         queryFilters.add(StrUtil.format("FThirdSystem != '{}'", CommonConstants.SYSTEM));
         String filterStr = String.join(" and ",  queryFilters );
         filterStr = filterStr.concat(StrUtil.format(" and (( FModifyDate >= '{}' and FModifyDate <= '{}') ", sdf.format(lastTime),sdf.format(nextTime)));
