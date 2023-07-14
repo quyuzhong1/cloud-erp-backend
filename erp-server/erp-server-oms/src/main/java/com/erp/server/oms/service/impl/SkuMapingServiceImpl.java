@@ -362,19 +362,4 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
         List<SkuMapingEntity> resultList = this.lambdaQuery().eq(SkuMapingEntity::getIsExpire, Boolean.FALSE).list();
         return resultList;
     }
-
-    /**
-     * 根据skuId查询对照表
-     * @Author Luo_WG
-     * @Date 2023/7/13 11:33
-     * @param skuIds
-     * @return java.util.List<com.erp.model.oms.entity.SkuMapingEntity>
-     **/
-    @Override
-    public List<SkuMapingEntity> listBySkuId(List<String> skuIds) {
-        if (CollectionUtils.isEmpty(skuIds)) {
-            return new ArrayList<>();
-        }
-        return lambdaQuery().in(SkuMapingEntity::getProductSkuId, skuIds).list();
-    }
 }

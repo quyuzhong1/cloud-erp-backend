@@ -43,6 +43,7 @@ public class QcReportDetailDTO {
         /**
          * 质检说明
          */
+        @NotBlank(message = "质检说明不能为空")
         @Size(max = 250, message = "质检说明不能超过250个字符", groups = {UpdateGroup.class, AddGroup.class})
         private String description;
 
@@ -50,6 +51,7 @@ public class QcReportDetailDTO {
          * 质检结果
          * 来源 http://172.16.100.11:3002/project/92/interface/api/7186
          */
+        @NotBlank(message = "质检结果不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private String resultDict;
 
         /**

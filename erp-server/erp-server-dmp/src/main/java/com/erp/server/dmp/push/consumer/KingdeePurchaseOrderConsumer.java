@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -68,8 +69,9 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
 
     }
 
-        @Override
-        public void onMessage(Map<String, Object> map) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void onMessage(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.PURCHASE_ORDER.getCode();
         //业务id
@@ -142,7 +144,13 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
             ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            if (isAdd) {
+                //给明细id赋值
+                JSONArray jsonArray = setDetailIdForJSONObject(apiUtils,platformEntity, map, type);
+                //更新明细id
+                updateKingdeeDetailId(jsonArray);
+            }
         }
     }
 

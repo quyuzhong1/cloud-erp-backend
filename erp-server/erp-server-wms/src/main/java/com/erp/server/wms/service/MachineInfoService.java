@@ -8,7 +8,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.MachineInfoEntity;
-import com.erp.model.wms.entity.TransferOutEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -167,13 +166,4 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @return
      */
     List<MachineInfoEntity> findBySourceTypeAndSourceCode(String sourceType, String sourceCode);
-
-    /**
-     * 根据来源单据ids查询
-     * @Author Luo_WG
-     * @Date 2023/7/10 16:43
-     * @param ids ids
-     * @return java.util.List<com.erp.model.wms.entity.MachineInfoEntity>
-     **/
-    List<MachineInfoEntity> listBySourceIds(List<String> ids);
 }

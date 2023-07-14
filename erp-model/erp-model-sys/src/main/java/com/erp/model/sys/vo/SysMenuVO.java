@@ -65,11 +65,6 @@ public class SysMenuVO implements Serializable {
      */
     private Date updateTime;
 
-    /**
-     * 是否需要数据权限
-     */
-    private Boolean isAuth;
-
     @JsonInclude(value= JsonInclude.Include.NON_NULL)
     private List<SysMenuVO> childrenList;
 }

@@ -78,13 +78,4 @@ public interface SkuMapingService extends SuperService<SkuMapingEntity> {
      * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SkuMapingDTO.ProductSkuInfoDTO>
      */
     PagingVO<SkuMapingDTO.ProductSkuInfoDTO> listPaging(PagingDTO<SkuMapingDTO.ListParamDTO> dto);
-
-    /**
-     * 根据skuId查询对照表
-     * @Author Luo_WG
-     * @Date 2023/7/13 11:33
-     * @param skuIds
-     * @return java.util.List<com.erp.model.oms.entity.SkuMapingEntity>
-     **/
-    List<SkuMapingEntity> listBySkuId(List<String> skuIds);
 }

@@ -513,19 +513,6 @@ public class PurchaseOrderController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-    /**
-     * 网采合同导出
-     * @Author Luo_WG
-     * @Date 2023/7/13 16:29
-     * @param id
-     * @param response
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @GetMapping("/exportPurchaseContract")
-    public ApiResult exportPurchaseContract(@RequestParam("id") String id, HttpServletResponse response) {
-        Boolean flag = purchaseOrderService.exportPurchaseContract(id,response);
-        return flag == true ? success() : failure();
-    }
 
 
 }

@@ -250,4 +250,11 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
      **/
     List<SoOutstockDTO.PrintDTO> print(List<String> ids);
+
+    /**
+     * 临时修复数据查询id
+     * @return
+     */
+    List<String> getIdsByTemp();
+
 }
