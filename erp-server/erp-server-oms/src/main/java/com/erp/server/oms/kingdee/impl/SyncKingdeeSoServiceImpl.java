@@ -153,14 +153,14 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                 resultMap.put("sellerCode", kingSellerInfo.getKingdeePostCode());
                 resultMap.put("seller", kingSellerInfo.getKingdeeUserName());
                 //当为空的时候 就取岗位表的
-                if (StringUtils.isBlank(deptCode)){
+                if (StringUtils.isBlank(deptCode)) {
 
                     KingdeePostDTO.FindUserKingdeePostDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostDTO();
                     findUserPostKingdee.setKingdeePostCode(kingSellerInfo.getKingdeePostCode());
                     findUserPostKingdee.setOrgCode(salesOrgCode);
                     KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePostByPostCode(findUserPostKingdee);
-                    if(kingdeePost!=null){
-                        resultMap.put("deptCode", kingdeePost.getKingdeeDeptCode());
+                    if (kingdeePost != null) {
+                        deptCode = kingdeePost.getKingdeeDeptCode();
                     }
                 }
             }
