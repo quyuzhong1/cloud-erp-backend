@@ -329,6 +329,8 @@ public class SoDetailDTO implements Serializable {
 
         private String skuId;
 
+        private String desc;
+
 
     }
 

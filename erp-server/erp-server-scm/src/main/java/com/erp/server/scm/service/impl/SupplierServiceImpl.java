@@ -675,21 +675,19 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     public Boolean disApprove(List<String> ids) {
         List<SupplierEntity> list = this.listByIds(ids);
         //审核中
-        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+//        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
 
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         //待提交
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        List<String> statusList = new ArrayList<>(2);
-        statusList.add(approveIngStatus);
-        statusList.add(approveStatus);
-        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
+//        List<String> statusList = new ArrayList<>(2);
+//        statusList.add(approveIngStatus);
+//        statusList.add(approveStatus);
+        long count = list.stream().filter(s -> !approveStatus.equals(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveIngStatus))).
-                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
@@ -697,9 +695,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
         //反审核
         if (result) {
-            //添加日志
-            String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
-            batchAddModuleOperateLog(ingContent, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "状态变更");
             //审核通过
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
