@@ -358,6 +358,11 @@ public class PurchasePriceChangeDTO implements Serializable {
         private String purchaseOrgName;
 
         /**
+         * 审核人名称
+         */
+        private String approveUserName;
+
+        /**
          * 创建人名称
          */
         private String createUserName;
