@@ -623,7 +623,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", skuId, item.getSkuNo());
                 item.setIsScarce(Boolean.FALSE);
                 item.setScarceQty(0);
-                item.setDeliveryQty(0);
             }
             if (contains) {
                 item.setCode("");
