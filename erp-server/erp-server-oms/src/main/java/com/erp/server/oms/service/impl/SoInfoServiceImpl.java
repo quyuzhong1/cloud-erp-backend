@@ -1937,10 +1937,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             // 未找到汇率直接返回
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 skuCostProfitResult.setPurchasePrice(BigDecimal.ZERO);
-                skuCostProfitResult.setExchangeRate(BigDecimal.ZERO);
                 return skuCostProfitResult;
             } else {
-                skuCostProfitResult.setExchangeRate(rate);
                 // 转换成人民币采购单价
                 purchasePrice = rate.multiply(skuCostProfitResult.getPurchasePrice()).setScale(4, BigDecimal.ROUND_HALF_UP);
             }
