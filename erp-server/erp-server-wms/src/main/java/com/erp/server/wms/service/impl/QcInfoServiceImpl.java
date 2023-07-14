@@ -1871,10 +1871,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 qcDailyReportDTO.setBoxHeight(item.getBoxHeight());
                 qcDailyReportDTO.setProductNetWeight(item.getProductNetWeight());
                 qcDailyReportDTO.setBoxWeight(item.getBoxWeight());
-
-                Integer unitQty = skuVOList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getUnitQty())).orElse(null);
-                qcDailyReportDTO.setFullBoxQty(unitQty);
+                qcDailyReportDTO.setFullBoxQty(item.getBoxQty());
 
                 String remark = billRemarkList.stream().filter(r -> r.getMainId().equals(item.getId())).
                         findFirst().flatMap(obj -> Optional.ofNullable(obj.getRemark())).orElse("");

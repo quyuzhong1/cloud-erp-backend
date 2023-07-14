@@ -1,10 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.vo.LoginUser;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.plm.dto.ProductPackShowDTO;
@@ -190,7 +187,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
             }
             SkuVO detail = productDetailList.stream().filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
             if (detail != null) {
-                packVO.setProductName(detail.getSpuName());
+                packVO.setProductName(detail.getSkuName());
                 packVO.setVariantProperty(detail.getVariantProperty());
                 String skuImagesUrl = detail.getSkuImagesUrl();
                 if (StringUtils.isNotBlank(skuImagesUrl)) {
