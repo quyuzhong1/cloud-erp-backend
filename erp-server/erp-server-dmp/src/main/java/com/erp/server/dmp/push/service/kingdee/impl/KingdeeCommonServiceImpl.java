@@ -470,7 +470,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     public void insertLogWriteBackSyncKingdeeStatus(PlatformEntity platformEntity, String businessId,
                                                     String jsonData, String msg, Integer type, Integer status) {
         //新增任务
-        insertSyncTask(platformEntity,businessId,jsonData,type, status);
+        insertSyncTask(platformEntity,businessId,jsonData,type, status,msg);
         //新增日志
         insertSyncLog(platformEntity, businessId, jsonData, msg, type, status);
         //更新金蝶同步状态
@@ -490,7 +490,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      * @param status
      */
     private void insertSyncTask (PlatformEntity platformEntity,String businessId,
-                                 String jsonData, Integer type, Integer status) {
+                                 String jsonData, Integer type, Integer status,String msg) {
 
         ApiSyncTaskDTO apiSyncTaskDTO = new ApiSyncTaskDTO();
         apiSyncTaskDTO.setApiPlatformId(platformEntity.getId());
@@ -499,6 +499,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         apiSyncTaskDTO.setRequestParamJson(jsonData);
         apiSyncTaskDTO.setBusinessId(businessId);
         apiSyncTaskDTO.setStatus(status);
+        apiSyncTaskDTO.setMsg(msg);
         apiSyncTaskService.addOrUpdateApiSyncTask(apiSyncTaskDTO);
     }
 

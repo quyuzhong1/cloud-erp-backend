@@ -62,6 +62,11 @@ public class ApiSyncTaskDTO {
     private String requestParamJson;
 
     /**
+     * 返回信息
+     */
+    private String msg;
+
+    /**
      * 请求次数(重试)
      */
     private Integer retryCount;
