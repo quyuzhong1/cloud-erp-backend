@@ -114,7 +114,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
 
         // 拉取新数据存储到mongodb中
         if(CollectionUtil.isNotEmpty(insertList)){
-            log.warn("本次拉取到马帮发货单数据没有需要新增的数据");
+            log.warn("本次拉取到马帮发货单数据需要新增{}条数据", insertList.size());
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_MABANG_DELIVERY);
         }
 
@@ -129,15 +129,21 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
 
-        // 异步推送到MQ
-        entityToMqlist.stream().peek(msg ->{
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_FBA_DELIVERY_TAG.getName(),
-                    msg, StrUtil.uuid().toLowerCase());
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-            }
-        }).collect(Collectors.toList());
-
+        if(CollUtil.isEmpty(entityToMqlist)) {
+            log.warn("马帮发货单列表, 清洗后 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+            return;
+        }
+        if(CollUtil.isNotEmpty(entityToMqlist)) {
+            log.warn("马帮发货单列表, 需推送到MQ 共{}条数据", entityToMqlist.size());
+            // 异步推送到MQ
+            entityToMqlist.stream().peek(msg ->{
+                SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_FBA_DELIVERY_TAG.getName(),
+                        msg, StrUtil.uuid().toLowerCase());
+                if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
+                    throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                }
+            }).collect(Collectors.toList());
+        }
     }
 
     @Override
@@ -251,14 +257,14 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
             //sku
             String skuNo = deliveryItemEntity.getSku();
             dmpFbaDeliveryDetailEntity.setSkuNo(skuNo);
-            // 只取组合品的（因为马帮那边的sku不能修改，所以不用判断sku种类的变化）
+            // 只取加工品的（因为马帮那边的sku不能修改，所以不用判断sku种类的变化）
             List<DmpBomEntity> bomList = dmpBomService.findBom(skuNo, PlatformEnum.MABANG.getDesc(), "machining");
             if(CollUtil.isNotEmpty(bomList)) {
-                log.warn("SKU：{}是组合品，需要推送到ERP生成加工单", skuNo);
+                log.warn("SKU：{}是加工组合品，需要推送到ERP生成加工单", skuNo);
                 dmpFbaDeliveryDetailEntity.setBomList(bomList);
                 items.add(dmpFbaDeliveryDetailEntity);
             } else {
-                log.warn("SKU：{}不是组合品，不需要推送到ERP生成加工单", skuNo);
+                log.warn("SKU：{}不是加工组合品，不需要推送到ERP生成加工单", skuNo);
             }
         }
         return items;
