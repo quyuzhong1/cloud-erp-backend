@@ -158,20 +158,6 @@
                     </if>
                 </foreach>
             </trim>
-            <trim prefix="receive_org_id = case" suffix="end,">
-                <foreach collection="list" index="index" item="item">
-                    <if test="item.receiveOrgId != null">
-                        when id = #{item.id,jdbcType=CHAR} then #{item.receiveOrgId,jdbcType=CHAR}
-                    </if>
-                </foreach>
-            </trim>
-            <trim prefix="receive_org_name = case" suffix="end,">
-                <foreach collection="list" index="index" item="item">
-                    <if test="item.receiveOrgName != null">
-                        when id = #{item.id,jdbcType=CHAR} then #{item.receiveOrgName,jdbcType=VARCHAR}
-                    </if>
-                </foreach>
-            </trim>
             <trim prefix="is_gift = case" suffix="end,">
                 <foreach collection="list" index="index" item="item">
                     <if test="item.isGift != null">
@@ -211,27 +197,6 @@
                 <foreach collection="list" index="index" item="item">
                     <if test="item.receiveQty != null">
                         when id = #{item.id,jdbcType=CHAR} then #{item.receiveQty,jdbcType=INTEGER}
-                    </if>
-                </foreach>
-            </trim>
-            <trim prefix="stock_in_qty = case" suffix="end,">
-                <foreach collection="list" index="index" item="item">
-                    <if test="item.stockInQty != null">
-                        when id = #{item.id,jdbcType=CHAR} then #{item.stockInQty,jdbcType=INTEGER}
-                    </if>
-                </foreach>
-            </trim>
-            <trim prefix="delivery_qty = case" suffix="end,">
-                <foreach collection="list" index="index" item="item">
-                    <if test="item.deliveryQty != null">
-                        when id = #{item.id,jdbcType=CHAR} then #{item.deliveryQty,jdbcType=INTEGER}
-                    </if>
-                </foreach>
-            </trim>
-            <trim prefix="return_qty = case" suffix="end,">
-                <foreach collection="list" index="index" item="item">
-                    <if test="item.returnQty != null">
-                        when id = #{item.id,jdbcType=CHAR} then #{item.returnQty,jdbcType=INTEGER}
                     </if>
                 </foreach>
             </trim>
