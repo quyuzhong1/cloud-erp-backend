@@ -211,14 +211,13 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         LinkedList<String> queryFilters = new LinkedList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        queryFilters.add(StrUtil.format(" FModifyDate >= '{}'", sdf.format(lastTime.minusMinutes(2))));
-        queryFilters.add(StrUtil.format(" FModifyDate <= '{}'", sdf.format(nextTime)));
         //审核状态
         queryFilters.add(StrUtil.format(" FDocumentStatus in ({})", "'B','C','D'"));
         // 过滤组织内订单
         queryFilters.add(StrUtil.format(" FISGENFORIOS = {}", "0"));
         String filterStr = String.join(" and ", queryFilters);
-        filterStr = filterStr.concat(StrUtil.format(" OR (FApproveDate >= '{}' and FApproveDate < '{}')", sdf.format(lastTime), sdf.format(nextTime)));
+        filterStr = filterStr.concat(StrUtil.format(" and (( FModifyDate >= '{}' and FModifyDate <= '{}') ", sdf.format(lastTime),sdf.format(nextTime)));
+        filterStr = filterStr.concat(StrUtil.format(" OR (FApproveDate >= '{}' and FApproveDate < '{}'))", sdf.format(lastTime), sdf.format(nextTime)));
         log.info("拉取金蝶条件为>>>>>>>>>>{}", filterStr);
         String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillNo,FSoOrDerNo,FDate,FSaleOrgId,FSaleOrgId.FName,FCarriageNO,FStockerID.FNumber,FStockerID.FName," +
                 "FCustomerID,FCustomerID.FName,FCustomerID.FNumber,FSaleDeptID.FName,FSalesManID,FSalesManID.FName,FSalesManID.FNumber,FReceiverID.FName," +
