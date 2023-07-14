@@ -197,13 +197,11 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             jsonObject.set("taxPrice", purchaseOrderDetailEntity.getTaxPrice());
             //采购编号
             jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
-
             //明细id
             jsonObject.set("detailId", detail.getId());
             //销售订单金蝶id
-            jsonObject.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
-            //明细id
-            jsonObject.set("kingdeeDetailId", detail.getKingdeeDetailId());
+            jsonObject.set("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
+
             //销售单金蝶明细id
             jsonObject.set("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
 

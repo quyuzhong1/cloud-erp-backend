@@ -2037,6 +2037,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public List<SoInfoDTO.PrintDTO> print(List<String> ids) {
         List<SoInfoDTO.PrintDTO> printDTOList = new ArrayList<>();
         List<SoInfoEntity> soInfoEntities = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(soInfoEntities)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
         //获取客户id集合
         List<String> customerIds = soInfoEntities.stream().map(SoInfoEntity::getCustomerId).distinct().collect(Collectors.toList());
         //根据客户id集合查询客户信息
