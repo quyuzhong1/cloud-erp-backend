@@ -737,17 +737,26 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
             for (SoDeliveryNoticeDetailEntity detailEntity : detailEntities) {
 
-                if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
-                    log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detailEntity.getSkuId(), detailEntity.getSkuNo());
-                    continue;
-                }
-
                 //获取核算公司
                 SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
                 //查询可用库存生成拣货明细
                 PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(warehouseEntity.getOrgId(), sysAccountingCompanyEntity.getCompanyName(), entity.getWarehouseId(),
                         entity.getWarehouseName(), detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getDeliveryQty());
-                List<InventoryEntity> inventoryList = inventoryService.listPickingDetailInventory(dto);
+
+                List<InventoryEntity> inventoryList = Lists.newArrayList();
+                if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
+                    InventoryEntity inventoryEntity = new InventoryEntity();
+                    inventoryEntity.setWarehouseId(dto.getWarehouseId());
+                    inventoryEntity.setOrgId(dto.getOrgId());
+                    inventoryEntity.setWarehouseLocation("");
+                    inventoryEntity.setQty(dto.getQty());
+                    inventoryEntity.setSkuId(dto.getSkuId());
+                    inventoryEntity.setSkuNo(dto.getSkuNo());
+                    inventoryEntity.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+                    inventoryList.add(inventoryEntity);
+                } else {
+                    inventoryList = inventoryService.listPickingDetailInventory(dto);
+                }
 
                 List<PickingDetailDTO.CommonDTO> pickingDetailList = BeanMapperUtils.copyList(PickingDetailDTO.CommonDTO.class, inventoryList);
 
