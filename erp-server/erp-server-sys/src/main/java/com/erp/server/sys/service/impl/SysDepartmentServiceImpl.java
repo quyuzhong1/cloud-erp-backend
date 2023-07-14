@@ -15,6 +15,8 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.entity.SysDepartmentUserEntity;
+import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.mapper.SysDepartmentMapper;
 import com.erp.server.sys.service.SysCodeService;
 import com.erp.server.sys.service.SysDepartmentService;
@@ -382,6 +384,30 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             return Collections.emptyList();
         }
         return this.listByIds(deptIdList);
+    }
+
+
+    /**
+     * 根据用户ｉｄ集合获取到负责人
+     *
+     * @param userIdList
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-07-14 17:26
+     */
+    @Override
+    public List<String> listLeadByUserIdList(List<String> userIdList) {
+        if (CollectionUtils.isEmpty(userIdList)) {
+            return Collections.emptyList();
+        }
+
+        List<SysDepartmentUserNumberDTO> deptUserList = sysDepartmentUserService.listDeptUserByUserIdList(userIdList);
+        //父部门id s
+        List<String>  deptPidList=deptUserList.stream().map(SysDepartmentUserNumberDTO::getDeptPid).collect(Collectors.toList());
+        List<SysDepartmentUserEntity>  departmentUserList=  sysDepartmentUserService.listByDepartmentIds(deptPidList);
+        List<String> resultList=departmentUserList.stream().filter(d-> SysConstant.YES_STATE.equals(d.getLeadState())).
+                map(SysDepartmentUserEntity::getUserId).collect(Collectors.toList());
+        return resultList;
     }
 
     @Override

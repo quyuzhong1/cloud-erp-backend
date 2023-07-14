@@ -1,8 +1,8 @@
 package com.erp.server.oms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.sys.dto.DictBasicDTO;
 
 import java.util.List;
 

@@ -322,4 +322,8 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.PrintDTO>
      **/
     List<SoInfoDTO.PrintDTO> print(List<String> ids);
+
+
+
+
 }

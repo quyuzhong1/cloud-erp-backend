@@ -3,10 +3,13 @@ package com.erp.server.oms.controller.api;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.sys.dto.DictBasicDTO;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.server.oms.service.DictBasicService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;

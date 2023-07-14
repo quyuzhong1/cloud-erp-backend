@@ -1,10 +1,10 @@
 package com.erp.server.oms.controller.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.CustomerSellerService;
