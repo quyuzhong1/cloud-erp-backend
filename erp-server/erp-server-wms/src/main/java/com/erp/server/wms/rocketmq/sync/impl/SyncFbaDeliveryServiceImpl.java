@@ -69,9 +69,21 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
     @Autowired
     private MachineDetailService machineDetailService;
 
+    /**
+     * 马帮平台加工品JG-开头的对应ERP的加工组合品不是JG-开头的
+     */
+    private static final String MACHINE_SKU_PREFIX = "JG-";
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void syncFbaDelivery(DmpFbaDeliveryEntity entity, String sourceType,  String syncTaskId) {
+        // 加工品处理（如果时JG-开头的需要去掉）
+        entity.getItemList().stream().forEach(item->{
+            if(StrUtils.isNotEmpty(item.getSkuNo()) && item.getSkuNo().startsWith(MACHINE_SKU_PREFIX) ) {
+                log.warn("马帮FBA发货单【{}】的加工组合品SKU【{}】是以JG-开头的", entity.getDeliveryNo(), item.getSkuNo());
+                item.setSkuNo(StrUtil.removePrefix(item.getSkuNo(), MACHINE_SKU_PREFIX));
+            }
+        });
         // 判断是否已经存在（一个FBA发货单不会生成多个加工单）
         log.warn("{}FBA发货单【{}】发货状态【{}】", entity.getPlatformSign(), entity.getDeliveryNo(), entity.getDeliveryStatus());
         List<MachineInfoEntity> machineInfoEntityList =  machineInfoService.findBySourceTypeAndSourceCode(sourceType, entity.getDeliveryNo());
