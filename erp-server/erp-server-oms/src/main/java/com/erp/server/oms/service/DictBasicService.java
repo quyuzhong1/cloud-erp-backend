@@ -1,8 +1,8 @@
 package com.erp.server.oms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.sys.dto.DictBasicDTO;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @param key
      * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
      */
-    List<DictBasicDTO.ViewDTO> getByKey(String key);
+    List<com.erp.model.oms.dto.DictBasicDTO.ViewDTO> getByKey(String key);
 
 
     /**
