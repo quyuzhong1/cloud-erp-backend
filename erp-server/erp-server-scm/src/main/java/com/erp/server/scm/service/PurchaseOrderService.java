@@ -189,7 +189,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 采购变更数据显示
      * @author Will
      * @date: 2023/3/31 14:29
-     * @param ids
+     * @param id
      * @return ViewDTO
      */
     PurchaseChangeDTO.ViewDTO viewPurchaseChange(List<String> ids);
