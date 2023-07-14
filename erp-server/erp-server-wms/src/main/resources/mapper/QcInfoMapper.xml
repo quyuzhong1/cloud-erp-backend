@@ -352,8 +352,11 @@
                 </foreach>
             </when>
             <otherwise>
-                <if test="params.searchType !=null and params.searchType!=''">
-                    AND qb.qc_status=#{params.searchType}
+                <if test="params.searchType !=null and params.searchType!='' and params.searchType != 'waitQc'">
+                    AND qb.qc_status = #{params.searchType}
+                </if>
+                <if test="params.searchType !=null and params.searchType!='' and params.searchType == 'waitQc'">
+                    AND qb.qc_status in ('draft', #{params.searchType})
                 </if>
                 <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
                     AND qb.purchase_order_code ilike concat('%', #{params.purchaseOrderCode} ,'%')
@@ -539,8 +542,11 @@
                 </foreach>
             </when>
             <otherwise>
-                <if test="params.searchType !=null and params.searchType!=''">
-                    AND qb.qc_status=#{params.searchType}
+                <if test="params.searchType !=null and params.searchType!='' and params.searchType != 'waitQc'">
+                    AND qb.qc_status = #{params.searchType}
+                </if>
+                <if test="params.searchType !=null and params.searchType!='' and params.searchType == 'waitQc'">
+                    AND qb.qc_status in ('draft', #{params.searchType})
                 </if>
                 <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
                     AND qb.purchase_order_code ilike concat('%', #{params.purchaseOrderCode} ,'%')
