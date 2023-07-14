@@ -106,11 +106,13 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         }
         List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailBySourceId(Arrays.asList(dto.getSourceId()));
 
+        /**
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = Lists.newArrayList();
         if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
             ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
         }
+         */
 
         List<SoReturnDetailEntity> list = new ArrayList<>();
         for (SoReturnDetailDTO.Add detailDto : dto.getDetailList()) {
@@ -119,6 +121,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(soDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
 
+            /**
             if(ignoreInventorySkuIds.contains(soDetailEntity.getSkuId())) {
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", soDetailEntity.getSkuId(), soDetailEntity.getSkuNo());
             } else {
@@ -126,7 +129,10 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                     throw new ServiceException(ApiError.ERROR_92009);
                 }
             }
-
+             */
+            if (actualQty < detailDto.getReturnQty() + returnQty) {
+                throw new ServiceException(ApiError.ERROR_92009);
+            }
             soReturnDetailEntity.setMainId(id);
             soReturnDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soReturnDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
@@ -167,11 +173,13 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailBySourceId(Arrays.asList(dto.getSourceId()));
         List<SoReturnDetailEntity> list = new ArrayList<>();
 
+        /**
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = Lists.newArrayList();
         if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
             ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
         }
+         */
 
         for (SoReturnDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
@@ -183,12 +191,18 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                 returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
+            /**
             if(ignoreInventorySkuIds.contains(soDetailEntity.getSkuId())) {
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", soDetailEntity.getSkuId(), soDetailEntity.getSkuNo());
             } else {
                 if (actualQty < detailDto.getReturnQty() + returnQty) {
                     throw new ServiceException(ApiError.ERROR_92009);
                 }
+            }
+             */
+
+            if (actualQty < detailDto.getReturnQty() + returnQty) {
+                throw new ServiceException(ApiError.ERROR_92009);
             }
 
             soReturnDetailEntity.setMainId(dto.getId());
