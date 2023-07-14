@@ -131,27 +131,15 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdee = new DeptKingdeeDTO.FindDeptKingdeeDTO();
         findDeptKingdee.setOrgCode(salesOrgCode);
         findDeptKingdee.setDeptId(salesDeptId);
-        DeptKingdeeEntity kingdeePost = kingdeeFeign.getDeptKingdee(findDeptKingdee);
-        if (kingdeePost != null) {
-            resultMap.put("deptCode", kingdeePost.getKingdeeDeptCode());
-        }
-
-
-        //销售员
-        String sellerId = entity.getSellerId();
+        DeptKingdeeEntity kingdeeDept = kingdeeFeign.getDeptKingdee(findDeptKingdee);
         String deptCode = "";
-
-        //当为空的时候 就取岗位表的
-        KingdeePostDTO.FindUserKingdeePostInfoDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostInfoDTO();
-        findUserPostKingdee.setUserId(sellerId);
-        findUserPostKingdee.setOrgCode(salesOrgCode);
-        KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePost(findUserPostKingdee);
-        if (kingdeePost != null) {
-            deptCode = kingdeePost.getKingdeeDeptCode();
+        if (kingdeeDept != null) {
+            deptCode = kingdeeDept.getKingdeeDeptCode();
         }
         resultMap.put("deptCode", deptCode);
 
-
+        //销售员
+        String sellerId = entity.getSellerId();
         //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
