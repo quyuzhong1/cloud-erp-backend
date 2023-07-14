@@ -191,7 +191,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         PurchaseApplicationEntity entity = new PurchaseApplicationEntity();
         BeanMapperUtils.copy(dto,entity);
         //校验明细是否有重复sku
-        //checkAddDetailsRepeatSku(dto.getDetails());
+        checkAddDetailsRepeatSku(dto.getDetails());
         //处理数据id
         doOpHandleDataId(dto.getApplyUserId(),dto.getApplyDeptId(),entity);
         log.info("采购申请单新增");
@@ -217,7 +217,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
         List<PurchaseApplicationDetailDTO.UpdateDTO> details = dto.getDetails();
         //校验明细是否有重复sku
-        //checkUpdateDetailsRepeatSku(details,dto.getId());
+        checkUpdateDetailsRepeatSku(details,dto.getId());
         //处理数据id
         doOpHandleDataId(dto.getApplyUserId(),dto.getApplyDeptId(),entity);
 

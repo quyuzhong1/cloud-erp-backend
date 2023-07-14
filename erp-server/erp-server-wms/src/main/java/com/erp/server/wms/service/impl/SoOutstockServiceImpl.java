@@ -26,7 +26,6 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
@@ -1254,5 +1253,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             printDTOList.add(printDTO);
         }
         return printDTOList;
+    }
+
+    @Override
+    public List<String> getIdsByTemp() {
+        return baseMapper.getIdsByTemp();
     }
 }

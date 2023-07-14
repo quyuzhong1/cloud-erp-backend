@@ -264,7 +264,6 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                         throw new ServiceException(ApiError.ERROR_92028);
                     }
                 }
-
             }
         } else {
             InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();

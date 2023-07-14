@@ -65,10 +65,7 @@ public class MenuEntity implements Serializable {
 
 	private String selectLightId;
 
-	/**
-	 * 是否需要数据权限
-	 */
-	private Boolean isAuth;
+
 
 
 }

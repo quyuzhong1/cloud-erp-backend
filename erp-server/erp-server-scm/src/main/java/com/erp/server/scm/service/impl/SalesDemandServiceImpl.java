@@ -146,7 +146,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         SalesDemandEntity entity = new SalesDemandEntity();
         BeanMapperUtils.copy(dto, entity);
         //校验明细是否有重复sku
-        //checkAddDetailsRepeatSku(dto.getDetails());
+        checkAddDetailsRepeatSku(dto.getDetails());
         //处理数据id
         doOpHandleDataId(dto.getApplyUserId(), dto.getApplyDeptId(), dto.getShopId(), entity);
         log.info("备货申请单新增");
@@ -171,7 +171,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         BeanMapperUtils.copy(dto, entity);
         List<SalesDemandDetailDTO.UpdateDTO> details = dto.getDetails();
         //校验明细是否有重复sku
-        //checkUpdateDetailsRepeatSku(details, dto.getId());
+        checkUpdateDetailsRepeatSku(details, dto.getId());
         //处理数据id
         doOpHandleDataId(dto.getApplyUserId(), dto.getApplyDeptId(), dto.getShopId(), entity);
 
