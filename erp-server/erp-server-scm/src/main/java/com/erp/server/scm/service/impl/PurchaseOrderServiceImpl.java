@@ -2111,11 +2111,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         sb.append(date);
         sb.append(name);
 
-        if (StringUtils.isBlank(contractDTO.getSettleMethod())) {
-            contractDTO.setSettleMethod("123");
-        }
         try {
-            new ExcelPrintUtils().patchExportT(contractDetailList, contractDTO, response, sb.toString(), excelPath);
+            new ExcelPrintUtils().patchExport(contractDetailList, contractDTO, response, sb.toString(), excelPath);
         } catch (IOException e) {
             log.error("销售单发票导出出错 {}", e);
             return Boolean.FALSE;
