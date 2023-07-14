@@ -1160,6 +1160,10 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private Integer sort;
         /**
+         * 图片
+         */
+        private String img;
+        /**
          * 物料编码
          */
         private String skuNo;
