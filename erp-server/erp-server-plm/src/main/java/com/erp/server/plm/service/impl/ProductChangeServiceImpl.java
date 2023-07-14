@@ -170,7 +170,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             throw new ServiceException(ApiError.ERROR_9030);
         }
         //产品经理上级
-        List<String> productManagerSupervisorList = sysUserFeign.listLeadByUserIdList(productManagerList);
+        List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
         if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
             throw new ServiceException(ApiError.ERROR_9031);
         }
@@ -201,7 +201,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         }
 
         //产品经理上级
-        List<String> productManagerSupervisorList = sysUserFeign.listLeadByUserIdList(productManagerList);
+        List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
         if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
             throw new ServiceException(ApiError.ERROR_9031);
         }
@@ -307,7 +307,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             //产品经理
             parameterMap.put("productManagerList", productManagerList);
 
-            List<String> productManagerSupervisorList = sysUserFeign.listLeadByUserIdList(productManagerList);
+            List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
             if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
                 throw new ServiceException(ApiError.ERROR_9031);
             }
@@ -395,7 +395,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             parameterMap.put("productManagerList", productManagerList);
 
 
-            List<String> productManagerSupervisorList = sysUserFeign.listLeadByUserIdList(productManagerList);
+            List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
             if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
                 throw new ServiceException(ApiError.ERROR_9031);
             }
