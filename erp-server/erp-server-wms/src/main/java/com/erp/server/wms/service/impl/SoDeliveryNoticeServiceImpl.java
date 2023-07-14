@@ -720,7 +720,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<String> warehouseIds = list.stream().map(SoDeliveryNoticeEntity::getWarehouseId).collect(Collectors.toList());
         //获取仓库信息
         List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(warehouseIds);
-        List<String> orgIdList = warehouseEntityList.stream().map(WarehouseEntity::getOrgId).collect(Collectors.toList());
+        List<String> orgIdList = warehouseEntityList.stream().map(WarehouseEntity::getOrgId).distinct().collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
 
         //拣货明细集合
