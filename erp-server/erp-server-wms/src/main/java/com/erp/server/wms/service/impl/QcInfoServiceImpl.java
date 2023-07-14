@@ -1717,11 +1717,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //质检产品信息
             List<QcProductEntity> qcProductList = qcProductService.getByMainIdList(ids);
+            //采购单id 集合
             List<String> purOrderIds = qcList.stream().map(QcInfoEntity::getPurchaseOrderId).collect(Collectors.toList());
-            //采购订单明细id集合
-            List<String> podIds = qcInfoList.stream().map(QcResultEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+
             //获取到对应的 订单明细
-            List<PurchaseOrderDetailEntity> purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
+            List<PurchaseOrderDetailEntity> purOrderDetailList = scmTaskFeign.listByPurchaseOrderIds(purOrderIds);
             /**
              * 根据采访订单id集合
              * 获取到已质检数量
