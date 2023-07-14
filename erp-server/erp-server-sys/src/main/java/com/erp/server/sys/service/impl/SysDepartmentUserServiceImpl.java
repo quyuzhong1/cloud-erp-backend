@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 
 /**
  * @Classname SysDepartmentUserServiceImpl
-
  * @Date 2022-07-13 18:54
  * @Created by yl
  */
@@ -148,6 +147,9 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
 
     @Override
     public List<SysDepartmentUserEntity> listByDepartmentIds(List<String> departmentIdList) {
+        if (CollectionUtils.isEmpty(departmentIdList)) {
+            return Collections.emptyList();
+        }
         LambdaQueryWrapper<SysDepartmentUserEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(SysDepartmentUserEntity::getDepartmentId, departmentIdList);
         return this.list(queryWrapper);

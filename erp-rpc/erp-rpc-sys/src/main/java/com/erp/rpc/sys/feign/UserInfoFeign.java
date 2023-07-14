@@ -45,4 +45,6 @@ public interface UserInfoFeign {
      */
     @GetMapping("feign/user/listUserByKingdeeCode")
     List<FindUserDTO> listUserByKingdeeCode(@RequestBody List<String> kingdeeCodeList);
+
+
 }

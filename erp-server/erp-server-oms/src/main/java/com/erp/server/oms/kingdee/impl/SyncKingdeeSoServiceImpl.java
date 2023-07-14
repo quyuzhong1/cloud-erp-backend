@@ -13,6 +13,7 @@ import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.entity.DeptKingdeeEntity;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
@@ -131,11 +132,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdee = new DeptKingdeeDTO.FindDeptKingdeeDTO();
         findDeptKingdee.setOrgCode(salesOrgCode);
         findDeptKingdee.setDeptId(salesDeptId);
-        DeptKingdeeEntity kingdeePost = kingdeeFeign.getDeptKingdee(findDeptKingdee);
-        if (kingdeePost != null) {
-            resultMap.put("deptCode", kingdeePost.getKingdeeDeptCode());
+        DeptKingdeeEntity kingdeeDept = kingdeeFeign.getDeptKingdee(findDeptKingdee);
+        String deptCode = "";
+        if (kingdeeDept != null) {
+            deptCode = kingdeeDept.getKingdeeDeptCode();
         }
-
 
         //销售员
         String sellerId = entity.getSellerId();
@@ -151,8 +152,21 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerCode", kingSellerInfo.getKingdeePostCode());
                 resultMap.put("seller", kingSellerInfo.getKingdeeUserName());
+                //当为空的时候 就取岗位表的
+                if (StringUtils.isBlank(deptCode)){
+
+                    KingdeePostDTO.FindUserKingdeePostDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostDTO();
+                    findUserPostKingdee.setKingdeePostCode(kingSellerInfo.getKingdeePostCode());
+                    findUserPostKingdee.setOrgCode(salesOrgCode);
+                    KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePostByPostCode(findUserPostKingdee);
+                    if(kingdeePost!=null){
+                        resultMap.put("deptCode", kingdeePost.getKingdeeDeptCode());
+                    }
+                }
             }
         }
+
+        resultMap.put("deptCode", deptCode);
         String currency = entity.getCurrency();
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
         //结算币别

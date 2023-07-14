@@ -59,8 +59,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     private SoOutstockDetailService soOutstockDetailService;
 
 
-
-
     /**
      * 同步金蝶的销售出库单
      *
@@ -102,24 +100,23 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                         soOutstockDetailService.removeByMainIdList(Arrays.asList(flagId));
                     }
 
-                }
-                //保存销售出库单
-                soOutstockService.save(soOutstock);
-                //保存销售出库单详情
-                soOutstockDetailService.saveBatch(detailList);
-                InventoryInOutStockRuleDTO inventoryInOutStockDTO = info.getInventoryInOutStockRuleDTO();
-                if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getMembers())) {
-                    inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
-                }
-
-            } else {
-                //当有的情况下
-                if (StringUtils.isNotBlank(flagId)) {
-                    //回滚库存
-                    InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_OUTSTOCK, Arrays.asList(flagId));
-                    inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-                    soOutstockService.removeById(flagId);
-                    soOutstockDetailService.removeByMainIdList(Arrays.asList(flagId));
+                    //保存销售出库单
+                    soOutstockService.save(soOutstock);
+                    //保存销售出库单详情
+                    soOutstockDetailService.saveBatch(detailList);
+                    InventoryInOutStockRuleDTO inventoryInOutStockDTO = info.getInventoryInOutStockRuleDTO();
+                    if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getMembers())) {
+                        inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
+                    }
+                } else {
+                    //当有的情况下
+                    if (StringUtils.isNotBlank(flagId)) {
+                        //回滚库存
+                        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_OUTSTOCK, Arrays.asList(flagId));
+                        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+                        soOutstockService.removeById(flagId);
+                        soOutstockDetailService.removeByMainIdList(Arrays.asList(flagId));
+                    }
                 }
             }
 

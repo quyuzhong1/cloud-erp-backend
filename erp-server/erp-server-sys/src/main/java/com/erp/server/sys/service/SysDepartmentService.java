@@ -113,5 +113,14 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
      * @return
      */
     List<SysDepartmentEntity> listByIdList(List<String> deptIdList);
+
+    /**
+     * 根据用户ｉｄ集合获取到负责人
+     * @author yl
+     * @date 2023-07-14 17:26
+     * @param userIdList
+     * @return java.util.List<java.lang.String>
+     */
+    List<String> listLeadByUserIdList(List<String> userIdList);
 }
 
