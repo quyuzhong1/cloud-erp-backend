@@ -193,26 +193,42 @@
 
     <select id="paging" resultType="com.erp.model.wms.dto.QcInfoDTO$PagingViewDTO">
         SELECT
-        qb.id, qb.code, qb.qc_dept_id,
-        qb.qc_dept_name, qb.qc_user_id,
-        qb.qc_user_name, qb.purchase_order_id,
-        qb.purchase_order_code,qb.qc_status,
-        qb.qc_date,qb.supplier_id,qb.warehouse_id,
-        qb.create_user_name,qb.create_time,
-        qi.qc_type,qi.is_inside,
-        qp.sku_id,qp.sku_no,qi.total_qty,
-        qi.qc_qty,qi.qc_good_qty,
-        qi.qc_bad_qty,qi.qc_result,
-        qi.handle_mode_dict,
-        qi.bad_description,
-        qi.qc_good_rate*100  AS qcGoodRate,
-        qi.qc_bad_rate*100 AS qcBadRate
+            qb.id,
+            qb.code,
+            qb.qc_dept_id as qcDeptId,
+            qb.qc_dept_name as qcDeptName,
+            qb.qc_user_id as qcUserId,
+            qb.qc_user_name as qcUserName,
+            qb.purchase_order_id as purchaseOrderId,
+            qb.purchase_order_code as purchaseOrderCode,
+            qb.qc_status as qcStatus,
+            qb.qc_date as qcDate,
+            qb.supplier_id as supplierId,
+            qb.warehouse_id as warehouseId,
+            qb.create_user_name as createUserName,
+            qb.create_time as createTime,
+            qi.qc_type as qcType,
+            qi.is_inside as isInside,
+            qp.sku_id as skuId,
+            qp.sku_no as skuNo,
+            qi.total_qty as totalQty,
+            qi.qc_qty as qcQty,
+            qi.qc_good_qty as qcGoodQty,
+            qi.qc_bad_qty as qcBadQty,
+            qi.qc_result as qcResult,
+            qi.handle_mode_dict as handleModeDict,
+            qi.bad_description as badDescription,
+            qi.qc_good_rate*100  AS qcGoodRate,
+            qi.qc_bad_rate*100 AS qcBadRate
         FROM qc_info qb
         LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
         WHERE qb.is_deleted=FALSE
-        <if test="params.searchType !=null and params.searchType!=''">
-            AND qb.qc_status=#{params.searchType}
+        <if test="params.searchType !=null and params.searchType!='' and params.searchType != 'waitQc'">
+            AND qb.qc_status = #{params.searchType}
+        </if>
+        <if test="params.searchType !=null and params.searchType!='' and params.searchType == 'waitQc'">
+            AND qb.qc_status in ('draft', #{params.searchType})
         </if>
         <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
             AND qb.purchase_order_code ILIKE concat('%', #{params.purchaseOrderCode} ,'%')
@@ -286,30 +302,44 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        ORDER BY qb.create_time DESC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        qb.create_time DESC
     </select>
 
     <select id="getExport" resultType="com.erp.model.wms.dto.QcInfoDTO$PagingViewDTO">
         SELECT
-        qb.id, qb.code, qb.qc_dept_id,
-        qb.qc_dept_name, qb.qc_user_id,
-        qb.qc_user_name, qb.purchase_order_id,
-        qb.purchase_order_code,qb.qc_status,
-        qb.qc_date,qb.supplier_id,qb.warehouse_id,
-        qb.create_user_name,qb.create_time,
-        qi.qc_type,qi.is_inside,
-        qp.id as product_id,qp.sku_id,qp.sku_no,
-        qp.product_length,qp.product_width,qp.product_height,
-        qp.box_length,qp.box_width,qp.box_height,qp.product_net_weight,qp.box_weight,
-        qi.id qc_result_id,
-        qi.total_qty,
-        qi.qc_qty,qi.qc_good_qty,
-        qi.qc_bad_qty,qi.qc_result,
-        qi.qc_problem_dict,
-        qi.handle_mode_dict,
-        qi.bad_description,
-        qi.qc_good_rate*100  AS qcGoodRate,
-        qi.qc_bad_rate*100 AS qcBadRate
+            qb.id,
+            qb.code,
+            qb.qc_dept_id as qcDeptId,
+            qb.qc_dept_name as qcDeptName,
+            qb.qc_user_id as qcUserId,
+            qb.qc_user_name as qcUserName,
+            qb.purchase_order_id as purchaseOrderId,
+            qb.purchase_order_code as purchaseOrderCode,
+            qb.qc_status as qcStatus,
+            qb.qc_date as qcDate,
+            qb.supplier_id as supplierId,
+            qb.warehouse_id as warehouseId,
+            qb.create_user_name as createUserName,
+            qb.create_time as createTime,
+            qi.qc_type as qcType,
+            qi.is_inside as isInside,
+            qp.sku_id as skuId,
+            qp.sku_no as skuNo,
+            qi.total_qty as totalQty,
+            qi.qc_qty as qcQty,
+            qi.qc_good_qty as qcGoodQty,
+            qi.qc_bad_qty as qcBadQty,
+            qi.qc_result as qcResult,
+            qi.handle_mode_dict as handleModeDict,
+            qi.bad_description as badDescription,
+            qi.qc_good_rate*100  AS qcGoodRate,
+            qi.qc_bad_rate*100 AS qcBadRate
         FROM qc_info qb
         LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
@@ -399,7 +429,13 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        ORDER BY qb.create_time DESC
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        qb.create_time DESC
     </select>
     <select id="viewGeneratePurchaseReturnOrder"
             resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$ViewGeneratePurchaseReturnOrderDTO">
