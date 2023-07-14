@@ -121,9 +121,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     private SyncKingdeeDTO.B2CSoOutstockDTO handleWmsSoOutstock(KingdeeDeliveryDetailEntity entity, List<String> noInventorySkuNoList) {
         SyncKingdeeDTO.B2CSoOutstockDTO result = new SyncKingdeeDTO.B2CSoOutstockDTO();
         List<KingdeeDeliveryDetailItemEntity> kingdeeDetailList = entity.getKingdeeOutStockItemEntityList();
-        //仓库编码
-        String fStockNumber = entity.getFStockerNumber();
-
         //金蝶的仓库code
         List<String> kingdeeWarehouseCodeList = kingdeeDetailList.stream().map(KingdeeDeliveryDetailItemEntity::getFStockNumber).distinct().collect(Collectors.toList());
         /**
@@ -159,6 +156,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         List<InOutStockDTO> inOutStockList = new ArrayList<>();
         for (KingdeeDeliveryDetailItemEntity detail : kingdeeDetailList) {
             String skuNo = detail.getFMaterialNumber();
+            String fStockNumber = detail.getFStockNumber();
             //是否扣减库存 true 就要
             Boolean isDeduction = !noInventorySkuNoList.contains(skuNo);
             String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).
