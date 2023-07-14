@@ -481,7 +481,7 @@
         qi.qc_type,qi.is_inside,
         qp.id as product_id,qp.sku_id,qp.sku_no,
         qp.product_length,qp.product_width,qp.product_height,
-        qp.box_length,qp.box_width,qp.box_height,qp.product_net_weight,qp.box_weight,
+        qp.box_length,qp.box_width,qp.box_height,qp.product_net_weight,qp.box_weight,qp.box_qty,
         qi.id qc_result_id,
         qi.total_qty,
         qi.qc_qty,qi.qc_good_qty,
