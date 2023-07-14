@@ -737,10 +737,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
             for (SoDeliveryNoticeDetailEntity detailEntity : detailEntities) {
 
-                //获取核算公司
-                SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
                 //查询可用库存生成拣货明细
-                PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(warehouseEntity.getOrgId(), sysAccountingCompanyEntity.getCompanyName(), entity.getWarehouseId(),
+                PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(warehouseEntity.getOrgId(), warehouseEntity.getOrgId(), entity.getWarehouseId(),
                         entity.getWarehouseName(), detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getDeliveryQty());
 
                 List<InventoryEntity> inventoryList = Lists.newArrayList();
