@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 
 /**
  * <p>
- * 
+ *
  * </p>
  *
  * @author will
@@ -177,9 +177,9 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     @TableField(exist = false)
     private String subArrivalStatus;
 
-   /**
-    *   采购申请明细id(无需传值，后端使用)
-    */
+    /**
+     *   采购申请明细id(无需传值，后端使用)
+     */
     @TableField(exist = false)
     private String purchaseApplicationDetailId;
 

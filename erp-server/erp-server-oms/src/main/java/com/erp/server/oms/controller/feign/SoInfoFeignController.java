@@ -124,7 +124,7 @@ public class SoInfoFeignController extends BaseController {
      */
     @PostMapping("/updateDeliveryStatus")
     public void updateDeliveryStatus(@RequestBody List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList) {
-         soDetailService.updateDeliveryStatus(paramList);
+        soDetailService.updateDeliveryStatus(paramList);
     }
 
     /**

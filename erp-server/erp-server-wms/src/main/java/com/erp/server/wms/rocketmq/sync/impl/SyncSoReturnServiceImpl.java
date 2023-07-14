@@ -160,7 +160,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
                     inventoryTransCore(Arrays.asList(instockEntity));
                 }
             } else {
-                 if (CollectionUtils.isNotEmpty(ids)) {
+                if (CollectionUtils.isNotEmpty(ids)) {
                     //回滚库存
                     InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, ids);
                     inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);

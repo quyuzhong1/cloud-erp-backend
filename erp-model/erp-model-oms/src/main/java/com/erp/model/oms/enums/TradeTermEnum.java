@@ -10,7 +10,7 @@ public enum TradeTermEnum implements EnumMessage {
     FOB("FOB", "FOB"),
     FCA("FCA", "FCA"),
     DDP("DDP", "DDP"),
-
+    DAP("DAP", "DAP"),
     ;
     /**
      * 类型

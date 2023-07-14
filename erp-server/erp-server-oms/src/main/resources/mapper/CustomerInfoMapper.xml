@@ -6,6 +6,7 @@
     <select id="paging" resultType="com.erp.model.oms.dto.CustomerDTO$PagingViewDTO">
         SELECT
         id,code,approve_status,
+        seller_name,
         approve_user_name,
         name,short_name,disabled,
         use_org_name,group_id,group_name,
@@ -25,6 +26,12 @@
             AND ci.approve_status IN
             <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
                 #{approveStatus}
+            </foreach>
+        </if>
+        <if test="params.sellerIdList !=null and params.sellerIdList.size>0">
+            AND ci.seller_id IN
+            <foreach collection="params.sellerIdList" item="item" open="(" separator="," close=")">
+                #{item}
             </foreach>
         </if>
         <if test="params.useOrgIdList !=null and params.useOrgIdList.size>0">
@@ -59,6 +66,7 @@
     <select id="listExport" resultType="com.erp.model.oms.dto.CustomerDTO$PagingViewDTO">
         SELECT
         id,code,approve_status,
+        seller_name,
         approve_user_name,
         name,short_name,disabled,
         use_org_name,group_id,group_name,
@@ -81,6 +89,12 @@
                 </if>
                 <if test="params.shortName !=null and params.shortName!=''">
                     AND ci.short_name ILIKE concat('%', #{params.name} ,'%')
+                </if>
+                <if test="params.sellerIdList !=null and params.sellerIdList.size>0">
+                    AND ci.seller_id IN
+                    <foreach collection="params.sellerIdList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
                 </if>
                 <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
                     AND ci.approve_status IN

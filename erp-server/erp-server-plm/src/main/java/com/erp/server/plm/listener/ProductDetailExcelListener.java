@@ -91,8 +91,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 errorMsgList.add("sku不存在，请选择导入新增");
             }
             if (ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productBy.getStatus())
-                || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())
-                || ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productBy.getStatus())) {
+                    || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())
+                    || ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productBy.getStatus())) {
                 errorMsgList.add("仅{待提交，审核不通过}的状态下可导入修改");
             }
             if (ObjectUtils.isEmpty(productBy)) {

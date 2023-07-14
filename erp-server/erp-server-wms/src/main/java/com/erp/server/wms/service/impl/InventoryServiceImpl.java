@@ -465,9 +465,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
         // 此处注意，分页列表展示的是实时的实际库存，不是按区间设置的
         /**
-        Integer startValue = userRangeList.get(0).getStartValue();
-        LocalDate endDate = LocalDate.now().plusDays(startValue * -1);
-        pagingParamDTO.getParams().setEndDate(endDate);
+         Integer startValue = userRangeList.get(0).getStartValue();
+         LocalDate endDate = LocalDate.now().plusDays(startValue * -1);
+         pagingParamDTO.getParams().setEndDate(endDate);
          */
         IPage<LinkedHashMap> pageData = this.baseMapper.inventoryAgePage(query, pagingParamDTO.getParams());
         // 标题及值赋值
@@ -681,34 +681,34 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 convertMap.put("warehouseName", null);
                 convertMap.put("orgName", null);
                 record.forEach((fieldKey,fieldVal)->{
-                String camelKey = StrUtil.toCamelCase(StrUtils.null2EmptyWithTrim(fieldKey));
-                if(Objects.equals(fieldKey, FieldConstant.SKU_ID) && skuMap.containsKey(fieldVal)) {
-                    SkuVO skuVO = skuMap.get(fieldVal).get(0);
-                    convertMap.put("productName", skuVO.getSkuName());
-                    convertMap.put("productImgUrl", skuVO.getSkuImagesUrl());
-                }
-                // 销售状态
-                if(Objects.equals(fieldKey,FieldConstant.SALE_STATE) && Objects.nonNull(fieldVal) && StrUtils.isInteger(fieldVal) ) {
-                    convertMap.put("saleStateName", SaleStateEnum.getNameByCode(Integer.parseInt(StrUtils.null2EmptyWithTrim(fieldVal))));
-                }
-                // 仓库名称
-                if(Objects.equals(fieldKey,FieldConstant.WAREHOUSE_ID) && Objects.nonNull(fieldVal)) {
-                    WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(StrUtils.null2EmptyWithTrim(fieldVal), (warehouseId) -> warehouseService.detailWithCache(warehouseId));
-                    if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-                        convertMap.put("warehouseName", warehouseDetail.getName());
+                    String camelKey = StrUtil.toCamelCase(StrUtils.null2EmptyWithTrim(fieldKey));
+                    if(Objects.equals(fieldKey, FieldConstant.SKU_ID) && skuMap.containsKey(fieldVal)) {
+                        SkuVO skuVO = skuMap.get(fieldVal).get(0);
+                        convertMap.put("productName", skuVO.getSkuName());
+                        convertMap.put("productImgUrl", skuVO.getSkuImagesUrl());
                     }
-                }
-                // 组织名称
-                if(Objects.equals(fieldKey,FieldConstant.ORG_ID) && Objects.nonNull(fieldVal)) {
-                    SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(StrUtils.null2EmptyWithTrim(fieldVal), (orgId) -> sysUserFeign.getCompanyById(orgId));
-                    if (Objects.nonNull(sysAccountingCompanyEntity)) {
-                        convertMap.put("orgName", sysAccountingCompanyEntity.getCompanyName());
+                    // 销售状态
+                    if(Objects.equals(fieldKey,FieldConstant.SALE_STATE) && Objects.nonNull(fieldVal) && StrUtils.isInteger(fieldVal) ) {
+                        convertMap.put("saleStateName", SaleStateEnum.getNameByCode(Integer.parseInt(StrUtils.null2EmptyWithTrim(fieldVal))));
                     }
-                }
-                convertMap.put(camelKey, fieldVal);
+                    // 仓库名称
+                    if(Objects.equals(fieldKey,FieldConstant.WAREHOUSE_ID) && Objects.nonNull(fieldVal)) {
+                        WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(StrUtils.null2EmptyWithTrim(fieldVal), (warehouseId) -> warehouseService.detailWithCache(warehouseId));
+                        if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                            convertMap.put("warehouseName", warehouseDetail.getName());
+                        }
+                    }
+                    // 组织名称
+                    if(Objects.equals(fieldKey,FieldConstant.ORG_ID) && Objects.nonNull(fieldVal)) {
+                        SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(StrUtils.null2EmptyWithTrim(fieldVal), (orgId) -> sysUserFeign.getCompanyById(orgId));
+                        if (Objects.nonNull(sysAccountingCompanyEntity)) {
+                            convertMap.put("orgName", sysAccountingCompanyEntity.getCompanyName());
+                        }
+                    }
+                    convertMap.put(camelKey, fieldVal);
+                });
+                convertDataList.add(convertMap);
             });
-            convertDataList.add(convertMap);
-         });
         }
         resultMap.put("head", headMap);
         resultMap.put("data", convertDataList);

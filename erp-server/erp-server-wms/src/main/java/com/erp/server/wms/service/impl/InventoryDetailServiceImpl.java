@@ -41,7 +41,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
     public InventoryDetailEntity findOneDetail(String inventoryInfoId, LocalDate instockBatchDate) {
         LambdaQueryWrapper<InventoryDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(InventoryDetailEntity::getInfoId, inventoryInfoId)
-        .eq(InventoryDetailEntity::getInstockBatchDate, instockBatchDate).last("limit 1");
+                .eq(InventoryDetailEntity::getInstockBatchDate, instockBatchDate).last("limit 1");
         return baseMapper.selectOne(queryWrapper);
     }
 

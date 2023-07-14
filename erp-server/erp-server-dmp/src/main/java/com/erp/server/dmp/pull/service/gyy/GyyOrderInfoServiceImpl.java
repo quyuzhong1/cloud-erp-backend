@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 管易云订单
@@ -99,6 +100,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
+            insertList = insertList.stream().distinct().collect(Collectors.toList());
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_GYY_ORDER);
         }
 

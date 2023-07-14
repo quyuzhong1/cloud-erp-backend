@@ -1,5 +1,6 @@
 package com.erp.server.wms.schedule;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 数据修复任务临时使用
@@ -54,6 +56,9 @@ public class DataRecoveryJob {
         }
         JSONObject param = JSONUtil.parseObj(jobParam);
         List<String> ids = param.getBeanList("ids", String.class);
+        if(CollectionUtil.isEmpty(ids)){
+            ids = soOutstockService.getIdsByTemp();
+        }
         if (ObjectUtils.isEmpty(ids)) {
             XxlJobHelper.log("参数错误ids={}", ids);
             return;
@@ -61,8 +66,13 @@ public class DataRecoveryJob {
         ids.parallelStream().forEach(item -> {
             BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
             idsDTO.setIds(Arrays.asList(item));
-            soOutstockService.disApprove(idsDTO, Boolean.FALSE);
+            try {
+                soOutstockService.disApprove(idsDTO, Boolean.FALSE);
+            } catch (Exception e) {
+                XxlJobHelper.log("数据修复失败，id={} e ={}", item, e);
+            }
         });
+
 
     }
 }

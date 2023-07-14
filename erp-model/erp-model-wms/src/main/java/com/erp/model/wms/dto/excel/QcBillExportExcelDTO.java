@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -52,12 +53,18 @@ public class QcBillExportExcelDTO  implements Serializable {
     @ExcelProperty(value = "质检员", index = 3)
     private String qcUserName;
 
+    /**
+     * 检验日期
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "检验日期", index = 4)
+    private LocalDate qcDate;
 
     /**
      * 质检类型名
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "质检类型", index = 4)
+    @ExcelProperty(value = "质检类型", index = 5)
     private String qcTypeName;
 
 
@@ -66,7 +73,7 @@ public class QcBillExportExcelDTO  implements Serializable {
      * 内检 类型
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "内外检类型", index = 5)
+    @ExcelProperty(value = "内外检类型", index = 6)
     private String insideType;
 
 
@@ -74,7 +81,7 @@ public class QcBillExportExcelDTO  implements Serializable {
      *供应商名
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "供应商名称", index = 6)
+    @ExcelProperty(value = "供应商名称", index = 7)
     private String supplierName;
 
 
@@ -83,7 +90,7 @@ public class QcBillExportExcelDTO  implements Serializable {
      * sku
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "SKU", index = 7)
+    @ExcelProperty(value = "SKU", index = 8)
     private String skuNo;
 
 
@@ -92,14 +99,14 @@ public class QcBillExportExcelDTO  implements Serializable {
      * sku id
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "SKU名称", index = 8)
+    @ExcelProperty(value = "SKU名称", index = 9)
     private String skuName;
 
     /**
      * 总量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "总数量", index = 9)
+    @ExcelProperty(value = "总数量", index = 10)
     private Integer totalQty;
 
 
@@ -107,7 +114,7 @@ public class QcBillExportExcelDTO  implements Serializable {
      * 质检量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "质检量", index = 10)
+    @ExcelProperty(value = "质检量", index = 11)
     private Integer qcQty;
 
 
@@ -115,14 +122,14 @@ public class QcBillExportExcelDTO  implements Serializable {
      * 质检合格量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "质检合格量", index = 11)
+    @ExcelProperty(value = "质检合格量", index = 12)
     private Integer qcGoodQty;
 
     /**
      * 质检不良量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "质检不良量", index = 12)
+    @ExcelProperty(value = "质检不良量", index = 13)
     private Integer qcBadQty;
 
 
@@ -131,14 +138,14 @@ public class QcBillExportExcelDTO  implements Serializable {
      * 质检结果名
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "检验结果", index = 13)
+    @ExcelProperty(value = "检验结果", index = 14)
     private String qcResultName;
 
     /**
      * 处理措施
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "处理措施", index = 14)
+    @ExcelProperty(value = "处理措施", index = 15)
     private String handleModeName;
 
 
@@ -147,7 +154,7 @@ public class QcBillExportExcelDTO  implements Serializable {
      * 不良现象
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "不良现象", index = 15)
+    @ExcelProperty(value = "不良现象", index = 16)
     private String badDescription;
 
 
@@ -155,14 +162,14 @@ public class QcBillExportExcelDTO  implements Serializable {
      * 质检合格率
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "质检合格率(%)", index = 16)
+    @ExcelProperty(value = "质检合格率(%)", index = 17)
     private String qcGoodRate;
 
     /**
      * 质检不良率
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "质检不良率(%)", index = 17)
+    @ExcelProperty(value = "质检不良率(%)", index = 18)
     private String qcBadRate;
 
 
@@ -170,14 +177,14 @@ public class QcBillExportExcelDTO  implements Serializable {
      * 仓库
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "仓库", index = 18)
+    @ExcelProperty(value = "仓库", index = 19)
     private String warehouseName;
 
     /**
      * remark
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "备注", index = 19)
+    @ExcelProperty(value = "备注", index = 20)
     private String remark;
 
 
@@ -185,7 +192,7 @@ public class QcBillExportExcelDTO  implements Serializable {
      * 创建人
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建人", index = 20)
+    @ExcelProperty(value = "创建人", index = 21)
     private String createUserName;
 
 
@@ -193,7 +200,7 @@ public class QcBillExportExcelDTO  implements Serializable {
      * 创建时间
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建时间", index = 21,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 22,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 
 }

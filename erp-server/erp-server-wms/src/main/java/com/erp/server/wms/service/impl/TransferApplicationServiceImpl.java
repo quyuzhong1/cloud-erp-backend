@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -24,7 +23,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
@@ -47,13 +45,11 @@ import com.erp.model.wms.enums.MachineTypeEnum;
 import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.TransferApplicationMapper;
 import com.erp.server.wms.service.*;
-import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -415,14 +411,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
             //审核通过后生成拣货明细
             generatePickingDetail(list);
-
-            //获取需要自动生成加工单的数据
-            List<TransferApplicationDetailEntity> transferApplicationDetailEntities = transferApplicationDetailService.listByMainIds(ids);
-            List<String> infoIds = transferApplicationDetailEntities.stream().filter(req -> req.getIsAutoMachine().equals(Boolean.TRUE)).map(TransferApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(infoIds)) {
-                List<TransferApplicationDTO.ViewGenerateMachineInfo> viewGenerateMachineInfoList = viewGenerateMachineInfo(infoIds, Boolean.TRUE, MathUtil.ZERO);
-                saveGenerateMachineInfo(viewGenerateMachineInfoList);
-            }
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("调拨申请单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //中止当前审核流程
@@ -457,11 +445,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             //审核通过后生成拣货明细
             generatePickingDetail(Arrays.asList(entity));
 
-            //获取需要自动生成加工单的数据
-            List<TransferApplicationDetailEntity> transferApplicationDetailEntities = transferApplicationDetailService.listByMainIds(Arrays.asList(id));
-            List<String> infoIds = transferApplicationDetailEntities.stream().filter(req -> req.getIsAutoMachine().equals(Boolean.TRUE)).map(TransferApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
-            List<TransferApplicationDTO.ViewGenerateMachineInfo> viewGenerateMachineInfoList = viewGenerateMachineInfo(infoIds, Boolean.TRUE, singleApproveParamDTO.getQty());
-            saveGenerateMachineInfo(viewGenerateMachineInfoList);
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("调拨申请单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
             //中止当前审核流程
@@ -492,11 +475,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
         List<TransferOutEntity> transferOutList = transferOutService.listBySourceIds(ids);
         if (CollectionUtils.isNotEmpty(transferOutList)) {
-            throw  new ServiceException(ApiError.ERROR_99046);
-        }
-
-        List<MachineInfoEntity> machineInfoEntityList = machineInfoService.listBySourceIds(ids);
-        if (CollectionUtils.isNotEmpty(machineInfoEntityList)) {
             throw  new ServiceException(ApiError.ERROR_99046);
         }
 
@@ -742,8 +720,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     @Override
     public List<TransferApplicationDTO.ViewGenerateMachineInfo> viewGenerateMachineInfo(List<String> ids, Boolean isAutoMachine, Integer qty) {
         List<TransferApplicationDTO.ViewGenerateMachineInfo> list = baseMapper.viewGenerateMachineInfo(ids, isAutoMachine);
-        List<TransferApplicationDTO.ViewGenerateMachineInfo> sonSkuDateList = new ArrayList<>();
-
         //产品信息
         List<String> skuIds = list.stream().map(TransferApplicationDTO.ViewGenerateMachineInfo::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
@@ -764,7 +740,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             String productName = skuList.stream().filter(e -> e.getSkuId().equals(viewGenerateMachineInfo.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
             viewGenerateMachineInfo.setProductName(productName);
             //获取sku的子sku
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewGenerateMachineInfo.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(viewGenerateMachineInfo.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 //设置主sku标识
                 viewGenerateMachineInfo.setIsCombination(Boolean.TRUE);
@@ -781,12 +757,10 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                     info.setWarehouseId(viewGenerateMachineInfo.getWarehouseId());
                     info.setWarehouseName(viewGenerateMachineInfo.getWarehouseName());
                     info.setMachineQty(viewGenerateMachineInfo.getMachineQty() * bomChildrenSkuDTO.getQuantity());
-                    info.setIsBody(Boolean.FALSE);
-                    sonSkuDateList.add(info);
+                    list.add(info);
                 }
             }
         }
-        list.addAll(sonSkuDateList);
         list.sort(Comparator.comparing(TransferApplicationDTO.ViewGenerateMachineInfo::getSourceCode, Comparator.reverseOrder()));
         return list;
     }
@@ -799,7 +773,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
      * @return java.lang.Boolean
      **/
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean saveGenerateMachineInfo(List<TransferApplicationDTO.ViewGenerateMachineInfo> list) {
         //获取到保存的主单据个数
         List<String> sourceIdList = list.stream().map(TransferApplicationDTO.ViewGenerateMachineInfo::getSourceId).distinct().collect(Collectors.toList());
@@ -818,6 +791,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 if (viewGenerateMachineInfo.getIsBody()) {
                     addDTO.setWorkType(viewGenerateMachineInfo.getWorkType());
                     addDTO.setWarehouseId(viewGenerateMachineInfo.getWarehouseId());
+                    addDTO.setType(viewGenerateMachineInfo.getWorkType());
                     dto.setSkuId(viewGenerateMachineInfo.getSkuId());
                     dto.setSkuNo(viewGenerateMachineInfo.getSkuNo());
                     dto.setQty(viewGenerateMachineInfo.getMachineQty());
@@ -825,8 +799,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                     dto.setWarehouseLocation(viewGenerateMachineInfo.getWarehouseLocation());
                     //查询是否包含了子sku
                     List<TransferApplicationDTO.ViewGenerateMachineInfo> infoList = list.stream().filter(req -> viewGenerateMachineInfo.getSourceId().equals(sourceId)
-                            && req.getIsCombination() != Boolean.TRUE
-                            && req.getIsBody() != Boolean.TRUE).collect(Collectors.toList());
+                            && viewGenerateMachineInfo.getIsCombination() != Boolean.TRUE
+                            && viewGenerateMachineInfo.getIsBody() != Boolean.TRUE).collect(Collectors.toList());
                     for (TransferApplicationDTO.ViewGenerateMachineInfo info : infoList) {
                         MachineSubComponentsDTO.AddDTO componentsDTO = new MachineSubComponentsDTO.AddDTO();
                         componentsDTO.setIsChild(Boolean.TRUE);
@@ -839,8 +813,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                         componentsDTOList.add(componentsDTO);
                     }
                     dto.setSubComponentsList(componentsDTOList);
-                    MachineDetailDtoList.add(dto);
                 }
+                MachineDetailDtoList.add(dto);
             }
             addDTO.setDetailList(MachineDetailDtoList);
             machineInfoService.add(addDTO);
@@ -932,14 +906,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
         //拣货明细集合
         List<PickingDetailDTO.CommonDTO> addList = new ArrayList<>();
-
-        // 忽略库存计算SKU
-        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
-        List<String> ignoreInventorySkuIds = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
-            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
-        }
-
         for (TransferApplicationEntity entity :list) {
             List<TransferApplicationDetailEntity> detailEntities = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(detailEntities)) {
@@ -949,21 +915,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 //查询可用库存生成拣货明细
                 PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(entity.getOutOrgId(),entity.getOutOrgName(),entity.getOutWarehouseId(),
                         entity.getOutWarehouseName(),detailEntity.getSkuId(),detailEntity.getSkuNo(),detailEntity.getQty());
-
-                List<InventoryEntity> inventoryList = Lists.newArrayList();
-                if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
-                    InventoryEntity inventoryEntity = new InventoryEntity();
-                    inventoryEntity.setWarehouseId(dto.getWarehouseId());
-                    inventoryEntity.setOrgId(dto.getOrgId());
-                    inventoryEntity.setWarehouseLocation("");
-                    inventoryEntity.setQty(detailEntity.getQty());
-                    inventoryEntity.setSkuId(detailEntity.getSkuId());
-                    inventoryEntity.setSkuNo(detailEntity.getSkuNo());
-                    inventoryEntity.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
-                    inventoryList.add(inventoryEntity);
-                } else {
-                    inventoryList = inventoryService.listPickingDetailInventory(dto);
-                }
+                List<InventoryEntity> inventoryList = inventoryService.listPickingDetailInventory(dto);
 
                 List<PickingDetailDTO.CommonDTO> pickingDetailList = BeanMapperUtils.copyList(PickingDetailDTO.CommonDTO.class, inventoryList);
 

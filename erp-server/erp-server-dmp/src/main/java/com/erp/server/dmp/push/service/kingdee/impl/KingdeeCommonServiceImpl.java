@@ -602,6 +602,11 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                 value = cfgApiFieldMapDTO.getDefaultValue();
             }
             String format = "";
+
+            //当传入的值是空时取默认
+            if (ObjectUtils.isEmpty(value) || StringUtils.isBlank(String.valueOf(value))) {
+                value = cfgApiFieldMapDTO.getDefaultValue();
+            }
             if (value instanceof LocalDateTime) {
                 LocalDateTime value1 = (LocalDateTime) value;
                 format = value1.format(DateTimeFormatter.ofPattern(DateUtil.fmt));

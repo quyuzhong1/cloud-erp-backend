@@ -521,7 +521,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             revokeDTO.setUserId(userInfo.getUid());
             workflowFeign.revokeProcess(revokeDTO);
         });
-        
+
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
@@ -572,6 +572,21 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             List<String> currencyIdList = list.stream().map(PurchasePriceDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
             //币种信息
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+
+            //最新审核人
+            ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+            list.forEach(obj -> {
+                dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.PURCHASE_PRICE.getCode(), obj.getId()));
+            });
+            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+            if (CollectionUtils.isNotEmpty(dtoList)) {
+                listApiResult = workflowFeign.curApprover(dtoList);
+                Integer code = listApiResult.getCode();
+                if (200 != code) {
+                    throw new ServiceException(ApiError.ERROR_500);
+                }
+            }
+
             for (PurchasePriceDTO.PagingViewDTO item : list) {
                 SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
                 item.setProductName(skuVO.getSkuName());
@@ -585,6 +600,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                         flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
                 item.setCurrencySymbol(currencySymbol);
 
+                //最新审核人
+                if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                    String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                    item.setApproveUserName(curApprove);
+                }
 
                 if (contains) {
                     item.setCode("");

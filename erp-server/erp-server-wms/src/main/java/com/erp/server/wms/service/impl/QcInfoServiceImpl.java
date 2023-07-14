@@ -1137,8 +1137,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         all.setTypeName("全部");
         resultList.add(all);
         QcInfoDTO.TabListDTO waitQc = new QcInfoDTO.TabListDTO();
+        String draft = QcBillStatusEnum.DRAFT.getCode();
         String waitQcType = QcBillStatusEnum.WAIT_QC.getCode();
-        waitQc.setCount((int) list.stream().filter(l -> waitQcType.equals(l.getQcStatus().getCode())).count());
+        waitQc.setCount((int) list.stream().filter(l -> waitQcType.equals(l.getQcStatus().getCode()) || draft.equals(l.getQcStatus().getCode())).count());
         waitQc.setSearchType(waitQcType);
         waitQc.setTypeName(QcBillStatusEnum.WAIT_QC.getName());
         resultList.add(waitQc);
@@ -1634,7 +1635,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
             view.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
             if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
-                view.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
+                view.setReturnReasonDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
             }
             view.setWarehouseId(view.getWarehouseId());
             List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(view.getWarehouseId()));
