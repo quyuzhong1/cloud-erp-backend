@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -715,13 +716,19 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99044);
         }
+
+        List<String> warehouseIds = list.stream().map(SoDeliveryNoticeEntity::getWarehouseId).collect(Collectors.toList());
+        //获取仓库信息
+        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(warehouseIds);
+        List<String> orgIdList = warehouseEntityList.stream().map(WarehouseEntity::getOrgId).collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+
         //拣货明细集合
         List<PickingDetailDTO.CommonDTO> addList = new ArrayList<>();
         for (SoDeliveryNoticeEntity entity : list) {
             List<SoDeliveryNoticeDetailEntity> detailEntities = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).collect(Collectors.toList());
-
             //获取仓库信息
-            WarehouseEntity warehouseEntity = warehouseService.getById(entity.getWarehouseId());
+            WarehouseEntity warehouseEntity = warehouseEntityList.stream().filter(req -> req.getId().equals(entity.getWarehouseId())).findFirst().orElse(new WarehouseEntity());
 
             //获取sku的id集合
             List<String> skuIdList = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).map(SoDeliveryNoticeDetailEntity::getSkuId).collect(Collectors.toList());
@@ -737,8 +744,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
             for (SoDeliveryNoticeDetailEntity detailEntity : detailEntities) {
 
+                BaseIdDTO.CodeDTO codeDTO = orgList.stream().filter(req -> req.getId().equals(warehouseEntity.getOrgId())).findFirst().orElse(new BaseIdDTO.CodeDTO());
                 //查询可用库存生成拣货明细
-                PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(warehouseEntity.getOrgId(), warehouseEntity.getOrgId(), entity.getWarehouseId(),
+                PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(warehouseEntity.getOrgId(), codeDTO.getName(), entity.getWarehouseId(),
                         entity.getWarehouseName(), detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getDeliveryQty());
 
                 List<InventoryEntity> inventoryList = Lists.newArrayList();
