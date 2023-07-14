@@ -98,6 +98,14 @@ public class QcProductDTO {
         private BigDecimal boxWeight;
 
         /**
+         * 整单数量
+         */
+        @NotNull(message = "整单数量不能为空", groups = {UpdateGroup.class, AddGroup.class})
+        @Min(value = 1, message = "整单数量最小值为1")
+        @Max(value = 999999999, message = "整单数量最大值为999999999")
+        private Integer boxQty;
+
+        /**
          * 外箱图片地址集合
          */
         private List<String> boxImageUrlList;
@@ -193,6 +201,11 @@ public class QcProductDTO {
          * 箱高
          */
         private BigDecimal boxHeight;
+
+        /**
+         * 整单数量
+         */
+        private Integer boxQty;
 
         /**
          * 产品净重
