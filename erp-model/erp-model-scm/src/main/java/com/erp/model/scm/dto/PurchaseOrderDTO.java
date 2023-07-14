@@ -1098,6 +1098,17 @@ public class PurchaseOrderDTO implements Serializable {
     }
 
 
+    /**
+     * 导出网采合同
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportPurchaseContractDTO {
+        /**
+         * 录单日期
+         */
+        private LocalDateTime createTime;
+
         /**
          * 编号
          */
@@ -1132,6 +1143,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 合计金额
          */
         private BigDecimal sumAmount;
+
+        /**
+         * 网采详情
+         */
+        private List<PurchaseContractDetailDTO> list;
     }
     /**
      * 网采合同明细
