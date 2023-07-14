@@ -142,7 +142,13 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
             ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            if (isAdd) {
+                //给明细id赋值
+                JSONArray jsonArray = setDetailIdForJSONObject(apiUtils,platformEntity, map, type);
+                //更新明细id
+                updateKingdeeDetailId(jsonArray);
+            }
         }
     }
 
