@@ -3,7 +3,6 @@ package com.erp.model.scm.dto;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.plm.vo.ProductVO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
