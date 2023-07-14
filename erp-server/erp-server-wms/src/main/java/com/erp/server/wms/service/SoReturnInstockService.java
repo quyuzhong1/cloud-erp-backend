@@ -166,16 +166,4 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return java.util.List<com.erp.model.wms.entity.SoReturnInstockEntity>
      **/
     List<SoReturnInstockEntity> listByCode(List<String> codeList);
-
-    /**
-     * 更新金蝶状态等信息
-     * @Author Luo_WG
-     * @date: 2023/5/23 17:41
-     * @param id
-     * @param syncKingdeeStatus
-     * @param syncKingdeeId
-     * @param operate
-     * @return Boolean
-     **/
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String operate);
 }

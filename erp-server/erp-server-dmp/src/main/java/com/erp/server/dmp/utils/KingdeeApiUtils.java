@@ -125,7 +125,6 @@ public class KingdeeApiUtils {
             param.setTopRowCount(topRowCount);
         }
         String paramJson = JSONUtil.toJsonStr(param);
-        System.out.println(paramJson);
         try {
             List<List<Object>> apiResult = client.executeBillQuery(paramJson);
             if (apiResult.isEmpty()) {

@@ -27,7 +27,7 @@ public interface QcProductService extends SuperService<QcProductEntity> {
      * @param qcProduct
      * @return void
      */
-    void add(String billId, QcProductDTO.AddDTO qcProduct,String skuId);
+    void add(String billId, QcProductDTO.AddDTO qcProduct);
 
     /**
      * 根据质检单 获取 质检产品信息

@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -62,8 +63,9 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
 
     }
 
-        @Override
-        public void onMessage(Map<String, Object> map) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void onMessage(Map<String, Object> map) {
 
         //模块类型
         Integer type = ApiModuleTypeEnum.SYS_USER_INFO.getCode();

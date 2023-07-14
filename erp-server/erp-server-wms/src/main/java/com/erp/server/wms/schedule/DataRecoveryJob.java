@@ -70,6 +70,7 @@ public class DataRecoveryJob {
                 soOutstockService.disApprove(idsDTO, Boolean.FALSE);
             } catch (Exception e) {
                 XxlJobHelper.log("数据修复失败，id={} e ={}", item, e);
+                log.error("数据修复失败，id={} e ={}", item, e);
             }
         });
 
