@@ -39,7 +39,8 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
     public InventoryHisEntity findInventory(String infoId, LocalDate billDate) {
         LambdaQueryWrapper<InventoryHisEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(InventoryHisEntity::getInfoId, infoId)
-                .eq(InventoryHisEntity::getBillDate, billDate).last("limit 1");;
+                .eq(InventoryHisEntity::getBillDate, billDate)
+                .last("limit 1");;
         return baseMapper.selectOne(queryWrapper);
     }
 
