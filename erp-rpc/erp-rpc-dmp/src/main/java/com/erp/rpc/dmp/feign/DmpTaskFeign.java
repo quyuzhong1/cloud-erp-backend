@@ -68,4 +68,15 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/getRate")
     BigDecimal getRate(@RequestParam(value = "date") String date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode);
+
+
+    /**
+     * 根据Map条件查询金蝶数据
+     * @param conditon 查询条件
+     *                 支持：id，is_deleted，source_type，source_code，source_id，status，mq_tag，return_msg
+     *                 注：lastSql 用于表示扩展SQL
+     * @return 返回Mq_data中的金蝶列表
+     */
+    @PostMapping("feign/getKingdeeSourceCode")
+    List<String> getKingdeeSourceCode(@RequestBody Map<String,Object> conditon);
 }

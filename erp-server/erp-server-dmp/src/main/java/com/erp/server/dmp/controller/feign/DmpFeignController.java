@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -119,4 +120,19 @@ public class DmpFeignController extends BaseController {
         return biSettlementExchangeRateService.findByCurrencyAndDate(date, sourceCurrencyCode);
     }
 
+    /**
+     * 从DmpSyncTask中查询金蝶的单据编号
+     * @param conditon 查询过滤条件
+     *                 支持：id，is_deleted，source_type，source_code，source_id，status，mq_tag，return_msg
+     *                 注：lastSql 用于表示扩展SQL(慎用)
+     * @return
+     */
+    @PostMapping("/getKingdeeSourceCode")
+    public List<String> getKingdeeSourceCode(@RequestBody Map<String,Object> conditon){
+        List<String> result=new ArrayList<>();
+
+        result = dmpSyncTaskService.listKingdeeCode(conditon);
+
+        return result;
+    }
 }

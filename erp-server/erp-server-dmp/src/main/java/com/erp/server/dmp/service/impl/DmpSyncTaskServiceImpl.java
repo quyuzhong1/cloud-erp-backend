@@ -1,9 +1,11 @@
 package com.erp.server.dmp.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
@@ -26,6 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -104,5 +109,32 @@ public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, 
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
+    }
+
+    @Override
+    public List<String> listKingdeeCode(Map<String, Object> conditon) {
+        List<String> result= new ArrayList<>();
+
+        LambdaQueryWrapper<DmpSyncTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(DmpSyncTaskEntity::getSourceCode);
+        queryWrapper.eq(DmpSyncTaskEntity::getSourcePlatformName,"金蝶云星空")
+                .eq(DmpSyncTaskEntity::getTargetPlatformName,"自研ERP")
+                .eq(null!=conditon.get("id"), DmpSyncTaskEntity::getId, conditon.get("id"))
+                .eq(null!=conditon.get("is_deleted"), DmpSyncTaskEntity::getIsDeleted, conditon.get("is_deleted"))
+                .eq(null!=conditon.get("source_type"), DmpSyncTaskEntity::getSourceType, conditon.get("source_type"))
+                .eq(null!=conditon.get("source_code"), DmpSyncTaskEntity::getSourceCode, conditon.get("source_code"))
+                .eq(null!=conditon.get("source_id"), DmpSyncTaskEntity::getSourceCode, conditon.get("source_id"))
+                .eq(null!=conditon.get("status"), DmpSyncTaskEntity::getStatus, conditon.get("status"))
+                .eq(null!=conditon.get("mq_tag"), DmpSyncTaskEntity::getMqTag, conditon.get("mq_tag"))
+                .like(null!=conditon.get("return_msg"), DmpSyncTaskEntity::getReturnMsg, conditon.get("return_msg"))
+        ;
+        queryWrapper.last(null!=conditon.get("lastSql")," and " + conditon.get("lastSql").toString());
+        List<DmpSyncTaskEntity> queryResult=this.list(queryWrapper);
+
+        if(CollectionUtil.isNotEmpty(queryResult)) {
+            queryResult.stream().forEach(item-> result.add(item.getSourceCode()));
+        }
+
+        return result;
     }
 }
