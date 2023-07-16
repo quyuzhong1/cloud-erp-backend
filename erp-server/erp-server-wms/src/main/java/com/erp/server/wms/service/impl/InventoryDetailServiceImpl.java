@@ -73,7 +73,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public String addOrUpdate(String inventoryInfoId, LocalDate billDate, Integer qty) {
+    public InventoryDetailEntity addOrUpdate(String inventoryInfoId, LocalDate billDate, Integer qty) {
         // 入库批次日期取单据日期
         InventoryDetailEntity inventoryDetail =  this.findOneDetail(inventoryInfoId, billDate);
         if (Objects.isNull(inventoryDetail)) {
@@ -95,7 +95,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
                 throw new ServiceException(ApiError.ERROR_1027);
             }
         }
-        return inventoryDetail.getId();
+        return inventoryDetail;
     }
 
 }

@@ -11,10 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -162,42 +159,28 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     }
 
     @Override
-    public void add(TransactionFlowEntity param, InventoryBusinessTypeEnum businessType, String transactionRuleId, Integer afterInventoryQty, InventoryModeEnum inventoryModeEnum) {
+    public void add(TransactionFlowEntity tradeParam, InventoryBusinessTypeEnum businessType, String transactionRuleId, Integer afterInventoryQty) {
         // 记录交易流水
         LoginUser loginUser = commonService.getUserInfo();
-        TransactionFlowEntity transactionFlowEntity = new TransactionFlowEntity();
-        transactionFlowEntity.setBillDate(param.getBillDate());
-        transactionFlowEntity.setInventoryId(param.getInventoryId());
-        transactionFlowEntity.setInventoryDetailId(param.getInventoryDetailId());
-        transactionFlowEntity.setOrgId(param.getOrgId());
-        transactionFlowEntity.setWarehouseId(param.getWarehouseId());
-        transactionFlowEntity.setWarehouseName(param.getWarehouseName());
-        transactionFlowEntity.setWarehouseLocation(param.getWarehouseLocation());
-        transactionFlowEntity.setDictInventoryStatus(param.getDictInventoryStatus());
-        transactionFlowEntity.setInstockBatchDate(param.getInstockBatchDate());
-        transactionFlowEntity.setSkuId(param.getSkuId());
-        transactionFlowEntity.setSkuNo(param.getSkuNo());
-        transactionFlowEntity.setSourceType(param.getSourceType());
-        transactionFlowEntity.setSourceId(param.getSourceId());
-        transactionFlowEntity.setSourceCode(param.getSourceCode());
-        transactionFlowEntity.setSourceDetailId(param.getSourceDetailId());
-        transactionFlowEntity.setDictBizType(businessType.getCode());
-        transactionFlowEntity.setUserId(Objects.nonNull(loginUser) ? loginUser.getUid() : "");
-        transactionFlowEntity.setTradeTime(LocalDateTime.now());
-        transactionFlowEntity.setTransactionRuleId(StrUtils.null2EmptyWithTrim(transactionRuleId));
-        transactionFlowEntity.setQty(param.getQty());
-        transactionFlowEntity.setCurInventoryQty(afterInventoryQty);
-        transactionFlowEntity.setOperationMode(StrUtils.null2EmptyWithTrim(param.getOperationMode()));
-        transactionFlowEntity.setVersion(1);
-        transactionFlowEntity.setTransactionNo(param.getTransactionNo());
 
-        // 如果是反审核操作，字段是否反审核设置为true，否则后面对同一单据查询会把这条记录查询出来
-        // TODO 后补单待定
-        if(Objects.equals(transactionFlowEntity.getOperationMode(),InventoryOperationModeEnum.UN_APPROVE.getCode())) {
-            transactionFlowEntity.setIsUnapproved(Boolean.TRUE);
-        }
+        // 复制所有参数
+        TransactionFlowEntity transactionFlow = new TransactionFlowEntity();
+        BeanMapper.copy(tradeParam,transactionFlow);
+        // 更改指定的参数
+        transactionFlow.setCurInventoryQty(afterInventoryQty);
+        transactionFlow.setTradeTime(LocalDateTime.now());
+        transactionFlow.setUserId(Objects.nonNull(loginUser) ? loginUser.getUid() : "");
+        transactionFlow.setVersion(1);
+        // 个别参数设置空值
+        transactionFlow.setId(null);
+        transactionFlow.setCreateUserId(null);
+        transactionFlow.setCreateUserName(null);
+        transactionFlow.setCreateTime(null);
+        transactionFlow.setUpdateUserId(null);
+        transactionFlow.setUpdateUserName(null);
+        transactionFlow.setUpdateTime(null);
 
-        boolean save = super.save(transactionFlowEntity);
+        boolean save = super.save(transactionFlow);
         ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
     }
 
