@@ -88,12 +88,15 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     public List<TransactionFlowEntity> getUnApprovedTxnFlows(String sourceType, String sourceId) {
-        List<TransactionFlowEntity> txnFlows =  lambdaQuery().eq(TransactionFlowEntity::getSourceType, sourceType)
-                .eq(TransactionFlowEntity::getSourceId, sourceId).eq(TransactionFlowEntity::getOperationMode, InventoryOperationModeEnum.APPROVE.getCode())
-                .eq(TransactionFlowEntity::getIsUnapproved, Boolean.FALSE).list();
-        if(CollUtil.isNotEmpty(txnFlows)) {
-            txnFlows = txnFlows.stream().sorted(Comparator.comparing(TransactionFlowEntity::getCreateTime)).collect(Collectors.toList());
-        }
+        List<TransactionFlowEntity> txnFlows =  lambdaQuery()
+                .eq(TransactionFlowEntity::getSourceType, sourceType)
+                .eq(TransactionFlowEntity::getSourceId, sourceId)
+                .eq(TransactionFlowEntity::getOperationMode, InventoryOperationModeEnum.APPROVE.getCode())
+                .eq(TransactionFlowEntity::getIsUnapproved, Boolean.FALSE)
+                .orderByAsc(TransactionFlowEntity::getTradeTime)
+                .orderByAsc(TransactionFlowEntity::getId)
+                .list();
+
         return txnFlows;
     }
 
@@ -154,6 +157,46 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         if(Objects.equals(transactionFlowEntity.getOperationMode(),InventoryOperationModeEnum.UN_APPROVE.getCode())) {
             transactionFlowEntity.setIsUnapproved(Boolean.TRUE);
         }
+        boolean save = super.save(transactionFlowEntity);
+        ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
+    }
+
+    @Override
+    public void add(TransactionFlowEntity param, InventoryBusinessTypeEnum businessType, String transactionRuleId, Integer afterInventoryQty, InventoryModeEnum inventoryModeEnum) {
+        // 记录交易流水
+        LoginUser loginUser = commonService.getUserInfo();
+        TransactionFlowEntity transactionFlowEntity = new TransactionFlowEntity();
+        transactionFlowEntity.setBillDate(param.getBillDate());
+        transactionFlowEntity.setInventoryId(param.getInventoryId());
+        transactionFlowEntity.setInventoryDetailId(param.getInventoryDetailId());
+        transactionFlowEntity.setOrgId(param.getOrgId());
+        transactionFlowEntity.setWarehouseId(param.getWarehouseId());
+        transactionFlowEntity.setWarehouseName(param.getWarehouseName());
+        transactionFlowEntity.setWarehouseLocation(param.getWarehouseLocation());
+        transactionFlowEntity.setDictInventoryStatus(param.getDictInventoryStatus());
+        transactionFlowEntity.setInstockBatchDate(param.getInstockBatchDate());
+        transactionFlowEntity.setSkuId(param.getSkuId());
+        transactionFlowEntity.setSkuNo(param.getSkuNo());
+        transactionFlowEntity.setSourceType(param.getSourceType());
+        transactionFlowEntity.setSourceId(param.getSourceId());
+        transactionFlowEntity.setSourceCode(param.getSourceCode());
+        transactionFlowEntity.setSourceDetailId(param.getSourceDetailId());
+        transactionFlowEntity.setDictBizType(businessType.getCode());
+        transactionFlowEntity.setUserId(Objects.nonNull(loginUser) ? loginUser.getUid() : "");
+        transactionFlowEntity.setTradeTime(LocalDateTime.now());
+        transactionFlowEntity.setTransactionRuleId(StrUtils.null2EmptyWithTrim(transactionRuleId));
+        transactionFlowEntity.setQty(param.getQty());
+        transactionFlowEntity.setCurInventoryQty(afterInventoryQty);
+        transactionFlowEntity.setOperationMode(StrUtils.null2EmptyWithTrim(param.getOperationMode()));
+        transactionFlowEntity.setVersion(1);
+        transactionFlowEntity.setTransactionNo(param.getTransactionNo());
+
+        // 如果是反审核操作，字段是否反审核设置为true，否则后面对同一单据查询会把这条记录查询出来
+        // TODO 后补单待定
+        if(Objects.equals(transactionFlowEntity.getOperationMode(),InventoryOperationModeEnum.UN_APPROVE.getCode())) {
+            transactionFlowEntity.setIsUnapproved(Boolean.TRUE);
+        }
+
         boolean save = super.save(transactionFlowEntity);
         ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
     }

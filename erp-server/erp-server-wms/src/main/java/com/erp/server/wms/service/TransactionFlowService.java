@@ -44,6 +44,17 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
     void add(TransactionFlowDTO param, InventoryBusinessTypeEnum businessType,
                                       String transactionRuleId, Integer afterInventoryQty, InventoryModeEnum inventoryModeEnum);
 
+    /**
+     * 记录库存交易流水
+     * @param param 交易流水
+     * @param businessType    业务类型
+     * @param transactionRuleId 交易规则ID
+     * @param afterInventoryQty 交易后库存
+     * @param inventoryModeEnum 交易模式
+     */
+    void add(TransactionFlowEntity param, InventoryBusinessTypeEnum businessType,
+                                      String transactionRuleId, Integer afterInventoryQty, InventoryModeEnum inventoryModeEnum);
+
 
     /**
      * 分页查询即时库存对应的流水

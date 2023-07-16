@@ -88,19 +88,24 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public InventoryEntity findInventory(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
         // 组织+仓库+库位+SKU+状态 确定唯一一条记录
         InventoryStatusEnum inventoryStatus = InventoryStatusEnum.getByCode(status);
+
+        // 1,空库位时，用空字符串 作为库位；
+        // 2,不控制库位时，用空字符串作为库位 查询；
         String qWarehouseLocationId = StrUtils.null2EmptyWithTrim(warehouseLocationId);
-        LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId).eq(InventoryEntity::getOrgId, orgId)
-                .eq(InventoryEntity::getSkuId, skuId)
-                .eq(InventoryEntity::getDictInventoryStatus, status);
-        /**
-         * 不控制库位把库位条件置位空字符串（从空库位查询）；
-         * 其他控制库位的如果传了则从指定库位出，没传则从空库位出
-         */
         if (Objects.equals(Boolean.FALSE, inventoryStatus.getControlLocation())) {
             qWarehouseLocationId = "";
         }
-        queryWrapper.eq(InventoryEntity::getWarehouseLocation, qWarehouseLocationId).last("limit 1");
+
+        LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId)
+                .eq(InventoryEntity::getOrgId, orgId)
+                .eq(InventoryEntity::getSkuId, skuId)
+                .eq(InventoryEntity::getDictInventoryStatus, status)
+                .eq(InventoryEntity::getWarehouseLocation, qWarehouseLocationId)
+                .last("limit 1")
+        ;
+
+        // 查询库存
         InventoryEntity inventory = baseMapper.selectOne(queryWrapper);
         return inventory;
     }
@@ -332,11 +337,13 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public boolean updateQtyById(String id, Integer qty) {
         LoginUser loginUser = commonService.getUserInfo();
-        boolean flag = lambdaUpdate().setSql(StrUtil.format("{}={}+{}", "qty","qty", qty))
-                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
+        boolean flag = lambdaUpdate()
+                .setSql(StrUtil.format("{}={}+{}", "qty","qty", qty))
+//                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
                 .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
                 .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
-                .eq(InventoryEntity::getId, id).update();
+                .eq(InventoryEntity::getId, id)
+                .update();
         return flag;
     }
 
