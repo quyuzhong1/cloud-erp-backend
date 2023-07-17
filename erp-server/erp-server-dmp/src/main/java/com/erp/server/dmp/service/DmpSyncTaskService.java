@@ -15,6 +15,9 @@ import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * <p>
  * 中台同步任务表 服务类
@@ -51,4 +54,12 @@ public interface DmpSyncTaskService extends SuperService<DmpSyncTaskEntity> {
      **/
     void syncKingdeeReturnOrderToWms(KingdeeReturnOrderEntity entity);
 
+    /**
+     * 根据Map条件查询金蝶数据
+     * @param conditon 查询条件
+     *                 支持：id，is_deleted，source_type，source_code，source_id，status，mq_tag，return_msg
+     *                 注：lastSql 用于表示扩展SQL
+     * @return 返回Mq_data中的金蝶列表
+     */
+    List<String> listKingdeeCode(Map<String, Object> conditon);
 }
