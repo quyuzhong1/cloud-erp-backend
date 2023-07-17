@@ -70,6 +70,15 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      */
     List<PurchasePriceDetailDTO.ViewDTO> getByPurchasePriceId(String purchasePriceId);
 
+    /**
+     * @description: 根据价目表明细ids获取产品明细信息
+     * @author Will
+     * @date: 2023/7/17 12:10
+     * @param purchasePriceDetailIds
+     * @return List<ViewDTO>
+     */
+    List<PurchasePriceDetailDTO.ViewDTO> listByPurchasePriceDetailIds(List<String> purchasePriceDetailIds);
+
 
     /**
      * 根据价目表id 和详情表id 集合获取对应数据
@@ -135,10 +144,10 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * 采购价目表 点击变更报价 获取到详情
      * @author yl
      * @date 2023-04-06 12:03
-     * @param id
+     * @param ids
      * @return com.erp.model.scm.dto.PurchasePriceChangeDTO.ViewDTO
      */
-    PurchasePriceChangeDTO.ViewDTO priceChangeDetail(String id);
+    PurchasePriceChangeDTO.ViewDTO priceChangeDetail(List<String> ids);
 
     /**
      * 根据采购价目表id 获取到采购价目变更的明细

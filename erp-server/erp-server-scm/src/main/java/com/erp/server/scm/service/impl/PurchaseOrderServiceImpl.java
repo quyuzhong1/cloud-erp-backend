@@ -856,10 +856,21 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public PurchaseChangeDTO.ViewDTO viewPurchaseChange(String id) {
+    public PurchaseChangeDTO.ViewDTO viewPurchaseChange(List<String> ids) {
         PurchaseChangeDTO.ViewDTO viewDTO = new PurchaseChangeDTO.ViewDTO();
+
+        //采购订单明细
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(ids);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        long count = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getPurchaseOrderId).distinct().count();
+        if (count > 1) {
+            throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_ID_REPEAT);
+        }
+
         //采购主表信息
-        PurchaseOrderEntity purchaseOrderEntity = this.getById(id);
+        PurchaseOrderEntity purchaseOrderEntity = this.getById(purchaseOrderDetailList.get(0).getPurchaseOrderId());
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
@@ -869,7 +880,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         viewDTO.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
         viewDTO.setDeliveryWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
         //采购供应商信息
-        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(id);
+        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderEntity.getId());
         if (ObjectUtils.isEmpty(supplierEntity)) {
             throw new ServiceException(ApiError.ERROR_98036);
         }
@@ -877,11 +888,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         BeanMapperUtils.copy(supplierEntity, supplierDTO);
         viewDTO.setSupplierDTO(supplierDTO);
         viewDTO.setSupplierId(supplierEntity.getSupplierId());
-        //采购订单明细
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByPurchaseOrderId(id);
-        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98026);
-        }
+
         List<PurchaseChangeDetailDTO.UpdateDTO> detailDTOList = new ArrayList<>();
         for (PurchaseOrderDetailEntity detailEntity : purchaseOrderDetailList) {
             PurchaseChangeDetailDTO.UpdateDTO detailDTO = new PurchaseChangeDetailDTO.UpdateDTO();
