@@ -166,10 +166,10 @@ public abstract class AbstractInventoryServiceImpl {
                 InventoryHisEntity inventoryHis = getAvaliableInventoryHis(txnFlow);
 
                 // 4，记录交易明细
-                transactionFlowService.add(txnFlow, businessTypeEnum, txnFlow.getTransactionRuleId(), (inventory.getQty()+txnFlow.getQty()));
+                transactionFlowService.add(txnFlow, (inventory.getQty()+txnFlow.getQty()));
 
                 // 5，更新库存
-                boolean updateFlag = inventoryDetailService.updateQtyById(txnFlow.getInventoryDetailId(), txnFlow.getQty());
+                boolean updateFlag = inventoryDetailService.updateQtyById(inventoryDetail.getId(), txnFlow.getQty());
                 if(!updateFlag) {
                     throw new ServiceException(ApiError.ERROR_1027);
                 }

@@ -5,7 +5,7 @@
     <update id="updateUnapprovedById">
         update transaction_flow set is_unapproved = true,version = version + 1,
         update_time = #{updateTime}, update_user_id = #{updateUserId}, update_user_name = #{updateUserName}
-        where id = #{id} and version = #{version} and is_deleted = false
+        where id = #{id} and is_deleted = false
     </update>
     <select id="pagingForInv" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$TransFlowPagingViewDTO">
        SELECT t.id,t.trade_time,
