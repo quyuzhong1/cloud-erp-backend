@@ -151,7 +151,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
                     //回滚库存
                     InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, ids);
                     inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-                    soReturnInstockService.removeByIds(ids);
+                    soReturnInstockService.deleteByIds(ids);
                     soReturnInstockDetailService.delete(ids);
                     //更新库存
                     inventoryTransCore(Arrays.asList(instockEntity));
@@ -164,7 +164,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
                     //回滚库存
                     InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, ids);
                     inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-                    soReturnInstockService.removeByIds(ids);
+                    soReturnInstockService.deleteByIds(ids);
                     soReturnInstockDetailService.delete(ids);
                 }
             }

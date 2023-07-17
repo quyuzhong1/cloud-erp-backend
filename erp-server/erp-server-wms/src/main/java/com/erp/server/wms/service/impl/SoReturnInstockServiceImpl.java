@@ -808,4 +808,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .set(StringUtils.isNotBlank(operate), SoReturnInstockEntity::getSyncOperate, operate)
                 .update();
     }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deleteByIds(List<String> ids) {
+        return lambdaUpdate().set(SoReturnInstockEntity::getIsDeleted, Boolean.TRUE)
+                .in(SoReturnInstockEntity::getId, ids)
+                .update();
+    }
 }

@@ -178,4 +178,13 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return Boolean
      **/
     Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String operate);
+
+    /**
+     * 根据主键删除
+     * @Author Luo_WG
+     * @Date 2023/7/17 11:06
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean deleteByIds(List<String> ids);
 }

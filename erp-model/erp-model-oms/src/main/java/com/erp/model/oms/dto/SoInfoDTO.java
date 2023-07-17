@@ -380,7 +380,10 @@ public class SoInfoDTO implements Serializable {
          */
         private List<LocalDate> createTimeList;
 
-
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
 
