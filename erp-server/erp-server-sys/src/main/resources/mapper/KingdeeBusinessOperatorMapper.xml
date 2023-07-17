@@ -11,7 +11,7 @@
         INNER JOIN sys_user_info su
         ON su.uid=kbo.erp_user_id
         INNER JOIN kingdee_user_post kup
-        ON kup.kingdee_post_code=kbo.kingdee_post_code
+        ON kup.user_id=kbo.erp_user_id
         AND kup.is_deleted=FALSE
         WHERE kbo.kingdee_type=#{params.type}
         AND kbo.kingdee_org_code=#{orgCode}

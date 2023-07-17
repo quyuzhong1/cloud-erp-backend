@@ -11,7 +11,6 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
@@ -126,43 +125,37 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
                 map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
 
-        //部门id
-        String salesDeptId = entity.getSalesDeptId();
-        DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdee = new DeptKingdeeDTO.FindDeptKingdeeDTO();
-        findDeptKingdee.setOrgCode(salesOrgCode);
-        findDeptKingdee.setDeptId(salesDeptId);
-
-
         //销售员
         String sellerId = entity.getSellerId();
-        String deptCode="";
+        String deptCode = "";
+
+        //当为空的时候 就取岗位表的
+        KingdeePostDTO.FindUserKingdeePostInfoDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostInfoDTO();
+        findUserPostKingdee.setUserId(sellerId);
+        findUserPostKingdee.setOrgCode(salesOrgCode);
+        KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePost(findUserPostKingdee);
+        if (kingdeePost != null) {
+            deptCode = kingdeePost.getKingdeeDeptCode();
+        }
+        resultMap.put("deptCode", deptCode);
+
+
         //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgCode(salesOrgCode);
             findBusinessOperator.setUserId(sellerId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.YSY.getCode());
-            //获取员工 岗位信息
+            //获取员工业务信息
             KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerCode", kingSellerInfo.getKingdeePostCode());
                 resultMap.put("seller", kingSellerInfo.getKingdeeUserName());
-                //当为空的时候 就取岗位表的
-                if (StringUtils.isBlank(deptCode)) {
-
-                    KingdeePostDTO.FindUserKingdeePostDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostDTO();
-                    findUserPostKingdee.setKingdeePostCode(kingSellerInfo.getKingdeePostCode());
-                    findUserPostKingdee.setOrgCode(salesOrgCode);
-                    KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePostByPostCode(findUserPostKingdee);
-                    if (kingdeePost != null) {
-                        deptCode = kingdeePost.getKingdeeDeptCode();
-                    }
-                }
             }
         }
 
-        resultMap.put("deptCode", deptCode);
+
         String currency = entity.getCurrency();
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
         //结算币别
@@ -287,7 +280,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             jsonObject.set("amount", item.getAmount());
             //单位
             String unit = item.getUnit();
-            jsonObject.set("unit", StringUtils.isNotBlank(unit)?unit:"Pcs");
+            jsonObject.set("unit", StringUtils.isNotBlank(unit) ? unit : "Pcs");
             jsonObject.set("warehouseOrgCode", warehouseOrgCode);
             jsonObject.set("curInventoryQty", item.getQty());
             jsonObject.set("stockBaseQty", item.getQty());

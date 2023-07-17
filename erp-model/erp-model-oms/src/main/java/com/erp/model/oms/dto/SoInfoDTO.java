@@ -1346,6 +1346,10 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal totalAmount;
 
         /**
+         * 价税合计
+         */
+        private BigDecimal totalTaxAmount;
+        /**
          * 大写
          */
         private String chineseAmount;

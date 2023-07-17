@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.validator.AddGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -937,10 +936,15 @@ public class SoDetailDTO implements Serializable {
     public static class ExportPdfDTO {
 
 
+        /**
+         * 序号
+         */
+        private String no;
+
         private String skuId;
 
         /**
-         * 物料编码
+          物料编码
          */
         private String skuNo;
 
@@ -990,6 +994,11 @@ public class SoDetailDTO implements Serializable {
          * 含税金额
          */
         private BigDecimal amount;
+
+        /**
+         * 含税金额
+         */
+        private BigDecimal taxAmount;
     }
 
 
