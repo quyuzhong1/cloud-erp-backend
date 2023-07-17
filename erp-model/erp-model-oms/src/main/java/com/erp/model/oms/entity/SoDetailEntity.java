@@ -155,6 +155,18 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField("sale_profit_rate")
     private BigDecimal saleProfitRate;
 
+    /**
+     * 销售金额(本位币)
+     */
+    @TableField("amount_local_currency")
+    private BigDecimal amountLocalCurrency;
+
+    /**
+     * 价税合计(本位币)
+     */
+    @TableField("all_amount_local_currency")
+    private BigDecimal allAmountLocalCurrency;
+
 
     public static final String MAIN_ID = "main_id";
 

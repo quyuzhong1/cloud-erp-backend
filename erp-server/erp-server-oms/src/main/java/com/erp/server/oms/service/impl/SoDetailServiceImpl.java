@@ -348,7 +348,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 item.setMinPrice(skuHistoryPrice.getMinPrice());
                 item.setAvgPrice(skuHistoryPrice.getAvgPrice());
             }
-
         }
 
         return resultList;

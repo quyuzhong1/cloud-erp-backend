@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.validator.AddGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -111,7 +112,15 @@ public class SoDetailDTO implements Serializable {
          */
         private BigDecimal saleProfitRate;
 
+        /**
+         * 销售金额(本位币)
+         */
+        private BigDecimal amountLocalCurrency;
 
+        /**
+         * 价税合计(本位币)
+         */
+        private BigDecimal allAmountLocalCurrency;
 
     }
 
@@ -293,6 +302,17 @@ public class SoDetailDTO implements Serializable {
          * 仓位
          */
         private String warehouseLocation;
+
+        /**
+         * 销售金额(本位币)
+         */
+        private BigDecimal amountLocalCurrency;
+
+        /**
+         * 价税合计(本位币)
+         */
+        private BigDecimal allAmountLocalCurrency;
+
     }
 
     /**
@@ -446,6 +466,16 @@ public class SoDetailDTO implements Serializable {
          * 销售毛利率
          */
         private BigDecimal saleProfitRate;
+
+        /**
+         * 销售金额(本位币)
+         */
+        private BigDecimal amountLocalCurrency;
+
+        /**
+         * 价税合计(本位币)
+         */
+        private BigDecimal allAmountLocalCurrency;
 
         /**
          * 备注
