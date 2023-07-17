@@ -42,6 +42,23 @@ public class BankAccountEntity extends BaseEntity<BankAccountEntity> {
     @TableField("bank_type")
     private String bankType;
 
+    /**
+     * 金蝶组织机构代码
+     */
+    @TableField("kindee_org_code")
+    private String kindeeOrgCode;
+
+    /**
+     * 组织名称
+     */
+    @TableField("org_name")
+    private String orgName;
+
+    /**
+     * 组织id
+     */
+    @TableField("org_id")
+    private String orgId;
 
     public static final String BANK_ACCOUNT_NO = "bank_account_no";
 
