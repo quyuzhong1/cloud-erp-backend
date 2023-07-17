@@ -36,6 +36,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.PurchaseStockExportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -970,6 +971,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             log.error("未找到订单明细信息，ids={}", JSONUtil.toJsonStr(ids));
             throw new ServiceException(ApiError.ERROR_98026);
         }
+        List<String> stockInUserIds = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getStockInUserId())).map(PurchaseOrderDTO.GenerateStockInDTO::getStockInUserId).collect(Collectors.toList());
+        List<SysDepartmentUserNumberDTO> sysDepartmentUserNumberList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(stockInUserIds)) {
+             sysDepartmentUserNumberList = sysUserFeign.listDeptUserByUserIdList(stockInUserIds);
+        }
+
 
         Map<String, List<PurchaseOrderDTO.GenerateStockInDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseOrderDTO.GenerateStockInDTO::getPurchaseOrderId));
         List<PoInstockDTO.AddDTO> resultList = new ArrayList<>();
@@ -988,8 +995,13 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             addDTO.setSourceId(purchaseOrderId);
             addDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
             addDTO.setDeliveryWarehouseId(entity.getDeliveryWarehouseId());
-            addDTO.setStockInDeptId(entity.getPurchaseDeptId());
-            addDTO.setStockInUserId(entity.getPurchaseUserId());
+            addDTO.setStockInUserId(value.get(0).getStockInUserId());
+            //部门
+            if (CollectionUtils.isNotEmpty(sysDepartmentUserNumberList)) {
+                String deptId = sysDepartmentUserNumberList.stream().filter(obj -> obj.getUserId().equals(value.get(0).getStockInUserId())).map(SysDepartmentUserNumberDTO::getDepartmentId).findFirst().orElse("");
+                addDTO.setStockInDeptId(deptId);
+            }
+            addDTO.setStockInDate(value.get(0).getStockInDate());
             List<PoInstockDetailDTO.AddDTO> details = new ArrayList<>();
             for (PurchaseOrderDTO.GenerateStockInDTO generateStockInDTO : value) {
                 PoInstockDetailDTO.AddDTO addDetailDTO = new PoInstockDetailDTO.AddDTO();
