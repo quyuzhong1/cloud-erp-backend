@@ -336,7 +336,7 @@ public abstract class AbstractInventoryServiceImpl {
             // 设置最大等待锁时间
             isLock = rLock.tryLock(20, TimeUnit.SECONDS);
             if (!isLock) {
-                log.error("单据：{},SKU:{},入库加锁失败,key={}",param.getSourceCode(),param.getSkuNo(), lockKey);
+                log.error("单据：{},SKU:{},出库加锁失败,key={}",param.getSourceCode(),param.getSkuNo(), lockKey);
                 throw new ServiceException(ApiError.ERROR_1026);
             }
 
