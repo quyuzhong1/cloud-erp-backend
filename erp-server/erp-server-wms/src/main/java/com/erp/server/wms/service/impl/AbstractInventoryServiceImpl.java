@@ -166,6 +166,7 @@ public abstract class AbstractInventoryServiceImpl {
                 InventoryHisEntity inventoryHis = getAvaliableInventoryHis(txnFlow);
 
                 // 4，记录交易明细
+                txnFlow.setIsUnapproved(Boolean.TRUE);
                 transactionFlowService.add(txnFlow, (inventory.getQty()+txnFlow.getQty()));
 
                 // 5，更新库存
@@ -293,7 +294,7 @@ public abstract class AbstractInventoryServiceImpl {
             // 登记交易流水
             TransactionFlowDTO transactionFlowDTO = InventoryUtils.wrapTransactionFlowInOutStock(param, inventorySaveDTO.getInventoryId(), businessType, inventoryDetail.getId(), inventoryStatusEnum, param.getBillDate(), param.getQty(), warehouseInfo.getOrgId());
             transactionFlowDTO.setTransactionNo(transactionNo);
-            transactionFlowService.add(transactionFlowDTO, businessType, tansactionRuleId, inventorySaveDTO.getQty(), InventoryModeEnum.IN_STOCK);
+            transactionFlowService.add(transactionFlowDTO, businessType, tansactionRuleId, inventorySaveDTO.getQty() + param.getQty(), InventoryModeEnum.IN_STOCK);
         } catch (Exception e) {
             log.error("交易业务：{}，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存操作异常", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getSkuNo(),e );
             if(e instanceof ServiceException) {

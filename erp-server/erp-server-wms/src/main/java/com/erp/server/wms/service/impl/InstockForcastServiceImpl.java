@@ -283,13 +283,13 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             // 采购入库单（收货单下推的）入库数量
             Integer poRecQty = MathUtil.ZERO;
             if(CollectionUtils.isNotEmpty(poInstockDetailList)) {
-                // 采购入库单（直接下推的无收货单的），会减少在途
+                // 采购入库单（直接下推的无收货单的），会减少在途，增加可用
                 poUnRecQty = poInstockDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), purchaseOrderDetailId)
                         // 采购入库单的来源明细id=采购订单明细id
                         && Objects.equals(e.getSourceDetailId(), purchaseOrderDetailId)
                         && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
                         .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-                // 采购入库单（收货单下推的）入库数量，会减少待检数量
+                // 采购入库单（收货单下推的）入库数量，会减少待检数量，增加可用
                 poRecQty = poInstockDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), purchaseOrderDetailId)
                         // 采购入库单的来源明细id在收货单
                         && receiveDetailIds.contains(e.getSourceDetailId())
@@ -311,13 +311,15 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
                     receiveQty, poRecQty, poUnRecQty, returnQty, member.getOriginQty());
             // 已到货（包括结束交货）
             if(Objects.equals(ArrivalStatusEnum.ARRIVED.getCode(), arriveStatus)) {
-                // 新采购数量- (待检 + 退货在途)
-                changeQty = member.getQty() - ((receiveQty - poRecQty) + returnQty);
+                // 新采购数量- (待检 + 退货在途 + 可用)
+                changeQty = member.getQty() - ((receiveQty - poRecQty) + returnQty + (poUnRecQty + poRecQty));
                 inventoryModeEnum = changeQty > 0 ? InventoryModeEnum.IN_STOCK : InventoryModeEnum.OUT_STOCK;
                 changeQty = Math.abs(changeQty);
             } else {
-                // 新采购订单数量 - (原采购订单数量 - 原采购订单入库数量 + 待检)
-                changeQty = member.getQty() - (member.getOriginQty() - (receiveQty + poUnRecQty) + returnQty + (receiveQty - poRecQty));
+                // 新采购订单数量 - (原采购订单数量 - 原采购订单入库数量 + 可用 + 待检)
+                // changeQty = member.getQty() - (member.getOriginQty() - (receiveQty + poUnRecQty) + (poUnRecQty + poRecQty) + returnQty + (receiveQty - poRecQty));
+                // 直接调整为差额
+                changeQty = member.getQty() - member.getOriginQty();
                 inventoryModeEnum = changeQty > 0 ? InventoryModeEnum.IN_STOCK : InventoryModeEnum.OUT_STOCK;
                 changeQty = Math.abs(changeQty);
             }
