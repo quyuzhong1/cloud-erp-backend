@@ -96,7 +96,9 @@
                 #{detailId}
             </foreach>
         </if>
-
+        <if test="params.remark !=null and params.remark!=''">
+            AND (si.remark ILIKE concat('%', #{params.remark} ,'%') or sod.remark ILIKE concat('%', #{params.remark} ,'%'))
+        </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -175,7 +177,9 @@
                 #{detailId}
             </foreach>
         </if>
-
+        <if test="params.remark !=null and params.remark!=''">
+            AND (si.remark ILIKE concat('%', #{params.remark} ,'%') or sod.remark ILIKE concat('%', #{params.remark} ,'%'))
+        </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -287,6 +291,9 @@
                     <foreach collection="detailIdList" item="detailId" open="(" separator="," close=")">
                         #{detailId}
                     </foreach>
+                </if>
+                <if test="params.remark !=null and params.remark!=''">
+                    AND (si.remark ILIKE concat('%', #{params.remark} ,'%') or sod.remark ILIKE concat('%', #{params.remark} ,'%'))
                 </if>
                 <!--权限-->
                 <if test="params.permissionSql!=null and params.permissionSql!=''">
