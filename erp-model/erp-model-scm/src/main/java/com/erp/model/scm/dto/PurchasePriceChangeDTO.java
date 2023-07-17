@@ -412,9 +412,9 @@ public class PurchasePriceChangeDTO implements Serializable {
 
 
         /**
-         * sku id 集合
+         * sku 编码 集合
          */
-        private List<String> skuIdList;
+        private List<String> skuNoList;
 
 
         /**
