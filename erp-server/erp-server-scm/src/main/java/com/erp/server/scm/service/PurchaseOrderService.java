@@ -318,4 +318,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
       * @return Boolean
       */
      Boolean kingdeePoImportFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * @description: 列表查询总数
+     * @author Will
+     * @date: 2023/7/17 15:05
+     * @param dto
+     * @return PagingTotalDTO
+     */
+    PurchaseOrderDTO.PagingTotalDTO pagingTotal(PurchaseOrderDTO.SearchParamDTO dto);
 }

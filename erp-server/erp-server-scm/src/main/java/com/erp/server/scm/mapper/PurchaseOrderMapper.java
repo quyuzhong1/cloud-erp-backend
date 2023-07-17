@@ -30,6 +30,16 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return IPage<ListDTO>
      */
     IPage<PurchaseOrderDTO.ListDTO> paging(Page query,@Param("params") PurchaseOrderDTO.SearchParamDTO params);
+
+    /**
+     * @description: 查询总数量、金额
+     * @author Will
+     * @date: 2023/7/17 15:10
+     * @param dto
+     * @return PagingTotalDTO
+     */
+    PurchaseOrderDTO.PagingTotalDTO pagingTotal(@Param("params") PurchaseOrderDTO.SearchParamDTO dto);
+
     /**
      * @description: 导出查询数据
      * @author Will
@@ -97,4 +107,5 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return List<SubcontractOrderChildDTO>
      */
     List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildByParentPodIds(@Param("parentPodIds") List<String> parentPodIds);
+
 }

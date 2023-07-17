@@ -30,6 +30,15 @@ public interface PurchaseApplicationMapper extends BaseMapper<PurchaseApplicatio
      */
     IPage<PurchaseApplicationDTO.ListDTO> paging(Page query,@Param("params") PurchaseApplicationDTO.SearchParamDTO params);
     /**
+     * @description: 查询总数
+     * @author Will
+     * @date: 2023/7/17 15:19
+     * @param dto
+     * @return PagingTotalDTO
+     */
+    PurchaseApplicationDTO.PagingTotalDTO pagingTotal(@Param("params") PurchaseApplicationDTO.SearchParamDTO dto);
+
+    /**
      * @description: 导出查询所有数据
      * @author Will
      * @date: 2023/3/22 14:05
@@ -53,4 +62,5 @@ public interface PurchaseApplicationMapper extends BaseMapper<PurchaseApplicatio
      * @return List<ViewGenerateSubcontractOrderDTO>
      */
     List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO> viewGenerateSubcontractOrder(@Param("ids") List<String> ids);
+
 }

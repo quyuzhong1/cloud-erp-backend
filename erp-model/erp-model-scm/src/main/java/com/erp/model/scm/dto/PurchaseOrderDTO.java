@@ -3,6 +3,7 @@ package com.erp.model.scm.dto;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.plm.vo.ProductVO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -213,6 +214,23 @@ public class PurchaseOrderDTO implements Serializable {
          */
         @JsonIgnore
         private List<String> purchaseApplicationIds;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PagingTotalDTO {
+
+        /**
+         * 合计数量
+         */
+        private Integer totalQty;
+
+        /**
+         * 合计金额
+         */
+        private BigDecimal totalAmount;
     }
 
     @Data

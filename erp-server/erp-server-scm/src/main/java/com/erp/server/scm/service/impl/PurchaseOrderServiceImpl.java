@@ -1445,6 +1445,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return Boolean.TRUE;
     }
 
+    @Override
+    public PurchaseOrderDTO.PagingTotalDTO pagingTotal(PurchaseOrderDTO.SearchParamDTO dto) {
+        Boolean isFlag = this.doOpHandleTableParam(dto);
+        if (!isFlag) {
+            PurchaseOrderDTO.PagingTotalDTO pagingTotalDTO = new PurchaseOrderDTO.PagingTotalDTO(MathUtil.ZERO,BigDecimal.ZERO);
+            return pagingTotalDTO;
+        }
+        PurchaseOrderDTO.PagingTotalDTO pagingTotalDTO = baseMapper.pagingTotal(dto);
+        return pagingTotalDTO;
+    }
+
     /**
      * @description: 列表Tab查询状态处理
      * @author Will
