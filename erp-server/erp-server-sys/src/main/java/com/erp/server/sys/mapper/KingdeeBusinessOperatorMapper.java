@@ -5,6 +5,7 @@ import com.common.business.dto.FindUserDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -24,5 +25,5 @@ public interface KingdeeBusinessOperatorMapper extends BaseMapper<KingdeeBusines
      * @param dto
      * @return
      */
-    List<FindUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto);
+    List<FindUserDTO> listInfo(@Param("params") KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto,@Param("orgCode") String orgCode);
 }

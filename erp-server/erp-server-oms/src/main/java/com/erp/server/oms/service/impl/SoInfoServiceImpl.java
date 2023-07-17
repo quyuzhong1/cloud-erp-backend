@@ -201,6 +201,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             code = so.getCode();
         }
+        //要货日期
+        LocalDate requireDate = dto.getRequireDate();
+        //单据日期
+        LocalDate billDate = dto.getBillDate();
+        //同步金蝶的时候要货日期要大于单据日期
+        if (requireDate != null && billDate != null) {
+            if (requireDate.compareTo(billDate) < 0) {
+                throw new ServiceException(ApiError.ERROR_92059);
+            }
+        }
 
         SoInfoEntity addEntity = new SoInfoEntity();
         BeanMapper.copy(dto, addEntity);
@@ -518,7 +528,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+        if (CollUtil.isNotEmpty(ignoreInventorySkuList)) {
             ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
         }
 
@@ -614,13 +624,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             BigDecimal taxRate = item.getTaxRate();
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //销售单价
-            BigDecimal price=item.getPrice();
+            BigDecimal price = item.getPrice();
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
 
-            if(ignoreInventorySkuIds.contains(skuId)) {
+            if (ignoreInventorySkuIds.contains(skuId)) {
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", skuId, item.getSkuNo());
                 item.setIsScarce(Boolean.FALSE);
                 item.setScarceQty(0);
@@ -652,7 +662,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             paramDetailIds = Collections.emptyList();
         } else {
             if (paramDetailIds.size() == 0) {
-                SoInfoDTO.PagingTotalDTO pagingTotalDTO = new SoInfoDTO.PagingTotalDTO(MathUtil.ZERO,BigDecimal.ZERO,BigDecimal.ZERO);
+                SoInfoDTO.PagingTotalDTO pagingTotalDTO = new SoInfoDTO.PagingTotalDTO(MathUtil.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
                 return pagingTotalDTO;
             }
         }
@@ -1777,7 +1787,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(addressIds)) {
             return 0;
         }
-        return this.lambdaQuery().in(SoInfoEntity::getReceiveAddressId,addressIds).count();
+        return this.lambdaQuery().in(SoInfoEntity::getReceiveAddressId, addressIds).count();
     }
 
 

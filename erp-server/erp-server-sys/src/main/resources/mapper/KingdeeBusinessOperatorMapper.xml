@@ -8,12 +8,14 @@
         kbo.erp_user_id AS userId,
         kbo.kingdee_user_name AS userName
         FROM kingdee_business_operator kbo
-        INNER JOIN sys_accounting_company sac
-        ON sac.code=kbo.kingdee_org_code
         INNER JOIN sys_user_info su
         ON su.uid=kbo.erp_user_id
-        WHERE kbo.kingdee_type=#{type}
-        AND sac.id=#{orgId}
+        INNER JOIN kingdee_user_post kup
+        ON kup.kingdee_post_code=kbo.kingdee_post_code
+        AND kup.is_deleted=FALSE
+        WHERE kbo.kingdee_type=#{params.type}
+        AND kbo.kingdee_org_code=#{orgCode}
+        AND kup.use_org_code=#{orgCode}
         AND su.delete_state=1
         AND su.user_state=1
     </select>

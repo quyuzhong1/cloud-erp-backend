@@ -14,7 +14,6 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
-import com.erp.model.sys.entity.DeptKingdeeEntity;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -132,14 +131,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdee = new DeptKingdeeDTO.FindDeptKingdeeDTO();
         findDeptKingdee.setOrgCode(salesOrgCode);
         findDeptKingdee.setDeptId(salesDeptId);
-        DeptKingdeeEntity kingdeeDept = kingdeeFeign.getDeptKingdee(findDeptKingdee);
-        String deptCode = "";
-        if (kingdeeDept != null) {
-            deptCode = kingdeeDept.getKingdeeDeptCode();
-        }
+
 
         //销售员
         String sellerId = entity.getSellerId();
+        String deptCode="";
         //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
@@ -162,8 +158,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                     if (kingdeePost != null) {
                         deptCode = kingdeePost.getKingdeeDeptCode();
                     }
+                }
             }
-        }
         }
 
         resultMap.put("deptCode", deptCode);
@@ -289,7 +285,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             //结算组织
             jsonObject.set("settleOrgCode", salesOrgCode);
             jsonObject.set("amount", item.getAmount());
-            jsonObject.set("unit", item.getUnit());
+            //单位
+            String unit = item.getUnit();
+            jsonObject.set("unit", StringUtils.isNotBlank(unit)?unit:"Pcs");
             jsonObject.set("warehouseOrgCode", warehouseOrgCode);
             jsonObject.set("curInventoryQty", item.getQty());
             jsonObject.set("stockBaseQty", item.getQty());
