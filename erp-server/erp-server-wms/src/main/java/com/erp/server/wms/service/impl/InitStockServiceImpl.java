@@ -536,7 +536,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         for(InitStockDetailDTO.AddDTO addDTO : details) {
             String skuWareLocation = addDTO.getSkuId() + "-" + StrUtils.null2EmptyWithTrim(addDTO.getWarehouseLocation());
             if(skuWareLocationSet.contains(skuWareLocation)) {
-                throw new ServiceException(StrUtil.format("sku编码【{}】仓位【{}】不允许重复", addDTO.getSkuNo(),  StrUtils.null2EmptyWithTrim(addDTO.getWarehouseLocation())));
+                // 临时注释打开，不做验证 by zhangchunlin at 2023-07-17
+                // throw new ServiceException(StrUtil.format("sku编码【{}】仓位【{}】不允许重复", addDTO.getSkuNo(),  StrUtils.null2EmptyWithTrim(addDTO.getWarehouseLocation())));
             } else {
                 skuWareLocationSet.add(skuWareLocation);
             }
@@ -547,10 +548,13 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 WarehouseLocationEntity warehouseLocation = warehouseLocationService.findByWarehouseIdAndCode(mainDTO.getWarehouseId(), warehouseLocationCode);
                 ValidatorUtil.isTrue(Objects.nonNull(warehouseLocation),()->new ServiceException("仓位信息不存在"));
             }
+            // 临时注释打开，不做验证 by zhangchunlin at 2023-07-17
+            /*
             Integer checkCnt = initStockDetailService.countCondition(mainDTO.getWarehouseId(), warehouseLocationCode, skuId, null);
             if(checkCnt > 0) {
                 throw new ServiceException(StrUtil.format("sku编码【{}】在仓库【{}】仓位【{}】中已经存在", addDTO.getSkuNo(), warehouseDTO.getName(), warehouseLocationCode));
             }
+             */
         }
     }
 
@@ -564,7 +568,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         for(InitStockDetailDTO.UpdateDTO updateDTO : details) {
             String skuWareLocation = updateDTO.getSkuId() + "-" + StrUtils.null2EmptyWithTrim(updateDTO.getWarehouseLocation());
             if(skuWareLocationSet.contains(skuWareLocation)) {
-                throw new ServiceException(StrUtil.format("sku编码【{}】仓位【{}】不允许重复", updateDTO.getSkuNo(),  StrUtils.null2EmptyWithTrim(updateDTO.getWarehouseLocation())));
+                // 临时注释打开，不做验证 by zhangchunlin at 2023-07-17
+                // throw new ServiceException(StrUtil.format("sku编码【{}】仓位【{}】不允许重复", updateDTO.getSkuNo(),  StrUtils.null2EmptyWithTrim(updateDTO.getWarehouseLocation())));
             } else {
                 skuWareLocationSet.add(skuWareLocation);
             }
@@ -587,10 +592,13 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 ValidatorUtil.isTrue(Objects.nonNull(warehouseLocation),()->new ServiceException("库位信息不存在"));
                 warehouseLocationCode = warehouseLocation.getCode();
             }
+            // 临时注释打开，不做验证 by zhangchunlin at 2023-07-17
+            /*
             Integer checkCnt = initStockDetailService.countCondition(mainDTO.getWarehouseId(), warehouseLocationCode, skuId, mainId);
             if(checkCnt > 0) {
                 throw new ServiceException(StrUtil.format("sku编码【{}】在仓库【{}】库位【{}】中已经存在", updateDTO.getSkuNo(), warehouseDTO.getName(), warehouseLocationCode));
             }
+             */
         }
     }
 
