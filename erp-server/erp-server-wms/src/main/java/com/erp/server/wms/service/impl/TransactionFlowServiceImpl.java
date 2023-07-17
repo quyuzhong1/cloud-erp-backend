@@ -11,10 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -88,12 +85,15 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     public List<TransactionFlowEntity> getUnApprovedTxnFlows(String sourceType, String sourceId) {
-        List<TransactionFlowEntity> txnFlows =  lambdaQuery().eq(TransactionFlowEntity::getSourceType, sourceType)
-                .eq(TransactionFlowEntity::getSourceId, sourceId).eq(TransactionFlowEntity::getOperationMode, InventoryOperationModeEnum.APPROVE.getCode())
-                .eq(TransactionFlowEntity::getIsUnapproved, Boolean.FALSE).list();
-        if(CollUtil.isNotEmpty(txnFlows)) {
-            txnFlows = txnFlows.stream().sorted(Comparator.comparing(TransactionFlowEntity::getCreateTime)).collect(Collectors.toList());
-        }
+        List<TransactionFlowEntity> txnFlows =  lambdaQuery()
+                .eq(TransactionFlowEntity::getSourceType, sourceType)
+                .eq(TransactionFlowEntity::getSourceId, sourceId)
+                .eq(TransactionFlowEntity::getOperationMode, InventoryOperationModeEnum.APPROVE.getCode())
+                .eq(TransactionFlowEntity::getIsUnapproved, Boolean.FALSE)
+                .orderByAsc(TransactionFlowEntity::getTradeTime)
+                .orderByAsc(TransactionFlowEntity::getId)
+                .list();
+
         return txnFlows;
     }
 
@@ -155,6 +155,32 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             transactionFlowEntity.setIsUnapproved(Boolean.TRUE);
         }
         boolean save = super.save(transactionFlowEntity);
+        ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
+    }
+
+    @Override
+    public void add(TransactionFlowEntity tradeParam, InventoryBusinessTypeEnum businessType, String transactionRuleId, Integer afterInventoryQty) {
+        // 记录交易流水
+        LoginUser loginUser = commonService.getUserInfo();
+
+        // 复制所有参数
+        TransactionFlowEntity transactionFlow = new TransactionFlowEntity();
+        BeanMapper.copy(tradeParam,transactionFlow);
+        // 更改指定的参数
+        transactionFlow.setCurInventoryQty(afterInventoryQty);
+        transactionFlow.setTradeTime(LocalDateTime.now());
+        transactionFlow.setUserId(Objects.nonNull(loginUser) ? loginUser.getUid() : "");
+        transactionFlow.setVersion(1);
+        // 个别参数设置空值
+        transactionFlow.setId(null);
+        transactionFlow.setCreateUserId(null);
+        transactionFlow.setCreateUserName(null);
+        transactionFlow.setCreateTime(null);
+        transactionFlow.setUpdateUserId(null);
+        transactionFlow.setUpdateUserName(null);
+        transactionFlow.setUpdateTime(null);
+
+        boolean save = super.save(transactionFlow);
         ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
     }
 

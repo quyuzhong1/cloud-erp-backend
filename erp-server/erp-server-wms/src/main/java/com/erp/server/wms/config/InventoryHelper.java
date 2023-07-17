@@ -187,12 +187,12 @@ public class InventoryHelper {
 
         if(Objects.isNull(inventory)) {
             log.warn("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 出库时未找到库存数据", warehouseId, orgId, warehouseLocation,skuId, skuNo);
-            throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), warehouseLocation, skuNo, inventoryStatusName));
+            throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg,skuNo, warehouseDetail.getName(), warehouseLocation, inventoryStatusName,"无",qty));
         }
         log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，操作数量：【{}】，库存状态对应的总数量：【{}】", warehouseId, orgId, warehouseLocation,skuId, skuNo, sourceTypeEnum.getName(),
                 businessType.getName(), status.getName(), qty, inventory.getQty());
         if(inventory.getQty() < qty) {
-            throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), warehouseLocation, skuNo, inventoryStatusName));
+            throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, skuNo, warehouseDetail.getName(), warehouseLocation, inventoryStatusName,inventory.getQty(),qty));
         }
     }
 

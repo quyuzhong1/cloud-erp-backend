@@ -162,8 +162,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                     if (kingdeePost != null) {
                         deptCode = kingdeePost.getKingdeeDeptCode();
                     }
-                }
             }
+        }
         }
 
         resultMap.put("deptCode", deptCode);

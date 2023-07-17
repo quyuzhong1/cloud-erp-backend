@@ -60,18 +60,20 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
     @Override
     public boolean updateQtyById(String id, Integer qty) {
         LoginUser loginUser = commonService.getUserInfo();
-        boolean flag = lambdaUpdate().setSql(StrUtil.format("{}={}+{}", "qty","qty", qty))
-                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
+        boolean flag = lambdaUpdate()
+                .setSql(StrUtil.format("{}={}+{}", "qty","qty", qty))
+//                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
                 .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
                 .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
-                .eq(InventoryDetailEntity::getId, id).update();
+                .eq(InventoryDetailEntity::getId, id)
+                .update();
         return flag;
         // return inventoryDetailMapper.updateQtyById(id, qty, version, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public String addOrUpdate(String inventoryInfoId, LocalDate billDate, Integer qty) {
+    public InventoryDetailEntity addOrUpdate(String inventoryInfoId, LocalDate billDate, Integer qty) {
         // 入库批次日期取单据日期
         InventoryDetailEntity inventoryDetail =  this.findOneDetail(inventoryInfoId, billDate);
         if (Objects.isNull(inventoryDetail)) {
@@ -93,7 +95,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
                 throw new ServiceException(ApiError.ERROR_1027);
             }
         }
-        return inventoryDetail.getId();
+        return inventoryDetail;
     }
 
 }

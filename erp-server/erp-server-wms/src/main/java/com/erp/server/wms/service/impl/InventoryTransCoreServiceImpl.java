@@ -32,8 +32,8 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     @Override
     public void approveByType(InventoryInOutStockDTO dto) {
         ValidatorUtil.validateEntity(dto);
-        AbstractInventoryServiceImpl abstractInventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
-        abstractInventoryService.approve(dto.getMembers(), null, InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), true);
+        AbstractInventoryServiceImpl inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
+        inventoryService.approve(dto.getMembers(), null, InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), true);
     }
 
     /**
@@ -44,8 +44,8 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     @Override
     public void approveByType(InventoryTransferDTO dto) {
         ValidatorUtil.validateEntity(dto);
-        AbstractInventoryServiceImpl abstractInventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.TRANSFER_STOCK);
-        abstractInventoryService.approve(dto.getMembers(), null, InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), true);
+        AbstractInventoryServiceImpl inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.TRANSFER_STOCK);
+        inventoryService.approve(dto.getMembers(), null, InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), true);
     }
 
     /**
@@ -56,8 +56,8 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     @Override
     public void approveByRule(InventoryTransferRuleDTO dto) {
         ValidatorUtil.validateEntity(dto);
-        AbstractInventoryServiceImpl abstractInventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.TRANSFER_STOCK);
-        abstractInventoryService.approve(dto.getMembers(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
+        AbstractInventoryServiceImpl inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.TRANSFER_STOCK);
+        inventoryService.approve(dto.getMembers(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
     }
 
     /**
@@ -68,8 +68,8 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     @Override
     public void approveByRule(InventoryInOutStockRuleDTO dto) {
         ValidatorUtil.validateEntity(dto);
-        AbstractInventoryServiceImpl abstractInventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
-        abstractInventoryService.approve(dto.getMembers(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
+        AbstractInventoryServiceImpl inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
+        inventoryService.approve(dto.getMembers(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
     }
 
     /**
@@ -80,7 +80,8 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     @Override
     public void unApprove(InventoryUnApproveDTO dto) {
         ValidatorUtil.validateEntity(dto);
-        inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK).unApprove(dto);
+        inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK)
+                .unApprove(dto);
     }
 
     /**
@@ -91,12 +92,12 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     @Override
     public void batchUnApprove(InventoryBatchUnApproveDTO dto) {
         ValidatorUtil.validateEntity(dto);
-        AbstractInventoryServiceImpl abstractInventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
+        AbstractInventoryServiceImpl inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
         dto.getBillIds().stream().forEach(billId->{
             InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO();
             inventoryUnApproveDTO.setSourceType(dto.getSourceType());
             inventoryUnApproveDTO.setBillId(billId);
-            abstractInventoryService.unApprove(inventoryUnApproveDTO);
+            inventoryService.unApprove(inventoryUnApproveDTO);
         });
     }
 

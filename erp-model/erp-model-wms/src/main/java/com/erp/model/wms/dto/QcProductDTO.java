@@ -35,7 +35,6 @@ public class QcProductDTO {
         /**
          * sku
          */
-        @NotBlank(message = "sku不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private String skuId;
 
 

@@ -44,6 +44,6 @@ public interface InventoryDetailService  extends SuperService<InventoryDetailEnt
      * @param qty
      * @return
      */
-    String addOrUpdate(String inventoryInfoId, LocalDate billDate, Integer qty);
+    InventoryDetailEntity addOrUpdate(String inventoryInfoId, LocalDate billDate, Integer qty);
 
 }

@@ -125,12 +125,14 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
         log.warn("从配置读取库存交易规则，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】,交易配置信息：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo(), JSONObject.toJSONString(transactionRuleParams));
         for(TransactionRuleDTO transactionRule : transactionRuleParams) {
             InventoryUtils.checkTransRule(transactionRule);
+
             // 可能某个业务类型在同一个仓库即需要做入也需要做出，分别调用逻辑
             InOutStockCoreDTO inOutStockCoreDTO = InventoryUtils.wrapCoreParam(param, InventoryOperationModeEnum.APPROVE);
             InventoryModeEnum inventoryModeEnum = transactionRule.getTransactionMode();
             InventoryStatusEnum inventoryStatusEnum = transactionRule.getInventoryStatus();
-            // 入库
+
             if(Objects.equals(InventoryModeEnum.IN_STOCK, inventoryModeEnum)) {
+                // 入库
                 this.inStockCore(inOutStockCoreDTO, businessType, inventoryStatusEnum, transactionRule.getId(), transactionNo);
             } else if (Objects.equals(InventoryModeEnum.OUT_STOCK, inventoryModeEnum)) {
                 // 出库

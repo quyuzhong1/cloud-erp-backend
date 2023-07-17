@@ -1,30 +1,33 @@
 package com.erp.server.dmp.pull.service.dmp;
 
+import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
-import com.erp.server.dmp.pull.service.gyy.GyyDeliveryDetailServiceImpl;
-import com.erp.server.dmp.pull.service.gyy.GyyOrderInfoServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeDeliveryDetailServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeEccShopServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeOrderInfoServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeReturnOrderInfoImpl;
+import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
+import com.erp.server.dmp.push.service.kingdee.impl.KingdeeCommonServiceImpl;
+import com.erp.server.dmp.utils.KingdeeApiUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.IntStream;
+import java.util.Map;
 
 /**
  *
@@ -132,4 +135,22 @@ public class KingdeePullServiceTest {
             e.printStackTrace();
         }
     }
+
+    @Test
+    public void Test(){
+        //模块类型
+        Integer type = ApiModuleTypeEnum.SO_OUTSTOCK.getCode();
+        KingdeeCommonService kingdeeCommonService = new KingdeeCommonServiceImpl();
+        Map<String, Object> map = new LinkedHashMap<>();
+        //读取配置，初始化SDK
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FBillNo = '%s'", "XSCKD4064971"));
+        String filterStr = String.join(" and ", queryFilters);//5814757
+        String fieldKeys = "FModifyDate,FDocumentStatus,FApproveDate";
+        map.put("FCustMatID.FNumber", "XSCKD01_SYS，XSCKD07_SYS");
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
+        System.out.println(queryList);
+    }
+
 }
