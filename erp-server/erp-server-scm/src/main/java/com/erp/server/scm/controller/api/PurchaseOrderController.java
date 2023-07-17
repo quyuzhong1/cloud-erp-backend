@@ -59,6 +59,22 @@ public class PurchaseOrderController extends BaseController {
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.paging(dto);
         return success(pagingVO);
     }
+
+    /**
+     * 列表查询总数
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/pagingTotal")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:paging",
+            tableAlias = "po")
+    public ApiResult<PurchaseOrderDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated PurchaseOrderDTO.SearchParamDTO dto) {
+        PurchaseOrderDTO.PagingTotalDTO pagingTotalDTO = purchaseOrderService.pagingTotal(dto);
+        return success(pagingTotalDTO);
+    }
     
     /**
      * 查询数量

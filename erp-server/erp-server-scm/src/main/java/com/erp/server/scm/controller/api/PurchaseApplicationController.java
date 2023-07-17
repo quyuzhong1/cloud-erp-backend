@@ -62,6 +62,22 @@ public class PurchaseApplicationController extends BaseController {
     }
 
     /**
+     * 列表查询总数
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/pagingTotal")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "apply_user_id",
+            menuCode = "scm:purchaseApplication:paging",
+            tableAlias = "pa")
+    public ApiResult<PurchaseApplicationDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated PurchaseApplicationDTO.SearchParamDTO dto) {
+        PurchaseApplicationDTO.PagingTotalDTO pagingTotalDTO = purchaseApplicationService.pagingTotal(dto);
+        return success(pagingTotalDTO);
+    }
+
+    /**
      * 查询数量
      * @author Will
      * @date: 2023/3/15 17:34

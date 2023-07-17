@@ -148,6 +148,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         return new PagingVO(pageData);
     }
 
+    @Override
+    public PurchaseApplicationDTO.PagingTotalDTO pagingTotal(PurchaseApplicationDTO.SearchParamDTO dto) {
+        PurchaseApplicationDTO.PagingTotalDTO pagingTotalDTO = baseMapper.pagingTotal(dto);
+        return pagingTotalDTO;
+    }
 
 
     @Override

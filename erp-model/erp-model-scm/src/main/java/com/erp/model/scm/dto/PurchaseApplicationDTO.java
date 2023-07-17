@@ -3,6 +3,7 @@ package com.erp.model.scm.dto;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -162,6 +163,18 @@ public class PurchaseApplicationDTO implements Serializable {
          * 是否是组合SKU
          */
         private Boolean isConstitute;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PagingTotalDTO {
+
+        /**
+         * 合计数量
+         */
+        private Integer totalQty;
+
     }
 
     @Data

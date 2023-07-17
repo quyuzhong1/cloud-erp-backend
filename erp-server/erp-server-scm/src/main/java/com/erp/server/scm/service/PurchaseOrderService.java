@@ -327,4 +327,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return java.lang.Boolean
      **/
     Boolean exportPurchaseContract(String id, HttpServletResponse response);
+    /**
+     * @description: 列表查询总数
+     * @author Will
+     * @date: 2023/7/17 15:05
+     * @param dto
+     * @return PagingTotalDTO
+     */
+    PurchaseOrderDTO.PagingTotalDTO pagingTotal(PurchaseOrderDTO.SearchParamDTO dto);
 }

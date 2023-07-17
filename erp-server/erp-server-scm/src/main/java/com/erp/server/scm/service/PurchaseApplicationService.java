@@ -32,6 +32,16 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @return PagingVO<PurchaseApplicationDTO.listDTO>
      */
     PagingVO<PurchaseApplicationDTO.ListDTO> paging(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto);
+
+    /**
+     * @description: 查询总数
+     * @author Will
+     * @date: 2023/7/17 15:18
+     * @param dto
+     * @return PagingTotalDTO
+     */
+    PurchaseApplicationDTO.PagingTotalDTO pagingTotal(PurchaseApplicationDTO.SearchParamDTO dto);
+
     /**
      * @description: 查询数量
      * @author Will
@@ -173,4 +183,5 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @param list
      */
     void generateSubcontractOrder(ValidList<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> list);
+
 }
