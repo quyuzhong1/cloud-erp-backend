@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public enum SysClassifyEnum {
-    SYS("sys", "系统管理"),
     PLM("plm", "PLM系统"),
     SCM("scm", "SCM系统"),
     WMS("wms", "WMS系统"),
