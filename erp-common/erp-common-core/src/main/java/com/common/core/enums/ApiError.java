@@ -575,8 +575,8 @@ public enum ApiError implements Serializable {
     ERROR_TRANSFER_MB_UPDATE(98097,"马帮直接调拨单不允许修改"),
     ERROR_TRANSFER_MB_DELETE(98098,"马帮直接调拨单【{}】不允许删除"),
     ERROR_NOT_FOUND_PURCHASE_PRICE_DETAIL(98099,"未找到采购价目明细"),
-    ERROR_PURCHASE_PRICE_ID_REPEAT(98100,"清选择同一采购价目表下明细进行变更"),
-    ERROR_PURCHASE_ORDER_ID_REPEAT(98101,"清选择同一采购订单下明细进行变更"),
+    ERROR_PURCHASE_PRICE_ID_REPEAT(98100,"请选择同一采购价目表下明细进行变更"),
+    ERROR_PURCHASE_ORDER_ID_REPEAT(98101,"请选择同一采购订单下明细进行变更"),
 
 
 
