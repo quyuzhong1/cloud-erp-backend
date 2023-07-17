@@ -104,6 +104,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
         /**
          * 预计交货日期
          */
+        @NotNull(message = "预计交货日期不能为空")
         private LocalDate planDeliveryDate;
 
         /**
