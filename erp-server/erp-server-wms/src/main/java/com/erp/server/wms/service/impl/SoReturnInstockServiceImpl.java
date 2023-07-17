@@ -765,7 +765,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 inOutStockDTO.setSourceId(entity.getId());
                 inOutStockDTO.setSourceCode(entity.getCode());
                 inOutStockDTO.setSourceDetailId(detailEntity.getId());
-                inOutStockDTO.setBillDate(LocalDate.now());
+                // 调整为入库日期 fix by zhangchunlin at 2023-07-17
+                inOutStockDTO.setBillDate(entity.getBillDate());
                 inOutStockDTO.setSkuId(detailEntity.getSkuId());
                 inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
                 inOutStockDTO.setQty(detailEntity.getRealQty());
