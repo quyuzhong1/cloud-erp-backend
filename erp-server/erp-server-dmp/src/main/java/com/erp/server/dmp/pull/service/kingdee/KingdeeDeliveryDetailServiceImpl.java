@@ -215,10 +215,10 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         queryFilters.add(StrUtil.format(" FDocumentStatus in ({})", "'C'"));
         // 过滤组织内订单
         queryFilters.add(StrUtil.format(" FISGENFORIOS = {}", "0"));
+        queryFilters.add(StrUtil.format(" ((FModifyDate >= '{}' and FModifyDate <= '{}') or (FApproveDate >= '{}' and FApproveDate < '{}'))",sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime),sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime)));
         String filterStr = String.join(" and ", queryFilters);
-        filterStr = filterStr.concat(StrUtil.format(" and (( FModifyDate >= '{}' and FModifyDate <= '{}') ", sdf.format(lastTime),sdf.format(nextTime)));
-        filterStr = filterStr.concat(StrUtil.format(" OR (FApproveDate >= '{}' and FApproveDate < '{}'))", sdf.format(lastTime), sdf.format(nextTime)));
         log.info("拉取金蝶条件为>>>>>>>>>>{}", filterStr);
+
         String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillNo,FSoOrDerNo,FDate,FSaleOrgId,FSaleOrgId.FName,FCarriageNO,FStockerID.FNumber,FStockerID.FName," +
                 "FCustomerID,FCustomerID.FName,FCustomerID.FNumber,FSaleDeptID.FName,FSalesManID,FSalesManID.FName,FSalesManID.FNumber,FReceiverID.FName," +
                 "FTransferBizType.FName,F_ulz_BaseProperty2,F_ulz_BaseProperty2.FNumber,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus," +
