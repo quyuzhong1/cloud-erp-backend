@@ -8,6 +8,7 @@ import com.erp.server.oms.service.BankAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -26,8 +27,8 @@ public class BankAccountController extends BaseController {
     private BankAccountService bankAccountService;
 
     @GetMapping("/select")
-    public ApiResult<List<BaseDropDownDTO.CommonDTO>> select( ) {
-        List<BankAccountEntity> list = bankAccountService.list( );
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> select(@RequestParam(value = "orgId") String orgId) {
+        List<BankAccountEntity> list = bankAccountService.findByOrgId(orgId);
         List<BaseDropDownDTO.CommonDTO> result = list.stream()
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getBankAccountNo(), x.getAccountName()))
                 .collect(Collectors.toList());

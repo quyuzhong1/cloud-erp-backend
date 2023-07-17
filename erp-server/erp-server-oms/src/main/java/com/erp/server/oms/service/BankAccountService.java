@@ -2,6 +2,8 @@ package com.erp.server.oms.service;
 import com.erp.model.oms.entity.BankAccountEntity;
 import com.common.business.service.SuperService;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -19,5 +21,12 @@ public interface BankAccountService extends SuperService<BankAccountEntity> {
      * @return
      */
     BankAccountEntity findByAccountNo(String bankAccountNo);
+
+    /**
+     * 根据组织id获取银行账号
+     * @param orgId
+     * @return
+     */
+    List<BankAccountEntity> findByOrgId(String orgId);
 
 }
