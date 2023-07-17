@@ -44,7 +44,7 @@ public class WorkOptionEntity extends BaseEntity<WorkOptionEntity> {
     /**
      * 模块地址
      */
-    @TableField("moduleUrl")
+    @TableField("module_url")
     private String moduleUrl;
 
     /**

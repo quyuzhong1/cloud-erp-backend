@@ -161,7 +161,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
     public Boolean delete(List<String> mainIds) {
         return lambdaUpdate().set(SoReturnInstockDetailEntity::getIsDeleted, Boolean.TRUE)
                 .in(SoReturnInstockDetailEntity::getMainId, mainIds)
-                .remove();
+                .update();
     }
 
     @Override
