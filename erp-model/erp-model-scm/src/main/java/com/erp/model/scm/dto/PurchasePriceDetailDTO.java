@@ -215,7 +215,14 @@ public class PurchasePriceDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class ViewDTO {
 
+        /**
+         * 采购价目id
+         */
+        private String purchasePriceId;
 
+        /**
+         * 主键id
+         */
         private String id;
 
         /**

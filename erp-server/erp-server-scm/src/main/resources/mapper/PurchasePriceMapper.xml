@@ -34,10 +34,10 @@
                 #{item}
             </foreach>
         </if>
-        <if test="params.skuIdList!=null and params.skuIdList.size>0">
-            AND ppd.sku_id IN
-            <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
-                #{skuId}
+        <if test="params.skuNoList!=null and params.skuNoList.size>0">
+            AND ppd.sku_no IN
+            <foreach collection="params.skuNoList" item="item" open="(" separator="," close=")">
+                #{item}
             </foreach>
         </if>
         <if test="params.code != null and params.code != ''">
@@ -134,10 +134,10 @@
                 </foreach>
             </when>
             <otherwise>
-                <if test="params.skuIdList!=null and params.skuIdList.size>0">
-                    AND ppd.sku_id IN
-                    <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
-                        #{skuId}
+                <if test="params.skuNoList!=null and params.skuNoList.size>0">
+                    AND ppd.sku_no IN
+                    <foreach collection="params.skuNoList" item="item" open="(" separator="," close=")">
+                        #{item}
                     </foreach>
                 </if>
                 <if test="params.name !=null and params.name!=''">

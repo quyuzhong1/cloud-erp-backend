@@ -80,8 +80,8 @@ public class PurchasePriceChangeController extends BaseController {
      * @return
      */
     @PostMapping("/priceChangeDetail")
-    public ApiResult<PurchasePriceChangeDTO.ViewDTO> priceChangeDetail(@RequestBody @Validated BaseIdDTO dto) {
-        PurchasePriceChangeDTO.ViewDTO view = purchasePriceDetailService.priceChangeDetail(dto.getId());
+    public ApiResult<PurchasePriceChangeDTO.ViewDTO> priceChangeDetail(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        PurchasePriceChangeDTO.ViewDTO view = purchasePriceDetailService.priceChangeDetail(dto.getIds());
         return success(view);
     }
 

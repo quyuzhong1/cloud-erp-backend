@@ -302,32 +302,19 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     public List<PurchasePriceDetailDTO.ViewDTO> getByPurchasePriceId(String purchasePriceId) {
         List<PurchasePriceDetailEntity> list = this.getListByPurchasePriceId(purchasePriceId);
         List<PurchasePriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, PurchasePriceDetailDTO.ViewDTO.class);
-        List<String> currencyIdList = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getCurrency).collect(Collectors.toList());
-        //币种信息
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
-        BigDecimal hundred = new BigDecimal("100");
-
-        for (PurchasePriceDetailDTO.ViewDTO item : viewList) {
-            //币种
-            String currency = item.getCurrency();
-            String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
-            item.setCurrencySymbol(currencySymbol);
-            BigDecimal taxRate = item.getTaxRate();
-            if (taxRate != null) {
-                item.setTaxRate(taxRate.multiply(hundred));
-            }
-            Integer minQty = item.getMinQty();
-            Integer maxQty = item.getMaxQty();
-            if (minQty == 0 && maxQty == 0) {
-                item.setMinQty(null);
-                item.setMaxQty(null);
-            }
-        }
-
+        //处理采购价目明细信息
+        handlePurchasePriceDetail(viewList);
         return viewList;
     }
 
+    @Override
+    public List<PurchasePriceDetailDTO.ViewDTO> listByPurchasePriceDetailIds(List<String> purchasePriceDetailIds) {
+        List<PurchasePriceDetailEntity> list = this.listByIds(purchasePriceDetailIds);
+        List<PurchasePriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, PurchasePriceDetailDTO.ViewDTO.class);
+        //处理采购价目明细信息
+        handlePurchasePriceDetail(viewList);
+        return viewList;
+    }
 
     /**
      * 根据价目表id 和详情表id 集合获取对应数据
@@ -349,7 +336,6 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, PurchasePriceDetailDTO.ViewDTO.class);
         return viewList;
     }
-
 
     /**
      * 修改产品明细
@@ -546,23 +532,33 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     /**
      * 采购价目表 点击变更报价 获取到详情
      *
-     * @param purchasePriceId
+     * @param purchasePriceDetailIds
      * @return com.erp.model.scm.dto.PurchasePriceChangeDTO.ViewDTO
      * @author yl
      * @date 2023-04-06 12:03
      */
     @Override
-    public PurchasePriceChangeDTO.ViewDTO priceChangeDetail(String purchasePriceId) {
+    public PurchasePriceChangeDTO.ViewDTO priceChangeDetail(List<String> purchasePriceDetailIds) {
         PurchasePriceChangeDTO.ViewDTO viewDTO = new PurchasePriceChangeDTO.ViewDTO();
-        PurchasePriceEntity priceEntity = priceService.getById(purchasePriceId);
+
+        List<PurchasePriceDetailDTO.ViewDTO> viewList = this.listByPurchasePriceDetailIds(purchasePriceDetailIds);
+        if (CollectionUtils.isEmpty(viewList)) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_PURCHASE_PRICE_DETAIL);
+        }
+        long count = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getPurchasePriceId).distinct().count();
+        if (count > 1) {
+            throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_ID_REPEAT);
+        }
+
+        PurchasePriceEntity priceEntity = priceService.getById(viewList.get(0).getPurchasePriceId());
         if (Objects.isNull(priceEntity)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
-        viewDTO.setPurchasePriceId(purchasePriceId);
+        viewDTO.setPurchasePriceId(viewList.get(0).getPurchasePriceId());
         viewDTO.setSupplierId(priceEntity.getSupplierId());
         viewDTO.setPurchaseOrgId(priceEntity.getPurchaseOrgId());
         viewDTO.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-        List<PurchasePriceDetailDTO.ViewDTO> viewList = this.getByPurchasePriceId(purchasePriceId);
+
         List<String> skuIds = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
@@ -728,5 +724,38 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         return new Pair<>("", resultList);
     }
 
+    /**
+     * @description: 处理采购价目明细信息
+     * @author Will
+     * @date: 2023/7/17 12:12
+     * @param viewList
+     */
+    private void handlePurchasePriceDetail(List<PurchasePriceDetailDTO.ViewDTO> viewList) {
+        if (CollectionUtils.isEmpty(viewList)) {
+            return;
+        }
+        List<String> currencyIdList = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getCurrency).collect(Collectors.toList());
+        //币种信息
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+        BigDecimal hundred = new BigDecimal("100");
+
+        for (PurchasePriceDetailDTO.ViewDTO item : viewList) {
+            //币种
+            String currency = item.getCurrency();
+            String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
+            item.setCurrencySymbol(currencySymbol);
+            BigDecimal taxRate = item.getTaxRate();
+            if (taxRate != null) {
+                item.setTaxRate(taxRate.multiply(hundred));
+            }
+            Integer minQty = item.getMinQty();
+            Integer maxQty = item.getMaxQty();
+            if (minQty == 0 && maxQty == 0) {
+                item.setMinQty(null);
+                item.setMaxQty(null);
+            }
+        }
+    }
 
 }

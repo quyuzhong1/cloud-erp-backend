@@ -280,12 +280,12 @@ public class PurchaseOrderController extends BaseController {
      * 采购变更数据显示
      * @author Will
      * @date: 2023/3/31 14:28
-     * @param id
+     * @param dto
      * @return ApiResult<AddDTO>
      */
-    @GetMapping("/viewPurchaseChange")
-    public ApiResult<PurchaseChangeDTO.ViewDTO> viewPurchaseChange(@RequestParam("id") String id) {
-        PurchaseChangeDTO.ViewDTO viewDTO = purchaseOrderService.viewPurchaseChange(id);
+    @PostMapping("/viewPurchaseChange")
+    public ApiResult<PurchaseChangeDTO.ViewDTO> viewPurchaseChange(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        PurchaseChangeDTO.ViewDTO viewDTO = purchaseOrderService.viewPurchaseChange(dto.getIds());
         return success(viewDTO);
     }
 
