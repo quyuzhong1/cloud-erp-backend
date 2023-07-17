@@ -364,7 +364,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             dto.setPurchaseUserName(skuPurchase.getPurchaseUserName());
             dto.setSupplierId(skuPurchase.getSupplierId());
             dto.setSupplierName(skuPurchase.getSupplierName());
-
+            //预计交货日期
+            dto.setPlanDeliveryDate(entity.getPlanDeliveryDate());
             PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO  = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
             searchDTO.setSkuId(entity.getSkuId());
             searchDTO.setSkuNo(entity.getSkuNo());
@@ -414,6 +415,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
+
+        log.info("生成采购订单 ids= {}",ids);
 
         //设置采购订单生成类型
         List<PurchaseApplicationDetailEntity> detailList = setCreatePoType(list, mainList);
@@ -480,6 +483,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
                 addDetailDTO.setCurrency(generatePurchaseOrderDTO.getCurrency());
                 addDetailDTO.setCurrencySymbol(generatePurchaseOrderDTO.getCurrencySymbol());
+                addDetailDTO.setPlanDeliveryDate(generatePurchaseOrderDTO.getPlanDeliveryDate());
                 addDetailDTO.setSkuId(skuVO.getSkuId());
                 addDetailDTO.setSkuNo(skuVO.getSkuNo());
                 addDetailDTO.setProductName(skuVO.getSkuName());
@@ -752,6 +756,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 viewGenerateDTO.setToPushdownQty(null);
                 viewGenerateDTO.setQty(viewDTO.getQty() * viewGenerateDTO.getQuantity());
                 viewGenerateDTO.setDeliveryQty(viewDTO.getDeliveryQty() * viewGenerateDTO.getQuantity());
+                viewGenerateDTO.setPlanDeliveryDate(viewDTO.getPlanDeliveryDate());
                 viewGenerateDTO.setIndex(index);
                 index++;
                 generateChildList.add(viewGenerateDTO);

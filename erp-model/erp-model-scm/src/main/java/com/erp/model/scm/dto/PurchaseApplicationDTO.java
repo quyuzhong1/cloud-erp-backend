@@ -449,6 +449,10 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         private String supplierName;
 
+        /**
+         * 预计交货日期
+         */
+        private LocalDate planDeliveryDate;
 
     }
 
@@ -473,6 +477,12 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         @NotBlank(message = "供应商id不能为空")
         private String supplierId;
+
+        /**
+         * 预计交货日期
+         */
+        @NotNull(message = "预计交货日期不能为空")
+        private LocalDate planDeliveryDate;
 
         /**
          * 币别
@@ -650,6 +660,10 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         private String supplierId;
 
+        /**
+         * 预计交货日期
+         */
+        private LocalDate planDeliveryDate;
 
         /**
          * 子集
@@ -763,6 +777,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * 供应商id
          */
         private String supplierId;
+
+        /**
+         * 预计交货日期
+         */
+        private LocalDate planDeliveryDate;
     }
 
 
@@ -827,6 +846,13 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         @NotBlank(message = "供应商不能为空")
         private String supplierId;
+
+
+        /**
+         * 预计交货日期
+         */
+        @NotNull(message = "预计交货日期不能为空")
+        private LocalDate planDeliveryDate;
 
         /**
          * 采购数量
