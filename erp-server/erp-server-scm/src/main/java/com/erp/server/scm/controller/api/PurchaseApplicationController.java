@@ -62,7 +62,7 @@ public class PurchaseApplicationController extends BaseController {
     }
 
     /**
-     * 列表查询总数
+     * 列表查询合计
      *
      * @param dto
      * @return
