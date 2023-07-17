@@ -3,7 +3,7 @@ package com.common.message.enums;
 /**
  * @author Will
  * @version 1.0
- * @description: API模块类型枚举
+ * @description: API模块类型枚举(sys字典表apiModuleType)
  * @date 2023/1/11 14:54
  */
 public enum ApiModuleTypeEnum {
