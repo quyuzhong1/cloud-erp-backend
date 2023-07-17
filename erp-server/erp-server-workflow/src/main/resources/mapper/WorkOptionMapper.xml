@@ -66,10 +66,10 @@
         SELECT
         wo.id,
         wmrs.id AS moduleStatusId,
-        wm.sys_classify AS sysClassify,
+        CASE WHEN wm.sys_classify IS NULL  THEN SUBSTRING(wo.module_url,2,3) ELSE wm.sys_classify END AS sysClassify,
         wm.id AS menu_id,
-        wm.module_classify AS name,
-        wmrs.module_url AS moduleUrl,
+        CASE WHEN wm.module_classify IS NULL THEN wo.module_name ELSE wm.module_classify END AS name,
+        CASE WHEN wmrs.module_url IS NULL THEN wo.module_url ELSE wmrs.module_url END AS moduleUrl,
         wmrs.module_param AS moduleParam,
         wo.module_name AS moduleName
         FROM work_option wo
