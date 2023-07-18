@@ -1115,7 +1115,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             BigDecimal price = item.getPrice();
             Integer qty = item.getQty();
             //当是赠品的时候  单价为0
-            if (isGift) {
+            if (Objects.nonNull(isGift)&&isGift) {
                 price = BigDecimal.ZERO;
             }
             item.setPrice(price);
