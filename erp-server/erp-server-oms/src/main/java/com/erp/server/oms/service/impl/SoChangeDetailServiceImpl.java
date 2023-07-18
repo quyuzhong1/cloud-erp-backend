@@ -514,7 +514,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         if (CollectionUtils.isNotEmpty(detailList)) {
             List<SoChangeDetailDTO.AddDTO> list = detailList.stream().filter(d -> StringUtils.isNotBlank(d.getSoDetailId())).collect(Collectors.toList());
             long distinctCount = list.stream().map(SoChangeDetailDTO.AddDTO::getChangeType).distinct().count();
-            if (list.size() != distinctCount) {
+            if (distinctCount > MathUtil.ONE) {
                 throw new ServiceException(ApiError.ERROR_92038);
             }
             //刪除
