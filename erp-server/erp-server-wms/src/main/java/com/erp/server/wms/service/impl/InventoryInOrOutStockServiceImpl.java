@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.enums.ApiError;
@@ -9,6 +10,7 @@ import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
+import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -105,7 +107,10 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
         // 获取忽略库存计算的sku
         List<String> ignoreInventorySkuIds = inventoryHelper.getIgnoreSkuIds();
         // 通过对sku id顺序执行, 避免多线程死锁
-        paramLis = paramLis.stream().sorted(Comparator.comparing(InventoryStockBaseDTO::getSkuId)).collect(Collectors.toList());
+        Comparator<InventoryStockBaseDTO> comparing = Comparator.comparing(InventoryStockBaseDTO::getSkuId)
+                .thenComparing(InventoryStockBaseDTO::getWarehouseId)
+                .thenComparing(InventoryStockBaseDTO::getWarehouseLocation);
+        paramLis = paramLis.stream().sorted(comparing).collect(Collectors.toList());
         for(InventoryStockBaseDTO baseParam : paramLis) {
             InOutStockDTO param = (InOutStockDTO)baseParam;
             if(ignoreInventorySkuIds.contains(param.getSkuId())) {
@@ -126,6 +131,10 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
             throw new ServiceException(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
         }
         log.warn("从配置读取库存交易规则，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】,交易配置信息：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo(), JSONObject.toJSONString(transactionRuleParams));
+        // 交易规则安装状态排序
+        transactionRuleParams = transactionRuleParams.stream()
+                .sorted(Comparator.comparing(x -> ObjectUtil.isNotEmpty(x.getInventoryStatus()) ? x.getInventoryStatus().getCode(): ""))
+                .collect(Collectors.toList());
         for(TransactionRuleDTO transactionRule : transactionRuleParams) {
             InventoryUtils.checkTransRule(transactionRule);
 

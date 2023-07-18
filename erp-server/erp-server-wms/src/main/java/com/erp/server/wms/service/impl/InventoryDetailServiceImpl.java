@@ -67,7 +67,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
 //                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
 //                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
                 .eq(InventoryDetailEntity::getId, id)
-                .update();
+                .update(new InventoryDetailEntity());
         return flag;
         // return inventoryDetailMapper.updateQtyById(id, qty, version, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
     }

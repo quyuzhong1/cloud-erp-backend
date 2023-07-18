@@ -18,12 +18,6 @@ import java.time.LocalDate;
 public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable {
 
         /**
-         * 仓库id
-         */
-        @NotEmpty(message = "仓库不能为空")
-        private String warehouseId;
-
-        /**
          * 单据类型
          */
         @NotNull(message = "单据类型不能为空")
@@ -52,11 +46,6 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
          */
         @NotEmpty(message = "原单明细id不能为空")
         private String sourceDetailId;
-
-        /**
-         * 库位id（没有不用传输，某些单据不需要选择库位信息）
-         */
-        private String warehouseLocation;
 
         /**
          * 库存变更数量

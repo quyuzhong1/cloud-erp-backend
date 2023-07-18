@@ -104,6 +104,12 @@ public class WarehouseDTO implements Serializable {
          */
         @NotNull(message = "是否是虚拟仓不能为空")
         private Boolean isVirtual;
+
+        /**
+         * 是否负库存
+         */
+        private Boolean allowNegativeInventory;
+
     }
 
 

@@ -11,13 +11,12 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.DmpBomEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
 import com.erp.model.dmp.enums.FbaDeliveryStatusEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineInfoDTO;
@@ -224,16 +223,20 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             member.setReferenceVersion(version);
 
             // 子件明细
-            List<DmpBomEntity> bomList = dmpFbaDeliveryDetailEntity.getBomList();
-            List<String> subSkuNos = bomList.stream().map(DmpBomEntity::getSkuNo).distinct().collect(Collectors.toList());
-            List<SkuVO> subSkuList = plmTaskFeign.listBySkuNoList(subSkuNos);
+            // List<DmpBomEntity> bomList = dmpFbaDeliveryDetailEntity.getBomList();
+            List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(parentSkuId));
+            // List<String> subSkuNos = bomList.stream().map(DmpBomEntity::getSkuNo).distinct().collect(Collectors.toList());
+            // List<SkuVO> subSkuList = plmTaskFeign.listBySkuNoList(subSkuNos);
 
-            List<MachineSubComponentsDTO.UpdateDTO> subComponentsList = Lists.newArrayListWithExpectedSize(bomList.size());
+            List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> Objects.equals(obj.getParentSkuId(), parentSkuId)).collect(Collectors.toList());
 
-            for (DmpBomEntity dmpBomEntity : bomList) {
+            List<MachineSubComponentsDTO.UpdateDTO> subComponentsList = Lists.newArrayList();
+
+            for (BomChildrenSkuDTO dmpBomEntity : bomList) {
                 MachineSubComponentsDTO.UpdateDTO subDTO = new MachineSubComponentsDTO.UpdateDTO();
 
-                String subSkuId = subSkuList.stream().filter(s -> Objects.equals(s.getSkuNo(), dmpBomEntity.getSkuNo())).findFirst().map(SkuVO::getSkuId).orElse("");
+                String subSkuId = bomList.stream().filter(s -> Objects.equals(s.getSkuNo(), dmpBomEntity.getSkuNo())).findFirst().map(BomChildrenSkuDTO::getSkuId).orElse("");
+
                 if(StrUtils.isEmpty(subSkuId)) {
                     this.sendNotice(syncTaskId, StrUtil.format("FBA发货单同步生成加工单子级SKU【{}】在ERP中不存在，对应的父级SKU【{}】", dmpBomEntity.getSkuNo(), parentSkuNo));
                     throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU,dmpBomEntity.getSkuNo());
@@ -241,7 +244,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
                 subDTO.setId(null);
                 subDTO.setSkuId(subSkuId);
                 subDTO.setSkuNo(dmpBomEntity.getSkuNo());
-                subDTO.setQty(dmpBomEntity.getQty() * member.getQty());
+                subDTO.setQty(dmpBomEntity.getQuantity() * member.getQty());
                 subDTO.setWarehouseId(warehouseEntity.getId());
                 subDTO.setRemark(StrUtil.format("同步ERP：FBA发货单号{}", updateDTO.getSourceCode()));
                 subComponentsList.add(subDTO);
@@ -303,23 +306,32 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             member.setReferenceVersion(version);
 
             // 子件明细
-            List<DmpBomEntity> bomList = dmpFbaDeliveryDetailEntity.getBomList();
-            List<String> subSkuNos = bomList.stream().map(DmpBomEntity::getSkuNo).distinct().collect(Collectors.toList());
-            List<SkuVO> subSkuList = plmTaskFeign.listBySkuNoList(subSkuNos);
+            // List<DmpBomEntity> bomList = dmpFbaDeliveryDetailEntity.getBomList();
+            // bom信息
+            List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(parentSkuId));
+            if(CollUtil.isEmpty(bomChildrenSkuList)) {
+                this.sendNotice(syncTaskId, StrUtil.format("FBA发货单同步生成ERP加工单父级SKU【{}】在ERP中未查询到BOM信息",parentSkuNo));
+                throw new ServiceException(ApiError.ERROR_95173,parentSkuNo);
+            }
+
+            List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> Objects.equals(obj.getParentSkuId(), parentSkuId)).collect(Collectors.toList());
+
+            // List<String> subSkuNos = bomList.stream().map(BomChildrenSkuDTO::getSkuNo).distinct().collect(Collectors.toList());
+            // List<SkuVO> subSkuList = plmTaskFeign.listBySkuNoList(subSkuNos);
 
             List<MachineSubComponentsDTO.AddDTO> subComponentsList = Lists.newArrayListWithExpectedSize(bomList.size());
 
-            for (DmpBomEntity dmpBomEntity : bomList) {
+            for (BomChildrenSkuDTO dmpBomEntity : bomList) {
                 MachineSubComponentsDTO.AddDTO subDTO = new MachineSubComponentsDTO.AddDTO();
 
-                String subSkuId = subSkuList.stream().filter(s -> Objects.equals(s.getSkuNo(), dmpBomEntity.getSkuNo())).findFirst().map(SkuVO::getSkuId).orElse("");
+                String subSkuId = bomList.stream().filter(s -> Objects.equals(s.getSkuNo(), dmpBomEntity.getSkuNo())).findFirst().map(BomChildrenSkuDTO::getSkuId).orElse("");
                 if(StrUtils.isEmpty(subSkuId)) {
                     this.sendNotice(syncTaskId, StrUtil.format("FBA发货单同步生成ERP加工单子级SKU【{}】在ERP中不存在，对应的父级SKU【{}】", dmpBomEntity.getSkuNo(), parentSkuNo));
                     throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU,dmpBomEntity.getSkuNo());
                 }
                 subDTO.setSkuId(subSkuId);
                 subDTO.setSkuNo(dmpBomEntity.getSkuNo());
-                subDTO.setQty(dmpBomEntity.getQty() * member.getQty());
+                subDTO.setQty(dmpBomEntity.getQuantity() * member.getQty());
                 subDTO.setWarehouseId(warehouseEntity.getId());
                 subDTO.setRemark(StrUtil.format("同步ERP：FBA发货单号{}", addDTO.getSourceCode()));
                 subComponentsList.add(subDTO);
