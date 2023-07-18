@@ -4,7 +4,6 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.common.core.utils.MathUtil;
 import com.erp.server.scm.service.CommonService;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 
@@ -30,7 +29,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
     @Override
     public void insertFill(MetaObject metaObject) {
         String userId = StrUtil.isBlank(commonService.getUserInfo().getUid()) ? "0": commonService.getUserInfo().getUid();
-        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUid();
+        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUserName();
         LocalDateTime localDateTime = LocalDateTime.now();
         this.setFieldValByName("version", MathUtil.ONE, metaObject);
         this.setFieldValByName("createTime", localDateTime, metaObject);
@@ -48,7 +47,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
     @Override
     public void updateFill(MetaObject metaObject) {
         String userId = StrUtil.isBlank(commonService.getUserInfo().getUid()) ? "0": commonService.getUserInfo().getUid();
-        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUid();
+        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUserName();
         LocalDateTime localDateTime = LocalDateTime.now();
         this.setFieldValByName("updateTime", localDateTime, metaObject);
         this.setFieldValByName("updateUserId", userId, metaObject);

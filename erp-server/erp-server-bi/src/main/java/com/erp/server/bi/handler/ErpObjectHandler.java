@@ -25,7 +25,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
     @Override
     public void insertFill(MetaObject metaObject) {
         String userId = StrUtil.isBlank(commonService.getUserInfo().getUid()) ? "0": commonService.getUserInfo().getUid();
-        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUid();
+        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUserName();
         LocalDateTime nowDate = LocalDateTime.now();
         this.setFieldValByName("createTime", nowDate, metaObject);
         this.setFieldValByName("updateTime", nowDate, metaObject);
@@ -40,7 +40,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
     public void updateFill(MetaObject metaObject) {
         LocalDateTime nowDate = LocalDateTime.now();
         String userId = StrUtil.isBlank(commonService.getUserInfo().getUid()) ? "0": commonService.getUserInfo().getUid();
-        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUid();
+        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUserName();
         this.setFieldValByName("updateTime", nowDate, metaObject);
         this.setFieldValByName("updateUserId", userId, metaObject);
         this.setFieldValByName("updateUserName", userName, metaObject);
