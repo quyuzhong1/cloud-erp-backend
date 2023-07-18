@@ -1,8 +1,6 @@
 package com.erp.server.dmp.push.consumer.mabang;
 
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.utils.StrUtils;
@@ -12,14 +10,12 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.entity.DmpWarehouseMappingEntity;
 import com.erp.model.dmp.enums.SettingEnum;
-import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.sync.MabangMachineInfoDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.dmp.push.service.common.DmpSyncCommonService;
 import com.erp.server.dmp.push.service.mabang.MabangInOutStockService;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpWarehouseMappingService;
@@ -44,9 +40,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_WMS_TO_DMP_TOPIC, selectorExpression = "erp_dmp_machine_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_ERP_MACHINE_INFO_TO_DMP)
 public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachineInfoDTO> {
-
-    @Autowired
-    private DmpSyncCommonService dmpSyncCommonService;
 
     @Autowired
     private CfgSettingService cfgSettingService;
@@ -81,6 +74,15 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
         String sourceType = StrUtils.null2EmptyWithTrim(mabangMachineInfoDTO.getSourceType());
         String sourceTypeName = SourceTypeEnum.getName(sourceType);
 
+        // 数据过滤处理
+        String value = cfgSettingService.getValue(SettingEnum.ERP_TO_MB_WAREHOUSE_NAME);
+        if(StrUtils.isEmpty(value)) {
+            mabangInOutStockService.sendNoticeNoMonitorWarehouse(sourceTypeName);
+            return;
+        }
+        List<String> permitWarehouseCodeList = Arrays.asList(value.split(MabangUtil.SEPARATOR));
+        log.warn("ERP加工单同步到马帮出入库配置的监控仓库为：【{}】", JSONObject.toJSONString(permitWarehouseCodeList));
+
         List<String> warehouseCodeList = Lists.newArrayList();
         // 父SKU仓
         String parentWarehouseCode =  StrUtils.null2EmptyWithTrim(machineInfoEntity.getWarehouseCode());
@@ -106,37 +108,27 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
 
         DmpWarehouseMappingEntity dmpWarehouseMappingEntity = warehouseMap.get(parentWarehouseCode);
-        // 判断加工单主单仓库是否存在，不存在发送提醒
-        if(Objects.isNull(dmpWarehouseMappingEntity)) {
-            log.warn("ERP加工单【{}】主单仓库【{}】在马帮配置表中不存在，不发送至马帮出入库", machineInfoEntity.getCode(), parentWarehouseCode);
-            sendWarehouseNotice(sourceTypeName, machineInfoEntity.getId(), machineInfoEntity.getCode(), parentWarehouseCode);
-            return;
-        }
-        // 判断加工单子件仓库是否存在，不存在发送提醒
-        for(MachineSubComponentsEntity subComponentsEntity : subMachineList) {
-            String subWarehouseCode = subComponentsEntity.getWarehouseCode();
-            if(Objects.isNull(warehouseMap.get(subWarehouseCode))) {
-                log.warn("ERP加工单【{}】子件 仓库【{}】在马帮配置表中不存在，不发送至马帮出入库", machineInfoEntity.getCode(), subWarehouseCode);
-                sendWarehouseNotice(sourceTypeName, machineInfoEntity.getId(), machineInfoEntity.getCode(), subWarehouseCode);
-                return;
-            }
-        }
         log.warn("ERP加工单单号【{}】，事务类型【{}】", machineInfoEntity.getCode(), WorkTypeEnum.getByCode(machineInfoEntity.getWorkType()));
 
         // 审核【组装】、反审核【拆卸】
         if(  (Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), operate) && Objects.equals(machineInfoEntity.getWorkType(), WorkTypeEnum.ASSEMBLE.getCode()) )
                 || (Objects.equals(SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode(), operate) && Objects.equals(machineInfoEntity.getWorkType(), WorkTypeEnum.DISASSEMBLE.getCode()) ) ) {
             // 父SKU手工入库
-            MabangInOutStockDTO mabangInStockDTO = MabangUtil.fillMabangInOutStock(dmpWarehouseMappingEntity.getWarehouseCode(), dmpWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
-                    productDetailList, machineInfoEntity, machineDetailList, InventoryInOutEnum.IN_STOCK.getCode());
-            mabangInOutStockService.inOutStock(mabangInStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+            if(Objects.nonNull(dmpWarehouseMappingEntity) && permitWarehouseCodeList.contains(dmpWarehouseMappingEntity.getWarehouseCode())) {
+                MabangInOutStockDTO mabangInStockDTO = MabangUtil.fillMabangInOutStock(dmpWarehouseMappingEntity.getWarehouseCode(), dmpWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
+                        productDetailList, machineInfoEntity, machineDetailList, InventoryInOutEnum.IN_STOCK.getCode());
+                mabangInOutStockService.inOutStock(mabangInStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+            }
+
             // 手工出库（按仓库维度）
             Map<String, List<MachineSubComponentsEntity>> subWarehouseMap = subMachineList.stream().collect(Collectors.groupingBy(MachineSubComponentsEntity::getWarehouseCode));
             subWarehouseMap.forEach((warehouseCode, subWareList)->{
                 DmpWarehouseMappingEntity dmpSubWarehouseMappingEntity = warehouseMap.get(warehouseCode);
-                MabangInOutStockDTO mabangOutStockDTO = MabangUtil.fillMabangInOutStockSub(dmpSubWarehouseMappingEntity.getWarehouseCode(), dmpSubWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
-                        productDetailList, machineInfoEntity, subWareList, InventoryInOutEnum.OUT_STOCK.getCode());
-                mabangInOutStockService.inOutStock(mabangOutStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                if(Objects.nonNull(dmpSubWarehouseMappingEntity) && permitWarehouseCodeList.contains(warehouseCode)) {
+                    MabangInOutStockDTO mabangOutStockDTO = MabangUtil.fillMabangInOutStockSub(dmpSubWarehouseMappingEntity.getWarehouseCode(), dmpSubWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
+                            productDetailList, machineInfoEntity, subWareList, InventoryInOutEnum.OUT_STOCK.getCode());
+                    mabangInOutStockService.inOutStock(mabangOutStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                }
             });
         }
 
@@ -144,40 +136,24 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
         if( (Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), operate) && Objects.equals(machineInfoEntity.getWorkType(), WorkTypeEnum.DISASSEMBLE.getCode()) )
                 || (Objects.equals(SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode(), operate) &&  Objects.equals(machineInfoEntity.getWorkType(), WorkTypeEnum.ASSEMBLE.getCode()))) {
              // 父SKU手工出库
-            MabangInOutStockDTO mabangOutStockDTO = MabangUtil.fillMabangInOutStock(dmpWarehouseMappingEntity.getWarehouseCode(), dmpWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
-                    productDetailList, machineInfoEntity, machineDetailList, InventoryInOutEnum.OUT_STOCK.getCode());
-            mabangInOutStockService.inOutStock(mabangOutStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+            if(Objects.nonNull(dmpWarehouseMappingEntity) && permitWarehouseCodeList.contains(dmpWarehouseMappingEntity.getWarehouseCode())) {
+                MabangInOutStockDTO mabangOutStockDTO = MabangUtil.fillMabangInOutStock(dmpWarehouseMappingEntity.getWarehouseCode(), dmpWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
+                        productDetailList, machineInfoEntity, machineDetailList, InventoryInOutEnum.OUT_STOCK.getCode());
+                mabangInOutStockService.inOutStock(mabangOutStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+            }
+
             // 子SKU手工入库（按仓库维度）
             Map<String, List<MachineSubComponentsEntity>> subWarehouseMap = subMachineList.stream().collect(Collectors.groupingBy(MachineSubComponentsEntity::getWarehouseCode));
             subWarehouseMap.forEach((warehouseCode, subWareList)->{
                 DmpWarehouseMappingEntity dmpSubWarehouseMappingEntity = warehouseMap.get(warehouseCode);
-                MabangInOutStockDTO mabangInStockDTO = MabangUtil.fillMabangInOutStockSub(dmpSubWarehouseMappingEntity.getWarehouseCode(), dmpSubWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
-                        productDetailList, machineInfoEntity, subWareList, InventoryInOutEnum.IN_STOCK.getCode());
-                mabangInOutStockService.inOutStock(mabangInStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                if(Objects.nonNull(dmpSubWarehouseMappingEntity) && permitWarehouseCodeList.contains(warehouseCode)) {
+                    MabangInOutStockDTO mabangInStockDTO = MabangUtil.fillMabangInOutStockSub(dmpSubWarehouseMappingEntity.getWarehouseCode(), dmpSubWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
+                            productDetailList, machineInfoEntity, subWareList, InventoryInOutEnum.IN_STOCK.getCode());
+                    mabangInOutStockService.inOutStock(mabangInStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                }
             });
         }
 
     }
-
-    /**
-     * 仓库不存在消息通知
-     * @param sourceTypeName
-     * @param machineId
-     * @param machineCode
-     * @param warehouseCode
-     */
-    private void sendWarehouseNotice(String sourceTypeName, String machineId, String machineCode, String warehouseCode) {
-        String errMsg = StrUtil.format("ERP{}，单据编号: {}，推送马帮手工出入库仓库{}在马帮中不存在", sourceTypeName, machineCode, warehouseCode);
-        log.info(errMsg);
-        WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
-        warnMsgInfoDTO.setTitle(StrUtil.format("ERP{}推送马帮手工出入库异常",sourceTypeName));
-        warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
-        warnMsgInfoDTO.setBizName(StrUtil.format("ERP{}推送马帮手工出入库", sourceTypeName));
-        warnMsgInfoDTO.setTableName("machine_info");
-        warnMsgInfoDTO.setTableId(machineId);
-        warnMsgInfoDTO.setKeyInfo(errMsg);
-        mqProducerService.sendWarnMsg(warnMsgInfoDTO);
-    }
-
 
 }

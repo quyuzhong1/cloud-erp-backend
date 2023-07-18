@@ -81,7 +81,7 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
         // 数据过滤处理
         String value = cfgSettingService.getValue(SettingEnum.ERP_TO_MB_WAREHOUSE_NAME);
         if(StrUtils.isEmpty(value)) {
-            sendNotice(sourceTypeName);
+            mabangInOutStockService.sendNoticeNoMonitorWarehouse(sourceTypeName);
             return;
         }
         List<String> warehouseCodeList = Arrays.asList(value.split(MabangUtil.SEPARATOR));
@@ -145,22 +145,6 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
         }
         mabangInOutStockService.batchInOutStock(mabangInOutStockDTOList, transferInfo.getId(),  transferInfo.getCode(), sourceType, operate);
 
-    }
-
-    /**
-     * 未配置监控仓库发送提醒
-     * @param sourceTypeName
-     */
-    private void sendNotice(String sourceTypeName) {
-        log.warn(StrUtil.format("ERP{}同步到马帮出入库未配置监控仓库", sourceTypeName));
-        WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
-        warnMsgInfoDTO.setTitle(StrUtil.format("ERP{}推送马帮出入库未配置监控仓库", sourceTypeName));
-        warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
-        warnMsgInfoDTO.setBizName(StrUtil.format("ERP{}推送马帮手工入库", sourceTypeName));
-        warnMsgInfoDTO.setTableName("");
-        warnMsgInfoDTO.setTableId("");
-        warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP{}同步到马帮出入库未配置监控仓库，请在cfg_setting表erp_to_mb_direct_transfer配置", sourceTypeName));
-        mqProducerService.sendWarnMsg(warnMsgInfoDTO);
     }
 
 
