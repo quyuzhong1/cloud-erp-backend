@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>erp-sdk-walmart</artifactId>
+    <artifactId>erp-sdk-oms-amz-spapi</artifactId>
 
 
 </project>
