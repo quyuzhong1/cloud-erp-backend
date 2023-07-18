@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.DistributedLockEnum;
@@ -136,7 +137,11 @@ public abstract class AbstractInventoryServiceImpl {
         // 关联交易号
         String transactionNo = IdUtil.getSnowflake().nextIdStr();
         // 通过对sku id顺序执行, 避免多线程死锁
-        txnFlows = txnFlows.stream().sorted(Comparator.comparing(TransactionFlowEntity::getSkuId)).collect(Collectors.toList());
+        Comparator<TransactionFlowEntity> comparing = Comparator.comparing(TransactionFlowEntity::getSkuId)
+                .thenComparing(TransactionFlowEntity::getWarehouseId)
+                .thenComparing(TransactionFlowEntity::getWarehouseLocation)
+                .thenComparing(x -> StrUtil.isNotEmpty(x.getDictInventoryStatus()) ? x.getDictInventoryStatus() : "");
+        txnFlows = txnFlows.stream().sorted(comparing).collect(Collectors.toList());
         txnFlows.stream().forEach(txnFlow->{
             // 检测是否允许库存交易
             checkAllowTransaction(txnFlow.getSkuId(),txnFlow.getOrgId(),txnFlow.getWarehouseId(),txnFlow.getWarehouseLocation(),txnFlow.getDictInventoryStatus());

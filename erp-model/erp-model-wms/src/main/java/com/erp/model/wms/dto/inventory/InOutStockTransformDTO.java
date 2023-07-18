@@ -41,16 +41,6 @@ public class InOutStockTransformDTO extends InventoryStockBaseDTO implements Ser
     private String sourceDetailId;
 
     /**
-     * 仓库
-     */
-    private String warehouseId;
-
-    /**
-     * 仓库位id（没有不用传输，某些单据不需要选择库位信息）
-     */
-    private String warehouseLocation;
-
-    /**
      * 库存交易数量
      * 增加或减少库存都传正数，程序判断正数或负数；当前仓和目的仓操作数量正反相等
      */
@@ -60,11 +50,6 @@ public class InOutStockTransformDTO extends InventoryStockBaseDTO implements Ser
      * 仓库选项
      */
     private InventoryWarehouseOptionEnum warehouseOptionEnum;
-
-    /**
-     * 仓库存状态
-     */
-    private InventoryStatusEnum inventoryStatus;
 
     /**
      * 仓库交易方向

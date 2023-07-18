@@ -347,7 +347,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 //                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
 //                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
                 .eq(InventoryEntity::getId, id)
-                .update();
+                .update(new InventoryEntity());
         return flag;
     }
 
