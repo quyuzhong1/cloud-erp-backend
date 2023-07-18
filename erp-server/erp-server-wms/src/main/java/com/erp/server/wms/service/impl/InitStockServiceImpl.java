@@ -239,7 +239,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         checkUpdateRepeateSku(dto, dto.getDetails(), dto.getId());
         // 判断状态是否允许操作（只有待提交且未作废的的才允许修改）
         ValidatorUtil.isTrue((Objects.equals(originInitStock.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(originInitStock.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()) )
-                && Objects.equals(originInitStock.getInvalidStatus(),Boolean.FALSE),
+                        && Objects.equals(originInitStock.getInvalidStatus(),Boolean.FALSE),
                 ()->new ServiceException("只有待提交或审核不通过并且未作废数据支持修改"));
 
         InitStockEntity nowInitStock =  BeanMapperUtils.map(InitStockEntity.class, dto);
@@ -323,11 +323,11 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         ApproveStatusEnum approveStatus = null;
         if(Objects.equals(ApproveTypeEnum.PASS, approveType)) { // 审核通过
             approveStatus = ApproveStatusEnum.APPROVE;
-           this.send2Inventory(initStockEntityMap);
+            this.send2Inventory(initStockEntityMap);
             // TODO 审核通过流程
         } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) { // 审核不通过
             approveStatus = ApproveStatusEnum.REJECT;
-           // TODO 中止当前审批流程
+            // TODO 中止当前审批流程
         }
 
         log.info("审核 开始修改期初库存状态数据，id集合：【{}】", JSONObject.toJSONString(ids));

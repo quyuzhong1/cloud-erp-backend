@@ -5,6 +5,7 @@ import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.erp.model.wms.entity.*;
 import com.erp.server.wms.kingdee.*;
 import com.erp.server.wms.service.*;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -86,7 +87,12 @@ public class KingdeePushJob {
             return;
         }
         list.forEach(obj->{
-            syncKingdeeMachineInfoService.syncDataToKingdee(obj, obj.getSyncOperate());
+            try {
+                syncKingdeeMachineInfoService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("单据【{}】推送金蝶失败",obj.getCode());
+                log.error("单据【{}】推送金蝶失败",obj.getCode());
+            }
         });
 
     }
@@ -104,7 +110,12 @@ public class KingdeePushJob {
             return;
         }
         list.forEach(obj->{
-            syncKingdeeOtherOutstockService.syncDataToKingdee(obj, obj.getSyncOperate());
+            try {
+                syncKingdeeOtherOutstockService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("单据【{}】推送金蝶失败",obj.getCode());
+                log.error("单据【{}】推送金蝶失败",obj.getCode());
+            }
         });
     }
 
@@ -121,7 +132,13 @@ public class KingdeePushJob {
             return;
         }
         list.forEach(obj->{
-            syncKingdeeOtherInstockService.syncDataToKingdee(obj, obj.getSyncOperate());
+            try {
+                syncKingdeeOtherInstockService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("单据【{}】推送金蝶失败",obj.getCode());
+                log.error("单据【{}】推送金蝶失败",obj.getCode());
+            }
+
         });
     }
 
@@ -138,7 +155,12 @@ public class KingdeePushJob {
             return;
         }
         list.forEach(obj->{
-            syncKingdeeReturnOrderService.syncDataToKingdee(obj, obj.getSyncOperate());
+            try {
+                syncKingdeeReturnOrderService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("单据【{}】推送金蝶失败",obj.getCode());
+                log.error("单据【{}】推送金蝶失败",obj.getCode());
+            }
         });
     }
 
@@ -155,7 +177,13 @@ public class KingdeePushJob {
             return;
         }
         list.forEach(obj->{
-            syncKingdeeSoOutstockService.syncDataToKingdee(obj, obj.getSyncOperate());
+            try {
+                syncKingdeeSoOutstockService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("单据【{}】推送金蝶失败",obj.getCode());
+                log.error("单据【{}】推送金蝶失败",obj.getCode());
+            }
+
         });
     }
 
@@ -172,7 +200,12 @@ public class KingdeePushJob {
             return;
         }
         list.forEach(obj->{
-            syncKingdeeStockInService.syncDataToKingdee(obj, obj.getSyncOperate());
+            try {
+                syncKingdeeStockInService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("单据【{}】推送金蝶失败",obj.getCode());
+                log.error("单据【{}】推送金蝶失败",obj.getCode());
+            }
         });
     }
 
@@ -189,7 +222,12 @@ public class KingdeePushJob {
             return;
         }
         list.forEach(obj->{
-            syncKingdeeTransferInfoService.syncDataToKingdee(obj, obj.getSyncOperate());
+            try {
+                syncKingdeeTransferInfoService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("单据【{}】推送金蝶失败",obj.getCode());
+                log.error("单据【{}】推送金蝶失败",obj.getCode());
+            }
         });
     }
 
@@ -206,7 +244,12 @@ public class KingdeePushJob {
             return;
         }
         list.forEach(obj->{
-            syncKingdeeWarehouseService.syncDataToKingdee(obj, obj.getSyncOperate());
+            try {
+                syncKingdeeWarehouseService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("仓库【{}】推送金蝶失败",obj.getName());
+                log.error("仓库【{}】推送金蝶失败",obj.getName());
+            }
         });
     }
 
