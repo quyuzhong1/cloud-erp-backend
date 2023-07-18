@@ -28,7 +28,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
     public void insertFill(MetaObject metaObject) {
         Date now = new Date();
         String userId = StrUtil.isBlank(commonService.getUserInfo().getUid()) ? "0": commonService.getUserInfo().getUid();
-        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUid();
+        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUserName();
         if(!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("isDeleted")){
             this.setFieldValByName("createTime", now, metaObject);
             this.setFieldValByName("updateTime", now, metaObject);
@@ -49,7 +49,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
     @Override
     public void updateFill(MetaObject metaObject) {
         String userId = StrUtil.isBlank(commonService.getUserInfo().getUid()) ? "0": commonService.getUserInfo().getUid();
-        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUid();
+        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUserName();
         if(!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("isDeleted")){
             this.setFieldValByName("updateTime", new Date(), metaObject);
         }else {

@@ -1,6 +1,5 @@
 package com.erp.server.workflow.handler;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.erp.server.workflow.service.CommonService;
@@ -8,9 +7,7 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @Classname 处理 TableField  注解
@@ -29,7 +26,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
     public void insertFill(MetaObject metaObject) {
         LocalDateTime localDateTime = LocalDateTime.now();
         String userId = StrUtil.isBlank(commonService.getUserInfo().getUid()) ? "0": commonService.getUserInfo().getUid();
-        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUid();
+        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUserName();
         this.setFieldValByName("createUserId", userId, metaObject);
         this.setFieldValByName("createUserName", userName, metaObject);
         this.setFieldValByName("updateUserId", userId, metaObject);
@@ -43,7 +40,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
     @Override
     public void updateFill(MetaObject metaObject) {
         String userId = StrUtil.isBlank(commonService.getUserInfo().getUid()) ? "0": commonService.getUserInfo().getUid();
-        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUid();
+        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUserName();
         this.setFieldValByName("updateUserId", userId, metaObject);
         this.setFieldValByName("updateUserName", userName, metaObject);
         this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);
