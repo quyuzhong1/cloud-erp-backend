@@ -47,4 +47,10 @@ public interface MabangInOutStockService {
      */
     void sendToMabangInOutStock(DmpSyncTaskEntity dmpSyncTaskEntity, MabangInOutStockDTO mabangInOutStock, InventoryInOutEnum inventoryInOutEnum);
 
+    /**
+     * 未配置监控仓库通知
+     * @param sourceTypeName
+     */
+    void sendNoticeNoMonitorWarehouse(String sourceTypeName);
+
 }
