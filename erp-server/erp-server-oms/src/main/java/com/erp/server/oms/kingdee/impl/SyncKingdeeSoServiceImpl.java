@@ -1,5 +1,6 @@
 package com.erp.server.oms.kingdee.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
@@ -242,8 +243,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         }
         // 收款账号
         if (StrUtils.isNotEmpty(entity.getReceiveAccount())) {
-            BankAccountEntity bankAccountEntity = bankAccountService.findByAccountNo(entity.getReceiveAccount());
-            if (Objects.nonNull(bankAccountEntity)) {
+            List<BankAccountEntity> bankAccountList = bankAccountService.findByOrgIdAndAccountNo(entity.getSalesOrgId(), entity.getReceiveAccount());
+            if (CollUtil.isNotEmpty(bankAccountList)) {
                 resultMap.put("receiveAccount", entity.getReceiveAccount());
                 // resultMap.put("receiveAccountName", bankAccountEntity.getAccountName());
             }

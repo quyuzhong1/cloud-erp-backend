@@ -61,6 +61,8 @@ public enum InventoryBusinessTypeEnum {
     PO_RETURN_QC("po_return_qc", "27","采购退货（质检退货，退货补货）"),
     // 自定义规则，无法固化
     PURCHASE_ORDER_CHANGE("purchase_order_change", "28","采购订单变更"),
+
+    PO_RETURN_QC_REF("po_return_qc_ref", "29","采购退货（质检退货，退货退款）"),
     ;
 
     private String code;
