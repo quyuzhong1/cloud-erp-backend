@@ -239,7 +239,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         checkUpdateRepeateSku(dto, dto.getDetails(), dto.getId());
         // 判断状态是否允许操作（只有待提交且未作废的的才允许修改）
         ValidatorUtil.isTrue((Objects.equals(originInitStock.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(originInitStock.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()) )
-                && Objects.equals(originInitStock.getInvalidStatus(),Boolean.FALSE),
+                        && Objects.equals(originInitStock.getInvalidStatus(),Boolean.FALSE),
                 ()->new ServiceException("只有待提交或审核不通过并且未作废数据支持修改"));
 
         InitStockEntity nowInitStock =  BeanMapperUtils.map(InitStockEntity.class, dto);
@@ -323,11 +323,11 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         ApproveStatusEnum approveStatus = null;
         if(Objects.equals(ApproveTypeEnum.PASS, approveType)) { // 审核通过
             approveStatus = ApproveStatusEnum.APPROVE;
-           this.send2Inventory(initStockEntityMap);
+            this.send2Inventory(initStockEntityMap);
             // TODO 审核通过流程
         } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) { // 审核不通过
             approveStatus = ApproveStatusEnum.REJECT;
-           // TODO 中止当前审批流程
+            // TODO 中止当前审批流程
         }
 
         log.info("审核 开始修改期初库存状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
@@ -536,7 +536,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         for(InitStockDetailDTO.AddDTO addDTO : details) {
             String skuWareLocation = addDTO.getSkuId() + "-" + StrUtils.null2EmptyWithTrim(addDTO.getWarehouseLocation());
             if(skuWareLocationSet.contains(skuWareLocation)) {
-                throw new ServiceException(StrUtil.format("sku编码【{}】仓位【{}】不允许重复", addDTO.getSkuNo(),  StrUtils.null2EmptyWithTrim(addDTO.getWarehouseLocation())));
+                // 临时注释打开，不做验证 by zhangchunlin at 2023-07-17
+                // throw new ServiceException(StrUtil.format("sku编码【{}】仓位【{}】不允许重复", addDTO.getSkuNo(),  StrUtils.null2EmptyWithTrim(addDTO.getWarehouseLocation())));
             } else {
                 skuWareLocationSet.add(skuWareLocation);
             }
@@ -547,10 +548,13 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 WarehouseLocationEntity warehouseLocation = warehouseLocationService.findByWarehouseIdAndCode(mainDTO.getWarehouseId(), warehouseLocationCode);
                 ValidatorUtil.isTrue(Objects.nonNull(warehouseLocation),()->new ServiceException("仓位信息不存在"));
             }
+            // 临时注释打开，不做验证 by zhangchunlin at 2023-07-17
+            /*
             Integer checkCnt = initStockDetailService.countCondition(mainDTO.getWarehouseId(), warehouseLocationCode, skuId, null);
             if(checkCnt > 0) {
                 throw new ServiceException(StrUtil.format("sku编码【{}】在仓库【{}】仓位【{}】中已经存在", addDTO.getSkuNo(), warehouseDTO.getName(), warehouseLocationCode));
             }
+             */
         }
     }
 
@@ -564,7 +568,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         for(InitStockDetailDTO.UpdateDTO updateDTO : details) {
             String skuWareLocation = updateDTO.getSkuId() + "-" + StrUtils.null2EmptyWithTrim(updateDTO.getWarehouseLocation());
             if(skuWareLocationSet.contains(skuWareLocation)) {
-                throw new ServiceException(StrUtil.format("sku编码【{}】仓位【{}】不允许重复", updateDTO.getSkuNo(),  StrUtils.null2EmptyWithTrim(updateDTO.getWarehouseLocation())));
+                // 临时注释打开，不做验证 by zhangchunlin at 2023-07-17
+                // throw new ServiceException(StrUtil.format("sku编码【{}】仓位【{}】不允许重复", updateDTO.getSkuNo(),  StrUtils.null2EmptyWithTrim(updateDTO.getWarehouseLocation())));
             } else {
                 skuWareLocationSet.add(skuWareLocation);
             }
@@ -587,10 +592,13 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 ValidatorUtil.isTrue(Objects.nonNull(warehouseLocation),()->new ServiceException("库位信息不存在"));
                 warehouseLocationCode = warehouseLocation.getCode();
             }
+            // 临时注释打开，不做验证 by zhangchunlin at 2023-07-17
+            /*
             Integer checkCnt = initStockDetailService.countCondition(mainDTO.getWarehouseId(), warehouseLocationCode, skuId, mainId);
             if(checkCnt > 0) {
                 throw new ServiceException(StrUtil.format("sku编码【{}】在仓库【{}】库位【{}】中已经存在", updateDTO.getSkuNo(), warehouseDTO.getName(), warehouseLocationCode));
             }
+             */
         }
     }
 
