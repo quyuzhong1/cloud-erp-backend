@@ -49,7 +49,7 @@ public class KingdeeSoOutstockConsumer implements RocketMQListener<Map<String, O
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "XSCK23071400002"));
+        queryFilters.add(String.format("FBillNo = '%s'", "XSCK23071400015"));
         String filterStr = String.join(" and ", queryFilters);//5814757
         String fieldKeys = "FModifyDate,FDocumentStatus,FApproveDate,F_ULZ_data_sources";
         map.put("FCustMatID.FNumber", "XSCKD01_SYS，XSCKD07_SYS");
