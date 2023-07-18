@@ -1948,7 +1948,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         PurchaseOrderDetailEntity purchaseOrderDetailEntity = CollUtil.isNotEmpty(purchaseOrderDetailEntityList) ? purchaseOrderDetailEntityList.get(0) : null;
         if (Objects.nonNull(purchaseOrderDetailEntity)) {
             purchasePrice = purchaseOrderDetailEntity.getTaxPrice();
+
+            BigDecimal purchaseTaxRate = purchaseOrderDetailEntity.getTaxRate();
+            //不含税单价（不含税价格=含税价格/（1+增值税税率））
+            purchasePrice= MathUtil.divide(purchasePrice, MathUtil.add(BigDecimal.ONE, purchaseTaxRate));
+
             skuCostProfitResult.setPurchasePrice(purchasePrice);
+
         }
         log.info("提交的币制：{}", costParam.getCurrency());
 
