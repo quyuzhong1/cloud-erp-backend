@@ -512,11 +512,6 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
     @Override
     public void checkChange(List<SoChangeDetailDTO.AddDTO> detailList) {
         if (CollectionUtils.isNotEmpty(detailList)) {
-            List<SoChangeDetailDTO.AddDTO> list = detailList.stream().filter(d -> StringUtils.isNotBlank(d.getSoDetailId())).collect(Collectors.toList());
-            long distinctCount = list.stream().map(SoChangeDetailDTO.AddDTO::getChangeType).distinct().count();
-            if (distinctCount > MathUtil.ONE) {
-                throw new ServiceException(ApiError.ERROR_92038);
-            }
             //刪除
             String deleteCode = SoChangeTypeEnum.DELETE.getCode();
             List<SoChangeDetailDTO.AddDTO> deleteDetailList = detailList.stream().filter(d -> d.getChangeType().getCode().equals(deleteCode)).collect(Collectors.toList());
