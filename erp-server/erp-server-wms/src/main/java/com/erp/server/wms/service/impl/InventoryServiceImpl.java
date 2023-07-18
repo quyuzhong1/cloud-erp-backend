@@ -212,7 +212,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         // 此处注意，入库传不传仓位都带仓位条件查询
         InventoryEntity inventory = this.findInventory(orgId, warehouseId, skuId, warehouseLocation, inventoryStatus);
         // 库存原数量
-        InventorySaveDTO inventorySaveDTO = new InventorySaveDTO(inventory.getId(), 0, 0);
+        InventorySaveDTO inventorySaveDTO = new InventorySaveDTO("", 0, 0);
         if (Objects.isNull(inventory)) {
             log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】在库存实时表中不存在数据，新增数据", inventoryStatus, warehouseId, orgId, warehouseLocation, skuId, skuNo);
             inventory = new InventoryEntity();
@@ -227,6 +227,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             inventory.setVersion(1);
             boolean save = super.save(inventory);
             ValidatorUtil.isTrue(save, () -> new ServiceException("库存数据保存失败"));
+            inventorySaveDTO.setInventoryId(inventory.getId());
         } else {
             log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】在库存实时表中存在数据，修改数据", inventoryStatus, warehouseId, orgId, warehouseLocation, skuId, skuNo);
             inventorySaveDTO.setBeforeQty(inventory.getQty());
@@ -236,6 +237,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             if (!updateFlag) {
                 throw new ServiceException(ApiError.ERROR_1027);
             }
+            inventorySaveDTO.setInventoryId(inventory.getId());
         }
 
         return inventorySaveDTO;

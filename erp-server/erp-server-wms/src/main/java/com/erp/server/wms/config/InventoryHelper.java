@@ -191,8 +191,11 @@ public class InventoryHelper {
         }
         log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，操作数量：【{}】，库存状态对应的总数量：【{}】", warehouseId, orgId, warehouseLocation,skuId, skuNo, sourceTypeEnum.getName(),
                 businessType.getName(), status.getName(), qty, inventory.getQty());
-        if(inventory.getQty() < qty) {
-            throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, skuNo, warehouseDetail.getName(), warehouseLocation, inventoryStatusName,inventory.getQty(),qty));
+
+        if(!allowNegativeInventory(warehouseId)) {
+            if(inventory.getQty() < qty) {
+                throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, skuNo, warehouseDetail.getName(), warehouseLocation, inventoryStatusName,inventory.getQty(),qty));
+            }
         }
     }
 
@@ -218,6 +221,22 @@ public class InventoryHelper {
             return transactionRuleDTOS;
         }
         return null;
+    }
+
+    /**
+     * 仓库是否允许负库存
+     * @param warehouseId
+     * @return true表示允许,false表示不允许
+     */
+    public boolean allowNegativeInventory(String warehouseId) {
+        // 仓库信息
+        WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
+        if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        Boolean warehouseAllowNegativeInventory = warehouseDetail.getAllowNegativeInventory();
+        log.warn("仓库【{}】【{}】负库存", warehouseDetail.getName(), Objects.equals(warehouseAllowNegativeInventory, Boolean.TRUE) ? "允许": "不允许");
+        return Objects.equals(warehouseAllowNegativeInventory, Boolean.TRUE);
     }
 
 
