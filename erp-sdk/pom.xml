@@ -12,12 +12,16 @@
     <artifactId>erp-sdk</artifactId>
     <packaging>pom</packaging>
     <modules>
-        <module>erp-sdk-fs</module>
-        <module>erp-sdk-amz-spapi</module>
-        <module>erp-sdk-amz-aws</module>
-        <module>erp-sdk-walmart</module>
-        <module>erp-sdk-shopee</module>
-        <module>erp-sdk-goodcang</module>
+        <module>erp-sdk-msg-fs</module>
+        <module>erp-sdk-oms-amz-spapi</module>
+        <module>erp-sdk-oms-amz-aws</module>
+        <module>erp-sdk-oms-walmart</module>
+        <module>erp-sdk-oms-shopee</module>
+        <module>erp-sdk-wms-goodcang</module>
+        <module>erp-sdk-wms-iml</module>
+        <module>erp-sdk-third-mabang</module>
+        <module>erp-sdk-third-guanyi</module>
+        <module>erp-sdk-third-kingdee</module>
     </modules>
 
     <profiles>

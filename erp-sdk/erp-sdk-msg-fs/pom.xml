@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>erp-sdk-fs</artifactId>
+    <artifactId>erp-sdk-msg-fs</artifactId>
 
     <dependencies>
         <dependency>
