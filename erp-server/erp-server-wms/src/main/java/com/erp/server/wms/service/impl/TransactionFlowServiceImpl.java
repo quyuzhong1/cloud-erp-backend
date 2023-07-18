@@ -159,7 +159,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     }
 
     @Override
-    public void add(TransactionFlowEntity tradeParam, InventoryBusinessTypeEnum businessType, String transactionRuleId, Integer afterInventoryQty) {
+    public void add(TransactionFlowEntity tradeParam, Integer afterInventoryQty) {
         // 记录交易流水
         LoginUser loginUser = commonService.getUserInfo();
 
@@ -169,8 +169,9 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         // 更改指定的参数
         transactionFlow.setCurInventoryQty(afterInventoryQty);
         transactionFlow.setTradeTime(LocalDateTime.now());
-        transactionFlow.setUserId(Objects.nonNull(loginUser) ? loginUser.getUid() : "");
+        transactionFlow.setUserId(Objects.nonNull(loginUser) ? loginUser.getUid() : "0");
         transactionFlow.setVersion(1);
+
         // 个别参数设置空值
         transactionFlow.setId(null);
         transactionFlow.setCreateUserId(null);

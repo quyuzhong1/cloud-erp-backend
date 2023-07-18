@@ -1977,8 +1977,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 // 转换成人民币采购单价
                 purchasePrice = rate.multiply(skuCostProfitResult.getPurchasePrice()).setScale(4, BigDecimal.ROUND_HALF_UP);
             }
-        }else{
-            skuCostProfitResult.setExchangeRate(BigDecimal.ZERO);
         }
         // 销售金额转换
         if (Objects.nonNull(costParam.getSaleAmount()) &&

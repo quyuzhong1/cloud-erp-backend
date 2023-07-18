@@ -61,8 +61,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     private SoOutstockDetailService soOutstockDetailService;
 
 
-
-
     /**
      * 同步金蝶的销售出库单
      *
@@ -122,7 +120,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
      * @author yl
      * @date 2023-07-01 10:56
      */
-    private SyncKingdeeDTO.B2CSoOutstockDTO handleWmsSoOutstock(KingdeeDeliveryDetailEntity entity, String fStockNumber, List<KingdeeDeliveryDetailItemEntity> detailList) {
+    private SyncKingdeeDTO.B2CSoOutstockDTO handleWmsSoOutstock(KingdeeDeliveryDetailEntity entity, List<String> noInventorySkuNoList) {
         SyncKingdeeDTO.B2CSoOutstockDTO result = new SyncKingdeeDTO.B2CSoOutstockDTO();
         List<KingdeeDeliveryDetailItemEntity> kingdeeDetailList = entity.getKingdeeOutStockItemEntityList();
         //金蝶的仓库code

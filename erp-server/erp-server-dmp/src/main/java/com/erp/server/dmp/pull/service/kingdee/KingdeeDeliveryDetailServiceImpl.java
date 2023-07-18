@@ -227,8 +227,8 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
                 "FEntity_FENTRYID,FBillAllAmount,FBillAllAmount_LC,FAllAmount,FAllAmount_LC,FAmount_LC,FTaxAmount,FTaxAmount_LC,FBillTaxAmount,FEntryTaxAmount," +
                 "FSrcBillNo,FCustMatName,F_ulz_BaseProperty1,FMaterialID,FMaterialID.FNumber,FMaterialID.FName,FStockLocID," +
                 "FBarcode,FMateriaModel,FMateriaType,FRealQty,FUnitID.FName,FPrice,FIsFree,FArrivalStatus,FArrivalDate," +
-                "FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,FStockID.FNumber,F_ulz_Text1,FEntryCostAmount,FEntrynote,FSrcBillNo,FSrcType,FTaxPrice," +
-                "FCostPrice,FCostAmount_LC,FSalCostPrice,FDocumentStatus,F_ULZ_data_sources";
+                "FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,FStockID.FNumber,F_ulz_Text1,FEntryCostAmount,FEntrynote,FSrcType,FTaxPrice," +
+                "FCostPrice,FCostAmount_LC,FSalCostPrice,F_ULZ_data_sources";
 
         Boolean dataSign = true;
         //当前页数
