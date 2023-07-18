@@ -680,6 +680,11 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal shippingFee;
 
         /**
+         * 是否收取运费
+         */
+        private Boolean isCollectShippingFee;
+
+        /**
          * 客户id
          */
         private String customerId;

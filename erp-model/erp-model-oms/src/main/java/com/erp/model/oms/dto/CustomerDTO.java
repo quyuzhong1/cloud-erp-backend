@@ -765,6 +765,11 @@ public class CustomerDTO implements Serializable {
         private String currency;
 
         /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
          * 地址类型
          */
         private String addressType;
