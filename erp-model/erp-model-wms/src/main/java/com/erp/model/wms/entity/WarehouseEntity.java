@@ -126,6 +126,12 @@ public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
     @TableField("sync_operate")
     private String syncOperate;
 
+    /**
+     * 允许负库存
+     */
+    @TableField("allow_negative_inventory")
+    private Boolean allowNegativeInventory;
+
 
     @Override
     public Serializable pkVal() {

@@ -1,5 +1,6 @@
 package com.erp.server.bi.handler;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.erp.server.bi.service.CommonService;
 import org.apache.ibatis.reflection.MetaObject;
@@ -23,8 +24,8 @@ public class ErpObjectHandler implements MetaObjectHandler {
     //插入时的填充数据
     @Override
     public void insertFill(MetaObject metaObject) {
-        String userId = commonService.getUserInfo().getUid();
-        String userName = commonService.getUserInfo().getUserName();
+        String userId = StrUtil.isBlank(commonService.getUserInfo().getUid()) ? "0": commonService.getUserInfo().getUid();
+        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUserName();
         LocalDateTime nowDate = LocalDateTime.now();
         this.setFieldValByName("createTime", nowDate, metaObject);
         this.setFieldValByName("updateTime", nowDate, metaObject);
@@ -38,8 +39,8 @@ public class ErpObjectHandler implements MetaObjectHandler {
     @Override
     public void updateFill(MetaObject metaObject) {
         LocalDateTime nowDate = LocalDateTime.now();
-        String userId = commonService.getUserInfo().getUid();
-        String userName = commonService.getUserInfo().getUserName();
+        String userId = StrUtil.isBlank(commonService.getUserInfo().getUid()) ? "0": commonService.getUserInfo().getUid();
+        String userName = StrUtil.isBlank(commonService.getUserInfo().getUserName()) ? "system": commonService.getUserInfo().getUserName();
         this.setFieldValByName("updateTime", nowDate, metaObject);
         this.setFieldValByName("updateUserId", userId, metaObject);
         this.setFieldValByName("updateUserName", userName, metaObject);

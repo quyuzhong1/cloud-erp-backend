@@ -85,7 +85,7 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
             PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(showDTO.getMainSupplier()) && req.getSkuId().equals(showDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
                 //不含税价=含税价÷（1+税率）
-                BigDecimal actualNotTaxCost = supplierSkuPrice.getTaxPrice().divide(MathUtil.BigDecimal_1.add(supplierSkuPrice.getTaxRate()));
+                BigDecimal actualNotTaxCost = supplierSkuPrice.getTaxPrice().divide(MathUtil.BigDecimal_1.add(supplierSkuPrice.getTaxRate()), 4, BigDecimal.ROUND_DOWN);
                 showDTO.setActualNoTaxCost(actualNotTaxCost);
                 //含税价
                 showDTO.setActualTaxCost(supplierSkuPrice.getTaxPrice());

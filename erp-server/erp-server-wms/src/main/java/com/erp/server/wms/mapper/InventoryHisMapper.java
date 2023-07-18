@@ -25,6 +25,7 @@ public interface InventoryHisMapper extends BaseMapper<InventoryHisEntity> {
      * @return
      */
     int updateQtyById(@Param(value = "id") String id,@Param(value = "qty") Integer qty,
-                      @Param(value = "updateTime") LocalDateTime updateTime,@Param(value = "updateUserId") String updateUserId, @Param(value = "updateUserName") String updateUserName);
+                      @Param(value = "updateTime") LocalDateTime updateTime,@Param(value = "updateUserId") String updateUserId,
+                      @Param(value = "updateUserName") String updateUserName);
 
 }

@@ -33,8 +33,8 @@ public interface InventoryHisService extends SuperService<InventoryHisEntity> {
      * 新增或修改库存历史
      * @param inventoryInfoId
      * @param billDate
-     * @param qty
+     * @param inventoryQty
      */
-    void addOrUpdate(String inventoryInfoId, LocalDate billDate, Integer qty);
+    void addOrUpdate(String inventoryInfoId, LocalDate billDate, Integer inventoryQty);
 
 }

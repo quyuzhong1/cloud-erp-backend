@@ -61,12 +61,13 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
     public boolean updateQtyById(String id, Integer qty) {
         LoginUser loginUser = commonService.getUserInfo();
         boolean flag = lambdaUpdate()
+//                .set(InventoryDetailEntity::getQty, qty)
                 .setSql(StrUtil.format("{}={}+{}", "qty","qty", qty))
 //                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
-                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
-                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
+//                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
+//                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
                 .eq(InventoryDetailEntity::getId, id)
-                .update();
+                .update(new InventoryDetailEntity());
         return flag;
         // return inventoryDetailMapper.updateQtyById(id, qty, version, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
     }
@@ -96,6 +97,17 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
             }
         }
         return inventoryDetail;
+    }
+
+    @Override
+    public List<InventoryDetailEntity> findListQtyLeZero(String inventoryInfoId) {
+        List<InventoryDetailEntity> inventoryDetails = lambdaQuery().eq(InventoryDetailEntity::getInfoId, inventoryInfoId).le(InventoryDetailEntity::getQty, 0).list();
+        if(CollUtil.isNotEmpty(inventoryDetails)) {
+            // 先按入库批次时间排序，再按id排序，防止时间冲突
+            inventoryDetails = inventoryDetails.stream().sorted(Comparator.comparing(InventoryDetailEntity::getInstockBatchDate).thenComparing(InventoryDetailEntity::getId)).collect(Collectors.toList());
+
+        }
+        return inventoryDetails;
     }
 
 }

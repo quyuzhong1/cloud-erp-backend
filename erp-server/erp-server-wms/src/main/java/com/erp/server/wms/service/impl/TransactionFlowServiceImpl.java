@@ -174,12 +174,12 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
         // 个别参数设置空值
         transactionFlow.setId(null);
-        transactionFlow.setCreateUserId(null);
-        transactionFlow.setCreateUserName(null);
-        transactionFlow.setCreateTime(null);
-        transactionFlow.setUpdateUserId(null);
-        transactionFlow.setUpdateUserName(null);
-        transactionFlow.setUpdateTime(null);
+//        transactionFlow.setCreateUserId(null);
+//        transactionFlow.setCreateUserName(null);
+//        transactionFlow.setCreateTime(null);
+//        transactionFlow.setUpdateUserId(null);
+//        transactionFlow.setUpdateUserName(null);
+//        transactionFlow.setUpdateTime(null);
 
         boolean save = super.save(transactionFlow);
         ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));

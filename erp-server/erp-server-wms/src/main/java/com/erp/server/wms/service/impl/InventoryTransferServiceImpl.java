@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.enums.ApiError;
@@ -22,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -132,7 +134,12 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
 
         // 获取忽略库存计算的sku
         List<String> ignoreInventorySkuIds = inventoryHelper.getIgnoreSkuIds();
-
+        // 通过对sku id 仓库id 仓位 顺序执行, 避免多线程死锁
+        Comparator<InventoryStockBaseDTO> comparing = Comparator.comparing(InventoryStockBaseDTO::getSkuId)
+                .thenComparing(InventoryStockBaseDTO::getWarehouseId)
+                .thenComparing(InventoryStockBaseDTO::getWarehouseLocation)
+                .thenComparing(x -> ObjectUtil.isNotEmpty(x.getInventoryStatus()) ? x.getInventoryStatus().getCode() : "");
+        paramLis = paramLis.stream().sorted(comparing).collect(Collectors.toList());
         for(InventoryStockBaseDTO baseParam : paramLis) {
             // 当前仓出入库业务处理
             TransferDTO param = (TransferDTO)baseParam;

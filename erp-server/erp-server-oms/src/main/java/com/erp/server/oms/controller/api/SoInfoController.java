@@ -355,6 +355,19 @@ public class SoInfoController extends BaseController {
     }
 
     /**
+     * 导出销售订单合同excel
+     *
+     * @return
+     * @author yl
+     * @date 2023-05-18 12:01
+     */
+    @PostMapping("/exportSoContractExcel")
+    public ApiResult<SoInfoDTO.ExportPdfDTO> exportSoContractExcel(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
+        Boolean result = soInfoService.exportSoContractExcel(dto.getId(),response);
+        return result ? success() : failure();
+    }
+
+    /**
      * 导出销售订单的的发票信息
      *
      * @param dto

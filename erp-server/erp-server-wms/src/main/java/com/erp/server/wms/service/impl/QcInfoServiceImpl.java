@@ -1391,8 +1391,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //质检类型的集合
         List<QcReportDTO.ListDTO> list = qcReportService.listByQcType(qcTypeList);
         Map<String, List<QcReportDTO.ListDTO>> qcTypeMap = list.stream().collect(Collectors.groupingBy(QcReportDTO.ListDTO::getQcType));
-        String qcUserId = commonService.getUserInfo().getUid();
-        String qcUserName = commonService.getUserInfo().getUserName();
+        String qcUserId = "";
+        String qcUserName = "";
         String departId = "";
         String departName = "";
         //质检员

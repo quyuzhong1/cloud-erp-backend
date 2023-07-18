@@ -95,8 +95,8 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
 
         //同步到OMS销售退货单
         pushToMqList.forEach(req -> {
-            if (StringUtils.isNotBlank(req.getFModifyDate()) && !req.getFModifyDate().equals("null")) {
-                if (LocalDateTime.parse(req.getFModifyDate()).compareTo(LocalDateTime.parse("2023-07-06T21:00:00")) > 0) {
+            if (StringUtils.isNotBlank(req.getFApproveDate()) && !req.getFApproveDate().equals("null")) {
+                if (LocalDateTime.parse(req.getFApproveDate()).compareTo(LocalDateTime.parse("2023-07-06T21:00:00")) > 0) {
                     mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_REFUND_ORDER_TO_TASK_TAG.getName(), req, req.getFBillNo());
                 }
             }
