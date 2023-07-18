@@ -966,9 +966,17 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         base.setId(customer.getId());
         base.setCode(customer.getCode());
+        String currency = customer.getCurrency();
         //币别
-        base.setCurrency(customer.getCurrency());
+        base.setCurrency(currency);
 
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
+
+        String currencySymbol = "";
+        if (CollectionUtils.isNotEmpty(currencyList)) {
+            currencySymbol = currencyList.get(0).getSymbol();
+        }
+        base.setCurrencySymbol(currencySymbol);
         List<CustomerAddressDTO.ViewDTO> addressList = customerAddressService.listByMainId(customerId);
         CustomerAddressDTO.ViewDTO address = addressList.stream().filter(c -> c.getIsDefault()).findFirst().orElse(null);
         if (address != null) {

@@ -1993,7 +1993,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         // 计算成本毛利信息
         skuCostProfitResult = SoUtils.calCostProfit(purchasePrice, costParam, skuCostProfitResult);
-        skuCostProfitResult.setExchangeRate(Objects.isNull(rate)?BigDecimal.ZERO:rate);
+        skuCostProfitResult.setExchangeRate(rate);
         return skuCostProfitResult;
     }
 
