@@ -80,7 +80,7 @@
         <if test="optionUserId != null and optionUserId != ''">
             AND wo.option_user_id = #{optionUserId}
         </if>
-        ORDER BY wo.create_time DESC
+        ORDER BY wo.id asc
     </select>
 
     <select id="approveView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$ApproveViewDTO">
