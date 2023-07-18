@@ -201,6 +201,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             code = so.getCode();
         }
+        //要货日期
+        LocalDate requireDate = dto.getRequireDate();
+        //单据日期
+        LocalDate billDate = dto.getBillDate();
+        //同步金蝶的时候要货日期要大于单据日期
+        if (requireDate != null && billDate != null) {
+            if (requireDate.compareTo(billDate) < 0) {
+                throw new ServiceException(ApiError.ERROR_92059);
+            }
+        }
 
         SoInfoEntity addEntity = new SoInfoEntity();
         BeanMapper.copy(dto, addEntity);
@@ -385,6 +395,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
+
         BeanMapper.copy(soInfo, view);
         String customerId = soInfo.getCustomerId();
         String customerName = "";
@@ -519,7 +530,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+        if (CollUtil.isNotEmpty(ignoreInventorySkuList)) {
             ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
         }
 
@@ -567,9 +578,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //是否大于销售数量
             Boolean isGre = curInventoryQty >= qty;
 
-            Boolean isScarce = !isGre;
 
-            item.setIsScarce(isScarce);
             /**
              * 可出数量
              * 根据可用即时库存计算可出数量，
@@ -591,6 +600,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             item.setScarceQty(scarceQty);
             item.setAvailableQty(availableQty);
+            //缺货标识
+            item.setIsScarce(scarceQty > 0);
             /**
              * 已出库数量
              * 新增时默认为0
@@ -615,14 +626,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             BigDecimal taxRate = item.getTaxRate();
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //销售单价
-            BigDecimal price=item.getPrice();
+            BigDecimal price = item.getPrice();
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
-            item.setTaxPrice(taxPrice);
 
-            if(ignoreInventorySkuIds.contains(skuId)) {
+            if (ignoreInventorySkuIds.contains(skuId)) {
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", skuId, item.getSkuNo());
                 item.setIsScarce(Boolean.FALSE);
                 item.setScarceQty(0);
@@ -654,7 +664,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             paramDetailIds = Collections.emptyList();
         } else {
             if (paramDetailIds.size() == 0) {
-                SoInfoDTO.PagingTotalDTO pagingTotalDTO = new SoInfoDTO.PagingTotalDTO(MathUtil.ZERO,BigDecimal.ZERO,BigDecimal.ZERO);
+                SoInfoDTO.PagingTotalDTO pagingTotalDTO = new SoInfoDTO.PagingTotalDTO(MathUtil.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
                 return pagingTotalDTO;
             }
         }
@@ -777,6 +787,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         BeanMapper.copy(dto, soInfo);
         soInfo.setCode(code);
+
+
+        //要货日期
+        LocalDate requireDate = dto.getRequireDate();
+        //单据日期
+        LocalDate billDate = dto.getBillDate();
+        //同步金蝶的时候要货日期要大于单据日期
+        if (requireDate != null && billDate != null) {
+            if (requireDate.compareTo(billDate) < 0) {
+                throw new ServiceException(ApiError.ERROR_92059);
+            }
+        }
 
         //销售组织
         String salesOrgId = dto.getSalesOrgId();
@@ -1779,7 +1801,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(addressIds)) {
             return 0;
         }
-        return this.lambdaQuery().in(SoInfoEntity::getReceiveAddressId,addressIds).count();
+        return this.lambdaQuery().in(SoInfoEntity::getReceiveAddressId, addressIds).count();
     }
 
 
@@ -1929,18 +1951,29 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             skuCostProfitResult.setPurchasePrice(purchasePrice);
         }
         log.info("提交的币制：{}", costParam.getCurrency());
+
+        BigDecimal rate = BigDecimal.ZERO;
+        if (Objects.nonNull(purchaseOrderDetailEntity)) {
+            LocalDate purchaseDate = purchaseOrderDetailEntity.getPurchaseDate();
+            if (Objects.nonNull(purchaseDate)) {
+                String purchaseDateStr = purchaseDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                rate=dmpTaskFeign.getRate(purchaseDateStr, purchaseOrderDetailEntity.getCurrency());
+            }
+
+        }
         // 最新的采购单价币制转换（非人民币）
         if (Objects.nonNull(skuCostProfitResult.getPurchasePrice()) &&
                 skuCostProfitResult.getPurchasePrice().compareTo(BigDecimal.ZERO) == 1 &&
                 !Objects.equals(purchaseOrderDetailEntity.getCurrency(), "CNY")) {
-            String purchaseDate = purchaseOrderDetailEntity.getPurchaseDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            BigDecimal rate = dmpTaskFeign.getRate(purchaseDate, purchaseOrderDetailEntity.getCurrency());
+
             log.info("找到的最新的采购订单:{} 的币制：{}，采购订单日期：{}，转换后汇率：{}", purchaseOrderDetailEntity.getPurchaseOrderId(), purchaseOrderDetailEntity.getCurrency(), rate);
             // 未找到汇率直接返回
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 skuCostProfitResult.setPurchasePrice(BigDecimal.ZERO);
+                skuCostProfitResult.setExchangeRate(BigDecimal.ZERO);
                 return skuCostProfitResult;
             } else {
+                skuCostProfitResult.setExchangeRate(rate);
                 // 转换成人民币采购单价
                 purchasePrice = rate.multiply(skuCostProfitResult.getPurchasePrice()).setScale(4, BigDecimal.ROUND_HALF_UP);
             }
@@ -1949,7 +1982,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (Objects.nonNull(costParam.getSaleAmount()) &&
                 costParam.getSaleAmount().compareTo(BigDecimal.ZERO) == 1 &&
                 !Objects.equals(costParam.getCurrency(), "CNY")) {
-            BigDecimal rate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), costParam.getCurrency());
+             rate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), costParam.getCurrency());
             log.info("提交的币制：{}，转换后汇率：{}", costParam.getCurrency(), rate);
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 costParam.setSaleAmount(BigDecimal.ZERO);
@@ -1960,6 +1993,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         // 计算成本毛利信息
         skuCostProfitResult = SoUtils.calCostProfit(purchasePrice, costParam, skuCostProfitResult);
+        skuCostProfitResult.setExchangeRate(Objects.isNull(rate)?BigDecimal.ZERO:rate);
         return skuCostProfitResult;
     }
 
@@ -2043,6 +2077,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public List<SoInfoDTO.PrintDTO> print(List<String> ids) {
         List<SoInfoDTO.PrintDTO> printDTOList = new ArrayList<>();
         List<SoInfoEntity> soInfoEntities = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(soInfoEntities)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
         //获取客户id集合
         List<String> customerIds = soInfoEntities.stream().map(SoInfoEntity::getCustomerId).distinct().collect(Collectors.toList());
         //根据客户id集合查询客户信息
@@ -2085,5 +2122,87 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             printDTOList.add(printDTO);
         }
         return printDTOList;
+    }
+
+
+    /**
+     * 导出合同的excel
+     *
+     * @param id
+     * @param response
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-07-17 17:39
+     */
+    @Override
+    public Boolean exportSoContractExcel(String id, HttpServletResponse response) {
+        SoInfoDTO.ExportPdfDTO result = new SoInfoDTO.ExportPdfDTO();
+        SoInfoDTO.CustomerDTO customer = this.getSoCustomer(id);
+        Boolean invalidStatus = customer.getInvalidStatus();
+        if (invalidStatus != null && invalidStatus) {
+            throw new ServiceException(ApiError.ERROR_92022);
+        }
+        String approveStatus = customer.getApproveStatus().getStatus();
+        String approve = ApproveStatusEnum.APPROVE.getStatus();
+        String approveIng = ApproveStatusEnum.APPROVE_ING.getStatus();
+        String waitSubmit = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        List<String> statusList = Arrays.asList(approve, approveIng, waitSubmit);
+        if (!statusList.contains(approveStatus)) {
+            throw new ServiceException(ApiError.ERROR_92022);
+        }
+        result.setCode(customer.getCode());
+        result.setCustomerName(customer.getCustomerName());
+        result.setTaxpayerId(customer.getTaxRegisterCode());
+        result.setContactPerson(customer.getReceiverName());
+        result.setContactTelNumber(customer.getTelNumber());
+        result.setContactAddress(customer.getReceiveAddress());
+
+        result.setCurrency(customer.getCurrency());
+        result.setFirstSignDate(customer.getCreateTime().toLocalDate());
+        result.setSecondSignDate(customer.getCreateTime().toLocalDate());
+
+        result.setCompany(company);
+        result.setCompanyTaxpayerId(companyTaxpayerId);
+        result.setCompanyAddress(companyAddress);
+        result.setSellerName(customer.getSellerName());
+        String sellerId = customer.getSellerId();
+        String sellerTelNumber = "";
+        if (StringUtils.isNotBlank(sellerId)) {
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(sellerId);
+            if (userDTO != null) {
+                sellerTelNumber = userDTO.getMobile();
+            }
+        }
+        result.setSellerTelNumber(sellerTelNumber);
+        List<SoDetailDTO.ExportPdfDTO> details = soDetailService.listExportPdf(id);
+        Integer totalQty = details.stream().mapToInt(SoDetailDTO.ExportPdfDTO::getQty).sum();
+        result.setTotalQty(totalQty);
+        BigDecimal totalAmount = details.stream().map(SoDetailDTO.ExportPdfDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalTaxAmount = details.stream().map(SoDetailDTO.ExportPdfDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        result.setTotalAmount(totalAmount);
+        result.setTotalTaxAmount(totalTaxAmount);
+        result.setDetails(details);
+        String chineseAmount = Convert.digitToChinese(totalAmount);
+        result.setChineseAmount(chineseAmount);
+        int i = 1;
+        for (SoDetailDTO.ExportPdfDTO item : details) {
+            item.setNo(i);
+            i++;
+        }
+
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/SoContract.xlsx";
+        String name = "销售合同信息";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(details, result, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("销售合同信息导出出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
     }
 }

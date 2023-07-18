@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -60,7 +61,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -265,9 +265,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setCustomerName(customerInfoEntity.getName());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
         WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+        //组织列表
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(updateDTO.getOrgId()));
+        BaseIdDTO.CodeDTO codeDTO = orgList.stream().filter(req -> updateDTO.getOrgId().equals(req.getId())).findFirst().orElse(new BaseIdDTO.CodeDTO());
+
         if (ObjectUtils.isNotEmpty(updateDTO)) {
             entity.setInventoryOrgId(updateDTO.getOrgId());
-            entity.setInventoryOrgName(updateDTO.getName());
+            entity.setInventoryOrgName(codeDTO.getName());
         }
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSTH, BusinessNoTypeEnum.CODE_XSTH.getCode()));
@@ -325,9 +329,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setCustomerName(customerInfoEntity.getName());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
         WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+        //组织列表
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(updateDTO.getOrgId()));
+        BaseIdDTO.CodeDTO codeDTO = orgList.stream().filter(req -> updateDTO.getOrgId().equals(req.getId())).findFirst().orElse(new BaseIdDTO.CodeDTO());
         if (ObjectUtils.isNotEmpty(updateDTO)) {
             entity.setInventoryOrgId(updateDTO.getOrgId());
-            entity.setInventoryOrgName(updateDTO.getName());
+            entity.setInventoryOrgName(codeDTO.getName());
         }
         entity.setId(dto.getId());
         entity.setSourceId(dto.getSourceId());
@@ -383,9 +390,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(viewDTO.getWarehouseId()));
         WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(viewDTO.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+        //组织列表
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(updateDTO.getOrgId()));
+        BaseIdDTO.CodeDTO codeDTO = orgList.stream().filter(req -> updateDTO.getOrgId().equals(req.getId())).findFirst().orElse(new BaseIdDTO.CodeDTO());
         if (ObjectUtils.isNotEmpty(updateDTO)) {
             viewDTO.setInventoryOrgId(updateDTO.getOrgId());
-            viewDTO.setInventoryOrgName(updateDTO.getName());
+            viewDTO.setInventoryOrgName(codeDTO.getName());
         }
         //退货单id
         List<SoReturnEntity> returnEntityList = soReturnFeign.listByIds(Arrays.asList(viewDTO.getSourceId()));
@@ -787,7 +797,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public List<SoReturnInstockEntity> listByCode(List<String> codeList) {
         return lambdaQuery().in(SoReturnInstockEntity::getCode, codeList).list();
     }
-
 
     @Override
     public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId,String operate) {

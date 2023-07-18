@@ -239,10 +239,7 @@ public class SoInfoDTO implements Serializable {
          */
         private BigDecimal amount;
 
-        /**
-         * 含税单价
-         */
-        private BigDecimal taxPrice;
+
 
         /**
          * 含税销售金额
@@ -910,7 +907,12 @@ public class SoInfoDTO implements Serializable {
         private Integer totalQty;
 
         /**
-         * 总金额
+         * 总含税金额
+         */
+        private Integer totalTaxAmount;
+
+        /**
+         * 总不含税金额
          */
         private Integer totalAmount;
 
@@ -1343,6 +1345,10 @@ public class SoInfoDTO implements Serializable {
          */
         private BigDecimal totalAmount;
 
+        /**
+         * 价税合计
+         */
+        private BigDecimal totalTaxAmount;
         /**
          * 大写
          */

@@ -319,6 +319,15 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
       */
      Boolean kingdeePoImportFile(MultipartFile excelFile, HttpServletResponse response);
     /**
+     * 导出网采合同
+     * @Author Luo_WG
+     * @Date 2023/7/13 15:09
+     * @param id
+     * @param response
+     * @return java.lang.Boolean
+     **/
+    Boolean exportPurchaseContract(String id, HttpServletResponse response);
+    /**
      * @description: 列表查询总数
      * @author Will
      * @date: 2023/7/17 15:05

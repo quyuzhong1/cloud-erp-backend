@@ -102,7 +102,8 @@
         sui.user_name,
         sd.code,
         sui.code AS userCode,
-        sui.head_icon AS userHeadIcon
+        sui.head_icon AS userHeadIcon,
+        sd.parent_id AS deptPid
         FROM sys_user_info sui
         LEFT JOIN sys_department_user sdu ON sdu.user_id = sui.uid
         INNER JOIN sys_department sd ON sdu.department_id = sd.id

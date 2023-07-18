@@ -16,10 +16,8 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.ObjectUtils;
 import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.model.plm.dto.ProductDetailOperateDTO;
 import com.erp.model.plm.dto.TaskHandleDataDTO;
@@ -46,8 +44,6 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.workflow.mapper.WorkOptionMapper;
 import com.erp.server.workflow.service.*;
 import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
-import com.google.gson.JsonObject;
-import com.jgoodies.common.bean.Bean;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -58,7 +54,6 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -331,7 +326,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
         frequentlyViewDTOS.forEach(req -> {
             req.setPathUrl(req.getModuleUrl());
-            switch (SysClassifyEnum.getEnumByCode(req.getSysClassify())) {
+            SysClassifyEnum enumByCode = SysClassifyEnum.getEnumByCode(req.getSysClassify());
+            if (enumByCode != null) {
+                switch (enumByCode) {
                 case PLM:
                     req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + req.getModuleUrl());
                     break;
@@ -346,6 +343,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                     break;
                 default:
                     break;
+            }
             }
         });
         return frequentlyViewDTOS;

@@ -75,11 +75,6 @@ public class QcInfoController extends BaseController {
      * @return
      */
     @PostMapping("/draft")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "qc_user_id",
-            menuCode = "wms:qcBill:draft",
-            serviceClass = QcInfoService.class,
-            keyIdName = "id")
     public ApiResult draft(@RequestBody QcInfoDTO.SaveOrUpdateDTO dto) {
         Boolean result = qcInfoService.draft(dto);
         return result ? success() : failure();

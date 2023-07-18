@@ -87,6 +87,11 @@ public class SkuCostProfitDTO implements Serializable {
          */
         private BigDecimal saleProfitRate;
 
+        /**
+         * 本位币的计算汇率值
+         */
+        private BigDecimal exchangeRate;
+
     }
 
 

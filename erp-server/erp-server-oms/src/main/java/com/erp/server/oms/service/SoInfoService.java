@@ -324,6 +324,13 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     List<SoInfoDTO.PrintDTO> print(List<String> ids);
 
 
-
-
+    /**
+     * 导出合同的excel
+     * @author yl
+     * @date 2023-07-17 17:39
+     * @param id
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean exportSoContractExcel(String id, HttpServletResponse response);
 }

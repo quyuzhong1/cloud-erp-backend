@@ -7,10 +7,12 @@ import com.common.core.utils.ExcelUtil;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.excel.KingdeeBusinessOperatorImportExcelDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.server.sys.listener.KingdeeBusinessOperatorExcelListener;
 import com.erp.server.sys.mapper.KingdeeBusinessOperatorMapper;
 import com.erp.server.sys.service.CommonService;
 import com.erp.server.sys.service.KingdeeBusinessOperatorService;
+import com.erp.server.sys.service.SysAccountingCompanyService;
 import com.erp.server.sys.service.SysUserInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,6 +42,9 @@ public class KingdeeBusinessOperatorServiceImpl extends SuperServiceImpl<Kingdee
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private SysAccountingCompanyService sysAccountingCompanyService;
 
     /**
      * 导入数据
@@ -100,7 +105,10 @@ public class KingdeeBusinessOperatorServiceImpl extends SuperServiceImpl<Kingdee
     @Override
     public List<FindUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
         List<FindUserDTO> resultList = new ArrayList<>(10);
-        List<FindUserDTO> dbList = baseMapper.listInfo(dto);
+        String orgId = dto.getOrgId();
+        SysAccountingCompanyEntity orgInfo = sysAccountingCompanyService.getById(orgId);
+        String code=orgInfo!=null?orgInfo.getCode():"";
+        List<FindUserDTO> dbList = baseMapper.listInfo(dto,code);
         String userId = commonService.getUserInfo().getUid();
         FindUserDTO findUser = dbList.stream().filter(d -> d.getUserId().equals(userId)).findFirst().orElse(null);
         if (findUser != null) {

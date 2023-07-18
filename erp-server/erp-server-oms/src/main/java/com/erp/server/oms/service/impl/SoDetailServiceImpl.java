@@ -348,7 +348,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 item.setMinPrice(skuHistoryPrice.getMinPrice());
                 item.setAvgPrice(skuHistoryPrice.getAvgPrice());
             }
-
         }
 
         return resultList;
@@ -825,6 +824,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     findFirst().orElse(null);
             result.setDeclareModel("");
             result.setAmount(MathUtil.multiply(taxPrice, qty));
+            result.setTaxAmount(item.getTaxAmount());
             if (skuVO != null) {
                 result.setProductName(skuVO.getSkuName());
                 result.setUnit(skuVO.getUnitName());
