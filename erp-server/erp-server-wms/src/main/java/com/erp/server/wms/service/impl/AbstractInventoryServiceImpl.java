@@ -25,10 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -383,6 +380,22 @@ public abstract class AbstractInventoryServiceImpl {
             Integer inventoryQty=inventory.getQty();
             // 查询库存明细，按入库批次日期降序排序
             List<InventoryDetailEntity> inventoryDetails = inventoryDetailService.findListQtyGreatZero(inventory.getId());
+            // 允许负库存
+            if(inventoryHelper.allowNegativeInventory(param.getWarehouseId()) && CollUtil.isEmpty(inventoryDetails)) {
+                // 判断是否含有小于等于0库存
+                inventoryDetails = inventoryDetailService.findListQtyLeZero(inventory.getId());
+                if(CollUtil.isEmpty(inventoryDetails)) {
+                    log.warn("仓库【{}】SKU【{}】允许负库存，且没有大于0的库存明细，也没有小于等于0的库存明细", warehouseInfo.getName(), param.getSkuNo());
+                    String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), param.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(inventory)?0:inventory.getQty()),param.getQty());
+                    log.error(errMsg);
+                    throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
+                } else {
+                    // 取最后一条负库存明细
+                    InventoryDetailEntity lastInventoryDetailEntity =  inventoryDetails.get(inventoryDetails.size() - 1);
+                    inventoryDetails = new ArrayList<>();
+                    inventoryDetails.add(lastInventoryDetailEntity);
+                }
+            }
             // 循环扣减
             for (int i = 0; i < inventoryDetails.size(); i++) {
                 InventoryDetailEntity detailEntity = inventoryDetails.get(i);
