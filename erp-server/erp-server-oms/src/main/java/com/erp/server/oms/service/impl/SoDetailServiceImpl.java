@@ -977,7 +977,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+        if (CollUtil.isNotEmpty(ignoreInventorySkuList)) {
             ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
         }
         if (CollectionUtils.isNotEmpty(detailList)) {
@@ -1115,7 +1115,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             BigDecimal price = item.getPrice();
             Integer qty = item.getQty();
             //当是赠品的时候  单价为0
-            if (Objects.nonNull(isGift)&&isGift) {
+            if (Objects.nonNull(isGift) && isGift) {
                 price = BigDecimal.ZERO;
             }
             item.setPrice(price);
@@ -1200,7 +1200,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @param item
      */
     @Override
-    public void calCost(Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap, SoDetailEntity item,  Boolean isBrush) {
+    public void calCost(Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap, SoDetailEntity item, Boolean isBrush) {
         PurchaseOrderDetailEntity purchaseOrderDetailEntity = null;
         if (purchaseOrderDetailMap.containsKey(item.getSkuId())) {
             purchaseOrderDetailEntity = purchaseOrderDetailMap.get(item.getSkuId()).get(0);
