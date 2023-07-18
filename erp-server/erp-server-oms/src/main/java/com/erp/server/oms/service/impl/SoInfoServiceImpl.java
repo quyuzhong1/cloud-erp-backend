@@ -1956,6 +1956,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 // 转换成人民币采购单价
                 purchasePrice = rate.multiply(skuCostProfitResult.getPurchasePrice()).setScale(4, BigDecimal.ROUND_HALF_UP);
             }
+        }else{
+            skuCostProfitResult.setExchangeRate(BigDecimal.ZERO);
         }
         // 销售金额转换
         if (Objects.nonNull(costParam.getSaleAmount()) &&
@@ -2100,5 +2102,87 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             printDTOList.add(printDTO);
         }
         return printDTOList;
+    }
+
+
+    /**
+     * 导出合同的excel
+     *
+     * @param id
+     * @param response
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-07-17 17:39
+     */
+    @Override
+    public Boolean exportSoContractExcel(String id, HttpServletResponse response) {
+        SoInfoDTO.ExportPdfDTO result = new SoInfoDTO.ExportPdfDTO();
+        SoInfoDTO.CustomerDTO customer = this.getSoCustomer(id);
+        Boolean invalidStatus = customer.getInvalidStatus();
+        if (invalidStatus != null && invalidStatus) {
+            throw new ServiceException(ApiError.ERROR_92022);
+        }
+        String approveStatus = customer.getApproveStatus().getStatus();
+        String approve = ApproveStatusEnum.APPROVE.getStatus();
+        String approveIng = ApproveStatusEnum.APPROVE_ING.getStatus();
+        String waitSubmit = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        List<String> statusList = Arrays.asList(approve, approveIng, waitSubmit);
+        if (!statusList.contains(approveStatus)) {
+            throw new ServiceException(ApiError.ERROR_92022);
+        }
+        result.setCode(customer.getCode());
+        result.setCustomerName(customer.getCustomerName());
+        result.setTaxpayerId(customer.getTaxRegisterCode());
+        result.setContactPerson(customer.getReceiverName());
+        result.setContactTelNumber(customer.getTelNumber());
+        result.setContactAddress(customer.getReceiveAddress());
+
+        result.setCurrency(customer.getCurrency());
+        result.setFirstSignDate(customer.getCreateTime().toLocalDate());
+        result.setSecondSignDate(customer.getCreateTime().toLocalDate());
+
+        result.setCompany(company);
+        result.setCompanyTaxpayerId(companyTaxpayerId);
+        result.setCompanyAddress(companyAddress);
+        result.setSellerName(customer.getSellerName());
+        String sellerId = customer.getSellerId();
+        String sellerTelNumber = "";
+        if (StringUtils.isNotBlank(sellerId)) {
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(sellerId);
+            if (userDTO != null) {
+                sellerTelNumber = userDTO.getMobile();
+            }
+        }
+        result.setSellerTelNumber(sellerTelNumber);
+        List<SoDetailDTO.ExportPdfDTO> details = soDetailService.listExportPdf(id);
+        Integer totalQty = details.stream().mapToInt(SoDetailDTO.ExportPdfDTO::getQty).sum();
+        result.setTotalQty(totalQty);
+        BigDecimal totalAmount = details.stream().map(SoDetailDTO.ExportPdfDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalTaxAmount = details.stream().map(SoDetailDTO.ExportPdfDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        result.setTotalAmount(totalAmount);
+        result.setTotalTaxAmount(totalTaxAmount);
+        result.setDetails(details);
+        String chineseAmount = Convert.digitToChinese(totalAmount);
+        result.setChineseAmount(chineseAmount);
+        int i = 1;
+        for (SoDetailDTO.ExportPdfDTO item : details) {
+            item.setNo(i);
+            i++;
+        }
+
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/SoContract.xlsx";
+        String name = "销售合同信息";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(details, result, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("销售合同信息导出出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
     }
 }

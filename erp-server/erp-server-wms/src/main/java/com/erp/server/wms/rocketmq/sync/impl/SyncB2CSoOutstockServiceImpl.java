@@ -7,7 +7,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
-import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.SyncKingdeeDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -31,7 +30,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -128,7 +130,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
          */
         List<String> skuNoList = kingdeeDetailList.stream().map(KingdeeDeliveryDetailItemEntity::getFMaterialNumber).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
-        String b2c = BillTypeEnum.B2C.getCode();
         ApproveStatusEnum statusEnum = ApproveStatusEnum.APPROVE;
         String sourceType = SourceTypeEnum.SAL_OUTSTOCK.getCode();
         //销售出库单
@@ -137,7 +138,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         String flagId = soOutstockService.getByCode(code);
         result.setFlagId(flagId);
         SoOutstockEntity soOutstock = new SoOutstockEntity();
-        soOutstock.setOrderType(b2c);
         //单据编号
         soOutstock.setCode(code);
         //运输单号

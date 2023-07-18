@@ -939,7 +939,7 @@ public class SoDetailDTO implements Serializable {
         /**
          * 序号
          */
-        private String no;
+        private Integer no;
 
         private String skuId;
 
