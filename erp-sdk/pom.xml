@@ -22,6 +22,7 @@
         <module>erp-sdk-third-mabang</module>
         <module>erp-sdk-third-guanyi</module>
         <module>erp-sdk-third-kingdee</module>
+        <module>erp-sdk-oms-shopify</module>
     </modules>
 
     <profiles>
