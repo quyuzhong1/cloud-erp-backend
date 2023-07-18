@@ -51,16 +51,6 @@ public class InOutStockTransformDTO extends InventoryStockBaseDTO implements Ser
     private String warehouseLocation;
 
     /**
-     * sku id
-     */
-    private String skuId;
-
-    /**
-     * sku编码
-     */
-    private String skuNo;
-
-    /**
      * 库存交易数量
      * 增加或减少库存都传正数，程序判断正数或负数；当前仓和目的仓操作数量正反相等
      */

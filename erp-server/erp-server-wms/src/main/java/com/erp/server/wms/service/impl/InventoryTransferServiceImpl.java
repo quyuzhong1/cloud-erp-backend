@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -132,7 +133,8 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
 
         // 获取忽略库存计算的sku
         List<String> ignoreInventorySkuIds = inventoryHelper.getIgnoreSkuIds();
-
+        // 通过对sku id顺序执行, 避免多线程死锁
+        paramLis = paramLis.stream().sorted(Comparator.comparing(InventoryStockBaseDTO::getSkuId)).collect(Collectors.toList());
         for(InventoryStockBaseDTO baseParam : paramLis) {
             // 当前仓出入库业务处理
             TransferDTO param = (TransferDTO)baseParam;

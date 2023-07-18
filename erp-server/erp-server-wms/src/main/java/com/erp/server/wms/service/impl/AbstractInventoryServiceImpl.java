@@ -24,10 +24,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @Classname: AbstractInventoryServiceImpl
@@ -133,6 +135,8 @@ public abstract class AbstractInventoryServiceImpl {
 
         // 关联交易号
         String transactionNo = IdUtil.getSnowflake().nextIdStr();
+        // 通过对sku id顺序执行, 避免多线程死锁
+        txnFlows = txnFlows.stream().sorted(Comparator.comparing(TransactionFlowEntity::getSkuId)).collect(Collectors.toList());
         txnFlows.stream().forEach(txnFlow->{
             // 检测是否允许库存交易
             checkAllowTransaction(txnFlow.getSkuId(),txnFlow.getOrgId(),txnFlow.getWarehouseId(),txnFlow.getWarehouseLocation(),txnFlow.getDictInventoryStatus());
@@ -163,7 +167,7 @@ public abstract class AbstractInventoryServiceImpl {
                 // 3，获取可用的库存, 数量不够时报错
                 InventoryEntity inventory = getAvaliableInventory(txnFlow);
                 InventoryDetailEntity inventoryDetail = getAvaliableInventoryDetail(txnFlow);
-                InventoryHisEntity inventoryHis = getAvaliableInventoryHis(txnFlow);
+//                InventoryHisEntity inventoryHis = getAvaliableInventoryHis(txnFlow, Localdate.now());
 
                 // 4，记录交易明细
                 txnFlow.setIsUnapproved(Boolean.TRUE);
@@ -178,10 +182,10 @@ public abstract class AbstractInventoryServiceImpl {
                 if(!updateFlag) {
                     throw new ServiceException(ApiError.ERROR_1027);
                 }
-                int updRows = inventoryHisService.updateQtyById(inventoryHis.getId(), txnFlow.getQty());
-                if(updRows<1) {
-                    throw new ServiceException(ApiError.ERROR_1027);
-                }
+                inventoryHisService.addOrUpdate(inventory.getId(),LocalDate.now(), inventory.getQty() + txnFlow.getQty());
+//                if(updRows<1) {
+//                    throw new ServiceException(ApiError.ERROR_1027);
+//                }
 
                 // 6,更新原交易流水为已反审核
                 transactionFlowService.updateUnapprovedById(txnFlow.getId(), txnFlow.getVersion());
@@ -289,12 +293,12 @@ public abstract class AbstractInventoryServiceImpl {
             InventorySaveDTO inventorySaveDTO = inventoryService.addOrUpdate(param.getWarehouseId(), warehouseInfo.getOrgId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getQty());
             InventoryDetailEntity inventoryDetail = inventoryDetailService.addOrUpdate(inventorySaveDTO.getInventoryId(), param.getBillDate(), param.getQty());
             // 时间为交易日期
-            inventoryHisService.addOrUpdate(inventorySaveDTO.getInventoryId(), LocalDate.now(), param.getQty());
+            inventoryHisService.addOrUpdate(inventorySaveDTO.getInventoryId(), LocalDate.now(), inventorySaveDTO.getAfterQty());
 
             // 登记交易流水
             TransactionFlowDTO transactionFlowDTO = InventoryUtils.wrapTransactionFlowInOutStock(param, inventorySaveDTO.getInventoryId(), businessType, inventoryDetail.getId(), inventoryStatusEnum, param.getBillDate(), param.getQty(), warehouseInfo.getOrgId());
             transactionFlowDTO.setTransactionNo(transactionNo);
-            transactionFlowService.add(transactionFlowDTO, businessType, tansactionRuleId, inventorySaveDTO.getQty() + param.getQty(), InventoryModeEnum.IN_STOCK);
+            transactionFlowService.add(transactionFlowDTO, businessType, tansactionRuleId, inventorySaveDTO.getAfterQty(), InventoryModeEnum.IN_STOCK);
         } catch (Exception e) {
             log.error("交易业务：{}，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存操作异常", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getSkuNo(),e );
             if(e instanceof ServiceException) {
@@ -391,7 +395,7 @@ public abstract class AbstractInventoryServiceImpl {
                 throw new ServiceException(ApiError.ERROR_1027);
             }
             // 创建/修改库存历史
-            inventoryHisService.addOrUpdate(inventory.getId(), LocalDate.now(), param.getQty()*-1);
+            inventoryHisService.addOrUpdate(inventory.getId(), LocalDate.now(), inventory.getQty() + param.getQty() * -1);
 
             // 此处再次验证，防止变成负库存
             InventoryEntity curInventory = inventoryService.getById(inventory.getId());

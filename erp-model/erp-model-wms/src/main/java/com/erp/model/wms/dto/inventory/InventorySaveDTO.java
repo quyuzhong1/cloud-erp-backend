@@ -21,8 +21,15 @@ public class InventorySaveDTO implements Serializable {
     private String inventoryId;
 
     /**
-     * 原库存数量
+     * 操作前库存数量
      */
-    private Integer qty;
+    private Integer beforeQty;
+
+    /**
+     * 操作后库存数量
+     */
+    private Integer afterQty;
+
+
 
 }

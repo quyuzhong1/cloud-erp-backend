@@ -54,18 +54,6 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
         private String sourceDetailId;
 
         /**
-         * sku id
-         */
-        @NotEmpty(message = "sku id不能为空")
-        private String skuId;
-
-        /**
-         * sku编码
-         */
-        @NotEmpty(message = "sku编码不能为空")
-        private String skuNo;
-
-        /**
          * 库位id（没有不用传输，某些单据不需要选择库位信息）
          */
         private String warehouseLocation;

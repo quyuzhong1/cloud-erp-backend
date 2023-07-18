@@ -75,18 +75,6 @@ public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
     private String targetWarehouseLocation;
 
     /**
-     * sku id
-     */
-    @NotEmpty(message = "sku不能为空")
-    private String skuId;
-
-    /**
-     * sku编码
-     */
-    @NotEmpty(message = "sku编码不能为空")
-    private String skuNo;
-
-    /**
      * 库存交易数量
      * 增加或减少库存都传正数，程序判断正数或负数；当前仓和目的仓操作数量正反相等
      */

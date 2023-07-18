@@ -211,7 +211,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         warehouseLocation = StrUtils.null2EmptyWithTrim(warehouseLocation);
         // 此处注意，入库传不传仓位都带仓位条件查询
         InventoryEntity inventory = this.findInventory(orgId, warehouseId, skuId, warehouseLocation, inventoryStatus);
-        Integer originInventoryQty = 0; // 库存原数量
+        // 库存原数量
+        InventorySaveDTO inventorySaveDTO = new InventorySaveDTO(inventory.getId(), 0, 0);
         if (Objects.isNull(inventory)) {
             log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】在库存实时表中不存在数据，新增数据", inventoryStatus, warehouseId, orgId, warehouseLocation, skuId, skuNo);
             inventory = new InventoryEntity();
@@ -222,19 +223,21 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             inventory.setSkuNo(skuNo);
             inventory.setDictInventoryStatus(inventoryStatus);
             inventory.setQty(qty);
+            inventorySaveDTO.setAfterQty(qty);
             inventory.setVersion(1);
             boolean save = super.save(inventory);
             ValidatorUtil.isTrue(save, () -> new ServiceException("库存数据保存失败"));
         } else {
             log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】在库存实时表中存在数据，修改数据", inventoryStatus, warehouseId, orgId, warehouseLocation, skuId, skuNo);
-            originInventoryQty = inventory.getQty();
+            inventorySaveDTO.setBeforeQty(inventory.getQty());
+            inventorySaveDTO.setAfterQty(inventory.getQty() + qty);
             // 更新实时库存表数量
             boolean updateFlag = this.updateQtyById(inventory.getId(), qty);
             if (!updateFlag) {
                 throw new ServiceException(ApiError.ERROR_1027);
             }
         }
-        InventorySaveDTO inventorySaveDTO = new InventorySaveDTO(inventory.getId(), originInventoryQty);
+
         return inventorySaveDTO;
     }
 
@@ -338,10 +341,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public boolean updateQtyById(String id, Integer qty) {
         LoginUser loginUser = commonService.getUserInfo();
         boolean flag = lambdaUpdate()
+//                .set(InventoryEntity::getQty, qty)
                 .setSql(StrUtil.format("{}={}+{}", "qty","qty", qty))
 //                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
-                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
-                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
+//                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
+//                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
                 .eq(InventoryEntity::getId, id)
                 .update();
         return flag;
