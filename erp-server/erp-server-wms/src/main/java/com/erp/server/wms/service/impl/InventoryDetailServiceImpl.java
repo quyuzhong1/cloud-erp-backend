@@ -61,10 +61,11 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
     public boolean updateQtyById(String id, Integer qty) {
         LoginUser loginUser = commonService.getUserInfo();
         boolean flag = lambdaUpdate()
+//                .set(InventoryDetailEntity::getQty, qty)
                 .setSql(StrUtil.format("{}={}+{}", "qty","qty", qty))
 //                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
-                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
-                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
+//                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
+//                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
                 .eq(InventoryDetailEntity::getId, id)
                 .update();
         return flag;

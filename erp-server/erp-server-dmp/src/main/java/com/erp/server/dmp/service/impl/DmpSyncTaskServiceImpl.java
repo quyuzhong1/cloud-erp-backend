@@ -57,7 +57,7 @@ public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, 
         updateWrapper.eq(DmpSyncTaskEntity::getId, id);
         updateWrapper.set(DmpSyncTaskEntity::getLastSyncTime, LocalDateTime.now());
         updateWrapper.set(DmpSyncTaskEntity::getStatus, syncStatus);
-        updateWrapper.set(DmpSyncTaskEntity::getReturnMsg, responseMsg);
+        updateWrapper.set(StrUtil.isNotBlank(responseMsg), DmpSyncTaskEntity::getReturnMsg, responseMsg);
         updateWrapper.set(DmpSyncTaskEntity::getUpdateTime, LocalDateTime.now());
         this.update(updateWrapper);
     }
