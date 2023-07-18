@@ -1208,6 +1208,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         BigDecimal purchasePrice = BigDecimal.ZERO;
         if (Objects.nonNull(purchaseOrderDetailEntity)) {
             purchasePrice = purchaseOrderDetailEntity.getTaxPrice();
+            BigDecimal purchaseTaxRate = purchaseOrderDetailEntity.getTaxRate();
+            //不含税单价（不含税价格=含税价格/（1+增值税税率））
+            purchasePrice= MathUtil.divide(purchasePrice, MathUtil.add(BigDecimal.ONE, purchaseTaxRate));
+
         }
 
         // 最新的采购单价币制转换（非人民币）
