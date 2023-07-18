@@ -431,8 +431,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         // 收款账号
         if (StrUtils.isNotEmpty(view.getReceiveAccount())) {
-            BankAccountEntity bankAccountEntity = bankAccountService.findByAccountNo(view.getReceiveAccount());
-            view.setReceiveAccountName(Optional.ofNullable(bankAccountEntity).map(BankAccountEntity::getAccountName).orElse(""));
+            List<BankAccountEntity> bankAccountList = bankAccountService.findByOrgIdAndAccountNo(view.getSalesOrgId(), view.getReceiveAccount());
+            if (CollUtil.isNotEmpty(bankAccountList)) {
+                view.setReceiveAccountName(bankAccountList.get(0).getAccountName());
+            }
         }
 
         List<SoDetailDTO.ViewDTO> detailList = soDetailService.listByMainId(id, warehouseId);
@@ -2032,8 +2034,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         // 收款账号
         if (StrUtils.isNotEmpty(soInfoEntity.getReceiveAccount())) {
-            BankAccountEntity bankAccountEntity = bankAccountService.findByAccountNo(soInfoEntity.getReceiveAccount());
-            ValidatorUtil.isTrue(Objects.nonNull(bankAccountEntity), () -> new ServiceException("收款账号错误"));
+            List<BankAccountEntity> bankAccountList = bankAccountService.findByOrgIdAndAccountNo(soInfoEntity.getSalesOrgId(), soInfoEntity.getReceiveAccount());
+            ValidatorUtil.isTrue(CollUtil.isNotEmpty(bankAccountList), () -> new ServiceException("收款账号错误"));
         }
     }
 

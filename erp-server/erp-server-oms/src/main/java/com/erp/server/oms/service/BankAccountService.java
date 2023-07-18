@@ -29,4 +29,13 @@ public interface BankAccountService extends SuperService<BankAccountEntity> {
      */
     List<BankAccountEntity> findByOrgId(String orgId);
 
+
+    /**
+     * 根据组织id和银行账号获取
+     * @param orgId
+     * @param bankAccountNo
+     * @return
+     */
+    List<BankAccountEntity> findByOrgIdAndAccountNo(String orgId, String bankAccountNo);
+
 }

@@ -33,4 +33,9 @@ public class BankAccountServiceImpl extends SuperServiceImpl<BankAccountMapper, 
         return lambdaQuery().eq(BankAccountEntity::getOrgId, orgId).list();
     }
 
+    @Override
+    public List<BankAccountEntity> findByOrgIdAndAccountNo(String orgId, String bankAccountNo) {
+        return lambdaQuery().eq(BankAccountEntity::getOrgId, orgId).eq(BankAccountEntity::getBankAccountNo, bankAccountNo).list();
+    }
+
 }
