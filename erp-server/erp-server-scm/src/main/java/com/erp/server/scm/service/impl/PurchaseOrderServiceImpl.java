@@ -2098,7 +2098,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         contractDTO.setCreateUserName(purchaseOrderEntity.getCreateUserName());
         List<DictBasicDTO> supplierPayMode = dictBasicService.getByKey("supplierPayMode");
         DictBasicDTO dictBasicDTO = supplierPayMode.stream().filter(req -> req.getId().equals(supplierEntity.getPayMethodId())).findFirst().orElse(new DictBasicDTO());
-        contractDTO.setSettleMethod(dictBasicDTO.getValue());
+        contractDTO.setSettleMethod(dictBasicDTO.getName());
         contractDTO.setSupplierName(supplierEntity.getSupplierName());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderEntity.getId());
         contractDTO.setSumQty(purchaseOrderDetailEntityList.stream().mapToInt(PurchaseOrderDetailEntity::getPurchaseQty).sum());
