@@ -473,4 +473,15 @@ public class SoInfoController extends BaseController {
         return success(printDTOList);
     }
 
+    /**
+     * 临时接口
+     * @Author Luo_WG
+     * @Date 2023/7/13 10:44
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
+     **/
+    @PostMapping("/temporaryUpdate")
+    public ApiResult temporaryUpdate() {
+        Boolean aBoolean = soInfoService.temporaryUpdate();
+        return aBoolean ? success() : failure();
+    }
 }

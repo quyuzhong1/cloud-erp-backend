@@ -333,4 +333,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean exportSoContractExcel(String id, HttpServletResponse response);
+
+    Boolean temporaryUpdate();
 }
