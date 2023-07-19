@@ -1161,11 +1161,6 @@ public class PurchaseOrderDTO implements Serializable {
          * 合计金额
          */
         private BigDecimal sumAmount;
-
-        /**
-         * 网采详情
-         */
-        private List<PurchaseContractDetailDTO> list;
     }
     /**
      * 网采合同明细
