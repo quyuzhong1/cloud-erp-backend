@@ -6,16 +6,16 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.entity.BankAccountEntity;
 import com.erp.server.oms.service.BankAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * 银行账号控制器
+ *
  * @CreateTime: 2023-07-04  15:27
  * @Author: zhangchunlin
  */
@@ -33,6 +33,18 @@ public class BankAccountController extends BaseController {
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getBankAccountNo(), x.getAccountName()))
                 .collect(Collectors.toList());
         return success(result);
+    }
+
+    /**
+     * 导入金蝶银行账号信息
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/import")
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = bankAccountService.importExcel(excelFile, response);
+        return result ? success() : failure();
     }
 
 }
