@@ -232,7 +232,7 @@ public class ${table.dtoName} implements Serializable {
         @NotBlank(message = "${field.validComment}不能为空")
         </#if>
     </#if>
-    <#if field.notNullField && field.propertyType == 'String'>
+    <#if field.notNullField && field.propertyType == 'String' && field.maxLength??>
         @Size(max = ${field.maxLength},message = "${field.validComment}最大长度不能超过${field.maxLength}位")
     </#if>
     <#if field.notNullField && field.propertyType == 'BigDecimal' && field.maxPreciseLength??  && field.maxPreciseLength = 0>
