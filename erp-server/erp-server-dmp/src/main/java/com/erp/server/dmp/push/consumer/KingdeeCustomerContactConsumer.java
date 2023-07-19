@@ -1,6 +1,7 @@
 package com.erp.server.dmp.push.consumer;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -18,6 +19,8 @@ import com.erp.server.dmp.push.service.kingdee.impl.KingdeeCommonServiceImpl;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
+import com.kingdee.bos.webapi.entity.SaveResult;
+import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -51,13 +54,43 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_COMMONCONTACT.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FCustId = '%s'", "335888"));
+        queryFilters.add(String.format("FNumber = '%s'", "CXR006655"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FForbidStatus,FNumber";
+        String fieldKeys = "FForbidStatus,FNumber,FCONTACTID";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 2);
 
-        JSONObject view = kingdeeCommonService.view(apiUtils, "3", "335888", String.valueOf(map.get("code")));
         System.out.println(queryList);
+
+        K3CloudApi client = new K3CloudApi();
+/*
+        JSONObject json = JSONUtil.parseObj("{\n" +
+                "    \"FCompanyType\":\"BD_Customer\",\n" +
+                "    \"FCompany\":{\n" +
+                "        \"FNumber\":\"CUST0020\"\n" +
+                "    },\n" +
+                "    \"FBizLocNumber\":\"test\",\n" +
+                "    \"FBizLocation\":\"Q9R8+88W, 68 MIDDLE PIRERBAG KAMAL SARANI, DHAKA, BANGLADESH\",\n" +
+                "    \"FBizAddress\":\"Q9R8+88W, 68 MIDDLE PIRERBAG KAMAL SARANI, DHAKA, BANGLADESH\",\n" +
+                "    \"FEmail\":\"\",\n" +
+                "    \"FMobile\":\"\",\n" +
+                "    \"FName\":\"RAJIB MISTRY\",\n" +
+                "    \"FNumber\":\"\",\n" +
+                "    \"FPost\":\"\",\n" +
+                "    \"FCONTACTID\":\"1303337\"\n" +
+                "}");
+
+        //判断金蝶系统是否已存在该数据
+        SaveParam param = new SaveParam(json);
+        SaveResult result;
+        try {
+            result = client.save(KingdeePushModuleEnum.BD_COMMONCONTACT.getCode(), param);
+            if (!result.isSuccessfully()) {
+                throw new RuntimeException("【保存】出错:" + JSONUtil.toJsonStr(result.getResult().getResponseStatus().getErrors()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }*/
+
     }
 
     @Override
@@ -98,7 +131,7 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
             excuteOperation(apiUtils,platformEntity,map,type);
             return;
         }
-        String id = String.valueOf(model.get("FCONTACTID")) ;
+        String id = String.valueOf(model.get("Id")) ;
         //主单据id
         KingdeeUtils.makeFieldJson(json,"FCONTACTID",".", id);
         String forbidStatus = String.valueOf(model.get("FForbidStatus")) ;
