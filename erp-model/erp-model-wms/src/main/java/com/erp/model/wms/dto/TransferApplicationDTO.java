@@ -503,10 +503,10 @@ public class TransferApplicationDTO implements Serializable {
         private LocalDate billDate;
 
         /**
-         * 调出仓库id
+         * 调入组织id
          */
-        @NotNull(message = "调出仓库不能为空")
-        private String   outWarehouseId;
+        @NotNull(message = "调入组织不能为空")
+        private String  inOrgId;
 
         /**
          * 调入仓库id

@@ -165,25 +165,6 @@ public class DmpTransferInfoDTO {
 
 
     /**
-     * 调入仓库code
-     */
-    private String inWarehouseCode;
-
-    /**
-     * 调入仓库名称
-     */
-    private String inWarehouseName;
-
-    /**
-     * 调出仓库code
-     */
-    private String outWarehouseCode;
-
-    /**
-     * 调出仓库名称
-     */
-    private String outWarehouseName;
-    /**
      * 调拨单明细
      */
     @TableField(exist = false)

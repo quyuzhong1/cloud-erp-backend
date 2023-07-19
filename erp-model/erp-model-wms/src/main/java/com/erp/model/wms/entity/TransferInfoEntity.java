@@ -98,6 +98,31 @@ public class TransferInfoEntity extends BaseEntity<TransferInfoEntity> {
     @TableField("approve_user_id")
     private String approveUserId;
 
+
+    /**
+     * 调入库存组织id
+     */
+    @TableField("in_org_id")
+    private String inOrgId;
+
+    /**
+     * 调入库存组织名称
+     */
+    @TableField("in_org_name")
+    private String inOrgName;
+
+    /**
+     * 调出库存组织id
+     */
+    @TableField("out_org_id")
+    private String outOrgId;
+
+    /**
+     * 调出库存组织名称
+     */
+    @TableField("out_org_name")
+    private String outOrgName;
+
     /**
      * 备注
      */

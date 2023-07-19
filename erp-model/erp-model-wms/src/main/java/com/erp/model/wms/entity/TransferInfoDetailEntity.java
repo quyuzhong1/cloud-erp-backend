@@ -90,30 +90,6 @@ public class TransferInfoDetailEntity extends BaseEntity<TransferInfoDetailEntit
     private String outWarehouseLocation;
 
     /**
-     * 调入库存组织id
-     */
-    @TableField("in_org_id")
-    private String inOrgId;
-
-    /**
-     * 调入库存组织名称
-     */
-    @TableField("in_org_name")
-    private String inOrgName;
-
-    /**
-     * 调出库存组织id
-     */
-    @TableField("out_org_id")
-    private String outOrgId;
-
-    /**
-     * 调出库存组织名称
-     */
-    @TableField("out_org_name")
-    private String outOrgName;
-
-    /**
      * 备注
      */
     @TableField("remark")
