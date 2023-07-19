@@ -86,6 +86,11 @@ public class SubcontractOrderDetailDTO implements Serializable {
         private Integer curInventoryQty;
 
         /**
+         * 付款条件名称
+         */
+        private String paymentConditionName;
+
+        /**
          * 子件集合
          */
         private List<ChildDTO> childList;
@@ -155,6 +160,10 @@ public class SubcontractOrderDetailDTO implements Serializable {
          */
         private Integer curInventoryQty;
 
+        /**
+         * 付款条件名称
+         */
+        private String paymentConditionName;
     }
 
     /**
@@ -270,6 +279,11 @@ public class SubcontractOrderDetailDTO implements Serializable {
         */
         @Size(max = 19,message = "来源明细id最大长度不能超过19位")
         private String sourceDetailId;
+
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
 
         private String kingdeeDetailId;
     }
