@@ -101,6 +101,11 @@ public class BomSkuPageDTO {
         private String supplierId;
 
         /**
+         * 付款条件
+         */
+        private String paymentCondition;
+
+        /**
          * bom版本
          */
         private String bomVersion;
@@ -199,5 +204,10 @@ public class BomSkuPageDTO {
          * 供应商id
          */
         private String supplierId;
+
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
     }
 }
