@@ -1229,7 +1229,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             SoOutstockDTO.PrintDTO printDTO = new SoOutstockDTO.PrintDTO();
             printDTO.setCustomerName(customerInfoEntity.getName());
             printDTO.setSellerName(soInfoEntity.getSellerName());
-            CustomerAddressEntity customerAddressEntity = customerAddressEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getReceiveAddressId())).findFirst().orElse(null);
+            CustomerAddressEntity customerAddressEntity = customerAddressEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getReceiveAddressId())).findFirst().orElse(new CustomerAddressEntity());
             printDTO.setReceiveAddress(customerAddressEntity.getAddress());
             printDTO.setTelNumber(soInfoEntity.getTelNumber());
             List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailEntities.stream().filter(req -> req.getMainId().equals(soOutstockEntity.getId())).collect(Collectors.toList());
