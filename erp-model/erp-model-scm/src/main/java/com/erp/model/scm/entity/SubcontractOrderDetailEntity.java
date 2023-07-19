@@ -157,6 +157,12 @@ public class SubcontractOrderDetailEntity extends BaseEntity<SubcontractOrderDet
     private String warehouseLocation;
 
     /**
+     * 付款条件
+     */
+    @TableField("payment_condition")
+    private String paymentCondition;
+
+    /**
     * 父级SKUid
     */
     @TableField("parent_id")

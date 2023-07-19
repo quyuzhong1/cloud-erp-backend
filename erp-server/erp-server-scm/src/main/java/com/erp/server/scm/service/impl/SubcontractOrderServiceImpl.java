@@ -37,14 +37,17 @@ import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseListTypeEnum;
+import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -122,6 +125,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Autowired
     private WorkflowFeign workflowFeign;
 
+    @Autowired
+    private SysDictFeign sysDictFeign;
 
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -549,6 +554,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             throw new ServiceException(ApiError.ERROR_95163);
         }
 
+        //供应商付款条件
+        List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+
+
         List<SubcontractOrderDetailDTO.ViewDTO> parentDTOList = BeanMapperUtils.copyList(SubcontractOrderDetailDTO.ViewDTO.class, parentList);
         for (SubcontractOrderDetailDTO.ViewDTO viewDTO : parentDTOList) {
             //产品名称
@@ -564,6 +573,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(viewDTO.getSkuId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
             viewDTO.setCurInventoryQty(curInventoryQty);
+
+            //付款条件
+            String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(viewDTO.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            viewDTO.setPaymentConditionName(paymentConditionName);
 
             //子集SKU
             List<SubcontractOrderDetailEntity> childList = detailList.stream().filter(obj -> obj.getParentId().equals(viewDTO.getId())).collect(Collectors.toList());
@@ -583,7 +596,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 String childProductName = skuList.stream().filter(obj -> obj.getSkuId().equals(childViewDTO.getSkuId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSkuName())).orElse("");
                 childViewDTO.setProductName(childProductName);
                 //供应商名称
-                String childSupplierName = supplierList.stream().filter(obj -> obj.getId().equals(viewDTO.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getName())).orElse("");
+                String childSupplierName = supplierList.stream().filter(obj -> obj.getId().equals(childViewDTO.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getName())).orElse("");
                 childViewDTO.setSupplierName(childSupplierName);
 
                 //根据组织、仓库、sku查询可用库存
@@ -592,6 +605,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 Integer childCurInventoryQty = childSkuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(childViewDTO.getSkuId())).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
                 childViewDTO.setCurInventoryQty(childCurInventoryQty);
+
+                //付款条件
+                String childPaymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(childViewDTO.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                childViewDTO.setPaymentConditionName(childPaymentConditionName);
             }
 
             viewDTO.setChildList(childDTOList);
@@ -714,6 +731,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //采购供应商
             PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();
             supplierDTO.setSupplierId(generatePoAddDTO.getSupplierId());
+            supplierDTO.setPaymentCondition(generatePoAddDTO.getPaymentCondition());
             //供应商默认联系人
             if (CollectionUtils.isNotEmpty(defaultSupplierContactList)) {
                 SupplierContactEntity supplierContactEntity = defaultSupplierContactList.stream().filter(obj -> obj.getSupplierId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
