@@ -392,6 +392,8 @@ public class MabangApiUtils {
             params.put("last_time_start", sdf.format(startDate));
             params.put("last_time_end", sdf.format(endDate));
             params.put("prePage", pageSize);
+            // 明细返回所有
+            params.put("isMore", "1");
             ParamHeaderVO paramVo = getParamMap(method, pageIndex, params);
             log.warn("马帮FBA发货单请求参数：{}", paramVo.getParamsStr());
             JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
