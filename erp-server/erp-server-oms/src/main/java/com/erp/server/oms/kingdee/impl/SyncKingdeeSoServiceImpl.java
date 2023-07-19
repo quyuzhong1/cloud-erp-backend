@@ -153,8 +153,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerCode", kingSellerInfo.getKingdeePostCode());
                 resultMap.put("seller", kingSellerInfo.getKingdeeUserName());
-                    }
             }
+        }
 
 
         String currency = entity.getCurrency();
@@ -246,10 +246,14 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             List<BankAccountEntity> bankAccountList = bankAccountService.findByOrgIdAndAccountNo(entity.getSalesOrgId(), entity.getReceiveAccount());
             if (CollUtil.isNotEmpty(bankAccountList)) {
                 resultMap.put("receiveAccount", entity.getReceiveAccount());
-                // resultMap.put("receiveAccountName", bankAccountEntity.getAccountName());
             }
         }
 
+        //报关费 贸易条件
+        BigDecimal customsFee = entity.getCustomsFee();
+        resultMap.put("customsFee", customsFee);
+        String tradeTerm = entity.getTradeTerm();
+        resultMap.put("tradeTerm", tradeTerm);
         String receiveAddressId = entity.getReceiveAddressId();
         CustomerAddressEntity addressEntity = customerAddressService.getById(receiveAddressId);
         String receiveAddressCode = addressEntity != null ? addressEntity.getCode() : "";
