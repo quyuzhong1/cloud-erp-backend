@@ -2210,4 +2210,106 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         return Boolean.TRUE;
     }
+
+    @Transactional
+    public Boolean temporaryUpdate() {
+        List<SoDetailEntity> list = soDetailService.list();
+        List<String> skuIds = list.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        // 获取采购单价
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(skuIds);
+        for (SoDetailEntity soDetailEntity : list) {
+            SkuCostProfitDTO.SkuCostProfitParam skuCostProfitParam = new SkuCostProfitDTO.SkuCostProfitParam();
+            skuCostProfitParam.setSaleAmount(soDetailEntity.getAmount());
+            skuCostProfitParam.setQty(soDetailEntity.getQty());
+            skuCostProfitParam.setTaxRate(soDetailEntity.getTaxRate());
+            skuCostProfitParam.setSkuId(soDetailEntity.getSkuId());
+            skuCostProfitParam.setCurrency(soDetailEntity.getCurrency());
+            SkuCostProfitDTO.SkuCostProfitResult skuCostProfit = this.getSkuCostProfit(skuCostProfitParam, purchaseOrderDetailEntityList);
+            //税率
+            BigDecimal taxRate = soDetailEntity.getTaxRate();
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+            //含税单价=销售单价*（税率+1）
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
+            //含税单价
+            BigDecimal taxPrice = MathUtil.multiply(soDetailEntity.getPrice(), multiplyTax);
+            BigDecimal taxAmount = MathUtil.multiply(taxPrice, soDetailEntity.getQty());
+            soDetailService.lambdaUpdate()
+                    .set(SoDetailEntity::getPurchasePrice, skuCostProfit.getPurchasePrice())
+                    .set(SoDetailEntity::getAmountLocalCurrency, skuCostProfit.getSaleProfitRate() == BigDecimal.ZERO ? soDetailEntity.getAmount() : soDetailEntity.getAmount().multiply(skuCostProfit.getExchangeRate()))
+                    .set(SoDetailEntity::getAllAmountLocalCurrency, skuCostProfit.getSaleProfitRate() == BigDecimal.ZERO ? taxAmount : taxAmount.multiply(skuCostProfit.getExchangeRate()))
+                    .eq(SoDetailEntity::getId, soDetailEntity.getId()).update();
+        }
+        return Boolean.TRUE;
+    }
+
+    public SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfit(SkuCostProfitDTO.SkuCostProfitParam costParam, List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList) {
+        if (Objects.isNull(costParam.getQty()) || costParam.getQty() < 0) {
+            costParam.setQty(0);
+        }
+        SkuCostProfitDTO.SkuCostProfitResult skuCostProfitResult = new SkuCostProfitDTO.SkuCostProfitResult();
+        skuCostProfitResult.setSkuId(costParam.getSkuId());
+        skuCostProfitResult.setPurchasePrice(BigDecimal.ZERO);
+        skuCostProfitResult.setSaleCost(BigDecimal.ZERO);
+        skuCostProfitResult.setSaleProfit(BigDecimal.ZERO);
+        skuCostProfitResult.setSaleProfitRate(BigDecimal.ZERO);
+        BigDecimal purchasePrice = BigDecimal.ZERO;
+
+        PurchaseOrderDetailEntity purchaseOrderDetailEntity = CollUtil.isNotEmpty(purchaseOrderDetailEntityList) ? purchaseOrderDetailEntityList.get(0) : null;
+        if (Objects.nonNull(purchaseOrderDetailEntity)) {
+            purchasePrice = purchaseOrderDetailEntity.getTaxPrice();
+
+            BigDecimal purchaseTaxRate = purchaseOrderDetailEntity.getTaxRate();
+            //不含税单价（不含税价格=含税价格/（1+增值税税率））
+            purchasePrice= MathUtil.divide(purchasePrice, MathUtil.add(BigDecimal.ONE, purchaseTaxRate));
+
+            skuCostProfitResult.setPurchasePrice(purchasePrice);
+
+        }
+        log.info("提交的币制：{}", costParam.getCurrency());
+
+        BigDecimal rate = BigDecimal.ZERO;
+        if (Objects.nonNull(purchaseOrderDetailEntity)) {
+            LocalDate purchaseDate = purchaseOrderDetailEntity.getPurchaseDate();
+            if (Objects.nonNull(purchaseDate)) {
+                String purchaseDateStr = purchaseDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                rate=dmpTaskFeign.getRate(purchaseDateStr, purchaseOrderDetailEntity.getCurrency());
+            }
+
+        }
+        // 最新的采购单价币制转换（非人民币）
+        if (Objects.nonNull(skuCostProfitResult.getPurchasePrice()) &&
+                skuCostProfitResult.getPurchasePrice().compareTo(BigDecimal.ZERO) == 1 &&
+                !Objects.equals(purchaseOrderDetailEntity.getCurrency(), "CNY")) {
+
+            log.info("找到的最新的采购订单:{} 的币制：{}，采购订单日期：{}，转换后汇率：{}", purchaseOrderDetailEntity.getPurchaseOrderId(), purchaseOrderDetailEntity.getCurrency(), rate);
+            // 未找到汇率直接返回
+            if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
+                skuCostProfitResult.setPurchasePrice(BigDecimal.ZERO);
+                skuCostProfitResult.setExchangeRate(BigDecimal.ZERO);
+                return skuCostProfitResult;
+            } else {
+                skuCostProfitResult.setExchangeRate(rate);
+                // 转换成人民币采购单价
+                purchasePrice = rate.multiply(skuCostProfitResult.getPurchasePrice()).setScale(4, BigDecimal.ROUND_HALF_UP);
+            }
+        }
+        // 销售金额转换
+        if (Objects.nonNull(costParam.getSaleAmount()) &&
+                costParam.getSaleAmount().compareTo(BigDecimal.ZERO) == 1 &&
+                !Objects.equals(costParam.getCurrency(), "CNY")) {
+            rate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), costParam.getCurrency());
+            log.info("提交的币制：{}，转换后汇率：{}", costParam.getCurrency(), rate);
+            if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
+                costParam.setSaleAmount(BigDecimal.ZERO);
+            } else {
+                // 转换成人民币销售金额
+                costParam.setSaleAmount(rate.multiply(costParam.getSaleAmount()).setScale(4, BigDecimal.ROUND_HALF_UP));
+            }
+        }
+        // 计算成本毛利信息
+        skuCostProfitResult = SoUtils.calCostProfit(purchasePrice, costParam, skuCostProfitResult);
+        skuCostProfitResult.setExchangeRate(rate);
+        return skuCostProfitResult;
+    }
 }
+
