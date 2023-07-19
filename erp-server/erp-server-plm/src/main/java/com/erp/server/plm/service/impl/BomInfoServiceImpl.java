@@ -36,9 +36,11 @@ import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.workflow.dto.BusinessTableDTO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.BomOperateContent;
@@ -100,6 +102,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Resource
     private SyncKingdeeBomInfoService syncKingdeeBomInfoService;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
 
     /**
      * 添加bom
@@ -239,8 +244,20 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (CollectionUtils.isEmpty(childList)) {
             throw new ServiceException(ApiError.ERROR_95166);
         }
+
+        List<String> supplierIds = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getSupplierId())).map(BomSkuPageDTO.ListDTO::getSupplierId).collect(Collectors.toList());
+        List<SupplierEntity> supplierList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(supplierIds)) {
+             supplierList = scmTaskFeign.getSupplierByIdList(supplierIds);
+        }
+
         Integer index = MathUtil.ONE;
         for (BomSkuPageDTO.ListDTO listDTO : records) {
+            //付款条件
+            if (CollectionUtils.isNotEmpty(supplierList)) {
+                String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(listDTO.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
+                listDTO.setPaymentCondition(paymentCondition);
+            }
             //状态名称
             listDTO.setStatusName(ProductDetailStatusEnum.getName(listDTO.getStatus()));
             listDTO.setIndex(index);
@@ -249,6 +266,11 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             List<BomSkuPageDTO.ChildDTO> childDTOList = childList.stream().filter(obj -> obj.getBomId().equals(listDTO.getBomId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(childDTOList)) {
                 for (BomSkuPageDTO.ChildDTO childDTO: childDTOList) {
+                    //付款条件
+                    if (CollectionUtils.isNotEmpty(supplierList)) {
+                        String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(listDTO.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
+                        childDTO.setPaymentCondition(paymentCondition);
+                    }
                     //状态名称
                     childDTO.setStatusName(ProductDetailStatusEnum.getName(childDTO.getStatus()));
                     childDTO.setIndex(index);

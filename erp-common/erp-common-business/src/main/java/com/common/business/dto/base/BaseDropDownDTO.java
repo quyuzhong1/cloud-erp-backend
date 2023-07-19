@@ -61,6 +61,29 @@ public class BaseDropDownDTO implements Serializable {
         }
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class RemarkDTO extends CommonDTO{
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 启用/禁用
+         */
+        private Boolean disabled;
+
+        public RemarkDTO(String code, String value, String remark,Boolean disabled) {
+            this.setCode(code);
+            this.setValue(value);
+            this.remark = remark;
+            this.disabled = disabled;
+        }
+    }
+
+
 
     @Data
     @NoArgsConstructor
