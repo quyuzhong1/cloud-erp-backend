@@ -2240,6 +2240,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean updateRemark(BaseIdsDTO.RemarkDTO dto) {
+        soDetailService.updateRemarkByIds(dto.getIds(),dto.getRemark());
+        return Boolean.TRUE;
+    }
+
     public SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfitt(SkuCostProfitDTO.SkuCostProfitParam costParam) {
         if (Objects.isNull(costParam.getQty()) || costParam.getQty() < 0) {
             costParam.setQty(0);
@@ -2311,4 +2317,3 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return skuCostProfitResult;
     }
 }
-

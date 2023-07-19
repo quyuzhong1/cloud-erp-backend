@@ -232,6 +232,24 @@ public class SoInfoController extends BaseController {
         return result ? success() : failure();
     }
 
+    /**
+     * 更新主表备注
+     * @author Will
+     * @date: 2023/7/19 14:58
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/updateRemark")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:so:update",
+            serviceClass = SoInfoService.class,
+            keyIdName = "ids")
+    public ApiResult updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        Boolean flag = soInfoService.updateRemark(dto);
+        return flag == true ? success() : failure();
+    }
+
 
     /**
      * 审核

@@ -289,6 +289,10 @@ public class SoInfoDTO implements Serializable {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime approveTime;
 
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
     }
 
     /**

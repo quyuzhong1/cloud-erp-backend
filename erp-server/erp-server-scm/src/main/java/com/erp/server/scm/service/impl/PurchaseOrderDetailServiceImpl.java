@@ -545,4 +545,14 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     .update();
         }
     }
+
+    @Override
+    public void updateRemarkByIds(List<String> ids, String remark) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        lambdaUpdate().in(PurchaseOrderDetailEntity::getId,ids)
+                .set(PurchaseOrderDetailEntity::getRemark,remark)
+                .update(new PurchaseOrderDetailEntity());
+    }
 }
