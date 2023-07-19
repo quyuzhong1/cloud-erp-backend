@@ -593,20 +593,42 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> stockInProductGradeList = qcRuleList.stream().filter(r -> r.getQcType().getCode().equals(stockIn)).map(QcRuleEntity::getProductGradeKey).collect(Collectors.toList());
         String stockInProductGrade = String.join(",", stockInProductGradeList);
         //新品 并且符合等级的
-        List<QcInfoDTO.ReceiveToQcDTO> newProductList = qcList.stream().filter(q -> q.getIsFirstMassProduct() && newProductGrade.contains(q.getProductGrade())).collect(Collectors.toList());
+        List<QcInfoDTO.ReceiveToQcDTO> newProductList = qcList.stream().filter(q -> q.getIsFirstMassProduct()).collect(Collectors.toList());
         for (QcInfoDTO.ReceiveToQcDTO newItem : newProductList) {
-            QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
-            BeanMapper.copy(newItem, newQc);
-            newQc.setQcType(newProduct);
-            addList.add(newQc);
+            //为空所有的加
+            if (StringUtils.isBlank(newProductGrade)) {
+                QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
+                BeanMapper.copy(newItem, newQc);
+                newQc.setQcType(newProduct);
+                addList.add(newQc);
+            } else {
+                //包含的时候就要弄
+                if (newProductGrade.contains(newItem.getProductGrade())) {
+                    QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
+                    BeanMapper.copy(newItem, newQc);
+                    newQc.setQcType(newProduct);
+                    addList.add(newQc);
+                }
+            }
         }
         //旧品 并且符合等级的
-        List<QcInfoDTO.ReceiveToQcDTO> stockInProductList = qcList.stream().filter(q -> !q.getIsFirstMassProduct() && stockInProductGrade.contains(q.getProductGrade())).collect(Collectors.toList());
+        List<QcInfoDTO.ReceiveToQcDTO> stockInProductList = qcList.stream().filter(q -> !q.getIsFirstMassProduct()).collect(Collectors.toList());
         for (QcInfoDTO.ReceiveToQcDTO stockInItem : stockInProductList) {
-            QcInfoDTO.ReceiveToQcDTO stockInQc = new QcInfoDTO.ReceiveToQcDTO();
-            BeanMapper.copy(stockInItem, stockInQc);
-            stockInQc.setQcType(stockIn);
-            addList.add(stockInQc);
+            if(StringUtils.isBlank(stockInProductGrade)){
+                QcInfoDTO.ReceiveToQcDTO stockInQc = new QcInfoDTO.ReceiveToQcDTO();
+                BeanMapper.copy(stockInItem, stockInQc);
+                stockInQc.setQcType(stockIn);
+                addList.add(stockInQc);
+            }else{
+                //包含的时候就要加
+                if (stockInProductGrade.contains(stockInItem.getProductGrade())) {
+                    QcInfoDTO.ReceiveToQcDTO stockInQc = new QcInfoDTO.ReceiveToQcDTO();
+                    BeanMapper.copy(stockInItem, stockInQc);
+                    stockInQc.setQcType(stockIn);
+                    addList.add(stockInQc);
+                }
+            }
+
         }
         qcInfoService.autoReceiveToQcDTO(addList);
     }
@@ -655,7 +677,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 .update();
 
         // 更新库存数据，回扣库存
-        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.WAREHOUSE_RECEIVE,ids);
+        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.WAREHOUSE_RECEIVE, ids);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         //操作日志
@@ -953,7 +975,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             });
             addDTO.setDetails(detailDTOList);
 
-            poInstockService.add(addDTO,Boolean.FALSE);
+            poInstockService.add(addDTO, Boolean.FALSE);
         }
         return true;
     }
@@ -1088,19 +1110,20 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 更新库存数据
+     *
      * @param list
      */
     public void updateInventoryTransCore(List<WarehouseReceiveEntity> list) {
         List<String> ids = list.stream().map(WarehouseReceiveEntity::getId).distinct().collect(Collectors.toList());
-        Map<String,WarehouseReceiveEntity> receiveMap =  list.stream().collect(Collectors.toMap(WarehouseReceiveEntity::getId, Function.identity()));
+        Map<String, WarehouseReceiveEntity> receiveMap = list.stream().collect(Collectors.toMap(WarehouseReceiveEntity::getId, Function.identity()));
         List<WarehouseReceiveDetailEntity> details = warehouseReceiveDetailService.listDetailByMainIds(ids);
-        if(CollUtil.isEmpty(details)) {
+        if (CollUtil.isEmpty(details)) {
             throw new ServiceException("未找到收货单明细数据");
         }
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.PO_RECEIVE.getCode());
         List<InOutStockDTO> members = Lists.newArrayList();
-        for(WarehouseReceiveDetailEntity detail : details) {
+        for (WarehouseReceiveDetailEntity detail : details) {
             WarehouseReceiveEntity warehouseReceiveEntity = receiveMap.get(detail.getMainId());
             InOutStockDTO inOutStockDTO = new InOutStockDTO();
             inOutStockDTO.setSourceType(InventorySourceTypeEnum.WAREHOUSE_RECEIVE);
@@ -1117,5 +1140,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         }
         inventoryInOutStockDTO.setMembers(members);
         inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+    }
+
+    public static void main(String[] args) {
+        List<String> productGradeList = Arrays.asList("S,A,B,C,D,", "S,A,B,C,D,未知");
+        String newProductGrade = String.join(",", productGradeList);
+        System.out.println(newProductGrade.contains(""));
+
     }
 }
