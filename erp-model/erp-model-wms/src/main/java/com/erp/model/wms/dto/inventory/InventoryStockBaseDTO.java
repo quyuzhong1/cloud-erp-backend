@@ -31,7 +31,6 @@ public class InventoryStockBaseDTO implements Serializable {
     /**
      * 仓库id
      */
-    @NotEmpty(message = "仓库不能为空")
     private String warehouseId;
     /**
      * 库位id（没有不用传输，某些单据不需要选择库位信息）
