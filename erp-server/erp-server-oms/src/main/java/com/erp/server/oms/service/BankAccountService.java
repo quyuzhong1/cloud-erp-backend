@@ -1,7 +1,9 @@
 package com.erp.server.oms.service;
 import com.erp.model.oms.entity.BankAccountEntity;
 import com.common.business.service.SuperService;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 
@@ -38,4 +40,13 @@ public interface BankAccountService extends SuperService<BankAccountEntity> {
      */
     List<BankAccountEntity> findByOrgIdAndAccountNo(String orgId, String bankAccountNo);
 
+    /**
+     * 导入金蝶银行账号信息
+     * @author yl
+     * @date 2023-07-19 10:04
+     * @param excelFile
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 }

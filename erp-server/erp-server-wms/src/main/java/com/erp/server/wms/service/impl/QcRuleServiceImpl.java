@@ -233,6 +233,8 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         BeanMapper.copy(dto, qcRule);
         if (CollectionUtils.isNotEmpty(gradeKeyList)) {
             qcRule.setProductGradeKey(gradeKeyList.stream().collect(Collectors.joining(",")));
+        }else{
+            qcRule.setProductGradeKey("");
         }
         qcRule.setCode(code);
         Boolean result = this.updateById(qcRule);
