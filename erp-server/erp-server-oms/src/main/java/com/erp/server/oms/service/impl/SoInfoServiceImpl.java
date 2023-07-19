@@ -2215,9 +2215,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public Boolean temporaryUpdate() {
         List<SoDetailEntity> list = soDetailService.list();
-        List<String> skuIds = list.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        // 获取采购单价
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(skuIds);
         for (SoDetailEntity soDetailEntity : list) {
             SkuCostProfitDTO.SkuCostProfitParam skuCostProfitParam = new SkuCostProfitDTO.SkuCostProfitParam();
             skuCostProfitParam.setSaleAmount(soDetailEntity.getAmount());
@@ -2225,7 +2222,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             skuCostProfitParam.setTaxRate(soDetailEntity.getTaxRate());
             skuCostProfitParam.setSkuId(soDetailEntity.getSkuId());
             skuCostProfitParam.setCurrency(soDetailEntity.getCurrency());
-            SkuCostProfitDTO.SkuCostProfitResult skuCostProfit = this.getSkuCostProfit(skuCostProfitParam, purchaseOrderDetailEntityList);
+            SkuCostProfitDTO.SkuCostProfitResult skuCostProfit = this.getSkuCostProfitt(skuCostProfitParam);
             //税率
             BigDecimal taxRate = soDetailEntity.getTaxRate();
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
@@ -2243,7 +2240,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return Boolean.TRUE;
     }
 
-    public SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfit(SkuCostProfitDTO.SkuCostProfitParam costParam, List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList) {
+    public SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfitt(SkuCostProfitDTO.SkuCostProfitParam costParam) {
         if (Objects.isNull(costParam.getQty()) || costParam.getQty() < 0) {
             costParam.setQty(0);
         }
@@ -2254,7 +2251,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         skuCostProfitResult.setSaleProfit(BigDecimal.ZERO);
         skuCostProfitResult.setSaleProfitRate(BigDecimal.ZERO);
         BigDecimal purchasePrice = BigDecimal.ZERO;
-
+        // 获取采购单价
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(Arrays.asList(costParam.getSkuId()));
         PurchaseOrderDetailEntity purchaseOrderDetailEntity = CollUtil.isNotEmpty(purchaseOrderDetailEntityList) ? purchaseOrderDetailEntityList.get(0) : null;
         if (Objects.nonNull(purchaseOrderDetailEntity)) {
             purchasePrice = purchaseOrderDetailEntity.getTaxPrice();
