@@ -524,6 +524,10 @@ public class SubcontractOrderDTO implements Serializable {
          */
         private Integer quantity;
 
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
 
     }
 
@@ -575,6 +579,11 @@ public class SubcontractOrderDTO implements Serializable {
          * 是否赠品
          */
         private Boolean isGift;
+
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
 
     }
 
