@@ -242,15 +242,16 @@ public abstract class AbstractInventoryServiceImpl {
     private InventoryDetailEntity getAvaliableInventoryDetail(TransactionFlowEntity transactionFlow) {
         InventoryDetailEntity inventoryDetail = inventoryDetailService.getById(transactionFlow.getInventoryDetailId());
 
+        String inventoryStatusName = InventoryStatusEnum.getNameByCode(transactionFlow.getDictInventoryStatus());
         if(null==inventoryDetail){
-            String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), transactionFlow.getWarehouseLocation(), transactionFlow.getDictInventoryStatus(),(Objects.isNull(inventoryDetail)?0:inventoryDetail.getQty()),transactionFlow.getQty());
+            String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), transactionFlow.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(inventoryDetail)?0:inventoryDetail.getQty()),transactionFlow.getQty());
             log.error(errMsg);
             throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
         }
         // 仓库是否允许负库存
         if(!inventoryHelper.allowNegativeInventory(transactionFlow.getWarehouseId())) {
             if(inventoryDetail.getQty()+transactionFlow.getQty()<0){
-                String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), transactionFlow.getWarehouseLocation(), transactionFlow.getDictInventoryStatus(),(Objects.isNull(inventoryDetail)?0:inventoryDetail.getQty()),transactionFlow.getQty());
+                String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), transactionFlow.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(inventoryDetail)?0:inventoryDetail.getQty()),transactionFlow.getQty());
                 log.error(errMsg);
                 throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
             }
@@ -265,16 +266,16 @@ public abstract class AbstractInventoryServiceImpl {
      */
     private InventoryEntity getAvaliableInventory(TransactionFlowEntity transactionFlow) {
         InventoryEntity inventory = inventoryService.getById(transactionFlow.getInventoryId());
-
+        String inventoryStatusName = InventoryStatusEnum.getNameByCode(transactionFlow.getDictInventoryStatus());
         if(null==inventory){
-            String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), transactionFlow.getWarehouseLocation(), transactionFlow.getDictInventoryStatus(),(Objects.isNull(inventory)?0:inventory.getQty()),transactionFlow.getQty());
+            String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), transactionFlow.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(inventory)?0:inventory.getQty()),transactionFlow.getQty());
             log.error(errMsg);
             throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
         }
         // 仓库是否允许负库存
         if(!inventoryHelper.allowNegativeInventory(transactionFlow.getWarehouseId())) {
             if(inventory.getQty()+transactionFlow.getQty()<0){
-                String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), transactionFlow.getWarehouseLocation(), transactionFlow.getDictInventoryStatus(),(Objects.isNull(inventory)?0:inventory.getQty()),transactionFlow.getQty());
+                String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), transactionFlow.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(inventory)?0:inventory.getQty()),transactionFlow.getQty());
                 log.error(errMsg);
                 throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
             }
