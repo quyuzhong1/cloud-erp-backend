@@ -136,8 +136,8 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
         List<String> ignoreInventorySkuIds = inventoryHelper.getIgnoreSkuIds();
         // 通过对sku id 仓库id 仓位 顺序执行, 避免多线程死锁
         Comparator<InventoryStockBaseDTO> comparing = Comparator.comparing(InventoryStockBaseDTO::getSkuId)
-                .thenComparing(InventoryStockBaseDTO::getWarehouseId)
-                .thenComparing(InventoryStockBaseDTO::getWarehouseLocation)
+                .thenComparing(x -> ObjectUtil.isNotEmpty(x.getWarehouseId()) ? x.getWarehouseId() : "")
+                .thenComparing(x -> ObjectUtil.isNotEmpty(x.getWarehouseLocation()) ? x.getWarehouseLocation() : "")
                 .thenComparing(x -> ObjectUtil.isNotEmpty(x.getInventoryStatus()) ? x.getInventoryStatus().getCode() : "");
         paramLis = paramLis.stream().sorted(comparing).collect(Collectors.toList());
         for(InventoryStockBaseDTO baseParam : paramLis) {
