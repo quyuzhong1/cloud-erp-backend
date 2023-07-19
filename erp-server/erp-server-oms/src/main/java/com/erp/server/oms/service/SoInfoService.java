@@ -342,5 +342,5 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean updateRemark(BaseIdsDTO.RemarkDTO dto);
+    Boolean updateDetailRemark(BaseIdsDTO.RemarkDTO dto);
 }
