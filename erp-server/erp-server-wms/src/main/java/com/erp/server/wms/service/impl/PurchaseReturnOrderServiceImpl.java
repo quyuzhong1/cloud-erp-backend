@@ -287,7 +287,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         // 增加库存数量验证（库存退货）
         String sourceType = dto.getSourceType();
-        if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) {
+        if(!Objects.equals(sourceType, ReturnOrderSourceEnum.QC.getCode())) {
             String returnMode = dto.getReturnMode();
             List<PurchaseReturnOrderDetailDTO.UpdateDTO> purchasePriceDetailList = dto.getPurchasePriceDetailList();
             for (PurchaseReturnOrderDetailDTO.UpdateDTO detail : purchasePriceDetailList) {
