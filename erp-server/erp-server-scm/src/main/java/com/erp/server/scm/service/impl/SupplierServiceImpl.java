@@ -395,6 +395,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
         //获取到采购订单数据
         List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
+        //付款条件
+        List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+
 
         //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
@@ -427,6 +430,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             String payMethodName = dictBasicList.stream().filter(d -> d.getId().equals(payMethodId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setPayMethodName(payMethodName);
+            //付款条件
+            String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(item.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setPaymentConditionName(paymentConditionName);
+
             ApproveStatusEnum statusEnum = item.getApproveStatus();
             item.setApproveStatusName(statusEnum.getName());
             SupplierPhaseEnum phaseEnum = item.getPhase();
@@ -781,7 +788,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             List<String> supplierIdList = list.stream().map(SupplierDTO.PagingViewDTO::getId).collect(Collectors.toList());
             //获取供应商默认联系人信息
             List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
-
+            //付款条件
+            List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
             //获取到采购订单数据
             List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
             for (SupplierDTO.PagingViewDTO item : list) {
@@ -812,6 +820,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 String payMethodName = dictBasicList.stream().filter(d -> d.getId().equals(payMethodId)).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 exportExcel.setPayMethodName(payMethodName);
+                //付款条件
+                String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(item.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                item.setPaymentConditionName(paymentConditionName);
                 //采购员
                 exportExcel.setPurchaseUserName(item.getPurchaseUserName());
                 SupplierContactEntity contact = contactList.stream().filter(c -> c.getSupplierId().equals(item.getId())).findFirst().orElse(null);
@@ -834,10 +845,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 throw new ServiceException(ApiError.ERROR_1015);
             }
         }
-
-
     }
-
 
     /**
      * 供应商导入
