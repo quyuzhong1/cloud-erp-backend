@@ -23,10 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -136,8 +133,6 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
         List<String> ignoreInventorySkuIds = inventoryHelper.getIgnoreSkuIds();
         // 通过对sku id 仓库id 仓位 顺序执行, 避免多线程死锁
         Comparator<InventoryStockBaseDTO> comparing = Comparator.comparing(InventoryStockBaseDTO::getSkuId)
-                .thenComparing(x -> ObjectUtil.isNotEmpty(x.getWarehouseId()) ? x.getWarehouseId() : "")
-                .thenComparing(x -> ObjectUtil.isNotEmpty(x.getWarehouseLocation()) ? x.getWarehouseLocation() : "")
                 .thenComparing(x -> ObjectUtil.isNotEmpty(x.getInventoryStatus()) ? x.getInventoryStatus().getCode() : "");
         paramLis = paramLis.stream().sorted(comparing).collect(Collectors.toList());
         for(InventoryStockBaseDTO baseParam : paramLis) {
@@ -154,10 +149,14 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库", param.getSkuId(), param.getSkuNo());
                 continue;
             }
-            this.singleHandler(curWareInOrOutStock, businessType, transactionRuleParams, transactionNo);
             // 目的仓出入库业务处理
             InOutStockTransformDTO targetWareInOrOutStock = InventoryUtils.wrapInOutStockByTransfer(param, InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryOperationModeEnum.APPROVE);
-            this.singleHandler(targetWareInOrOutStock, businessType, transactionRuleParams, transactionNo);
+            Arrays.asList(curWareInOrOutStock, targetWareInOrOutStock)
+                    .stream()
+                    .sorted(Comparator.comparing(InOutStockTransformDTO::getWarehouseId)
+                            .thenComparing(InOutStockTransformDTO::getWarehouseLocation)
+                            .thenComparing(x -> ObjectUtil.isNotEmpty(x.getInventoryStatus()) ? x.getInventoryStatus().getCode(): "")
+                    ).forEach(wareInOrOutStock -> this.singleHandler(wareInOrOutStock, businessType, transactionRuleParams, transactionNo));
         }
     }
 
@@ -187,6 +186,9 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
             if(CollUtil.isEmpty(transactionRuleParams)) {
                 throw new ServiceException(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
             }
+            transactionRuleParams = transactionRuleParams.stream()
+                    .sorted(Comparator.comparing(inventoryStatus -> inventoryStatus.getInventoryStatus().getCode()))
+                    .collect(Collectors.toList());
             for(TransactionRuleDTO transactionRule : transactionRuleParams) {
                 InventoryWarehouseOptionEnum inventoryWarehouseOptionEnum = transactionRule.getWarehouseOption();
                 ValidatorUtil.isTrue(Objects.nonNull(inventoryWarehouseOptionEnum), () -> new ServiceException(ApiError.ERROR_99033));
