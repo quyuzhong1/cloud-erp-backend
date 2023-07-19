@@ -481,9 +481,8 @@ public class SoInfoController extends BaseController {
         return success(printDTOList);
     }
 
-
     /**
-     * 临时接口
+     * 临时接口：修改未税单价
      * @Author Luo_WG
      * @Date 2023/7/13 10:44
      * @return com.common.core.controller.vo.ApiResult<java.lang.Void>

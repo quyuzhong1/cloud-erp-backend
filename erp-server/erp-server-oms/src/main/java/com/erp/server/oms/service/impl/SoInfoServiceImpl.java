@@ -2212,6 +2212,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     @Transactional
+    @Override
     public Boolean temporaryUpdate() {
         List<SoDetailEntity> list = soDetailService.list();
         List<String> skuIds = list.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
