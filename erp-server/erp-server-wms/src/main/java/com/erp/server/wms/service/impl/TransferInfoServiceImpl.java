@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
@@ -37,7 +36,6 @@ import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -184,7 +182,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         TransferInfoEntity entity = new TransferInfoEntity();
         BeanMapperUtils.copy(dto, entity);
         //处理数据id
-        doOpHandleDataId(dto.getInWarehouseId(), dto.getOutWarehouseId(), dto.getWarehouseKeeperId(), entity);
+        doOpHandleDataId(entity);
         log.info("直接调拨单新增");
         if (StringUtils.isBlank(dto.getCode())) {
             //生成单号
@@ -691,46 +689,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     /**
      * 处理数据id
      */
-    private void doOpHandleDataId(String inWarehouseId, String outWarehouseId, String warehouseKeeperId, TransferInfoEntity entity) {
+    private void doOpHandleDataId( TransferInfoEntity entity) {
 
         //申请人
-        if (StringUtils.isNotBlank(warehouseKeeperId)) {
-            FindUserDTO userDTO = sysUserFeign.getUserByUserId(warehouseKeeperId);
+        if (StringUtils.isNotBlank(entity.getWarehouseKeeperId())) {
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(entity.getWarehouseKeeperId());
             if (ObjectUtils.isNotEmpty(userDTO)) {
                 entity.setWarehouseKeeperName(userDTO.getUserName());
             }
         }
-        //仓库信息
-        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(inWarehouseId,outWarehouseId));
-
-        if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_99002);
-        }
-        //调入仓库
-        WarehouseEntity inWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getInWarehouseId())).findFirst().orElse(null);
-        if (ObjectUtils.isEmpty(inWarehouse)) {
-            throw new ServiceException(ApiError.ERROR_99002);
-        }
-        //调出仓库
-        WarehouseEntity outWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getOutWarehouseId())).findFirst().orElse(null);
-        if (ObjectUtils.isEmpty(outWarehouse)) {
-            throw new ServiceException(ApiError.ERROR_99002);
-        }
-        //组织信息
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inWarehouse.getOrgId(), outWarehouse.getOrgId()));
-        if (CollectionUtils.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_9014);
-        }
-        entity.setInWarehouseName(inWarehouse.getName());
-        entity.setInOrgId(inWarehouse.getOrgId());
-        //调入组织名称
-        String inOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(inWarehouse.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
-        entity.setInOrgName(inOrgName);
-        entity.setOutOrgId(outWarehouse.getOrgId());
-        entity.setOutWarehouseName(outWarehouse.getName());
-        //调出组织名称
-        String outOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(outWarehouse.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
-        entity.setOutOrgName(outOrgName);
 
         //调拨类型
         if (inOrgName.equals(outOrgName))  {
