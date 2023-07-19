@@ -954,35 +954,36 @@ public class SoInfoDTO implements Serializable {
     @NoArgsConstructor
     public static class UpdateDTO {
 
-
         @NotBlank(message = "id不能为空")
         private String id;
+
+
 
         /**
          * 类型 来源
          * http://172.16.100.11:3002/project/110/interface/api/13480
          * type=BillType
          */
-        @NotBlank(message = "单据类型不能为空")
-        @StateEnumValue(clazz = BillTypeEnum.class, message = "单据类型有误")
+        @NotBlank(message = "单据类型不能为空", groups = {AddGroup.class})
+        @StateEnumValue(clazz = BillTypeEnum.class, message = "单据类型有误", groups = {AddGroup.class})
         private String orderType;
 
         /**
          * 要货日期
          */
-        @NotNull(message = "要货日期不能为空")
+        @NotNull(message = "要货日期不能为空", groups = {AddGroup.class})
         private LocalDate requireDate;
 
         /**
          * 单据日期
          */
-        @NotNull(message = "单据日期不能为空")
+        @NotNull(message = "单据日期不能为空", groups = {AddGroup.class})
         private LocalDate billDate;
 
         /**
          * 组织id
          */
-        @NotBlank(message = "销售组织不能为空")
+        @NotBlank(message = "销售组织不能为空", groups = {AddGroup.class})
         private String salesOrgId;
 
         /**
@@ -993,7 +994,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 销售员id
          */
-        @NotBlank(message = "销售员不能为空")
+        @NotBlank(message = "销售员不能为空", groups = {AddGroup.class})
         private String sellerId;
 
         /**
@@ -1006,7 +1007,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 仓库id
          */
-        @NotBlank(message = "仓库不能为空")
+        @NotBlank(message = "仓库不能为空", groups = {AddGroup.class})
         private String warehouseId;
 
 
@@ -1019,7 +1020,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 运费
          */
-        @PositiveOrZero(message = "银行手续费不能为负数", groups = {AddGroup.class})
+        @PositiveOrZero(message = "运费不能为负数", groups = {AddGroup.class})
         private BigDecimal shippingFee;
 
         /**
@@ -1028,15 +1029,17 @@ public class SoInfoDTO implements Serializable {
         @PositiveOrZero(message = "报关费不能为负数", groups = {AddGroup.class})
         private BigDecimal customsFee;
 
+
         /**
          * 客户id
          */
-        @NotBlank(message = "客户不能为空")
+        @NotBlank(message = "客户不能为空", groups = {AddGroup.class})
         private String customerId;
 
 
         /**
          * 收货人
+         * 来源 http://172.16.100.11:3002/project/110/interface/api/13561
          */
         @Size(max = 50, message = "收货人最大50字符")
         private String receiverName;
@@ -1047,11 +1050,14 @@ public class SoInfoDTO implements Serializable {
         @Size(max = 50, message = "联系电话最大50字符")
         private String telNumber;
 
+
         /**
-         * 收货人地址
+         * 收货人id地址
+         * 来源 http://172.16.100.11:3002/project/110/interface/api/13561
+         * <p>
+         * 这个是地址下拉 http://172.16.100.11:3002/project/110/interface/api/13786
          */
-        @Size(max = 50, message = "收货人地址最大50字符")
-        private String receiverAddress;
+        private String receiveAddressId;
 
         /**
          * 交货方式 oms/common/enumDropDown?type=DeliveryMode
@@ -1081,17 +1087,16 @@ public class SoInfoDTO implements Serializable {
         @StateEnumValue(strValues = {"forwarder", "receive", "company"}, message = "地址类型有误", groups = {AddGroup.class})
         private String addressType;
 
-
         /**
          * 收款账号 接口地址：/oms/bankAccount/select
          */
-        @NotBlank(message = "收款账号不能为空")
+        @NotBlank(message = "收款账号不能为空", groups = {AddGroup.class})
         private String receiveAccount;
 
         /**
          * 收款方式  http://172.16.100.11:3002/project/110/interface/api/13435?key=receiveMethod
          */
-        @NotBlank(message = "收款方式不能为空")
+        @NotBlank(message = "收款方式不能为空", groups = {AddGroup.class})
         private String receiveMethod;
 
         /**
@@ -1102,19 +1107,19 @@ public class SoInfoDTO implements Serializable {
         /**
          * 收款金额
          */
-        @Digits(integer = 16,fraction = 4,message = "收款金额整数位最大12位，小数位不能大于4位")
+        @Digits(integer = 16,fraction = 4,message = "收款金额整数位最大12位，小数位不能大于4位", groups = {AddGroup.class})
         private BigDecimal receiveAmount;
 
         /**
          * 收款条件 http://172.16.100.11:3002/project/110/interface/api/13435?key=collectionTerms
          */
-        @NotBlank(message = "收款条件不能为空")
+        @NotBlank(message = "收款条件不能为空", groups = {AddGroup.class})
         private String receiveCondition;
 
         /**
          * 备注
          */
-        @Size(max = 255, message = "备注最大长度不能超过255")
+        @Size(max = 255, message = "备注最大长度不能超过255", groups = {AddGroup.class})
         private String remark;
 
         /**
@@ -1130,6 +1135,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 贸易条款：oms/common/enumDropDown?type=TradeTermEnum
          */
+        @StateEnumValue(clazz = TradeTermEnum.class, message = "贸易条款有误", groups = {AddGroup.class})
         private String tradeTerm;
 
         @Valid
