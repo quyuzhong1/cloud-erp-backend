@@ -1,5 +1,7 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.business.validator.AddGroup;
+import com.common.business.validator.ValidGroup;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.enums.inventory.InventoryBizTypeEnum;
@@ -67,7 +69,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void approveByRule(InventoryInOutStockRuleDTO dto) {
-        ValidatorUtil.validateEntity(dto);
+        ValidatorUtil.validateEntity(dto, ValidGroup.Update.class);
         AbstractInventoryServiceImpl inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
         inventoryService.approve(dto.getMembers(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
     }
