@@ -146,4 +146,12 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @return void
      **/
     void updateKingdeeDetailId(JSONArray list);
+    /**
+     * @description: 更新备注
+     * @author Will
+     * @date: 2023/7/19 15:02
+     * @param ids
+     * @param remark
+     */
+    void updateRemarkByIds(List<String> ids, String remark);
 }

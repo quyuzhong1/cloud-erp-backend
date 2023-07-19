@@ -165,6 +165,24 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
+     * 更新备注
+     * @author Will
+     * @date: 2023/7/19 14:58
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/updateRemark")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:update",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "ids")
+    public ApiResult updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        Boolean flag = purchaseOrderService.updateRemark(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
      * 查询详情
      * @author Will
      * @date: 2023/3/15 17:44

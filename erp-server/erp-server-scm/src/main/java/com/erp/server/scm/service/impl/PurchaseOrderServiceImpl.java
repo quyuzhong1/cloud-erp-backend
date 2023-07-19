@@ -14,10 +14,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -1470,6 +1467,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         PurchaseOrderDTO.PagingTotalDTO pagingTotalDTO = baseMapper.pagingTotal(dto);
         return pagingTotalDTO;
+    }
+
+    @Override
+    public Boolean updateRemark(BaseIdsDTO.RemarkDTO dto) {
+       purchaseOrderDetailService.updateRemarkByIds(dto.getIds(),dto.getRemark());
+       return Boolean.TRUE;
     }
 
     /**

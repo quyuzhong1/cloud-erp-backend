@@ -1263,4 +1263,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 .eq(SoDetailEntity::getId, id).update();
     }
 
+    @Override
+    public void updateRemarkByIds(List<String> ids, String remark) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        lambdaUpdate().in(SoDetailEntity::getId,ids)
+                .set(SoDetailEntity::getRemark,remark)
+                .update(new SoDetailEntity());
+    }
+
 }
