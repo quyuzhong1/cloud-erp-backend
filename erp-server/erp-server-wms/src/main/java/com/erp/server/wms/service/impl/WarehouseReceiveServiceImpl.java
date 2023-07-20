@@ -609,14 +609,33 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<QcInfoDTO.ReceiveToQcDTO> newProductList = qcList.stream().filter(q -> q.getIsFirstMassProduct()).collect(Collectors.toList());
         for (QcInfoDTO.ReceiveToQcDTO newItem : newProductList) {
             //为空所有的加，等级为空用销售方式，销售方式为空用等级
-            if ((StringUtils.isBlank(newProductGrade) && StringUtils.isBlank(newSaleMethod))
-                    || (StringUtils.isBlank(newProductGrade) && newSaleMethod.contains(newItem.getSaleMethod()))
-                    || (StringUtils.isBlank(newSaleMethod) && newProductGrade.contains(newItem.getProductGrade()))
-            ) {
+            if ((StringUtils.isBlank(newProductGrade) && StringUtils.isBlank(newSaleMethod))) {
                 QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
                 BeanMapper.copy(newItem, newQc);
                 newQc.setQcType(newProduct);
                 addList.add(newQc);
+            } else if (StringUtils.isBlank(newProductGrade)) {
+                String[] split = newItem.getSaleMethod().split(",");
+                for (String s : split) {
+                    if (newSaleMethod.contains(s)) {
+                        QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
+                        BeanMapper.copy(newItem, newQc);
+                        newQc.setQcType(newProduct);
+                        addList.add(newQc);
+                        break;
+                    }
+                }
+            } else if (StringUtils.isBlank(newSaleMethod)) {
+                String[] split = newItem.getProductGrade().split(",");
+                for (String s : split) {
+                    if (newProductGrade.contains(s)) {
+                        QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
+                        BeanMapper.copy(newItem, newQc);
+                        newQc.setQcType(newProduct);
+                        addList.add(newQc);
+                        break;
+                    }
+                }
             } else {
                 //包含的时候就要弄
                 if (newProductGrade.contains(newItem.getProductGrade()) && newSaleMethod.contains(newItem.getProductGrade())) {
@@ -630,21 +649,40 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //旧品 并且符合等级的
         List<QcInfoDTO.ReceiveToQcDTO> stockInProductList = qcList.stream().filter(q -> !q.getIsFirstMassProduct()).collect(Collectors.toList());
         for (QcInfoDTO.ReceiveToQcDTO stockInItem : stockInProductList) {
-            if((StringUtils.isBlank(stockInProductGrade) && StringUtils.isBlank(stockInSaleMethod))
-                    || (StringUtils.isBlank(stockInProductGrade) && stockInSaleMethod.contains(stockInItem.getSaleMethod()))
-                    || (StringUtils.isBlank(stockInSaleMethod) && stockInProductGrade.contains(stockInItem.getProductGrade()))
-            ){
+            if ((StringUtils.isBlank(stockInProductGrade) && StringUtils.isBlank(newSaleMethod))) {
                 QcInfoDTO.ReceiveToQcDTO stockInQc = new QcInfoDTO.ReceiveToQcDTO();
                 BeanMapper.copy(stockInItem, stockInQc);
                 stockInQc.setQcType(stockIn);
                 addList.add(stockInQc);
-            }else{
-                //包含的时候就要加
-                if (stockInProductGrade.contains(stockInItem.getProductGrade()) && stockInSaleMethod.contains(stockInItem.getSaleMethod())) {
-                    QcInfoDTO.ReceiveToQcDTO stockInQc = new QcInfoDTO.ReceiveToQcDTO();
-                    BeanMapper.copy(stockInItem, stockInQc);
-                    stockInQc.setQcType(stockIn);
-                    addList.add(stockInQc);
+            } else if (StringUtils.isBlank(stockInProductGrade)) {
+                String[] split = stockInItem.getSaleMethod().split(",");
+                for (String s : split) {
+                    if (newSaleMethod.contains(s)) {
+                        QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
+                        BeanMapper.copy(stockInItem, newQc);
+                        newQc.setQcType(newProduct);
+                        addList.add(newQc);
+                        break;
+                    }
+                }
+            } else if (StringUtils.isBlank(stockInSaleMethod)) {
+                String[] split = stockInItem.getProductGrade().split(",");
+                for (String s : split) {
+                    if (newProductGrade.contains(s)) {
+                        QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
+                        BeanMapper.copy(stockInItem, newQc);
+                        newQc.setQcType(newProduct);
+                        addList.add(newQc);
+                        break;
+                    }
+                }
+            } else {
+                //包含的时候就要弄
+                if (newProductGrade.contains(stockInItem.getProductGrade()) && newSaleMethod.contains(stockInItem.getProductGrade())) {
+                    QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
+                    BeanMapper.copy(stockInItem, newQc);
+                    newQc.setQcType(newProduct);
+                    addList.add(newQc);
                 }
             }
         }
