@@ -112,6 +112,10 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 模块状态名称
          */
         private String moduleStatusName;
+        /**
+         * 系统菜单id
+         */
+        private String sysMenuId;
     }
 
     @Data
