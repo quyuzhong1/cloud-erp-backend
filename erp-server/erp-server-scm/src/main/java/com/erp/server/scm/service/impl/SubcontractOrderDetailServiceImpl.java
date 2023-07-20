@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -471,6 +473,14 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
      * @param isChild
      */
     private void handleSupplierTaxPrice(SubcontractOrderDetailEntity entity,Boolean isChild) {
+        //赠品无需报价,默认人民币
+        if (entity.getIsGift()) {
+            entity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            entity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+            entity.setPrice(BigDecimal.ZERO);
+            entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
+            return;
+        }
         //供应商报价信息
         PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
         searchDTO.setSkuId(entity.getSkuId());

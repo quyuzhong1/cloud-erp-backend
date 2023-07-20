@@ -10,6 +10,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -295,7 +296,13 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         for (PurchaseOrderDetailEntity entity : newList) {
-
+            //赠品单价默认0
+            if (entity.getIsGift()) {
+                entity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+                entity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+                entity.setTaxPrice(BigDecimal.ZERO);
+                entity.setTaxRate(BigDecimal.ZERO);
+            }
             //产品信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(skuVO)) {

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -30,6 +31,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -286,7 +288,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             }
 
 
-            handleSupplierTaxPrice(detailEntity,Boolean.FALSE);
+            handleSupplierTaxPrice(detailEntity,subEntity,Boolean.FALSE);
             //子集SKU信息
             List<SubcontractChangeDetailEntity>   childList = BeanMapperUtils.copyList(SubcontractChangeDetailEntity.class, detailEntity.getChildList());
             for (SubcontractChangeDetailEntity childEntity : childList) {
@@ -319,7 +321,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                     childEntity.setOldDeliveryQty(childSubEntity.getDeliveryQty());
                 }
 
-                handleSupplierTaxPrice(childEntity,Boolean.TRUE);
+                handleSupplierTaxPrice(childEntity,childSubEntity,Boolean.TRUE);
             }
             resultList.add(detailEntity);
             resultList.addAll(childList);
@@ -348,7 +350,15 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
      * @param entity
      * @param isChild
      */
-    private void handleSupplierTaxPrice(SubcontractChangeDetailEntity entity, Boolean isChild) {
+    private void handleSupplierTaxPrice(SubcontractChangeDetailEntity entity,SubcontractOrderDetailEntity subEntity  , Boolean isChild) {
+        //赠品无需报价,默认人民币
+        if (subEntity.getIsGift()) {
+            entity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            entity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+            entity.setPrice(BigDecimal.ZERO);
+            entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
+            return;
+        }
         //供应商报价信息
         PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
         searchDTO.setSkuId(entity.getSkuId());
