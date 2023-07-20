@@ -201,4 +201,15 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return java.util.List<com.erp.model.wms.entity.WarehouseEntity>
      */
     List<WarehouseEntity> listByKingdeeCodeList(List<String> kingdeeWarehouseCodeList);
+
+    /**
+     * @description: 出库列表(带参数)
+     * @author Will
+     * @date: 2023/7/20 15:32
+     * @param dto
+     * @return List<ListDTO>
+     */
+    List<WarehouseDTO.ListDTO> listWarehouseByParams(WarehouseDTO.ListParamDTO dto);
+
+
 }
