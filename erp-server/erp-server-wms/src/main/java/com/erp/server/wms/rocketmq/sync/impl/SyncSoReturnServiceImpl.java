@@ -38,6 +38,7 @@ import com.erp.server.wms.service.WarehouseService;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -70,6 +71,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void syncKingdeeReturnOrderToSoReturn(KingdeeReturnOrderEntity kingdeeReturnOrderEntity) {
         //跳过优质胜和小隼科技的单
         if (StrUtil.isEmpty(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId())) {
@@ -79,9 +81,11 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         if (!kingdeeReturnOrderEntity.getFBillTypeID().equals("559351ce1d0252")) {
             return;
         }*/
-        //不同步MWS同步到金蝶的数据
-        if (CommonConstants.SYSTEM.equals(kingdeeReturnOrderEntity.getFULZDataSources())) {
-            return;
+        if (StringUtils.isNotBlank(kingdeeReturnOrderEntity.getFULZDataSources())) {
+            //不同步MWS同步到金蝶的数据
+            if (CommonConstants.SYSTEM.equals(kingdeeReturnOrderEntity.getFULZDataSources().trim())) {
+                return;
+            }
         }
 
         List<KingdeeReturnOrderItemEntity> itemEntityList = kingdeeReturnOrderEntity.getItemEntityList();
