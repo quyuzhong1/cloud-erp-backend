@@ -240,13 +240,6 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         resultEntity.setLastUpdatedUserName(entity.getFModifierIdFName());
         resultEntity.setSourceId(entity.getId());
         resultEntity.setPlatformSign(PlatformEnum.KINGDEE.getDesc());
-        if(CollectionUtil.isNotEmpty(entity.getItemList())){
-            KingdeeTransferDirectItemEntity itemEntity = entity.getItemList().get(0);
-            resultEntity.setInWarehouseCode(itemEntity.getFDestStockIdFNumber());
-            resultEntity.setInWarehouseName(itemEntity.getFDestStockIdFName());
-            resultEntity.setOutWarehouseCode(itemEntity.getFSrcStockIdFNumber());
-            resultEntity.setOutWarehouseName(itemEntity.getFSrcStockIdFName());
-        }
         resultEntity.setDetailList(initOrderItem(entity));
         return resultEntity;
     }
@@ -269,6 +262,10 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
             itemEntity.setInStockStatusName(item.getFDestStockStatusIdFName());
             itemEntity.setOutStockStatusCode(item.getFSrcStockStatusId());
             itemEntity.setOutStockStatusName(item.getFSrcStockStatusIdFName());
+            itemEntity.setInWarehouseCode(item.getFDestStockIdFNumber());
+            itemEntity.setInWarehouseName(item.getFDestStockIdFName());
+            itemEntity.setOutWarehouseCode(item.getFSrcStockIdFNumber());
+            itemEntity.setOutWarehouseName(item.getFSrcStockIdFName());
             orderItemList.add(itemEntity);
         }
         return orderItemList;

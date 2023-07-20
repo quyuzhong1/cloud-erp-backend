@@ -1,5 +1,7 @@
 package com.erp.server.sys.controller.api;
 
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.sys.dto.QuerySchemeFavoriteDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -48,6 +50,13 @@ public class QuerySchemeFavoriteController extends BaseController {
     @PostMapping("/update")
     public ApiResult<Boolean> update(@Validated @RequestBody QuerySchemeFavoriteDTO.UpdateDTO updateDTO) {
         return success(querySchemeFavoriteService.updateById(updateDTO));
+    }
+    /**
+     * 删除个人方案
+     */
+    @PostMapping("/delete")
+    public ApiResult<Boolean> delete(@Validated @RequestBody BaseIdsDTO.IdsDTO deleteDTO) {
+        return success(querySchemeFavoriteService.removeByIds(deleteDTO.getIds()));
     }
 
 

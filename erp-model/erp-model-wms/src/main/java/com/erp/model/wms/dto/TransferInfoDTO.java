@@ -244,16 +244,16 @@ public class TransferInfoDTO implements Serializable {
         private String warehouseKeeperId;
 
         /**
-         * 调出仓库id
+         * 调入组织id
          */
-        @NotBlank(message = "调出仓库不能为空")
-        private String outWarehouseId;
+        @NotBlank(message = "调入组织不能为空")
+        private String  inOrgId;
 
         /**
-         * 调入仓库id
+         * 调出组织id
          */
-        @NotBlank(message = "调入仓库不能为空")
-        private String inWarehouseId;
+        @NotBlank(message = "调出组织不能为空")
+        private String  outOrgId;
 
         /**
          * 备注
@@ -361,29 +361,9 @@ public class TransferInfoDTO implements Serializable {
         private String   warehouseKeeperName;
 
         /**
-         * 调出仓库名称
-         */
-        private String  outWarehouseName;
-
-        /**
-         * 调入仓库名称
-         */
-        private String  inWarehouseName;
-
-        /**
-         * 调出组织id
-         */
-        private String  outOrgId;
-
-        /**
          * 调出组织名称
          */
         private String  outOrgName;
-
-        /**
-         * 调入组织id
-         */
-        private String  inOrgId;
 
         /**
          * 调入组织名称
