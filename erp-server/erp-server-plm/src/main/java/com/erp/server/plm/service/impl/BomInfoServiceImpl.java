@@ -268,7 +268,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 for (BomSkuPageDTO.ChildDTO childDTO: childDTOList) {
                     //付款条件
                     if (CollectionUtils.isNotEmpty(supplierList)) {
-                        String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(listDTO.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
+                        String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(childDTO.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
                         childDTO.setPaymentCondition(paymentCondition);
                     }
                     //状态名称
