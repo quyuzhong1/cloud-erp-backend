@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum BillTypeEnum implements EnumMessage {
     B2B("B2B", "B2B订单"),
     B2C("B2C", "B2C订单"),
-    AFTER_SALES("AfterSale","【售后订单-补/换/赠】")
+    AFTER_SALES("AfterSale","售后订单-补/换/赠")
     ;
     /**
      * 类型
