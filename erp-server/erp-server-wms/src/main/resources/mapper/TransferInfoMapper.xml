@@ -17,10 +17,6 @@
         <result column="approve_status" property="approveStatus" />
         <result column="bill_date" property="billDate" />
         <result column="type" property="type" />
-        <result column="in_warehouse_id" property="inWarehouseId" />
-        <result column="in_warehouse_name" property="inWarehouseName" />
-        <result column="out_warehouse_id" property="outWarehouseId" />
-        <result column="out_warehouse_name" property="outWarehouseName" />
         <result column="in_org_id" property="inOrgId" />
         <result column="in_org_name" property="inOrgName" />
         <result column="out_org_id" property="outOrgId" />
@@ -48,8 +44,8 @@
             ti.bill_date as billDate,
             tid.qty,
             tid.unit,
-            ti.in_warehouse_name as inWarehouseName,
-            ti.out_warehouse_name as outWarehouseName,
+            tid.in_warehouse_name as inWarehouseName,
+            tid.out_warehouse_name as outWarehouseName,
             tid.remark,
             ti.approve_user_name as approveUserName,
             ti.create_user_name as createUserName,
@@ -85,13 +81,13 @@
                 </foreach>
             </if>
             <if test="params.inWarehouseIdList != null and params.inWarehouseIdList.size > 0">
-                and ti.in_warehouse_id in
+                and tid.in_warehouse_id in
                 <foreach collection="params.inWarehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
             <if test="params.outWarehouseIdList != null and params.outWarehouseIdList.size > 0">
-                and ti.out_warehouse_id in
+                and tid.out_warehouse_id in
                 <foreach collection="params.outWarehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
@@ -152,8 +148,8 @@
             ti.bill_date as billDate,
             tid.qty,
             tid.unit,
-            ti.in_warehouse_name as inWarehouseName,
-            ti.out_warehouse_name as outWarehouseName,
+            tid.in_warehouse_name as inWarehouseName,
+            tid.out_warehouse_name as outWarehouseName,
             tid.remark,
             ti.approve_user_name as approveUserName,
             ti.create_user_name as createUserName,
@@ -196,13 +192,13 @@
                     </foreach>
                 </if>
                 <if test="params.inWarehouseIdList != null and params.inWarehouseIdList.size > 0">
-                    and ti.in_warehouse_id in
+                    and tid.in_warehouse_id in
                     <foreach collection="params.inWarehouseIdList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>
                 </if>
                 <if test="params.outWarehouseIdList != null and params.outWarehouseIdList.size > 0">
-                    and ti.out_warehouse_id in
+                    and tid.out_warehouse_id in
                     <foreach collection="params.outWarehouseIdList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>

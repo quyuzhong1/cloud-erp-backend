@@ -543,6 +543,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         return Boolean.TRUE;
     }
 
+
     /**
      * 生成质检单
      *
