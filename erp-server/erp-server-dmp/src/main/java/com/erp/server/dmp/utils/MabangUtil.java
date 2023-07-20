@@ -49,43 +49,6 @@ public class MabangUtil {
      */
     public static final String SEPARATOR = ",";
 
-    /**
-     * 验证直接调拨单同步马帮出入库是否在监控仓库
-     * @param inWarehouseCode
-     * @param outWarehouseCode
-     * @param warehouseMap
-     * @param warehouseCodeList
-     * @return
-     */
-    public static Map<String, Object> checkTransferInOutWarehouse(String inWarehouseCode, String outWarehouseCode,
-                                                                  Map<String, DmpWarehouseMappingEntity> warehouseMap,
-                                                                  List<String> warehouseCodeList) {
-        Map<String, Object> resultMap = Maps.newHashMap();
-        String inWarehouseName = "", outWarehouseName = "";
-        if(Objects.isNull(warehouseMap.get(inWarehouseCode)) && Objects.isNull(warehouseMap.get(outWarehouseCode))) {
-            String msg = StrUtil.format("ERP直接调拨单同步到马帮出入库调入仓和调出仓在马帮未找到映射，调入仓【{}】，调出仓【{}】,不需要推送马帮出入库", inWarehouseCode, outWarehouseCode);
-            log.warn(msg);
-            resultMap.put(SEND_STOP, true);
-            return resultMap;
-        }
-        if(Objects.nonNull(warehouseMap.get(inWarehouseCode))) {
-            inWarehouseName = warehouseMap.get(inWarehouseCode).getWarehouseName();
-        }
-        if(Objects.nonNull(warehouseMap.get(outWarehouseCode))) {
-            outWarehouseName = warehouseMap.get(outWarehouseCode).getWarehouseName();
-        }
-        if(!warehouseCodeList.contains(inWarehouseCode) && !warehouseCodeList.contains(outWarehouseCode)) {
-            String msg = StrUtil.format("ERP直接调拨单同步到马帮出入库调入仓和调出仓都不在监控仓库范围内，调入仓【{}】，调出仓【{}】,不需要推送马帮出入库", inWarehouseCode, outWarehouseCode);
-            log.warn(msg);
-            resultMap.put(SEND_STOP, true);
-            return resultMap;
-        }
-        resultMap.put(SEND_STOP, false);
-        resultMap.put(IN_WAREHOUSE_CODE, inWarehouseName);
-        resultMap.put(OUT_WAREHOUSE_CODE, outWarehouseName);
-        return resultMap;
-    }
-
 
     /**
      * 填充马帮出入库实体(直接调拨单)

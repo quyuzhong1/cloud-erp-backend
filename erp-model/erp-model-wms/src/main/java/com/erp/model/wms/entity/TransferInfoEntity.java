@@ -171,11 +171,13 @@ public class TransferInfoEntity extends BaseEntity<TransferInfoEntity> {
     @TableField("sync_operate")
     private String syncOperate;
 
+    /**
     @TableField(exist = false)
     private String inWarehouseCode;
 
     @TableField(exist = false)
     private String outWarehouseCode;
+     */
 
     @TableField(exist = false)
     private List<TransferInfoDetailEntity> detailList;
