@@ -6,7 +6,6 @@ import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.entity.DmpWarehouseMappingEntity;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -53,13 +52,10 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
     @Autowired
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
-    private MQProducerService mqProducerService;
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void onMessage(MabangMachineInfoDTO mabangMachineInfoDTO) {
-        log.info("监听到ERP加工单单信息，内容：{}", JSONObject.toJSONString(mabangMachineInfoDTO));
+        log.warn("监听到ERP加工单单信息，内容：{}", JSONObject.toJSONString(mabangMachineInfoDTO));
 
         // 主单
         MachineInfoEntity machineInfoEntity = mabangMachineInfoDTO.getMachineInfoEntity();
