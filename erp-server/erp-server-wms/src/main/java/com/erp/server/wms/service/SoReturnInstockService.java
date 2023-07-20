@@ -106,7 +106,7 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @param ids ids
      * @return java.lang.Boolean
      **/
-    Boolean disApprove(List<String> ids);
+    Boolean disApprove(List<String> ids, Boolean isPushKingDee);
 
     /**
      * 取消流程
