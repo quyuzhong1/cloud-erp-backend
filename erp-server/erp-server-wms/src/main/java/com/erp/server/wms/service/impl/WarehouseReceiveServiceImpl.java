@@ -622,6 +622,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                         BeanMapper.copy(newItem, newQc);
                         newQc.setQcType(newProduct);
                         addList.add(newQc);
+                        break;
                     }
                 }
             } else if (StringUtils.isBlank(newSaleMethod)) {
@@ -632,6 +633,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                         BeanMapper.copy(newItem, newQc);
                         newQc.setQcType(newProduct);
                         addList.add(newQc);
+                        break;
                     }
                 }
             } else {
@@ -660,6 +662,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                         BeanMapper.copy(stockInItem, newQc);
                         newQc.setQcType(newProduct);
                         addList.add(newQc);
+                        break;
                     }
                 }
             } else if (StringUtils.isBlank(stockInSaleMethod)) {
@@ -670,6 +673,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                         BeanMapper.copy(stockInItem, newQc);
                         newQc.setQcType(newProduct);
                         addList.add(newQc);
+                        break;
                     }
                 }
             } else {
