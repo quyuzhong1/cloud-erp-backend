@@ -2,14 +2,13 @@ package com.erp.model.sys.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.business.handler.JsonTypeHandler;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.sys.dto.QuerySchemeFavoriteDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import org.apache.ibatis.type.JdbcType;
 
 import java.util.LinkedHashMap;
 
@@ -26,7 +25,7 @@ import java.util.LinkedHashMap;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("query_scheme_favorite")
+@TableName(value = "query_scheme_favorite" , autoResultMap = true)
 public class QuerySchemeFavoriteEntity extends BaseEntity<QuerySchemeFavoriteEntity> {
 
 
@@ -51,13 +50,13 @@ public class QuerySchemeFavoriteEntity extends BaseEntity<QuerySchemeFavoriteEnt
     /**
     * 参数json
     */
-    @TableField(value = "param_json", typeHandler= JsonTypeHandler.class, jdbcType= JdbcType.OTHER, javaType = true)
+    @TableField(value = "param_json", typeHandler= JacksonTypeHandler.class)
     private LinkedHashMap<String, Object> paramJson;
 
     /**
     * 备注
     */
-    @TableField("remark ")
+    @TableField("remark")
     private String remark ;
 
 

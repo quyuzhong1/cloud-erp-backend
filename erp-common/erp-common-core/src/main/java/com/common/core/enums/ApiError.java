@@ -131,6 +131,7 @@ public enum ApiError implements Serializable {
     ERROR_9045(9045, "通知不存在"),
     ERROR_9046(9046, "字段编号不正确"),
     SCHEME_NOT_EXIST(9047, "方案不存在"),
+    SCHEME_NAME_EXIST(9048, "查询方案[{}]已存在"),
     /**
      * 工作流错误 workflow
      * 从9040 开始  以端口号

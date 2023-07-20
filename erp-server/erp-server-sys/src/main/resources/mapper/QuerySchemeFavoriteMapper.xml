@@ -15,7 +15,7 @@
        <result column="name" property="name" />
        <result column="user_id" property="userId" />
        <result column="module_path" property="modulePath" />
-       <result column="param_json" jdbcType="OTHER" property="paramJson" typeHandler= "com.common.business.handler.JsonTypeHandler"/>
+       <result column="param_json" jdbcType="OTHER" property="paramJson" typeHandler= "com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
        <result column="remark" property="remark" />
     </resultMap>
 
@@ -32,13 +32,6 @@
         is_deleted,
         name, user_id, module_path, param_json, remark 
     </sql>
-    <select id="listByUserId" resultMap="BaseResultMap">
-        select
-        <include refid="Base_Column_List" />
-        from query_scheme_favorite
-        where user_id = #{userId}
-        and is_deleted = false
-    </select>
 
 
 </mapper>
