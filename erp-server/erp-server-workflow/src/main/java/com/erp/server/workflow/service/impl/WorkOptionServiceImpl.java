@@ -493,7 +493,15 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<WorkOptionDTO.ApproveViewDTO> records = pageData.getRecords();
+        List<String> businessIds = records.stream().map(WorkOptionDTO.ApproveViewDTO::getBusinessId).distinct().collect(Collectors.toList());
+
+        List<ProcessTaskManagementEntity> processTaskManagementEntities = processTaskManagementService.listProcessByBusinessId(businessIds);
+
         records.forEach(req -> {
+            List<String> curApproveName = processTaskManagementEntities.stream().filter(obj -> req.getBusinessId().equals(obj.getBusinessId()) && obj.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+            String userName = StringUtils.join(curApproveName, ",");
+            req.setApproveUserName(userName);
+
             if (StringUtils.isNotBlank(req.getApproveDuration())) {
                 BigDecimal bigDecimal = BigDecimal.valueOf(Double.valueOf(req.getApproveDuration()));
                 String value = String.valueOf(bigDecimal.divide(BigDecimal.valueOf(3600), 2, BigDecimal.ROUND_DOWN));

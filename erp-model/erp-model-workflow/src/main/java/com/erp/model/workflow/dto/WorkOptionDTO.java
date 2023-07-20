@@ -388,6 +388,10 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 撤销请求参数
          */
         private String cancelProcessParam;
+        /**
+         * 审核人（最新）
+         */
+        private String approveUserName;
     }
 
     /**
