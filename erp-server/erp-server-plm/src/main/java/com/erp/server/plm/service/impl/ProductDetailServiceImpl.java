@@ -1423,6 +1423,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             ProductDetailEntity productDetailEntity = new ProductDetailEntity();
             productDetailEntity.setVariantProperty(req);
+            productDetailEntity.setUnitName("Pcs");
             productDetailEntity.setProductId(id);
             productDetailEntity.setName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName());
             productDetailEntity.setNameEn(variantAutoAddDTO.getProductSpuBaseInfoDTO().getNameEn());
