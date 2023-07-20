@@ -343,7 +343,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      **/
 
     public void startProcess(List<SoInfoEntity> list) {
-        LoginUser userInfo = commonService.getUserInfo();
         ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
         list.forEach(obj -> {
             ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
@@ -351,7 +350,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             startDTO.setBusinessCode(obj.getCode());
             startDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
             startDTO.setBusinessName(obj.getCode());
-            startDTO.setUserId(userInfo.getUid());
+            startDTO.setUserId(obj.getSellerId());
             startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
             resultList.add(startDTO);
         });
