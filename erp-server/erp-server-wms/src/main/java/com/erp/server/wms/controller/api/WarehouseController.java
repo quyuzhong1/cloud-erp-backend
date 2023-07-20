@@ -274,7 +274,7 @@ public class WarehouseController extends BaseController {
      * 仓库列表(有参)
      */
     @PostMapping("/listWarehouseByParams")
-    public ApiResult<List<WarehouseDTO.ListDTO>> listWarehouseByParams(WarehouseDTO.ListParamDTO dto) {
+    public ApiResult<List<WarehouseDTO.ListDTO>> listWarehouseByParams(@RequestBody @Valid WarehouseDTO.ListParamDTO dto) {
         List<WarehouseDTO.ListDTO> list = warehouseService.listWarehouseByParams(dto);
         return success(list);
     }
