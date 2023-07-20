@@ -170,8 +170,8 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         String filterStr = String.join(" and ",  queryFilters );
 
         String fieldKeys = "FId,FBillNo,FBizType,FTransferDirect,FTransferBizType,FSaleOrgId,FSaleOrgId.FName," +
-                "FSettleOrgId,FSettleOrgId.FName,FStockOutOrgId,FStockOutOrgId.FName,FOwnerOutIdHead,FOwnerOutIdHead.FName," +
-                "FStockOrgId,FStockOrgId.FName,FSettleCurrId,FSettleCurrId.FName,FExchangeTypeId,FExchangeTypeId.FName,FExchangeRate," +
+                "FSettleOrgId,FSettleOrgId.FName,FStockOutOrgId,FStockOutOrgId.FNumber,FStockOutOrgId.FName,FOwnerOutIdHead,FOwnerOutIdHead.FName," +
+                "FStockOrgId,FStockOrgId.FNumber,FStockOrgId.FName,FSettleCurrId,FSettleCurrId.FName,FExchangeTypeId,FExchangeTypeId.FName,FExchangeRate," +
                 "FDate,FNote,FBaseCurrId,FBaseCurrId.FName,FDocumentStatus,FDocumentStatus.FCaption,FApproverId,FApproverId.FName,FApproveDate,FSTOCKERID.FNumber," +
                 "FCancellerId,FCancellerId.FName,FCreateDate,FCreatorId,FCreatorId.FName,FModifierId,FModifierId.FName,FModifyDate,FCancelStatus,FCancelStatus.FCaption,FCancelDate," +
                 "FBillEntry_FEntryID,FSrcStockId,FSrcStockId.FNumber,FSrcStockId.FName,FDestStockId,FDestStockId.FNumber,FDestStockId.FName," +
@@ -222,8 +222,10 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         resultEntity.setTransferType(entity.getFTransferBizType());
         resultEntity.setTransferTypeCode(entity.getFTransferBizType());
         resultEntity.setInOrgId(entity.getFStockOrgId());
+        resultEntity.setInOrgCode(entity.getFStockOrgIdFNumber());
         resultEntity.setInOrgName(entity.getFStockOrgIdFName());
         resultEntity.setOutOrgId(entity.getFStockOutOrgId());
+        resultEntity.setOutOrgCode(entity.getFStockOutOrgIdFNumber());
         resultEntity.setOutOrgName(entity.getFStockOutOrgIdFName());
         resultEntity.setBillDate(entity.getFDate());
         resultEntity.setApproveStatus(entity.getFDocumentStatus());

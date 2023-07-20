@@ -66,16 +66,23 @@ public class KingdeeTransferDirectEntity extends CleanBaseDTO {
     @Alias("FSettleOrgId.FName")
     private String FSettleOrgIdFName;
     /**
-     * (基本信息)调出库存组织#编码
+     * (基本信息)调出库存组织#id
      */
     @Alias("FStockOutOrgId")
     private String FStockOutOrgId;
 
     /**
+     * (基本信息)调出库存组织#编码
+     */
+    @Alias("FStockOutOrgId.FNumber")
+    private String FStockOutOrgIdFNumber;
+
+    /**
      * (基本信息)调出库存组织#名称
      */
-    @Alias("FStockOutOrgId.FName")
+    @Alias("FStockOutOrgId.FNumber")
     private String FStockOutOrgIdFName;
+
     /**
      * (基本信息)调出货主#编码
      */
@@ -87,10 +94,17 @@ public class KingdeeTransferDirectEntity extends CleanBaseDTO {
     @Alias("FOwnerOutIdHead.FName")
     private String FOwnerOutIdHeadFName;
     /**
-     * (基本信息)调入库存组织#编码
+     * (基本信息)调入库存组织#id
      */
     @Alias("FStockOrgId")
     private String FStockOrgId;
+
+    /**
+     * (基本信息)调入库存组织#编码
+     */
+    @Alias("FStockOrgId.FNumber")
+    private String FStockOrgIdFNumber;
+
     /**
      * (基本信息)调入库存组织#名称
      */

@@ -174,7 +174,7 @@
             </foreach>
         </if>
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
-            AND (P.name ILIKE concat('%',#{params.searchKeyword},'%')
+            AND (p.name ILIKE concat('%',#{params.searchKeyword},'%')
             OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
             concat('%',#{params.searchKeyword},'%'))
             OR p.spu_no ILIKE concat('%',#{params.searchKeyword},'%'))
@@ -285,7 +285,7 @@
             </foreach>
         </if>
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
-            AND (P.name ILIKE concat('%',#{params.searchKeyword},'%')
+            AND (p.name ILIKE concat('%',#{params.searchKeyword},'%')
             OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
             concat('%',#{params.searchKeyword},'%'))
             OR p.spu_no ILIKE concat('%',#{params.searchKeyword},'%'))
@@ -375,7 +375,7 @@
             </foreach>
         </if>
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
-            AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
+            AND (p.name LIKE concat('%',#{params.searchKeyword},'%')
             OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE
             concat('%',#{params.searchKeyword},'%'))
             OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
@@ -607,7 +607,7 @@
             </foreach>
         </if>
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
-            AND P.name LIKE concat('%',#{params.searchKeyword},'%')
+            AND p.name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
         <if test="params.stateList !=null and params.stateList.size()>0">
             AND P.approval_status IN

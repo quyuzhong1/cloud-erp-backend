@@ -658,7 +658,23 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 }
                 dto.setQuantity(bomChildrenSkuDTO.getQuantity());
             }
-
+            //报价信息查询
+            if (ObjectUtils.isNotEmpty(dto.getIsGift()) && !dto.getIsGift()) {
+                PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO  = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+                searchDTO.setSkuId(dto.getSkuId());
+                searchDTO.setSkuNo(dto.getSkuNo());
+                searchDTO.setSupplierId(dto.getSupplierId());
+                searchDTO.setPurchaseQty(dto.getQty().intValue() );
+                Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> pair = purchasePriceDetailService.listPurchaseTaxPriceView(searchDTO);
+                List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> value = pair.getValue();
+                if (CollectionUtils.isNotEmpty(value)) {
+                    dto.setPrice(value.get(0).getTaxPrice());
+                    dto.setTaxRate(value.get(0).getTaxRate());
+                    dto.setCurrency(value.get(0).getCurrency());
+                    dto.setCurrencySymbol(value.get(0).getCurrencySymbol());
+                    dto.setAmount(MathUtil.multiply(value.get(0).getTaxPrice(),searchDTO.getPurchaseQty()));
+                }
+            }
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuVO)) {
                 throw new ServiceException(ApiError.ERROR_95084);

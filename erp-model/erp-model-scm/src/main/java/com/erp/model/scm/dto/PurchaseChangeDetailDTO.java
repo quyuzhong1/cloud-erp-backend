@@ -72,7 +72,6 @@ public class PurchaseChangeDetailDTO implements Serializable {
         /**
          * 新含税单价
          */
-        @NotNull(message = "新含税单价不能为空")
         @Digits(integer = 16,fraction = 4,message = "新含税单价最大16字符，小数位不能大于4个字符")
         private BigDecimal price;
 

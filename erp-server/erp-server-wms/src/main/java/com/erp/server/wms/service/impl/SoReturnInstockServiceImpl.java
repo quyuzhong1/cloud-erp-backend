@@ -558,17 +558,22 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
+    public Boolean disApprove(List<String> ids, Boolean isPushKingDee) {
         List<SoReturnInstockEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
         //已审核支持反审核
-        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
-        ).count();
-        if (count != entityList.size()) {
-            throw new ServiceException(ApiError.ERROR_99003);
+
+        if(!isPushKingDee){
+            entityList = entityList.stream().filter(x -> ApproveStatusEnum.APPROVE.equals(x.getApproveStatus())).collect(Collectors.toList());
+        }else {
+            long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                    && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+            ).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_98014);
+            }
         }
         //TODO 待加审核流程
 
@@ -582,7 +587,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, ids);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
         //反审核发送金蝶
-        entityList.forEach(obj -> syncKingdeeSoReturnService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        if(isPushKingDee){
+            entityList.forEach(obj -> syncKingdeeSoReturnService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        }
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "反审核操作");
