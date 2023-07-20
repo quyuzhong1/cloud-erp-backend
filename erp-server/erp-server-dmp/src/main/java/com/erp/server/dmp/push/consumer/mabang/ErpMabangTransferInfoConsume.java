@@ -59,7 +59,7 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void onMessage(MabangTransferInfoDTO mabangTransferInfoDTO) {
-        log.info("监听到ERP直接调拨单信息，内容：{}", JSONObject.toJSONString(mabangTransferInfoDTO));
+        log.warn("监听到ERP直接调拨单信息，内容：{}", JSONObject.toJSONString(mabangTransferInfoDTO));
 
         // 主单
         TransferInfoEntity transferInfo = mabangTransferInfoDTO.getTransferInfo();
@@ -98,9 +98,9 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
 
         // 调入仓明细
-        Map<String, List<TransferInfoDetailEntity>> inTransferInfoMap = transferDetailList.stream().collect(Collectors.groupingBy(TransferInfoDetailEntity::getInWarehouseId));
+        Map<String, List<TransferInfoDetailEntity>> inTransferInfoMap = transferDetailList.stream().collect(Collectors.groupingBy(TransferInfoDetailEntity::getInWarehouseCode));
         // 调出仓明细
-        Map<String, List<TransferInfoDetailEntity>> outTransferInfoMap = transferDetailList.stream().collect(Collectors.groupingBy(TransferInfoDetailEntity::getOutWarehouseId));
+        Map<String, List<TransferInfoDetailEntity>> outTransferInfoMap = transferDetailList.stream().collect(Collectors.groupingBy(TransferInfoDetailEntity::getOutWarehouseCode));
 
 
         List<MabangInOutStockDTO> mabangInOutStockDTOList = Lists.newArrayList();

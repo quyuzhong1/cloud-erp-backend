@@ -47,7 +47,7 @@ public class DmpMabangInOutStockConsume implements RocketMQListener<DmpSyncMqDTO
         MabangInOutStockDTO mabangInOutStockDTO = JSONObject.parseObject(dtoDmpSyncMqDTO.getMqData(), MabangInOutStockDTO.class);
         // erp单号
         String erpSourceCode = mabangInOutStockDTO.getErpSourceCode();
-        log.info("监听到DMP出入库，erp单号【{}】，同步内容：{}", erpSourceCode, JSONObject.toJSONString(dtoDmpSyncMqDTO));
+        log.warn("监听到DMP出入库，erp单号【{}】，同步内容：{}", erpSourceCode, JSONObject.toJSONString(dtoDmpSyncMqDTO));
 
         String syncTaskId = dtoDmpSyncMqDTO.getDmpSyncTaskId();
         DmpSyncTaskEntity dmpSyncTaskEntity = dmpSyncTaskService.getById(syncTaskId);
