@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -190,9 +191,16 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
                 }
             }
 
+            PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(purchaseChangeDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(detailEntity)) {
+                throw new ServiceException(ApiError.ERROR_98026);
+            }
+
             //赠品无需判断供应商报价
-            long count = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(purchaseChangeDetailEntity.getPurchaseOrderDetailId()) && obj.getIsGift()).count();
-            if (count > 0) {
+            if (detailEntity.getIsGift()) {
+                purchaseChangeDetailEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+                purchaseChangeDetailEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+                purchaseChangeDetailEntity.setPrice(BigDecimal.ZERO);
                 continue;
             }
 
