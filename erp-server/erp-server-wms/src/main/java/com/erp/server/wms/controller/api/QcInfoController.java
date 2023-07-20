@@ -11,6 +11,7 @@ import com.common.business.validator.UpdateGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.server.wms.service.QcInfoService;
 import com.erp.server.wms.service.QcResultService;
@@ -355,4 +356,15 @@ public class QcInfoController extends BaseController {
         return success();
     }
 
+    /**
+     * 获取质检用户
+     * @Author Luo_WG
+     * @Date 2023/7/20 16:34
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/listQcUser")
+    public ApiResult<List<SysUserInfoEntity>> listQcUser() {
+        List<SysUserInfoEntity> sysUserInfoEntities = qcInfoService.listQcUser();
+        return success(sysUserInfoEntities);
+    }
 }

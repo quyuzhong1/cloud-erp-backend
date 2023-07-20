@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.QcInfoEntity;
 
@@ -249,4 +250,12 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @param response
      */
     void exportDailyExcel(QcInfoDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 获取质检用户
+     * @Author Luo_WG
+     * @Date 2023/7/20 16:34
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    List<SysUserInfoEntity> listQcUser();
 }
