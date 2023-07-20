@@ -32,6 +32,11 @@ public class SkuVO implements Serializable {
     private String skuImagesUrl;
 
     /**
+     * 销售方式
+     */
+    private String saleMethod;
+
+    /**
      * 单箱数量
      */
     private Integer unitQty;

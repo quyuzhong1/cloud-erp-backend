@@ -24,6 +24,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -556,6 +557,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> purchaseOrderIds = qcList.stream().map(QcInfoDTO.ReceiveToQcDTO::getPurchaseOrderId).collect(Collectors.toList());
         //获取到sku 信息
         List<ProductVO.ProductPackVO> skuList = plmTaskFeign.getProductPackBySkuIds(skuIds);
+        List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuIds);
         List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(purchaseOrderIds);
         String sourceType = SourceTypeEnum.PO_RECEIVE.getCode();
         for (QcInfoDTO.ReceiveToQcDTO item : qcList) {
@@ -563,8 +565,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             String purchaseOrderId = item.getPurchaseOrderId();
             ProductVO.ProductPackVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().orElse(new ProductVO.ProductPackVO());
+            SkuVO productDetailEntity = skuNoList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                    findFirst().orElse(new SkuVO());
             item.setSourceType(sourceType);
             item.setProductGrade(sku.getProductGrade());
+            item.setSaleMethod(productDetailEntity.getSaleMethod());
             item.setVariantProperty(sku.getVariantProperty());
             item.setBoxHeight(sku.getBoxHeight());
             item.setBoxLength(sku.getBoxHeight());
@@ -588,22 +593,32 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> productGradeList = qcRuleList.stream().filter(r -> r.getQcType().getCode().equals(newProduct)).map(QcRuleEntity::getProductGradeKey).collect(Collectors.toList());
         String newProductGrade = String.join(",", productGradeList);
 
+        //销售方式
+        List<String> saleMethodList = qcRuleList.stream().filter(r -> r.getQcType().getCode().equals(newProduct)).map(QcRuleEntity::getSaleMethod).collect(Collectors.toList());
+        String newSaleMethod = String.join(",", saleMethodList);
+
         //入库质检
         String stockIn = QcTypeEnum.STOCK_IN.getCode();
         List<String> stockInProductGradeList = qcRuleList.stream().filter(r -> r.getQcType().getCode().equals(stockIn)).map(QcRuleEntity::getProductGradeKey).collect(Collectors.toList());
         String stockInProductGrade = String.join(",", stockInProductGradeList);
+
+        List<String> stockInSaleMethodList = qcRuleList.stream().filter(r -> r.getQcType().getCode().equals(stockIn)).map(QcRuleEntity::getSaleMethod).collect(Collectors.toList());
+        String stockInSaleMethod = String.join(",", stockInSaleMethodList);
         //新品 并且符合等级的
         List<QcInfoDTO.ReceiveToQcDTO> newProductList = qcList.stream().filter(q -> q.getIsFirstMassProduct()).collect(Collectors.toList());
         for (QcInfoDTO.ReceiveToQcDTO newItem : newProductList) {
-            //为空所有的加
-            if (StringUtils.isBlank(newProductGrade)) {
+            //为空所有的加，等级为空用销售方式，销售方式为空用等级
+            if ((StringUtils.isBlank(newProductGrade) && StringUtils.isBlank(newSaleMethod))
+                    || (StringUtils.isBlank(newProductGrade) || newSaleMethod.contains(newItem.getSaleMethod()))
+                    || (StringUtils.isBlank(newSaleMethod) || newProductGrade.contains(newItem.getProductGrade()))
+            ) {
                 QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
                 BeanMapper.copy(newItem, newQc);
                 newQc.setQcType(newProduct);
                 addList.add(newQc);
             } else {
                 //包含的时候就要弄
-                if (newProductGrade.contains(newItem.getProductGrade())) {
+                if (newProductGrade.contains(newItem.getProductGrade()) && newSaleMethod.contains(newItem.getProductGrade())) {
                     QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
                     BeanMapper.copy(newItem, newQc);
                     newQc.setQcType(newProduct);
@@ -614,21 +629,23 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //旧品 并且符合等级的
         List<QcInfoDTO.ReceiveToQcDTO> stockInProductList = qcList.stream().filter(q -> !q.getIsFirstMassProduct()).collect(Collectors.toList());
         for (QcInfoDTO.ReceiveToQcDTO stockInItem : stockInProductList) {
-            if(StringUtils.isBlank(stockInProductGrade)){
+            if((StringUtils.isBlank(stockInProductGrade) && StringUtils.isBlank(stockInSaleMethod))
+                    || (StringUtils.isBlank(stockInProductGrade) || stockInSaleMethod.contains(stockInItem.getSaleMethod()))
+                    || (StringUtils.isBlank(stockInSaleMethod) || stockInProductGrade.contains(stockInItem.getProductGrade()))
+            ){
                 QcInfoDTO.ReceiveToQcDTO stockInQc = new QcInfoDTO.ReceiveToQcDTO();
                 BeanMapper.copy(stockInItem, stockInQc);
                 stockInQc.setQcType(stockIn);
                 addList.add(stockInQc);
             }else{
                 //包含的时候就要加
-                if (stockInProductGrade.contains(stockInItem.getProductGrade())) {
+                if (stockInProductGrade.contains(stockInItem.getProductGrade()) && stockInSaleMethod.contains(stockInItem.getSaleMethod())) {
                     QcInfoDTO.ReceiveToQcDTO stockInQc = new QcInfoDTO.ReceiveToQcDTO();
                     BeanMapper.copy(stockInItem, stockInQc);
                     stockInQc.setQcType(stockIn);
                     addList.add(stockInQc);
                 }
             }
-
         }
         qcInfoService.autoReceiveToQcDTO(addList);
     }

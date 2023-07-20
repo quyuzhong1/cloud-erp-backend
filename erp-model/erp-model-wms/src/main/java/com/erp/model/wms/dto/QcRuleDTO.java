@@ -47,13 +47,17 @@ public class QcRuleDTO implements Serializable {
         @NotNull(message = "是否含有质检报告不能为空")
         private Boolean existReport;
 
-
         /**
          * 产品等级 plm 系统
          * 来源 http://172.16.100.11:3002/project/47/interface/api/4505  请传里面对应的 value
          */
         private List<String> productGradeKeyList;
 
+        /**
+         * 销售方式
+         * 来源 /api/plm/common/enumDropDown?type=SaleMethod
+         */
+        private List<String> saleMethodList;
 
         /**
          * 质检报告集合
@@ -93,6 +97,11 @@ public class QcRuleDTO implements Serializable {
          */
         private List<String> productGradeKeyList;
 
+        /**
+         * 销售方式
+         * 来源 /api/plm/common/enumDropDown?type=SaleMethod
+         */
+        private List<String> saleMethodList;
 
         /**
          * 质检报告集合
