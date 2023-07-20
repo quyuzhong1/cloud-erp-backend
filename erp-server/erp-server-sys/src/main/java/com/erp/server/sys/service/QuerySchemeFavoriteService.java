@@ -35,7 +35,8 @@ public interface QuerySchemeFavoriteService extends SuperService<QuerySchemeFavo
     /**
      * 查询指定用户所有保存方案
      * @param userId
+     * @param modulePath
      * @return List<QuerySchemeFavoriteEntity>
      */
-    List<QuerySchemeFavoriteDTO.ViewDTO> listByUserId(String userId);
+    List<QuerySchemeFavoriteDTO.ViewDTO> listByUserId(String userId, String modulePath);
 }

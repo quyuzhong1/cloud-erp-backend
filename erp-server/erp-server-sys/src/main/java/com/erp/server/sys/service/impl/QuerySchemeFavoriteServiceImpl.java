@@ -52,6 +52,7 @@ public class QuerySchemeFavoriteServiceImpl extends SuperServiceImpl<QueryScheme
         }
         lambdaQuery().eq(QuerySchemeFavoriteEntity::getName,addDTO.getName())
                 .eq(QuerySchemeFavoriteEntity::getUserId,userId)
+                .eq(QuerySchemeFavoriteEntity::getModulePath, addDTO.getModulePath())
                 .oneOpt().ifPresent(entity -> {
             throw new ServiceException(ApiError.SCHEME_NAME_EXIST, entity.getName());
         });
@@ -59,7 +60,7 @@ public class QuerySchemeFavoriteServiceImpl extends SuperServiceImpl<QueryScheme
     }
 
     @Override
-    public List<QuerySchemeFavoriteDTO.ViewDTO> listByUserId(String userId) {
+    public List<QuerySchemeFavoriteDTO.ViewDTO> listByUserId(String userId, String modulePath) {
         if (StrUtil.isBlank(userId)) {
             userId = CommonInterceptor.threadLocal.get().getUid();
         }
@@ -68,6 +69,7 @@ public class QuerySchemeFavoriteServiceImpl extends SuperServiceImpl<QueryScheme
         }
         List<QuerySchemeFavoriteEntity> list = lambdaQuery()
                 .eq(QuerySchemeFavoriteEntity::getUserId, userId)
+                .eq(QuerySchemeFavoriteEntity::getModulePath, modulePath)
                 .list();
         if (CollectionUtil.isEmpty(list)) {
             return Collections.EMPTY_LIST;
