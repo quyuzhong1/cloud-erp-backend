@@ -8,6 +8,7 @@ import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
@@ -211,5 +212,13 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      */
     void importUserKingdee(MultipartFile file) throws IOException;
 
+    /**
+     * 根据部门id查询用户
+     * @Author Luo_WG
+     * @Date 2023/7/20 15:52
+     * @param deptId
+     * @return java.util.List<com.erp.model.sys.entity.SysUserInfoEntity>
+     **/
+    List<SysUserInfoEntity> listUserByDept(String deptId);
 }
 
