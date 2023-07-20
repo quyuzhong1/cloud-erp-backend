@@ -439,6 +439,16 @@ public class TransferApplicationDTO implements Serializable {
         private String   inWarehouseName;
 
         /**
+         * 调入库存组织id
+         */
+        private String inOrgId;
+
+        /**
+         * 调入库存组织名称
+         */
+        private String inOrgName;
+
+        /**
          * 调出仓位
          */
         private String outWarehouseLocation;
@@ -501,11 +511,6 @@ public class TransferApplicationDTO implements Serializable {
          */
         @NotNull(message = "调拨日期不能为空")
         private LocalDate billDate;
-
-        /**
-         * 调入组织id
-         */
-        private String  inOrgId;
 
         /**
          * 调入仓库id
