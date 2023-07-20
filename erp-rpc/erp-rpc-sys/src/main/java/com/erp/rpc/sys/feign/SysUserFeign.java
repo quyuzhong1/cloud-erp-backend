@@ -456,4 +456,12 @@ public interface SysUserFeign {
      */
     @PostMapping("/feign/dept/listLeadByUserIdList")
     List<String> listLeadByUserIdList(List<String> userIdList);
+
+    /**
+     * 根据角色id获取角色菜单
+     * @param roleIdList
+     * @return
+     */
+    @PostMapping("/feign/user/getMenuRefRoleByRoleIds")
+    List<SysRoleMenuEntity> getMenuRefRoleByRoleIds(@RequestBody List<String> roleIdList);
 }
