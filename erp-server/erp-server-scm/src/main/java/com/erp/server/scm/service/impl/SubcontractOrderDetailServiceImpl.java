@@ -474,7 +474,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
      */
     private void handleSupplierTaxPrice(SubcontractOrderDetailEntity entity,Boolean isChild) {
         //赠品无需报价,默认人民币
-        if (entity.getIsGift()) {
+        if (ObjectUtils.isNotEmpty(entity.getIsGift()) && entity.getIsGift()) {
             entity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             entity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
             entity.setPrice(BigDecimal.ZERO);

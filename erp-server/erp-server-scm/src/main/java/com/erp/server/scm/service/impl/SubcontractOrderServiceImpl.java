@@ -761,18 +761,20 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailAddDTO.setIsGift(addDetailDTO.getIsGift());
                 poDetailAddDTO.setPurchaseApplicationId(addDetailDTO.getPurchaseApplicationId());
                 poDetailAddDTO.setPurchaseApplicationDetailId(addDetailDTO.getPurchaseApplicationDetailId());
-                //供应商报价信息
-                PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
-                searchDTO.setSkuId(addDetailDTO.getSkuId());
-                searchDTO.setSupplierId(addDetailDTO.getSupplierId());
-                searchDTO.setPurchaseQty(addDetailDTO.getQty());
-                searchDTO.setSkuNo(addDetailDTO.getSkuNo());
-                List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(searchDTO);
-                PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
-                poDetailAddDTO.setCurrency(viewDTO.getCurrency());
-                poDetailAddDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                poDetailAddDTO.setTaxPrice(ObjectUtils.isEmpty(addDetailDTO.getTaxPrice())? viewDTO.getTaxPrice() : addDetailDTO.getTaxPrice());
-                poDetailAddDTO.setDeliveryDay(viewDTO.getDeliveryDay());
+                if (!addDetailDTO.getIsGift()) {
+                    //供应商报价信息
+                    PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+                    searchDTO.setSkuId(addDetailDTO.getSkuId());
+                    searchDTO.setSupplierId(addDetailDTO.getSupplierId());
+                    searchDTO.setPurchaseQty(addDetailDTO.getQty());
+                    searchDTO.setSkuNo(addDetailDTO.getSkuNo());
+                    List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(searchDTO);
+                    PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
+                    poDetailAddDTO.setCurrency(viewDTO.getCurrency());
+                    poDetailAddDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                    poDetailAddDTO.setTaxPrice(ObjectUtils.isEmpty(addDetailDTO.getTaxPrice())? viewDTO.getTaxPrice() : addDetailDTO.getTaxPrice());
+                    poDetailAddDTO.setDeliveryDay(viewDTO.getDeliveryDay());
+                }
                 poDetailAddDTO.setPurchaseAmount(MathUtil.multiply(poDetailAddDTO.getTaxPrice(),poDetailAddDTO.getPurchaseQty()));
                 poDetailList.add(poDetailAddDTO);
             }
