@@ -505,7 +505,6 @@ public class TransferApplicationDTO implements Serializable {
         /**
          * 调入组织id
          */
-        @NotNull(message = "调入组织不能为空")
         private String  inOrgId;
 
         /**

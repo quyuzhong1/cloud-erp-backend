@@ -628,6 +628,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 addInfoDTO.setRemark(null);
                 List<TransferInfoDetailDTO.AddDTO> addDetailList = new ArrayList<>();
                 for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
+                    if (StringUtils.isBlank(dto.getInOrgId())) {
+                        throw new ServiceException(ApiError.ERROR_IN_ORG_BLANK);
+                    }
                     //验证明细是否已经被调拨
                     checkGenerateTransfer(transferInfoDetailList,transferOutDetailList,detailList,dto);
                     TransferInfoDetailDTO.AddDTO addDetailDTO = new TransferInfoDetailDTO.AddDTO();

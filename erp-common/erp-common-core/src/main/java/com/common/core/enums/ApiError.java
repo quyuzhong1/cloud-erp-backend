@@ -671,6 +671,7 @@ public enum ApiError implements Serializable {
     ERROR_99077(99077,"ERP已存在直接调拨单【{}】"),
     ERROR_99078(99078,"调拨申请单已下推加工单，不支持反审核"),
     ERROR_99079(99079,"【{}】退货数量不能大于待质检数量"),
+    ERROR_IN_ORG_BLANK(99080,"调入组织不能为空"),
 
 
     /**
