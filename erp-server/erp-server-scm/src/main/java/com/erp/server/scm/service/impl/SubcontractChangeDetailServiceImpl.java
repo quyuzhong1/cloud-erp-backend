@@ -352,7 +352,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
      */
     private void handleSupplierTaxPrice(SubcontractChangeDetailEntity entity,SubcontractOrderDetailEntity subEntity  , Boolean isChild) {
         //赠品无需报价,默认人民币
-        if (subEntity.getIsGift()) {
+        if (ObjectUtils.isNotEmpty(subEntity.getIsGift()) && subEntity.getIsGift()) {
             entity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             entity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
             entity.setPrice(BigDecimal.ZERO);

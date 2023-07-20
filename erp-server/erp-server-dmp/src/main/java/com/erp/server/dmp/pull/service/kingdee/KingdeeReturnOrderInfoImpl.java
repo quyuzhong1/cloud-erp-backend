@@ -178,6 +178,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
 //        queryFilters.add(StrUtil.format("FBillTypeID in ('{}','{}')", "73383412199a402bb58439509e089077","559351ce1d0252"));
 //        queryFilters.add(String.format("FOrderNo <> '%s'", ""));
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'C'"));
+        queryFilters.add(StrUtil.format(" FISGENFORIOS = {}", "0"));
         queryFilters.add(StrUtil.format(" ((FModifyDate >= '{}' and FModifyDate <= '{}') or (FApproveDate >= '{}' and FApproveDate < '{}'))",sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime),sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime)));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FID," +
@@ -236,7 +237,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
                 "FAllAmount," +
                 "FReturnType," +
                 "FSOEntryId," +
-                "F_ULZ_data_sources";
+                "F_ULZ_data_sources, FISGENFORIOS";
 
         Boolean dataSign = true;
         //当前页数

@@ -197,7 +197,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
             }
 
             //赠品无需判断供应商报价
-            if (detailEntity.getIsGift()) {
+            if (ObjectUtils.isNotEmpty(detailEntity.getIsGift()) && detailEntity.getIsGift()) {
                 purchaseChangeDetailEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 purchaseChangeDetailEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
                 purchaseChangeDetailEntity.setPrice(BigDecimal.ZERO);
