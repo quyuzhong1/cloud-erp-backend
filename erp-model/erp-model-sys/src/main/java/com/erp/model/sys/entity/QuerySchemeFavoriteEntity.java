@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 
 
 /**
@@ -51,7 +52,7 @@ public class QuerySchemeFavoriteEntity extends BaseEntity<QuerySchemeFavoriteEnt
     * 参数json
     */
     @TableField(value = "param_json", typeHandler= JacksonTypeHandler.class)
-    private LinkedHashMap<String, Object> paramJson;
+    private LinkedList<LinkedHashMap<String, Object>> paramJson;
 
     /**
     * 备注
