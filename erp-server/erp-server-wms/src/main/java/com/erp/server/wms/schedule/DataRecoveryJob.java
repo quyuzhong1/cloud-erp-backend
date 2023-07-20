@@ -23,6 +23,7 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.service.SoOutstockService;
+import com.erp.server.wms.service.SoReturnInstockService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +50,9 @@ public class DataRecoveryJob {
     private SoOutstockService soOutstockService;
 
     @Resource
+    private SoReturnInstockService soReturnInstockService;
+
+    @Resource
     private DmpTaskFeign dmpTaskFeign;
 
     @XxlJob("soOutStockDataRecovery")
@@ -60,9 +64,9 @@ public class DataRecoveryJob {
         }
         JSONObject param = JSONUtil.parseObj(jobParam);
         List<String> ids = param.getBeanList("ids", String.class);
+        String type = param.get("type", String.class);
         if(CollectionUtil.isEmpty(ids)){
-//            ids = soOutstockService.getIdsByTemp();
-            ids=getInnerSoOutStockIds();
+            ids = soOutstockService.getIdsByTemp();
         }
         if (ObjectUtils.isEmpty(ids)) {
             XxlJobHelper.log("参数错误ids={}", ids);
@@ -73,7 +77,11 @@ public class DataRecoveryJob {
             BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
             idsDTO.setIds(Arrays.asList(item));
             try {
-                soOutstockService.disApprove(idsDTO, Boolean.FALSE);
+                if(StrUtil.isNotBlank(type) && "soReturnInstockService".equals(type)){
+                    soReturnInstockService.disApprove(idsDTO.getIds(), Boolean.FALSE);
+                }else {
+                    soOutstockService.disApprove(idsDTO, Boolean.FALSE);
+                }
             } catch (Exception e) {
                 XxlJobHelper.log("数据修复失败，id={} e ={}", item, e);
                 log.error("数据修复失败，id={} e ={}", item, e);
@@ -89,7 +97,6 @@ public class DataRecoveryJob {
         Map<String,Object> condition=new HashMap<>();
         condition.put("return_msg","同步成功");
         condition.put("lastSql","cast(mq_data AS json)->>'fIsGenForIos'='true'");
-
         List<String> kingdeeCodeList=new ArrayList<>();
         kingdeeCodeList = dmpTaskFeign.getKingdeeSourceCode(condition);
 
