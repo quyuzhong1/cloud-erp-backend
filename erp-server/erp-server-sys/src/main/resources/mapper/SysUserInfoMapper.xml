@@ -152,26 +152,26 @@
 
     <select id="listUserByDept" resultType="com.erp.model.sys.entity.SysUserInfoEntity">
         SELECT
-            sui.uid
-            sui.user_name
-            sui.real_name
-            sui.mobile
-            sui.user_state
-            sui.last_login_time
-            sui.delete_state
-            sui.last_login_ip
-            sui.login_count
-            sui.create_time
-            sui.update_time
-            sui.user_account
-            sui.password
-            sui.salt
-            sui.email
-            sui.head_icon
-            sui.code
-            sui.sync_kingdee_status
-            sui.sync_kingdee_time
-            sui.sync_kingdee_id
+            sui.uid,
+            sui.user_name,
+            sui.real_name,
+            sui.mobile,
+            sui.user_state,
+            sui.last_login_time,
+            sui.delete_state,
+            sui.last_login_ip,
+            sui.login_count,
+            sui.create_time,
+            sui.update_time,
+            sui.user_account,
+            sui.password,
+            sui.salt,
+            sui.email,
+            sui.head_icon,
+            sui.code,
+            sui.sync_kingdee_status,
+            sui.sync_kingdee_time,
+            sui.sync_kingdee_id,
             sui.sync_operate
         from sys_user_info sui
         LEFT JOIN sys_department_user sdu on sui.uid = sdu.user_id
