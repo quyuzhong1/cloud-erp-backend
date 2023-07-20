@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -56,7 +57,7 @@ public class QuerySchemeFavoriteDTO implements Serializable {
         /**
         * 参数json
         */
-        private LinkedHashMap<String, Object> paramJson;
+        private LinkedList<LinkedHashMap<String, Object>> paramJson;
 
         /**
         * 备注
@@ -113,7 +114,7 @@ public class QuerySchemeFavoriteDTO implements Serializable {
         * 参数json
         */
         @NotEmpty(message = "参数json不能为空")
-        private LinkedHashMap<String, Object> paramJson;
+        private LinkedList<LinkedHashMap<String, Object>> paramJson;
 
         /**
         * 备注
