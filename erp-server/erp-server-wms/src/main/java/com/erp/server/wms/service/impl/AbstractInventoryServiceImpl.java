@@ -136,7 +136,7 @@ public abstract class AbstractInventoryServiceImpl {
         // 通过对sku id顺序执行, 避免多线程死锁
         Comparator<TransactionFlowEntity> comparing = Comparator.comparing(TransactionFlowEntity::getSkuId)
                 .thenComparing(TransactionFlowEntity::getWarehouseId)
-                .thenComparing(TransactionFlowEntity::getWarehouseLocation)
+                .thenComparing(x -> StrUtil.isNotEmpty(x.getWarehouseLocation()) ? x.getWarehouseLocation() : "")
                 .thenComparing(x -> StrUtil.isNotEmpty(x.getDictInventoryStatus()) ? x.getDictInventoryStatus() : "");
         txnFlows = txnFlows.stream().sorted(comparing).collect(Collectors.toList());
         txnFlows.stream().forEach(txnFlow->{

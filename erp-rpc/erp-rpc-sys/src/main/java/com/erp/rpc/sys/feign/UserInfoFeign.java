@@ -21,7 +21,7 @@ public interface UserInfoFeign {
 
 
 
-        
+
     /**
      * 获取第三方绑定的用户信息
      * @author yl

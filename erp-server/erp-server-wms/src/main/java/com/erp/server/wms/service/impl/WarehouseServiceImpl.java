@@ -661,7 +661,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         for (WarehouseDTO.ListDTO listDTO : resultList) {
             String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
             listDTO.setOrgName(orgName);
-            if (ApproveStatusEnum.APPROVE.equals(listDTO.getApproveStatus())) {
+            if (!ApproveStatusEnum.APPROVE.equals(listDTO.getApproveStatus())) {
                 listDTO.setDisabled(true);
             }
         }

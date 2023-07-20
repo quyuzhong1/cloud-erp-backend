@@ -177,4 +177,5 @@
         LEFT JOIN sys_department_user sdu on sui.uid = sdu.user_id
         where sdu.department_id = #{deptId}
     </select>
+
 </mapper>
