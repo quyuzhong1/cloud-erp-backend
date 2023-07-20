@@ -82,12 +82,12 @@ public class SyncMabangTransferServiceImpl implements SyncMabangTransferService 
             if(!warehouseMap.containsKey(detailEntity.getInWarehouseId())) {
                 throw new ServiceException("调入仓库错误");
             } else {
-                entity.setInWarehouseCode(warehouseMap.get(detailEntity.getInWarehouseId()).getKingdeeWarehouseCode());
+                detailEntity.setInWarehouseCode(warehouseMap.get(detailEntity.getInWarehouseId()).getKingdeeWarehouseCode());
             }
             if(!warehouseMap.containsKey(detailEntity.getOutWarehouseId())) {
                 throw new ServiceException("调出仓库错误");
             } else {
-                entity.setOutWarehouseCode(warehouseMap.get(detailEntity.getOutWarehouseId()).getKingdeeWarehouseCode());
+                detailEntity.setOutWarehouseCode(warehouseMap.get(detailEntity.getOutWarehouseId()).getKingdeeWarehouseCode());
             }
         }
 

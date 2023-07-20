@@ -101,6 +101,12 @@ public class TransferInfoDetailEntity extends BaseEntity<TransferInfoDetailEntit
     @TableField("source_detail_id")
     private String sourceDetailId;
 
+    @TableField(exist = false)
+    private String inWarehouseCode;
+
+    @TableField(exist = false)
+    private String outWarehouseCode;
+
 
     public static final String MAIN_ID = "main_id";
 
