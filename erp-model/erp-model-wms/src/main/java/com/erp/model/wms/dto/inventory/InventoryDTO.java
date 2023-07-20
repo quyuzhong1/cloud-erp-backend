@@ -438,6 +438,12 @@ public class InventoryDTO implements Serializable {
          */
         private List<String> orgIdList;
 
+        /**
+         * 是否过滤反审核数据
+         * true则会过滤，false则不过滤展示所有流水数据
+         */
+        private Boolean hideUnApprove;
+
     }
 
     /**
@@ -493,6 +499,12 @@ public class InventoryDTO implements Serializable {
          * 库存组织
          */
         private List<String> orgIdList;
+
+        /**
+         * 是否过滤反审核数据
+         * true则会过滤，false则不过滤展示所有流水数据
+         */
+        private Boolean hideUnApprove;
 
     }
 
@@ -869,63 +881,63 @@ public class InventoryDTO implements Serializable {
         }
 
         public Integer getTotalOutstockQty() {
-            return this.totalOutstockQty = Math.abs(this.purchaseReturnQty + this.saleOutstockQty + this.otherOutstockQty + this.inventoryLossOutstockQty + this.transferOutstockQty + this.machineOutstockQty + this.receiveMaterielQty);
+            return this.totalOutstockQty = this.purchaseReturnQty + this.saleOutstockQty + this.otherOutstockQty + this.inventoryLossOutstockQty + this.transferOutstockQty + this.machineOutstockQty + this.receiveMaterielQty;
         }
 
         public Integer getPurchaseInstockQty() {
-            return Math.abs(purchaseInstockQty);
+            return purchaseInstockQty;
         }
 
         public Integer getOtherInstockQty() {
-            return Math.abs(otherInstockQty);
+            return otherInstockQty;
         }
 
         public Integer getTransferInstockQty() {
-            return Math.abs(transferInstockQty);
+            return transferInstockQty;
         }
 
         public Integer getInventoryProfitInstockQty() {
-            return Math.abs(inventoryProfitInstockQty);
+            return inventoryProfitInstockQty;
         }
 
         public Integer getSaleReturnQty() {
-            return Math.abs(saleReturnQty);
+            return saleReturnQty;
         }
 
         public Integer getMachineInstockQty() {
-            return Math.abs(machineInstockQty);
+            return machineInstockQty;
         }
 
         public Integer getPurchaseReturnQty() {
-            return Math.abs(purchaseReturnQty);
+            return purchaseReturnQty;
         }
 
         public Integer getSaleOutstockQty() {
-            return Math.abs(saleOutstockQty);
+            return saleOutstockQty;
         }
 
         public Integer getOtherOutstockQty() {
-            return Math.abs(otherOutstockQty);
+            return otherOutstockQty;
         }
 
         public Integer getInventoryLossOutstockQty() {
-            return Math.abs(inventoryLossOutstockQty);
+            return inventoryLossOutstockQty;
         }
 
         public Integer getTransferOutstockQty() {
-            return Math.abs(transferOutstockQty);
+            return transferOutstockQty;
         }
 
         public Integer getMachineOutstockQty() {
-            return Math.abs(machineOutstockQty);
+            return machineOutstockQty;
         }
 
         public Integer getReturnMaterielQty() {
-            return Math.abs(returnMaterielQty);
+            return returnMaterielQty;
         }
 
         public Integer getReceiveMaterielQty() {
-            return Math.abs(receiveMaterielQty);
+            return receiveMaterielQty;
         }
     }
 
