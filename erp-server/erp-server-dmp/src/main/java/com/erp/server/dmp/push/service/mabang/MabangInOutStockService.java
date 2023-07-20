@@ -53,4 +53,11 @@ public interface MabangInOutStockService {
      */
     void sendNoticeNoMonitorWarehouse(String sourceTypeName);
 
+    /**
+     * 未找到同步任务通知
+     * @param syncTaskId
+     * @param erpSourceCode
+     */
+    void sendNoTaskNotice(String syncTaskId, String erpSourceCode);
+
 }

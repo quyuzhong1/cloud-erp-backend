@@ -183,4 +183,18 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         mqProducerService.sendWarnMsg(warnMsgInfoDTO);
     }
 
+    @Override
+    public void sendNoTaskNotice(String syncTaskId, String erpSourceCode) {
+        String errMsg = StrUtil.format("未找到同步任务id：【{}】，ERP单据编号: {}", syncTaskId, erpSourceCode);
+        log.info(errMsg);
+        WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+        warnMsgInfoDTO.setTitle("ERP推送马帮手工出入库异常");
+        warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+        warnMsgInfoDTO.setBizName("ERP推送马帮手工出入库");
+        warnMsgInfoDTO.setTableName("dmp_sync_task");
+        warnMsgInfoDTO.setTableId(syncTaskId);
+        warnMsgInfoDTO.setKeyInfo(errMsg);
+        mqProducerService.sendWarnMsg(warnMsgInfoDTO);
+    }
+
 }

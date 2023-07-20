@@ -356,14 +356,14 @@ public class MabangApiUtils {
         ParamHeaderVO paramVo = getParamMap(method, params);
         resultMap.put("request", paramVo.getParamsStr());
 
-        log.warn("开始调用马帮【{}】手工出入库请求内容【{}】", paramVo.getParamsStr());
+        log.warn("开始调用马帮【{}】手工出入库请求内容【{}】", method, paramVo.getParamsStr());
         JSONObject response = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
-        log.warn("调用马帮【{}】手工出入库响应内容【{}】", JSONObject.toJSONString(response));
+        log.warn("调用马帮【{}】手工出入库响应内容【{}】", method, JSONObject.toJSONString(response));
         if (!Objects.equals(response.getInteger("code"), 200)) {
             log.error("调用url={} param={} {}，马帮手工出库失败 response={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response));
             resultMap.put("msg", JSONUtil.toJsonStr(response));
         } else {
-            log.warn("调用马帮【{}】手工出入库成功，请求内容【{}】", paramVo.getParamsStr());
+            log.warn("调用马帮【{}】手工出入库成功，请求内容【{}】", method, paramVo.getParamsStr());
             resultMap.put("success", true);
             resultMap.put("result", response.getJSONObject("data"));
         }
