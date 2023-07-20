@@ -35,7 +35,7 @@
         </if>
 
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''  ">
-            AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
+            AND (p.name LIKE concat('%',#{params.searchKeyword},'%')
             OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE
             concat('%',#{params.searchKeyword},'%'))
             OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
@@ -153,7 +153,7 @@
             </foreach>
         </if>
         <if test="params.searchKeyword!=null and params.searchKeyword!=''  ">
-            AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
+            AND (p.name LIKE concat('%',#{params.searchKeyword},'%')
             OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE
             concat('%',#{params.searchKeyword},'%'))
             OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
