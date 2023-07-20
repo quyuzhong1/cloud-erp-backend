@@ -54,6 +54,30 @@ public class TransferInfoDetailEntity extends BaseEntity<TransferInfoDetailEntit
     private String unit;
 
     /**
+     * 调入仓库id
+     */
+    @TableField("in_warehouse_id")
+    private String inWarehouseId;
+
+    /**
+     * 调入仓库名称
+     */
+    @TableField("in_warehouse_name")
+    private String inWarehouseName;
+
+    /**
+     * 调出仓库id
+     */
+    @TableField("out_warehouse_id")
+    private String outWarehouseId;
+
+    /**
+     * 调出仓库名称
+     */
+    @TableField("out_warehouse_name")
+    private String outWarehouseName;
+
+    /**
      * 调入仓位
      */
     @TableField("in_warehouse_location")

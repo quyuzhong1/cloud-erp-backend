@@ -37,7 +37,6 @@ import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -184,7 +183,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         TransferInfoEntity entity = new TransferInfoEntity();
         BeanMapperUtils.copy(dto, entity);
         //处理数据id
-        doOpHandleDataId(dto.getInWarehouseId(), dto.getOutWarehouseId(), dto.getWarehouseKeeperId(), entity);
+        doOpHandleDataId(entity);
         log.info("直接调拨单新增");
         if (StringUtils.isBlank(dto.getCode())) {
             //生成单号
@@ -236,7 +235,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         BeanMapperUtils.copy(dto, entity);
         List<TransferInfoDetailDTO.UpdateDTO> detailList = dto.getDetailList();
         //处理数据id
-        doOpHandleDataId(dto.getInWarehouseId(), dto.getOutWarehouseId(), dto.getWarehouseKeeperId(), entity);
+        doOpHandleDataId(entity);
 
         log.info("直接调拨单修改，id=【{}】", dto.getId());
 
@@ -268,10 +267,16 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
+        List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainIds(ids);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99048);
+        }
+
         //验证调出入仓库是否相同
-        for (TransferInfoEntity entity : list) {
-            if (entity.getInWarehouseId().equals(entity.getOutWarehouseId())) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_98069.code,String.format(ApiError.ERROR_98069.msg,entity.getCode())));
+        for (TransferInfoDetailEntity detailEntity : detailList) {
+            String code = list.stream().filter(obj -> obj.getId().equals(detailEntity.getMainId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
+            if (detailEntity.getInWarehouseId().equals(detailEntity.getOutWarehouseId())) {
+                throw new ServiceException(new ApiResult(ApiError.ERROR_98069.code,String.format(ApiError.ERROR_98069.msg,code)));
             }
         }
 
@@ -320,7 +325,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 viewDetailDTO.setSpuNo(skuVO.getSpuNo());
             }
             //根据组织、仓库、sku查询可用库存
-            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getOutWarehouseId(), viewDetailDTO.getSkuId());
+            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDetailDTO.getOutWarehouseId(), viewDetailDTO.getSkuId());
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
             viewDetailDTO.setInWarehouseLocation(viewDetailDTO.getInWarehouseLocation());
             viewDetailDTO.setOutWarehouseLocation(viewDetailDTO.getOutWarehouseLocation());
@@ -613,9 +618,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             transferDTO.setSourceCode(transferInfoEntity.getCode());
             transferDTO.setSourceDetailId(detailEntity.getId());
             transferDTO.setBillDate(transferInfoEntity.getBillDate());
-            transferDTO.setCurWarehouseId(transferInfoEntity.getOutWarehouseId());
+            transferDTO.setCurWarehouseId(detailEntity.getOutWarehouseId());
             transferDTO.setCurWarehouseLocation(detailEntity.getOutWarehouseLocation());
-            transferDTO.setTargetWarehouseId(transferInfoEntity.getInWarehouseId());
+            transferDTO.setTargetWarehouseId(detailEntity.getInWarehouseId());
             transferDTO.setTargetWarehouseLocation(detailEntity.getInWarehouseLocation());
             transferDTO.setSkuId(detailEntity.getSkuId());
             transferDTO.setSkuNo(detailEntity.getSkuNo());
@@ -691,45 +696,27 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     /**
      * 处理数据id
      */
-    private void doOpHandleDataId(String inWarehouseId, String outWarehouseId, String warehouseKeeperId, TransferInfoEntity entity) {
+    private void doOpHandleDataId( TransferInfoEntity entity) {
 
         //申请人
-        if (StringUtils.isNotBlank(warehouseKeeperId)) {
-            FindUserDTO userDTO = sysUserFeign.getUserByUserId(warehouseKeeperId);
+        if (StringUtils.isNotBlank(entity.getWarehouseKeeperId())) {
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(entity.getWarehouseKeeperId());
             if (ObjectUtils.isNotEmpty(userDTO)) {
                 entity.setWarehouseKeeperName(userDTO.getUserName());
             }
         }
-        //仓库信息
-        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(inWarehouseId,outWarehouseId));
-
-        if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_99002);
-        }
-        //调入仓库
-        WarehouseEntity inWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getInWarehouseId())).findFirst().orElse(null);
-        if (ObjectUtils.isEmpty(inWarehouse)) {
-            throw new ServiceException(ApiError.ERROR_99002);
-        }
-        //调出仓库
-        WarehouseEntity outWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getOutWarehouseId())).findFirst().orElse(null);
-        if (ObjectUtils.isEmpty(outWarehouse)) {
-            throw new ServiceException(ApiError.ERROR_99002);
-        }
         //组织信息
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inWarehouse.getOrgId(), outWarehouse.getOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getInOrgId(),entity.getOutOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
             throw new ServiceException(ApiError.ERROR_9014);
         }
-        entity.setInWarehouseName(inWarehouse.getName());
-        entity.setInOrgId(inWarehouse.getOrgId());
+
         //调入组织名称
-        String inOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(inWarehouse.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
+        String inOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
         entity.setInOrgName(inOrgName);
-        entity.setOutOrgId(outWarehouse.getOrgId());
-        entity.setOutWarehouseName(outWarehouse.getName());
+
         //调出组织名称
-        String outOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(outWarehouse.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
+        String outOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOutOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
         entity.setOutOrgName(outOrgName);
 
         //调拨类型

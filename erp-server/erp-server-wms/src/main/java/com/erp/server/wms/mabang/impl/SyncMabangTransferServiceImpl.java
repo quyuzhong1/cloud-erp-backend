@@ -24,10 +24,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 直接调拨单推送到马帮
@@ -67,18 +69,26 @@ public class SyncMabangTransferServiceImpl implements SyncMabangTransferService 
         }
 
         //仓库
-        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getInWarehouseId(), entity.getOutWarehouseId()));
+        List<String> warehouseIdList = detailList.stream().flatMap(obj -> Stream.of(obj.getInWarehouseId(), obj.getOutWarehouseId())).collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
         Map<String,WarehouseEntity> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getId, Function.identity()));
-        log.info("直接调拨单【{}】调入仓库id：{}，调出仓库id：{}", entity.getCode(), entity.getInWarehouseId(), entity.getOutWarehouseId());
-        if(!warehouseMap.containsKey(entity.getInWarehouseId())) {
-            throw new ServiceException("调入仓库错误");
-        } else {
-            entity.setInWarehouseCode(warehouseMap.get(entity.getInWarehouseId()).getKingdeeWarehouseCode());
-        }
-        if(!warehouseMap.containsKey(entity.getOutWarehouseId())) {
-            throw new ServiceException("调出仓库错误");
-        } else {
-            entity.setOutWarehouseCode(warehouseMap.get(entity.getOutWarehouseId()).getKingdeeWarehouseCode());
+
+
+        //明细赋值仓库编码
+        for (TransferInfoDetailEntity detailEntity : detailList)  {
+
+            log.info("直接调拨单【{}】调入仓库id：{}，调出仓库id：{}", entity.getCode(), detailEntity.getInWarehouseId(), detailEntity.getOutWarehouseId());
+
+            if(!warehouseMap.containsKey(detailEntity.getInWarehouseId())) {
+                throw new ServiceException("调入仓库错误");
+            } else {
+                entity.setInWarehouseCode(warehouseMap.get(detailEntity.getInWarehouseId()).getKingdeeWarehouseCode());
+            }
+            if(!warehouseMap.containsKey(detailEntity.getOutWarehouseId())) {
+                throw new ServiceException("调出仓库错误");
+            } else {
+                entity.setOutWarehouseCode(warehouseMap.get(detailEntity.getOutWarehouseId()).getKingdeeWarehouseCode());
+            }
         }
 
         MabangTransferInfoDTO mabangTransferInfoDTO = new  MabangTransferInfoDTO();

@@ -14,12 +14,11 @@ import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.TransferInfoDetailMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.PickingDetailService;
-import com.erp.server.wms.service.TransferInfoDetailService;
-import com.erp.server.wms.service.TransferInfoService;
+import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -29,6 +28,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 直接调拨单明细表
@@ -50,6 +50,12 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
 
     @Resource
     private PickingDetailService pickingDetailService;
+
+    @Resource
+    private WarehouseService warehouseService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -187,6 +193,12 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             list = this.listByIds(ids);
         }
 
+        List<String> warehouseIdList = newList.stream().flatMap(obj -> Stream.of(obj.getInWarehouseId(), obj.getOutWarehouseId())).collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+
         //SKU信息
         List<String> skuIds = newList.stream().map(TransferInfoDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
@@ -194,6 +206,20 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             throw new ServiceException(ApiError.ERROR_95084);
         }
         for (TransferInfoDetailEntity detail:newList) {
+
+            //调入仓库
+            WarehouseEntity inWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(detail.getInWarehouseId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(inWarehouse)) {
+                throw new ServiceException(ApiError.ERROR_99002);
+            }
+            detail.setInWarehouseName(inWarehouse.getName());
+            //调出仓库
+            WarehouseEntity outWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(detail.getOutWarehouseId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(outWarehouse)) {
+                throw new ServiceException(ApiError.ERROR_99002);
+            }
+            detail.setOutWarehouseName(outWarehouse.getName());
+
             //单位
             String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
             detail.setUnit(unit);
