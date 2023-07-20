@@ -196,6 +196,11 @@ public class QcInfoDTO implements Serializable {
          */
         private String productGrade;
 
+        /**
+         * 销售方式
+         */
+        private String saleMethod;
+
 
         /**
          * 变体属性

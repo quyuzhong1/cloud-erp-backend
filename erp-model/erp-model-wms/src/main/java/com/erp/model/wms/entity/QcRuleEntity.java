@@ -60,6 +60,11 @@ public class QcRuleEntity extends BaseEntity<QcRuleEntity> {
     @TableField("approve_status")
     private String approveStatus;
 
+    /**
+     * 销售方式 多个以逗号分割
+     */
+    @TableField("sale_method")
+    private String saleMethod;
 
     public static final String EXIST_REPORT = "exist_report";
 
