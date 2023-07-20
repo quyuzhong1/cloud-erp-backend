@@ -380,7 +380,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             }
         }
 
-        if (SourceTypeEnum.QC_INFO.getCode().equals(purchaseReturnOrderEntity.getSourceType())) {
+        if (ReturnOrderSourceEnum.QC.getCode().equals(purchaseReturnOrderEntity.getSourceType())) {
             viewDTO.setSourceType(ReturnOrderSourceEnum.QC.getCode());
             viewDTO.setSourceTypeName(ReturnOrderSourceEnum.QC.getName());
         } else {
