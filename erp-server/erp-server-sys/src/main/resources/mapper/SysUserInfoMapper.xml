@@ -175,7 +175,7 @@
             sui.sync_operate
         from sys_user_info sui
         LEFT JOIN sys_department_user sdu on sui.uid = sdu.user_id
-        where sdu.department_id = '1675798259051794434'
+        where sdu.department_id = #{deptId}
     </select>
 
 </mapper>
