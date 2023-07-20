@@ -63,5 +63,5 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
      * @param deptId
      * @return java.util.List<com.erp.model.sys.entity.SysUserInfoEntity>
      **/
-    List<SysUserInfoEntity> listUserByDept(String deptId);
+    List<SysUserInfoEntity> listUserByDept(@Param("deptId") String deptId);
 }
