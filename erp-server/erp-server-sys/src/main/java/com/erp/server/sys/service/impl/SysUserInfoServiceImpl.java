@@ -1282,4 +1282,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         Boolean sendResult = mailService.sendVerifyCode(emailDTO);
         return sendResult;
     }
+
+    @Override
+    public List<SysUserInfoEntity> listUserByDept(String deptId) {
+        return baseMapper.listUserByDept(deptId);
+    }
 }
