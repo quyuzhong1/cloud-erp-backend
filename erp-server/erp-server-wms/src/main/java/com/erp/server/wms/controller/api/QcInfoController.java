@@ -117,11 +117,6 @@ public class QcInfoController extends BaseController {
      * @return
      */
     @PostMapping("/finish")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "qc_user_id",
-            menuCode = "wms:qcBill:finish",
-            serviceClass = QcInfoService.class,
-            keyIdName = "id")
     public ApiResult finish(@RequestBody @Validated({AddGroup.class}) QcInfoDTO.SaveOrUpdateDTO dto) {
         Boolean result = qcInfoService.finish(dto);
         return result ? success() : failure();
@@ -136,7 +131,7 @@ public class QcInfoController extends BaseController {
     @PostMapping("/exemption")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "qc_user_id",
-            menuCode = "wms:qcBill:exemption",
+            menuCode = "wms:qcBill:batchExemption",
             serviceClass = QcInfoService.class,
             keyIdName = "id")
     public ApiResult exemption(@RequestBody @Validated({UpdateGroup.class}) QcInfoDTO.SaveOrUpdateDTO dto) {

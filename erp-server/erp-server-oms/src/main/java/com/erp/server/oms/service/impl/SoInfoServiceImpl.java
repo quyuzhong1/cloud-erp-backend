@@ -588,7 +588,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             Integer availableQty = 0;
             if (!isGre) {
                 //缺货数量=销售数量-发货通知单审核通过数量 -可用即时库存数量；
-                Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceId().equals(item.getId())).
+                Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceDetailId().equals(item.getDetailId())).
                         mapToInt(SoDeliveryNoticeDetailDTO.ListDTO::getDeliveryQty).sum();
                 scarceQty = curInventoryQty - (qty - deliveryNoticeQty);
                 //当为正数的时候不缺货
@@ -1279,7 +1279,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
              */
             Integer availableQty = 0;
             if (!isGre) {
-                Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceId().equals(item.getId())).
+                Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceDetailId().equals(item.getDetailId())).
                         mapToInt(SoDeliveryNoticeDetailDTO.ListDTO::getDeliveryQty).sum();
                 scarceQty = curInventoryQty - (qty - deliveryNoticeQty);
                 //当为正数的时候不缺货
@@ -1535,7 +1535,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 Integer scarceQty = 0;
                 Boolean isGre = curInventoryQty >= qty;
                 if (!isGre) {
-                    Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceId().equals(viewDTO.getSourceId())).
+                    Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceDetailId().equals(viewDTO.getSourceDetailId())).
                             mapToInt(SoDeliveryNoticeDetailDTO.ListDTO::getDeliveryQty).sum();
                     scarceQty = curInventoryQty - (qty - deliveryNoticeQty);
                     //当为正数的时候不缺货
