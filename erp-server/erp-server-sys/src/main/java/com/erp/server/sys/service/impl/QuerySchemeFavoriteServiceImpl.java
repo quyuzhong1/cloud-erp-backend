@@ -50,6 +50,11 @@ public class QuerySchemeFavoriteServiceImpl extends SuperServiceImpl<QueryScheme
         if (StrUtil.isBlank(userId)) {
             throw new ServiceException(ApiError.ERROR_403);
         }
+        lambdaQuery().eq(QuerySchemeFavoriteEntity::getName,addDTO.getName())
+                .eq(QuerySchemeFavoriteEntity::getUserId,userId)
+                .oneOpt().ifPresent(entity -> {
+            throw new ServiceException(ApiError.SCHEME_NAME_EXIST, entity.getName());
+        });
         return this.save(new QuerySchemeFavoriteEntity(addDTO,userId));
     }
 
@@ -61,10 +66,9 @@ public class QuerySchemeFavoriteServiceImpl extends SuperServiceImpl<QueryScheme
         if (StrUtil.isBlank(userId)) {
             throw new ServiceException(ApiError.ERROR_403);
         }
-        List<QuerySchemeFavoriteEntity> list = baseMapper.listByUserId(userId);
-//        List<QuerySchemeFavoriteEntity> list = lambdaQuery()
-//                .eq(QuerySchemeFavoriteEntity::getUserId, userId)
-//                .list();
+        List<QuerySchemeFavoriteEntity> list = lambdaQuery()
+                .eq(QuerySchemeFavoriteEntity::getUserId, userId)
+                .list();
         if (CollectionUtil.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }

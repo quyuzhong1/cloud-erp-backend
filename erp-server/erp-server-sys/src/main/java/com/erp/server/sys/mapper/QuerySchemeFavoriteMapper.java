@@ -20,5 +20,4 @@ import java.util.List;
 public interface QuerySchemeFavoriteMapper extends BaseMapper<QuerySchemeFavoriteEntity> {
 
 
-    List<QuerySchemeFavoriteEntity> listByUserId(@Param("userId") String userId);
 }
