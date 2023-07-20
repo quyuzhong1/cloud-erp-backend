@@ -20,7 +20,7 @@
             AND ci.name ILIKE concat('%', #{params.name} ,'%')
         </if>
         <if test="params.shortName !=null and params.shortName!=''">
-            AND ci.short_name ILIKE concat('%', #{params.name} ,'%')
+            AND ci.short_name ILIKE concat('%', #{params.shortName} ,'%')
         </if>
         <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
             AND ci.approve_status IN
@@ -95,7 +95,7 @@
                     AND ci.name ILIKE concat('%', #{params.name} ,'%')
                 </if>
                 <if test="params.shortName !=null and params.shortName!=''">
-                    AND ci.short_name ILIKE concat('%', #{params.name} ,'%')
+                    AND ci.short_name ILIKE concat('%', #{params.shortName} ,'%')
                 </if>
                 <if test="params.customerIdList !=null and params.customerIdList.size>0">
                     AND ci.id IN

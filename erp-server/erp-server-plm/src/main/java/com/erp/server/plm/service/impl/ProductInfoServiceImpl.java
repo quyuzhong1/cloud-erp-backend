@@ -775,7 +775,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             List<CountDTO> productRelevance = this.getProductRelevanceList();
 
             //完成的任务的状态
-            List<Integer> finishedList = Arrays.asList(TaskStateEnum.FINISH.getCode(), TaskStateEnum.APPROVAL_PASS.getCode());
+            List<Integer> finishedList = Arrays.asList(TaskStateEnum.FINISH.getCode());
             for (ProductShowDTO item : list) {
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
@@ -1296,7 +1296,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Integer finishStatus = ProjectStateEnum.FINISH.getState();
         Integer ingStatus = ProjectStateEnum.ING.getState();
         //当前状态为终止的时候
-        if(terminateStatus.equals(currentStatus)){
+        if (terminateStatus.equals(currentStatus)) {
             throw new ServiceException(ApiError.ERROR_95187);
         }
         switch (status) {
@@ -1348,7 +1348,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Integer suspendStatus = ApprovalStatusEnum.SUSPEND.getCode();
         Integer terminateStatus = ApprovalStatusEnum.TERMINATE.getCode();
         //当前状态为终止的时候
-        if(terminateStatus.equals(currentStatus)){
+        if (terminateStatus.equals(currentStatus)) {
             throw new ServiceException(ApiError.ERROR_95187);
         }
         switch (status) {
@@ -2149,7 +2149,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //变更
         Integer totalChangeCount = 0;
         //这个是排期任务的id 集合
-        List<String> planTaskIdList = taskList.stream().filter(t -> change.equals(t.getScheduleType())||t.getIsChangeDocs()).map(ProjectTaskEntity::getId).collect(Collectors.toList());
+        List<String> planTaskIdList = taskList.stream().filter(t -> change.equals(t.getScheduleType()) || t.getIsChangeDocs()).map(ProjectTaskEntity::getId).collect(Collectors.toList());
         totalChangeCount = planTaskIdList.size();
         totalTask.setFinishCount((int) totalFinishCount);
         totalTask.setDoingCount((int) totalDoingCount);
@@ -2256,7 +2256,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             List<ProjectTaskEntity> preTaskFinishInfoList = taskList.stream().filter(p -> preTaskIdList.contains(p.getId()) &&
                     taskFinish.equals(p.getStatus())).collect(Collectors.toList());
             //表示的都完成了
-            if(preTaskIdList.size()==preTaskFinishInfoList.size()){
+            if (preTaskIdList.size() == preTaskFinishInfoList.size()) {
                 //获取到前置任务完成的 任务id
                 wantTaskIdList.add(item.getKey());
             }
