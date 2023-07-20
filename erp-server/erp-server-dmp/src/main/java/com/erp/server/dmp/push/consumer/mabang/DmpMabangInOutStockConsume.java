@@ -1,17 +1,13 @@
 package com.erp.server.dmp.push.consumer.mabang;
 
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.entity.DmpSyncTaskEntity;
-import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 import com.erp.server.dmp.push.service.mabang.MabangInOutStockService;
 import com.erp.server.dmp.service.DmpSyncTaskService;
@@ -39,9 +35,6 @@ public class DmpMabangInOutStockConsume implements RocketMQListener<DmpSyncMqDTO
     @Autowired
     private MabangInOutStockService mabangInOutStockService;
 
-    @Autowired
-    private MQProducerService mqProducerService;
-
     @Override
     public void onMessage(DmpSyncMqDTO dtoDmpSyncMqDTO) {
         MabangInOutStockDTO mabangInOutStockDTO = JSONObject.parseObject(dtoDmpSyncMqDTO.getMqData(), MabangInOutStockDTO.class);
@@ -53,7 +46,7 @@ public class DmpMabangInOutStockConsume implements RocketMQListener<DmpSyncMqDTO
         DmpSyncTaskEntity dmpSyncTaskEntity = dmpSyncTaskService.getById(syncTaskId);
         if(Objects.isNull(dmpSyncTaskEntity)) {
             log.warn("未查询到同步到马帮数据，同步任务数据id:{}，待同步内容：{}", syncTaskId, dtoDmpSyncMqDTO.getMqData());
-            this.sendNotice(syncTaskId, erpSourceCode);
+            mabangInOutStockService.sendNoTaskNotice(syncTaskId, erpSourceCode);
             return;
         }
         String sourceType = dmpSyncTaskEntity.getSourceType();
@@ -70,24 +63,6 @@ public class DmpMabangInOutStockConsume implements RocketMQListener<DmpSyncMqDTO
         // 推送马帮手工出入库
         InventoryInOutEnum inventoryInOutEnum = InventoryInOutEnum.getByCode(mabangInOutStockDTO.getType());
         mabangInOutStockService.sendToMabangInOutStock(dmpSyncTaskEntity, mabangInOutStockDTO, inventoryInOutEnum);
-    }
-
-    /**
-     * 未找到同步任务消息通知
-     * @param syncTaskId
-     * @param erpSourceCode
-     */
-    private void sendNotice(String syncTaskId, String erpSourceCode){
-        String errMsg = StrUtil.format("未找到同步任务id：【{}】，ERP单据编号: {}", syncTaskId, erpSourceCode);
-        log.info(errMsg);
-        WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
-        warnMsgInfoDTO.setTitle("ERP推送马帮手工出库异常");
-        warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
-        warnMsgInfoDTO.setBizName("ERP推送马帮手工出库");
-        warnMsgInfoDTO.setTableName("dmp_sync_task");
-        warnMsgInfoDTO.setTableId(syncTaskId);
-        warnMsgInfoDTO.setKeyInfo(errMsg);
-        mqProducerService.sendWarnMsg(warnMsgInfoDTO);
     }
 
 }
