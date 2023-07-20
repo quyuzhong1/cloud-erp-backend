@@ -34,6 +34,13 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.customerIdList !=null and params.customerIdList.size>0">
+            AND ci.id IN
+            <foreach collection="params.customerIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+
         <if test="params.useOrgIdList !=null and params.useOrgIdList.size>0">
             AND ci.use_org_id IN
             <foreach collection="params.useOrgIdList" item="useOrgId" open="(" separator="," close=")">
@@ -89,6 +96,12 @@
                 </if>
                 <if test="params.shortName !=null and params.shortName!=''">
                     AND ci.short_name ILIKE concat('%', #{params.name} ,'%')
+                </if>
+                <if test="params.customerIdList !=null and params.customerIdList.size>0">
+                    AND ci.id IN
+                    <foreach collection="params.customerIdList" item="id" open="(" separator="," close=")">
+                        #{id}
+                    </foreach>
                 </if>
                 <if test="params.sellerIdList !=null and params.sellerIdList.size>0">
                     AND ci.seller_id IN
