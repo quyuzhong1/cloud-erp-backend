@@ -343,4 +343,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return Boolean
      */
     Boolean updateDetailRemark(BaseIdsDTO.RemarkDTO dto);
+    /**
+     * @description: 更新备注
+     * @author Will
+     * @date: 2023/7/20 9:58
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateRemark(BaseIdsDTO.RemarkDTO dto);
 }

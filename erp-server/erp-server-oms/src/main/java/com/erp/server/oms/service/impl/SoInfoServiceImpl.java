@@ -2246,6 +2246,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean updateRemark(BaseIdsDTO.RemarkDTO dto) {
+        List<SoInfoEntity> list = this.listByIds(dto.getIds());
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+        lambdaUpdate().in(SoInfoEntity::getId,dto.getIds())
+                .set(SoInfoEntity::getRemark,dto.getRemark())
+                .update(new SoInfoEntity());
+        return Boolean.TRUE;
+    }
+
     public SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfitt(SkuCostProfitDTO.SkuCostProfitParam costParam) {
         if (Objects.isNull(costParam.getQty()) || costParam.getQty() < 0) {
             costParam.setQty(0);
