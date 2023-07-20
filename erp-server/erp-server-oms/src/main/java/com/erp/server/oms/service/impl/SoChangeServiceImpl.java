@@ -407,7 +407,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         String searchType = params.getSearchType();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         //根据搜索类型获取到审核状态
-        List<String> approveList = listBySearchType(searchType,params);
+        List<String> approveList = listBySearchType(searchType, params);
         if (approveList == null) {
             return new PagingVO(new Page());
         }
@@ -422,7 +422,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         List<String> ids = list.stream().map(SoChangeDTO.PagingViewDTO::getId).collect(Collectors.toList());
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         ids.forEach(obj -> {
-            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_CHANGE.getCode(),obj));
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_CHANGE.getCode(), obj));
         });
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         Integer code = listApiResult.getCode();
@@ -486,7 +486,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Override
     public Boolean exportExcel(SoChangeDTO.PagingParamDTO dto, HttpServletResponse response) {
         String searchType = dto.getSearchType();
-        List<String> approveList = listBySearchType(searchType,dto);
+        List<String> approveList = listBySearchType(searchType, dto);
         if (approveList == null) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
@@ -747,7 +747,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     }
 
 
-
     /**
      * 更改销售订单金蝶推送的状态
      *
@@ -797,7 +796,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         }
 
         //调用审核流程
-        approveProcess(list,dto);
+        approveProcess(list, dto);
 
         //添加日志
         List<Pair<String, String>> pairList = list.stream().
@@ -807,21 +806,21 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     }
 
     /**
+     * @param dto
+     * @param list
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/3 15:25
-     * @param dto
-     * @param list
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approveEnd (BaseApproveParamDTO dto,List<SoChangeEntity> list) {
+    public Boolean approveEnd(BaseApproveParamDTO dto, List<SoChangeEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
         LoginUser user = commonService.getUserInfo();
-        ApproveStatusEnum approveStatus ;
+        ApproveStatusEnum approveStatus;
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
             approveStatus = ApproveStatusEnum.APPROVE;
@@ -829,7 +828,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT;
         }
-        Boolean  result = this.updateApproveInfo(list, approveStatus, user.getUid(), user.getUserName());
+        Boolean result = this.updateApproveInfo(list, approveStatus, user.getUid(), user.getUserName());
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
@@ -865,7 +864,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
         //撤销现有流程
         LoginUser userInfo = commonService.getUserInfo();
-        ids.forEach(obj ->{
+        ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.SO_CHANGE.getCode());
@@ -957,38 +956,47 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     }
 
     /**
+     * @param list
      * @description: 提交流程
      * @author Will
      * @date: 2023/7/3 14:39
-     * @param list
      */
-    private void startProcess (List<SoChangeEntity> list) {
-        LoginUser userInfo = commonService.getUserInfo();
+    private void startProcess(List<SoChangeEntity> list) {
         ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
+        //销售订单id 集合
+        List<String> soIdList = list.stream().map(SoChangeEntity::getSoId).collect(Collectors.toList());
+        List<SoInfoEntity> soInfoList = CollectionUtils.isNotEmpty(soIdList) ? soInfoService.listByIds(soIdList) : Collections.emptyList();
         list.forEach(obj -> {
-            ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
-            startDTO.setBusinessId(obj.getId());
-            startDTO.setBusinessCode(obj.getCode());
-            startDTO.setBusinessKey(SourceTypeEnum.SO_CHANGE.getCode());
-            startDTO.setBusinessName(obj.getCode());
-            startDTO.setUserId(userInfo.getUid());
-            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
-            resultList.add(startDTO);
+            String sellerId = soInfoList.stream().filter(s -> s.getId().equals(obj.getSoId())).
+                    map(SoInfoEntity::getSellerId).findFirst().orElse("");
+            if(StringUtils.isNotBlank(sellerId)){
+                ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+                startDTO.setBusinessId(obj.getId());
+                startDTO.setBusinessCode(obj.getCode());
+                startDTO.setBusinessKey(SourceTypeEnum.SO_CHANGE.getCode());
+                startDTO.setBusinessName(obj.getCode());
+                startDTO.setUserId(sellerId);
+                startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+                resultList.add(startDTO);
+            }
+
         });
-        ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
-        if (!listApiResult.isSuccess()) {
-            throw new ServiceException(listApiResult.getMsg());
+        if(CollectionUtils.isNotEmpty(resultList)){
+            ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
+            if (!listApiResult.isSuccess()) {
+                throw new ServiceException(listApiResult.getMsg());
+            }
         }
     }
 
     /**
+     * @param list
+     * @param dto
      * @description: 流程审核
      * @author Will
      * @date: 2023/7/3 15:24
-     * @param list
-     * @param dto
      */
-    private void approveProcess (List<SoChangeEntity> list, BaseApproveParamDTO dto) {
+    private void approveProcess(List<SoChangeEntity> list, BaseApproveParamDTO dto) {
         ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
         LoginUser userInfo = commonService.getUserInfo();
         list.forEach(obj -> {
@@ -1015,7 +1023,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         if (CollectionUtils.isNotEmpty(updateIdList)) {
             //无需走流程的数据则直接更新状态
             List<SoChangeEntity> updateList = list.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
-            approveEnd(dto,updateList);
+            approveEnd(dto, updateList);
         }
     }
 
@@ -1042,7 +1050,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         return Boolean.TRUE;
     }
 
-    private List<String> listBySearchType(String searchType,SoChangeDTO.PagingParamDTO params) {
+    private List<String> listBySearchType(String searchType, SoChangeDTO.PagingParamDTO params) {
         List<String> approveList = new ArrayList<>(3);
         //待审核
         if (SearchType.WAIT_APPROVE.equals(searchType)) {
