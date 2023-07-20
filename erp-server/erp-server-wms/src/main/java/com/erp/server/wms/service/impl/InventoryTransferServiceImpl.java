@@ -154,7 +154,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
             Arrays.asList(curWareInOrOutStock, targetWareInOrOutStock)
                     .stream()
                     .sorted(Comparator.comparing(InOutStockTransformDTO::getWarehouseId)
-                            .thenComparing(InOutStockTransformDTO::getWarehouseLocation)
+                            .thenComparing(x -> ObjectUtil.isNotEmpty(x.getWarehouseLocation()) ? x.getWarehouseLocation() : "")
                             .thenComparing(x -> ObjectUtil.isNotEmpty(x.getInventoryStatus()) ? x.getInventoryStatus().getCode(): "")
                     ).forEach(wareInOrOutStock -> this.singleHandler(wareInOrOutStock, businessType, transactionRuleParams, transactionNo));
         }

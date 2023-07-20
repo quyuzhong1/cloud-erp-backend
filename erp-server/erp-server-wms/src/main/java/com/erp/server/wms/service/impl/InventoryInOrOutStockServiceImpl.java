@@ -109,7 +109,7 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
         // 通过对sku id顺序执行, 避免多线程死锁
         Comparator<InventoryStockBaseDTO> comparing = Comparator.comparing(InventoryStockBaseDTO::getSkuId)
                 .thenComparing(InventoryStockBaseDTO::getWarehouseId)
-                .thenComparing(InventoryStockBaseDTO::getWarehouseLocation);
+                .thenComparing(x -> StrUtil.isNotEmpty(x.getWarehouseLocation()) ? x.getWarehouseLocation() : "");
         paramLis = paramLis.stream().sorted(comparing).collect(Collectors.toList());
         for(InventoryStockBaseDTO baseParam : paramLis) {
             InOutStockDTO param = (InOutStockDTO)baseParam;
