@@ -297,7 +297,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         for (PurchaseOrderDetailEntity entity : newList) {
             //赠品单价默认0
-            if (entity.getIsGift()) {
+             if (ObjectUtils.isNotEmpty(entity.getIsGift()) && entity.getIsGift()) {
                 entity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 entity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
                 entity.setTaxPrice(BigDecimal.ZERO);
