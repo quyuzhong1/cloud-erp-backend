@@ -32,8 +32,8 @@ public class QuerySchemeFavoriteController extends BaseController {
      *  查询指定用户所有保存方案
      */
     @GetMapping("/list")
-    public ApiResult<List<QuerySchemeFavoriteDTO.ViewDTO>> list(@RequestParam(value = "userId", required = false) String userId) {
-        return success(querySchemeFavoriteService.listByUserId(userId));
+    public ApiResult<List<QuerySchemeFavoriteDTO.ViewDTO>> list(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "modulePath") String modulePath) {
+        return success(querySchemeFavoriteService.listByUserId(userId, modulePath));
     }
 
     /**
