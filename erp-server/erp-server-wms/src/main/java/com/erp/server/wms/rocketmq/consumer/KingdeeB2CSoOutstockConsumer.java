@@ -9,6 +9,7 @@ import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -49,7 +50,7 @@ public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<DmpSyncMqD
             paramDTO.setResponseMsg("同步成功");
             dmpTaskFeign.updateSyncInfo(paramDTO);
         }catch (Exception e){
-            log.error("金蝶B2C销售出库单同步失败，msg = {}",e.getMessage());
+            log.error("金蝶B2C销售出库单同步失败，msg = {}",StringUtils.isBlank(e.getMessage())?e:e.getMessage());
             //同步失败
             paramDTO.setSyncStatus(SyncKingdeeStatusEnum.FAILED_SYNC.getCode());
             paramDTO.setResponseMsg(e.getMessage());
