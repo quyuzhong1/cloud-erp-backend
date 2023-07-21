@@ -38,6 +38,7 @@ import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -197,6 +198,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean excuteOperation(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number, String operate) {
         LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
         //金蝶id
@@ -226,6 +228,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void delete(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number) {
         LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
         //金蝶id
@@ -249,6 +252,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void customerGroupDelete(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type) {
         try {
             apiUtils.customerGroupDelete(String.valueOf(map.get("id")));
@@ -264,6 +268,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean customerGroupSaveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type) {
         RepoRet repoRet;
         String msg = "新增数据";
@@ -295,6 +300,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type) {
         SaveResult save;
         log.info("param>>>>>>>{}",param);
@@ -324,6 +330,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean push(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils sourceApiUtils, KingdeeApiUtils apiUtils, JSONObject jsonMap, SaveParam param, Integer type, JSONObject json) {
         RepoResult result;
         String msg = "下推";
@@ -361,6 +369,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void submit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type) {
         //提交
         List<String> ids = new ArrayList<>();
@@ -392,6 +401,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void audit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type) {
         LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
         viewMap.put("Id", id);
@@ -423,6 +433,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean unAudit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type) {
         //审核中或已审核则要先反审
         ArrayList<String> ids = new ArrayList<>();
@@ -468,6 +479,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void insertLogWriteBackSyncKingdeeStatus(PlatformEntity platformEntity, String businessId,
                                                     String jsonData, String msg, Integer type, Integer status) {
         //新增任务
@@ -506,6 +518,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void updateBusinessSyncKingdeeStatus(Integer code, String businessId, String status, String kingdeeId) {
         //更新业务单据状态
         Map<String, Object> params = new HashMap<>(MathUtil.THREE);
