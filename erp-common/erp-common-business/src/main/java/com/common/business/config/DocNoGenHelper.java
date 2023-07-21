@@ -58,7 +58,7 @@ public class DocNoGenHelper implements InitializingBean {
         String docNoKey = BusinessNoTypeEnum.REDIS_GEN_KEY + ":" + businessNoTypeEnum.getName() +  ":" + currentDateStr;
         Long currentIndex = redisTemplate.execute(redisScript, stringRedisSerializer, stringRedisSerializer, Lists.newArrayList(docNoKey),String.valueOf(1),String.valueOf(ONE_DAY_CACHE_TIME));
         // 单据前缀+6位日期+5位顺序位
-        String docNo = StrUtil.format("{}{}{}",businessNoTypeEnum.getCode(), currentDateStr, StrUtils.leftPadding(String.valueOf(currentIndex),BusinessNoTypeEnum.FILL_0_DIGIT,"0"));
+        String docNo = StrUtil.format("{}{}{}",StrUtils.null2EmptyWithTrim(businessNoTypeEnum.getPrefix()), currentDateStr, StrUtils.leftPadding(String.valueOf(currentIndex),BusinessNoTypeEnum.FILL_0_DIGIT,"0"));
         log.info("单据类型：【{}】生成的单号为【{}】", businessNoTypeEnum.getName(), docNo);
         return docNo;
     }
