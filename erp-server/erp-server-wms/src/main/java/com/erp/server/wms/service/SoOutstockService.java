@@ -9,6 +9,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -256,5 +257,17 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return
      */
     List<String> getIdsByTemp();
+
+
+    /**
+     * 金蝶同步到系统
+     * @author yl
+     * @date 2023-07-21 14:44
+     * @param soOutstock 销售出库单
+     * @param detailList 销售出库详情
+     * @param flagId  已存在的flagId
+     * @return void
+     */
+    void handleKingdeeToErp(SoOutstockEntity soOutstock, List<SoOutstockDetailEntity> detailList, String flagId);
 
 }

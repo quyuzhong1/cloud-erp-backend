@@ -57,8 +57,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Resource
     private SoOutstockService soOutstockService;
-    @Resource
-    private SoOutstockDetailService soOutstockDetailService;
 
 
     /**
@@ -90,22 +88,16 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             //当是审核通过的时候
             if ("C".equals(entity.getFDocumentStatus())) {
                 //当已存在 就删除以前的  并回滚库存
-                if (StringUtils.isNotBlank(flagId)) {
-                    //回滚库存
-                    InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_OUTSTOCK, Arrays.asList(flagId));
-                    inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-                    soOutstockService.removeById(flagId);
-                    soOutstockDetailService.removeByMainIdList(Arrays.asList(flagId));
-                }
-
-                //保存销售出库单
-                soOutstockService.save(soOutstock);
-                //保存销售出库单详情
-                soOutstockDetailService.saveBatch(detailList);
+                soOutstockService.handleKingdeeToErp(soOutstock, detailList, flagId);
                 InventoryInOutStockRuleDTO inventoryInOutStockDTO = info.getInventoryInOutStockRuleDTO();
                 if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getMembers())) {
                     inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
                 }
+                //扣减库存成功后 更新状态
+                boolean update = soOutstockService.lambdaUpdate()
+                        .set(SoOutstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE)
+                        .eq(SoOutstockEntity::getId, soOutstock.getId())
+                        .update();
             }
 
         }
@@ -130,7 +122,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
          */
         List<String> skuNoList = kingdeeDetailList.stream().map(KingdeeDeliveryDetailItemEntity::getFMaterialNumber).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
-        ApproveStatusEnum statusEnum = ApproveStatusEnum.APPROVE;
+        ApproveStatusEnum statusEnum = ApproveStatusEnum.WAIT_SUBMIT;
         String sourceType = SourceTypeEnum.SAL_OUTSTOCK.getCode();
         //销售出库单
         InventorySourceTypeEnum sourceTypeEnum = InventorySourceTypeEnum.SO_OUTSTOCK;
