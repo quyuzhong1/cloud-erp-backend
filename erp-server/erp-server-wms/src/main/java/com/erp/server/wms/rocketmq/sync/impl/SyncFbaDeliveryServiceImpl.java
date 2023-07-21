@@ -213,7 +213,6 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             String parentSkuId = skuList.stream().filter(s -> Objects.equals(s.getParentSkuNo(), parentSkuNo)).
                     findFirst().map(BomInfoEntity::getParentSkuId).orElse("");
             if (StringUtils.isBlank(parentSkuId)) {
-                this.sendNotice(syncTaskId, StrUtil.format("FBA发货单同步生成加工单父级SKU【{}】在ERP中不存在", parentSkuNo));
                 throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU,parentSkuNo);
             }
             member.setSkuId(parentSkuId);
@@ -238,8 +237,8 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
                 String subSkuId = bomList.stream().filter(s -> Objects.equals(s.getSkuNo(), dmpBomEntity.getSkuNo())).findFirst().map(BomChildrenSkuDTO::getSkuId).orElse("");
 
                 if(StrUtils.isEmpty(subSkuId)) {
-                    this.sendNotice(syncTaskId, StrUtil.format("FBA发货单同步生成加工单子级SKU【{}】在ERP中不存在，对应的父级SKU【{}】", dmpBomEntity.getSkuNo(), parentSkuNo));
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU,dmpBomEntity.getSkuNo());
+                    String errmsg = StrUtil.format("FBA发货单同步生成加工单子级SKU【{}】在ERP中不存在，对应的父级SKU【{}】", dmpBomEntity.getSkuNo(), parentSkuNo);
+                    throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU.code, errmsg);
                 }
                 subDTO.setId(null);
                 subDTO.setSkuId(subSkuId);
@@ -270,8 +269,8 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
         addDTO.setType(MachineTypeEnum.ORDINARY.getCode());
         List<WarehouseEntity> warehouseEntityList = warehouseService.listByKingdeeCodeList(Arrays.asList(entity.getWarehouseCode()));
         if(CollUtil.isEmpty(warehouseEntityList)) {
-            this.sendNotice(syncTaskId, StrUtil.format("FBA发货单同步生成ERP加工单仓库【{}】在ERP中不存在", entity.getWarehouseCode()));
-            throw new ServiceException(ApiError.ERROR_99076, entity.getWarehouseCode());
+            String errmsg = StrUtil.format("FBA发货单同步生成ERP加工单仓库【{}】在ERP中不存在", entity.getWarehouseCode());
+            throw new ServiceException(ApiError.ERROR_99076.code, errmsg);
         }
         WarehouseEntity warehouseEntity = warehouseEntityList.get(0);
         addDTO.setWarehouseId(warehouseEntity.getId());
@@ -296,8 +295,8 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             String parentSkuId = skuList.stream().filter(s -> Objects.equals(s.getParentSkuNo(), dmpFbaDeliveryDetailEntity.getSkuNo())).
                     findFirst().map(BomInfoEntity::getParentSkuId).orElse("");
             if (StringUtils.isBlank(parentSkuId)) {
-                this.sendNotice(syncTaskId, StrUtil.format("FBA发货单同步生成ERP加工单父级SKU【{}】在ERP中不存在", parentSkuNo));
-                throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU,dmpFbaDeliveryDetailEntity.getSkuNo());
+                String errmsg = StrUtil.format("FBA发货单同步生成ERP加工单父级SKU【{}】在ERP中不存在", parentSkuNo);
+                throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU.code,errmsg);
             }
             member.setSkuId(parentSkuId);
 
@@ -310,8 +309,8 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             // bom信息
             List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(parentSkuId));
             if(CollUtil.isEmpty(bomChildrenSkuList)) {
-                this.sendNotice(syncTaskId, StrUtil.format("FBA发货单同步生成ERP加工单父级SKU【{}】在ERP中未查询到BOM信息",parentSkuNo));
-                throw new ServiceException(ApiError.ERROR_95173,parentSkuNo);
+                String errmsg = StrUtil.format("FBA发货单同步生成ERP加工单父级SKU【{}】在ERP中未查询到BOM信息",parentSkuNo);
+                throw new ServiceException(ApiError.ERROR_95173.code,errmsg);
             }
 
             List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> Objects.equals(obj.getParentSkuId(), parentSkuId)).collect(Collectors.toList());
@@ -326,8 +325,8 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
 
                 String subSkuId = bomList.stream().filter(s -> Objects.equals(s.getSkuNo(), dmpBomEntity.getSkuNo())).findFirst().map(BomChildrenSkuDTO::getSkuId).orElse("");
                 if(StrUtils.isEmpty(subSkuId)) {
-                    this.sendNotice(syncTaskId, StrUtil.format("FBA发货单同步生成ERP加工单子级SKU【{}】在ERP中不存在，对应的父级SKU【{}】", dmpBomEntity.getSkuNo(), parentSkuNo));
-                    throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU,dmpBomEntity.getSkuNo());
+                    String errmsg = StrUtil.format("FBA发货单同步生成ERP加工单子级SKU【{}】在ERP中不存在，对应的父级SKU【{}】", dmpBomEntity.getSkuNo(), parentSkuNo);
+                    throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU.code,errmsg);
                 }
                 subDTO.setSkuId(subSkuId);
                 subDTO.setSkuNo(dmpBomEntity.getSkuNo());
