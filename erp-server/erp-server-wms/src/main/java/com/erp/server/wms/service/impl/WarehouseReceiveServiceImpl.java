@@ -649,7 +649,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //旧品 并且符合等级的
         List<QcInfoDTO.ReceiveToQcDTO> stockInProductList = qcList.stream().filter(q -> !q.getIsFirstMassProduct()).collect(Collectors.toList());
         for (QcInfoDTO.ReceiveToQcDTO stockInItem : stockInProductList) {
-            if ((StringUtils.isBlank(stockInProductGrade) && StringUtils.isBlank(newSaleMethod))) {
+            if ((StringUtils.isBlank(stockInProductGrade) && StringUtils.isBlank(stockInSaleMethod))) {
                 QcInfoDTO.ReceiveToQcDTO stockInQc = new QcInfoDTO.ReceiveToQcDTO();
                 BeanMapper.copy(stockInItem, stockInQc);
                 stockInQc.setQcType(stockIn);
@@ -657,7 +657,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             } else if (StringUtils.isBlank(stockInProductGrade)) {
                 String[] split = stockInItem.getSaleMethod().split(",");
                 for (String s : split) {
-                    if (newSaleMethod.contains(s)) {
+                    if (stockInSaleMethod.contains(s)) {
                         QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
                         BeanMapper.copy(stockInItem, newQc);
                         newQc.setQcType(newProduct);
@@ -668,7 +668,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             } else if (StringUtils.isBlank(stockInSaleMethod)) {
                 String[] split = stockInItem.getProductGrade().split(",");
                 for (String s : split) {
-                    if (newProductGrade.contains(s)) {
+                    if (stockInProductGrade.contains(s)) {
                         QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
                         BeanMapper.copy(stockInItem, newQc);
                         newQc.setQcType(newProduct);
