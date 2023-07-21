@@ -53,7 +53,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:paging",
             tableAlias = "pa")
     public ApiResult<PagingVO<PurchaseApplicationDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto) {
@@ -69,7 +69,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/pagingTotal")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:paging",
             tableAlias = "pa")
     public ApiResult<PurchaseApplicationDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated PurchaseApplicationDTO.SearchParamDTO dto) {
@@ -85,7 +85,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:paging",
             tableAlias = "pa")
     public ApiResult<List<ListStatusCountDTO.PurchaseApplicationCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
@@ -102,12 +102,12 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:cancelProcess",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto) {
-         purchaseApplicationService.add(dto);
+        purchaseApplicationService.add(dto);
         return success();
     }
 
@@ -120,7 +120,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:update",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "id")
@@ -138,7 +138,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:add",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "id")
@@ -156,7 +156,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:update",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "id")
@@ -174,7 +174,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:view",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "id")
@@ -192,7 +192,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:submit",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "ids")
@@ -210,7 +210,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:approve",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "ids")
@@ -228,7 +228,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:disApprove",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "ids")
@@ -247,7 +247,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:delete",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "ids")
@@ -265,7 +265,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/viewGeneratePurchaseOrder")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:viewGeneratePurchaseOrder",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "ids")
@@ -296,7 +296,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:cancelProcess",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "ids")
@@ -360,7 +360,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "apply_user_id",
+            tableField = "apply_user_id,create_user_id",
             menuCode = "scm:purchaseApplication:paging",
             tableAlias = "pa")
     public ApiResult exportExcel(@RequestBody PurchaseApplicationDTO.SearchParamDTO dto, HttpServletResponse response) {
