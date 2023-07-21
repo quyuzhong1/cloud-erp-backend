@@ -181,7 +181,7 @@
             <foreach collection="deptIds" item="id" open="(" close=")" separator=",">
                 #{id}
             </foreach>
-        </if>llection="param1"
+        </if>
     </select>
 
 
