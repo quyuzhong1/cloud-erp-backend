@@ -660,7 +660,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     if (stockInSaleMethod.contains(s)) {
                         QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
                         BeanMapper.copy(stockInItem, newQc);
-                        newQc.setQcType(newProduct);
+                        newQc.setQcType(stockIn);
                         addList.add(newQc);
                         break;
                     }
@@ -671,7 +671,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     if (stockInProductGrade.contains(s)) {
                         QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
                         BeanMapper.copy(stockInItem, newQc);
-                        newQc.setQcType(newProduct);
+                        newQc.setQcType(stockIn);
                         addList.add(newQc);
                         break;
                     }
@@ -681,7 +681,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 if (newProductGrade.contains(stockInItem.getProductGrade()) && newSaleMethod.contains(stockInItem.getProductGrade())) {
                     QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
                     BeanMapper.copy(stockInItem, newQc);
-                    newQc.setQcType(newProduct);
+                    newQc.setQcType(stockIn);
                     addList.add(newQc);
                 }
             }
