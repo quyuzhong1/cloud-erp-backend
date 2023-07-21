@@ -175,7 +175,25 @@
         sui.sync_operate
         from sys_user_info sui
         LEFT JOIN sys_department_user sdu on sui.uid = sdu.user_id
-        where sdu.department_id = #{deptId}
+        where 1 = 1
+        <if test="deptIds != null and deptIds.size() > 0">
+            and sdu.department_id in
+            <foreach collection="deptIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>llection="param1"
+    </select>
+
+
+    <select id="listSonDeptAll" resultType="com.erp.model.sys.dto.SysDepartmentTreeDTO">
+        WITH RECURSIVE T ( ID, NAME, parent_id, PATH ) AS (
+        SELECT ID,NAME,PARENT_ID,ID::text AS PATH FROM sys_department
+        WHERE id = #{deptId}
+        UNION ALL
+        SELECT st.ID,st.NAME,st.PARENT_ID,T.PATH ||','|| st.ID
+        FROM sys_department st JOIN T ON st.PARENT_ID = T.ID
+        )
+        SELECT ID,NAME,PARENT_ID,PATH FROM T ORDER BY 	PATH;
     </select>
 
 </mapper>

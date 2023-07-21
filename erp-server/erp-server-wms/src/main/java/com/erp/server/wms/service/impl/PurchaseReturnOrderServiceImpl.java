@@ -380,7 +380,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             }
         }
 
-        if (ReturnOrderSourceEnum.QC.getCode().equals(purchaseReturnOrderEntity.getSourceType())) {
+        if (SourceTypeEnum.QC_INFO.getCode().equals(purchaseReturnOrderEntity.getSourceType())) {
             viewDTO.setSourceType(ReturnOrderSourceEnum.QC.getCode());
             viewDTO.setSourceTypeName(ReturnOrderSourceEnum.QC.getName());
         } else {
@@ -390,6 +390,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         if (StringUtils.isNotBlank(viewDTO.getReturnMode())) {
             viewDTO.setReturnModeName(ReturnModeEnum.getName(viewDTO.getReturnMode()));
         }
+
 
         //创库保存详情表的集合
         List<PurchaseReturnOrderDetailDTO.ViewDTO> detailViewDTOS = new ArrayList<>();

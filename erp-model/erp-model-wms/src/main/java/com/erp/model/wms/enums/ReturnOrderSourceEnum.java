@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ReturnOrderSourceEnum {
 
-    QC("qc","质检退货"),
+    QC("qcInfo","质检退货"),
     OTHER("other","库存退货");
 
     /**
