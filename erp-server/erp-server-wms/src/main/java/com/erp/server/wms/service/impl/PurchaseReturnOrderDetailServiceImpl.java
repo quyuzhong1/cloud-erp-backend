@@ -120,10 +120,14 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                     purchaseReturnOrderDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
                     returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (dto.getSourceType().equals(SourceTypeEnum.QC_INFO.getCode())) {
-                        Integer receiveQty = detailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                        /*Integer receiveQty = detailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                         returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                         if (addDTO.getReturnQty() + returnQty > receiveQty) {
                             throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, purchaseOrderDetailEntity.getSkuNo()));
+                        }*/
+                        Integer inventoryTotal = inventoryService.getInventoryTotal(dto.getReturnOrgId(), dto.getReturnWarehouseId(), addDTO.getSkuId(), addDTO.getWarehouseLocation(), InventoryStatusEnum.WAIT_QC.getCode());
+                        if (addDTO.getReturnQty() + returnQty > inventoryTotal) {
+                            throw new ServiceException(ApiError.ERROR_99079, JSONUtil.toJsonStr(purchaseOrderDetailEntity.getSkuNo()));
                         }
                     } else if (dto.getSourceType().equals(ReturnOrderSourceEnum.QC.getCode())) {
                         Integer inventoryTotal = inventoryService.getInventoryTotal(dto.getReturnOrgId(), dto.getReturnWarehouseId(), addDTO.getSkuId(), addDTO.getWarehouseLocation(), InventoryStatusEnum.WAIT_QC.getCode());
