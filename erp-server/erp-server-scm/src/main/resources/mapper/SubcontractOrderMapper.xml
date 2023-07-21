@@ -292,7 +292,7 @@
             sod.payment_condition as paymentCondition
         from subcontract_order so
         inner join subcontract_order_detail sod on so.id = sod.main_id  and sod.is_deleted = false
-        left join supplier s on sod.id = s.id and s.is_deleted = false
+        left join supplier s on sod.supplier_id = s.id and s.is_deleted = false
         <where>
             so.is_deleted = false and so.invalid_status = false
             <if test="ids != null and ids.size > 0">
