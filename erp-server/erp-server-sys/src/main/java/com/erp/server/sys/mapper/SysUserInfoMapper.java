@@ -62,11 +62,11 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
     List<SysUserInfoEntity> listUserByDept(@Param("deptIds") List<String> deptIds);
 
     /**
-     * 根据部门id获取所有的子部门
+     * 根据部门名称获取所有的子部门
      * @Author Luo_WG
      * @Date 2023/7/20 15:54
-     * @param deptId
+     * @param deptName
      * @return java.util.List<com.erp.model.sys.entity.SysUserInfoEntity>
      **/
-    List<SysDepartmentTreeDTO> listSonDeptAll(@Param("deptId") String deptId);
+    List<SysDepartmentTreeDTO> listSonDeptAll(@Param("deptName") String deptName);
 }

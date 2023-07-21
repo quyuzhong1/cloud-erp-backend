@@ -466,12 +466,12 @@ public interface SysUserFeign {
     List<SysRoleMenuEntity> getMenuRefRoleByRoleIds(@RequestBody List<String> roleIdList);
 
     /**
-     * 根据部门id查询用户
+     * 根据部门名称查询用户
      * @Author Luo_WG
      * @Date 2023/7/20 15:49
-     * @param deptId
+     * @param deptName
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.FindUserDTO>>
      **/
     @PostMapping("feign/user/listUserByDept")
-    List<SysUserInfoEntity> listUserByDept(@RequestBody String deptId);
+    List<SysUserInfoEntity> listUserByDept(@RequestBody String deptName);
 }

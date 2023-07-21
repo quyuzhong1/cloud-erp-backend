@@ -1284,8 +1284,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    public List<SysUserInfoEntity> listUserByDept(String deptId) {
-        List<SysDepartmentTreeDTO> treeList = baseMapper.listSonDeptAll(deptId);
+    public List<SysUserInfoEntity> listUserByDept(String deptName) {
+        List<SysDepartmentTreeDTO> treeList = baseMapper.listSonDeptAll(deptName);
         List<String> deptIds = treeList.stream().map(SysDepartmentTreeDTO::getId).distinct().collect(Collectors.toList());
         return baseMapper.listUserByDept(deptIds);
     }
