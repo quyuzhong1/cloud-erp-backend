@@ -107,7 +107,7 @@ public class PurchaseApplicationController extends BaseController {
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto) {
-         purchaseApplicationService.add(dto);
+        purchaseApplicationService.add(dto);
         return success();
     }
 
