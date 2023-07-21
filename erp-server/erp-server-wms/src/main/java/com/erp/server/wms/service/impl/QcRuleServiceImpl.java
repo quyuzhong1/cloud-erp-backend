@@ -86,6 +86,11 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         if (CollectionUtils.isNotEmpty(gradeKeyList)) {
             rule.setProductGradeKey(gradeKeyList.stream().collect(Collectors.joining(",")));
         }
+        List<String> saleMethodList = dto.getSaleMethodList();
+        if (CollectionUtils.isNotEmpty(saleMethodList)) {
+            rule.setSaleMethod(saleMethodList.stream().collect(Collectors.joining(",")));
+        }
+
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QCGZ, BusinessNoTypeEnum.CODE_ZJGZ.getCode()));
         rule.setCode(code);
@@ -146,6 +151,13 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
             gradeKeyList = Arrays.asList(gradeKey.split(","));
         }
         view.setProductGradeKeyList(gradeKeyList);
+        //销售方式
+        String saleMethod = rule.getSaleMethod();
+        List<String> saleMethodList = new ArrayList<>();
+        if (StringUtils.isNotBlank(saleMethod)) {
+            saleMethodList = Arrays.asList(saleMethod.split(","));
+        }
+        view.setSaleMethodList(saleMethodList);
         String qcType = rule.getQcType().getCode();
         String qcTypeName = QcTypeEnum.getByCode(qcType);
         view.setQcTypeName(qcTypeName);
@@ -236,6 +248,16 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         }else{
             qcRule.setProductGradeKey("");
         }
+
+        List<String> saleMethodList = dto.getSaleMethodList();
+        if (CollectionUtils.isNotEmpty(saleMethodList)) {
+            qcRule.setSaleMethod(saleMethodList.stream().collect(Collectors.joining(",")));
+        }else{
+            qcRule.setSaleMethod("");
+        }
+
+
+
         qcRule.setCode(code);
         Boolean result = this.updateById(qcRule);
         if (result) {
