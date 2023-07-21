@@ -30,9 +30,9 @@ import java.util.stream.Collectors;
 
 /**
  * 对接金蝶仓库
+ *
  * @author Lambda
  * @Classname KingdeeWarehouseConsumer
-
  * @Date 2023-04-25 14:29
  * @Created by yl
  */
@@ -50,9 +50,9 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         queryFilters.add(StrUtil.format("FNumber in ({})", "'CUST5188'"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FCUSTID,FForbidStatus";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 11);
         System.out.println(queryList);
-       /* JSONObject entries = apiUtils.customerGroupDelete("");*/
+        /* JSONObject entries = apiUtils.customerGroupDelete("");*/
 
 
       /* LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
@@ -71,7 +71,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         Integer type = ApiModuleTypeEnum.CUSTOMER_INFO.getCode();
 
         //业务id
-        String  businessId = String.valueOf(map.get("id"));
+        String businessId = String.valueOf(map.get("id"));
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
@@ -81,33 +81,36 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_CUSTOMER.getCode());
 
         //根据录入值和字段配置生成JSONObject
-        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
+        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
 
         //未配置发送字段
         if (CollectionUtils.isEmpty(json)) {
             log.error(ApiError.ERROR_97025.msg);
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,"","未配置同步字段",type, ApiSendStatusEnum.FAILURE.getCode());
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "未配置同步字段", type, ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
         //判断金蝶系统是否已存在该数据
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("code"));
+            model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), (String) map.get("syncKingdeeId"), (String) map.get("code"));
         } catch (Exception e) {
 
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
-            //启用、禁用
-            excuteOperation(apiUtils,platformEntity,map,type);
+            Boolean saveOrUpdateResult = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            if (saveOrUpdateResult) {
+                //启用、禁用
+                excuteOperation(apiUtils, platformEntity, map, type);
+            }
+
             return;
         }
 
         //查找到数据后，判断其审核状态
-        String documentStatus = (String)model.get("DocumentStatus");
-        String id = String.valueOf(model.get("Id")) ;
-        String forbidStatus = String.valueOf(model.get("FForbidStatus")) ;
+        String documentStatus = (String) model.get("DocumentStatus");
+        String id = String.valueOf(model.get("Id"));
+        String forbidStatus = String.valueOf(model.get("FForbidStatus"));
         Boolean flag = Boolean.FALSE;
 
         //操作项
@@ -120,9 +123,9 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         }
 
         if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
-            String code = (String)map.get("code");
+            String code = (String) map.get("code");
             //启用、禁用
-            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
+            kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
             return;
         }
 
@@ -133,15 +136,15 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
             //主单据id
-            KingdeeUtils.makeFieldJson(json,"FCustId",".", id);
+            KingdeeUtils.makeFieldJson(json, "FCustId", ".", id);
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
             if ((forbidStatus.equals("B") && Boolean.valueOf(map.get("disabled").toString()) == Boolean.FALSE) || (forbidStatus.equals("A") && Boolean.valueOf(map.get("disabled").toString()))) {
                 //启用、禁用
-                excuteOperation(apiUtils,platformEntity,map,type);
+                excuteOperation(apiUtils, platformEntity, map, type);
             }
         }
     }
@@ -149,7 +152,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
     /**
      * 启用、禁用
      */
-    private void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+    private void excuteOperation(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type) {
         //仓库状态 true禁用,false启用
         Object disabled = map.get("disabled");
         if (ObjectUtils.isEmpty(disabled)) {
@@ -167,7 +170,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
             operate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
         }
         if (StringUtils.isNotBlank(operate)) {
-            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
+            kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
         }
     }
 

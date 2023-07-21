@@ -638,7 +638,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 }
             } else {
                 //包含的时候就要弄
-                if (newProductGrade.contains(newItem.getProductGrade()) && newSaleMethod.contains(newItem.getProductGrade())) {
+                if (newProductGrade.contains(newItem.getProductGrade()) && newSaleMethod.contains(newItem.getSaleMethod())) {
                     QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
                     BeanMapper.copy(newItem, newQc);
                     newQc.setQcType(newProduct);
@@ -678,7 +678,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 }
             } else {
                 //包含的时候就要弄
-                if (newProductGrade.contains(stockInItem.getProductGrade()) && newSaleMethod.contains(stockInItem.getProductGrade())) {
+                if (newProductGrade.contains(stockInItem.getProductGrade()) && newSaleMethod.contains(stockInItem.getSaleMethod())) {
                     QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
                     BeanMapper.copy(stockInItem, newQc);
                     newQc.setQcType(stockIn);
