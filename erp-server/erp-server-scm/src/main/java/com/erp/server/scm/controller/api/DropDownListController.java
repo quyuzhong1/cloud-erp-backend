@@ -91,13 +91,13 @@ public class DropDownListController extends BaseController {
      * @return
      */
     @GetMapping("/supplier/allList")
-    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listALLSupplierDropDown() {
+    public ApiResult<List<BaseDropDownDTO.RemarkDTO>> listALLSupplierDropDown() {
         List<SupplierEntity> mapList = supplierService.list();
         if (CollectionUtils.isEmpty(mapList)) {
             return success(new ArrayList<>());
         }
-        List<BaseDropDownDTO.DisabledDTO> result = mapList.stream()
-                .map(x -> new BaseDropDownDTO.DisabledDTO(x.getId(), x.getName(),x.getDisabled()))
+        List<BaseDropDownDTO.RemarkDTO> result = mapList.stream()
+                .map(x -> new BaseDropDownDTO.RemarkDTO(x.getId(), x.getName(),x.getPaymentCondition(),x.getDisabled()))
                 .collect(Collectors.toList());
         return success(result);
     }

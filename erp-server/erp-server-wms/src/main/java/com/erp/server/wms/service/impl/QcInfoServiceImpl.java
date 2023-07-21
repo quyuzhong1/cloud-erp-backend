@@ -36,6 +36,7 @@ import com.erp.model.scm.enums.QcInsideTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.QcBillExportExcelDTO;
 import com.erp.model.wms.entity.*;
@@ -2055,5 +2056,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     }
 
-
+    @Override
+    public List<SysUserInfoEntity> listQcUser() {
+        List<SysUserInfoEntity> sysUserInfoEntities = sysUserFeign.listUserByDept("1675798259051794434");
+        return sysUserInfoEntities;
+    }
 }

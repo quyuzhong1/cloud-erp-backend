@@ -64,6 +64,7 @@
         so_delivery_notice_detail sdnd
         ON sdn.id=sdnd.main_id and sdnd.is_deleted = FALSE
         WHERE sdn.is_deleted = FALSE
+        AND sdn.invalid_status = FALSE
         AND sdn.approve_status=#{status}
         AND sdnd.is_close= FALSE
         AND sdn.source_id IN

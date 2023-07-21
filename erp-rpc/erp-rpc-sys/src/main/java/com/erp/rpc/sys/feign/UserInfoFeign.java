@@ -1,8 +1,10 @@
 package com.erp.rpc.sys.feign;
 
 import com.common.business.dto.FindUserDTO;
+import com.erp.model.sys.entity.SysUserInfoEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
@@ -19,7 +21,7 @@ public interface UserInfoFeign {
 
 
 
-        
+
     /**
      * 获取第三方绑定的用户信息
      * @author yl
@@ -45,6 +47,4 @@ public interface UserInfoFeign {
      */
     @GetMapping("feign/user/listUserByKingdeeCode")
     List<FindUserDTO> listUserByKingdeeCode(@RequestBody List<String> kingdeeCodeList);
-
-
 }

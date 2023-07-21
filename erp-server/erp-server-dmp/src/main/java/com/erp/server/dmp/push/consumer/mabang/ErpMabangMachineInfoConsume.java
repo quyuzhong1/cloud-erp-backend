@@ -1,14 +1,16 @@
 package com.erp.server.dmp.push.consumer.mabang;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
+import com.erp.model.dmp.entity.DmpBomEntity;
 import com.erp.model.dmp.entity.DmpWarehouseMappingEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.sync.MabangMachineInfoDTO;
@@ -18,6 +20,7 @@ import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.push.service.mabang.MabangInOutStockService;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.service.DmpBomService;
 import com.erp.server.dmp.service.DmpWarehouseMappingService;
 import com.erp.server.dmp.utils.MabangUtil;
 import com.google.common.collect.Lists;
@@ -54,12 +57,17 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
     private PlmTaskFeign plmTaskFeign;
 
     @Autowired
-    private MQProducerService mqProducerService;
+    private DmpBomService dmpBomService;
+
+    /**
+     * 马帮平台加工品JG-开头的对应ERP的加工组合品不是JG-开头的
+     */
+    private static final String MACHINE_SKU_PREFIX = "JG-";
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void onMessage(MabangMachineInfoDTO mabangMachineInfoDTO) {
-        log.info("监听到ERP加工单单信息，内容：{}", JSONObject.toJSONString(mabangMachineInfoDTO));
+        log.warn("监听到ERP加工单单信息，内容：{}", JSONObject.toJSONString(mabangMachineInfoDTO));
 
         // 主单
         MachineInfoEntity machineInfoEntity = mabangMachineInfoDTO.getMachineInfoEntity();
@@ -110,6 +118,19 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
         DmpWarehouseMappingEntity dmpWarehouseMappingEntity = warehouseMap.get(parentWarehouseCode);
         log.warn("ERP加工单单号【{}】，事务类型【{}】", machineInfoEntity.getCode(), WorkTypeEnum.getByCode(machineInfoEntity.getWorkType()));
 
+        // 特殊处理，马帮那边的加工SKU有些是带JG-的，从ERP那边来的可能已经去掉了JG-
+        for(MachineDetailEntity machineDetailEntity : machineDetailList) {
+            List<DmpBomEntity> bomList = dmpBomService.findBom(machineDetailEntity.getSkuNo(),  PlatformEnum.MABANG.getDesc(), "machining");
+            if(CollUtil.isEmpty(bomList)) {
+                log.warn("ERP加工单单号【{}】,SKU【{}】未匹配到马帮加工品SKU", machineInfoEntity.getCode(), machineDetailEntity.getSkuNo());
+                String makeSkuNo = MACHINE_SKU_PREFIX + machineDetailEntity.getSkuNo();
+                bomList = dmpBomService.findBom(makeSkuNo,  PlatformEnum.MABANG.getDesc(), "machining");
+                if(CollUtil.isNotEmpty(bomList)) {
+                    log.warn("ERP加工单单号【{}】,SKU补齐后【{}】匹配到马帮加工品SKU", machineInfoEntity.getCode(), makeSkuNo);
+                    machineDetailEntity.setSkuNo(makeSkuNo);
+                }
+            }
+        }
         // 审核【组装】、反审核【拆卸】
         if(  (Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), operate) && Objects.equals(machineInfoEntity.getWorkType(), WorkTypeEnum.ASSEMBLE.getCode()) )
                 || (Objects.equals(SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode(), operate) && Objects.equals(machineInfoEntity.getWorkType(), WorkTypeEnum.DISASSEMBLE.getCode()) ) ) {

@@ -7,11 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
-import com.erp.model.sys.dto.SysLoginIpDTO;
-import com.erp.model.sys.dto.SysUserDeptDTO;
-import com.erp.model.sys.dto.SysUserPagingSearchDTO;
-import com.erp.model.sys.dto.UserDTO;
-import com.erp.model.sys.dto.UserManageDTO;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -55,4 +51,22 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
      * @return
      */
     List<FindUserDTO> getListByRoleIds(List<String> roleIds);
+
+    /**
+     * 根据部门id查询用户
+     * @Author Luo_WG
+     * @Date 2023/7/20 15:54
+     * @param deptIds
+     * @return java.util.List<com.erp.model.sys.entity.SysUserInfoEntity>
+     **/
+    List<SysUserInfoEntity> listUserByDept(@Param("deptIds") List<String> deptIds);
+
+    /**
+     * 根据部门id获取所有的子部门
+     * @Author Luo_WG
+     * @Date 2023/7/20 15:54
+     * @param deptId
+     * @return java.util.List<com.erp.model.sys.entity.SysUserInfoEntity>
+     **/
+    List<SysDepartmentTreeDTO> listSonDeptAll(@Param("deptId") String deptId);
 }

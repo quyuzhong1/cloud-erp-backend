@@ -287,7 +287,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         // 增加库存数量验证（库存退货）
         String sourceType = dto.getSourceType();
-        if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) {
+        if(!Objects.equals(sourceType, ReturnOrderSourceEnum.QC.getCode())) {
             String returnMode = dto.getReturnMode();
             List<PurchaseReturnOrderDetailDTO.UpdateDTO> purchasePriceDetailList = dto.getPurchasePriceDetailList();
             for (PurchaseReturnOrderDetailDTO.UpdateDTO detail : purchasePriceDetailList) {
@@ -390,6 +390,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         if (StringUtils.isNotBlank(viewDTO.getReturnMode())) {
             viewDTO.setReturnModeName(ReturnModeEnum.getName(viewDTO.getReturnMode()));
         }
+
 
         //创库保存详情表的集合
         List<PurchaseReturnOrderDetailDTO.ViewDTO> detailViewDTOS = new ArrayList<>();
@@ -1189,7 +1190,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      * @param replenishmentQcDetailList
      */
     public void replenishmentQcInventory(Map<String,PurchaseReturnOrderEntity> replenishmentQcMap,
-                                   List<PurchaseReturnOrderDetailEntity> replenishmentQcDetailList) { //采购退货(质检退货，退货补货)
+                                         List<PurchaseReturnOrderDetailEntity> replenishmentQcDetailList) { //采购退货(质检退货，退货补货)
         if(CollUtil.isNotEmpty(replenishmentQcDetailList)) {
             InventoryInOutStockDTO receiveInventoryInOutStockDTO = new InventoryInOutStockDTO();
             receiveInventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.PO_RETURN_QC.getCode());
@@ -1220,7 +1221,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      * @param deductionQcDetailList
      */
     public void deductionQcInventory(Map<String,PurchaseReturnOrderEntity> deductionQcMap,
-                                   List<PurchaseReturnOrderDetailEntity> deductionQcDetailList) { //采购退货(质检退货，退货退款)
+                                     List<PurchaseReturnOrderDetailEntity> deductionQcDetailList) { //采购退货(质检退货，退货退款)
         if(CollUtil.isNotEmpty(deductionQcDetailList)) {
             InventoryInOutStockDTO receiveInventoryInOutStockDTO = new InventoryInOutStockDTO();
             receiveInventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.PO_RETURN_QC_REF.getCode());

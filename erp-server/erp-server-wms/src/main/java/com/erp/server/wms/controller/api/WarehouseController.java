@@ -269,4 +269,14 @@ public class WarehouseController extends BaseController {
         List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse();
         return success(list);
     }
+
+    /**
+     * 仓库列表(有参)
+     */
+    @PostMapping("/listWarehouseByParams")
+    public ApiResult<List<WarehouseDTO.ListDTO>> listWarehouseByParams(@RequestBody @Valid WarehouseDTO.ListParamDTO dto) {
+        List<WarehouseDTO.ListDTO> list = warehouseService.listWarehouseByParams(dto);
+        return success(list);
+    }
+
 }

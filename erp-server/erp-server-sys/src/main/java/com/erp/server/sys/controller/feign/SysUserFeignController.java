@@ -8,6 +8,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.erp.model.sys.dto.*;
+import com.erp.model.sys.entity.SysRoleMenuEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
@@ -409,4 +410,25 @@ public class SysUserFeignController extends BaseController {
         return sysUserInfoService.listUserByKingdeeCode(kingdeeCodeList);
     }
 
+    /**
+     * 根据角色id获取角色菜单
+     * @param roleIdList
+     * @return
+     */
+    @PostMapping("/getMenuRefRoleByRoleIds")
+    public List<SysRoleMenuEntity> getMenuRefRoleByRoleIds(@RequestBody List<String> roleIdList) {
+        return sysRoleMenuService.getMenuRefRoleByRoleIds(roleIdList);
+    }
+
+    /**
+     * 根据部门id查询用户
+     * @Author Luo_WG
+     * @Date 2023/7/20 15:49
+     * @param deptId
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.FindUserDTO>>
+     **/
+    @PostMapping("/listUserByDept")
+    public List<SysUserInfoEntity> listUserByDept(@RequestBody String deptId) {
+        return sysUserInfoService.listUserByDept(deptId);
+    }
 }

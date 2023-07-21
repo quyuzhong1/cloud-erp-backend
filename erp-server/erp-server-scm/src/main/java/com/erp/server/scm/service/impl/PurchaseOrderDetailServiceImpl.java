@@ -10,6 +10,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -295,7 +296,13 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         for (PurchaseOrderDetailEntity entity : newList) {
-
+            //赠品单价默认0
+             if (ObjectUtils.isNotEmpty(entity.getIsGift()) && entity.getIsGift()) {
+                entity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+                entity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+                entity.setTaxPrice(BigDecimal.ZERO);
+                entity.setTaxRate(BigDecimal.ZERO);
+            }
             //产品信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(skuVO)) {
@@ -351,7 +358,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             //单价
             BigDecimal taxPrice = viewDTO.getTaxPrice();
 
-            PurchaseOrderDetailDTO.AddDTO addDTO = details.stream().filter(obj -> obj.getSkuId().equals(priceDTO.getSkuId())).findFirst().orElse(null);
+            PurchaseOrderDetailDTO.AddDTO addDTO = details.stream().filter(obj -> obj.getSkuId().equals(priceDTO.getSkuId()) && MathUtil.compareTo(priceDTO.getPurchaseQty(),obj.getPurchaseQty()) == MathUtil.ZERO).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(addDTO)) {
                 String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
                 throw new ServiceException(new ApiResult(1,error));
@@ -544,5 +551,15 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     .eq(PurchaseOrderDetailEntity::getId, detailId)
                     .update();
         }
+    }
+
+    @Override
+    public void updateRemarkByIds(List<String> ids, String remark) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        lambdaUpdate().in(PurchaseOrderDetailEntity::getId,ids)
+                .set(PurchaseOrderDetailEntity::getRemark,remark)
+                .update(new PurchaseOrderDetailEntity());
     }
 }

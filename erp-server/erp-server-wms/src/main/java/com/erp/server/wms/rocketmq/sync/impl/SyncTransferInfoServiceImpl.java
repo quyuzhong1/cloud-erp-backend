@@ -1,5 +1,6 @@
 package com.erp.server.wms.rocketmq.sync.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -39,6 +40,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @description: 同步直接调拨单业务层
@@ -143,11 +145,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         if (CollectionUtils.isEmpty(dmpDetailList)) {
             throw new ServiceException(ApiError.ERROR_99048);
         }
-        //仓库信息
-        List<WarehouseEntity> warehouseList = warehouseService.listByKingdeeCodeList(Arrays.asList(entity.getInWarehouseCode(), entity.getOutWarehouseCode()));
-        if (CollectionUtils.isEmpty(warehouseList)) {
-            throw new ServiceException(ApiError.ERROR_99076,entity.getInWarehouseCode().concat(",").concat(entity.getOutWarehouseCode()));
-        }
+
         //核算公司信息
         List<BaseIdDTO.CodeDTO> companyList = sysUserFeign.listAccountingCompanyByCodeList(Arrays.asList(entity.getInOrgCode(), entity.getOutOrgCode()));
 
@@ -163,7 +161,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         resultEntity.setCode(entity.getCode());
 
         //平台来源
-        if (entity.getCode().substring(0,2).equals("SP")) {
+        if (entity.getCode().substring(0,2).equals("SP") || entity.getCode().substring(0,3).equals("FBA")) {
             resultEntity.setThirdPartySystem(ThirdPartySystemEnum.ENUM_MB.getCode());
         } else {
             resultEntity.setThirdPartySystem(ThirdPartySystemEnum.ENUM_KINGDEE.getCode());
@@ -192,19 +190,6 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         //金蝶同步状态（无需同步）
         resultEntity.setSyncKingdeeStatus(SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode());
 
-        //调入仓库
-        String inWarehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(entity.getInWarehouseCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
-        if (StringUtils.isBlank(inWarehouseId)) {
-            throw new ServiceException(ApiError.ERROR_99076,entity.getInWarehouseCode());
-        }
-        resultEntity.setInWarehouseId(inWarehouseId);
-        //调出仓库
-        String outWarehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(entity.getOutWarehouseCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
-        if (StringUtils.isBlank(outWarehouseId)) {
-            throw new ServiceException(ApiError.ERROR_99076,entity.getOutWarehouseCode());
-        }
-        resultEntity.setOutWarehouseId(outWarehouseId);
-
         if (CollectionUtils.isNotEmpty(companyList)) {
             //入库组织
             String inOrgId = companyList.stream().filter(obj -> obj.getCode().equals(entity.getInOrgCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
@@ -222,6 +207,12 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         List<String> skuNoList = dmpDetailList.stream().map(DmpTransferInfoDetailDTO::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
 
+        //仓库信息
+        List<String> warehouseCodeList = dmpDetailList.stream().flatMap(obj -> Stream.of(obj.getInWarehouseCode(), obj.getOutWarehouseCode())).collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByKingdeeCodeList(warehouseCodeList);
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException(ApiError.ERROR_99076, JSONUtil.toJsonStr(warehouseCodeList));
+        }
 
         List<TransferInfoDetailEntity> detailList = new ArrayList<>();
         for (DmpTransferInfoDetailDTO dmpDetailEntity : dmpDetailList) {
@@ -240,6 +231,20 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
                 String detailId = viewDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(dmpDetailEntity.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
                 detailEntity.setId(detailId);
             }
+
+            //调入仓库
+            String inWarehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(dmpDetailEntity.getInWarehouseCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            if (StringUtils.isBlank(inWarehouseId)) {
+                throw new ServiceException(ApiError.ERROR_99076,dmpDetailEntity.getInWarehouseCode());
+            }
+            detailEntity.setInWarehouseId(inWarehouseId);
+            //调出仓库
+            String outWarehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(dmpDetailEntity.getOutWarehouseCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            if (StringUtils.isBlank(outWarehouseId)) {
+                throw new ServiceException(ApiError.ERROR_99076,dmpDetailEntity.getOutWarehouseCode());
+            }
+            detailEntity.setOutWarehouseId(outWarehouseId);
+
             detailEntity.setSkuId(skuId);
             detailEntity.setSkuNo(dmpDetailEntity.getSkuNo());
             detailEntity.setQty(dmpDetailEntity.getQty());

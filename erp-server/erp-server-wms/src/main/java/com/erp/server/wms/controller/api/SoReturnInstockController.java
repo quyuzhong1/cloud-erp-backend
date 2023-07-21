@@ -207,7 +207,7 @@ public class SoReturnInstockController extends BaseController {
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soReturnInstockService.disApprove(dto.getIds());
+        Boolean flag = soReturnInstockService.disApprove(dto.getIds(), Boolean.TRUE);
         return flag == true ? success() : failure();
     }
 

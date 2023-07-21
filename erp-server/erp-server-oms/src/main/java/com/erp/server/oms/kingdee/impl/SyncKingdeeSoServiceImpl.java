@@ -153,8 +153,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerCode", kingSellerInfo.getKingdeePostCode());
                 resultMap.put("seller", kingSellerInfo.getKingdeeUserName());
-                    }
             }
+        }
 
 
         String currency = entity.getCurrency();

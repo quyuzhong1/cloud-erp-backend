@@ -55,6 +55,12 @@ public class CustomerDTO implements Serializable {
          */
         private String name;
 
+
+        /**
+         * 客户 集合
+         */
+        private List<String> customerIdList;
+
         /**
          * 客户简称
          */

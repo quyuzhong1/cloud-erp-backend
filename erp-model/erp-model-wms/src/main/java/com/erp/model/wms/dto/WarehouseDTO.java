@@ -162,6 +162,17 @@ public class WarehouseDTO implements Serializable {
         private ApproveStatusEnum approveStatus;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ListParamDTO {
+
+        /**
+         * 组织id集合
+         */
+        private List<String> orgIdList;
+
+    }
+
 
     /**
      * 仓库分页信息

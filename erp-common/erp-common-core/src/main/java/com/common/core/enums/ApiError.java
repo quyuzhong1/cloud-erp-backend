@@ -130,7 +130,8 @@ public enum ApiError implements Serializable {
     ERROR_9044(9044, "账号未绑定邮箱，请绑定邮箱后操作"),
     ERROR_9045(9045, "通知不存在"),
     ERROR_9046(9046, "字段编号不正确"),
-
+    SCHEME_NOT_EXIST(9047, "方案不存在"),
+    SCHEME_NAME_EXIST(9048, "查询方案[{}]已存在"),
     /**
      * 工作流错误 workflow
      * 从9040 开始  以端口号
@@ -669,7 +670,8 @@ public enum ApiError implements Serializable {
     ERROR_99076(99076,"未找到仓库金蝶编号【{}】"),
     ERROR_99077(99077,"ERP已存在直接调拨单【{}】"),
     ERROR_99078(99078,"调拨申请单已下推加工单，不支持反审核"),
-
+    ERROR_99079(99079,"【{}】退货数量不能大于待质检数量"),
+    ERROR_IN_ORG_BLANK(99080,"调入组织不能为空"),
 
 
     /**
@@ -741,7 +743,8 @@ public enum ApiError implements Serializable {
 
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
-    ERROR_end(1000000, "系统错误");
+    ERROR_end(1000000, "系统错误"),
+    ;
 
     public Integer code;
     public String msg;

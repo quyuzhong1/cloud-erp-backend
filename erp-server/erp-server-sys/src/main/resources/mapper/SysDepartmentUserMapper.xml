@@ -19,7 +19,7 @@
             AND sui.user_state=#{params.state}
         </if>
         <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
-            AND sui.${params.searchType} LIKE concat('%',#{params.searchKeyword},'%')
+            AND sui.${params.searchType} ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
 
         ORDER BY sui.update_time DESC

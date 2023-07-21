@@ -14,10 +14,14 @@ import com.erp.model.oms.entity.SoChangeDetailEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoChangeService;
@@ -75,6 +79,9 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
+    @Resource
+    private KingdeeFeign kingdeeFeign;
+
     /**
      * 销售变更单同步金碟
      *
@@ -107,16 +114,26 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             if (CollectionUtils.isEmpty(detailList)) {
                 return;
             }
+            //销售组织
+            String salesOrgId = soInfo.getSalesOrgId();
+            List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
+            //销售组织的金蝶code
+            String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
+                    map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
 
-            String salesDeptId = soInfo.getSalesDeptId();
-            //获取部门id
-            if (StringUtils.isNotBlank(salesDeptId)) {
-                SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(salesDeptId);
-                //销售部门
-                if (!Objects.isNull(departmentDTO)) {
-                    resultMap.put("deptCode", departmentDTO.getCode());
-                }
+            //销售员
+            String sellerId = soInfo.getSellerId();
+            String deptCode = "";
+
+            //当为空的时候 就取岗位表的
+            KingdeePostDTO.FindUserKingdeePostInfoDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostInfoDTO();
+            findUserPostKingdee.setUserId(sellerId);
+            findUserPostKingdee.setOrgCode(salesOrgCode);
+            KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePost(findUserPostKingdee);
+            if (kingdeePost != null) {
+                deptCode = kingdeePost.getKingdeeDeptCode();
             }
+            resultMap.put("deptCode", deptCode);
 
             //客户id
             String customerId = soInfo.getCustomerId();
@@ -126,7 +143,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             //单据类型
             resultMap.put("orderType", "XSDDBGD01_SYS");
             //单据日期
-            resultMap.put("billDate", soInfo.getCreateTime().toLocalDate());
+            resultMap.put("billDate", entity.getBillDate());
             //客户
             if (StringUtils.isNotBlank(customerId)) {
                 CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
@@ -136,16 +153,19 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             }
             //变更原因
             resultMap.put("remark", entity.getRemark());
-            //销售员
-            String sellerId = soInfo.getSellerId();
+
             //获取员工
             if (StringUtils.isNotBlank(sellerId)) {
-                //获取员工 岗位信息
-                KingdeePostDTO.UserKingdeePostInfoDTO userDTO = sysUserFeign.getUserKingdeePostByUserId(sellerId);
+                KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+                findBusinessOperator.setOrgCode(salesOrgCode);
+                findBusinessOperator.setUserId(sellerId);
+                findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.YSY.getCode());
+                //获取员工业务信息
+                KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
                 //销售员
-                if (!Objects.isNull(userDTO)) {
-                    resultMap.put("sellerCode", userDTO.getKingdeePostCode());
-                    resultMap.put("seller", userDTO.getUserName());
+                if (!Objects.isNull(kingSellerInfo)) {
+                    resultMap.put("sellerCode", kingSellerInfo.getKingdeePostCode());
+                    resultMap.put("seller", kingSellerInfo.getKingdeeUserName());
                 }
             }
 
@@ -155,8 +175,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 kingdeeWarehouseCode = warehouseList.get(0).getKingdeeWarehouseCode();
             }
-            //销售组织
-            String salesOrgId = soInfo.getSalesOrgId();
+
             //库存组织
             String warehouseOrgId = soInfo.getWarehouseOrgId();
             List<String> orgIdList = new ArrayList<>(2);
@@ -164,9 +183,6 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             orgIdList.add(salesOrgId);
             String warehouseOrgCode = "";
             if (CollectionUtils.isNotEmpty(orgIdList)) {
-                List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
-                String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
-                        map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
                 if (StringUtils.isNotBlank(salesOrgCode)) {
                     resultMap.put("salesOrgCode", salesOrgCode);
                 }

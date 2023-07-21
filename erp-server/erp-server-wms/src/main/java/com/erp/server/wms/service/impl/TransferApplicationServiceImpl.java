@@ -27,9 +27,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -617,13 +615,17 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             TransferApplicationDTO.GenerateTransferInfoDTO transferInfoDTO = value.get(0);
 
             //调拨方向
-            String transferDirection = transferApplicationList.stream().filter(obj -> obj.getId().equals(transferInfoDTO.getSourceId())).map(TransferApplicationEntity::getTransferDirection).findFirst().orElse("");
-
+            TransferApplicationEntity entity = transferApplicationList.stream().filter(obj -> obj.getId().equals(transferInfoDTO.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_99043);
+            }
             //直接调拨单
             if (MathUtil.ZERO.equals(type)) {
                 TransferInfoDTO.AddDTO addInfoDTO = new TransferInfoDTO.AddDTO();
                 BeanMapperUtils.copy(transferInfoDTO,addInfoDTO);
-                addInfoDTO.setTransferDirection(transferDirection);
+                addInfoDTO.setTransferDirection(entity.getTransferDirection());
+                addInfoDTO.setOutOrgId(entity.getOutOrgId());
+                addInfoDTO.setInOrgId(entity.getInOrgId());
                 addInfoDTO.setRemark(null);
                 List<TransferInfoDetailDTO.AddDTO> addDetailList = new ArrayList<>();
                 for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
@@ -631,6 +633,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                     checkGenerateTransfer(transferInfoDetailList,transferOutDetailList,detailList,dto);
                     TransferInfoDetailDTO.AddDTO addDetailDTO = new TransferInfoDetailDTO.AddDTO();
                     BeanMapperUtils.copy(dto,addDetailDTO);
+                    addDetailDTO.setOutWarehouseId(entity.getOutWarehouseId());
                     addDetailList.add(addDetailDTO);
                 }
                 addInfoDTO.setDetailList(addDetailList);
@@ -643,7 +646,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 //分步式调出单
                 TransferOutDTO.AddDTO addOutDTO = new TransferOutDTO.AddDTO();
                 BeanMapperUtils.copy(transferInfoDTO,addOutDTO);
-                addOutDTO.setTransferDirection(transferDirection);
+                addOutDTO.setTransferDirection(entity.getTransferDirection());
+                addOutDTO.setOutWarehouseId(entity.getOutWarehouseId());
                 addOutDTO.setRemark(null);
                 List<TransferOutDetailDTO.AddDTO> addDetailList = new ArrayList<>();
                 for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {

@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -335,4 +336,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return PagingTotalDTO
      */
     PurchaseOrderDTO.PagingTotalDTO pagingTotal(PurchaseOrderDTO.SearchParamDTO dto);
+    /**
+     * @description: 更新明细备注
+     * @author Will
+     * @date: 2023/7/19 14:59
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateRemark(BaseIdsDTO.RemarkDTO dto);
 }

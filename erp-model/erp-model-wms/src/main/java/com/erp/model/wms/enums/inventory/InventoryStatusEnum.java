@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @Classname: InventoryStatusEnum
@@ -66,6 +67,16 @@ public enum InventoryStatusEnum {
      */
     public static InventoryStatusEnum getByCode(String code) {
         return Arrays.stream(InventoryStatusEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
+    }
+
+    /**
+     * 根据代码获取名称
+     * @param code
+     * @return
+     */
+    public static String getNameByCode(String code) {
+        InventoryStatusEnum inventoryStatusEnum = getByCode(code);
+        return Optional.ofNullable(inventoryStatusEnum).map(InventoryStatusEnum::getName).orElse("");
     }
 
 }

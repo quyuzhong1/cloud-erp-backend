@@ -23,6 +23,7 @@ import com.erp.model.plm.dto.ProductDetailOperateDTO;
 import com.erp.model.plm.dto.TaskHandleDataDTO;
 import com.erp.model.plm.dto.TaskOperateDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.sys.entity.SysRoleMenuEntity;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.workflow.dto.ApproveParamDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
@@ -123,18 +124,15 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     public List<WorkOptionDTO.WaitDoMenu> listWaitDoMenu(String sysClassify) {
         LoginUser userInfo = commonService.getUserInfo();
         List<String> roleIds = sysUserFeign.getRoleIdList(userInfo.getUid());
-        List<SysMenuVO> leftMenuList = sysUserFeign.findLeftMenuByRoleIds(roleIds);
-        leftMenuList.forEach(req -> {
-            List<String> collect = req.getChildrenList().stream().map(SysMenuVO::getMenuUrl).distinct().collect(Collectors.toList());
-        });
-
+        List<SysRoleMenuEntity> menuRefRoleByRoleIds = sysUserFeign.getMenuRefRoleByRoleIds(roleIds);
         List<String> collect = new ArrayList<>();
         List<WorkOptionDTO.WaitDoMenu> waitDoMenus = baseMapper.listWaitDoMenu(sysClassify);
-
         List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
         if (ObjectUtil.isNotEmpty(myWorkOptionDTOS)) {
             collect = myWorkOptionDTOS.stream().map(WorkOptionDTO.MyWorkOptionDTO::getModuleStatusId).collect(Collectors.toList());
         }
+
+        List<WorkOptionDTO.WaitDoMenu> returnWaitDoMenus = new ArrayList<>();
         for (WorkOptionDTO.WaitDoMenu req : waitDoMenus) {
             req.setName(req.getModuleClassify() + "-" + req.getModuleStatusName());
             if (collect.contains(req.getId())) {
@@ -142,8 +140,12 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             } else {
                 req.setSign(0);
             }
+            String menuId = menuRefRoleByRoleIds.stream().filter(obj -> obj.getMenuId().equals(req.getSysMenuId())).map(SysRoleMenuEntity::getMenuId).distinct().findFirst().orElse("");
+            if (StringUtils.isNotBlank(menuId)) {
+                returnWaitDoMenus.add(req);
+            }
         }
-        return waitDoMenus;
+        return returnWaitDoMenus;
     }
 
     /**
@@ -493,7 +495,15 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<WorkOptionDTO.ApproveViewDTO> records = pageData.getRecords();
+        List<String> businessIds = records.stream().map(WorkOptionDTO.ApproveViewDTO::getBusinessId).distinct().collect(Collectors.toList());
+
+        List<ProcessTaskManagementEntity> processTaskManagementEntities = processTaskManagementService.listProcessByBusinessId(businessIds);
+
         records.forEach(req -> {
+            List<String> curApproveName = processTaskManagementEntities.stream().filter(obj -> req.getBusinessId().equals(obj.getBusinessId()) && obj.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+            String userName = StringUtils.join(curApproveName, ",");
+            req.setApproveUserName(userName);
+
             if (StringUtils.isNotBlank(req.getApproveDuration())) {
                 BigDecimal bigDecimal = BigDecimal.valueOf(Double.valueOf(req.getApproveDuration()));
                 String value = String.valueOf(bigDecimal.divide(BigDecimal.valueOf(3600), 2, BigDecimal.ROUND_DOWN));

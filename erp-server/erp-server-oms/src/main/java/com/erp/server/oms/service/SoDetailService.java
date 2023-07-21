@@ -241,4 +241,12 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @param item
      */
     void updateCost(String id, SoDetailEntity item);
+    /**
+     * @description: 更新明细备注
+     * @author Will
+     * @date: 2023/7/19 15:17
+     * @param ids
+     * @param remark
+     */
+    void updateRemarkByIds(List<String> ids, String remark);
 }

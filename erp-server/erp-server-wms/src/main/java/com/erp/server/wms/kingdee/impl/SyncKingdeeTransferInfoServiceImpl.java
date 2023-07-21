@@ -32,6 +32,7 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @description: 同步直接调拨单
@@ -77,8 +78,11 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         resultMap.put("type", entity.getType());
         //调拨日期
         resultMap.put("billDate", entity.getBillDate());
-        //仓库
-        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getInWarehouseId(), entity.getOutWarehouseId()));
+
+        //调拨方向
+        resultMap.put("transferDirection", entity.getTransferDirection());
+        //备注
+        resultMap.put("remark", entity.getRemark());
 
         if (StringUtils.isNotBlank(entity.getWarehouseKeeperId())) {
             //仓管员编码
@@ -87,11 +91,6 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
                 resultMap.put("warehouseKeeperCode",findUserDTO.getCode());
             }
         }
-
-        //调拨方向
-        resultMap.put("transferDirection", entity.getTransferDirection());
-        //备注
-        resultMap.put("remark", entity.getRemark());
 
         //组织机构编码
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getInOrgId(), entity.getOutOrgId()));
@@ -122,6 +121,12 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
             return;
         }
 
+        List<String> warehouseIds = detailList.stream().flatMap(obj -> Stream.of(obj.getInWarehouseId(), obj.getOutWarehouseId())).collect(Collectors.toList());
+
+        //仓库
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
+
+
         List<JSONObject> list = new ArrayList<>();
         for (TransferInfoDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
@@ -141,10 +146,10 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
 
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 //调入仓库编码
-                String inWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getInWarehouseId()))
+                String inWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(detail.getInWarehouseId()))
                         .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
                 //调出仓库编码
-                String outWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getOutWarehouseId()))
+                String outWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(detail.getOutWarehouseId()))
                         .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
                 //调入仓库
                 jsonObject.set("inWarehouseCode", inWarehouseCode);

@@ -224,6 +224,43 @@ public class SoInfoController extends BaseController {
         return result ? success() : failure();
     }
 
+    /**
+     * 更新明细备注
+     * @author Will
+     * @date: 2023/7/19 14:58
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/updateDetailRemark")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:so:update",
+            serviceClass = SoInfoService.class,
+            keyIdName = "ids")
+    public ApiResult updateDetailRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        Boolean flag = soInfoService.updateDetailRemark(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 更新备注
+     * @author Will
+     * @date: 2023/7/19 14:58
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/updateRemark")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:so:update",
+            serviceClass = SoInfoService.class,
+            keyIdName = "ids")
+    public ApiResult updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        Boolean flag = soInfoService.updateRemark(dto);
+        return flag == true ? success() : failure();
+    }
+
+
 
     /**
      * 审核
@@ -473,4 +510,15 @@ public class SoInfoController extends BaseController {
         return success(printDTOList);
     }
 
+    /**
+     * 临时接口：修改未税单价
+     * @Author Luo_WG
+     * @Date 2023/7/13 10:44
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
+     **/
+    @PostMapping("/temporaryUpdate")
+    public ApiResult temporaryUpdate() {
+        Boolean aBoolean = soInfoService.temporaryUpdate();
+        return aBoolean ? success() : failure();
+    }
 }

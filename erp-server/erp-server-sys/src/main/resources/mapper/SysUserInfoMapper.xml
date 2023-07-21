@@ -22,7 +22,7 @@
             AND sui.user_state=#{params.state}
         </if>
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND sui.${params.searchType} LIKE concat('%',#{params.searchKeyword},'%')
+            AND sui.${params.searchType} LIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         <if test="params.startTime!=null">
             AND last_login_time &gt;=#{params.startTime}
@@ -150,5 +150,50 @@
         </foreach>
     </select>
 
+    <select id="listUserByDept" resultType="com.erp.model.sys.entity.SysUserInfoEntity">
+        SELECT
+        sui.uid,
+        sui.user_name,
+        sui.real_name,
+        sui.mobile,
+        sui.user_state,
+        sui.last_login_time,
+        sui.delete_state,
+        sui.last_login_ip,
+        sui.login_count,
+        sui.create_time,
+        sui.update_time,
+        sui.user_account,
+        sui.password,
+        sui.salt,
+        sui.email,
+        sui.head_icon,
+        sui.code,
+        sui.sync_kingdee_status,
+        sui.sync_kingdee_time,
+        sui.sync_kingdee_id,
+        sui.sync_operate
+        from sys_user_info sui
+        LEFT JOIN sys_department_user sdu on sui.uid = sdu.user_id
+        where 1 = 1
+        <if test="deptIds != null and deptIds.size() > 0">
+            and sdu.department_id in
+            <foreach collection="deptIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+
+    <select id="listSonDeptAll" resultType="com.erp.model.sys.dto.SysDepartmentTreeDTO">
+        WITH RECURSIVE T ( ID, NAME, parent_id, PATH ) AS (
+        SELECT ID,NAME,PARENT_ID,ID::text AS PATH FROM sys_department
+        WHERE id = #{deptId}
+        UNION ALL
+        SELECT st.ID,st.NAME,st.PARENT_ID,T.PATH ||','|| st.ID
+        FROM sys_department st JOIN T ON st.PARENT_ID = T.ID
+        )
+        SELECT ID,NAME,PARENT_ID,PATH FROM T ORDER BY 	PATH;
+    </select>
 
 </mapper>

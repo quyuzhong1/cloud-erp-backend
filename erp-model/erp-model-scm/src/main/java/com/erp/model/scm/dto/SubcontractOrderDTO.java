@@ -495,6 +495,21 @@ public class SubcontractOrderDTO implements Serializable {
         private BigDecimal price;
 
         /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
          * 金额
          */
         private BigDecimal amount;
@@ -508,6 +523,11 @@ public class SubcontractOrderDTO implements Serializable {
          * 供应商id
          */
         private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
 
         /**
          * 是否赠品
@@ -524,6 +544,10 @@ public class SubcontractOrderDTO implements Serializable {
          */
         private Integer quantity;
 
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
 
     }
 
@@ -575,6 +599,11 @@ public class SubcontractOrderDTO implements Serializable {
          * 是否赠品
          */
         private Boolean isGift;
+
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
 
     }
 

@@ -41,6 +41,18 @@ public class TransferInfoDetailDTO implements Serializable {
         private Integer  qty;
 
         /**
+         * 调出仓库id
+         */
+        @NotBlank(message = "调出仓库不能为空")
+        private String outWarehouseId;
+
+        /**
+         * 调入仓库id
+         */
+        @NotBlank(message = "调入仓库不能为空")
+        private String inWarehouseId;
+
+        /**
          * 调入仓位id
          */
         private String  inWarehouseLocation;
@@ -95,6 +107,16 @@ public class TransferInfoDetailDTO implements Serializable {
          * 即时库存
          */
         private Integer curInventoryQty;
+
+        /**
+         * 调出仓库
+         */
+        private String outWarehouseName;
+
+        /**
+         * 调入仓库
+         */
+        private String inWarehouseName;
 
         /**
          * 调出仓位

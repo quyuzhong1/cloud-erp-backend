@@ -646,6 +646,28 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         return this.lambdaQuery().in(WarehouseEntity::getKingdeeWarehouseCode,kingdeeWarehouseCodeList).list();
     }
 
+
+    @Override
+    public List<WarehouseDTO.ListDTO> listWarehouseByParams(WarehouseDTO.ListParamDTO dto) {
+        List<WarehouseEntity> list = lambdaQuery()
+                .in(CollectionUtils.isNotEmpty(dto.getOrgIdList()),WarehouseEntity::getOrgId,dto.getOrgIdList())
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
+        List<String> orgIds = list.stream().map(WarehouseEntity::getOrgId).collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+        for (WarehouseDTO.ListDTO listDTO : resultList) {
+            String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
+            listDTO.setOrgName(orgName);
+            if (!ApproveStatusEnum.APPROVE.equals(listDTO.getApproveStatus())) {
+                listDTO.setDisabled(true);
+            }
+        }
+        return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
+    }
+
     /**
      * 更改状态
      *

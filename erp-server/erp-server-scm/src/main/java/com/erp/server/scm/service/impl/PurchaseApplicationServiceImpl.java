@@ -119,6 +119,10 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
 
+    @Resource
+    private SupplierService supplierService;
+
+
     @Override
     public PagingVO<PurchaseApplicationDTO.ListDTO> paging(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -426,9 +430,14 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //设置采购订单生成类型
         List<PurchaseApplicationDetailEntity> detailList = setCreatePoType(list, mainList);
 
+
+
         //供应商默认联系人
         List<String> supplierIds = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getSupplierId).collect(Collectors.toList());
         List<SupplierContactEntity> defaultSupplierContactList = supplierContactService.getDefaultBySupplierIdList(supplierIds);
+
+        //供应商
+        List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
 
         //委外订单
         List<String> applicationDetailIds = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseApplicationDetailId).collect(Collectors.toList());
@@ -455,9 +464,14 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             addDTO.setDeliveryWarehouseId(value.get(0).getDestWarehouseId());
             addDTO.setPurchaseUserId(value.get(0).getPurchaseUserId());
 
+            //付款条件
+            String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(value.get(0).getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
+
+
             //采购订单供应商信息
             PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();
             supplierDTO.setSupplierId(value.get(0).getSupplierId());
+            supplierDTO.setPaymentCondition(paymentCondition);
             //供应商默认联系人
             if (CollectionUtils.isNotEmpty(defaultSupplierContactList)) {
                 SupplierContactEntity supplierContactEntity = defaultSupplierContactList.stream().filter(obj -> obj.getSupplierId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);

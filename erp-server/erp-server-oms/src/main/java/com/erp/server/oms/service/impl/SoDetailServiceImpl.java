@@ -318,7 +318,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
             if (qty > curInventoryQty) {
                 // 当可用即时库存数量小于销售数量时， 缺货数量=可用即时库存数量-(销售数量-发货通知单数量)；
-                Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceId().equals(item.getId())).
+                Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getDetailId().equals(item.getId())).
                         mapToInt(SoDeliveryNoticeDetailDTO.ListDTO::getDeliveryQty).sum();
                 scarceQty = curInventoryQty - (qty - deliveryNoticeQty);
                 scarceQty = scarceQty > 0 ? 0 : Math.abs(scarceQty);
@@ -898,7 +898,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
              */
             Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
             if (qty > curInventoryQty) {
-                Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceId().equals(item.getId())).
+                Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceDetailId().equals(item.getId())).
                         mapToInt(SoDeliveryNoticeDetailDTO.ListDTO::getDeliveryQty).sum();
                 scarceQty = curInventoryQty - (qty - deliveryNoticeQty);
                 scarceQty = scarceQty > 0 ? 0 : Math.abs(scarceQty);
@@ -1261,6 +1261,16 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 .set(SoDetailEntity::getSaleProfit, item.getSaleProfit())
                 .set(SoDetailEntity::getSaleProfitRate, item.getSaleProfitRate())
                 .eq(SoDetailEntity::getId, id).update();
+    }
+
+    @Override
+    public void updateRemarkByIds(List<String> ids, String remark) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        lambdaUpdate().in(SoDetailEntity::getId,ids)
+                .set(SoDetailEntity::getRemark,remark)
+                .update(new SoDetailEntity());
     }
 
 }
