@@ -325,10 +325,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 viewDetailDTO.setSpuNo(skuVO.getSpuNo());
             }
             //根据组织、仓库、sku查询可用库存
-            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDetailDTO.getOutWarehouseId(), viewDetailDTO.getSkuId());
+            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDetailDTO.getOutWarehouseId(), viewDetailDTO.getSkuId(),viewDetailDTO.getOutWarehouseLocation());
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
-            viewDetailDTO.setInWarehouseLocation(viewDetailDTO.getInWarehouseLocation());
-            viewDetailDTO.setOutWarehouseLocation(viewDetailDTO.getOutWarehouseLocation());
         }
         viewDTO.setDetailList(viewDetailList);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
