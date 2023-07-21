@@ -41,22 +41,24 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             }
         }
         List<String> notExistIdList = detailIds.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> notExistDetailEntityList = new ArrayList<>();
-        List<PurchaseOrderDetailEntity> existDetailEntityList = new ArrayList<>();
+/*        List<PurchaseOrderDetailEntity> notExistDetailEntityList = new ArrayList<>();
+        List<PurchaseOrderDetailEntity> existDetailEntityList = new ArrayList<>();*/
         for (PurchaseOrderDetailEntity detailEntity : purchaseOrderDetailEntityList) {
             if (notExistIdList.contains(detailEntity.getId())) {
-                notExistDetailEntityList.add(detailEntity);
+//                notExistDetailEntityList.add(detailEntity);
+                this.save(detailEntity);
             }
             if (existIdList.contains(detailEntity.getId())) {
-                existDetailEntityList.add(detailEntity);
+//                existDetailEntityList.add(detailEntity);
+                this.saveOrUpdate(detailEntity);
             }
         }
-        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
+/*        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
             this.saveBatch(notExistDetailEntityList);
         }
         if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
             baseMapper.updateBatchSelective(existDetailEntityList);
-        }
+        }*/
         return Boolean.TRUE;
     }
 }
