@@ -5,7 +5,6 @@ import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 /**
  * @author Lambda
  * @Classname SyncB2CSoOutstockService
- * @Description TODO
  * @Date 2023-06-27 10:54
  * @Created by yl
  */

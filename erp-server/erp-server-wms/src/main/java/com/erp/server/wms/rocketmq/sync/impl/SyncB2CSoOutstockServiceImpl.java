@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 /**
  * @author Lambda
  * @Classname SyncB2CSoOutstockServiceImpl
- * @Description TODO
  * @Date 2023-06-27 10:54
  * @Created by yl
  */

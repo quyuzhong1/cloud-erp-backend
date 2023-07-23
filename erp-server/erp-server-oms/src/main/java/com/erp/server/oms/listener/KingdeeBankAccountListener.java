@@ -18,7 +18,6 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname KingdeeBankAccountListener
- * @Description TODO
  * @Date 2023-07-19 9:12
  * @Created by yl
  */

@@ -8,7 +8,6 @@ import javax.validation.constraints.NotBlank;
 /**
  * @author Lambda
  * @Classname DeptKingdeeFTO
- * @Description TODO
  * @Date 2023-07-07 1:50
  * @Created by yl
  */

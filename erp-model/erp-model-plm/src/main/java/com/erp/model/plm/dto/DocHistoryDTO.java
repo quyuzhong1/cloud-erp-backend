@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 /**
  * @author Lambda
  * @Classname DocHistoryDTO
- * @Description TODO
  * @Date 2023-06-25 9:44
  * @Created by yl
  */

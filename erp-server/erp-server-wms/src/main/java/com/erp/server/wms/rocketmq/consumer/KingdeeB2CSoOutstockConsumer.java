@@ -22,7 +22,6 @@ import javax.annotation.Resource;
  *
  * @author Lambda
  * @Classname KingdeeB2CSoOutstockConsumer
- * @Description TODO
  * @Date 2023-06-27 10:21
  * @Created by yl
  */

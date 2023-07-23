@@ -9,7 +9,6 @@ import java.io.Serializable;
 /**
  * @author Lambda
  * @Classname ShopDTO
- * @Description TODO
  * @Date 2023-06-28 18:28
  * @Created by yl
  */
