@@ -145,9 +145,10 @@ public class KingdeePullServiceTest {
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "XSCKD4064972"));
+        queryFilters.add(String.format("FBillNo = '%s'", "XSCKD4064982"));
         String filterStr = String.join(" and ", queryFilters);//5814757
         String fieldKeys = "FModifyDate,FDocumentStatus,FApproveDate";
+        map.put("FCustMatID.FNumber", "XSCKD01_SYS，XSCKD07_SYS");
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
         System.out.println(queryList);
     }

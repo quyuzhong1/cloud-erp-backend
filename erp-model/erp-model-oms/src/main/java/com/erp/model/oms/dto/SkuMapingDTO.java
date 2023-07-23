@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname SkuMapingDTO
- * @Description TODO
+
  * @Date 2023-06-28 17:24
  * @Created by yl
  */

@@ -56,6 +56,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -1258,5 +1259,32 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     public List<String> getIdsByTemp() {
         return baseMapper.getIdsByTemp();
+    }
+
+
+    /**
+     * 金蝶同步到系统
+     * @author yl
+     * @date 2023-07-21 14:44
+     * @param soOutstock 销售出库单
+     * @param detailList 销售出库详情
+     * @param flagId  已存在的flagId
+     * @return void
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class,propagation = Propagation.REQUIRES_NEW)
+    public void handleKingdeeToErp(SoOutstockEntity soOutstock, List<SoOutstockDetailEntity> detailList, String flagId) {
+        if (StringUtils.isNotBlank(flagId)) {
+            //回滚库存
+            InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_OUTSTOCK, Arrays.asList(flagId));
+            inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+            this.removeById(flagId);
+            soOutstockDetailService.removeByMainIdList(Arrays.asList(flagId));
+        }
+
+        //保存销售出库单
+        this.save(soOutstock);
+        //保存销售出库单详情
+        soOutstockDetailService.saveBatch(detailList);
     }
 }

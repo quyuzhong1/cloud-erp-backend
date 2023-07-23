@@ -11,7 +11,6 @@ import java.io.Serializable;
  * 同步
  * @author Lambda
  * @Classname SyncKingdeeB2cSoOutstockDTO
- * @Description TODO
  * @Date 2023-07-01 11:34
  * @Created by yl
  */

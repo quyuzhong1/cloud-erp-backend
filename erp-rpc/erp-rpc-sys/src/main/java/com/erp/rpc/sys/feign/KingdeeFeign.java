@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 /**
  * @author Lambda
  * @Classname DeptKingFeign
- * @Description TODO
  * @Date 2023-07-07 1:38
  * @Created by yl
  */
