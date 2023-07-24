@@ -724,6 +724,16 @@ public class SoInfoDTO implements Serializable {
 
 
         /**
+         * 国家id
+         */
+        private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
+        /**
          * 收货人
          */
         private String receiverName;

@@ -403,6 +403,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (StringUtils.isNotBlank(customerId)) {
             CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
             customerName = customerInfo.getName();
+
+            //国家
+            String countryId = customerInfo.getCountryId();
+            view.setCountryId(countryId);
+            // 国家
+            List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+            //国家
+            if (CollectionUtils.isNotEmpty(countryList)) {
+                String countryName = countryList.stream().filter(obj -> obj.getId().equals(view.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                view.setCountryName(countryName);
+            }
         }
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(Arrays.asList(soInfo.getId()));
 
