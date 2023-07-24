@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.sys.dto.CfgUserRangeDTO;
@@ -157,10 +158,11 @@ public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper
         if(CollUtil.isEmpty(rangeList)) {
             // 获取默认的区间配置
             LinkedHashMap<String, List<CfgUserRangeDTO.UserRangeDataDTO>> rangeMap = userRangeProperties.getRangeMap();
-            rangeList = rangeMap.get(type);
+            List configRangeList = rangeMap.get(type);
 
-            if(CollUtil.isNotEmpty(rangeList)) {
+            if(CollUtil.isNotEmpty(configRangeList)) {
                 // 需要赋值展示名称
+                rangeList = BeanMapper.copyList(configRangeList, CfgUserRangeDTO.UserRangeDataDTO.class);
                 rangeList.stream().forEach(data-> data.setName(StrUtil.format(formatName, data.getStartValue(), data.getEndValue())));
             }
         }
