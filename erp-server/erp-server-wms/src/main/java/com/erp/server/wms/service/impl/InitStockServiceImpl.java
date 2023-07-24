@@ -555,6 +555,9 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 throw new ServiceException(StrUtil.format("sku编码【{}】在仓库【{}】仓位【{}】中已经存在", addDTO.getSkuNo(), warehouseDTO.getName(), warehouseLocationCode));
             }
              */
+            if(0 == addDTO.getQty().intValue()) {
+                throw new ServiceException(StrUtil.format("sku编码【{}】期初数量不能为0", addDTO.getSkuNo()));
+            }
         }
     }
 
@@ -599,6 +602,9 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 throw new ServiceException(StrUtil.format("sku编码【{}】在仓库【{}】库位【{}】中已经存在", updateDTO.getSkuNo(), warehouseDTO.getName(), warehouseLocationCode));
             }
              */
+            if(0 == updateDTO.getQty().intValue()) {
+                throw new ServiceException(StrUtil.format("sku编码【{}】期初数量不能为0", updateDTO.getSkuNo()));
+            }
         }
     }
 

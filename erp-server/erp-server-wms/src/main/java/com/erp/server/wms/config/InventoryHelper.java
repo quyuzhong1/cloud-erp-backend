@@ -61,6 +61,11 @@ public class InventoryHelper {
 
     private static Map<InventoryBizTypeEnum, InventoryStockService> inventoryServiceMap;
 
+    /**
+     * 允许录入负数的库存业务单据（临时打开）
+     */
+    public static List<InventorySourceTypeEnum> ALLOW_NEGATIVE_INVENTORY = Lists.newArrayList(InventorySourceTypeEnum.INIT_STOCK);
+
     @PostConstruct
     public void init() {
         Map<String,InventoryStockService> springInventoryServiceMap  = applicationContext.getBeansOfType(InventoryStockService.class);

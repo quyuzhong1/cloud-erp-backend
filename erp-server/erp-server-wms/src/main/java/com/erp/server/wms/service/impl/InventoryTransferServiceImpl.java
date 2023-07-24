@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.*;
+import com.erp.server.wms.config.InventoryHelper;
 import com.erp.server.wms.service.InventoryStockService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
@@ -52,6 +53,15 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
             if(baseParam instanceof TransferDTO) { // 调拨走交易规则
                 TransferDTO param = (TransferDTO)baseParam;
                 ValidatorUtil.validateEntity(param);
+
+                if(0 == param.getQty().intValue()) {
+                    throw new ServiceException("库存变更数量不能等于0");
+                }
+                if(!InventoryHelper.ALLOW_NEGATIVE_INVENTORY.contains(param.getSourceType())) {
+                    if(param.getQty().intValue() < 0) {
+                        throw new ServiceException("库存变更数量不能小于0");
+                    }
+                }
 
                 if(ignoreInventorySkuIds.contains(param.getSkuId())) {
                     log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", param.getSkuId(), param.getSkuNo());

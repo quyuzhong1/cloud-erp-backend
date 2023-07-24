@@ -14,6 +14,7 @@ import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.wms.config.InventoryHelper;
 import com.erp.server.wms.service.InventoryStockService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
@@ -57,6 +58,14 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
             if(baseParam instanceof InOutStockDTO) { // 出入库业务-走交易规则
                 InOutStockDTO param = (InOutStockDTO) baseParam;
                 ValidatorUtil.validateEntity(param);
+                if(0 == param.getQty().intValue()) {
+                    throw new ServiceException("库存变更数量不能等于0");
+                }
+                if(!InventoryHelper.ALLOW_NEGATIVE_INVENTORY.contains(param.getSourceType())) {
+                    if(param.getQty().intValue() < 0) {
+                        throw new ServiceException("库存变更数量不能小于0");
+                    }
+                }
 
                 if(ignoreInventorySkuIds.contains(param.getSkuId())) {
                     log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", param.getSkuId(), param.getSkuNo());
