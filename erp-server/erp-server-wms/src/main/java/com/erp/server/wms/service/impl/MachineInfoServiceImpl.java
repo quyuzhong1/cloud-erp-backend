@@ -826,4 +826,11 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         });
     }
 
+    @Override
+    public List<MachineInfoEntity> listBySourceIds(List<String> ids) {
+        return lambdaQuery()
+                .in(MachineInfoEntity::getSourceId,ids)
+                .eq(MachineInfoEntity::getInvalidStatus,Boolean.FALSE)
+                .list();
+    }
 }
