@@ -79,7 +79,7 @@ public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
      * 增加或减少库存都传正数，程序判断正数或负数；当前仓和目的仓操作数量正反相等
      */
     @NotNull(message = "库存变更数量不能为空")
-    @Min(value = 1,message = "库存变更数量不能小于1")
+    // @Min(value = 1,message = "库存变更数量不能小于1")
     private Integer qty;
 
 
