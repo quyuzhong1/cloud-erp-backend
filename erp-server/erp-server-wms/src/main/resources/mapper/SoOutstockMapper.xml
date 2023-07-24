@@ -26,6 +26,8 @@
         so.create_user_name,
         so.create_time,
         so.track_no,
+        so.seller_id,
+        so.seller_name,
         sod.sku_id,
         sod.sku_no,
         sod.plan_qty,
@@ -64,6 +66,12 @@
             AND so.customer_id IN
             <foreach collection="params.customerIdList" item="customerId" open="(" separator="," close=")">
                 #{customerId}
+            </foreach>
+        </if>
+        <if test="params.sellerIdList !=null and params.sellerIdList.size>0">
+            AND so.seller_id IN
+            <foreach collection="params.sellerIdList" item="item" open="(" separator="," close=")">
+                #{item}
             </foreach>
         </if>
         <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
@@ -124,6 +132,8 @@
            so.create_user_name,
            so.create_time,
            so.track_no,
+           so.seller_id,
+           so.seller_name,
            sod.sku_id,
            sod.sku_no,
            sod.plan_qty,
@@ -170,6 +180,12 @@
                     AND so.customer_id IN
                     <foreach collection="params.customerIdList" item="customerId" open="(" separator="," close=")">
                         #{customerId}
+                    </foreach>
+                </if>
+                <if test="params.sellerIdList !=null and params.sellerIdList.size>0">
+                    AND so.seller_id IN
+                    <foreach collection="params.sellerIdList" item="item" open="(" separator="," close=")">
+                        #{item}
                     </foreach>
                 </if>
                 <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
