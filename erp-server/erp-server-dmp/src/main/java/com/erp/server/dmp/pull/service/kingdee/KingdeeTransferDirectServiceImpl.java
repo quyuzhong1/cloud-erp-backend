@@ -168,7 +168,7 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         queryFilters.add(StrUtil.format("FThirdSystem != '{}'", CommonConstants.SYSTEM));
         queryFilters.add(StrUtil.format(" ((FModifyDate >= '{}' and FModifyDate <= '{}') or (FApproveDate >= '{}' and FApproveDate < '{}'))",sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime),sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime)));
         String filterStr = String.join(" and ",  queryFilters );
-        filterStr = filterStr.concat(StrUtil.format(" OR (FApproveDate >= '{}' and FApproveDate < '{}')", sdf.format(lastTime), sdf.format(nextTime)));
+
         String fieldKeys = "FId,FBillNo,FBizType,FTransferDirect,FTransferBizType,FSaleOrgId,FSaleOrgId.FName," +
                 "FSettleOrgId,FSettleOrgId.FName,FStockOutOrgId,FStockOutOrgId.FNumber,FStockOutOrgId.FName,FOwnerOutIdHead,FOwnerOutIdHead.FName," +
                 "FStockOrgId,FStockOrgId.FNumber,FStockOrgId.FName,FSettleCurrId,FSettleCurrId.FName,FExchangeTypeId,FExchangeTypeId.FName,FExchangeRate," +
@@ -199,11 +199,11 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
             pageIndex++;
         }
         List<KingdeeTransferDirectEntity> entityList = resultAll.stream().map(entity ->
-                        BeanUtil.toBeanIgnoreError(entity, KingdeeTransferDirectEntity.class)).distinct()
+                BeanUtil.toBeanIgnoreError(entity, KingdeeTransferDirectEntity.class)).distinct()
                 .collect(Collectors.toList());
 
         Map<String, List<KingdeeTransferDirectItemEntity>> itemMap = resultAll.stream().map(entity ->
-                        BeanUtil.toBeanIgnoreError(entity, KingdeeTransferDirectItemEntity.class))
+                BeanUtil.toBeanIgnoreError(entity, KingdeeTransferDirectItemEntity.class))
                 .collect(Collectors.groupingBy(KingdeeTransferDirectItemEntity::getFBillNo));
         entityList.stream().peek(m -> m.setItemList(itemMap.get(m.getFBillNo())))
                 .distinct()
