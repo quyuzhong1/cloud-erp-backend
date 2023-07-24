@@ -44,6 +44,7 @@ import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
@@ -402,6 +403,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (StringUtils.isNotBlank(customerId)) {
             CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
             customerName = customerInfo.getName();
+
+            //国家
+            String countryId = customerInfo.getCountryId();
+            view.setCountryId(countryId);
+            // 国家
+            List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+            //国家
+            if (CollectionUtils.isNotEmpty(countryList)) {
+                String countryName = countryList.stream().filter(obj -> obj.getId().equals(view.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                view.setCountryName(countryName);
+            }
         }
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(Arrays.asList(soInfo.getId()));
 
@@ -504,6 +516,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isNotEmpty(deliveryNoticeDetailIdList)) {
             detailIds.addAll(deliveryNoticeDetailIdList);
         }
+        // 国家
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
 
         //有效发货通知单
         List<String> sodIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getDetailId).collect(Collectors.toList());
@@ -552,6 +566,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setApproveStatusName(billApproveStatus.getName());
             String type = item.getOrderType();
             item.setOrderTypeName(BillTypeEnum.getName(type));
+
+            //国家
+            if (CollectionUtils.isNotEmpty(countryList)) {
+                String countryName = countryList.stream().filter(obj -> obj.getId().equals(item.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                item.setCountryName(countryName);
+            }
+
             //发货状态
             String deliveryStatus = item.getDeliveryStatus();
             String deliveryStatusName = DeliveryStatusEnum.getName(deliveryStatus);
@@ -1235,6 +1256,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> salesDeptIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSalesDeptId).distinct().collect(Collectors.toList());
         List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(salesDeptIdList);
 
+        // 国家
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+
         //从wms 获取到sku 的即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventoryByParam(skuInventoryDTO);
         //客户id
@@ -1255,6 +1279,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String deptName = departmentList.stream().filter(d -> d.getId().equals(item.getSalesDeptId())).
                     map(SysDepartmentEntity::getName).findFirst().orElse("");
             item.setSalesDeptName(deptName);
+
+            //国家
+            if (CollectionUtils.isNotEmpty(countryList)) {
+                String countryName = countryList.stream().filter(obj -> obj.getId().equals(item.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                item.setCountryName(countryName);
+            }
 
             //作废状态
             Boolean invalidStatus = item.getInvalidStatus();
