@@ -210,14 +210,6 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
                 //原单编号
                 map.put("FSrcBillNo", soReturnEntity.getSourceCode());
             }
-
-            List<Map<String,Object>> mapList = new ArrayList<>();
-            Map<String,Object> entityMap = new HashMap<>();
-            entityMap.put("soKingdeeDetailId", soDetailEntity.getKingdeeDetailId());
-            entityMap.put("soSyncKingdeeId", soInfoEntity.getSyncKingdeeId());
-            mapList.add(entityMap);
-            //销售单金蝶明细id
-            map.put("FEntity_Link", mapList);
             list.add(map);
         }
         resultMap.put("FEntityList", list);
