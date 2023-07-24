@@ -174,13 +174,14 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
 
         LinkedList<String> queryFilters = new LinkedList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+        queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
+        queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));
         // 退货单拉全类型的单据
 //        queryFilters.add(StrUtil.format("FBillTypeID in ('{}','{}')", "73383412199a402bb58439509e089077","559351ce1d0252"));
 //        queryFilters.add(String.format("FOrderNo <> '%s'", ""));
-        queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'C'"));
-        queryFilters.add(StrUtil.format(" FISGENFORIOS = {}", "0"));
-        queryFilters.add(StrUtil.format(" ((FModifyDate >= '{}' and FModifyDate <= '{}') or (FApproveDate >= '{}' and FApproveDate < '{}'))",sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime),sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'B','C','D'"));
         String filterStr = String.join(" and ", queryFilters);
+        filterStr = filterStr.concat(StrUtil.format(" OR (FApproveDate >= '{}' and FApproveDate < '{}')", sdf.format(lastTime), sdf.format(nextTime)));
         String fieldKeys = "FID," +
                 "FBillTypeID," +
                 "FBillTypeID.FName," +
@@ -237,7 +238,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
                 "FAllAmount," +
                 "FReturnType," +
                 "FSOEntryId," +
-                "F_ULZ_data_sources, FISGENFORIOS";
+                "F_ULZ_data_sources";
 
         Boolean dataSign = true;
         //当前页数

@@ -211,14 +211,15 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         LinkedList<String> queryFilters = new LinkedList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+        queryFilters.add(StrUtil.format(" FModifyDate >= '{}'", sdf.format(lastTime.minusMinutes(2))));
+        queryFilters.add(StrUtil.format(" FModifyDate <= '{}'", sdf.format(nextTime)));
         //审核状态
-        queryFilters.add(StrUtil.format(" FDocumentStatus in ({})", "'C'"));
+        queryFilters.add(StrUtil.format(" FDocumentStatus in ({})", "'B','C','D'"));
         // 过滤组织内订单
         queryFilters.add(StrUtil.format(" FISGENFORIOS = {}", "0"));
-        queryFilters.add(StrUtil.format(" ((FModifyDate >= '{}' and FModifyDate <= '{}') or (FApproveDate >= '{}' and FApproveDate < '{}'))",sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime),sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime)));
         String filterStr = String.join(" and ", queryFilters);
+        filterStr = filterStr.concat(StrUtil.format(" OR (FApproveDate >= '{}' and FApproveDate < '{}')", sdf.format(lastTime), sdf.format(nextTime)));
         log.info("拉取金蝶条件为>>>>>>>>>>{}", filterStr);
-
         String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillNo,FSoOrDerNo,FDate,FSaleOrgId,FSaleOrgId.FName,FCarriageNO,FStockerID.FNumber,FStockerID.FName," +
                 "FCustomerID,FCustomerID.FName,FCustomerID.FNumber,FSaleDeptID.FName,FSalesManID,FSalesManID.FName,FSalesManID.FNumber,FReceiverID.FName," +
                 "FTransferBizType.FName,F_ulz_BaseProperty2,F_ulz_BaseProperty2.FNumber,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus," +
@@ -227,8 +228,8 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
                 "FEntity_FENTRYID,FBillAllAmount,FBillAllAmount_LC,FAllAmount,FAllAmount_LC,FAmount_LC,FTaxAmount,FTaxAmount_LC,FBillTaxAmount,FEntryTaxAmount," +
                 "FSrcBillNo,FCustMatName,F_ulz_BaseProperty1,FMaterialID,FMaterialID.FNumber,FMaterialID.FName,FStockLocID," +
                 "FBarcode,FMateriaModel,FMateriaType,FRealQty,FUnitID.FName,FPrice,FIsFree,FArrivalStatus,FArrivalDate," +
-                "FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,FStockID.FNumber,F_ulz_Text1,FEntryCostAmount,FEntrynote,FSrcType,FTaxPrice," +
-                "FCostPrice,FCostAmount_LC,FSalCostPrice,F_ULZ_data_sources";
+                "FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,FStockID.FNumber,F_ulz_Text1,FEntryCostAmount,FEntrynote,FSrcBillNo,FSrcType,FTaxPrice," +
+                "FCostPrice,FCostAmount_LC,FSalCostPrice,FDocumentStatus,F_ULZ_data_sources";
 
         Boolean dataSign = true;
         //当前页数
@@ -238,7 +239,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         Integer pageSize = 10000;
         List<Map<String, Object>> resultAll = new ArrayList<>();
         while (dataSign) {
-            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName());
+            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(),1);
             List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
             XxlJobHelper.log("获取金蝶发货数据第[{}]页 有{}条记录", pageIndex, pageSize);
             if (result.size() < pageSize) {
