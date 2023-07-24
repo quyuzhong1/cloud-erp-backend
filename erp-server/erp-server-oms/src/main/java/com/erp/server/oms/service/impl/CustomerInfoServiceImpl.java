@@ -969,7 +969,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String currency = customer.getCurrency();
         //币别
         base.setCurrency(currency);
-
+        base.setCountryId(customer.getCountryId());
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
 
         String currencySymbol = "";
