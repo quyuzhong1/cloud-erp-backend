@@ -59,7 +59,7 @@
         LEFT JOIN work_menu wm on pb.business_key = wm.module_code and pb.is_deleted = false
         where pd.is_deleted = false
         <if test="null != params and params.id != null and params.id != ''">
-            and pd.id = #{params.id}
+            and pd.id ilike  concat('%',#{params.id},'%')
         </if>
        <include refid="query_list_sql"/>
     </select>
