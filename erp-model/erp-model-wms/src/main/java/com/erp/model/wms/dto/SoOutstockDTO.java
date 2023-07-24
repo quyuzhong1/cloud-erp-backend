@@ -133,6 +133,27 @@ public class SoOutstockDTO implements Serializable {
          */
         private String customerName;
 
+
+        /**
+         * 国家id
+         */
+        private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+
+        /**
+         * 销售员
+         */
+        private String sellerName;
+
         /**
          * 仓库id
          */
@@ -293,6 +314,16 @@ public class SoOutstockDTO implements Serializable {
         private List<String> customerIdList;
 
         /**
+         * 国家 集合
+         */
+        private List<String> countryIdList;
+
+        /**
+         * 销售员 id 集合
+         */
+        private List<String> sellerIdList;
+
+        /**
          * 出库日期
          */
         private List<LocalDate> actualDeliveryDateList;
@@ -389,6 +420,11 @@ public class SoOutstockDTO implements Serializable {
         private String carrierId;
 
         /**
+         * 销售员
+         */
+        private String sellerId;
+
+        /**
          * 详情
          */
         @Valid
@@ -459,6 +495,15 @@ public class SoOutstockDTO implements Serializable {
          */
         private String trackNo;
 
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
 
         /**
          * 仓库id
@@ -581,9 +626,13 @@ public class SoOutstockDTO implements Serializable {
          */
         private String warehouseOrgName;
 
+        /**
+         * 销售员id
+         */
+        private String sellerId;
 
         /**
-         * 销售员
+         * 销售员名称
          */
         private String sellerName;
 
@@ -619,6 +668,19 @@ public class SoOutstockDTO implements Serializable {
          * 客户
          */
         private String customerName;
+
+
+        /**
+         * 国家id
+         */
+        private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
+
 
         /**
          * 要货日期

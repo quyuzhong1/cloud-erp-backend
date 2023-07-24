@@ -260,4 +260,12 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @param file
      */
     void importCustomerKingdee(MultipartFile file) throws IOException;
+    /**
+     * @description: 根据国家ids查询客户信息
+     * @author Will
+     * @date: 2023/7/24 12:29
+     * @param countryIdList
+     * @return List<CustomerInfoEntity>
+     */
+    List<CustomerInfoEntity> listByCountryIdList(List<String> countryIdList);
 }

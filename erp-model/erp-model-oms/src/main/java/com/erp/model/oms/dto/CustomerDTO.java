@@ -795,6 +795,11 @@ public class CustomerDTO implements Serializable {
          */
         private String countryId;
 
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
         private String receiveConditionName;
 
 

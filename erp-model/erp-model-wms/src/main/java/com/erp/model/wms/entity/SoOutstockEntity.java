@@ -60,7 +60,17 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("invalid_status")
     private Boolean invalidStatus;
 
+    /**
+     * 销售员id
+     */
+    @TableField("seller_id")
+    private String sellerId;
 
+    /**
+     * 销售员
+     */
+    @TableField("seller_name")
+    private String sellerName;
 
 
     /**
