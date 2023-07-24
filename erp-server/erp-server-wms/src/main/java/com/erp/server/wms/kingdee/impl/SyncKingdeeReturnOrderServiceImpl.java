@@ -151,6 +151,9 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         //退货原因
         resultMap.put("returnRemark", entity.getReturnRemark());
 
+        //退货原因
+        resultMap.put("purchaseOrderCode", entity.getPurchaseOrderCode());
+
         //退货单明细
         List<PurchaseReturnOrderDetailEntity> detailList = purchaseReturnOrderDetailService.getDetailByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
@@ -194,15 +197,17 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             //退款单价
             jsonObject.set("returnPrice", detail.getReturnPrice());
 
-            List<Map<String,Object>> mapList = new ArrayList<>();
-            Map<String,Object> entityMap = new HashMap<>();
-            entityMap.put("soKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
-            if (ObjectUtils.isNotEmpty(purchaseOrderEntity)) {
-                entityMap.put("soSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
+            if (StringUtils.isNotBlank(entity.getPurchaseOrderCode())) {
+                List<Map<String,Object>> mapList = new ArrayList<>();
+                Map<String,Object> entityMap = new HashMap<>();
+                entityMap.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
+                if (ObjectUtils.isNotEmpty(purchaseOrderEntity)) {
+                    entityMap.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
+                }
+                mapList.add(entityMap);
+                //销售单金蝶明细id
+                jsonObject.set("FPURMRBENTRY_Link", mapList);
             }
-            mapList.add(entityMap);
-            //销售单金蝶明细id
-            jsonObject.set("FPURMRBENTRY_Link", mapList);
             list.add(jsonObject);
         }
         resultMap.put("list",list);
