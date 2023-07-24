@@ -22,7 +22,7 @@ import javax.annotation.Resource;
  */
 @Slf4j
 @Component
-@SaveData(method = PlatformApiEnum.GY_ERP_TRADE_HISTORY_GET)
+//@SaveData(method = PlatformApiEnum.GY_ERP_TRADE_HISTORY_GET)
 public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<GyyOrderEntity> {
     @Resource
     private PlatformApiTaskService platformApiTaskService;
