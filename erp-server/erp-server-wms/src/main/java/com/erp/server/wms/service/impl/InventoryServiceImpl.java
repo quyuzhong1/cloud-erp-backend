@@ -233,7 +233,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             inventorySaveDTO.setBeforeQty(inventory.getQty());
             inventorySaveDTO.setAfterQty(inventory.getQty() + qty);
             // 更新实时库存表数量
-            boolean updateFlag = this.updateQtyById(inventory.getId(), qty);
+            boolean updateFlag = this.updateQtyById(inventory.getId(), inventory.getQty() + qty);
             if (!updateFlag) {
                 throw new ServiceException(ApiError.ERROR_1027);
             }
@@ -343,8 +343,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public boolean updateQtyById(String id, Integer qty) {
         LoginUser loginUser = commonService.getUserInfo();
         boolean flag = lambdaUpdate()
-//                .set(InventoryEntity::getQty, qty)
-                .setSql(StrUtil.format("{}={}+{}", "qty","qty", qty))
+                .set(InventoryEntity::getQty, qty)
+//                .setSql(StrUtil.format("{}={}+{}", "qty","qty", qty))
 //                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
 //                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
 //                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
