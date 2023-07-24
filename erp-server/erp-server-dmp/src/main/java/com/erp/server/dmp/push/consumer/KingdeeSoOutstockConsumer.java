@@ -79,8 +79,6 @@ public class KingdeeSoOutstockConsumer implements RocketMQListener<Map<String, O
 //        List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, 100, 0, 0);
 //        System.out.println(result);
     }
-//[{FID=5814813, FSrcType=SAL_SaleOrder, FMtoNo= , FSALUNITQTY=2.0, FSALBASEQTY=2.0, FProjectNo= , FSNUnitID=0, FSalBaseARJoinQty=0.0, FSOEntryId=279993, FRowId=e897dacb-3d81-80f4-11ee-05a091df2ca9, FParentRowId= , FETHIRDBILLID= , FBOMEntryId=0, FInStockBillno= , FInStockEntryId=0}, {FID=5814813, FSrcType=SAL_SaleOrder, FMtoNo= , FSALUNITQTY=10.0, FSALBASEQTY=10.0, FProjectNo= , FSNUnitID=0, FSalBaseARJoinQty=0.0, FSOEntryId=279994, FRowId=e897dacb-3d81-80f4-11ee-05a091df2caa, FParentRowId= , FETHIRDBILLID= , FBOMEntryId=0, FInStockBillno= , FInStockEntryId=0}]
-//[{FID=5814813, FSrcType=, FMtoNo= , FSALUNITQTY=0.0, FSALBASEQTY=0.0, FProjectNo= , FSNUnitID=0, FSalBaseARJoinQty=0.0, FSOEntryId=279993, FRowId=e897dacb-3d81-80f4-11ee-05c32c5b56db, FParentRowId= , FETHIRDBILLID= , FBOMEntryId=0, FInStockBillno= , FInStockEntryId=0}, {FID=5814813, FSrcType=SAL_OUTSTOCK, FMtoNo= , FSALUNITQTY=0.0, FSALBASEQTY=0.0, FProjectNo= , FSNUnitID=0, FSalBaseARJoinQty=0.0, FSOEntryId=279994, FRowId=e897dacb-3d81-80f4-11ee-05c32c5b56dc, FParentRowId= , FETHIRDBILLID= , FBOMEntryId=0, FInStockBillno= , FInStockEntryId=0}]
 
     @Override
     public void onMessage(Map<String, Object> map) {

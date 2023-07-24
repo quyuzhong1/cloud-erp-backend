@@ -164,26 +164,26 @@ public class DataPermissionAspect {
             }
             if (CollectionUtils.isNotEmpty(list)) {
                 if (tableFieldSize == 1) {
-                    sqlString.append(" AND string_to_array("+ tableAliasList.get(0) + "."+ tableFieldList.get(0) +",',') && string_to_array('" + StringUtils.join(list,",") + "',',')");
+                    sqlString.append(" AND string_to_array(" + tableAliasList.get(0) + "." + tableFieldList.get(0) + ",',') && string_to_array('" + StringUtils.join(list, ",") + "',',')");
                 } else {
-                    sqlString.append(" AND (string_to_array("+ tableAliasList.get(0) + "."+ tableFieldList.get(0) +",',') && string_to_array('" + StringUtils.join(list,",") + "',',')");
+                    sqlString.append(" AND (string_to_array(" + tableAliasList.get(0) + "." + tableFieldList.get(0) + ",',') && string_to_array('" + StringUtils.join(list, ",") + "',',')");
                     if (tableFieldSize > 1) {
                         sqlString.append(" OR ");
                         for (int i = 1; i < tableFieldSize; i++) {
-                            sqlString.append("string_to_array("+ (flag ? tableAliasList.get(i) : tableAliasList.get(0)) + "."+ tableFieldList.get(i) +",',') && string_to_array('" + StringUtils.join(list,",") + "',','))");
+                            sqlString.append("string_to_array(" + (flag ? tableAliasList.get(i) : tableAliasList.get(0)) + "." + tableFieldList.get(i) + ",',') && string_to_array('" + StringUtils.join(list, ",") + "',','))");
                         }
                     }
                 }
 
             } else {
                 if (tableFieldSize == 1) {
-                    sqlString.append(" AND string_to_array("+ tableAliasList.get(0) + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
+                    sqlString.append(" AND string_to_array(" + tableAliasList.get(0) + "." + tableFieldList.get(0) + ",',') && string_to_array('" + user.getUid() + "',',')");
                 } else {
-                    sqlString.append(" AND (string_to_array("+ tableAliasList.get(0) + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
+                    sqlString.append(" AND (string_to_array(" + tableAliasList.get(0) + "." + tableFieldList.get(0) + ",',') && string_to_array('" + user.getUid() + "',',')");
                     if (tableFieldSize > 1) {
                         sqlString.append(" OR ");
                         for (int i = 1; i < tableFieldSize; i++) {
-                            sqlString.append("string_to_array("+ (flag ? tableAliasList.get(i) : tableAliasList.get(0)) + "."+ tableFieldList.get(i) +",',') && string_to_array('" + user.getUid() + "',','))");
+                            sqlString.append("string_to_array(" + (flag ? tableAliasList.get(i) : tableAliasList.get(0)) + "." + tableFieldList.get(i) + ",',') && string_to_array('" + user.getUid() + "',','))");
                         }
                     }
                 }
@@ -191,13 +191,13 @@ public class DataPermissionAspect {
             //like any (array['%1582313948525367297%','%1549948476757303297%'])
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
             if (tableFieldSize == 1) {
-                sqlString.append(" AND string_to_array("+ tableAliasList.get(0) + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
+                sqlString.append(" AND string_to_array(" + tableAliasList.get(0) + "." + tableFieldList.get(0) + ",',') && string_to_array('" + user.getUid() + "',',')");
             } else {
-                sqlString.append(" AND (string_to_array("+ tableAliasList.get(0) + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
+                sqlString.append(" AND (string_to_array(" + tableAliasList.get(0) + "." + tableFieldList.get(0) + ",',') && string_to_array('" + user.getUid() + "',',')");
                 if (tableFieldSize > 1) {
                     sqlString.append(" OR ");
                     for (int i = 1; i < tableFieldSize; i++) {
-                        sqlString.append("string_to_array("+ (flag ? tableAliasList.get(i) : tableAliasList.get(0)) + "."+ tableFieldList.get(i) +",',') && string_to_array('" + user.getUid() + "',','))");
+                        sqlString.append("string_to_array(" + (flag ? tableAliasList.get(i) : tableAliasList.get(0)) + "." + tableFieldList.get(i) + ",',') && string_to_array('" + user.getUid() + "',','))");
                     }
                 }
             }
@@ -271,7 +271,8 @@ public class DataPermissionAspect {
         if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
             return;
         } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
-            if (!userList.containsAll(users)) {
+            long containsUserCount = users.stream().filter(u -> userList.contains(u)).count();
+            if (containsUserCount==0) {
                 throw new ServiceException(ApiError.NO_PERMISSION);
             }
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
@@ -315,7 +316,7 @@ public class DataPermissionAspect {
             inputIdList.add(String.valueOf(obj));
         } else if (obj instanceof List) {
             List<Object> list = (List<Object>) obj;
-            for (Object object: list) {
+            for (Object object : list) {
                 Map<String, Object> mapParam = JSONObject.parseObject(JSONObject.toJSONString(object), Map.class);
                 Object o = null;
                 if (StringUtils.isNotBlank(dataPermission.entityName())) {
@@ -375,7 +376,8 @@ public class DataPermissionAspect {
         if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
             return;
         } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
-            if (!userList.containsAll(users)) {
+            long containsUserCount = users.stream().filter(u -> userList.contains(u)).count();
+            if (containsUserCount==0) {
                 throw new ServiceException(ApiError.NO_PERMISSION);
             }
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
