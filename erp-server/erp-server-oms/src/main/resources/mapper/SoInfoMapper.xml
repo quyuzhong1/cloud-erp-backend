@@ -234,7 +234,8 @@
             sod.sale_cost,
             sod.sale_profit,
             sod.sale_profit_rate,
-            sod.remark as detailRemark
+            sod.remark as detailRemark,
+            ci.country_id as countryId
         FROM so_detail sod
         INNER JOIN so_info si
         ON sod.main_id =si.id AND si.is_deleted=false

@@ -663,6 +663,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private String warehouseKeeperId;
 
+        /**
+         * 客户id
+         */
+        private String customerId;
 
         /**
          * 客户
