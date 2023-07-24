@@ -112,9 +112,15 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
 
         //采购员编码
         if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
-            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
-            if (ObjectUtils.isNotEmpty(findUserDTO)) {
-                resultMap.put("purchaseUserCode", findUserDTO.getCode());
+            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(entity.getPurchaseUserId(),entity.getCreateUserId()));
+
+            if (CollectionUtils.isNotEmpty(userList)) {
+                //采购员
+                String purchaseUserCode = userList.stream().filter(obj -> obj.getUserId().equals(entity.getPurchaseUserId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
+                resultMap.put("purchaseUserCode", purchaseUserCode);
+                //创建人
+                String createUserCode = userList.stream().filter(obj -> obj.getUserId().equals(entity.getCreateUserId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
+                resultMap.put("createUserCode", createUserCode);
             }
         }
         //供应商联系人
