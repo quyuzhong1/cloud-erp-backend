@@ -57,6 +57,16 @@ public interface CustomerFeign {
     List<CustomerInfoEntity> listCustomerByIds(@RequestBody List<String> ids);
 
     /**
+     * @description: 根据国家ids查询客户信息
+     * @author Will
+     * @date: 2023/7/24 12:28
+     * @param countryIdList
+     * @return List<CustomerInfoEntity>
+     */
+    @PostMapping("feign/customer/listByCountryIdList")
+    List<CustomerInfoEntity> listByCountryIdList(@RequestBody List<String> countryIdList);
+
+    /**
      * 客户列表审核
      * @Author Luo_WG
      * @Date 2023/7/4 12:28
@@ -85,5 +95,6 @@ public interface CustomerFeign {
      */
     @PostMapping("feign/customer/getDictBasicByKey")
     List<DictBasicDTO.ViewDTO> getDictBasicByKey(@RequestBody String Key);
+
 
 }

@@ -133,6 +133,17 @@ public class SoOutstockDTO implements Serializable {
          */
         private String customerName;
 
+
+        /**
+         * 国家id
+         */
+        private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
         /**
          * 仓库id
          */
@@ -291,6 +302,16 @@ public class SoOutstockDTO implements Serializable {
          * 客户 集合
          */
         private List<String> customerIdList;
+
+        /**
+         * 国家 集合
+         */
+        private List<String> countryIdList;
+
+        /**
+         * 销售员 id 集合
+         */
+        private List<String> sellerIdList;
 
         /**
          * 出库日期
@@ -619,6 +640,19 @@ public class SoOutstockDTO implements Serializable {
          * 客户
          */
         private String customerName;
+
+
+        /**
+         * 国家id
+         */
+        private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
+
 
         /**
          * 要货日期

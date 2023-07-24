@@ -68,6 +68,18 @@ public class CustomerFeignController {
     }
 
     /**
+     * 根据国家ids查询客户信息
+     * @author Will
+     * @date: 2023/7/24 12:28
+     * @param ids
+     * @return List<CustomerInfoEntity>
+     */
+    @PostMapping("/listByCountryIdList")
+    List<CustomerInfoEntity> listByCountryIdList(@RequestBody List<String> ids) {
+        return customerInfoService.listByCountryIdList(ids);
+    }
+
+    /**
      * 客户列表审核
      * @Author Luo_WG
      * @Date 2023/7/4 12:28
