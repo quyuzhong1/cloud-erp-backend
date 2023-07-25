@@ -426,6 +426,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             detailView.setSpuNo(productDetailEntity.getSpuNo());
             detailView.setUnit(productDetailEntity.getUnitName());
             detailView.setVariantProperty(productDetailEntity.getVariantProperty());
+
+            //根据组织、仓库、sku查询可用库存
+            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(purchaseReturnOrderEntity.getReturnWarehouseId(), purchaseReturnOrderDetailEntity.getSkuId());
+            detailView.setCurInventoryQty(curInventoryQty);
+
             detailViewDTOS.add(detailView);
         }
         viewDTO.setPurchasePriceDetailList(detailViewDTOS);
