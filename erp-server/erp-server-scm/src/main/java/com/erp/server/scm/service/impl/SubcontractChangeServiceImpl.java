@@ -169,6 +169,11 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
 
     @Override
     public void exportList(SubcontractChangeDTO.ExportDTO param, HttpServletResponse response) {
+        //列表Tab查询状态处理
+        Boolean isFlag = doOpHandleTableParam(param);
+        if (!isFlag) {
+           return;
+        }
         List<SubcontractChangeDTO.ListDTO> list = this.baseMapper.listExport(param);
         if(CollUtil.isEmpty(list)) {
            return;
