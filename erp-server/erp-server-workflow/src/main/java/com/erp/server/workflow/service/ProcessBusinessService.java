@@ -40,7 +40,9 @@ public interface ProcessBusinessService extends SuperService<ProcessBusinessEnti
 
     /**
      * 保存流程业务绑定关系
+     *
      * @param dto
+     * @param isSave
      */
-    void addOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto);
+    void addOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto, Boolean isSave);
 }
