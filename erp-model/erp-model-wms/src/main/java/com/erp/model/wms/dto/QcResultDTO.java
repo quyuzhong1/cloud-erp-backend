@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.QcReCheckResultEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -123,6 +124,17 @@ public class QcResultDTO {
          */
         @NotBlank(message = "处理措施不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private String handleModeDict;
+
+        /**
+         * 是否库内抽检
+         */
+        private Boolean isInsideQc;
+
+        /**
+         * 复检抽检结果
+         */
+        @StateEnumValue(clazz = QcReCheckResultEnum.class, message = "复检抽检结果有误")
+        private String qcSampleResult;
     }
 
 
@@ -253,6 +265,21 @@ public class QcResultDTO {
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime qcFinishTime;
+
+        /**
+         * 是否库内内检 默认 false
+         */
+        private Boolean isInsideQc;
+
+        /**
+         * 复检抽检结果
+         */
+        private String qcSampleResult;
+
+        /**
+         * 复检抽检结果描述
+         */
+        private String qcSampleResultName;
 
     }
 

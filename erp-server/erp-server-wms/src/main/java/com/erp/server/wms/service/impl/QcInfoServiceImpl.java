@@ -16,10 +16,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
@@ -51,6 +48,7 @@ import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcInfoMapper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.QcUtils;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -452,6 +450,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 //是否内检
                 Boolean isInside = item.getIsInside();
                 excelDTO.setInsideType(isInside != null && isInside ? "内部检验" : "外部检验");
+                excelDTO.setIsInsideQcName(Objects.equals(item.getIsInsideQc(), Boolean.TRUE) ? "是" : "否");
+                String qcSampleResult = QcReCheckResultEnum.getByCode(item.getQcSampleResult());
+                excelDTO.setQcSampleResultName(StrUtils.isNotEmpty(qcSampleResult) ? qcSampleResult : "-");
                 resultList.add(excelDTO);
             }
 
@@ -1145,6 +1146,14 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         waitQc.setSearchType(waitQcType);
         waitQc.setTypeName(QcBillStatusEnum.WAIT_QC.getName());
         resultList.add(waitQc);
+
+        // 待复检
+        QcInfoDTO.TabListDTO waitReQc = new QcInfoDTO.TabListDTO();
+        String waitReQcType = QcBillStatusEnum.WAIT_RE_QC.getCode();
+        waitReQc.setCount(qcResultService.getReQcCount());
+        waitReQc.setSearchType(waitReQcType);
+        waitReQc.setTypeName(QcBillStatusEnum.WAIT_RE_QC.getName());
+        resultList.add(waitReQc);
 
         QcInfoDTO.TabListDTO finishQc = new QcInfoDTO.TabListDTO();
         String finishQcType = QcBillStatusEnum.FINISH_QC.getCode();
@@ -2062,4 +2071,24 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         List<SysUserInfoEntity> sysUserInfoEntities = sysUserFeign.listUserByDept("品质部");
         return sysUserInfoEntities;
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void reQcSample(QcInfoDTO.ReQcDTO dto) {
+        dto.getIds().stream().forEach(id->{
+            QcInfoEntity qcInfoEntity = super.getById(id);
+            Optional.ofNullable(qcInfoEntity).orElseThrow(()->new ServiceException("质检单信息不存在"));
+
+            // 添加备注
+            if(StrUtils.isNotEmpty(dto.getRemark())) {
+                QcRemarkEntity qcRemarkEntity = new QcRemarkEntity();
+                qcRemarkEntity.setMainId(id);
+                qcRemarkEntity.setRemark(dto.getRemark());
+                qcRemarkService.save(qcRemarkEntity);
+            }
+        });
+        // 更新质检复检抽检结果
+        qcResultService.updateQcSampleResult(dto.getIds(), dto.getQcSampleResult());
+    }
+
 }
