@@ -64,6 +64,9 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
     public void syncDataToKingdee(PurchasePriceEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
+        //更新同步状态为待同步
+        purchasePriceService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
         //业务id
         resultMap.put("id",entity.getId());
         //编码

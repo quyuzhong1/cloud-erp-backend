@@ -44,6 +44,8 @@ public class SyncKingdeeSysDeptServiceImpl implements SyncKingdeeSysDeptService 
         if (ObjectUtils.isEmpty(entity)) {
             return;
         }
+        //更新同步状态为待同步
+        sysDepartmentService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
 
         Map<String, Object> resultMap = new HashMap<>();
 

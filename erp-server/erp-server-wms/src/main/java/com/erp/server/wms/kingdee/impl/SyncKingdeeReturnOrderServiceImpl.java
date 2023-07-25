@@ -76,6 +76,10 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
     @Override
     public void syncDataToKingdee(PurchaseReturnOrderEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+
+        //更新同步状态为待同步
+        purchaseReturnOrderService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
         //业务id

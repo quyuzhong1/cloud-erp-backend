@@ -10,15 +10,9 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
-import com.erp.model.scm.entity.PurchasePriceChangeEntity;
-import com.erp.model.scm.entity.PurchasePriceDetailEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceChangeService;
-import com.erp.server.scm.service.PurchasePriceChangeDetailService;
-import com.erp.server.scm.service.PurchasePriceChangeService;
-import com.erp.server.scm.service.PurchasePriceDetailService;
-import com.erp.server.scm.service.SupplierService;
+import com.erp.server.scm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -43,6 +37,9 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
     private MQProducerService mQProducerService;
 
     @Resource
+    private PurchasePriceService purchasePriceService;
+
+    @Resource
     private PurchasePriceChangeService purchasePriceChangeService;
 
     @Resource
@@ -61,6 +58,21 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
     @Override
     public void syncDataToKingdee(PurchasePriceChangeEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+
+        //更新同步状态为待同步
+        purchasePriceChangeService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
+        //如果上游单据未发送成功则无需发送
+        PurchasePriceEntity purchasePriceEntity = purchasePriceService.getById(entity.getPurchasePriceId());
+        //采购价目主表数据
+        if (ObjectUtils.isEmpty(purchasePriceEntity)) {
+            throw new ServiceException(ApiError.ERROR_98024);
+        }
+
+        if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(purchasePriceEntity.getSyncKingdeeStatus())) {
+            log.error("采购价目未推送成功，不支持推送采购调价，采购价目单号【{}】",purchasePriceEntity.getCode());
+            return;
+        }
 
         //业务id
         resultMap.put("id",entity.getId());

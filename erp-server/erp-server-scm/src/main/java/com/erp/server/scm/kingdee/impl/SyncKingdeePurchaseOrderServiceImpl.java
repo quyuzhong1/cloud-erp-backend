@@ -12,10 +12,7 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -26,10 +23,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @author Will
@@ -54,8 +53,10 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
     private PurchaseOrderDetailService purchaseOrderDetailService;
 
     @Resource
-    private DictBasicService dictBasicService;
+    private SubcontractOrderService subcontractOrderService;
 
+    @Resource
+    private SubcontractChangeService subcontractChangeService;
 
     @Resource
     private SupplierService supplierService;
@@ -71,8 +72,31 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
      * 组装数据发送到金蝶
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(PurchaseOrderEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+
+        //更新同步状态为待同步
+        purchaseOrderService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
+        //如果上游单据未发送成功则无需发送
+        if (StringUtils.isNotBlank(entity.getSubcontractType())) {
+            //委外订单
+            SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
+            if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(subcontractOrderEntity.getSyncKingdeeStatus())) {
+                log.error("委外订单未推送成功，不支持推送采购订单，委外订单号【{}】",subcontractOrderEntity.getCode());
+                return;
+            }
+            //委外变更单
+            List<SubcontractChangeEntity> subcontractChangeList = subcontractChangeService.listBySourceIds(Arrays.asList(subcontractOrderEntity.getId()));
+            if (CollectionUtils.isNotEmpty(subcontractChangeList)) {
+                String changeCodes = subcontractChangeList.stream().filter(obj -> !SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(obj.getSyncKingdeeStatus())).map(SubcontractChangeEntity::getCode).collect(Collectors.joining(","));
+                if (StringUtils.isNotBlank(changeCodes)) {
+                    log.error("委外变更单未推送成功，不支持推送采购订单，委外变更单号【{}】",changeCodes);
+                    return;
+                }
+            }
+        }
 
         //业务id
         resultMap.put("id",entity.getId());
@@ -92,8 +116,6 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         if (ObjectUtils.isEmpty(supplierEntity)) {
             return;
         }
-
-
 
         //供应商编码
         resultMap.put("supplierCode",supplierEntity.getCode());
