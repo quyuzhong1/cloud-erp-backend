@@ -299,7 +299,7 @@ public class TransferInfoController extends BaseController {
     @PostMapping("/checkSkuInventory")
     public ApiResult<String> checkSkuInventory(@RequestBody @Validated() TransferInfoDTO.AddDTO dto) {
         String msg = transferInfoService.checkSkuInventory(dto, dto.getDetailList());
-        return success( msg, null);
+        return success( "", msg);
     }
 
 }
