@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -26,6 +27,7 @@ import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.QcResultEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.QcReCheckResultEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -202,6 +204,11 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             qcInfoView.setQcProblemName(qcProblemName);
             String qcResult = qcInfoView.getQcResult();
             qcInfoView.setQcResultName(QcResultEnum.getByCode(qcResult));
+
+            // 复检抽检结果
+            if(StrUtils.isNotEmpty(qcInfo.getQcSampleResult())) {
+                qcInfoView.setQcSampleResultName(QcReCheckResultEnum.getByCode(qcInfo.getQcSampleResult()));
+            }
 
         }
         return qcInfoView;
@@ -381,6 +388,20 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             sendMsg(isFirstMassProduct, value);
         }
 
+    }
+
+    @Override
+    public int getReQcCount() {
+        return this.baseMapper.getReQcCount();
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateQcSampleResult(List<String> qcInfoIds, String qcSampleResult) {
+         lambdaUpdate()
+                .set(QcResultEntity::getQcSampleResult, qcSampleResult)
+                .in(QcResultEntity::getMainId, qcInfoIds)
+                .update(new QcResultEntity());
     }
 
     /**

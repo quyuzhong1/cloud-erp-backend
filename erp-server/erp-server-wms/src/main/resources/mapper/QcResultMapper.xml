@@ -60,4 +60,11 @@
         </foreach>
 
     </select>
+    <select id="getReQcCount" resultType="java.lang.Integer">
+        select count(distinct main_id) from qc_result
+        <where>
+            is_inside_qc = true
+            and (qc_sample_result is null or qc_sample_result = '')
+        </where>
+    </select>
 </mapper>
