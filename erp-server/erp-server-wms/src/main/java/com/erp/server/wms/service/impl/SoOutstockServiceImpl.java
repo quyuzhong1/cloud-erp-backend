@@ -1362,8 +1362,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 return;
             }
             List<String> customerIdList = customerList.stream().map(CustomerInfoEntity::getId).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(params.getCustomerIdList())) {
+            if (CollectionUtils.isEmpty(params.getCustomerIdList())) {
                 params.setCustomerIdList(customerIdList);
+            } else {
+                List<String> newCustomerIdList = customerIdList.stream().filter(obj -> params.getCustomerIdList().contains(obj)).collect(Collectors.toList());
+                params.setCustomerIdList(newCustomerIdList);
             }
         }
 
