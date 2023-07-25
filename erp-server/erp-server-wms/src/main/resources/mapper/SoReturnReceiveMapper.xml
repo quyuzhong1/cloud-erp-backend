@@ -261,6 +261,7 @@
         SELECT
             srr.id,
             srr.approve_status,
+            srrd.main_id,
             srr.code,
             srr.source_id,
             srrd.source_detail_id,
