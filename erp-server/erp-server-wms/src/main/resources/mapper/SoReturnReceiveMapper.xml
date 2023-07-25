@@ -259,7 +259,7 @@
 
     <select id="generateSoReturnInstockView" resultType="com.erp.model.wms.dto.SoReturnReceiveDTO$ReceiveGenerateSoReturnInstockView">
         SELECT
-            srr.id,
+            srrd.id,
             srr.approve_status,
             srrd.main_id,
             srr.code,
