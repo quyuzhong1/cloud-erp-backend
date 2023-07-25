@@ -581,6 +581,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_PRICE_ID_REPEAT(98100,"请选择同一采购价目表下明细进行变更"),
     ERROR_PURCHASE_ORDER_ID_REPEAT(98101,"请选择同一采购订单下明细进行变更"),
     ERROR_PURCHASE_DATE(98102,"采购订单【{}】SKU【{}】采购日期不能大于预计交货日期"),
+    ERROR_PURCHASE_PRICE(98103,"采购订单【{}】SKU【{}】单价必须大于0"),
 
 
 
