@@ -137,7 +137,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     public Boolean exportExcel(ProcessDefinitionDTO.QueryExportDTO dto, HttpServletResponse response) {
         // 查询数据
         List<ProcessDefinitionDTO.ExportDTO> list = this.baseMapper.query(dto);
-        list.stream().peek(x -> x.setApproveStatusName(x.getApproveStatusCode().getName())).collect(Collectors.toList());
+//        list.stream().peek(x -> x.setApproveStatusName(x.getApproveStatusCode().getName())).collect(Collectors.toList());
         // 导出数据
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;

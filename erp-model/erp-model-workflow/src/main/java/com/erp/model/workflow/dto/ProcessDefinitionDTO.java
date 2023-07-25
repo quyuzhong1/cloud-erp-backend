@@ -123,6 +123,8 @@ public class ProcessDefinitionDTO {
          */
         private List<LocalDateTime> createTimeList;
 
+        private Boolean isDeploy;
+
     }
 
 
@@ -290,8 +292,7 @@ public class ProcessDefinitionDTO {
         /**
          * 流程审核状态名称
          */
-        @ColumnWidth(20)
-        @ExcelProperty(value = "流程审核状态", index = 2)
+        @ExcelIgnore
         private String approveStatusName;
         /**
          * BPMN流程图
