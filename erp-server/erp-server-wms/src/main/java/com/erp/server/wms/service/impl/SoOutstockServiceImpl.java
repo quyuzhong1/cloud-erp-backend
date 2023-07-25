@@ -911,6 +911,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //检查出库数量
         soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), dto.getSourceId(), sourceType, detailList);
         String code = soOutstock.getCode();
+        LocalDate billDate = soOutstock.getBillDate();
         //旧的
         SoOutstockEntity old = new SoOutstockEntity();
         BeanMapper.copy(soOutstock, old);
@@ -922,6 +923,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         BeanMapper.copy(dto, soOutstock);
         soOutstock.setCode(code);
+        // 出库日期
+        soOutstock.setBillDate(billDate);
         soOutstock.setSoCode(soInfo.getCode());
         soOutstock.setCustomerId(soInfo.getCustomerId());
         soOutstock.setOrderType(soInfo.getOrderType());
