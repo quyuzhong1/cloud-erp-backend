@@ -348,13 +348,11 @@ public class SoReturnReceiveDTO {
         /**
          * 销售组织id
          */
-        @NotBlank(message = "销售组织不能为空")
         private String salesOrgId;
 
         /**
          * 单据类型
          */
-        @NotBlank(message = "单据类型不能为空")
         private String type;
 
         /**
