@@ -210,16 +210,17 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Transactional(rollbackFor = Exception.class)
     public Boolean excuteOperation(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number, String operate) {
         LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
-        //金蝶id
+
         String syncKingdeeId = (String) map.get("syncKingdeeId");
+        Integer createOrgId = (Integer) map.get("createOrgId");
 
         if (StringUtils.isNotBlank(syncKingdeeId)) {
             viewMap.put("ids", syncKingdeeId);
         } else {
-            //现默认唯迹科技
-            viewMap.put("CreateOrgId", 1);
             viewMap.put("numbers", Arrays.asList(number));
         }
+        //创建组织
+        viewMap.put("CreateOrgId", ObjectUtils.isEmpty(createOrgId) ? MathUtil.ZERO : createOrgId);
         //金蝶操作编码
         String operateNumber = SyncKingdeeOperateEnum.getNameByCode(operate);
 
