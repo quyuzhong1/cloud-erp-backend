@@ -1964,7 +1964,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             BigDecimal purchaseTaxRate = purchaseOrderDetailEntity.getTaxRate();
             //不含税单价（不含税价格=含税价格/（1+增值税税率））
-            purchasePrice= MathUtil.divide(purchasePrice, MathUtil.add(BigDecimal.ONE, purchaseTaxRate));
+            purchasePrice = MathUtil.divide(purchasePrice, MathUtil.add(BigDecimal.ONE, purchaseTaxRate));
 
             skuCostProfitResult.setPurchasePrice(purchasePrice);
 
@@ -1976,7 +1976,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             LocalDate purchaseDate = purchaseOrderDetailEntity.getPurchaseDate();
             if (Objects.nonNull(purchaseDate)) {
                 String purchaseDateStr = purchaseDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                rate=dmpTaskFeign.getRate(purchaseDateStr, purchaseOrderDetailEntity.getCurrency());
+                rate = dmpTaskFeign.getRate(purchaseDateStr, purchaseOrderDetailEntity.getCurrency());
             }
 
         }
@@ -2000,7 +2000,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (Objects.nonNull(costParam.getSaleAmount()) &&
                 costParam.getSaleAmount().compareTo(BigDecimal.ZERO) == 1 &&
                 !Objects.equals(costParam.getCurrency(), "CNY")) {
-             rate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), costParam.getCurrency());
+            rate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), costParam.getCurrency());
             log.info("提交的币制：{}，转换后汇率：{}", costParam.getCurrency(), rate);
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 costParam.setSaleAmount(BigDecimal.ZERO);
@@ -2255,7 +2255,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     public Boolean updateDetailRemark(BaseIdsDTO.RemarkDTO dto) {
-        soDetailService.updateRemarkByIds(dto.getIds(),dto.getRemark());
+        soDetailService.updateRemarkByIds(dto.getIds(), dto.getRemark());
         return Boolean.TRUE;
     }
 
@@ -2265,8 +2265,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
-        lambdaUpdate().in(SoInfoEntity::getId,dto.getIds())
-                .set(SoInfoEntity::getRemark,dto.getRemark())
+        lambdaUpdate().in(SoInfoEntity::getId, dto.getIds())
+                .set(SoInfoEntity::getRemark, dto.getRemark())
                 .update(new SoInfoEntity());
         return Boolean.TRUE;
     }
@@ -2290,7 +2290,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             BigDecimal purchaseTaxRate = purchaseOrderDetailEntity.getTaxRate();
             //不含税单价（不含税价格=含税价格/（1+增值税税率））
-            purchasePrice= MathUtil.divide(purchasePrice, MathUtil.add(BigDecimal.ONE, purchaseTaxRate));
+            purchasePrice = MathUtil.divide(purchasePrice, MathUtil.add(BigDecimal.ONE, purchaseTaxRate));
 
             skuCostProfitResult.setPurchasePrice(purchasePrice);
 
@@ -2302,7 +2302,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             LocalDate purchaseDate = purchaseOrderDetailEntity.getPurchaseDate();
             if (Objects.nonNull(purchaseDate)) {
                 String purchaseDateStr = purchaseDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                rate=dmpTaskFeign.getRate(purchaseDateStr, purchaseOrderDetailEntity.getCurrency());
+                rate = dmpTaskFeign.getRate(purchaseDateStr, purchaseOrderDetailEntity.getCurrency());
             }
 
         }

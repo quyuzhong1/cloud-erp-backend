@@ -2,10 +2,10 @@ package com.erp.server.scm.kingdee.impl;
 
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MathUtil;
@@ -22,6 +22,8 @@ import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceService;
 import com.erp.server.scm.service.SupplierService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
@@ -35,7 +37,6 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
-
  * @date 2023/4/4 12:25
  */
 @Slf4j
@@ -65,16 +66,16 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
         Map<String, Object> resultMap = new HashMap<>();
 
         //更新同步状态为待同步
-        purchasePriceService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        purchasePriceService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), "", operate);
 
         //业务id
-        resultMap.put("id",entity.getId());
+        resultMap.put("id", entity.getId());
         //编码
-        resultMap.put("code",entity.getCode());
+        resultMap.put("code", entity.getCode());
         //名称
-        resultMap.put("name",entity.getCode());
+        resultMap.put("name", entity.getCode());
         //金蝶id
-        resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
 
         //查询供应商
         SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
@@ -82,16 +83,25 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
             return;
         }
         //供应商编码
-        resultMap.put("supplierCode",supplierEntity.getCode());
+        resultMap.put("supplierCode", supplierEntity.getCode());
+        //采购组织id
+        String purchaseOrgId = entity.getPurchaseOrgId();
+        //组织
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(purchaseOrgId));
+
+        String purchaseOrgCode = "";
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            purchaseOrgCode = accountingCompanyList.get(0).getCode();
+        }
         //采购组织
-        resultMap.put("purchaseOrgName",entity.getPurchaseOrgName());
+        resultMap.put("purchaseOrgCode", purchaseOrgCode);
 
         if (StringUtils.isNotBlank(entity.getPricingUserId())) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPricingUserId());
 
             if (ObjectUtils.isNotEmpty(findUserDTO)) {
                 //定价员
-                resultMap.put("pricingUserCode",findUserDTO.getCode());
+                resultMap.put("pricingUserCode", findUserDTO.getCode());
             }
         }
 
@@ -106,21 +116,21 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
             BigDecimal rate = MathUtil.divide(detailEntity.getTaxRate(), MathUtil.BigDecimal_100);
             JSONObject jsonObject = new JSONObject();
             //金蝶id
-            resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
-            resultMap.put("kingdeeDetailId",detailEntity.getKingdeeDetailId());
-            jsonObject.set("detailId",detailEntity.getId());
-            jsonObject.set("skuNo",detailEntity.getSkuNo());
-            jsonObject.set("taxRate",detailEntity.getTaxRate());
-            jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(),MathUtil.add(MathUtil.BigDecimal_1,rate)) );
-            jsonObject.set("taxPrice",detailEntity.getTaxPrice());
-            jsonObject.set("minQty",detailEntity.getMinQty());
-            jsonObject.set("maxQty",detailEntity.getMaxQty());
-            jsonObject.set("effectiveDate",detailEntity.getEffectiveDate());
-            jsonObject.set("expireDate",detailEntity.getExpireDate());
-            jsonObject.set("disabled",detailEntity.getDisabled());
+            resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+            resultMap.put("kingdeeDetailId", detailEntity.getKingdeeDetailId());
+            jsonObject.set("detailId", detailEntity.getId());
+            jsonObject.set("skuNo", detailEntity.getSkuNo());
+            jsonObject.set("taxRate", detailEntity.getTaxRate());
+            jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(), MathUtil.add(MathUtil.BigDecimal_1, rate)));
+            jsonObject.set("taxPrice", detailEntity.getTaxPrice());
+            jsonObject.set("minQty", detailEntity.getMinQty());
+            jsonObject.set("maxQty", detailEntity.getMaxQty());
+            jsonObject.set("effectiveDate", detailEntity.getEffectiveDate());
+            jsonObject.set("expireDate", detailEntity.getExpireDate());
+            jsonObject.set("disabled", detailEntity.getDisabled());
             list.add(jsonObject);
         }
-        resultMap.put("list",list);
+        resultMap.put("list", list);
 
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
@@ -130,7 +140,7 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_PRICE_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return purchasePriceService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"",operate);
+                return purchasePriceService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "", operate);
             }
             return Boolean.TRUE;
         });
@@ -155,15 +165,15 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
 
         for (PurchasePriceDetailEntity entity : details) {
             JSONObject jsonObject = new JSONObject();
-            String syncKingdeeId = list.stream().filter( obj -> obj.getId().equals(entity.getPurchasePriceId())).map(PurchasePriceEntity::getSyncKingdeeId).findFirst().orElse(null);
+            String syncKingdeeId = list.stream().filter(obj -> obj.getId().equals(entity.getPurchasePriceId())).map(PurchasePriceEntity::getSyncKingdeeId).findFirst().orElse(null);
             if (StringUtils.isBlank(syncKingdeeId)) {
                 continue;
             }
-            jsonObject.set("syncKingdeeId",syncKingdeeId);
-            jsonObject.set("kingdeeDetailId",entity.getKingdeeDetailId());
-            jsonObject.set("skuNo",entity.getSkuNo());
-            jsonObject.set("minQty",entity.getMinQty());
-            jsonObject.set("maxQty",entity.getMaxQty());
+            jsonObject.set("syncKingdeeId", syncKingdeeId);
+            jsonObject.set("kingdeeDetailId", entity.getKingdeeDetailId());
+            jsonObject.set("skuNo", entity.getSkuNo());
+            jsonObject.set("minQty", entity.getMinQty());
+            jsonObject.set("maxQty", entity.getMaxQty());
             jsonArray.put(jsonObject);
         }
         String operate;
@@ -175,9 +185,9 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
 
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
-        resultMap.put("list",jsonArray);
+        resultMap.put("list", jsonArray);
         //异步推送mq
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_PRICE_TAG.getName(), resultMap, String.join(",",purchasePriceIds));
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_PRICE_TAG.getName(), resultMap, String.join(",", purchasePriceIds));
 
     }
 
