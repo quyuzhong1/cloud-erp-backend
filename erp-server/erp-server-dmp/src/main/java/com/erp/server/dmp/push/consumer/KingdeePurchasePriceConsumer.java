@@ -107,7 +107,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("code"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
 
             log.error("采购价目表查看失败 map = {}",JSONUtil.toJsonStr(map));

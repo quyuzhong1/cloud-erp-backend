@@ -2,7 +2,6 @@ package com.erp.server.dmp.push.consumer;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -196,7 +195,7 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("code"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
             Map<String, Object> pushMap = new HashMap<>();
 //            pushMap.put("ids", Arrays.asList(map.get("soSyncKingdeeId")));

@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -68,7 +68,10 @@ public class DmpFeignController extends BaseController {
             log.error("第三方平台【{}】未找到！", PlatformEnum.KINGDEE.getDesc());
             throw new ServiceException(ApiError.ERROR_97022);
         }
-        return kingdeeCommonService.view(apiUtils,platformEntity.getId(), dto.getId(), dto.getNumber());
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("syncKingdeeId",dto.getId());
+        map.put("code",dto.getNumber());
+        return kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
     }
 
 

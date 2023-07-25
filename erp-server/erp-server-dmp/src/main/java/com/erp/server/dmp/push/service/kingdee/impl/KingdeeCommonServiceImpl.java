@@ -156,28 +156,39 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
 
     @Override
-    public JSONObject view(KingdeeApiUtils apiUtils,String apiPlatformId, String id, String number) {
+    public JSONObject view(KingdeeApiUtils apiUtils,String apiPlatformId,Map<String, Object> map) {
         /**
-         * 二级查询：
-         * 优先根据第一创建组织查询，未查到则根据第二创建组织查询
+         * 1、优先根据创建组织id查询
+         * 2、有配置则优先根据配置查询，优先根据第一创建组织查询，未查到则根据第二创建组织查询
+         * 3、无创建组织id及配置 ，则根据唯迹集团查询
          */
+        String syncKingdeeId = (String) map.get("syncKingdeeId");
+        String number = (String) map.get("code");
+        Integer createOrgId = (Integer) map.get("createOrgId");
+
         JSONObject model;
-        Integer createOrgId = 1;
-        CfgApiAuthEntity authEntity = cfgApiAuthService.getByKey(CfgApiAuthContant.KINGDEE_CREATE_ORG_Id, apiPlatformId);
-        if (ObjectUtils.isEmpty(authEntity)) {
-            //未配置数据
-            return handleViewJson(apiUtils, id, number, createOrgId);
+        //1、有传创建组织id则根据创建组织id查询
+        if (ObjectUtils.isNotEmpty(createOrgId)) {
+            return handleViewJson(apiUtils, syncKingdeeId, number, createOrgId);
         }
+        //2、未传组织且未配置组织则默认唯迹查询
+        CfgApiAuthEntity authEntity = cfgApiAuthService.getByKey(CfgApiAuthContant.KINGDEE_CREATE_ORG_Id,"", apiPlatformId);
+        if (ObjectUtils.isEmpty(authEntity)) {
+            createOrgId = MathUtil.ONE ;
+            //未配置数据
+            return handleViewJson(apiUtils, syncKingdeeId, number, createOrgId);
+        }
+        //3、根据配置表数据查询
         CfgApiAuthDTO.KingDeeCreateOrgDTO kingDeeCreateOrgDTO = JSONUtil.toBean(authEntity.getValue(), CfgApiAuthDTO.KingDeeCreateOrgDTO.class);
         //根据一级创建组织查询
         try {
              createOrgId = ObjectUtils.isEmpty(kingDeeCreateOrgDTO.getFirstOrgId()) ? createOrgId : kingDeeCreateOrgDTO.getFirstOrgId();
-             model = handleViewJson(apiUtils, id, number, createOrgId);
+             model = handleViewJson(apiUtils, syncKingdeeId, number, createOrgId);
         } catch (Exception e) {
-            log.error("未查询到有效数据，apiPlatformId = {}，id = {}，number = {}，firstOrgId = {}",apiPlatformId,id,number,kingDeeCreateOrgDTO.getFirstOrgId());
+            log.error("未查询到有效数据，apiPlatformId = {}，id = {}，number = {}，firstOrgId = {}",apiPlatformId,syncKingdeeId,number,kingDeeCreateOrgDTO.getFirstOrgId());
             //根据二级创建组织查询
             createOrgId = ObjectUtils.isEmpty(kingDeeCreateOrgDTO.getSecondOrgId()) ? createOrgId : kingDeeCreateOrgDTO.getSecondOrgId();
-            model = handleViewJson(apiUtils, id, number, createOrgId);
+            model = handleViewJson(apiUtils, syncKingdeeId, number, createOrgId);
         }
         return model;
     }

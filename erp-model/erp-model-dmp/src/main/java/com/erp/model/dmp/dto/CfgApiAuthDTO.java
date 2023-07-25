@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import java.util.List;
 
 /**
  * @author Will
@@ -63,6 +64,11 @@ public class CfgApiAuthDTO {
          * 第二级创建组织id
          */
         private Integer secondOrgId;
+
+        /**
+         * 组织id集合
+         */
+        private List<Integer> orgIdList;
 
     }
 }

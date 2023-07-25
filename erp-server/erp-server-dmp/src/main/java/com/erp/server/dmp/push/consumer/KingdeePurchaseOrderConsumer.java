@@ -17,7 +17,6 @@ import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
@@ -101,7 +100,7 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("code"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
 
             //更新数据

@@ -49,9 +49,10 @@ public class CfgApiAuthServiceImpl extends ServiceImpl<CfgApiAuthMapper, CfgApiA
     }
 
     @Override
-    public CfgApiAuthEntity getByKey (String key ,String apiPlatformId) {
+    public CfgApiAuthEntity getByKey (String key ,String apiGroup ,String apiPlatformId) {
       return   lambdaQuery()
               .eq(CfgApiAuthEntity::getApiPlatformId,apiPlatformId)
+              .eq(CfgApiAuthEntity::getApiGroup,apiGroup)
               .eq(CfgApiAuthEntity::getKey,key)
               .one();
     }
@@ -123,7 +124,7 @@ public class CfgApiAuthServiceImpl extends ServiceImpl<CfgApiAuthMapper, CfgApiA
      * 验证数据是否重复
      */
     private void checkCfgApiAuth(CfgApiAuthDTO.ParamDTO dto) {
-        CfgApiAuthEntity entity = getByKey(dto.getKey(),dto.getApiPlatformId());
+        CfgApiAuthEntity entity = getByKey(dto.getKey(), dto.getApiGroup(), dto.getApiPlatformId());
         if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(dto.getId())) {
             throw new ServiceException(ApiError.ERROR_97024);
         }
