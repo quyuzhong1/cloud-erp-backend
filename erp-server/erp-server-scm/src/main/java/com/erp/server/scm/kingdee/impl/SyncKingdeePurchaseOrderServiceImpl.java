@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
@@ -106,6 +107,14 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
         //采购日期
         resultMap.put("purchaseDate",entity.getPurchaseDate());
+
+        //委外采购订单
+        if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType())) {
+            resultMap.put("sourceType",SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
+        } else {
+            resultMap.put("sourceType",SourceTypeEnum.PURCHASE_ORDER.getCode());
+        }
+
 
         //查询采购供应商
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getId());
