@@ -23,6 +23,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -98,89 +99,85 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             throw new ServiceException(ApiError.ERROR_92057, StringUtil.join(skuNoList, ","));
         }
 
-        //如果金蝶退货单明细有不一样的仓库，这里分开成多单存到OMS
-        Map<String, List<KingdeeReturnOrderItemEntity>> stockNumberMap = itemEntityList.stream().collect(Collectors.groupingBy(KingdeeReturnOrderItemEntity::getFStockNumber));
-        for (Map.Entry<String, List<KingdeeReturnOrderItemEntity>> stringListEntry : stockNumberMap.entrySet()) {
+        //获取退货单明细
+        List<KingdeeReturnOrderItemEntity> orderItemEntityList = kingdeeReturnOrderEntity.getItemEntityList();
 
-            //获取退货单明细
-            List<KingdeeReturnOrderItemEntity> orderItemEntityList = stringListEntry.getValue();
+        SoReturnInstockEntity instockEntity = new SoReturnInstockEntity();
+        instockEntity.setCode(kingdeeReturnOrderEntity.getFBillNo());
+        instockEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        instockEntity.setType(BillTypeEnum.B2C.getCode());
+        instockEntity.setSourceType(SourceTypeEnum.SAL_RETURNSTOCK.getCode());
+        instockEntity.setSalesOrgName(kingdeeReturnOrderEntity.getFSaleOrgName());
+        SysDepartmentDTO userDeptByCode = sysUserFeign.getUserDeptByCode(kingdeeReturnOrderEntity.getFSaledeptNumber());
+        if (ObjectUtil.isNotEmpty(userDeptByCode)) {
+            instockEntity.setSalesDeptId(userDeptByCode.getId());
+        }
+        instockEntity.setSalesDeptName(kingdeeReturnOrderEntity.getFSaledeptName());
+        instockEntity.setSellerName(kingdeeReturnOrderEntity.getFSalesManName());
+        instockEntity.setBillDate(LocalDate.parse(kingdeeReturnOrderEntity.getFDate().split("T")[0]));
+        instockEntity.setWarehouseId("");
+        instockEntity.setWarehouseName("");
+        if (CollectionUtils.isNotEmpty(orderItemEntityList)) {
+            KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity = orderItemEntityList.get(MathUtil.ZERO);
+            instockEntity.setSourceCode(kingdeeReturnOrderItemEntity.getFOrderNo());
+            instockEntity.setSourceId(kingdeeReturnOrderItemEntity.getFSOEntryId());
+            instockEntity.setSoReturnCode(kingdeeReturnOrderItemEntity.getFOrderNo());
+            instockEntity.setSoReturnId(kingdeeReturnOrderItemEntity.getFSOEntryId());
+        }
+        instockEntity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
+        instockEntity.setCustomerName(kingdeeReturnOrderEntity.getFRetcustName());
+        instockEntity.setId(IdWorker.getIdStr());
+
+        List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
+        for (KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity : orderItemEntityList) {
+            SoReturnInstockDetailEntity instockDetailEntity = new SoReturnInstockDetailEntity();
             //获取仓库信息
-            WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getKingdeeWarehouseCode().equals(stringListEntry.getKey())).findFirst().orElse(null);
+            WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getKingdeeWarehouseCode().equals(kingdeeReturnOrderItemEntity.getFStockNumber())).findFirst().orElse(null);
             //如果仓库不存在抛出异常
             if (ObjectUtil.isEmpty(warehouseEntity)) {
-                throw new ServiceException(ApiError.ERROR_92056, stringListEntry.getKey());
-            }
-            SoReturnInstockEntity instockEntity = new SoReturnInstockEntity();
-            instockEntity.setCode(kingdeeReturnOrderEntity.getFBillNo());
-            instockEntity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
-            instockEntity.setType(BillTypeEnum.B2C.getCode());
-            instockEntity.setSourceType(SourceTypeEnum.SAL_RETURNSTOCK.getCode());
-            instockEntity.setSalesOrgName(kingdeeReturnOrderEntity.getFSaleOrgName());
-            SysDepartmentDTO userDeptByCode = sysUserFeign.getUserDeptByCode(kingdeeReturnOrderEntity.getFSaledeptNumber());
-            if (ObjectUtil.isNotEmpty(userDeptByCode)) {
-                instockEntity.setSalesDeptId(userDeptByCode.getId());
-            }
-            instockEntity.setSalesDeptName(kingdeeReturnOrderEntity.getFSaledeptName());
-            instockEntity.setSellerName(kingdeeReturnOrderEntity.getFSalesManName());
-            instockEntity.setBillDate(LocalDate.parse(kingdeeReturnOrderEntity.getFDate().split("T")[0]));
-            instockEntity.setWarehouseId(warehouseEntity.getId());
-            instockEntity.setWarehouseName(warehouseEntity.getName());
-            if (CollectionUtils.isNotEmpty(orderItemEntityList)) {
-                KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity = orderItemEntityList.get(MathUtil.ZERO);
-                instockEntity.setSourceCode(kingdeeReturnOrderItemEntity.getFOrderNo());
-                instockEntity.setSourceId(kingdeeReturnOrderItemEntity.getFSOEntryId());
-            }
-            instockEntity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
-            instockEntity.setCustomerName(kingdeeReturnOrderEntity.getFRetcustName());
-            instockEntity.setId(IdWorker.getIdStr());
-            List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
-            for (KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity : orderItemEntityList) {
-                SoReturnInstockDetailEntity instockDetailEntity = new SoReturnInstockDetailEntity();
-                SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuNo().equals(kingdeeReturnOrderItemEntity.getFMaterialNumber())).findFirst().orElse(null);
-
-                instockDetailEntity.setMainId(instockEntity.getId());
-                instockDetailEntity.setSkuNo(kingdeeReturnOrderItemEntity.getFMaterialNumber());
-                instockDetailEntity.setSkuId(skuVO.getSkuId());
-                instockDetailEntity.setRealQty(Double.valueOf(kingdeeReturnOrderItemEntity.getFRealQty()).intValue());
-                detailEntityList.add(instockDetailEntity);
+                throw new ServiceException(ApiError.ERROR_92056, kingdeeReturnOrderItemEntity.getFStockNumber());
             }
 
-            List<SoReturnInstockEntity> soReturnInstockEntities = soReturnInstockService.listByCode(Arrays.asList(kingdeeReturnOrderEntity.getFBillNo()));
-            List<String> ids = soReturnInstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnInstockEntity::getId).collect(Collectors.toList());
-            if (kingdeeReturnOrderEntity.getFDocumentStatus().equals("C")) {
-                soReturnInstockService.save(instockEntity);
-                soReturnInstockDetailService.saveBatch(detailEntityList);
-                //如果存在已审核的数据先回滚再审核
-                if (CollectionUtils.isNotEmpty(ids)) {
-                    //回滚库存
-                    InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, ids);
-                    inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-                    soReturnInstockService.deleteByIds(ids);
-                    soReturnInstockDetailService.delete(ids);
-                    //更新库存
-                    inventoryTransCore(Arrays.asList(instockEntity));
-                } else {
-                    //更新库存
-                    inventoryTransCore(Arrays.asList(instockEntity));
-                }
-            } else {
-                if (CollectionUtils.isNotEmpty(ids)) {
-                    //回滚库存
-                    InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, ids);
-                    inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-                    soReturnInstockService.deleteByIds(ids);
-                    soReturnInstockDetailService.delete(ids);
-                }
+            instockDetailEntity.setWarehouseId(warehouseEntity.getId());
+            instockDetailEntity.setWarehouseName(warehouseEntity.getName());
+            SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuNo().equals(kingdeeReturnOrderItemEntity.getFMaterialNumber())).findFirst().orElse(null);
+            instockDetailEntity.setMainId(instockEntity.getId());
+            instockDetailEntity.setSkuNo(kingdeeReturnOrderItemEntity.getFMaterialNumber());
+            instockDetailEntity.setSkuId(skuVO.getSkuId());
+            instockDetailEntity.setRealQty(Double.valueOf(kingdeeReturnOrderItemEntity.getFRealQty()).intValue());
+            detailEntityList.add(instockDetailEntity);
+        }
+
+        List<SoReturnInstockEntity> soReturnInstockEntities = soReturnInstockService.listByCode(Arrays.asList(kingdeeReturnOrderEntity.getFBillNo()));
+        List<String> ids = soReturnInstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnInstockEntity::getId).collect(Collectors.toList());
+        if (kingdeeReturnOrderEntity.getFDocumentStatus().equals("C")) {
+            soReturnInstockService.saveKingdeeSoReturn(instockEntity, detailEntityList, ids);
+            //更新库存
+            inventoryTransCore(Arrays.asList(instockEntity));
+
+            //更新状态
+           soReturnInstockService.lambdaUpdate()
+                   .set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE)
+                   .eq(SoReturnInstockEntity::getId, instockEntity.getId())
+                   .update();
+        } else {
+            if (CollectionUtils.isNotEmpty(ids)) {
+                //回滚库存
+                InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, ids);
+                inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+                soReturnInstockService.deleteByIds(ids);
+                soReturnInstockDetailService.delete(ids);
             }
         }
     }
 
     /**
      * 更新库存
-     * @Author Luo_WG
-     * @Date 2023/5/24 11:25
+     *
      * @param entityList
      * @return void
+     * @Author Luo_WG
+     * @Date 2023/5/24 11:25
      **/
     private void inventoryTransCore(List<SoReturnInstockEntity> entityList) {
         for (SoReturnInstockEntity entity : entityList) {
@@ -196,7 +193,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
                 inOutStockDTO.setSkuId(detailEntity.getSkuId());
                 inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
                 inOutStockDTO.setQty(detailEntity.getRealQty());
-                inOutStockDTO.setWarehouseId(entity.getWarehouseId());
+                inOutStockDTO.setWarehouseId(detailEntity.getWarehouseId());
                 // TODO 金蝶目前没有填仓位
 //                inOutStockDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
                 inOutStockList.add(inOutStockDTO);

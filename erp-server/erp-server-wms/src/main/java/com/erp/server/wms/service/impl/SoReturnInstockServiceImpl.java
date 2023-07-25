@@ -57,6 +57,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -859,5 +860,20 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         return lambdaUpdate().set(SoReturnInstockEntity::getIsDeleted, Boolean.TRUE)
                 .in(SoReturnInstockEntity::getId, ids)
                 .update();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    public Boolean saveKingdeeSoReturn(SoReturnInstockEntity instockEntity, List<SoReturnInstockDetailEntity> detailEntityList, List<String> ids) {
+        if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isNotEmpty(ids)) {
+            //回滚库存
+            InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, ids);
+            inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+            this.deleteByIds(ids);
+            soReturnInstockDetailService.delete(ids);
+        }
+        this.save(instockEntity);
+        soReturnInstockDetailService.saveBatch(detailEntityList);
+        return null;
     }
 }

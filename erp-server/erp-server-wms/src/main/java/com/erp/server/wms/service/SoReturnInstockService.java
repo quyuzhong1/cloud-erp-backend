@@ -7,6 +7,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
+import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -194,4 +195,15 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return java.lang.Boolean
      **/
     Boolean deleteByIds(List<String> ids);
+
+    /**
+     * 保存金蝶退货单
+     * @Author Luo_WG
+     * @Date 2023/7/17 11:06
+     * @param instockEntity
+     * @param detailEntityList
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean saveKingdeeSoReturn(SoReturnInstockEntity instockEntity, List<SoReturnInstockDetailEntity> detailEntityList, List<String> ids);
 }
