@@ -6,7 +6,6 @@ import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.QcBillStatusEnum;
-import com.erp.model.wms.enums.QcReCheckResultEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -18,7 +17,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -497,12 +495,6 @@ public class QcInfoDTO implements Serializable {
          */
         private List<LocalDate> createTimeList;
 
-        /**
-         * 是否库内抽检
-         * true 内部抽检
-         */
-        private Boolean isInsideQc;
-
     }
 
 
@@ -762,21 +754,6 @@ public class QcInfoDTO implements Serializable {
          */
         @JsonIgnore
         private String qcResultId;
-
-        /**
-         * 是否库内内检 默认 false
-         */
-        private Boolean isInsideQc;
-
-        /**
-         * 复检抽检结果
-         */
-        private String qcSampleResult;
-
-        /**
-         * 复检抽检结果描述
-         */
-        private String qcSampleResultName;
 
     }
 
@@ -1334,30 +1311,6 @@ public class QcInfoDTO implements Serializable {
          */
         @JsonIgnore
         private String qcResultId;
-
-    }
-
-    /**
-     * 复检抽检
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ReQcDTO extends PermissionsDTO {
-
-        @Size(min = 1, message = "请至少勾选一条数据")
-        private List<String> ids;
-
-        /**
-         * 复检抽检结果
-         */
-        @NotEmpty(message = "请选择抽检结果")
-        @StateEnumValue(clazz = QcReCheckResultEnum.class, message = "复检抽检结果有误")
-        private String qcSampleResult;
-
-        /**
-         * 抽检备注
-         */
-        private String remark;
 
     }
 

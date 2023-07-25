@@ -18,8 +18,7 @@ public enum QcBillStatusEnum {
     WAIT_QC("waitQc", "待质检"),
     EXEMPTION("exemption", "免检"),
     FINISH_QC("finishQc", "已质检"),
-    CANCEL("cancel", "取消"),
-    WAIT_RE_QC("waitReQc", "待复检");
+    CANCEL("cancel", "取消");
 
     /**
      * 类型

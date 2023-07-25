@@ -38,10 +38,4 @@ public interface QcResultMapper extends BaseMapper<QcResultEntity> {
      * @return java.util.List<com.erp.model.wms.dto.QcResultDTO.QcNoticeDTO>
      */
     List<QcResultDTO.QcNoticeDTO> listQcResultMsg(@Param("mainIdList") List<String> mainIdList);
-
-    /**
-     * 获取待复检的质检单数量
-     * @return
-     */
-    int getReQcCount();
 }
