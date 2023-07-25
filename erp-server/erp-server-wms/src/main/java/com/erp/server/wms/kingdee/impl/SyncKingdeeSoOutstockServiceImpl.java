@@ -125,7 +125,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //单据类型
         resultMap.put("orderType", entity.getOrderType());
         //单据日期
-        resultMap.put("billDate", LocalDate.now());
+        resultMap.put("billDate", entity.getCreateTime().toLocalDate());
         //销售组织
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
