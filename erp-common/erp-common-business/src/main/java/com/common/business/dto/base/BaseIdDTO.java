@@ -31,5 +31,7 @@ public class BaseIdDTO   extends  PermissionsDTO  {
 
         private String name;
 
+        private String flagId;
+
     }
 }

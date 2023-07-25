@@ -77,6 +77,17 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
     public void checkSkuInterval(String purchasePriceId, List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList, List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList, List<PurchasePriceDetailDTO.AddDTO> historyList) {
 
         if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
+
+            //价格为零的 sku no
+            List<String> priceZeroSkuIdList = purchasePriceChangeDetailList.stream().filter(p -> BigDecimal.ZERO.compareTo(p.getTaxPrice()) == 0).map(PurchasePriceChangeDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+            List<SkuVO> skuVOList=plmTaskFeign.getSkuInfoByIds(priceZeroSkuIdList);
+            //不为空的时候
+            if (CollectionUtils.isNotEmpty(skuVOList)) {
+                String priceZeroSkuNo = skuVOList.stream().map(SkuVO::getSkuNo).collect(Collectors.joining(","));
+                throw new ServiceException(ApiError.ERROR_PRICE_ZERO_SKUNO, priceZeroSkuNo);
+            }
+
+
             //这个是检查的
             List<PurchasePriceChangeDetailDTO.AddDTO> checkList = new ArrayList<>(10);
             checkList.addAll(purchasePriceChangeDetailList);

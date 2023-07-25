@@ -30,9 +30,9 @@ import java.util.stream.Collectors;
 
 /**
  * 对接金蝶仓库
+ *
  * @author Lambda
  * @Classname KingdeeWarehouseConsumer
-
  * @Date 2023-04-25 14:29
  * @Created by yl
  */
@@ -65,14 +65,14 @@ public class KingdeeWarehouseConsumer implements RocketMQListener<Map<String, Ob
          * 反审核
          */
         if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            operateDisapprove(apiUtils,platformEntity, map,type);
+            operateDisapprove(apiUtils, platformEntity, map, type);
         }
 
         /**
          * 启用、禁用
          */
         if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
-            excuteOperation(apiUtils,platformEntity,map,type);
+            excuteOperation(apiUtils, platformEntity, map, type);
             return;
         }
 
@@ -80,14 +80,14 @@ public class KingdeeWarehouseConsumer implements RocketMQListener<Map<String, Ob
          * 审核
          */
         if (SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
-            operateApprove(apiUtils,platformEntity, map,type);
+            operateApprove(apiUtils, platformEntity, map, type);
         }
     }
 
     /**
      * 启用、禁用
      */
-    private void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+    private void excuteOperation(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type) {
         //仓库状态 true禁用,false启用
         Object disabled = map.get("disabled");
         if (ObjectUtils.isEmpty(disabled)) {
@@ -107,33 +107,33 @@ public class KingdeeWarehouseConsumer implements RocketMQListener<Map<String, Ob
         }
         Map<String, Object> queryMap = queryList.get(0);
         //禁用人
-        String disablerId = (String)queryMap.get("FForbiderId");
+        String disablerId = (String) queryMap.get("FForbiderId");
 
         String operate = null;
         //启用
-        if (!(Boolean) disabled && !StringUtils.equals("0",disablerId)) {
+        if (!(Boolean) disabled && !StringUtils.equals("0", disablerId)) {
             operate = SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
         }
         //禁用
-        if ((Boolean) disabled && StringUtils.equals("0",disablerId)) {
+        if ((Boolean) disabled && StringUtils.equals("0", disablerId)) {
             operate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
         }
 
         if (StringUtils.isNotBlank(operate)) {
-            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
+            kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
         }
     }
 
     /**
-     * @description: 反审核
-     * @author Will
-     * @date: 2023/5/24 17:57
      * @param apiUtils
      * @param platformEntity
      * @param map
      * @param type
+     * @description: 反审核
+     * @author Will
+     * @date: 2023/5/24 17:57
      */
-    private void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+    private void operateDisapprove(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type) {
         String syncKingdeeId = (String) map.get("syncKingdeeId");
         if (StringUtils.isBlank(syncKingdeeId)) {
             return;
@@ -144,47 +144,47 @@ public class KingdeeWarehouseConsumer implements RocketMQListener<Map<String, Ob
     }
 
     /**
-     * @description: 审核
-     * @author Will
-     * @date: 2023/5/24 18:10
      * @param apiUtils
      * @param platformEntity
      * @param map
      * @param type
+     * @description: 审核
+     * @author Will
+     * @date: 2023/5/24 18:10
      */
-    private void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+    private void operateApprove(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type) {
 
         //业务id
-        String  businessId = String.valueOf(map.get("id"));
+        String businessId = String.valueOf(map.get("id"));
 
         //根据录入值和字段配置生成JSONObject
-        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
+        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
 
         //未配置发送字段
         if (CollectionUtils.isEmpty(json)) {
             log.error(ApiError.ERROR_97025.msg);
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,"","未配置同步字段",type, ApiSendStatusEnum.FAILURE.getCode());
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "未配置同步字段", type, ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
         //判断金蝶系统是否已存在该数据
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
+            model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
         } catch (Exception e) {
             //更新数据
             Boolean isSuccess = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
             if (isSuccess) {
                 //启用、禁用
-                excuteOperation(apiUtils,platformEntity,map,type);
+                excuteOperation(apiUtils, platformEntity, map, type);
             }
             return;
         }
 
         //查找到数据后，判断其审核状态
-        String documentStatus = (String)model.get("DocumentStatus");
-        String id = String.valueOf(model.get("Id")) ;
+        String documentStatus = (String) model.get("DocumentStatus");
+        String id = String.valueOf(model.get("Id"));
         Boolean flag = Boolean.FALSE;
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
@@ -193,7 +193,7 @@ public class KingdeeWarehouseConsumer implements RocketMQListener<Map<String, Ob
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
             //主单据id
-            KingdeeUtils.makeFieldJson(json,"FStockId",".", id);
+            KingdeeUtils.makeFieldJson(json, "FStockId", ".", id);
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
@@ -201,7 +201,7 @@ public class KingdeeWarehouseConsumer implements RocketMQListener<Map<String, Ob
             Boolean isSuccess = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
             if (isSuccess) {
                 //启用、禁用
-                excuteOperation(apiUtils,platformEntity,map,type);
+                excuteOperation(apiUtils, platformEntity, map, type);
             }
         }
     }
