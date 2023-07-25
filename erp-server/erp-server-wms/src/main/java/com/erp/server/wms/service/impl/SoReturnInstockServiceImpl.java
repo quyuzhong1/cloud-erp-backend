@@ -390,9 +390,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             BeanMapperUtils.copy(detailEntity, detailView);
             //产品sku信息
             SkuVO productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
-            if (ObjectUtil.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95107);
-            }
             detailView.setProductName(productDetailEntity.getSkuName());
             detailView.setSpuNo(productDetailEntity.getSpuNo());
             detailView.setUnitName(productDetailEntity.getUnitName());
