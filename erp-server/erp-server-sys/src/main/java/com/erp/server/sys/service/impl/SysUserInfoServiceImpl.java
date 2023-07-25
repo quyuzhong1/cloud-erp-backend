@@ -653,7 +653,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         List<SysUserInfoEntity> list = this.list();
         for (SysUserInfoEntity item : list) {
             Integer userState = item.getUserState();
-            if(userState==0){
+            if (userState == 0) {
                 continue;
             }
             FindUserDTO userDTO = new FindUserDTO();
@@ -782,23 +782,12 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      **/
     @Override
     public List<String> getDepUserList(String userId) {
-        List<SysDepartmentTreeDTO> treeList = sysDepartmentMapper.findTree();
+        //       List<SysDepartmentTreeDTO> treeList = sysDepartmentMapper.findTree();
         List<String> userDepList = baseMapper.getUserDepList(userId);
-        List<String> deptList = new LinkedList<>();
-        for (String s : userDepList) {
-            if (CollectionUtils.isNotEmpty(treeList)) {
-                for (SysDepartmentTreeDTO vo : treeList) {
-                    if (vo.getPath().contains(s)) {
-                        deptList.add(vo.getId());
-                    }
-
-                }
-            }
+        if (CollectionUtils.isEmpty(userDepList)) {
+            return Collections.emptyList();
         }
-        if (deptList.size() <= 0) {
-            return new ArrayList<String>();
-        }
-        return baseMapper.getDepUserList(deptList);
+        return baseMapper.getDepUserList(userDepList);
     }
 
     @Override
