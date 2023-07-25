@@ -48,6 +48,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private SoReturnInstockService soReturnInstockService;
 
+    @Resource
+    private MachineInfoService machineInfoService;
+
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
@@ -97,6 +100,10 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //销售退货入库单
         if (ApiModuleTypeEnum.SO_RETURN.getCode().toString().equals(code)) {
             soReturnInstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+        }
+        //加工单
+        if (ApiModuleTypeEnum.MACHINE_INFO.getCode().toString().equals(code)) {
+            machineInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
         }
     }
 }
