@@ -514,6 +514,14 @@ public class SoReturnReceiveDTO {
          */
         private String code;
         /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+        /**
          * 单据日期
          */
         private LocalDate billDate;
