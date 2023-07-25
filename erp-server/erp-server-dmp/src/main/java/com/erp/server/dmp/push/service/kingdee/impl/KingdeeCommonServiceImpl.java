@@ -723,9 +723,11 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             viewMap.put("id", id);
         } else {
             viewMap.put("number", number);
-            //现默认唯迹科技
-            viewMap.put("CreateOrgId", createOrgId);
         }
+        //创建组织
+        viewMap.put("CreateOrgId", createOrgId);
+
+        log.info("view方法数据查询,viewJson = {}",JSONUtil.toJsonStr(viewMap));
         JSONObject model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
         return model;
     }
