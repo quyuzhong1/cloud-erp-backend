@@ -140,6 +140,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setSourceType(sourceType);
         String warehouseOrgId = "";
         soOutstock.setWarehouseOrgId(warehouseOrgId);
+        // 出库日期
+        soOutstock.setBillDate(LocalDate.now());
         String id = IdWorker.getIdStr();
         soOutstock.setId(id);
         LocalDate now = LocalDate.now();

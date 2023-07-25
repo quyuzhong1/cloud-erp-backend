@@ -200,6 +200,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.ERROR_99002);
         }
         soOutstock.setWarehouseName(warehouse.getName());
+        // 出库日期
+        soOutstock.setBillDate(LocalDate.now());
         Boolean addResult = this.save(soOutstock);
         //添加成功
         if (addResult) {
