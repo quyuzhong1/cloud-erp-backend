@@ -1999,6 +1999,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             inventoryForcastDTO.setPurchaseOrderId(id);
             inventoryForcastDTO.setPurchaseOrderCode(order.getCode());
             inventoryForcastDTO.setWarehouseId(order.getDeliveryWarehouseId());
+            inventoryForcastDTO.setBillDate(order.getPurchaseDate());
 
             List<InstockForcastDetailDTO.AddDTO> details = Lists.newArrayListWithExpectedSize(detailList.size());
             detailList.stream().forEach(detail->{
