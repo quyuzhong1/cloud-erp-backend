@@ -742,6 +742,7 @@ public enum ApiError implements Serializable {
     ERROR_92059(92059,"要货日期必须大于单据日期"),
     ERROR_KINGDEE_CODE_NOT_EXIST(92059,"金蝶单号不存在"),
 
+    ERROR_99997(99997,"SKU缺货"),
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),

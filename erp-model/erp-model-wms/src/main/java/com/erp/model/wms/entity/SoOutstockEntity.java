@@ -211,6 +211,12 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("sync_operate")
     private String syncOperate;
 
+    /**
+     * 出库日期
+     */
+    @TableField("bill_date")
+    private LocalDate billDate;
+
 
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;
