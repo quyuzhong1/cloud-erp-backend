@@ -795,6 +795,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 item.setPlanDeliveryDate(null);
                 item.setPackDate(null);
                 item.setActualDeliveryDate(null);
+                item.setBillDate(null);
                 item.setCreateUserName("");
                 item.setCreateTime(null);
             }
