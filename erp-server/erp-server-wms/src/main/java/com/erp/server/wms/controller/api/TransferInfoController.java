@@ -297,7 +297,7 @@ public class TransferInfoController extends BaseController {
      * @return
      */
     @PostMapping("/checkSkuInventory")
-    public ApiResult<String> checkSkuInventory(@RequestBody @Validated({AddGroup.class}) TransferInfoDTO.AddDTO dto) {
+    public ApiResult<String> checkSkuInventory(@RequestBody @Validated({}) TransferInfoDTO.AddDTO dto) {
         String msg = transferInfoService.checkSkuInventory(dto, dto.getDetailList());
         return StrUtils.isEmpty(msg) ? success() : failure(ApiError.ERROR_99997.code, msg, null);
     }
