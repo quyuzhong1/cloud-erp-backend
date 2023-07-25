@@ -3,6 +3,7 @@ package com.erp.server.scm.kingdee.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -11,6 +12,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.scm.entity.*;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceChangeService;
 import com.erp.server.scm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +53,8 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
     @Resource
     private SupplierService supplierService;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     /**
      * 组装数据发送到金蝶
@@ -88,8 +92,14 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
         //调价日期
         resultMap.put("adjustDate",entity.getAdjustDate());
 
-        //采购组织
-        resultMap.put("purchaseOrgName",entity.getPurchaseOrgName());
+        //组织机构编码
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId()));
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            //采购组织
+            String orgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+            resultMap.put("purchaseOrgCode", orgCode);
+        }
 
         //查询供应商
         SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
