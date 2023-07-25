@@ -110,17 +110,4 @@ public interface QcResultService extends SuperService<QcResultEntity> {
      * @return void
      */
     void sendQcResultMsg(List<String> mainIdList);
-
-    /**
-     * 获取待复检的质检单数量
-     * @return
-     */
-    int getReQcCount();
-
-    /**
-     * 批量更新复检抽检结果
-     * @param qcInfoIds
-     * @return
-     */
-    void updateQcSampleResult(List<String> qcInfoIds, String qcSampleResult);
 }

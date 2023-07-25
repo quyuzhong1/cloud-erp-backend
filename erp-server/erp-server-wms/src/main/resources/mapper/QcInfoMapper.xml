@@ -298,9 +298,6 @@
             AND qb.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > qb.create_time
         </if>
-        <if test="params.isInsideQc !=null ">
-            AND qi.is_inside_qc =#{params.isInsideQc}
-        </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -342,9 +339,7 @@
             qi.handle_mode_dict as handleModeDict,
             qi.bad_description as badDescription,
             qi.qc_good_rate*100  AS qcGoodRate,
-            qi.qc_bad_rate*100 AS qcBadRate,
-            qi.is_inside_qc AS isInsideQc,
-            qi.qc_sample_result AS qcSampleResult
+            qi.qc_bad_rate*100 AS qcBadRate
         FROM qc_info qb
         LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
@@ -429,9 +424,6 @@
                     AND qb.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
                     INTERVAL '1
                     DAY' ) > qb.create_time
-                </if>
-                <if test="params.isInsideQc !=null ">
-                    AND qi.is_inside_qc =#{params.isInsideQc}
                 </if>
 
             </otherwise>

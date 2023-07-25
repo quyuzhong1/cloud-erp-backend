@@ -367,4 +367,5 @@ public class QcInfoController extends BaseController {
         List<SysUserInfoEntity> sysUserInfoEntities = qcInfoService.listQcUser();
         return success(sysUserInfoEntities);
     }
+
 }
