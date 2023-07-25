@@ -226,7 +226,39 @@ public class SoReturnInstockDTO {
         /**
          * 退货单id
          */
+        private String soReturnId;
+        /**
+         * 退货单编号
+         */
+        private String soReturnCode;
+        /**
+         * 来源id
+         */
         private String sourceId;
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
+        /**
+         * 退货客户id
+         */
+        private String customerId;
+        /**
+         * 销售组织
+         */
+        private String salesOrgId;
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+        /**
+         * 单据类型
+         */
+        private String type;
         /**
          * 来源类型
          */
@@ -264,7 +296,43 @@ public class SoReturnInstockDTO {
         /**
          * 退货单id
          */
+        private String soReturnId;
+        /**
+         * 退货单编号
+         */
+        private String soReturnCode;
+        /**
+         * 来源id
+         */
         private String sourceId;
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
+        /**
+         * 退货客户id
+         */
+        private String customerId;
+        /**
+         * 销售组织
+         */
+        private String salesOrgId;
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+        /**
+         * 单据类型
+         */
+        private String type;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
         /**
          * 入库日期
          */
@@ -296,13 +364,21 @@ public class SoReturnInstockDTO {
          */
         private String id;
         /**
-         * 退货单id
+         * 来源id
          */
         private String sourceId;
         /**
-         * 退货单编号
+         * 来源编号
          */
         private String sourceCode;
+        /**
+         * 退货单id
+         */
+        private String soReturnId;
+        /**
+         * 退货单编号
+         */
+        private String soReturnCode;
         /**
          * 单据编号
          */

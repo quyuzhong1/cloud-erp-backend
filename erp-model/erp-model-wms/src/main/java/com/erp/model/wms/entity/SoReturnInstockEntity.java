@@ -183,16 +183,28 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
     private String warehouseName;
 
     /**
+     * 销售单id
+     */
+    @TableField("so_id")
+    private String soId;
+
+    /**
      * 销售单编号
      */
     @TableField("so_code")
     private String soCode;
 
     /**
-     * 销售单id
+     * 销售单退货单id
      */
-    @TableField("so_id")
-    private String soId;
+    @TableField("so_return_id")
+    private String soReturnId;
+
+    /**
+     * 销售退货单编号
+     */
+    @TableField("so_return_code")
+    private String soReturnCode;
 
     /**
      * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）

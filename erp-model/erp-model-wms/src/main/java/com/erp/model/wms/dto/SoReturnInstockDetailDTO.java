@@ -14,7 +14,10 @@ public class SoReturnInstockDetailDTO {
     @Data
     @NoArgsConstructor
     public static class Add {
-
+        /**
+         * skuid
+         */
+        private String skuId;
         /**
          * 实退数量
          */
@@ -41,6 +44,15 @@ public class SoReturnInstockDetailDTO {
          * 退货单明细表id
          */
         private String sourceDetailId;
+        /**
+         * 退货类型 wms/common/enumDropDown?type=ReturnType
+         * 描述：refund 退货扣款 replenishment 退货补货
+         */
+        private String returnTypeDict;
+        /**
+         * 退货原因 调用字典接口 类型=ReturnReason
+         */
+        private String returnReasonDict;
     }
 
     /**
@@ -53,7 +65,10 @@ public class SoReturnInstockDetailDTO {
          * id
          */
         private String id;
-
+        /**
+         * skuid
+         */
+        private String skuId;
         /**
          * 实退数量
          */
@@ -80,6 +95,15 @@ public class SoReturnInstockDetailDTO {
          * 退货单明细表id
          */
         private String sourceDetailId;
+        /**
+         * 退货类型 wms/common/enumDropDown?type=ReturnType
+         * 描述：refund 退货扣款 replenishment 退货补货
+         */
+        private String returnTypeDict;
+        /**
+         * 退货原因 调用字典接口 类型=ReturnReason
+         */
+        private String returnReasonDict;
     }
 
     /**

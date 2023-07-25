@@ -285,7 +285,7 @@ public class SoReturnInstockController extends BaseController {
     }
 
     /**
-     * 下推退货入库单-保存
+     * 质检下推退货入库单-保存
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
      * @param list list
@@ -293,7 +293,20 @@ public class SoReturnInstockController extends BaseController {
      **/
     @PostMapping(value = "/generateSoReturnInstockSave")
     public ApiResult generateSoReturnInstockSave(@RequestBody ValidList<SoReturnInstockDTO.GenerateSoReturnInstockView> list) {
-        Boolean flag = soReturnInstockService.generateSoReturnInstockSave(list.getList());
+        Boolean flag = soReturnInstockService.qcGenerateSoReturnInstockSave(list.getList());
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 签收单下推退货入库单-保存
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param list list
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/receiveGenerateSoReturnInstockSave")
+    public ApiResult receiveGenerateSoReturnInstockSave(@RequestBody ValidList<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> list) {
+        Boolean flag = soReturnInstockService.receiveGenerateSoReturnInstockSave(list.getList());
         return flag == true ? success() : failure();
     }
 }
