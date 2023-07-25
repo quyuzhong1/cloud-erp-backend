@@ -31,10 +31,12 @@
         sod.price,
         sod.tax_amount,
         sod.tax_rate,
-        sod.remark as detailRemark
+        sod.remark as detailRemark,
+        ci.country_id as countryId
         FROM so_info si
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false
+        left join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
         WHERE sod.is_deleted=false
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
             AND sod.sku_no IN
@@ -58,6 +60,12 @@
             AND si.customer_id IN
             <foreach collection="params.customerIdList" item="customerId" open="(" separator="," close=")">
                 #{customerId}
+            </foreach>
+        </if>
+        <if test="params.countryIdList !=null and params.countryIdList.size>0">
+            AND ci.country_id IN
+            <foreach collection="params.countryIdList" item="item" open="(" separator="," close=")">
+                #{item}
             </foreach>
         </if>
         <if test="params.sellerIdList !=null and params.sellerIdList.size>0">
@@ -116,6 +124,7 @@
         FROM so_info si
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false
+        left join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
         WHERE sod.is_deleted=false
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
             AND sod.sku_no IN
@@ -139,6 +148,12 @@
             AND si.customer_id IN
             <foreach collection="params.customerIdList" item="customerId" open="(" separator="," close=")">
                 #{customerId}
+            </foreach>
+        </if>
+        <if test="params.countryIdList !=null and params.countryIdList.size>0">
+            AND ci.country_id IN
+            <foreach collection="params.countryIdList" item="item" open="(" separator="," close=")">
+                #{item}
             </foreach>
         </if>
         <if test="params.sellerIdList !=null and params.sellerIdList.size>0">
@@ -219,10 +234,12 @@
             sod.sale_cost,
             sod.sale_profit,
             sod.sale_profit_rate,
-            sod.remark as detailRemark
+            sod.remark as detailRemark,
+            ci.country_id as countryId
         FROM so_detail sod
         INNER JOIN so_info si
         ON sod.main_id =si.id AND si.is_deleted=false
+        left join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
         WHERE sod.is_deleted=false
         <choose>
             <when test="params.ids!=null and params.ids.size>0">
@@ -255,6 +272,12 @@
                     AND si.customer_id IN
                     <foreach collection="params.customerIdList" item="customerId" open="(" separator="," close=")">
                         #{customerId}
+                    </foreach>
+                </if>
+                <if test="params.countryIdList !=null and params.countryIdList.size>0">
+                    AND ci.country_id IN
+                    <foreach collection="params.countryIdList" item="item" open="(" separator="," close=")">
+                        #{item}
                     </foreach>
                 </if>
                 <if test="params.sellerIdList !=null and params.sellerIdList.size>0">

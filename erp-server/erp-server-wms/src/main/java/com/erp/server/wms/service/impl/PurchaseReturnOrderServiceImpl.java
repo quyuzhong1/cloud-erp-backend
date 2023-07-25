@@ -426,6 +426,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             detailView.setSpuNo(productDetailEntity.getSpuNo());
             detailView.setUnit(productDetailEntity.getUnitName());
             detailView.setVariantProperty(productDetailEntity.getVariantProperty());
+
+            //根据组织、仓库、sku查询可用库存
+            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(purchaseReturnOrderEntity.getReturnWarehouseId(), purchaseReturnOrderDetailEntity.getSkuId());
+            detailView.setCurInventoryQty(curInventoryQty);
+
             detailViewDTOS.add(detailView);
         }
         viewDTO.setPurchasePriceDetailList(detailViewDTOS);
@@ -548,23 +553,26 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 List<PurchaseOrderDetailEntity> list = new ArrayList<>();
                 List<PurchaseReturnOrderDetailEntity> detailByMainId = purchaseReturnOrderDetailService.getDetailByMainId(purchaseReturnOrderEntity.getId());
                 List<String> detailId = detailByMainId.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
-                //退料扣款
-                if (purchaseReturnOrderEntity.getReturnMode().equals(ReturnModeEnum.DEDUCTION.getCode())) {
-                    List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
-                    detailByMainId.forEach(returnOrderDetailEntity -> {
-                        PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(returnOrderDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
-                        if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
-                            PurchaseOrderDetailEntity entity = new PurchaseOrderDetailEntity ();
-                            entity.setId(purchaseOrderDetailEntity.getId());
-                            entity.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().subtract(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
-                            list.add(entity);
-                        }
+                List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
+                if (CollectionUtils.isNotEmpty(purchaseOrderDetailEntities)) {
+                    //退料扣款
+                    if (purchaseReturnOrderEntity.getReturnMode().equals(ReturnModeEnum.DEDUCTION.getCode())) {
 
-                    });
-                }
+                        detailByMainId.forEach(returnOrderDetailEntity -> {
+                            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(returnOrderDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
+                            if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
+                                PurchaseOrderDetailEntity entity = new PurchaseOrderDetailEntity ();
+                                entity.setId(purchaseOrderDetailEntity.getId());
+                                entity.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().subtract(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
+                                list.add(entity);
+                            }
 
-                if (StringUtils.isNotBlank(purchaseReturnOrderEntity.getPurchaseOrderId())) {
-                    updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId(), list);
+                        });
+                    }
+
+                    if (StringUtils.isNotBlank(purchaseReturnOrderEntity.getPurchaseOrderId())) {
+                        updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId(), list);
+                    }
                 }
             }
 
@@ -620,19 +628,22 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
             List<PurchaseReturnOrderDetailEntity> detailByMainId = purchaseReturnOrderDetailService.getDetailByMainId(purchaseReturnOrderEntity.getId());
             List<String> detailId = detailByMainId.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
-            //退料扣款
-            if (purchaseReturnOrderEntity.getReturnMode().equals(ReturnModeEnum.DEDUCTION.getCode())) {
-                List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
-                detailByMainId.forEach(returnOrderDetailEntity -> {
-                    PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(returnOrderDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
-                    PurchaseOrderDetailEntity entity = new PurchaseOrderDetailEntity ();
-                    entity.setId(purchaseOrderDetailEntity.getId());
-                    entity.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().add(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
-                    list.add(entity);
-                });
-            }
-            if (StringUtils.isNotBlank(purchaseReturnOrderEntity.getPurchaseOrderId())) {
-                updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId(), list);
+            List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
+            if (CollectionUtils.isNotEmpty(purchaseOrderDetailEntities)) {
+                //退料扣款
+                if (purchaseReturnOrderEntity.getReturnMode().equals(ReturnModeEnum.DEDUCTION.getCode())) {
+
+                    detailByMainId.forEach(returnOrderDetailEntity -> {
+                        PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(returnOrderDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
+                        PurchaseOrderDetailEntity entity = new PurchaseOrderDetailEntity ();
+                        entity.setId(purchaseOrderDetailEntity.getId());
+                        entity.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().add(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
+                        list.add(entity);
+                    });
+                }
+                if (StringUtils.isNotBlank(purchaseReturnOrderEntity.getPurchaseOrderId())) {
+                    updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId(), list);
+                }
             }
         }
 

@@ -297,4 +297,17 @@ public class SoReturnReceiveController extends BaseController {
         Boolean flag = soReturnReceiveService.generateSoReturnReceiveSave(validList.getList());
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 下推退货入库单-列表查询
+     * @Author Luo_WG
+     * @Date 2023/5/23 15:52
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.GenerateSoReturnInstockView>
+     **/
+    @PostMapping(value = "/generateSoReturnInstockView")
+    public ApiResult<List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView>> generateSoReturnInstockView(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> generateSoDeliveryViews = soReturnReceiveService.generateSoReturnInstockView(dto.getIds());
+        return success(generateSoDeliveryViews);
+    }
 }

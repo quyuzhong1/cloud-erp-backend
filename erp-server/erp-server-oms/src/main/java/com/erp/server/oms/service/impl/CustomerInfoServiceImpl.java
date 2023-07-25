@@ -34,6 +34,7 @@ import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -969,8 +970,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String currency = customer.getCurrency();
         //币别
         base.setCurrency(currency);
-
+        base.setCountryId(customer.getCountryId());
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
+
+        // 国家
+        DictCountryEntity dictCountryEntity = sysUserFeign.getCountryById(base.getCountryId());
+        if (ObjectUtils.isNotEmpty(dictCountryEntity)) {
+            base.setCountryName(dictCountryEntity.getNameCn());
+        }
 
         String currencySymbol = "";
         if (CollectionUtils.isNotEmpty(currencyList)) {
@@ -1340,6 +1347,17 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                     .update();
         }
 
+    }
+
+    @Override
+    public List<CustomerInfoEntity> listByCountryIdList(List<String> countryIdList) {
+        if (CollectionUtils.isEmpty(countryIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<CustomerInfoEntity> list = lambdaQuery()
+                .in(CustomerInfoEntity::getCountryId, countryIdList)
+                .list();
+        return list;
     }
 
     /**

@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 /**
  * @author Lambda
  * @Classname KingdeeBusinessOperatorDTO
- * @Description TODO
  * @Date 2023-07-08 10:31
  * @Created by yl
  */

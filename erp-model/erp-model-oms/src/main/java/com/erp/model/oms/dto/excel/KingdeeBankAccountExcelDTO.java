@@ -11,7 +11,6 @@ import java.io.Serializable;
 /**
  * @author Lambda
  * @Classname KingdeeBankAccountExcelDTO
- * @Description TODO
  * @Date 2023-07-19 9:15
  * @Created by yl
  */

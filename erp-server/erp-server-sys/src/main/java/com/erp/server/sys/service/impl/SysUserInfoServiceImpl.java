@@ -788,7 +788,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         for (String s : userDepList) {
             if (CollectionUtils.isNotEmpty(treeList)) {
                 for (SysDepartmentTreeDTO vo : treeList) {
-                    if (vo.getPath().contains(s)) {
+                    if (StringUtils.isNotBlank(s)&&vo.getPath().contains(s)) {
                         deptList.add(vo.getId());
                     }
 

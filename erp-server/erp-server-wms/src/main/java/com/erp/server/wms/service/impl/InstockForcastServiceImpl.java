@@ -92,7 +92,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         InstockForcastEntity instockForcastEntity = new InstockForcastEntity();
         // 生成单号
         // String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.RKYB, BusinessNoTypeEnum.CODE_RKYB.getCode()));
-        String code =  docNoGenHelper.generateWithoutCustomerCode(BusinessNoTypeEnum.CODE_RKYB);
+        String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_RKYB);
         // feign调用取不到登录人信息，已解决
         LoginUser loginUser = commonService.getUserInfo();
         instockForcastEntity.setCreateUserId(loginUser.getUid());
@@ -119,7 +119,8 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         instockForcastEntity.setPurchaseOrderCode(dto.getPurchaseOrderCode());
         instockForcastEntity.setOrgId(orgId);
         instockForcastEntity.setWarehouseId(dto.getWarehouseId());
-        instockForcastEntity.setBillDate(LocalDate.now());// 单据日期取采购订单日期
+        // 入库预报取采购订单日期
+        instockForcastEntity.setBillDate(dto.getBillDate());
 
         // 保存主单信息
         this.save(instockForcastEntity);

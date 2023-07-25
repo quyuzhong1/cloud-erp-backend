@@ -790,6 +790,16 @@ public class CustomerDTO implements Serializable {
          */
         private String receiveCondition;
 
+        /**
+         * 国家id
+         */
+        private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
         private String receiveConditionName;
 
 

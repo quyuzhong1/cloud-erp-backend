@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 /**
  * @author Lambda
  * @Classname SkuMapingImportExcelDTO
- * @Description TODO
  * @Date 2023-06-28 18:09
  * @Created by yl
  */

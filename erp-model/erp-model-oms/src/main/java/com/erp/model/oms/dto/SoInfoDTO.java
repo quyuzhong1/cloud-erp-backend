@@ -120,6 +120,15 @@ public class SoInfoDTO implements Serializable {
          */
         private String customerName;
 
+        /**
+         * 国家id
+         */
+        private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
 
         /**
          * 销售组织名
@@ -373,6 +382,11 @@ public class SoInfoDTO implements Serializable {
          * 客户 集合
          */
         private List<String> customerIdList;
+
+        /**
+         * 国家 集合
+         */
+        private List<String> countryIdList;
 
         /**
          * 销售员 集合
@@ -708,6 +722,16 @@ public class SoInfoDTO implements Serializable {
          */
         private String customerName;
 
+
+        /**
+         * 国家id
+         */
+        private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
 
         /**
          * 收货人

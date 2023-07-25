@@ -3,6 +3,8 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -12,6 +14,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
@@ -75,6 +78,12 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
      **/
     @Override
     public void syncDataToKingdee(PurchaseReturnOrderEntity entity, String operate) {
+        PurchaseOrderEntity purchaseOrderEntity = new PurchaseOrderEntity();
+        if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
+            purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
+        }
+
+
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
@@ -142,6 +151,9 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         //退货原因
         resultMap.put("returnRemark", entity.getReturnRemark());
 
+        //退货原因
+        resultMap.put("purchaseOrderCode", entity.getPurchaseOrderCode());
+
         //退货单明细
         List<PurchaseReturnOrderDetailEntity> detailList = purchaseReturnOrderDetailService.getDetailByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
@@ -185,6 +197,17 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             //退款单价
             jsonObject.set("returnPrice", detail.getReturnPrice());
 
+            if (StringUtils.isNotBlank(entity.getPurchaseOrderCode())) {
+                List<Map<String,Object>> mapList = new ArrayList<>();
+                Map<String,Object> entityMap = new HashMap<>();
+                entityMap.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
+                if (ObjectUtils.isNotEmpty(purchaseOrderEntity)) {
+                    entityMap.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
+                }
+                mapList.add(entityMap);
+                //销售单金蝶明细id
+                jsonObject.set("FPURMRBENTRY_Link", mapList);
+            }
             list.add(jsonObject);
         }
         resultMap.put("list",list);

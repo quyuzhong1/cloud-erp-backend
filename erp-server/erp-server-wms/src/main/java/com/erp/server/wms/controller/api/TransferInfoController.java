@@ -7,9 +7,12 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.AddGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.utils.StrUtils;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.server.wms.service.TransferInfoService;
 import org.apache.commons.lang3.StringUtils;
@@ -287,4 +290,16 @@ public class TransferInfoController extends BaseController {
         Boolean flag = transferInfoService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 检测 sku 是否缺货
+     * @param dto
+     * @return
+     */
+    @PostMapping("/checkSkuInventory")
+    public ApiResult<String> checkSkuInventory(@RequestBody @Validated() TransferInfoDTO.AddDTO dto) {
+        String msg = transferInfoService.checkSkuInventory(dto, dto.getDetailList());
+        return success( "", msg);
+    }
+
 }

@@ -6,6 +6,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.TransferInfoDTO;
+import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.entity.TransferInfoEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -158,4 +159,11 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return ViewDTO
      */
     TransferInfoDTO.ViewDTO viewTransferInfoByCode(String code);
+
+    /**
+     * 验证SKU是否缺货
+     * @param dto
+     * @return
+     */
+    String checkSkuInventory(TransferInfoDTO.CommonDTO dto, List<TransferInfoDetailDTO.AddDTO> detailList);
 }

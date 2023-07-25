@@ -11,6 +11,10 @@ public enum TradeTermEnum implements EnumMessage {
     FCA("FCA", "FCA"),
     DDP("DDP", "DDP"),
     DAP("DAP", "DAP"),
+    CPT("CPT", "CPT"),
+    CIP("CIP", "CIP"),
+    DPU("DPU", "DPU"),
+    CIF("CIF", "CIF"),
     ;
     /**
      * 类型

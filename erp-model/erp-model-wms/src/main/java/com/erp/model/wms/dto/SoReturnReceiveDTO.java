@@ -236,10 +236,6 @@ public class SoReturnReceiveDTO {
          */
         private String sourceType;
         /**
-         * 退货日期
-         */
-        private LocalDate returnDate;
-        /**
          * 库存组织id
          */
         @NotBlank(message = "库存组织不能为空")
@@ -257,6 +253,39 @@ public class SoReturnReceiveDTO {
          */
         @NotBlank(message = "仓库不能为空")
         private String warehouseId;
+
+        /**
+         * 客户id
+         */
+        private String customerId;
+
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+
+        /**
+         * 退货日期
+         */
+        private LocalDate returnDate;
+
+        /**
+         * 销售组织id
+         */
+        @NotBlank(message = "销售组织不能为空")
+        private String salesOrgId;
+
+        /**
+         * 单据类型
+         */
+        @NotBlank(message = "单据类型不能为空")
+        private String type;
+
         /**
          * 明细信息
          */
@@ -278,10 +307,6 @@ public class SoReturnReceiveDTO {
          */
         private String sourceId;
         /**
-         * 退货日期
-         */
-        private LocalDate returnDate;
-        /**
          * 库存组织id
          */
         @NotBlank(message = "库存组织不能为空")
@@ -299,6 +324,39 @@ public class SoReturnReceiveDTO {
          */
         @NotBlank(message = "仓库不能为空")
         private String warehouseId;
+
+        /**
+         * 客户id
+         */
+        private String customerId;
+
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+
+        /**
+         * 退货日期
+         */
+        private LocalDate returnDate;
+
+        /**
+         * 销售组织id
+         */
+        @NotBlank(message = "销售组织不能为空")
+        private String salesOrgId;
+
+        /**
+         * 单据类型
+         */
+        @NotBlank(message = "单据类型不能为空")
+        private String type;
+
         /**
          * 明细信息
          */
@@ -431,5 +489,134 @@ public class SoReturnReceiveDTO {
          * 明细信息
          */
         private List<SoReturnReceiveDetailDTO.View> detailList;
+    }
+
+    /**
+     * 签收单下推退货入库单-列表查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReceiveGenerateSoReturnInstockView {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 主表id
+         */
+        private String mainId;
+        /**
+         * 单据编号
+         */
+        private String code;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+        /**
+         * 退货客户id
+         */
+        private String customerId;
+        /**
+         * 退货客户
+         */
+        private String customerName;
+        /**
+         * 销售组织
+         */
+        private String salesOrgId;
+        /**
+         * 销售组织名称
+         */
+        private String salesOrgName;
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+        /**
+         * 销售员
+         */
+        private String sellerName;
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
+        /**
+         * 仓库
+         */
+        private String warehouseId;
+        /**
+         * 仓库
+         */
+        private String warehouseName;
+        /**
+         * 单据类型
+         */
+        private String type;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+        /**
+         * 退货类型
+         */
+        private String returnTypeDict;
+        /**
+         * 退货类型名称
+         */
+        private String returnTypeDictName;
+        /**
+         * 退货原因
+         */
+        private String  returnReasonDict;
+        /**
+         * 退货原因名称
+         */
+        private String  returnReasonDictName;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 入库日期
+         */
+        private LocalDate instockDate;
     }
 }

@@ -60,7 +60,17 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("invalid_status")
     private Boolean invalidStatus;
 
+    /**
+     * 销售员id
+     */
+    @TableField("seller_id")
+    private String sellerId;
 
+    /**
+     * 销售员
+     */
+    @TableField("seller_name")
+    private String sellerName;
 
 
     /**
@@ -200,6 +210,12 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
      */
     @TableField("sync_operate")
     private String syncOperate;
+
+    /**
+     * 出库日期
+     */
+    @TableField("bill_date")
+    private LocalDate billDate;
 
 
     @TableField(exist = false)

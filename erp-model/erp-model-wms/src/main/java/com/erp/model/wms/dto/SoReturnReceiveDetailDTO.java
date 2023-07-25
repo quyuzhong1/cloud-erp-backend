@@ -18,6 +18,10 @@ public class SoReturnReceiveDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class Add {
         /**
+         * skuId
+         */
+        private String skuId;
+        /**
          * 退货数量
          */
         @NotNull(message = "退货数量不能为空")
@@ -39,6 +43,17 @@ public class SoReturnReceiveDetailDTO implements Serializable {
          * 退货单明细表id
          */
         private String sourceDetailId;
+
+        /**
+         * 退货类型 wms/common/enumDropDown?type=ReturnType
+         * 描述：refund 退货扣款 replenishment 退货补货
+         */
+        private String returnTypeDict;
+
+        /**
+         * 退货原因 调用字典接口 类型=ReturnReason
+         */
+        private String returnReasonDict;
     }
 
     /**
@@ -47,6 +62,10 @@ public class SoReturnReceiveDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class Update {
+        /**
+         * skuId
+         */
+        private String skuId;
         /**
          * id
          */
@@ -73,6 +92,17 @@ public class SoReturnReceiveDetailDTO implements Serializable {
          * 退货单明细表id
          */
         private String sourceDetailId;
+
+        /**
+         * 退货类型 wms/common/enumDropDown?type=ReturnType
+         * 描述：refund 退货扣款 replenishment 退货补货
+         */
+        private String returnTypeDict;
+
+        /**
+         * 退货原因 调用字典接口 类型=ReturnReason
+         */
+        private String returnReasonDict;
     }
 
     /**

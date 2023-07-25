@@ -5,7 +5,6 @@ import com.erp.model.scm.entity.SubcontractChangeEntity;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
  * @date 2023/6/20 16:37
  */
 public interface SyncKingdeeSubcontractChangeService {
