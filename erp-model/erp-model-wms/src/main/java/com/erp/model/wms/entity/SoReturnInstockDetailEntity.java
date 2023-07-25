@@ -90,6 +90,18 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     private String sourceDetailId;
 
     /**
+     * 仓库id
+     */
+    @TableField("warehouse_id")
+    private String warehouseId;
+
+    /**
+     * 仓库名称
+     */
+    @TableField("warehouse_name")
+    private String warehouseName;
+
+    /**
      * 审核状态
      */
     @TableField(exist = false)
