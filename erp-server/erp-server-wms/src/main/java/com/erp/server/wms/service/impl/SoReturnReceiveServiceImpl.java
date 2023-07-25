@@ -731,7 +731,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             if (StringUtils.isNotBlank(view.getReturnTypeDict())) {
                 view.setReturnTypeDictName(ReturnTypeEnum.getName(view.getReturnTypeDict()));
             }
-            if (StringUtils.isNotBlank(view.getReturnTypeDict())) {
+            if (StringUtils.isNotBlank(view.getReturnReasonDict())) {
                 view.setReturnReasonDictName(ReturnReasonEnum.getName(view.getReturnReasonDict()));
             }
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
