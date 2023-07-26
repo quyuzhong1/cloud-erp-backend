@@ -114,8 +114,14 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             if (CollectionUtils.isEmpty(detailList)) {
                 return;
             }
+
+            List<String> orgIdList = new ArrayList<>(2);
+            //库存组织
+            String warehouseOrgId = soInfo.getWarehouseOrgId();
             //销售组织
             String salesOrgId = soInfo.getSalesOrgId();
+            orgIdList.add(warehouseOrgId);
+            orgIdList.add(salesOrgId);
             List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
             //销售组织的金蝶code
             String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
@@ -176,19 +182,11 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
                 kingdeeWarehouseCode = warehouseList.get(0).getKingdeeWarehouseCode();
             }
 
-            //库存组织
-            String warehouseOrgId = soInfo.getWarehouseOrgId();
-            List<String> orgIdList = new ArrayList<>(2);
-            orgIdList.add(warehouseOrgId);
-            orgIdList.add(salesOrgId);
-            String warehouseOrgCode = "";
-            if (CollectionUtils.isNotEmpty(orgIdList)) {
-                if (StringUtils.isNotBlank(salesOrgCode)) {
-                    resultMap.put("salesOrgCode", salesOrgCode);
-                }
-                warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
-                        map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("100");
+            if (StringUtils.isNotBlank(salesOrgCode)) {
+                resultMap.put("salesOrgCode", salesOrgCode);
             }
+            String warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
+                    map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
 
             //要货日期
             LocalDate requireDate = soInfo.getRequireDate();
@@ -227,7 +225,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
                 }
 
                 jsonObject.set("oldTaxPrice", item.getOldTaxPrice());
-                jsonObject.set("oldPrice",item.getOldPrice());
+                jsonObject.set("oldPrice", item.getOldPrice());
                 jsonObject.set("oldTaxRate", item.getOldTaxRate());
                 jsonObject.set("isGift", item.getIsGift());
                 jsonObject.set("amount", item.getAmount());
