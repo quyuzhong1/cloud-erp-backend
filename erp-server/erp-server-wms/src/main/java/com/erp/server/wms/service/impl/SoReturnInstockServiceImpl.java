@@ -563,11 +563,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if(!isPushKingDee){
             entityList = entityList.stream().filter(x -> ApproveStatusEnum.APPROVE.equals(x.getApproveStatus())).collect(Collectors.toList());
         }else {
+            //已审核支持反审核
             long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
                     && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
             ).count();
-            if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_98014);
+            if (count != entityList.size()) {
+                throw new ServiceException(ApiError.ERROR_99003);
             }
         }
         //TODO 待加审核流程
