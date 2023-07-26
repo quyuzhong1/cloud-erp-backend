@@ -78,8 +78,7 @@ public class PurchasePriceController extends BaseController {
      */
     @PostMapping("/tab/list")
     public ApiResult tabList(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
-        String id = purchasePriceService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return success();
     }
 
     /**

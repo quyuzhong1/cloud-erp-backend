@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 /**
  * @author Administrator
  * @Classname SysAccountingCompanyImpl
-
  * @Date 2022-07-12 9:52
  * @Created by yl
  */
@@ -64,9 +63,9 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
      */
     private void checkName(String id, String name) {
         LambdaQueryWrapper<SysAccountingCompanyEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SysAccountingCompanyEntity::getCompanyName,name);
-        if(StringUtils.isNotBlank(id)){
-            queryWrapper.ne(SysAccountingCompanyEntity::getId,id);
+        queryWrapper.eq(SysAccountingCompanyEntity::getCompanyName, name);
+        if (StringUtils.isNotBlank(id)) {
+            queryWrapper.ne(SysAccountingCompanyEntity::getId, id);
         }
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
@@ -194,6 +193,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
                 dto.setId(item.getId());
                 dto.setName(item.getCompanyName());
                 dto.setCode(item.getCode());
+                dto.setFlagId(item.getKingdeeId());
                 resultList.add(dto);
             }
             return resultList;
@@ -204,6 +204,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
             dto.setId(item.getId());
             dto.setName(item.getCompanyName());
             dto.setCode(item.getCode());
+            dto.setFlagId(item.getKingdeeId());
             resultList.add(dto);
         }
         return resultList;
@@ -227,11 +228,11 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
 
     @Override
     public List<BaseIdDTO.CodeDTO> listByCodes(List<String> codes) {
-        if (CollectionUtils.isEmpty(codes)){
+        if (CollectionUtils.isEmpty(codes)) {
             return Collections.EMPTY_LIST;
         }
         List<SysAccountingCompanyEntity> list = this.lambdaQuery().in(SysAccountingCompanyEntity::getCode, codes).list();
-        return BeanMapperUtils.copyList(BaseIdDTO.CodeDTO.class,list);
+        return BeanMapperUtils.copyList(BaseIdDTO.CodeDTO.class, list);
     }
 
 

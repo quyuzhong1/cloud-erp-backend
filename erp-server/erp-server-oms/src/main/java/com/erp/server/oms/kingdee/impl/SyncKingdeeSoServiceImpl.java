@@ -95,6 +95,10 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     @Transactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(SoInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+
+        //更新同步状态为待同步
+        soInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), "", operate);
+
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         String id = entity.getId();

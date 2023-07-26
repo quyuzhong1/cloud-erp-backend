@@ -74,7 +74,7 @@ public class CfgApiAuthEntity implements Serializable {
     /**
      * 组别,默认default
      */
-    @TableField(value = "api_group",update = "default")
+    @TableField(value = "api_group")
     private String apiGroup;
 
     /**

@@ -26,6 +26,7 @@ public  class MQProducerServiceTest {
 //    @Resource
 //    private MQProducerService mQProducerService;
 
+
     @Test
     public void syncSendMsg() {
 //        mQProducerService.syncSendMsg("testId2", RocketMqTopic.DMP_ERP_ORDER_TOPIC, "tag2", "{'key':'value2'}","dmp jindie");
@@ -56,6 +57,8 @@ public  class MQProducerServiceTest {
 
     @Test
     public void sendEntity() {
+
+
     }
     @Resource
     private MongoService mongoService;
@@ -67,4 +70,7 @@ public  class MQProducerServiceTest {
         throw new RuntimeException("手动增加异常");
 
     }
+
+
+
 }

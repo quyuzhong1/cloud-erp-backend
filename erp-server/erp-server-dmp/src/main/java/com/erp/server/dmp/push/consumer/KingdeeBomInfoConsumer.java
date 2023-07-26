@@ -66,6 +66,9 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         Integer type = ApiModuleTypeEnum.BOM_INFO.getCode();
         //业务id
         String  businessId = String.valueOf(map.get("id"));
+        //编码转换
+        map.put("code",map.get("version"));
+
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
@@ -85,7 +88,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         JSONObject model;
         SaveParam param = new SaveParam(json);
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("version"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
             //未查找到数据，新增数据
             SaveResult save;

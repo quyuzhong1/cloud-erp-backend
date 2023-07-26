@@ -7,15 +7,16 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.scm.entity.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -26,10 +27,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @author Will
@@ -54,8 +57,13 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
     private PurchaseOrderDetailService purchaseOrderDetailService;
 
     @Resource
-    private DictBasicService dictBasicService;
+    private SubcontractOrderService subcontractOrderService;
 
+    @Resource
+    private SubcontractOrderDetailService subcontractOrderDetailService;
+
+    @Resource
+    private SubcontractChangeService subcontractChangeService;
 
     @Resource
     private SupplierService supplierService;
@@ -71,8 +79,39 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
      * 组装数据发送到金蝶
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(PurchaseOrderEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+
+        //更新同步状态为待同步
+        purchaseOrderService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
+        //如果上游单据未发送成功则无需发送
+        SubcontractOrderEntity subcontractOrderEntity = null;
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = null;
+        if (StringUtils.isNotBlank(entity.getSubcontractType())) {
+            //委外订单
+            subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
+            if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
+                throw new ServiceException(ApiError.ERROR_98073);
+            }
+            if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(subcontractOrderEntity.getSyncKingdeeStatus())) {
+                log.error("委外订单未推送成功，不支持推送采购订单，委外订单号【{}】",subcontractOrderEntity.getCode());
+                return;
+            }
+            //委外订单明细
+            subcontractOrderDetailList = subcontractOrderDetailService.listByMainId(subcontractOrderEntity.getId());
+
+            //委外变更单
+            List<SubcontractChangeEntity> subcontractChangeList = subcontractChangeService.listBySourceIds(Arrays.asList(subcontractOrderEntity.getId()));
+            if (CollectionUtils.isNotEmpty(subcontractChangeList)) {
+                String changeCodes = subcontractChangeList.stream().filter(obj -> !SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(obj.getSyncKingdeeStatus())).map(SubcontractChangeEntity::getCode).collect(Collectors.joining(","));
+                if (StringUtils.isNotBlank(changeCodes)) {
+                    log.error("委外变更单未推送成功，不支持推送采购订单，委外变更单号【{}】",changeCodes);
+                    return;
+                }
+            }
+        }
 
         //业务id
         resultMap.put("id",entity.getId());
@@ -83,6 +122,14 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         //采购日期
         resultMap.put("purchaseDate",entity.getPurchaseDate());
 
+        //委外采购订单
+        if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType())) {
+            resultMap.put("sourceType",SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
+        } else {
+            resultMap.put("sourceType",SourceTypeEnum.PURCHASE_ORDER.getCode());
+        }
+
+
         //查询采购供应商
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getId());
         if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
@@ -92,8 +139,6 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         if (ObjectUtils.isEmpty(supplierEntity)) {
             return;
         }
-
-
 
         //供应商编码
         resultMap.put("supplierCode",supplierEntity.getCode());
@@ -167,6 +212,27 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             }
             jsonObject.set("isGift",detailEntity.getIsGift());
             jsonObject.set("detailRemark",detailEntity.getRemark());
+            //来源单据类型类型
+            if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType())) {
+                jsonObject.set("detailSourceType", KingdeePushModuleEnum.SUB_SUBREQORDER.getCode());
+            }
+            if (ObjectUtils.isNotEmpty(subcontractOrderEntity)) {
+                //委外单号
+                jsonObject.set("refCode", subcontractOrderEntity.getCode());
+            }
+
+            //委外订单关联关系
+            List<Map<String,Object>> refList = new ArrayList<>();
+            JSONObject refJsonObject = new JSONObject();
+            if (ObjectUtils.isNotEmpty(subcontractOrderEntity)) {
+                refJsonObject.set("refKingdeeId",subcontractOrderEntity.getSyncKingdeeId());
+                if (CollectionUtils.isNotEmpty(subcontractOrderDetailList)) {
+                    String subDetailKingdeeId = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeDetailId())).orElse("");
+                    refJsonObject.set("refDetailKingdeeId",subDetailKingdeeId);
+                }
+                refList.add(refJsonObject);
+                jsonObject.set("refList",refList);
+            }
             list.add(jsonObject);
         }
         resultMap.put("list",list);

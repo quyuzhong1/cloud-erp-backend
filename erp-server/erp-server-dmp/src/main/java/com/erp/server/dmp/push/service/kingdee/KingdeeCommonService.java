@@ -121,11 +121,10 @@ public interface KingdeeCommonService {
      * @date: 2023/4/7 11:29
      * @param apiUtils
      * @param apiPlatformId
-     * @param id
-     * @param number
+     * @param map
      * @return JSONObject
      */
-    JSONObject view (KingdeeApiUtils apiUtils,String apiPlatformId,String id,String number);
+    JSONObject view (KingdeeApiUtils apiUtils,String apiPlatformId,Map<String, Object> map);
 
     /**
      * 查询客户分组
@@ -160,6 +159,23 @@ public interface KingdeeCommonService {
 
     */
     Boolean excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,String operate);
+
+    /**
+     * 检查并禁用，反禁用
+     * 检查是否同步到金蝶 如果没有就不用同步
+     * 审核不通过不用同步到金蝶 但是作废缺要同步金蝶 避免这个问题
+     * @author yl
+     * @date 2023-07-26 10:13
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @param number
+     * @param operate
+     * @return java.lang.Boolean
+     */
+    
+    Boolean checkAndExcuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,String operate);
     /**
      * @description: 删除
      * @author Will

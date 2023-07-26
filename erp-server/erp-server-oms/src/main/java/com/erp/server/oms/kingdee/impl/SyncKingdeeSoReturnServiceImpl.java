@@ -72,6 +72,10 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
 
     @Override
     public void syncDataToKingdee(SoReturnEntity entity, String operate) {
+
+        //更新同步状态为待同步
+        soReturnService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
         //客户信息
         List<CustomerInfoEntity> customerInfoEntitieList = customerInfoService.listByIds(Arrays.asList(entity.getCustomerId()));
         //退货单

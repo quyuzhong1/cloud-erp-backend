@@ -1,12 +1,10 @@
 package com.erp.server.oms.kingdee.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.CustomerAddressDTO;
-import com.erp.model.oms.dto.CustomerContactDTO;
 import com.erp.model.oms.entity.CustomerContactEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerContactService;
@@ -46,6 +44,10 @@ public class SyncKingdeeCustomerContactServiceImpl implements SyncKingdeeCustome
 
     @Override
     public void syncDataToKingdee(CustomerContactEntity entity, String operate) {
+
+        //更新同步状态为待同步
+        customerContactService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
         //客户地址信息
         List<CustomerAddressDTO.ViewDTO> viewDTOS = customerAddressService.listByMainId(entity.getMainId());
         //客户信息

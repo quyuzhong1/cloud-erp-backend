@@ -653,7 +653,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         List<SysUserInfoEntity> list = this.list();
         for (SysUserInfoEntity item : list) {
             Integer userState = item.getUserState();
-            if(userState==0){
+            if (userState == 0) {
                 continue;
             }
             FindUserDTO userDTO = new FindUserDTO();

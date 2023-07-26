@@ -79,12 +79,19 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
     @Override
     public void syncDataToKingdee(PurchaseReturnOrderEntity entity, String operate) {
         PurchaseOrderEntity purchaseOrderEntity = new PurchaseOrderEntity();
-        if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
-            purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
-        }
-
-
         Map<String, Object> resultMap = new HashMap<>();
+
+        //更新同步状态为待同步
+        purchaseReturnOrderService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        //如果上游单据未发送成功则无需发送
+        if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
+            //采购订单
+            purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getSourceId());
+            if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(purchaseOrderEntity.getSyncKingdeeStatus())) {
+                log.error("采购订单未推送成功，不支持推送采购入库单，采购订单号【{}】",purchaseOrderEntity.getCode());
+                return;
+            }
+        }
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
         //业务id

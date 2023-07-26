@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
-
  * @date 2023/4/20 11:12
  */
 @Service
@@ -59,8 +58,6 @@ public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> 
         String fieldKeys = "FBillTypeID.FNUMBER";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 11);
         System.out.println(queryList);
-
-
 
 
     }
@@ -96,7 +93,7 @@ public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> 
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(), (String) map.get("syncKingdeeId"), (String) map.get("code"));
+            model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
         } catch (Exception e) {
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
@@ -113,6 +110,7 @@ public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> 
         //操作项
         String operate = (String) map.get("operate");
         if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+
             //作废
             kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
             return;

@@ -55,7 +55,6 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
-
  * @date 2023/3/3 11:53
  */
 @Slf4j
@@ -156,28 +155,39 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
 
     @Override
-    public JSONObject view(KingdeeApiUtils apiUtils,String apiPlatformId, String id, String number) {
+    public JSONObject view(KingdeeApiUtils apiUtils, String apiPlatformId, Map<String, Object> map) {
         /**
-         * 二级查询：
-         * 优先根据第一创建组织查询，未查到则根据第二创建组织查询
+         * 1、优先根据创建组织id查询
+         * 2、有配置则优先根据配置查询，优先根据第一创建组织查询，未查到则根据第二创建组织查询
+         * 3、无创建组织id及配置 ，则根据唯迹集团查询
          */
+        String syncKingdeeId = (String) map.get("syncKingdeeId");
+        String number = (String) map.get("code");
+        Integer createOrgId = map.containsKey("createOrgId") ? Integer.valueOf(map.get("createOrgId").toString()) : null;
+
         JSONObject model;
-        Integer createOrgId = 1;
-        CfgApiAuthEntity authEntity = cfgApiAuthService.getByKey(CfgApiAuthContant.KINGDEE_CREATE_ORG_Id, apiPlatformId);
-        if (ObjectUtils.isEmpty(authEntity)) {
-            //未配置数据
-            return handleViewJson(apiUtils, id, number, createOrgId);
+        //1、有传创建组织id则根据创建组织id查询
+        if (ObjectUtils.isNotEmpty(createOrgId)) {
+            return handleViewJson(apiUtils, syncKingdeeId, number, createOrgId);
         }
+        //2、未传组织且未配置组织则默认唯迹查询
+        CfgApiAuthEntity authEntity = cfgApiAuthService.getByKey(CfgApiAuthContant.KINGDEE_CREATE_ORG_Id, "", apiPlatformId);
+        if (ObjectUtils.isEmpty(authEntity)) {
+            createOrgId = MathUtil.ONE;
+            //未配置数据
+            return handleViewJson(apiUtils, syncKingdeeId, number, createOrgId);
+        }
+        //3、根据配置表数据查询
         CfgApiAuthDTO.KingDeeCreateOrgDTO kingDeeCreateOrgDTO = JSONUtil.toBean(authEntity.getValue(), CfgApiAuthDTO.KingDeeCreateOrgDTO.class);
         //根据一级创建组织查询
         try {
-             createOrgId = ObjectUtils.isEmpty(kingDeeCreateOrgDTO.getFirstOrgId()) ? createOrgId : kingDeeCreateOrgDTO.getFirstOrgId();
-             model = handleViewJson(apiUtils, id, number, createOrgId);
+            createOrgId = ObjectUtils.isEmpty(kingDeeCreateOrgDTO.getFirstOrgId()) ? createOrgId : kingDeeCreateOrgDTO.getFirstOrgId();
+            model = handleViewJson(apiUtils, syncKingdeeId, number, createOrgId);
         } catch (Exception e) {
-            log.error("未查询到有效数据，apiPlatformId = {}，id = {}，number = {}，firstOrgId = {}",apiPlatformId,id,number,kingDeeCreateOrgDTO.getFirstOrgId());
+            log.error("未查询到有效数据，apiPlatformId = {}，id = {}，number = {}，firstOrgId = {}", apiPlatformId, syncKingdeeId, number, kingDeeCreateOrgDTO.getFirstOrgId());
             //根据二级创建组织查询
             createOrgId = ObjectUtils.isEmpty(kingDeeCreateOrgDTO.getSecondOrgId()) ? createOrgId : kingDeeCreateOrgDTO.getSecondOrgId();
-            model = handleViewJson(apiUtils, id, number, createOrgId);
+            model = handleViewJson(apiUtils, syncKingdeeId, number, createOrgId);
         }
         return model;
     }
@@ -195,20 +205,22 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         return model;
     }
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean excuteOperation(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number, String operate) {
         LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
-        //金蝶id
+
         String syncKingdeeId = (String) map.get("syncKingdeeId");
+        Integer createOrgId = (Integer) map.get("createOrgId");
 
         if (StringUtils.isNotBlank(syncKingdeeId)) {
             viewMap.put("ids", syncKingdeeId);
         } else {
-            //现默认唯迹科技
-            viewMap.put("CreateOrgId", 1);
             viewMap.put("numbers", Arrays.asList(number));
         }
+        //创建组织
+        viewMap.put("CreateOrgId", ObjectUtils.isEmpty(createOrgId) ? MathUtil.ZERO : createOrgId);
         //金蝶操作编码
         String operateNumber = SyncKingdeeOperateEnum.getNameByCode(operate);
 
@@ -222,6 +234,39 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //操作成功添加日志
         insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(viewMap), SyncKingdeeOperateEnum.getDescByCode(operate), type, ApiSendStatusEnum.SUCCESS.getCode());
         return Boolean.TRUE;
+    }
+
+    /**
+     * 检查并禁用，反禁用
+     * 检查是否同步到金蝶 如果没有就不用同步
+     * 审核不通过不用同步到金蝶 但是作废缺要同步金蝶 避免这个问题
+     * TODO  暂停
+     *
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @param number
+     * @param operate
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-07-26 10:13
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean checkAndExcuteOperation(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number, String operate) {
+        if (map.containsKey("syncKingdeeId")) {
+            String syncKingdeeId = (String) map.get("syncKingdeeId");
+            //表示没有那么就让其 无需同步
+            if (StringUtils.isBlank(syncKingdeeId)) {
+                String businessId = String.valueOf(map.get("id"));
+                this.updateBusinessSyncKingdeeStatus(type, businessId, SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode(), "");
+            } else {
+                this.excuteOperation(apiUtils, platformEntity, map, type, number, operate);
+            }
+        }
+
+        return null;
     }
 
     @Override
@@ -435,7 +480,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         } catch (Exception e) {
             //反审核失败操作日志及定时任务
             log.error("反审核失败", e);
-            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), id,e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), id, e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
             return Boolean.FALSE;
         }
         //反审核成功操作日志
@@ -475,7 +520,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     public void insertLogWriteBackSyncKingdeeStatus(PlatformEntity platformEntity, String businessId,
                                                     String jsonData, String msg, Integer type, Integer status) {
         //新增任务
-        insertSyncTask(platformEntity,businessId,jsonData,type, status,msg);
+        insertSyncTask(platformEntity, businessId, jsonData, type, status, msg);
         //新增日志
         insertSyncLog(platformEntity, businessId, jsonData, msg, type, status);
         //更新金蝶同步状态
@@ -485,17 +530,17 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     }
 
     /**
-     * @description: 新增推送任务
-     * @author Will
-     * @date: 2023/7/10 19:14
      * @param platformEntity
      * @param businessId
      * @param jsonData
      * @param type
      * @param status
+     * @description: 新增推送任务
+     * @author Will
+     * @date: 2023/7/10 19:14
      */
-    private void insertSyncTask (PlatformEntity platformEntity,String businessId,
-                                 String jsonData, Integer type, Integer status,String msg) {
+    private void insertSyncTask(PlatformEntity platformEntity, String businessId,
+                                String jsonData, Integer type, Integer status, String msg) {
 
         ApiSyncTaskDTO apiSyncTaskDTO = new ApiSyncTaskDTO();
         apiSyncTaskDTO.setApiPlatformId(platformEntity.getId());
@@ -694,34 +739,36 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER_CHANGE.getCode());
         K3CloudApi client = apiUtils.client;
-        RepoResult  repoResult= client.CheckAuthInfo();
+        RepoResult repoResult = client.CheckAuthInfo();
         repoResult.getId();
         String url = KingdeeUtils.SO_CHANGE_URL;
         String paramStr = JSONUtil.toJsonStr(paramMap);
-        log.info("createkingdeeSoChange  paramStr==={}",paramStr);
+        log.info("createkingdeeSoChange  paramStr==={}", paramStr);
         String result = client.execute(url, new Object[]{paramStr});
         return result;
     }
 
     /**
-     * @description: 根据创建组织id查询
-     * @author Will
-     * @date: 2023/7/3 10:23
      * @param apiUtils
      * @param id
      * @param number
      * @param createOrgId
      * @return JSONObject
+     * @description: 根据创建组织id查询
+     * @author Will
+     * @date: 2023/7/3 10:23
      */
-    private JSONObject handleViewJson (KingdeeApiUtils apiUtils,String id,String number,Integer createOrgId) {
+    private JSONObject handleViewJson(KingdeeApiUtils apiUtils, String id, String number, Integer createOrgId) {
         LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
         if (StringUtils.isNotBlank(id)) {
             viewMap.put("id", id);
         } else {
             viewMap.put("number", number);
-            //现默认唯迹科技
-            viewMap.put("CreateOrgId", createOrgId);
         }
+        //创建组织
+        viewMap.put("CreateOrgId", createOrgId);
+
+        log.info("view方法数据查询,viewJson = {}", JSONUtil.toJsonStr(viewMap));
         JSONObject model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
         return model;
     }

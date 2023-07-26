@@ -16,7 +16,6 @@ import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -94,166 +93,165 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
     @Override
     public void syncDataToKingdee(SoChangeEntity entity, String operate) {
 
-        try {
-            String soId = entity.getSoId();
-            SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
-            //填充数据
-            fillDb(entity, soInfo.getSyncKingdeeId(), soInfo.getCode());
-            Map<String, Object> resultMap = new HashMap<>();
-            //金蝶id
-            resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
-            String id = entity.getId();
-            //业务id
-            resultMap.put("id", id);
-            //编码
-            resultMap.put("code", entity.getCode());
-            if (Objects.isNull(soInfo)) {
-                return;
-            }
-            List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailByMainId(id);
-            if (CollectionUtils.isEmpty(detailList)) {
-                return;
-            }
+        //更新同步状态为待同步
+        soChangeService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), "", operate);
 
-            List<String> orgIdList = new ArrayList<>(2);
-            //库存组织
-            String warehouseOrgId = soInfo.getWarehouseOrgId();
-            //销售组织
-            String salesOrgId = soInfo.getSalesOrgId();
-            orgIdList.add(warehouseOrgId);
-            orgIdList.add(salesOrgId);
-            List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
-            //销售组织的金蝶code
-            String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
-                    map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
-
-            //销售员
-            String sellerId = soInfo.getSellerId();
-            String deptCode = "";
-
-            //当为空的时候 就取岗位表的
-            KingdeePostDTO.FindUserKingdeePostInfoDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostInfoDTO();
-            findUserPostKingdee.setUserId(sellerId);
-            findUserPostKingdee.setOrgCode(salesOrgCode);
-            KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePost(findUserPostKingdee);
-            if (kingdeePost != null) {
-                deptCode = kingdeePost.getKingdeeDeptCode();
-            }
-            resultMap.put("deptCode", deptCode);
-
-            //客户id
-            String customerId = soInfo.getCustomerId();
-            //销售订单号
-            resultMap.put("soCode", soInfo.getCode());
-            resultMap.put("soId", soInfo.getId());
-            //单据类型
-            resultMap.put("orderType", "XSDDBGD01_SYS");
-            //单据日期
-            resultMap.put("billDate", entity.getBillDate());
-            //客户
-            if (StringUtils.isNotBlank(customerId)) {
-                CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
-                if (customerInfo != null) {
-                    resultMap.put("customerCode", customerInfo.getCode());
-                }
-            }
-            //变更原因
-            resultMap.put("remark", entity.getRemark());
-
-            //获取员工
-            if (StringUtils.isNotBlank(sellerId)) {
-                KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-                findBusinessOperator.setOrgCode(salesOrgCode);
-                findBusinessOperator.setUserId(sellerId);
-                findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.YSY.getCode());
-                //获取员工业务信息
-                KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
-                //销售员
-                if (!Objects.isNull(kingSellerInfo)) {
-                    resultMap.put("sellerCode", kingSellerInfo.getKingdeePostCode());
-                    resultMap.put("seller", kingSellerInfo.getKingdeeUserName());
-                }
-            }
-
-            String warehouseId = soInfo.getWarehouseId();
-            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
-            String kingdeeWarehouseCode = "";
-            if (CollectionUtils.isNotEmpty(warehouseList)) {
-                kingdeeWarehouseCode = warehouseList.get(0).getKingdeeWarehouseCode();
-            }
-
-            if (StringUtils.isNotBlank(salesOrgCode)) {
-                resultMap.put("salesOrgCode", salesOrgCode);
-            }
-            String warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
-                    map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
-
-            //要货日期
-            LocalDate requireDate = soInfo.getRequireDate();
-            List<JSONObject> list = new ArrayList<>(detailList.size());
-            //表示删除
-            String deleteCode = SoChangeTypeEnum.DELETE.getCode();
-            for (SoChangeDetailDTO.ViewDTO item : detailList) {
-                JSONObject jsonObject = new JSONObject();
-                String changeType = item.getChangeType().getCode();
-                //是否是删除
-                Boolean isDelete = deleteCode.equals(changeType);
-                //金蝶详情id
-                jsonObject.set("kingdeeDetailId", item.getKingdeeDetailId());
-                jsonObject.set("skuNo", item.getSkuNo());
-                jsonObject.set("changeType", item.getChangeType().getCode());
-                jsonObject.set("soDetailId", item.getSoDetailId());
-                jsonObject.set("requireDate", requireDate);
-                jsonObject.set("oldQty", item.getOldQty());
-                if (isDelete) {
-                    jsonObject.set("qty", item.getOldQty());
-                    jsonObject.set("baseQty", item.getOldQty());
-                    jsonObject.set("stockBaseQty", item.getOldQty());
-                    jsonObject.set("currentInventoryQty", item.getOldQty());
-                    jsonObject.set("curInventoryQty", item.getOldQty());
-                    jsonObject.set("taxPrice", item.getOldPrice());
-                    jsonObject.set("taxRate", item.getOldTaxRate());
-
-                } else {
-                    jsonObject.set("qty", item.getQty());
-                    jsonObject.set("baseQty", item.getQty());
-                    jsonObject.set("stockBaseQty", item.getQty());
-                    jsonObject.set("currentInventoryQty", item.getQty());
-                    jsonObject.set("curInventoryQty", item.getQty());
-                    jsonObject.set("taxPrice", item.getTaxPrice());
-                    jsonObject.set("taxRate", item.getTaxRate());
-                }
-
-                jsonObject.set("oldTaxPrice", item.getOldTaxPrice());
-                jsonObject.set("oldPrice", item.getOldPrice());
-                jsonObject.set("oldTaxRate", item.getOldTaxRate());
-                jsonObject.set("isGift", item.getIsGift());
-                jsonObject.set("amount", item.getAmount());
-
-                //是否补发
-                jsonObject.set("isReissue", item.getIsReissue());
-                jsonObject.set("unit", "Pcs");
-                jsonObject.set("remark", item.getRemark());
-                jsonObject.set("warehouseOrgCode", warehouseOrgCode);
-                jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
-                list.add(jsonObject);
-            }
-
-            resultMap.put("detailList", list);
-            //操作（枚举SyncKingdeeOperateEnum）
-            resultMap.put("operate", operate);
-            //异步推送mq
-            CompletableFuture.supplyAsync(() -> {
-                SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_CHANGE_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-                if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                    //mq发送成更新业务表状态及时间
-                    return soChangeService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "", entity.getSyncOperate());
-                }
-                return Boolean.TRUE;
-            });
-        } catch (Exception e) {
-            log.error("同步金蝶出错>>>>>>{}", e);
+        String soId = entity.getSoId();
+        SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
+        //填充数据
+        fillDb(entity, soInfo.getSyncKingdeeId(), soInfo.getCode());
+        Map<String, Object> resultMap = new HashMap<>();
+        //金蝶id
+        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+        String id = entity.getId();
+        //业务id
+        resultMap.put("id", id);
+        //编码
+        resultMap.put("code", entity.getCode());
+        if (Objects.isNull(soInfo)) {
+            return;
         }
+        List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailByMainId(id);
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+
+        List<String> orgIdList = new ArrayList<>(2);
+        //库存组织
+        String warehouseOrgId = soInfo.getWarehouseOrgId();
+        //销售组织
+        String salesOrgId = soInfo.getSalesOrgId();
+        orgIdList.add(warehouseOrgId);
+        orgIdList.add(salesOrgId);
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+        //销售组织的金蝶code
+        String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
+                map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
+
+        //销售员
+        String sellerId = soInfo.getSellerId();
+        String deptCode = "";
+
+        //当为空的时候 就取岗位表的
+        KingdeePostDTO.FindUserKingdeePostInfoDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostInfoDTO();
+        findUserPostKingdee.setUserId(sellerId);
+        findUserPostKingdee.setOrgCode(salesOrgCode);
+        KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePost(findUserPostKingdee);
+        if (kingdeePost != null) {
+            deptCode = kingdeePost.getKingdeeDeptCode();
+        }
+        resultMap.put("deptCode", deptCode);
+
+        //客户id
+        String customerId = soInfo.getCustomerId();
+        //销售订单号
+        resultMap.put("soCode", soInfo.getCode());
+        resultMap.put("soId", soInfo.getId());
+        //单据类型
+        resultMap.put("orderType", "XSDDBGD01_SYS");
+        //单据日期
+        resultMap.put("billDate", entity.getBillDate());
+        //客户
+        if (StringUtils.isNotBlank(customerId)) {
+            CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
+            if (customerInfo != null) {
+                resultMap.put("customerCode", customerInfo.getCode());
+            }
+        }
+        //变更原因
+        resultMap.put("remark", entity.getRemark());
+
+        //获取员工
+        if (StringUtils.isNotBlank(sellerId)) {
+            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+            findBusinessOperator.setOrgCode(salesOrgCode);
+            findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.YSY.getCode());
+            //获取员工业务信息
+            KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            //销售员
+            if (!Objects.isNull(kingSellerInfo)) {
+                resultMap.put("sellerCode", kingSellerInfo.getKingdeePostCode());
+                resultMap.put("seller", kingSellerInfo.getKingdeeUserName());
+            }
+        }
+
+        String warehouseId = soInfo.getWarehouseId();
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+        String kingdeeWarehouseCode = "";
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            kingdeeWarehouseCode = warehouseList.get(0).getKingdeeWarehouseCode();
+        }
+
+        if (StringUtils.isNotBlank(salesOrgCode)) {
+            resultMap.put("salesOrgCode", salesOrgCode);
+        }
+        String warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
+                map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
+
+        //要货日期
+        LocalDate requireDate = soInfo.getRequireDate();
+        List<JSONObject> list = new ArrayList<>(detailList.size());
+        //表示删除
+        String deleteCode = SoChangeTypeEnum.DELETE.getCode();
+        for (SoChangeDetailDTO.ViewDTO item : detailList) {
+            JSONObject jsonObject = new JSONObject();
+            String changeType = item.getChangeType().getCode();
+            //是否是删除
+            Boolean isDelete = deleteCode.equals(changeType);
+            //金蝶详情id
+            jsonObject.set("kingdeeDetailId", item.getKingdeeDetailId());
+            jsonObject.set("skuNo", item.getSkuNo());
+            jsonObject.set("changeType", item.getChangeType().getCode());
+            jsonObject.set("soDetailId", item.getSoDetailId());
+            jsonObject.set("requireDate", requireDate);
+            jsonObject.set("oldQty", item.getOldQty());
+            if (isDelete) {
+                jsonObject.set("qty", item.getOldQty());
+                jsonObject.set("baseQty", item.getOldQty());
+                jsonObject.set("stockBaseQty", item.getOldQty());
+                jsonObject.set("currentInventoryQty", item.getOldQty());
+                jsonObject.set("curInventoryQty", item.getOldQty());
+                jsonObject.set("taxPrice", item.getOldPrice());
+                jsonObject.set("taxRate", item.getOldTaxRate());
+
+            } else {
+                jsonObject.set("qty", item.getQty());
+                jsonObject.set("baseQty", item.getQty());
+                jsonObject.set("stockBaseQty", item.getQty());
+                jsonObject.set("currentInventoryQty", item.getQty());
+                jsonObject.set("curInventoryQty", item.getQty());
+                jsonObject.set("taxPrice", item.getTaxPrice());
+                jsonObject.set("taxRate", item.getTaxRate());
+            }
+
+            jsonObject.set("oldTaxPrice", item.getOldTaxPrice());
+            jsonObject.set("oldPrice", item.getOldPrice());
+            jsonObject.set("oldTaxRate", item.getOldTaxRate());
+            jsonObject.set("isGift", item.getIsGift());
+            jsonObject.set("amount", item.getAmount());
+
+            //是否补发
+            jsonObject.set("isReissue", item.getIsReissue());
+            jsonObject.set("unit", "Pcs");
+            jsonObject.set("remark", item.getRemark());
+            jsonObject.set("warehouseOrgCode", warehouseOrgCode);
+            jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
+            list.add(jsonObject);
+        }
+
+        resultMap.put("detailList", list);
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+        //异步推送mq
+        CompletableFuture.supplyAsync(() -> {
+            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_CHANGE_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
+            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
+                //mq发送成更新业务表状态及时间
+                return soChangeService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "", entity.getSyncOperate());
+            }
+            return Boolean.TRUE;
+        });
 
     }
 

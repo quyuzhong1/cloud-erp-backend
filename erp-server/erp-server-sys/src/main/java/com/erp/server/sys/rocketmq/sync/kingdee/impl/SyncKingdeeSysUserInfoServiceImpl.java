@@ -41,6 +41,9 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
     public void syncDataToKingdee(SysUserInfoEntity entity,String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
+        //更新同步状态为待同步
+        sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getUid()),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
         //业务id
         resultMap.put("id",entity.getUid());
         //编码
