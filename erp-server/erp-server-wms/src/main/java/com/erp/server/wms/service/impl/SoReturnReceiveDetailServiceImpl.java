@@ -284,7 +284,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
 
     @Override
     public List<SoReturnReceiveDetailEntity> listDetailByMainIds(List<String> ids) {
-        return lambdaQuery().in(SoReturnReceiveDetailEntity::getMainId, ids).list();
+        return baseMapper.listDetailByMainIds(ids);
     }
 
 }
