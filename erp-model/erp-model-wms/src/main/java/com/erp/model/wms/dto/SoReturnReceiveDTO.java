@@ -585,9 +585,25 @@ public class SoReturnReceiveDTO {
          */
         private Integer returnQty;
         /**
+         * 销售数量
+         */
+        private Integer salesQty;
+        /**
+         * 已出库数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 应退数量
+         */
+        private Integer mustQty;
+        /**
          * 签收数量
          */
         private Integer receiveQty;
+        /**
+         * 实退数量
+         */
+        private Integer realQty;
         /**
          * 退货类型
          */
@@ -616,9 +632,5 @@ public class SoReturnReceiveDTO {
          * 入库日期
          */
         private LocalDate instockDate;
-        /**
-         * 实退数量
-         */
-        private Integer realQty;
     }
 }
