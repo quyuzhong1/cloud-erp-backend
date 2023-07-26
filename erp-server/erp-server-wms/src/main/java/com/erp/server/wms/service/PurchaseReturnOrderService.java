@@ -6,8 +6,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.wms.dto.PoInstockDTO;
-import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -224,4 +223,11 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @return
      */
     List<PurchaseReturnOrderDTO.SupplierReturnDTO> getReturnInfo(PurchaseReturnOrderDTO.SupplierReturnParamDTO params);
+
+    /**
+     * 验证SKU是否缺货
+     * @param dto
+     * @return
+     */
+    String checkSkuInventory(PurchaseReturnOrderDTO.AddDTO dto, List<PurchaseReturnOrderDetailDTO.AddDTO> detailList);
 }

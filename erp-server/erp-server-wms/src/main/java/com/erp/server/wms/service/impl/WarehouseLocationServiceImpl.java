@@ -132,5 +132,14 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         return dataList;
     }
 
+    @Override
+    public List<WarehouseLocationEntity> list(List<String> warehouseIds) {
+        if(CollUtil.isEmpty(warehouseIds)) {
+            return Lists.newArrayList();
+        }
+        List<WarehouseLocationEntity> list = this.baseMapper.list(warehouseIds);
+        return CollUtil.isNotEmpty(list) ? list : Lists.newArrayList();
+    }
+
 
 }
