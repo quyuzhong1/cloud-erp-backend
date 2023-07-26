@@ -800,6 +800,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             for (SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView view : viewList) {
                 dto.setBillDate(view.getInstockDate());
                 SoReturnInstockDetailDTO.Add detailAddDTO = new SoReturnInstockDetailDTO.Add();
+                detailAddDTO.setSkuId(view.getSkuId());
                 detailAddDTO.setRealQty(view.getReturnQty());
                 detailAddDTO.setReceiveQty(view.getReceiveQty());
                 detailAddDTO.setWarehouseLocation(view.getWarehouseLocation());
