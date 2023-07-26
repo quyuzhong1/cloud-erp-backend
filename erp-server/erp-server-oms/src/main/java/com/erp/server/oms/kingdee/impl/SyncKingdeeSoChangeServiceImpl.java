@@ -122,7 +122,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             String salesOrgId = soInfo.getSalesOrgId();
             orgIdList.add(warehouseOrgId);
             orgIdList.add(salesOrgId);
-            List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
+            List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
             //销售组织的金蝶code
             String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
                     map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");

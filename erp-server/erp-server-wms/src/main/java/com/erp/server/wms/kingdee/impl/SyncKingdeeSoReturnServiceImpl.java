@@ -83,7 +83,11 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         //退货详情
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainId(entity.getSourceId());
         //销售单
-        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
+        SoInfoEntity soInfoEntity = new SoInfoEntity();
+        if (ObjectUtils.isNotEmpty(soReturnEntity)) {
+            soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
+        }
+
         //销售单明细
         List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soInfoEntity.getId()));
         //仓库
@@ -114,7 +118,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             resultMap.put("inventoryOrgCode", inventoryOrgCode);
         }
         //销售部门
-        String salesDeptId = soInfoEntity.getSalesDeptId();
+        String salesDeptId = entity.getSalesDeptId();
         //获取部门id
         if (StringUtils.isNotBlank(salesDeptId)) {
             SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(salesDeptId);
@@ -124,7 +128,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             }
         }
 
-        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoDTOS = sysUserFeign.listUserKingdeePostByUserIds(Collections.singletonList(soInfoEntity.getSellerId()));
+        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoDTOS = sysUserFeign.listUserKingdeePostByUserIds(Collections.singletonList(entity.getSellerId()));
         if (CollectionUtils.isNotEmpty(userKingdeePostInfoDTOS)) {
             resultMap.put("sellerUserCode", userKingdeePostInfoDTOS.get(MathUtil.ZERO).getKingdeePostCode());
         }
@@ -145,14 +149,20 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             List<DictBasicDTO.ViewDTO> collectionTermsList = customerFeign.getDictBasicByKey("collectionTerms");
             DictBasicDTO.ViewDTO viewDTO = collectionTermsList.stream().filter(req -> req.getValue().equals(customerInfoEntity.getCode())).findFirst().orElse(new DictBasicDTO.ViewDTO());
             resultMap.put("collectionTerms", viewDTO.getRemark());
+
+            //获取币别信息
+            List<CurrencyDTO.ViewDTO> currencyListt = sysUserFeign.listByCurrency(Arrays.asList(customerInfoEntity.getCurrency()));
+            CurrencyDTO.ViewDTO currencyDTO = currencyListt.stream().filter(req -> req.getId().equals(customerInfoEntity.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
+            resultMap.put("currencyCode", currencyDTO.getKingdeeCode());
         }
-        //结算币别
+    /*    //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soReturnEntity.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
-        resultMap.put("currencyCode", viewDTO.getKingdeeCode());
+        resultMap.put("currencyCode", viewDTO.getKingdeeCode());*/
+
         //结算组织
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
-            String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soReturnEntity.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
-            resultMap.put("salesOrgCode", salesOrgCode);
+            BaseIdDTO.CodeDTO codeDTO = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getSalesOrgId())).findFirst().orElse(new BaseIdDTO.CodeDTO());
+            resultMap.put("salesOrgCode", codeDTO.getCode());
         }
         List<String> soKingdeeDetailIdList = soDetailEntitieList.stream().map(req -> req.getKingdeeDetailId()).collect(Collectors.toList());
 
@@ -160,7 +170,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         //金蝶 FEntity:物料信息
         List<Map<String,Object>> list = new ArrayList<>();
         for (SoReturnInstockDetailEntity detailEntity : returnInstockDetailEntities) {
-            SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             Map<String,Object> map = new HashMap<>();
             //退货原因
@@ -204,12 +214,15 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             map.put("billDate", entity.getBillDate());
             //备注
             map.put("remark", detailEntity.getRemark());
-            if (soReturnEntity.getSourceType().equals(SourceTypeEnum.SO_INFO.getCode())) {
-                //原单类型
-                map.put("FSrcBillTypeID", "SAL_SaleOrder");
-                //原单编号
-                map.put("FSrcBillNo", soReturnEntity.getSourceCode());
+            if (ObjectUtils.isNotEmpty(soReturnEntity)) {
+                if (soReturnEntity.getSourceType().equals(SourceTypeEnum.SO_INFO.getCode())) {
+                    //原单类型
+                    map.put("FSrcBillTypeID", "SAL_SaleOrder");
+                    //原单编号
+                    map.put("FSrcBillNo", soReturnEntity.getSourceCode());
+                }
             }
+
             list.add(map);
         }
         resultMap.put("FEntityList", list);
