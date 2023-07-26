@@ -794,9 +794,16 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(id);
             SoReturnInstockDTO.Add dto = new  SoReturnInstockDTO.Add();
-            dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
-            dto.setSourceCode(soReturnReceiveEntity.getCode());
-            dto.setSourceId(id);
+            //等于空表示无退货单的下推
+            if (StringUtils.isBlank(soReturnReceiveEntity.getSourceId())) {
+                dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
+                dto.setSourceCode(soReturnReceiveEntity.getCode());
+                dto.setSourceId(id);
+            } else {
+                dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
+                dto.setSourceCode(soReturnReceiveEntity.getSourceCode());
+                dto.setSourceId(soReturnReceiveEntity.getSourceId());
+            }
             dto.setSoReturnId(soReturnReceiveEntity.getSourceId());
             dto.setSoReturnCode(soReturnReceiveEntity.getSourceCode());
             dto.setCustomerId(soReturnReceiveEntity.getCustomerId());
