@@ -790,6 +790,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             dto.setSoReturnCode(soReturnReceiveEntity.getSourceCode());
             dto.setCustomerId(soReturnReceiveEntity.getCustomerId());
             dto.setSalesOrgId(soReturnReceiveEntity.getSalesOrgId());
+
             dto.setSalesDeptId(soReturnReceiveEntity.getSalesDeptId());
             dto.setSellerId(soReturnReceiveEntity.getSellerId());
             dto.setWarehouseId(soReturnReceiveEntity.getWarehouseId());
@@ -803,6 +804,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailAddDTO.setSkuId(view.getSkuId());
                 detailAddDTO.setRealQty(view.getReturnQty());
                 detailAddDTO.setReceiveQty(view.getReceiveQty());
+                detailAddDTO.setRealQty(view.getRealQty());
                 detailAddDTO.setWarehouseLocation(view.getWarehouseLocation());
                 detailAddDTO.setRemark(view.getRemark());
                 if (StringUtils.isNotBlank(soReturnReceiveEntity.getSourceId())) {
