@@ -748,8 +748,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailService.getById(qcInfoEntity.getSourceDetailId());
             SoReturnInstockDTO.Add dto = new  SoReturnInstockDTO.Add();
             dto.setSourceType(SourceTypeEnum.QC_INFO.getCode());
-            dto.setSourceCode(qcInfoEntity.getCode());
-            dto.setSourceId(id);
+            dto.setSourceCode(receiveEntity.getCode());
+            dto.setSourceId(receiveEntity.getId());
             dto.setSoReturnId(receiveEntity.getSourceId());
             dto.setSoReturnCode(receiveEntity.getSourceCode());
             dto.setCustomerId(receiveEntity.getCustomerId());
