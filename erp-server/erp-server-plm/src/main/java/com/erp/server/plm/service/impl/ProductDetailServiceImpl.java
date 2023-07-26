@@ -2378,9 +2378,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (costEntity.getTargetNoTaxCost() == null) {
                 throw new ServiceException(ApiError.ERROR_95223);
             }
-            if (costEntity.getTargetGpm() == null) {
-                throw new ServiceException(ApiError.ERROR_95224);
-            }
 
             ProductSaleEntity saleEntity = productSaleService.getBySkuId(entity.getId());
             if (ObjectUtils.isEmpty(saleEntity)) {

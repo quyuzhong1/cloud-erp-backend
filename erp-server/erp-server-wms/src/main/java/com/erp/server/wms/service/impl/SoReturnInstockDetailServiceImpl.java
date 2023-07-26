@@ -29,7 +29,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -109,9 +111,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         List<String> skuIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIds);
         //获取退货签收单详情表id
-        List<String> sourceDetailIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
-        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailByIds(sourceDetailIds);
-        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = this.listDetailBySourceDetailIds(sourceDetailIds);
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailByMainIds(Arrays.asList(dto.getSourceId()));
+        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = this.listDetailBySourceIds(Arrays.asList(dto.getSourceId()));
         List<SoReturnInstockDetailEntity> list = new ArrayList<>();
         for (SoReturnInstockDetailDTO.Add detailDto : dto.getDetailList()) {
             SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
