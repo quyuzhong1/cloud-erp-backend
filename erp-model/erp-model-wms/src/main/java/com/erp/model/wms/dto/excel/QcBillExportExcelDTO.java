@@ -148,21 +148,13 @@ public class QcBillExportExcelDTO  implements Serializable {
     @ExcelProperty(value = "处理措施", index = 15)
     private String handleModeName;
 
-    @ColumnWidth(20)
-    @ExcelProperty(value = "是否库内抽检", index = 16)
-    private String isInsideQcName;
-
-    @ColumnWidth(20)
-    @ExcelProperty(value = "复检抽检结果", index = 17)
-    private String qcSampleResultName;
-
 
 
     /**
      * 不良现象
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "不良现象", index = 18)
+    @ExcelProperty(value = "不良现象", index = 16)
     private String badDescription;
 
 
@@ -170,14 +162,14 @@ public class QcBillExportExcelDTO  implements Serializable {
      * 质检合格率
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "质检合格率(%)", index = 19)
+    @ExcelProperty(value = "质检合格率(%)", index = 17)
     private String qcGoodRate;
 
     /**
      * 质检不良率
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "质检不良率(%)", index = 20)
+    @ExcelProperty(value = "质检不良率(%)", index = 18)
     private String qcBadRate;
 
 
@@ -185,14 +177,14 @@ public class QcBillExportExcelDTO  implements Serializable {
      * 仓库
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "仓库", index = 21)
+    @ExcelProperty(value = "仓库", index = 19)
     private String warehouseName;
 
     /**
      * remark
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "备注", index = 22)
+    @ExcelProperty(value = "备注", index = 20)
     private String remark;
 
 
@@ -200,7 +192,7 @@ public class QcBillExportExcelDTO  implements Serializable {
      * 创建人
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建人", index = 23)
+    @ExcelProperty(value = "创建人", index = 21)
     private String createUserName;
 
 
@@ -208,7 +200,7 @@ public class QcBillExportExcelDTO  implements Serializable {
      * 创建时间
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建时间", index = 24,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 22,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 
 }

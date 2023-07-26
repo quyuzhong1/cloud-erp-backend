@@ -116,18 +116,6 @@ public class QcResultEntity extends BaseEntity<QcResultEntity> {
     @TableField("purchase_order_detail_id")
     private String purchaseOrderDetailId;
 
-    /**
-     * 是否库内内检 默认 false
-     */
-    @TableField("is_inside_qc")
-    private Boolean isInsideQc;
-
-    /**
-     * 复检抽检结果
-     */
-    @TableField("qc_sample_result")
-    private String qcSampleResult;
-
 
     public static final String MAIN_ID = "main_id";
 
@@ -154,8 +142,6 @@ public class QcResultEntity extends BaseEntity<QcResultEntity> {
     public static final String QC_RESULT = "qc_result";
 
     public static final String HANDLE_MODE_KEY = "handle_mode_dict";
-
-    public static final String IS_INSIDE_QC = "is_inside_qc";
 
     @Override
     public Serializable pkVal() {

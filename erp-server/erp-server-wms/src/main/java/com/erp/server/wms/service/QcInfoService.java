@@ -258,10 +258,4 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return com.common.core.controller.vo.ApiResult
      **/
     List<SysUserInfoEntity> listQcUser();
-
-    /**
-     * 复检抽检
-     * @param dto
-     */
-    void reQcSample(QcInfoDTO.ReQcDTO dto);
 }

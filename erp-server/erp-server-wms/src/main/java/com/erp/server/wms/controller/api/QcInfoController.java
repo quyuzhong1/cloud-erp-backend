@@ -368,21 +368,4 @@ public class QcInfoController extends BaseController {
         return success(sysUserInfoEntities);
     }
 
-    /**
-     * 复检抽检
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/reQcSample")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "qc_user_id",
-            menuCode = "wms:qcBill:reQcSample",
-            serviceClass = QcInfoService.class,
-            keyIdName = "id")
-    public ApiResult<Void> reQcSample(@RequestBody @Validated() QcInfoDTO.ReQcDTO dto) {
-        qcInfoService.reQcSample(dto);
-        return success();
-    }
-
 }
