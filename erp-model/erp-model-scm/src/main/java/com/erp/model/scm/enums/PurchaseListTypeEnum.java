@@ -8,6 +8,7 @@ package com.erp.model.scm.enums;
  */
 public enum PurchaseListTypeEnum {
 
+    WAIT_SUBMIT("waitSubmit", "待提交"),
     TO_BE_APPROVE("toBeApprove", "待审批"),
     TO_BE_CREATE("toBeCreate", "待生成"),
     CREATED("created", "已生成"),

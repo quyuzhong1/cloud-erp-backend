@@ -153,6 +153,10 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
             MachineInfoDTO.ListStatusCountDTO resultDTO = new MachineInfoDTO.ListStatusCountDTO();
             Integer count = MathUtil.ZERO;
+            if(PageListTypeEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
+            }
             if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
                 searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
