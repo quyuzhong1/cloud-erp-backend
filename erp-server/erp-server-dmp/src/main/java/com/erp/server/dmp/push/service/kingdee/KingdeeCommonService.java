@@ -159,6 +159,21 @@ public interface KingdeeCommonService {
 
     */
     Boolean excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,String operate);
+
+    /**
+     * 检查并禁用，反禁用
+     * @author yl
+     * @date 2023-07-26 10:13
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @param number
+     * @param operate
+     * @return java.lang.Boolean
+     */
+    
+    Boolean checkAndExcuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,String operate);
     /**
      * @description: 删除
      * @author Will

@@ -2,6 +2,7 @@ package com.erp.server.plm.controller.api;
 
 import com.alibaba.excel.EasyExcel;
 import com.common.business.annotation.DataPermission;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -15,10 +16,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProductDetailApproverEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
-import com.erp.model.plm.entity.ProductUnitEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -108,9 +106,10 @@ ProductDetailController extends BaseController {
 
     /**
      * 临时接口-添加产品国外海关编码
+     *
+     * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/6/25 10:06
-     * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/addProductCustoms")
     public ApiResult addProductCustoms() {
@@ -645,7 +644,9 @@ ProductDetailController extends BaseController {
     @PostMapping("/importProductFile")
     //@RequestPermissions("plm:product:detail:importProductFile")
     public ApiResult importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productUnitService, basicCategoryService, basicDictService, sysUserFeign);
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<BasicDictEntity> basicDictList = basicDictService.list();
+        ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productUnitService, basicCategoryService, basicDictService, userList, basicDictList);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -863,21 +864,22 @@ ProductDetailController extends BaseController {
      * @date 2023-01-11 14:58
      */
     @PostMapping("/search/skuInfo")
-    public ApiResult<List<SkuVO>> skuInfo(@RequestBody  ProductDetailDTO.SearchDTO  dto) {
+    public ApiResult<List<SkuVO>> skuInfo(@RequestBody ProductDetailDTO.SearchDTO dto) {
         List<SkuVO> skuList = productDetailService.searchSkuInfo(dto);
         return success(skuList);
     }
 
-   /**
-    * 搜索父级sku
-    * @author Will
-    * @date: 2023/3/7 20:06
-    * @param searchKeyword
-    * @return ApiResult<List<SkuVO>>
-    */
+    /**
+     * 搜索父级sku
+     *
+     * @param searchKeyword
+     * @return ApiResult<List < SkuVO>>
+     * @author Will
+     * @date: 2023/3/7 20:06
+     */
     @GetMapping("/search/parentSku")
-    public ApiResult<List<SkuVO>> searchParentSku(@Param("searchKeyword") String searchKeyword,@Param("bomId")String bomId) {
-        List<SkuVO> skuList = productDetailService.searchParentSku(searchKeyword,bomId);
+    public ApiResult<List<SkuVO>> searchParentSku(@Param("searchKeyword") String searchKeyword, @Param("bomId") String bomId) {
+        List<SkuVO> skuList = productDetailService.searchParentSku(searchKeyword, bomId);
         return success(skuList);
     }
 
@@ -965,10 +967,11 @@ ProductDetailController extends BaseController {
 
     /**
      * 提交-PLM-1.3
-     * @Author Luo_WG
-     * @Date 2023/4/6 18:52
+     *
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/6 18:52
      **/
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -976,11 +979,13 @@ ProductDetailController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-    /** 批量审核-PLM-1.3
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:06
+    /**
+     * 批量审核-PLM-1.3
+     *
      * @param baseApproveParamDTO baseApproveParamDTO
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:06
      **/
     @PostMapping("/approve")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
@@ -990,10 +995,11 @@ ProductDetailController extends BaseController {
 
     /**
      * 批量反审核-PLM-1.3
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:29
+     *
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
      **/
     @PostMapping("/disApprove")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -1003,10 +1009,11 @@ ProductDetailController extends BaseController {
 
     /**
      * 取消流程-PLM-1.3
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:58
+     *
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:58
      **/
     @PostMapping("/cancelProcess")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -1016,10 +1023,11 @@ ProductDetailController extends BaseController {
 
     /**
      * 批量删除-PLM-1.3
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:29
+     *
      * @param idsDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
      **/
     @PostMapping("/deleteBatch")
     public ApiResult deleteBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
@@ -1029,10 +1037,11 @@ ProductDetailController extends BaseController {
 
     /**
      * 批量更新字段-PLM-1.3
-     * @Author Luo_WG
-     * @Date 2023/6/15 11:32
+     *
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/6/15 11:32
      **/
     @PostMapping("/updateBatchFiled")
     public ApiResult updateBatchFiled(@RequestBody @Validated ProductDetailBatchUpdateDTO dto) {
@@ -1042,6 +1051,7 @@ ProductDetailController extends BaseController {
 
     /**
      * 根据sku id集合获取采购员、供应商信息
+     *
      * @param idsDTO
      * @return
      */
@@ -1052,10 +1062,11 @@ ProductDetailController extends BaseController {
 
     /**
      * 根据产品id 获取到产品下的sku信息【PLM1.3】
+     *
+     * @param productId
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.plm.dto.SkuPurchaseDTO.PurchaseInfo>>
      * @author yl
      * @date 2023-06-25 10:17
-     * @param productId
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.plm.dto.SkuPurchaseDTO.PurchaseInfo>>
      */
     @GetMapping("/listSkuByProductId")
     public ApiResult<List<ProductDetailEntity>> listSkuByProductId(@RequestParam("productId") String productId) {

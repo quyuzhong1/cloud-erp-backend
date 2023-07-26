@@ -113,6 +113,7 @@ public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> 
         //操作项
         String operate = (String) map.get("operate");
         if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+
             //作废
             kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
             return;

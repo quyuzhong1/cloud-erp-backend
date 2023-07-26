@@ -206,6 +206,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         return model;
     }
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean excuteOperation(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number, String operate) {
