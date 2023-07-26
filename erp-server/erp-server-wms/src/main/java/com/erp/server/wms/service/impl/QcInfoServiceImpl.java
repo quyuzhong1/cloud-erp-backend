@@ -1626,7 +1626,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             view.setSourceId(soReturnReceiveEntity.getSourceId());
             view.setSourceDetailId(view.getSourceDetailId());
             view.setSourceCode(soReturnEntity.getCode());
-            view.setCode(soReturnReceiveEntity.getSourceCode());
+            if (StringUtils.isBlank(soReturnReceiveEntity.getSourceCode())) {
+                view.setCode(soReturnReceiveEntity.getCode());
+            } else {
+                view.setCode(soReturnReceiveEntity.getSourceCode());
+            }
             view.setCustomerId(soReturnReceiveEntity.getCustomerId());
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             view.setCustomerName(customerInfoEntity.getName());

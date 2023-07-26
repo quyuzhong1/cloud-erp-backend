@@ -747,9 +747,15 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(qcInfoEntity.getSourceId());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailService.getById(qcInfoEntity.getSourceDetailId());
             SoReturnInstockDTO.Add dto = new  SoReturnInstockDTO.Add();
-            dto.setSourceType(SourceTypeEnum.QC_INFO.getCode());
-            dto.setSourceCode(receiveEntity.getCode());
-            dto.setSourceId(receiveEntity.getId());
+            if (StringUtils.isBlank(receiveEntity.getSourceId())) {
+                dto.setSourceCode(receiveEntity.getCode());
+                dto.setSourceId(receiveEntity.getId());
+                dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
+            } else {
+                dto.setSourceCode(receiveEntity.getSourceCode());
+                dto.setSourceId(receiveEntity.getSourceId());
+                dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
+            }
             dto.setSoReturnId(receiveEntity.getSourceId());
             dto.setSoReturnCode(receiveEntity.getSourceCode());
             dto.setCustomerId(receiveEntity.getCustomerId());
@@ -758,6 +764,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             dto.setSellerId(receiveEntity.getSellerId());
             dto.setWarehouseId(qcInfoEntity.getWarehouseId());
             dto.setWarehouseKeeperId(receiveEntity.getWarehouseKeeperId());
+            dto.setType(receiveEntity.getType());
             List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnInstockDTO.GenerateSoReturnInstockView view : viewList) {
                 dto.setBillDate(view.getBillDate());
@@ -767,7 +774,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailAddDTO.setReceiveQty(view.getReceiveQty());
                 detailAddDTO.setWarehouseLocation(view.getWarehouseLocation());
                 detailAddDTO.setRemark(view.getRemark());
-                detailAddDTO.setSourceDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
+                if (StringUtils.isBlank(receiveEntity.getSourceId())) {
+                    detailAddDTO.setSourceDetailId(view.getSourceDetailId());
+                } else {
+                    detailAddDTO.setSourceDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
+                }
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);
