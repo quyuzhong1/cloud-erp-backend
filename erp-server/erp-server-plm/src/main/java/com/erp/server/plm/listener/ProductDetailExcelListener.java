@@ -248,7 +248,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             //二级品类
             String secondaryCategory = dto.getSecondaryCategory();
             BasicCategoryEntity secondaryCategoryEntity = basicCategoryService.getCategoryByName(secondaryCategory, Boolean.FALSE);
-            if (ObjectUtils.isEmpty(secondaryCategoryEntity) ) {
+            if (ObjectUtils.isEmpty(secondaryCategoryEntity)) {
                 errorMsgList.add("二级类目不存在");
             } else {
                 BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> secondaryCategoryEntity.getPid().equals(obj.getId())).findFirst().orElse(null);
@@ -265,8 +265,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
         //存在侵权风险
         String pirateRisk = dto.getPirateRisk();
-        if(StringUtils.isNotBlank(pirateRisk)){
-            if(pirateRisk.equals("是")){
+        if (StringUtils.isNotBlank(pirateRisk)) {
+            if (pirateRisk.equals("是")) {
                 productInfoDTO.setPirateRisk(1);
             } else {
                 productInfoDTO.setPirateRisk(2);
@@ -274,8 +274,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         }
         //是否客户定制
         String isCustomized = dto.getIsCustomized();
-        if(StringUtils.isNotBlank(isCustomized)){
-            if(isCustomized.equals("是")){
+        if (StringUtils.isNotBlank(isCustomized)) {
+            if (isCustomized.equals("是")) {
                 productInfoDTO.setIsCustomized(1);
             } else {
                 productInfoDTO.setIsCustomized(0);
@@ -311,11 +311,14 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setApprovalStatus(0);
 
         productInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
+        //sku 经理
         if (!CollectionUtils.isEmpty(chargeNameList)) {
             productInfoDTO.setChargeName(chargeNameList.get(0).getUserName());
             productInfoDTO.setChargeId(chargeNameList.get(0).getUserId());
             productSkuBaseInfoDTO.setChargeName(chargeNameList.get(0).getUserName());
             productSkuBaseInfoDTO.setChargeId(chargeNameList.get(0).getUserId());
+            //给sku 产品经理id
+            dto.setChargeId(chargeNameList.get(0).getUserId());
         }
         productInfoDTO.setMaterials(dto.getMaterials());
         productInfoDTO.setFunctionDesc(dto.getFunctionDesc());
@@ -476,7 +479,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
          * 销售国家
          */
         if (StringUtils.isNotBlank(saleCountryStr)) {
-            productSaleDTO.setSaleCountry(saleCountryStr.substring(0,saleCountryStr.length()-1));
+            productSaleDTO.setSaleCountry(saleCountryStr.substring(0, saleCountryStr.length() - 1));
         }
         /**
          * 图片是否完成
@@ -519,8 +522,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
          * 是否可销售
          */
         String isMarketable = dto.getIsMarketable();
-        if(StringUtils.isNotBlank(isMarketable)){
-            if(isMarketable.equals("是")){
+        if (StringUtils.isNotBlank(isMarketable)) {
+            if (isMarketable.equals("是")) {
                 productSaleDTO.setIsMarketable(1);
             } else {
                 productSaleDTO.setIsMarketable(0);
@@ -584,7 +587,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         ProductPackDTO productPackDTO = new ProductPackDTO();
         BeanMapper.copy(dto, productPackDTO);
         String productSize = "";
-        String boxSize ="";
+        String boxSize = "";
         String productSizeLength = dto.getProductSizeLength();
         String productSizeWide = dto.getProductSizeWide();
         String productSizeHigh = dto.getProductSizeHigh();
@@ -655,19 +658,19 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productDetailService.inportExcel(productNoSpecDTO);
     }
 
-    public List<ProductDetailExcelDTO> getDateList(){
+    public List<ProductDetailExcelDTO> getDateList() {
         return list;
     }
 
-    public List<ProductDetailExcelDTO> getExcelDateList(){
+    public List<ProductDetailExcelDTO> getExcelDateList() {
         return dataList;
     }
 
     /**
+     * @param analysisContext: 解析器上下文
      * @Description 全部解析完回调此方法
      * @Author Luo_WG
      * @Date 2022/9/27 14:49
-     * @param analysisContext: 解析器上下文
      **/
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
