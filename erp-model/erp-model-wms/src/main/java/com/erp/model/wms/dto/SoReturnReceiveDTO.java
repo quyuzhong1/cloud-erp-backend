@@ -616,5 +616,9 @@ public class SoReturnReceiveDTO {
          * 入库日期
          */
         private LocalDate instockDate;
+        /**
+         * 实退数量
+         */
+        private Integer realQty;
     }
 }

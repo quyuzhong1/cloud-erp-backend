@@ -677,6 +677,11 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             dto.setWarehouseKeeperId(noticeEntity.getWarehouseKeeperId());
             dto.setReturnDate(noticeEntity.getBillDate());
             dto.setBillDate(LocalDate.now());
+            dto.setType(noticeEntity.getType());
+            dto.setCustomerId(noticeEntity.getCustomerId());
+            dto.setSalesOrgId(noticeEntity.getSalesOrgId());
+            dto.setSalesDeptId(noticeEntity.getSalesDeptId());
+            dto.setSellerId(noticeEntity.getSellerId());
             List<SoReturnReceiveDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : viewList) {
                 dto.setSourceId(view.getSourceId());
