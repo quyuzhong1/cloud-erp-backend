@@ -1758,7 +1758,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                                     q.getSkuId().equals(skuId) && q.getPurchaseOrderId().equals(purchaseOrderId)
                             ).mapToInt(QcResultDTO.QcQtyDTO::getTotalQty).sum();
                             if (finishQcQty > purchaseSkuQty) {
-                                throw new ServiceException(ApiError.ERROR_99019);
+                                // 关闭验证
+                                // throw new ServiceException(ApiError.ERROR_99019);
                             }
                         }
                     }
