@@ -402,6 +402,17 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
 
         List<PoInstockDetailEntity> stockInDetailEntityList = poInstockDetailService.listDetailByPodIds(detailId);
+
+        List<String> skuIdList = detail.stream().map(PurchaseReturnOrderDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> warehouseLocationCodeList = detail.stream().map(r->StrUtils.null2EmptyWithTrim(r.getWarehouseLocation())).distinct().collect(Collectors.toList());
+        InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
+        skuInventoryDTO.setSkuIdList(skuIdList);
+        skuInventoryDTO.setWarehouseIdList(Lists.newArrayList(purchaseReturnOrderEntity.getReturnWarehouseId()));
+        skuInventoryDTO.setWarehouseLocationIdList(warehouseLocationCodeList);
+        skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        //可用数量
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
+
         for (PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity : detail) {
             Integer stockInQty = stockInDetailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(purchaseReturnOrderDetailEntity.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             PurchaseReturnOrderDetailDTO.ViewDTO detailView = new PurchaseReturnOrderDetailDTO.ViewDTO();
@@ -424,7 +435,14 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             detailView.setVariantProperty(productDetailEntity.getVariantProperty());
 
             //根据组织、仓库、sku查询可用库存
+            /*
             Integer curInventoryQty = inventoryService.getUsableInventoryTotal(purchaseReturnOrderEntity.getReturnWarehouseId(), purchaseReturnOrderDetailEntity.getSkuId());
+            detailView.setCurInventoryQty(curInventoryQty);
+             */
+            //即时库存
+            Integer curInventoryQty = skuInventoryList.stream().filter(r ->Objects.equals(r.getSkuId(), purchaseReturnOrderDetailEntity.getSkuId())
+                    && Objects.equals(r.getWarehouseId(), purchaseReturnOrderEntity.getReturnWarehouseId())
+                    && Objects.equals(r.getWarehouseLocationId(), StrUtils.null2EmptyWithTrim(purchaseReturnOrderDetailEntity.getWarehouseLocation()))).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
             detailView.setCurInventoryQty(curInventoryQty);
 
             detailViewDTOS.add(detailView);
@@ -1098,13 +1116,22 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
 
         String warehouseId = dto.getReturnWarehouseId();
+        List<String> warehouseLocationList = detailList.stream().map(r->StrUtils.null2EmptyWithTrim(r.getWarehouseLocation())).distinct().collect(Collectors.toList());
 
         Map<String, List<PurchaseReturnOrderDetailDTO.AddDTO>> multiInventoryMap = detailList.stream().collect(
                 Collectors.groupingBy(r -> r.getSkuId() + "-" + StrUtils.null2EmptyWithTrim(r.getWarehouseLocation()), Collectors.toList()));
 
+        InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
+        skuInventoryDTO.setSkuIdList(skuIds);
+        skuInventoryDTO.setWarehouseIdList(Arrays.asList(warehouseId));
+        skuInventoryDTO.setWarehouseLocationIdList(warehouseLocationList);
+        skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        //可用数量
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
+
         multiInventoryMap.forEach((key, detailGroupList)->{
             String skuId = detailGroupList.get(0).getSkuId();
-            String warehouseLocation = detailGroupList.get(0).getWarehouseLocation();
+            String warehouseLocation = StrUtils.null2EmptyWithTrim(detailGroupList.get(0).getWarehouseLocation());
 
             String skuNo = "";
             if(skuMap.containsKey(skuId) && CollUtil.isNotEmpty(skuMap.get(skuId))) {
@@ -1114,11 +1141,16 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             // 合计实退数量
             int sumQty = detailGroupList.stream().mapToInt(PurchaseReturnOrderDetailDTO.AddDTO::getReturnQty).sum();
             log.warn("sku id【{}】库位【{}】 合计实退数量【{}】",  warehouseId, skuId, warehouseLocation, sumQty);
+            /*
             List<InventoryQtyDTO.SkuInventoryTotalDTO> inventoryList = inventoryService.listSkuInventory(Lists.newArrayList(skuId), warehouseId,
                     warehouseLocation, InventoryStatusEnum.USABLE.getCode());
-            //即时库存
             Integer curInventoryQty = inventoryList.stream().filter(r -> Objects.equals(r.getSkuId(), skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+             */
+            //即时库存
+            Integer curInventoryQty = skuInventoryList.stream().filter(r ->Objects.equals(r.getSkuId(), skuId)
+                    && Objects.equals(r.getWarehouseId(), warehouseId)
+                    && Objects.equals(r.getWarehouseLocationId(), warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
 
             log.warn("仓库id【{}】sku id【{}】库位【{}】 合计实退数量【{}】实时库存数量", warehouseId, skuId, warehouseLocation,
                     sumQty, curInventoryQty);
