@@ -195,7 +195,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
             String inOrgId = companyList.stream().filter(obj -> obj.getCode().equals(entity.getInOrgCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
             resultEntity.setInOrgId(inOrgId);
             //出库组织
-            String outOrgId = companyList.stream().filter(obj -> obj.getCode().equals(entity.getInOrgCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            String outOrgId = companyList.stream().filter(obj -> obj.getCode().equals(entity.getOutOrgCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
             resultEntity.setOutOrgId(outOrgId);
         }
         //仓管员

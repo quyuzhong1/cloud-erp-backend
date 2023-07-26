@@ -9,10 +9,13 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.scm.entity.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -57,6 +60,9 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
     private SubcontractOrderService subcontractOrderService;
 
     @Resource
+    private SubcontractOrderDetailService subcontractOrderDetailService;
+
+    @Resource
     private SubcontractChangeService subcontractChangeService;
 
     @Resource
@@ -81,13 +87,21 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         purchaseOrderService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
 
         //如果上游单据未发送成功则无需发送
+        SubcontractOrderEntity subcontractOrderEntity = null;
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = null;
         if (StringUtils.isNotBlank(entity.getSubcontractType())) {
             //委外订单
-            SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
+            subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
+            if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
+                throw new ServiceException(ApiError.ERROR_98073);
+            }
             if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(subcontractOrderEntity.getSyncKingdeeStatus())) {
                 log.error("委外订单未推送成功，不支持推送采购订单，委外订单号【{}】",subcontractOrderEntity.getCode());
                 return;
             }
+            //委外订单明细
+            subcontractOrderDetailList = subcontractOrderDetailService.listByMainId(subcontractOrderEntity.getId());
+
             //委外变更单
             List<SubcontractChangeEntity> subcontractChangeList = subcontractChangeService.listBySourceIds(Arrays.asList(subcontractOrderEntity.getId()));
             if (CollectionUtils.isNotEmpty(subcontractChangeList)) {
@@ -198,6 +212,27 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             }
             jsonObject.set("isGift",detailEntity.getIsGift());
             jsonObject.set("detailRemark",detailEntity.getRemark());
+            //来源单据类型类型
+            if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType())) {
+                jsonObject.set("detailSourceType", KingdeePushModuleEnum.SUB_SUBREQORDER.getCode());
+            }
+            if (ObjectUtils.isNotEmpty(subcontractOrderEntity)) {
+                //委外单号
+                jsonObject.set("refCode", subcontractOrderEntity.getCode());
+            }
+
+            //委外订单关联关系
+            List<Map<String,Object>> refList = new ArrayList<>();
+            JSONObject refJsonObject = new JSONObject();
+            if (ObjectUtils.isNotEmpty(subcontractOrderEntity)) {
+                refJsonObject.set("refKingdeeId",subcontractOrderEntity.getSyncKingdeeId());
+                if (CollectionUtils.isNotEmpty(subcontractOrderDetailList)) {
+                    String subDetailKingdeeId = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeDetailId())).orElse("");
+                    refJsonObject.set("refDetailKingdeeId",subDetailKingdeeId);
+                }
+                refList.add(refJsonObject);
+                jsonObject.set("refList",refList);
+            }
             list.add(jsonObject);
         }
         resultMap.put("list",list);
