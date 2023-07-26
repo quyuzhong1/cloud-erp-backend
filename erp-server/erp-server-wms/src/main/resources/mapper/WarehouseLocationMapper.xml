@@ -13,4 +13,17 @@
          </where>
          order by code asc NULLS FIRST
     </select>
+    <select id="list" resultType="com.erp.model.wms.entity.WarehouseLocationEntity">
+        SELECT
+            warehouse_id, code, max(name) as name
+        FROM
+            warehouse_location
+        WHERE
+            type = 'location' and
+            warehouse_id IN
+            <foreach collection="warehouseIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        group by warehouse_id,code
+    </select>
 </mapper>

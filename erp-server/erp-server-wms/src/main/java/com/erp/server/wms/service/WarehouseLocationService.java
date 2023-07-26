@@ -52,4 +52,11 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      */
     List<WarehouseLocationDTO.LocationSelectDTO> all();
 
+    /**
+     * 获取仓库的仓位信息
+     * @param warehouseIds
+     * @return
+     */
+    List<WarehouseLocationEntity> list(List<String> warehouseIds);
+
 }

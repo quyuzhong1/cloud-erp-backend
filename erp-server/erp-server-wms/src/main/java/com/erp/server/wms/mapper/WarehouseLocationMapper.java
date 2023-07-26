@@ -8,6 +8,8 @@ import com.erp.model.wms.entity.WarehouseLocationEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  * 仓库仓位表 Mapper 接口
@@ -21,4 +23,5 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
 
     IPage<WarehouseLocationDTO.LocationSelectDTO> paging(Page query, @Param("params") WarehouseLocationDTO.WarehouseLocationSearchParamDTO dto);
 
+    List<WarehouseLocationEntity> list(@Param(value = "warehouseIds") List<String> warehouseIds);
 }
