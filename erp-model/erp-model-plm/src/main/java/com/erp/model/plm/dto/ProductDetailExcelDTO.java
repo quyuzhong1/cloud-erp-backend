@@ -295,7 +295,7 @@ public class ProductDetailExcelDTO {
     /**
      * 首季度目标销量
      */
-    @FieldValid(fieldName = "首季度目标销量", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "首季度目标销量", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String targetSalesQty;
 
     /**

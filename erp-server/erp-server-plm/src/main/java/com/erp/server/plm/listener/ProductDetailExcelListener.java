@@ -43,7 +43,16 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
     private BasicDictService basicDictService;
 
-    private SysUserFeign sysUserFeign;
+
+    /**
+     * plm 字典信息
+     */
+    private List<BasicDictEntity> basicDictList;
+
+    /**
+     * 用户信息
+     */
+    private List<FindUserDTO> userList;
 
     private List<ProductDetailExcelDTO> list;
 
@@ -52,18 +61,19 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
     public ProductDetailExcelListener(Integer importType, ProductDetailService productDetailService, ProductUnitService productUnitService,
-                                      BasicCategoryService basicCategoryService, BasicDictService basicDictService, SysUserFeign sysUserFeign) {
+                                      BasicCategoryService basicCategoryService, BasicDictService basicDictService, List<FindUserDTO> userList, List<BasicDictEntity> basicDictList) {
         this.importType = importType;
         this.productDetailService = productDetailService;
         this.productUnitService = productUnitService;
         this.basicCategoryService = basicCategoryService;
         this.basicDictService = basicDictService;
-        this.sysUserFeign = sysUserFeign;
+        this.userList = userList;
+        this.basicDictList = basicDictList;
         this.list = new ArrayList<>();
     }
 
     /**
-     * @Description  每解析一行数据回调一遍
+     * @Description 每解析一行数据回调一遍
      * @Author Luo_WG
      * @Date 2022/9/27 14:49
      * @param1 productDetailExcelDTO: 导入信息
@@ -128,7 +138,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         }
 
         String saleCountryStr = "";
-        if(StringUtils.isNotBlank(dto.getSaleCountry())){
+        if (StringUtils.isNotBlank(dto.getSaleCountry())) {
             String[] saleCountryList = dto.getSaleCountry().split(",");
             for (String saleCountry : saleCountryList) {
                 BasicDictEntity productCountry = basicDictService.checkBasicDict(BasicDictTypeEnum.COUNTRY.getCode(), saleCountry);
@@ -140,10 +150,9 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             }
         }
 
-        List<FindUserDTO> resultList = sysUserFeign.getUserList();
         List<FindUserDTO> chargeNameList = new ArrayList<>();
         if (StringUtils.isNotBlank(dto.getChargeName())) {
-            chargeNameList = resultList.stream().filter(e -> e.getUserName().equals(dto.getChargeName())).collect(Collectors.toList());
+            chargeNameList = userList.stream().filter(e -> e.getUserName().equals(dto.getChargeName())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(chargeNameList)) {
                 errorMsgList.add("产品经理在系统中未找到");
             }
@@ -151,20 +160,30 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
         List<FindUserDTO> purchaseUserList = new ArrayList<>();
         if (StringUtils.isNotBlank(dto.getPurchaseUser())) {
-            purchaseUserList = resultList.stream().filter(e -> e.getUserName().equals(dto.getPurchaseUser())).collect(Collectors.toList());
+            purchaseUserList = userList.stream().filter(e -> e.getUserName().equals(dto.getPurchaseUser())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(purchaseUserList)) {
                 errorMsgList.add("采购员在系统中未找到");
             }
         }
 
-        BasicDictEntity productBrand = basicDictService.checkBasicDict(BasicDictTypeEnum.PRODUCT_BRAND.getCode(), dto.getBrandName());
+        BasicDictEntity productBrand = basicDictList.stream().filter(b -> BasicDictTypeEnum.PRODUCT_BRAND.getCode().equals(b.getType()) && b.getValue().
+                equals(dto.getBrandName())).findFirst().orElse(null);
         if (ObjectUtils.isEmpty(productBrand)) {
             errorMsgList.add("产品品牌在系统中未找到");
         }
 
-        BasicDictEntity productProperty = basicDictService.checkBasicDict(BasicDictTypeEnum.PRODUCT_PROPERTY.getCode(), dto.getProperty());
+        BasicDictEntity productProperty = basicDictList.stream().filter(b -> BasicDictTypeEnum.PRODUCT_PROPERTY.getCode().equals(b.getType()) && b.getValue().
+                equals(dto.getProperty())).findFirst().orElse(null);
+
         if (ObjectUtils.isEmpty(productProperty)) {
             errorMsgList.add("产品属性在系统中未找到");
+        }
+        //产品等级
+        BasicDictEntity productGrade = basicDictList.stream().filter(b -> BasicDictTypeEnum.PRODUCT_GRADE.getCode().equals(b.getType()) && b.getValue().
+                equals(dto.getGrade())).findFirst().orElse(null);
+
+        if (ObjectUtils.isEmpty(productGrade)) {
+            errorMsgList.add("产品等级在系统中未找到");
         }
 
         ProductUnitEntity productUnitEntity = new ProductUnitEntity();
@@ -306,7 +325,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setProperty(productProperty.getValue());
         productInfoDTO.setPropertyId(productProperty.getId());
         productInfoDTO.setNameEn(dto.getNameEn());
-        productInfoDTO.setGrade(dto.getGrade());
+        productInfoDTO.setGrade(productGrade.getValue());
+        productInfoDTO.setGradeId(productGrade.getId());
         productInfoDTO.setSalesChannel(dto.getSalesChannel());
         productInfoDTO.setMoldCost(MathUtil.valueOf(dto.getMoldCost()));
         productInfoDTO.setEntrustedDevelopCost(MathUtil.valueOf(dto.getEntrustedDevelopCost()));
