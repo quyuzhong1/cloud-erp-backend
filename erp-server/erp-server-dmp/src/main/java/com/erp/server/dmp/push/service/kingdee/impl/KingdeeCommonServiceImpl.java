@@ -55,7 +55,6 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
-
  * @date 2023/3/3 11:53
  */
 @Slf4j
@@ -164,7 +163,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
          */
         String syncKingdeeId = (String) map.get("syncKingdeeId");
         String number = (String) map.get("code");
-        Integer createOrgId = (Integer) map.get("createOrgId");
+        Integer createOrgId = map.containsKey("createOrgId") ? Integer.valueOf(map.get("createOrgId").toString()) : null;
 
         JSONObject model;
         //1、有传创建组织id则根据创建组织id查询
@@ -241,7 +240,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      * 检查并禁用，反禁用
      * 检查是否同步到金蝶 如果没有就不用同步
      * 审核不通过不用同步到金蝶 但是作废缺要同步金蝶 避免这个问题
-     *TODO  暂停
+     * TODO  暂停
+     *
      * @param apiUtils
      * @param platformEntity
      * @param map
@@ -261,8 +261,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             if (StringUtils.isBlank(syncKingdeeId)) {
                 String businessId = String.valueOf(map.get("id"));
                 this.updateBusinessSyncKingdeeStatus(type, businessId, SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode(), "");
-            }else{
-                this.excuteOperation(apiUtils,platformEntity,map,type,number,operate);
+            } else {
+                this.excuteOperation(apiUtils, platformEntity, map, type, number, operate);
             }
         }
 

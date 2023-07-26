@@ -94,7 +94,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
     public void syncDataToKingdee(SoChangeEntity entity, String operate) {
 
         //更新同步状态为待同步
-        soChangeService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        soChangeService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), "", operate);
 
         String soId = entity.getSoId();
         SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
@@ -115,9 +115,15 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
+
+        List<String> orgIdList = new ArrayList<>(2);
+        //库存组织
+        String warehouseOrgId = soInfo.getWarehouseOrgId();
         //销售组织
         String salesOrgId = soInfo.getSalesOrgId();
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
+        orgIdList.add(warehouseOrgId);
+        orgIdList.add(salesOrgId);
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
         //销售组织的金蝶code
         String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
                 map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
@@ -177,19 +183,11 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             kingdeeWarehouseCode = warehouseList.get(0).getKingdeeWarehouseCode();
         }
 
-        //库存组织
-        String warehouseOrgId = soInfo.getWarehouseOrgId();
-        List<String> orgIdList = new ArrayList<>(2);
-        orgIdList.add(warehouseOrgId);
-        orgIdList.add(salesOrgId);
-        String warehouseOrgCode = "";
-        if (CollectionUtils.isNotEmpty(orgIdList)) {
-            if (StringUtils.isNotBlank(salesOrgCode)) {
-                resultMap.put("salesOrgCode", salesOrgCode);
-            }
-            warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
-                    map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("100");
+        if (StringUtils.isNotBlank(salesOrgCode)) {
+            resultMap.put("salesOrgCode", salesOrgCode);
         }
+        String warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
+                map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
 
         //要货日期
         LocalDate requireDate = soInfo.getRequireDate();
@@ -228,7 +226,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             }
 
             jsonObject.set("oldTaxPrice", item.getOldTaxPrice());
-            jsonObject.set("oldPrice",item.getOldPrice());
+            jsonObject.set("oldPrice", item.getOldPrice());
             jsonObject.set("oldTaxRate", item.getOldTaxRate());
             jsonObject.set("isGift", item.getIsGift());
             jsonObject.set("amount", item.getAmount());
