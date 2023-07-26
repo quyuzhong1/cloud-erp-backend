@@ -163,6 +163,10 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
             PoInstockDTO.ListStatusCountDTO resultDTO = new PoInstockDTO.ListStatusCountDTO();
             Integer count = MathUtil.ZERO;
+            if (PageListTypeEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
+            }
             if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
                 searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);

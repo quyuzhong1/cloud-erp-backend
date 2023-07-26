@@ -680,6 +680,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         all.setSearchType(SearchType.ALL);
         resultList.add(all);
 
+        //待提交
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        SoOutstockDTO.TabListDTO waitSubmit = new SoOutstockDTO.TabListDTO();
+        int waitSubmitCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(waitSubmitStatus)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        waitSubmit.setCount(waitSubmitCount);
+        waitSubmit.setSearchType(SearchType.WAIT_SUBMIT);
+        resultList.add(waitSubmit);
 
         //待审核
         String ing = ApproveStatusEnum.APPROVE_ING.getStatus();

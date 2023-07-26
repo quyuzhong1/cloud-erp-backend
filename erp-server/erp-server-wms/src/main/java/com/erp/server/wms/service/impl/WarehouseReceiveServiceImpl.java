@@ -204,6 +204,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             pagingParamDTO.setPermissionSql(dto.getPermissionSql());
             WarehouseReceiveDTO.WarehouseReceiveCountDTO resultDTO = new WarehouseReceiveDTO.WarehouseReceiveCountDTO();
             Integer count = MathUtil.ZERO;
+            if (PageListTypeEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
             if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParamDTO);

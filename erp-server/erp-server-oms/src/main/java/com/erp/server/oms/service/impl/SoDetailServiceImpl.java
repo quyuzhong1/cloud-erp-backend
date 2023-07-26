@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.constant.SearchType;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
@@ -146,6 +147,15 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         all.setCount(allCount);
         all.setSearchType(OmsConstant.ALL);
         result.add(all);
+
+        // 待提交
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        SoInfoDTO.TabListDTO waitSubmit = new SoInfoDTO.TabListDTO();
+        waitSubmit.setSearchType(OmsConstant.WAIT_SUBMIT);
+        int waitSubmitCount = countList.stream().filter(a -> a.getType().equals(waitSubmitStatus)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        waitSubmit.setCount(waitSubmitCount);
+        result.add(waitSubmit);
 
         //待审核
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();

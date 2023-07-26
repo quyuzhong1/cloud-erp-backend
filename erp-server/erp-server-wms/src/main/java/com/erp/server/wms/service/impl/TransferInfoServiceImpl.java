@@ -171,6 +171,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
             TransferInfoDTO.ListStatusCountDTO resultDTO = new TransferInfoDTO.ListStatusCountDTO();
             Integer count = MathUtil.ZERO;
+            if (PageListTypeEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
+            }
             if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
                 searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
