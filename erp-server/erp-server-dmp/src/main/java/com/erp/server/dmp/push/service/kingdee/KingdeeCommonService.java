@@ -162,6 +162,8 @@ public interface KingdeeCommonService {
 
     /**
      * 检查并禁用，反禁用
+     * 检查是否同步到金蝶 如果没有就不用同步
+     * 审核不通过不用同步到金蝶 但是作废缺要同步金蝶 避免这个问题
      * @author yl
      * @date 2023-07-26 10:13
      * @param apiUtils
