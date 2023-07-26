@@ -718,8 +718,15 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> list = baseMapper.generateSoReturnInstockView(ids);
         long receiveCount = list.stream().filter(req -> !req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).count();
         if (receiveCount > 0) {
-            throw new ServiceException(ApiError.ERROR_99080);
+            throw new ServiceException(ApiError.ERROR_99081);
         }
+
+        List<QcInfoEntity> qcInfoEntities = qcInfoService.listQCBySourceIds(ids);
+        long qcCount = qcInfoEntities.stream().filter(req -> QcBillStatusEnum.FINISH_QC.equals(req.getQcStatus()) || QcBillStatusEnum.EXEMPTION.equals(req.getQcStatus())).count();
+        if (qcCount != qcInfoEntities.size()) {
+            throw new ServiceException(ApiError.ERROR_99082);
+        }
+
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         //获取sku的id集合
         List<String> skuIdList = list.stream().map(SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView::getSkuId).collect(Collectors.toList());
