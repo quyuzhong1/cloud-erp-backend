@@ -770,6 +770,11 @@ public class SoOutstockDTO implements Serializable {
          */
         private String soRemark;
 
+        /**
+         * 出库日期
+         */
+        private LocalDate billDate;
+
         private List<SoOutstockDetailDTO.ViewDTO> detailList;
 
     }
@@ -874,6 +879,12 @@ public class SoOutstockDTO implements Serializable {
          * 交货方式
          */
         private String deliveryModeDict;
+
+        /**
+         * 出库日期
+         */
+        @NotNull(message = "出库日期不能为空")
+        private LocalDate billDate;
 
         /**
          * 详情

@@ -42,6 +42,7 @@ import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -73,6 +74,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 直接调拨单主表
@@ -123,6 +125,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Value("${transfer-sync-to-mb: true}")
     private Boolean transferSyncToMb;
+
+    @Autowired
+    private WarehouseLocationService warehouseLocationService;
 
 
     @Override
@@ -326,6 +331,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //产品信息
         List<String> skuIds = detailList.stream().map(TransferInfoDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        //仓库信息
+        List<String> inWarehouseIds = detailList.stream().map(TransferInfoDetailEntity::getInWarehouseId).distinct().collect(Collectors.toList());
+        List<String> outWarehouseIds = detailList.stream().map(TransferInfoDetailEntity::getOutWarehouseId).distinct().collect(Collectors.toList());
+        List<String> warehouseIds = Stream.of(inWarehouseIds,outWarehouseIds).flatMap(Collection::stream).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.list(warehouseIds);
         for (TransferInfoDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
@@ -336,6 +346,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //根据组织、仓库、sku查询可用库存
             Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDetailDTO.getOutWarehouseId(), viewDetailDTO.getSkuId(),viewDetailDTO.getOutWarehouseLocation());
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
+
+            // 取仓位名称
+            String outWarehouseLocationName = warehouseLocationList.stream().filter(r -> Objects.equals(r.getWarehouseId(), viewDetailDTO.getOutWarehouseId())
+                        && Objects.equals(StrUtils.null2EmptyWithTrim(r.getCode()), StrUtils.null2EmptyWithTrim(viewDetailDTO.getOutWarehouseLocation()))).map(o->StrUtils.null2EmptyWithTrim(o.getName())).findFirst().orElse("");
+            viewDetailDTO.setOutWarehouseLocationName(outWarehouseLocationName);
+
+            String inWarehouseLocationName = warehouseLocationList.stream().filter(r -> Objects.equals(r.getWarehouseId(), viewDetailDTO.getInWarehouseId())
+                    && Objects.equals(StrUtils.null2EmptyWithTrim(r.getCode()), StrUtils.null2EmptyWithTrim(viewDetailDTO.getInWarehouseLocation()))).map(o->StrUtils.null2EmptyWithTrim(o.getName())).findFirst().orElse("");
+            viewDetailDTO.setInWarehouseLocationName(inWarehouseLocationName);
         }
         viewDTO.setDetailList(viewDetailList);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));

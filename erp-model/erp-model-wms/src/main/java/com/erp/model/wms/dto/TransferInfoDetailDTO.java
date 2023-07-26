@@ -127,6 +127,16 @@ public class TransferInfoDetailDTO implements Serializable {
          * 调入仓位
          */
         private String inWarehouseLocation;
+
+        /**
+         * 调出仓位名称
+         */
+        private String outWarehouseLocationName;
+
+        /**
+         * 调入仓位名称
+         */
+        private String inWarehouseLocationName;
     }
 
 }

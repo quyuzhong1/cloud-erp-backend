@@ -307,4 +307,15 @@ public class PurchaseReturnOrderController extends BaseController {
         return flag?success():failure();
     }
 
+    /**
+     * 检测 sku 是否缺货
+     * @param dto
+     * @return
+     */
+    @PostMapping("/checkSkuInventory")
+    public ApiResult<String> checkSkuInventory(@RequestBody @Validated() PurchaseReturnOrderDTO.AddDTO dto) {
+        String msg = purchaseReturnOrderService.checkSkuInventory(dto, dto.getPurchasePriceDetailList());
+        return success( "", msg);
+    }
+
 }
