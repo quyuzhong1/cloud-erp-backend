@@ -192,17 +192,20 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         // 只返回待审核、已审核、审核不通过的数据
         List<TransferOutDTO.TabListDTO> resultList = Lists.newArrayListWithExpectedSize(3);
         Map<PageListTypeEnum, List<ApproveStatusEnum>> pageApproveStatusMap = Maps.newHashMap();
+        pageApproveStatusMap.put(PageListTypeEnum.WAIT_SUBMIT,  Lists.newArrayList(ApproveStatusEnum.WAIT_SUBMIT));
         pageApproveStatusMap.put(PageListTypeEnum.TO_BE_APPROVE,  Lists.newArrayList(ApproveStatusEnum.APPROVE_ING));
         pageApproveStatusMap.put(PageListTypeEnum.APPROVE,  Lists.newArrayList(ApproveStatusEnum.APPROVE));
         pageApproveStatusMap.put(PageListTypeEnum.REJECT,  Lists.newArrayList(ApproveStatusEnum.REJECT));
         Arrays.asList(PageListTypeEnum.values()).stream().forEach(pageListTypeEnum -> {
             // 获取对应的业务单据状态
             List<ApproveStatusEnum> approveStatusEnumList = pageApproveStatusMap.get(pageListTypeEnum);
-            Integer statusQty = approveStatusEnumList.stream().mapToInt(approveStatus-> {
-                return statusMap.getOrDefault(approveStatus.getStatus(), new ApproveStatusQtyDTO()).getCount();
-            }).sum();
-            TransferOutDTO.TabListDTO tab = new TransferOutDTO.TabListDTO(pageListTypeEnum.getCode(), statusQty);
-            resultList.add(tab);
+            if(Objects.nonNull(approveStatusEnumList)) {
+                Integer statusQty = approveStatusEnumList.stream().mapToInt(approveStatus-> {
+                    return statusMap.getOrDefault(approveStatus.getStatus(), new ApproveStatusQtyDTO()).getCount();
+                }).sum();
+                TransferOutDTO.TabListDTO tab = new TransferOutDTO.TabListDTO(pageListTypeEnum.getCode(), statusQty);
+                resultList.add(tab);
+            }
         });
         return resultList;
     }
