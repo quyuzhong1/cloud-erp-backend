@@ -372,6 +372,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             item.setWarehouseName(warehouseName);
             String remark = billRemarkList.stream().filter(r -> r.getMainId().equals(item.getId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getRemark())).orElse("");
+            String qcSampleResult = QcReCheckResultEnum.getByCode(item.getQcSampleResult());
+            item.setQcSampleResultName(StrUtils.isNotEmpty(qcSampleResult) ? qcSampleResult : "");
             item.setRemark(remark);
 
 
