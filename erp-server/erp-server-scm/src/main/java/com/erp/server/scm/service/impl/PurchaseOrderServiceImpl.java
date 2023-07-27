@@ -1832,8 +1832,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             if (CollectionUtils.isEmpty(warehouseList)) {
                 throw new ServiceException(ApiError.ERROR_99002);
             }
-            String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDeliveryWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
-            entity.setDeliveryWarehouseName(warehouseName);
+            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDeliveryWarehouseId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(updateDTO)) {
+                throw new ServiceException(ApiError.ERROR_99002);
+            }
+            //交货仓库和收料组织校验
+            if (!updateDTO.getOrgId().equals(entity.getReceiveOrgId())) {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_WAREHOUSE_ORG,updateDTO.getName(),entity.getReceiveOrgName());
+            }
+            entity.setDeliveryWarehouseName(updateDTO.getName());
         }
     }
 

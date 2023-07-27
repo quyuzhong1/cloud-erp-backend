@@ -582,6 +582,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_ORDER_ID_REPEAT(98101,"请选择同一采购订单下明细进行变更"),
     ERROR_PURCHASE_DATE(98102,"采购订单SKU【{}】预计交货日期不能小于【{}】"),
     ERROR_PURCHASE_PRICE(98103,"采购订单SKU【{}】单价必须大于0"),
+    ERROR_PURCHASE_WAREHOUSE_ORG(98102,"交货仓库【{}】与收料组织【{}】不匹配"),
 
 
 
