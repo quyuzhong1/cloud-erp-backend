@@ -104,6 +104,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Resource
     private WarehouseService warehouseService;
 
+    @Resource
+    private SoOutstockDetailService soOutstockDetailService;
+
     @Override
     public PagingVO<SoReturnReceiveDTO.PagingView> paging(PagingDTO<SoReturnReceiveDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -677,6 +680,11 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             dto.setWarehouseKeeperId(noticeEntity.getWarehouseKeeperId());
             dto.setReturnDate(noticeEntity.getBillDate());
             dto.setBillDate(LocalDate.now());
+            dto.setType(noticeEntity.getType());
+            dto.setCustomerId(noticeEntity.getCustomerId());
+            dto.setSalesOrgId(noticeEntity.getSalesOrgId());
+            dto.setSalesDeptId(noticeEntity.getSalesDeptId());
+            dto.setSellerId(noticeEntity.getSellerId());
             List<SoReturnReceiveDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : viewList) {
                 dto.setSourceId(view.getSourceId());
@@ -718,8 +726,15 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> list = baseMapper.generateSoReturnInstockView(ids);
         long receiveCount = list.stream().filter(req -> !req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).count();
         if (receiveCount > 0) {
-            throw new ServiceException(ApiError.ERROR_99080);
+            throw new ServiceException(ApiError.ERROR_99081);
         }
+
+        List<QcInfoEntity> qcInfoEntities = qcInfoService.listQCBySourceIds(ids);
+        long qcCount = qcInfoEntities.stream().filter(req -> QcBillStatusEnum.FINISH_QC.equals(req.getQcStatus()) || QcBillStatusEnum.EXEMPTION.equals(req.getQcStatus())).count();
+        if (qcCount != qcInfoEntities.size()) {
+            throw new ServiceException(ApiError.ERROR_99082);
+        }
+
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         //获取sku的id集合
         List<String> skuIdList = list.stream().map(SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView::getSkuId).collect(Collectors.toList());
@@ -727,6 +742,24 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);
         List<String> warehouseIds = list.stream().map(SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
+
+        //退货签收单明细表id
+        List<String> receiveDetailIds = list.stream().map(SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView::getId).collect(Collectors.toList());
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailByIds(receiveDetailIds);
+        List<String> returnDetailIds = soReturnReceiveDetailEntities.stream().map(SoReturnReceiveDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByIds(returnDetailIds);
+        //销售单明细id
+        List<String> soDetailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(soDetailIds);
+        //签收单id
+        List<String> receiveIds = list.stream().map(SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView::getMainId).distinct().collect(Collectors.toList());
+        List<SoReturnReceiveEntity> soReturnReceiveEntities = this.listByIds(receiveIds);
+        List<String> returnIds = soReturnReceiveEntities.stream().map(SoReturnReceiveEntity::getSourceId).collect(Collectors.toList());
+        List<SoReturnEntity> returnEntityList = soReturnFeign.listByIds(returnIds);
+        //销售单id
+        List<String> soIds = returnEntityList.stream().map(SoReturnEntity::getSourceId).collect(Collectors.toList());
+        //根据销售单获取出库单
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(soIds);
         for (SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView view : list) {
             if (StringUtils.isNotBlank(view.getReturnTypeDict())) {
                 view.setReturnTypeDictName(ReturnTypeEnum.getName(view.getReturnTypeDict()));
@@ -741,6 +774,16 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             WarehouseDTO.UpdateDTO warehouseDto = warehouseList.stream().filter(req -> req.getId().equals(view.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             view.setWarehouseName(warehouseDto.getName());
             view.setInstockDate(LocalDate.now());
+            SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(view.getId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
+
+            SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(req -> req.getId().equals(soReturnReceiveDetailEntity.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(req -> req.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            view.setSalesQty(soDetailEntity.getQty());
+            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(soDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            view.setDeliveryQty(actualQty);
+            view.setMustQty(soReturnReceiveDetailEntity.getReturnQty());
+            view.setReceiveQty(soReturnReceiveDetailEntity.getReceiveQty());
+            view.setRealQty(soReturnReceiveDetailEntity.getReceiveQty());
         }
         return list;
     }

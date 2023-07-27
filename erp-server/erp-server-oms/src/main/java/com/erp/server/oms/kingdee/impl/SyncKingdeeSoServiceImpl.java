@@ -120,8 +120,12 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //销售组织
         String salesOrgId = entity.getSalesOrgId();
 
-
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
+        //库存组织
+        String warehouseOrgId = entity.getWarehouseOrgId();
+        List<String> orgIdList = new ArrayList<>(2);
+        orgIdList.add(warehouseOrgId);
+        orgIdList.add(salesOrgId);
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
         //销售组织的金蝶code
         String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
                 map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
@@ -156,7 +160,6 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             }
         }
 
-
         String currency = entity.getCurrency();
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
         //结算币别
@@ -178,19 +181,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         finance.put("FSettleCurrId.FNumber", currencyCode);
         resultMap.put("finance", finance);
 
-        //库存组织
-        String warehouseOrgId = entity.getWarehouseOrgId();
-        List<String> orgIdList = new ArrayList<>(2);
-        orgIdList.add(warehouseOrgId);
-        orgIdList.add(salesOrgId);
-        String warehouseOrgCode = "";
-
-
         if (StringUtils.isNotBlank(salesOrgCode)) {
             resultMap.put("salesOrgCode", salesOrgCode);
         }
-        warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
-                map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("100");
+        String warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
+                map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
 
         //客户
         String customerId = entity.getCustomerId();

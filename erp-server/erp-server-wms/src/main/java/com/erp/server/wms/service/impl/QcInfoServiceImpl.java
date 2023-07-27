@@ -16,10 +16,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
@@ -75,6 +72,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -374,6 +372,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             item.setWarehouseName(warehouseName);
             String remark = billRemarkList.stream().filter(r -> r.getMainId().equals(item.getId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getRemark())).orElse("");
+            String qcSampleResult = QcReCheckResultEnum.getByCode(item.getQcSampleResult());
+            item.setQcSampleResultName(StrUtils.isNotEmpty(qcSampleResult) ? qcSampleResult : "");
             item.setRemark(remark);
 
 
@@ -452,6 +452,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 //是否内检
                 Boolean isInside = item.getIsInside();
                 excelDTO.setInsideType(isInside != null && isInside ? "内部检验" : "外部检验");
+                excelDTO.setIsInsideQcName(Objects.equals(item.getIsInsideQc(), Boolean.TRUE) ? "是" : "否");
+                String qcSampleResult = QcReCheckResultEnum.getByCode(item.getQcSampleResult());
+                excelDTO.setQcSampleResultName(StrUtils.isNotEmpty(qcSampleResult) ? qcSampleResult : "-");
                 resultList.add(excelDTO);
             }
 
@@ -1146,6 +1149,14 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         waitQc.setTypeName(QcBillStatusEnum.WAIT_QC.getName());
         resultList.add(waitQc);
 
+        // 待复检
+        QcInfoDTO.TabListDTO waitReQc = new QcInfoDTO.TabListDTO();
+        String waitReQcType = QcBillStatusEnum.WAIT_RE_QC.getCode();
+        waitReQc.setCount(qcResultService.getReQcCount());
+        waitReQc.setSearchType(waitReQcType);
+        waitReQc.setTypeName(QcBillStatusEnum.WAIT_RE_QC.getName());
+        resultList.add(waitReQc);
+
         QcInfoDTO.TabListDTO finishQc = new QcInfoDTO.TabListDTO();
         String finishQcType = QcBillStatusEnum.FINISH_QC.getCode();
         finishQc.setCount((int) list.stream().filter(l -> finishQcType.equals(l.getQcStatus().getCode())).count());
@@ -1604,20 +1615,28 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveEntities.stream().filter(req -> req.getId().equals(view.getSourceId())).findFirst().orElse(new SoReturnReceiveEntity());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
             SoReturnEntity soReturnEntity = returnEntityList.stream().filter(req -> req.getId().equals(soReturnReceiveEntity.getSourceId())).findFirst().orElse(new SoReturnEntity());
-            if (StringUtils.isNotBlank(soReturnReceiveDetailEntity.getReturnTypeDict())) {
-                view.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnReceiveDetailEntity.getReturnTypeDict()));
+            //退货方式
+            String returnTypeDict = soReturnReceiveDetailEntity.getReturnTypeDict();
+            if (StringUtils.isNotBlank(returnTypeDict)) {
+                view.setReturnTypeDictName(ReturnTypeEnum.getName(returnTypeDict));
+                view.setReturnTypeDict(returnTypeDict);
             }
-            if (StringUtils.isNotBlank(soReturnReceiveDetailEntity.getReturnTypeDict())) {
-                view.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnReceiveDetailEntity.getReturnReasonDict()));
+            //退货原因
+            String returnReason = soReturnReceiveDetailEntity.getReturnReasonDict();
+            if (StringUtils.isNotBlank(returnReason)) {
+                view.setReturnReasonDictName(ReturnReasonEnum.getName(returnReason));
+                view.setReturnReasonDict(returnReason);
             }
-
-
             view.setId(view.getId());
             view.setMainId(view.getId());
             view.setSourceId(soReturnReceiveEntity.getSourceId());
             view.setSourceDetailId(view.getSourceDetailId());
             view.setSourceCode(soReturnEntity.getCode());
-            view.setCode(soReturnReceiveEntity.getSourceCode());
+            if (StringUtils.isBlank(soReturnReceiveEntity.getSourceCode())) {
+                view.setCode(soReturnReceiveEntity.getCode());
+            } else {
+                view.setCode(soReturnReceiveEntity.getSourceCode());
+            }
             view.setCustomerId(soReturnReceiveEntity.getCustomerId());
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             view.setCustomerName(customerInfoEntity.getName());
@@ -1637,7 +1656,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
             view.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
             if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
-                view.setReturnReasonDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
+                view.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
             }
             view.setWarehouseId(view.getWarehouseId());
             List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(view.getWarehouseId()));
@@ -1758,7 +1777,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                                     q.getSkuId().equals(skuId) && q.getPurchaseOrderId().equals(purchaseOrderId)
                             ).mapToInt(QcResultDTO.QcQtyDTO::getTotalQty).sum();
                             if (finishQcQty > purchaseSkuQty) {
-                                throw new ServiceException(ApiError.ERROR_99019);
+                                // 关闭验证
+                                // throw new ServiceException(ApiError.ERROR_99019);
                             }
                         }
                     }
@@ -2062,4 +2082,32 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         List<SysUserInfoEntity> sysUserInfoEntities = sysUserFeign.listUserByDept("品质部");
         return sysUserInfoEntities;
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void reQcSample(QcInfoDTO.ReQcDTO dto) {
+        dto.setIds(dto.getIds().stream().distinct().collect(Collectors.toList()));
+        List<QcResultEntity> qcResultlist = qcResultService.getByMainIdList(dto.getIds());
+        Map<String,QcResultEntity> qcResultMap = qcResultlist.stream().collect(Collectors.toMap(QcResultEntity::getMainId, Function.identity()));
+        dto.getIds().stream().forEach(id->{
+            QcInfoEntity qcInfoEntity = super.getById(id);
+            Optional.ofNullable(qcInfoEntity).orElseThrow(()->new ServiceException("质检单信息不存在"));
+
+            // 是否库内抽检为是才可以操作
+            QcResultEntity qcResultEntity = qcResultMap.get(id);
+            if(Objects.isNull(qcResultEntity) || !Objects.equals(qcResultEntity.getIsInsideQc(), Boolean.TRUE)) {
+                throw new ServiceException("只有库内抽检为是才允许操作");
+            }
+            // 添加备注
+            if(StrUtils.isNotEmpty(dto.getRemark())) {
+                QcRemarkEntity qcRemarkEntity = new QcRemarkEntity();
+                qcRemarkEntity.setMainId(id);
+                qcRemarkEntity.setRemark(dto.getRemark());
+                qcRemarkService.save(qcRemarkEntity);
+            }
+        });
+        // 更新质检复检抽检结果
+        qcResultService.updateQcSampleResult(dto.getIds(), dto.getQcSampleResult());
+    }
+
 }

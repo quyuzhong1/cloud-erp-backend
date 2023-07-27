@@ -292,6 +292,7 @@ public class SoReturnInstockDTO {
         /**
          * 主键id
          */
+        @NotBlank(message = "退货入库单不能为空")
         private String id;
         /**
          * 退货单id

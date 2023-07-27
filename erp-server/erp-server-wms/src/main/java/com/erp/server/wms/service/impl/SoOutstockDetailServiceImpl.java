@@ -444,6 +444,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
     @Override
     public List<SoOutstockDetailEntity> listDetailBySoIds(List<String> soIds) {
+        if (CollectionUtils.isEmpty(soIds)) {
+            return new ArrayList<>();
+        }
         List<SoOutstockDetailEntity> resultList = baseMapper.listDetailBySoIds(soIds);
         return resultList;
     }

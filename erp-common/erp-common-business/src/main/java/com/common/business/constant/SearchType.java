@@ -25,4 +25,9 @@ public interface SearchType {
      * 待审核
      */
     String WAIT_APPROVE = "waitApprove";
+
+    /**
+     * 待提交
+     */
+    String WAIT_SUBMIT = "waitSubmit";
 }

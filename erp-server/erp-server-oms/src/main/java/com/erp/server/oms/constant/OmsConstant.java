@@ -41,5 +41,10 @@ public interface OmsConstant {
      */
     String DELIVERY = "delivery";
 
+    /**
+     * 待提交
+     */
+    String WAIT_SUBMIT = "waitSubmit";
+
 
 }

@@ -219,16 +219,21 @@
             qi.handle_mode_dict as handleModeDict,
             qi.bad_description as badDescription,
             qi.qc_good_rate*100  AS qcGoodRate,
-            qi.qc_bad_rate*100 AS qcBadRate
+            qi.qc_bad_rate*100 AS qcBadRate,
+            qi.is_inside_qc AS isInsideQc,
+            qi.qc_sample_result AS qcSampleResult
         FROM qc_info qb
         LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
         WHERE qb.is_deleted=FALSE
-        <if test="params.searchType !=null and params.searchType!='' and params.searchType != 'waitQc'">
+        <if test="params.searchType !=null and params.searchType!='' and params.searchType != 'waitQc' and params.searchType != 'waitReQc' ">
             AND qb.qc_status = #{params.searchType}
         </if>
         <if test="params.searchType !=null and params.searchType!='' and params.searchType == 'waitQc'">
             AND qb.qc_status in ('draft', #{params.searchType})
+        </if>
+        <if test="params.searchType !=null and params.searchType!='' and params.searchType == 'waitReQc'">
+            AND ( qi.is_inside_qc = true  and (qi.qc_sample_result is null or qi.qc_sample_result = '') )
         </if>
         <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
             AND qb.purchase_order_code ILIKE concat('%', #{params.purchaseOrderCode} ,'%')
@@ -298,6 +303,9 @@
             AND qb.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > qb.create_time
         </if>
+        <if test="params.isInsideQc !=null ">
+            AND qi.is_inside_qc =#{params.isInsideQc}
+        </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -339,7 +347,9 @@
             qi.handle_mode_dict as handleModeDict,
             qi.bad_description as badDescription,
             qi.qc_good_rate*100  AS qcGoodRate,
-            qi.qc_bad_rate*100 AS qcBadRate
+            qi.qc_bad_rate*100 AS qcBadRate,
+            qi.is_inside_qc AS isInsideQc,
+            qi.qc_sample_result AS qcSampleResult
         FROM qc_info qb
         LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
@@ -352,11 +362,14 @@
                 </foreach>
             </when>
             <otherwise>
-                <if test="params.searchType !=null and params.searchType!='' and params.searchType != 'waitQc'">
+                <if test="params.searchType !=null and params.searchType!='' and params.searchType != 'waitQc' and params.searchType != 'waitReQc' ">
                     AND qb.qc_status = #{params.searchType}
                 </if>
                 <if test="params.searchType !=null and params.searchType!='' and params.searchType == 'waitQc'">
                     AND qb.qc_status in ('draft', #{params.searchType})
+                </if>
+                <if test="params.searchType !=null and params.searchType!='' and params.searchType == 'waitReQc'">
+                    AND ( qi.is_inside_qc = true  and (qi.qc_sample_result is null or qi.qc_sample_result = '') )
                 </if>
                 <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
                     AND qb.purchase_order_code ilike concat('%', #{params.purchaseOrderCode} ,'%')
@@ -424,6 +437,9 @@
                     AND qb.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
                     INTERVAL '1
                     DAY' ) > qb.create_time
+                </if>
+                <if test="params.isInsideQc !=null ">
+                    AND qi.is_inside_qc =#{params.isInsideQc}
                 </if>
 
             </otherwise>
