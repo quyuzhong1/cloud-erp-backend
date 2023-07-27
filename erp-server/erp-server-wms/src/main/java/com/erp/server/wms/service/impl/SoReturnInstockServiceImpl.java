@@ -327,79 +327,34 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_99083);
         }
-        //退货单id
-        String soReturnId = dto.getSoReturnId();
-        //当退货单不为空的时候
-        if (StringUtils.isNotBlank(soReturnId)) {
-            SoReturnEntity soReturn = soReturnFeign.getSoReturnById(soReturnId);
-            //对应的就是销售订单id
-            String soId = soReturn.getSourceId();
-            if (StringUtils.isNotBlank(soId)) {
-                SoInfoEntity soInfo = soInfoFeign.getSoInfoById(soId);
-                if (!Objects.isNull(soInfo)) {
-                    dto.setSellerId(soInfo.getSellerId());
-                    dto.setCustomerId(soInfo.getCustomerId());
-                    dto.setSalesDeptId(soInfo.getSalesDeptId());
-                    dto.setSellerId(soInfo.getSellerId());
-                    dto.setWarehouseId(soReturn.getWarehouseId());
-                    dto.setSalesOrgId(soInfo.getSalesOrgId());
-                    dto.setType(soInfo.getOrderType());
-                    entity.setSoId(soInfo.getId());
-                    entity.setSoCode(soInfo.getCode());
-                }
-            }
-
-            if (!Objects.isNull(soReturn)) {
-                dto.setSoReturnId(soReturnId);
-                dto.setSoReturnCode(soReturn.getCode());
-                dto.setSourceId(soReturn.getId());
-                dto.setSourceCode(soReturn.getCode());
-            }
-
-        }
+        //仓管员
+        String warehouseKeeperId = dto.getWarehouseKeeperId();
+        String warehouseKeeperName = "";
+        if (StringUtils.isNotBlank(warehouseKeeperId)) {
         //获取用户信息
-        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(dto.getSellerId(), dto.getWarehouseKeeperId()));
-        //获取客户信息
-        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(Arrays.asList(dto.getCustomerId()));
-        //获取部门信息
-        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(Arrays.asList(dto.getSalesDeptId()));
+            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(warehouseKeeperId));
+            if (CollectionUtils.isNotEmpty(userList)) {
+                warehouseKeeperName = userList.get(0).getUserName();
+            }
+        }
+
         //获取核算公司
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
         WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
         //获取组织信息
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getSalesOrgId(), updateDTO.getOrgId()));
-        entity.setId(dto.getId());
-        entity.setType(dto.getType());
-        entity.setSalesOrgId(dto.getSalesOrgId());
-        String orgName = orgList.stream().filter(o -> StringUtils.isNotBlank(dto.getSalesOrgId())&&dto.getSalesOrgId().equals(o.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        entity.setSalesOrgName(orgName);
-        entity.setSalesDeptId(dto.getSalesDeptId());
-        String deptName = departmentList.stream().filter(o -> StringUtils.isNotBlank(dto.getSalesDeptId())&&dto.getSalesDeptId().equals(o.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        entity.setSalesDeptName(deptName);
-        entity.setSellerId(dto.getSellerId());
-        String userName = userList.stream().filter(d -> d.getUserId().equals(dto.getSellerId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
-        entity.setSellerName(userName);
-        entity.setCustomerId(dto.getCustomerId());
-        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(dto.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
-        entity.setCustomerName(customerInfoEntity.getName());
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(updateDTO.getOrgId()));
         entity.setWarehouseId(dto.getWarehouseId());
         entity.setWarehouseName(updateDTO.getName());
-        entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
-        String warehouseKeeperUserName = userList.stream().filter(d -> d.getUserId().equals(dto.getWarehouseKeeperId())).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
-        entity.setWarehouseKeeperName(warehouseKeeperUserName);
+        entity.setWarehouseKeeperId(warehouseKeeperId);
+        entity.setWarehouseKeeperName(warehouseKeeperName);
         entity.setInventoryOrgId(updateDTO.getOrgId());
         String warehouseOrgName = orgList.stream().filter(o -> updateDTO.getOrgId().equals(o.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         entity.setInventoryOrgName(warehouseOrgName);
-        entity.setSourceCode(dto.getSourceCode());
-        entity.setSourceType(dto.getSourceType());
-        entity.setSourceId(dto.getSourceId());
         entity.setBillDate(dto.getBillDate());
         //操作日志
         SoReturnInstockEntity byId = this.getById(dto.getId());
         operateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "", "");
         boolean flag = this.updateById(entity);
-
         soReturnInstockDetailService.update(dto);
         return flag;
     }
