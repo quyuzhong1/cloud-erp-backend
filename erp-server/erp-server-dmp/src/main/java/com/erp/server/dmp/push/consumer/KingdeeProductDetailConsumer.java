@@ -101,6 +101,7 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
             //主单据id
             KingdeeUtils.makeFieldJson(json,"FMATERIALID",".",id);
             //需要修改字段
+            json.remove("FCreateOrgId");
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
@@ -138,6 +139,7 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
                 KingdeeUtils.makeFieldJson(json, String.valueOf(entry.getKey()),".",entry.getValue());
             }
             //需要修改字段
+            json.remove("FCreateOrgId");
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);

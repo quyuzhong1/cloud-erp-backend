@@ -131,6 +131,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
             if (!allowUnApproveStatus) {
                 //反审核
                 log.warn("单据状态为[{}], 无法反审核，跳过反审核操作", KingdeeDocStatusEnum.getByCode(documentStatus));
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "金蝶数据可修改不需要反审核", type, ApiSendStatusEnum.SUCCESS.getCode());
                 return;
             }
             // 判断禁用状态已禁用数据 先启用再反审核
@@ -146,6 +147,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
             // 判断禁用状态是否与金蝶系统一致 A启用 B禁用
             if (erpForbidStatus.equals(kingdeeForbidStatus)) {
                 log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}], 无需{}，跳过{}操作", forbidStatus, map.get("disabled"), operate, operate);
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "未配置同步字段", type, ApiSendStatusEnum.FAILURE.getCode());
                 return;
             }
             //启用、禁用
