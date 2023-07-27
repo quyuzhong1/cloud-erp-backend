@@ -97,7 +97,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         if (CollectionUtils.isEmpty(json)) {
             log.error(ApiError.ERROR_97025.msg);
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "未配置同步字段", type, ApiSendStatusEnum.FAILURE.getCode());
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(map), "未配置同步字段", type, ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
         //判断金蝶系统是否已存在该数据
@@ -118,8 +118,9 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         //查找到数据后，判断其审核状态
         String documentStatus = (String) model.get("DocumentStatus");
         String id = String.valueOf(model.get("Id"));
-        String forbidStatus = String.valueOf(model.get("FForbidStatus"));
+        String forbidStatus = String.valueOf(model.get("ForbidStatus"));
         Boolean flag = Boolean.FALSE;
+        // A启用 B禁用
         Boolean kingdeeForbidStatus = "B".equals(forbidStatus) ? Boolean.TRUE : Boolean.FALSE;
         Boolean erpForbidStatus = ObjectUtil.isNotEmpty(map.get("disabled")) ? (Boolean) map.get("disabled") : Boolean.FALSE;
         //操作项
@@ -147,7 +148,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
             // 判断禁用状态是否与金蝶系统一致 A启用 B禁用
             if (erpForbidStatus.equals(kingdeeForbidStatus)) {
                 log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}], 无需{}，跳过{}操作", forbidStatus, map.get("disabled"), operate, operate);
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "未配置同步字段", type, ApiSendStatusEnum.FAILURE.getCode());
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(map), "金蝶状态与ERP相同不需要修改", type, ApiSendStatusEnum.SUCCESS.getCode());
                 return;
             }
             //启用、禁用
