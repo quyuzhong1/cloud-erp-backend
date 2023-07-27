@@ -48,7 +48,6 @@ import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcInfoMapper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.QcUtils;
-import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -73,6 +72,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -2086,10 +2086,18 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void reQcSample(QcInfoDTO.ReQcDTO dto) {
+        dto.setIds(dto.getIds().stream().distinct().collect(Collectors.toList()));
+        List<QcResultEntity> qcResultlist = qcResultService.getByMainIdList(dto.getIds());
+        Map<String,QcResultEntity> qcResultMap = qcResultlist.stream().collect(Collectors.toMap(QcResultEntity::getMainId, Function.identity()));
         dto.getIds().stream().forEach(id->{
             QcInfoEntity qcInfoEntity = super.getById(id);
             Optional.ofNullable(qcInfoEntity).orElseThrow(()->new ServiceException("质检单信息不存在"));
 
+            // 是否库内抽检为是才可以操作
+            QcResultEntity qcResultEntity = qcResultMap.get(id);
+            if(Objects.isNull(qcResultEntity) || !Objects.equals(qcResultEntity.getIsInsideQc(), Boolean.TRUE)) {
+                throw new ServiceException("只有库内抽检为是才允许操作");
+            }
             // 添加备注
             if(StrUtils.isNotEmpty(dto.getRemark())) {
                 QcRemarkEntity qcRemarkEntity = new QcRemarkEntity();
