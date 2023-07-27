@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 
 /**
  * 销售退货入库单明细表 服务实现类
+ *
  * @author LUO_WG
  * @since 2023-05-10
  */
@@ -78,7 +79,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
                 //签收单数量
                 Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (receiveQty <  detailDto.getRealQty() + realQty) {
+                if (receiveQty < detailDto.getRealQty() + realQty) {
                     throw new ServiceException(ApiError.ERROR_92045);
                 }
                 detailEntity.setMainId(id);
@@ -86,8 +87,18 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
                 detailEntity.setRealQty(detailDto.getRealQty());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
-                detailEntity.setReturnTypeDict(soReturnDetailEntity.getReturnTypeDict());
-                detailEntity.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
+                //类型
+                String returnTypeDict = soReturnDetailEntity.getReturnTypeDict();
+                //原因
+                String returnReasonDict = soReturnDetailEntity.getReturnReasonDict();
+                if (StringUtils.isBlank(returnTypeDict)) {
+                    returnTypeDict = detailDto.getReturnTypeDict();
+                }
+                if (StringUtils.isBlank(returnReasonDict)) {
+                    returnReasonDict = detailDto.getReturnReasonDict();
+                }
+                detailEntity.setReturnTypeDict(returnTypeDict);
+                detailEntity.setReturnReasonDict(returnReasonDict);
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
@@ -101,11 +112,12 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
     /**
      * 无退货订单新增
-     * @Author Luo_WG
-     * @Date 2023/7/24 14:47
+     *
      * @param dto
      * @param id
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/7/24 14:47
      **/
     private Boolean notReturnOrderAdd(SoReturnInstockDTO.Add dto, String id) {
         List<String> skuIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getSkuId).collect(Collectors.toList());
@@ -120,7 +132,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
             //签收单数量
             Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (receiveQty <  detailDto.getRealQty() + realQty) {
+            if (receiveQty < detailDto.getRealQty() + realQty) {
                 throw new ServiceException(ApiError.ERROR_92045);
             }
             detailEntity.setMainId(id);
@@ -158,7 +170,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 List<SoReturnInstockDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
                 //操作日志
                 List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
-                operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(),pairList,"编辑操作");
+                operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), pairList, "编辑操作");
                 this.removeByIds(deleteIds);
             }
             for (SoReturnInstockDetailDTO.Update detailDto : dto.getDetailList()) {
@@ -175,7 +187,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     detailEntity.setId(detailDto.getId());
                     realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
-                if (receiveQty <  detailDto.getRealQty() + realQty) {
+                if (receiveQty < detailDto.getRealQty() + realQty) {
                     throw new ServiceException(ApiError.ERROR_92026);
                 }
                 detailEntity.setMainId(dto.getId());
@@ -208,10 +220,11 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
     /**
      * 无退货订单修改
-     * @Author Luo_WG
-     * @Date 2023/7/25 10:33
+     *
      * @param dto
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/7/25 10:33
      **/
     private Boolean notReturnOrderUpdate(SoReturnInstockDTO.Update dto) {
         List<String> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(SoReturnInstockDetailDTO.Update::getId).collect(Collectors.toList());
@@ -229,7 +242,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             List<SoReturnInstockDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(),pairList,"编辑操作");
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), pairList, "编辑操作");
             this.removeByIds(deleteIds);
         }
         for (SoReturnInstockDetailDTO.Update detailDto : dto.getDetailList()) {
@@ -242,7 +255,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setId(detailDto.getId());
                 realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            if (receiveQty <  detailDto.getRealQty() + realQty) {
+            if (receiveQty < detailDto.getRealQty() + realQty) {
                 throw new ServiceException(ApiError.ERROR_92026);
             }
             detailEntity.setMainId(dto.getId());

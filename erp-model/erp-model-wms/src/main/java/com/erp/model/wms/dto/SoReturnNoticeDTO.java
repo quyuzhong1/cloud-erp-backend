@@ -7,7 +7,9 @@ import com.erp.model.wms.enums.ReturnTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -470,8 +472,10 @@ public class SoReturnNoticeDTO {
          */
         private Integer returnQty;
         /**
-         * 退货数量
+         * 签收数量
          */
+        @DecimalMin(value = "1",message ="签收数量不能为0" )
+        @NotNull(message = "签收数量不能为空")
         private Integer receiveQty;
         /**
          * 退货类型 wms/common/enumDropDown?type=ReturnType
