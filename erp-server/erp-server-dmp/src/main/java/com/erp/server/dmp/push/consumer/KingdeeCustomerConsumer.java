@@ -105,6 +105,9 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         JSONObject model;
         try {
             model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
+            map.put("syncKingdeeId", String.valueOf(model.get("Id")));
+            json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
+            param = new SaveParam(json);
         } catch (Exception e) {
             //更新数据
             Boolean saveOrUpdateResult = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
@@ -168,7 +171,6 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
             //主单据id
-            KingdeeUtils.makeFieldJson(json,"FCustId",".", id);
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
