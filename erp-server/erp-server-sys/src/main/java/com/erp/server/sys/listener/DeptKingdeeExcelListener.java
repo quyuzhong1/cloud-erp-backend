@@ -73,8 +73,8 @@ public class DeptKingdeeExcelListener extends AnalysisEventListener<DeptKingdeeI
             errorMsgList.addAll(msgList);
         }
         //部门名
-        String deptName = excelDTO.getKingdeeDeptName();
-        SysDepartmentEntity deptInfo = deptList.stream().filter(u -> u.getName().equals(deptName)).findFirst().orElse(null);
+        String deptName = excelDTO.getKingdeeDeptName().trim();
+        SysDepartmentEntity deptInfo = deptList.stream().filter(u -> u.getName().trim().equals(deptName)).findFirst().orElse(null);
         String id = "";
         //就要加的一个部门
         if (!Objects.isNull(deptInfo)) {
