@@ -519,9 +519,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //新增日志
         insertSyncLog(platformEntity, businessId, jsonData, msg, type, status);
         //更新金蝶同步状态
-        if (ApiSendStatusEnum.FAILURE.getCode().equals(status)) {
-            this.updateBusinessSyncKingdeeStatus(type, businessId, SyncKingdeeStatusEnum.FAILED_SYNC.getCode(), "");
-        }
+        this.updateBusinessSyncKingdeeStatus(type, businessId, SyncKingdeeStatusEnum.getCodeBySendStatus(status), "");
     }
 
     /**
