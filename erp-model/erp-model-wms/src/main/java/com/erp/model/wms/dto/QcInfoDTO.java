@@ -414,7 +414,7 @@ public class QcInfoDTO implements Serializable {
          * finishQc 完成质检
          * cancel 已取消
          */
-        @StateEnumValue(strValues = {"all", "waitQc", "finishQc", "cancel"}, message = "搜索类型有误")
+        @StateEnumValue(strValues = {"all", "waitQc", "finishQc", "cancel", "waitReQc"}, message = "搜索类型有误")
         @NotBlank(message = "搜索类型不能为空")
         private String searchType;
 
