@@ -880,6 +880,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             generatePoDTO.setPlanDeliveryDate(detailEntity.getPlanDeliveryDate());
             //备注
             generatePoDTO.setRemark(detailEntity.getRemark());
+            //付款条件
+            generatePoDTO.setPaymentCondition(detailEntity.getPaymentCondition());
             //是否赠品
             generatePoDTO.setIsGift( ObjectUtils.isEmpty(generatePoDTO.getIsGift()) ? detailEntity.getIsGift() : generatePoDTO.getIsGift());
             generatePoDTO.setTaxPrice(detailEntity.getPrice());
