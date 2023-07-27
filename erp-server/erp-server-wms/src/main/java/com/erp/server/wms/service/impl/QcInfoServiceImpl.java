@@ -1615,20 +1615,28 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveEntities.stream().filter(req -> req.getId().equals(view.getSourceId())).findFirst().orElse(new SoReturnReceiveEntity());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
             SoReturnEntity soReturnEntity = returnEntityList.stream().filter(req -> req.getId().equals(soReturnReceiveEntity.getSourceId())).findFirst().orElse(new SoReturnEntity());
-            if (StringUtils.isNotBlank(soReturnReceiveDetailEntity.getReturnTypeDict())) {
-                view.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnReceiveDetailEntity.getReturnTypeDict()));
+            //退货方式
+            String returnTypeDict = soReturnReceiveDetailEntity.getReturnTypeDict();
+            if (StringUtils.isNotBlank(returnTypeDict)) {
+                view.setReturnTypeDictName(ReturnTypeEnum.getName(returnTypeDict));
+                view.setReturnTypeDict(returnTypeDict);
             }
-            if (StringUtils.isNotBlank(soReturnReceiveDetailEntity.getReturnTypeDict())) {
-                view.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnReceiveDetailEntity.getReturnReasonDict()));
+            //退货原因
+            String returnReason = soReturnReceiveDetailEntity.getReturnReasonDict();
+            if (StringUtils.isNotBlank(returnReason)) {
+                view.setReturnReasonDictName(ReturnReasonEnum.getName(returnReason));
+                view.setReturnReasonDict(returnReason);
             }
-
-
             view.setId(view.getId());
             view.setMainId(view.getId());
             view.setSourceId(soReturnReceiveEntity.getSourceId());
             view.setSourceDetailId(view.getSourceDetailId());
             view.setSourceCode(soReturnEntity.getCode());
+            if (StringUtils.isBlank(soReturnReceiveEntity.getSourceCode())) {
+                view.setCode(soReturnReceiveEntity.getCode());
+            } else {
             view.setCode(soReturnReceiveEntity.getSourceCode());
+            }
             view.setCustomerId(soReturnReceiveEntity.getCustomerId());
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             view.setCustomerName(customerInfoEntity.getName());
@@ -1648,7 +1656,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
             view.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
             if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
-                view.setReturnReasonDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
+                view.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
             }
             view.setWarehouseId(view.getWarehouseId());
             List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(view.getWarehouseId()));
