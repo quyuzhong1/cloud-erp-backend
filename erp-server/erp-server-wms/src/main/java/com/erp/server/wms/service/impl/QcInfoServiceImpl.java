@@ -1635,7 +1635,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             if (StringUtils.isBlank(soReturnReceiveEntity.getSourceCode())) {
                 view.setCode(soReturnReceiveEntity.getCode());
             } else {
-                view.setCode(soReturnReceiveEntity.getSourceCode());
+            view.setCode(soReturnReceiveEntity.getSourceCode());
             }
             view.setCustomerId(soReturnReceiveEntity.getCustomerId());
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
@@ -1650,13 +1650,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             view.setMustQty(soReturnReceiveDetailEntity.getReturnQty());
             view.setReceiveQty(soReturnReceiveDetailEntity.getReceiveQty());
             view.setRealQty(soReturnReceiveDetailEntity.getReceiveQty());
-            view.setReturnTypeDict(soReturnDetailEntity.getReturnTypeDict());
             if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
                 view.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
+                view.setReturnTypeDict(soReturnDetailEntity.getReturnTypeDict());
             }
-            view.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
             if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
                 view.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
+                view.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
             }
             view.setWarehouseId(view.getWarehouseId());
             List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(view.getWarehouseId()));
@@ -2088,24 +2088,24 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     public void reQcSample(QcInfoDTO.ReQcDTO dto) {
         dto.setIds(dto.getIds().stream().distinct().collect(Collectors.toList()));
         List<QcResultEntity> qcResultlist = qcResultService.getByMainIdList(dto.getIds());
-        Map<String,QcResultEntity> qcResultMap = qcResultlist.stream().collect(Collectors.toMap(QcResultEntity::getMainId, Function.identity()));
-        dto.getIds().stream().forEach(id->{
+        Map<String, QcResultEntity> qcResultMap = qcResultlist.stream().collect(Collectors.toMap(QcResultEntity::getMainId, Function.identity()));
+        dto.getIds().stream().forEach(id -> {
             QcInfoEntity qcInfoEntity = super.getById(id);
-            Optional.ofNullable(qcInfoEntity).orElseThrow(()->new ServiceException("质检单信息不存在"));
+            Optional.ofNullable(qcInfoEntity).orElseThrow(() -> new ServiceException("质检单信息不存在"));
 
             // 只有已质检才允许操作
             QcBillStatusEnum qcBillStatusEnum = qcInfoEntity.getQcStatus();
-            if(!Objects.equals(qcBillStatusEnum, QcBillStatusEnum.FINISH_QC)) {
+            if (!Objects.equals(qcBillStatusEnum, QcBillStatusEnum.FINISH_QC)) {
                 throw new ServiceException("只有已质检才允许操作");
             }
 
             // 是否库内抽检为是才可以操作
             QcResultEntity qcResultEntity = qcResultMap.get(id);
-            if(Objects.isNull(qcResultEntity) || !Objects.equals(qcResultEntity.getIsInsideQc(), Boolean.TRUE)) {
+            if (Objects.isNull(qcResultEntity) || !Objects.equals(qcResultEntity.getIsInsideQc(), Boolean.TRUE)) {
                 throw new ServiceException("只有库内抽检为是才允许操作");
             }
             // 添加备注
-            if(StrUtils.isNotEmpty(dto.getRemark())) {
+            if (StrUtils.isNotEmpty(dto.getRemark())) {
                 QcRemarkEntity qcRemarkEntity = new QcRemarkEntity();
                 qcRemarkEntity.setMainId(id);
                 qcRemarkEntity.setRemark(dto.getRemark());
