@@ -2093,6 +2093,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             QcInfoEntity qcInfoEntity = super.getById(id);
             Optional.ofNullable(qcInfoEntity).orElseThrow(()->new ServiceException("质检单信息不存在"));
 
+            // 只有已质检才允许操作
+            QcBillStatusEnum qcBillStatusEnum = qcInfoEntity.getQcStatus();
+            if(!Objects.equals(qcBillStatusEnum, QcBillStatusEnum.FINISH_QC)) {
+                throw new ServiceException("只有已质检才允许操作");
+            }
+
             // 是否库内抽检为是才可以操作
             QcResultEntity qcResultEntity = qcResultMap.get(id);
             if(Objects.isNull(qcResultEntity) || !Objects.equals(qcResultEntity.getIsInsideQc(), Boolean.TRUE)) {

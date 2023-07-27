@@ -233,7 +233,7 @@
             AND qb.qc_status in ('draft', #{params.searchType})
         </if>
         <if test="params.searchType !=null and params.searchType!='' and params.searchType == 'waitReQc'">
-            AND ( qi.is_inside_qc = true  and (qi.qc_sample_result is null or qi.qc_sample_result = '') )
+            AND ( qb.qc_status = 'finishQc' and  qi.is_inside_qc = true  and (qi.qc_sample_result is null or qi.qc_sample_result = '') )
         </if>
         <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
             AND qb.purchase_order_code ILIKE concat('%', #{params.purchaseOrderCode} ,'%')
@@ -369,7 +369,7 @@
                     AND qb.qc_status in ('draft', #{params.searchType})
                 </if>
                 <if test="params.searchType !=null and params.searchType!='' and params.searchType == 'waitReQc'">
-                    AND ( qi.is_inside_qc = true  and (qi.qc_sample_result is null or qi.qc_sample_result = '') )
+                    AND ( qb.qc_status = 'finishQc' and qi.is_inside_qc = true  and (qi.qc_sample_result is null or qi.qc_sample_result = '') )
                 </if>
                 <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
                     AND qb.purchase_order_code ilike concat('%', #{params.purchaseOrderCode} ,'%')
