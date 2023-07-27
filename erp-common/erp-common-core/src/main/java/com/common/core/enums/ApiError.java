@@ -673,6 +673,7 @@ public enum ApiError implements Serializable {
     ERROR_99079(99079,"【{}】退货数量不能大于待质检数量"),
     ERROR_99081(99081,"只有已审核的单据才能下推退货入库单"),
     ERROR_99082(99082,"质检未完成不允许下推退货入库单"),
+    ERROR_99083(99083,"退货入库单不存在"),
     ERROR_IN_ORG_BLANK(99080,"调入组织不能为空"),
 
 
