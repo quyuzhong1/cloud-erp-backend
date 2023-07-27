@@ -86,7 +86,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         //如果上游单据未发送成功则无需发送
         if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
             //采购订单
-            purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getSourceId());
+            purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
             if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(purchaseOrderEntity.getSyncKingdeeStatus())) {
                 log.error("采购订单未推送成功，不支持推送采购入库单，采购订单号【{}】",purchaseOrderEntity.getCode());
                 return;
