@@ -1,6 +1,7 @@
 package com.erp.server.oms.kingdee.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeOperateEnum;
@@ -195,9 +196,11 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         }
         resultMap.put("platformType", platformTypeKingdeeCode);
         String regionCode = countryEntity.getRegionCode();
-        DictGlobalAreaEntity globalAreaEntity = sysUserFeign.getGlobalAreaById(regionCode);
-        if (ObjectUtil.isNotEmpty(globalAreaEntity)) {
-            resultMap.put("globalAreaCode", globalAreaEntity.getKingdeeCode());
+        if (StrUtil.isNotBlank(regionCode)) {
+            DictGlobalAreaEntity globalAreaEntity = sysUserFeign.getGlobalAreaById(regionCode);
+            if (ObjectUtil.isNotEmpty(globalAreaEntity)) {
+                resultMap.put("globalAreaCode", globalAreaEntity.getKingdeeCode());
+            }
         }
         resultMap.put("disabled", entity.getDisabled());
         resultMap.put("operate", operate);

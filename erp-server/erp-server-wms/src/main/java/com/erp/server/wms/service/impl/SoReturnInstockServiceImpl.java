@@ -249,7 +249,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         SoReturnInstockEntity entity = new SoReturnInstockEntity();
         entity.setType(dto.getType());
         entity.setSalesOrgId(dto.getSalesOrgId());
-        String orgName = orgList.stream().filter(o -> dto.getSalesOrgId().equals(o.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        String orgName = orgList.stream().filter(o -> StringUtils.isNotBlank(dto.getSalesOrgId()) && dto.getSalesOrgId().equals(o.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         entity.setSalesOrgName(orgName);
         entity.setSalesDeptId(dto.getSalesDeptId());
         String deptName = departmentList.stream().filter(o -> dto.getSalesDeptId().equals(o.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -278,7 +278,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             entity.setSoId(soInfoEntity.getId());
             entity.setSoCode(soInfoEntity.getCode());
         }
-        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
+        String sourceId = dto.getSourceId();
+        SoReturnEntity soReturnEntity = StringUtils.isNotBlank(sourceId) ? soReturnFeign.getSoReturnById(sourceId):null;
         if (ObjectUtils.isNotEmpty(soReturnEntity)) {
             entity.setSoReturnId(soReturnEntity.getId());
             entity.setSoReturnCode(soReturnEntity.getCode());
@@ -560,9 +561,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         //已审核支持反审核
 
-        if(!isPushKingDee){
+        if (!isPushKingDee) {
             entityList = entityList.stream().filter(x -> ApproveStatusEnum.APPROVE.equals(x.getApproveStatus())).collect(Collectors.toList());
-        }else {
+        } else {
             //已审核支持反审核
             long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
                     && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
@@ -583,7 +584,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, ids);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
         //反审核发送金蝶
-        if(isPushKingDee){
+        if (isPushKingDee) {
             entityList.forEach(obj -> syncKingdeeSoReturnService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         //操作日志
@@ -747,7 +748,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             QcInfoEntity qcInfoEntity = qcInfoService.getById(id);
             SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(qcInfoEntity.getSourceId());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailService.getById(qcInfoEntity.getSourceDetailId());
-            SoReturnInstockDTO.Add dto = new  SoReturnInstockDTO.Add();
+            SoReturnInstockDTO.Add dto = new SoReturnInstockDTO.Add();
             if (StringUtils.isBlank(receiveEntity.getSourceId())) {
                 dto.setSourceCode(receiveEntity.getCode());
                 dto.setSourceId(receiveEntity.getId());
@@ -773,6 +774,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailAddDTO.setSkuId(view.getSkuId());
                 detailAddDTO.setRealQty(view.getRealQty());
                 detailAddDTO.setReceiveQty(view.getReceiveQty());
+                //退货类型
+                detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
+                //退货原因
+                detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
                 detailAddDTO.setWarehouseLocation(view.getWarehouseLocation());
                 detailAddDTO.setRemark(view.getRemark());
                 if (StringUtils.isBlank(receiveEntity.getSourceId())) {
@@ -805,7 +810,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         for (String id : soReceiveIdList) {
             List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(id);
-            SoReturnInstockDTO.Add dto = new  SoReturnInstockDTO.Add();
+            SoReturnInstockDTO.Add dto = new SoReturnInstockDTO.Add();
             //等于空表示无退货单的下推
             if (StringUtils.isBlank(soReturnReceiveEntity.getSourceId())) {
                 dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
@@ -855,10 +860,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     /**
      * 更新库存
-     * @Author Luo_WG
-     * @Date 2023/5/24 11:25
+     *
      * @param entityList
      * @return void
+     * @Author Luo_WG
+     * @Date 2023/5/24 11:25
      **/
     private void inventoryTransCore(List<SoReturnInstockEntity> entityList) {
         for (SoReturnInstockEntity entity : entityList) {
@@ -894,7 +900,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId,String operate) {
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String operate) {
         return this.lambdaUpdate()
                 .eq(SoReturnInstockEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), SoReturnInstockEntity::getSyncKingdeeStatus, syncKingdeeStatus)

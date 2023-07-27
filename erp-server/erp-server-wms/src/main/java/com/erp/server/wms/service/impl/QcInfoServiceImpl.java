@@ -1613,14 +1613,18 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveEntities.stream().filter(req -> req.getId().equals(view.getSourceId())).findFirst().orElse(new SoReturnReceiveEntity());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
             SoReturnEntity soReturnEntity = returnEntityList.stream().filter(req -> req.getId().equals(soReturnReceiveEntity.getSourceId())).findFirst().orElse(new SoReturnEntity());
-            if (StringUtils.isNotBlank(soReturnReceiveDetailEntity.getReturnTypeDict())) {
-                view.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnReceiveDetailEntity.getReturnTypeDict()));
+            //退货方式
+            String returnTypeDict = soReturnReceiveDetailEntity.getReturnTypeDict();
+            if (StringUtils.isNotBlank(returnTypeDict)) {
+                view.setReturnTypeDictName(ReturnTypeEnum.getName(returnTypeDict));
+                view.setReturnTypeDict(returnTypeDict);
             }
-            if (StringUtils.isNotBlank(soReturnReceiveDetailEntity.getReturnTypeDict())) {
-                view.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnReceiveDetailEntity.getReturnReasonDict()));
+            //退货原因
+            String returnReason = soReturnReceiveDetailEntity.getReturnReasonDict();
+            if (StringUtils.isNotBlank(returnReason)) {
+                view.setReturnReasonDictName(ReturnReasonEnum.getName(returnReason));
+                view.setReturnReasonDict(returnReason);
             }
-
-
             view.setId(view.getId());
             view.setMainId(view.getId());
             view.setSourceId(soReturnReceiveEntity.getSourceId());
@@ -1644,13 +1648,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             view.setMustQty(soReturnReceiveDetailEntity.getReturnQty());
             view.setReceiveQty(soReturnReceiveDetailEntity.getReceiveQty());
             view.setRealQty(soReturnReceiveDetailEntity.getReceiveQty());
-            view.setReturnTypeDict(soReturnDetailEntity.getReturnTypeDict());
-            if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
+            if(StringUtils.isNotBlank(soReturnDetailEntity.getReturnTypeDict())){
+                view.setReturnTypeDict(soReturnDetailEntity.getReturnTypeDict());
                 view.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
             }
-            view.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
             if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
                 view.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
+                view.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
             }
             view.setWarehouseId(view.getWarehouseId());
             List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(view.getWarehouseId()));
@@ -2080,12 +2084,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void reQcSample(QcInfoDTO.ReQcDTO dto) {
-        dto.getIds().stream().forEach(id->{
+        dto.getIds().stream().forEach(id -> {
             QcInfoEntity qcInfoEntity = super.getById(id);
-            Optional.ofNullable(qcInfoEntity).orElseThrow(()->new ServiceException("质检单信息不存在"));
+            Optional.ofNullable(qcInfoEntity).orElseThrow(() -> new ServiceException("质检单信息不存在"));
 
             // 添加备注
-            if(StrUtils.isNotEmpty(dto.getRemark())) {
+            if (StrUtils.isNotEmpty(dto.getRemark())) {
                 QcRemarkEntity qcRemarkEntity = new QcRemarkEntity();
                 qcRemarkEntity.setMainId(id);
                 qcRemarkEntity.setRemark(dto.getRemark());
