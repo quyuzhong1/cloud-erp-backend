@@ -578,6 +578,7 @@ public enum ApiError implements Serializable {
     ERROR_NOT_FOUND_PURCHASE_PRICE_DETAIL(98099,"未找到采购价目明细"),
     ERROR_PURCHASE_PRICE_ID_REPEAT(98100,"请选择同一采购价目表下明细进行变更"),
     ERROR_PURCHASE_ORDER_ID_REPEAT(98101,"请选择同一采购订单下明细进行变更"),
+    ERROR_PURCHASE_WAREHOUSE_ORG(98102,"交货仓库【{}】与收料组织【{}】不匹配"),
 
 
 
