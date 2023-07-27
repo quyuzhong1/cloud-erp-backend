@@ -293,7 +293,7 @@ public class SoReturnReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/generateSoReturnReceiveSave")
-    public ApiResult generateSoReturnReceiveSave(@RequestBody ValidList<SoReturnNoticeDTO.GenerateSoReturnReceiveView> validList) {
+    public ApiResult generateSoReturnReceiveSave(@RequestBody @Validated ValidList<SoReturnNoticeDTO.GenerateSoReturnReceiveView> validList) {
         Boolean flag = soReturnReceiveService.generateSoReturnReceiveSave(validList.getList());
         return flag == true ? success() : failure();
     }
