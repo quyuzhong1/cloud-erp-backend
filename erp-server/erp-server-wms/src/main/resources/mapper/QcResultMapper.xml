@@ -61,10 +61,14 @@
 
     </select>
     <select id="getReQcCount" resultType="java.lang.Integer">
-        select count(distinct main_id) from qc_result
+        select count(distinct qr.main_id) from qc_result qr
+        inner join qc_info qi on qi.id = qr.main_id
         <where>
-            is_inside_qc = true
-            and (qc_sample_result is null or qc_sample_result = '')
+            qr.is_deleted = FALSE
+            and qi.qc_status = 'finishQc'
+            and qi.is_deleted = FALSE
+            and qr.is_inside_qc = TRUE
+            and (qr.qc_sample_result is null or qr.qc_sample_result = '')
         </where>
     </select>
 </mapper>
