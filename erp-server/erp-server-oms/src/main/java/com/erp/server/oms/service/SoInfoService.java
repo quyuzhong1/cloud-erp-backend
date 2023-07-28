@@ -358,7 +358,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @param id
      * @return true表示已下推过有效发货通知单，false表示没有下推过有效发货通知单
      */
-    Boolean checkSoPushDeliveryNotice(String id);
+    // Boolean checkSoPushDeliveryNotice(String id);
 
     /**
      * 重新计算成本毛利
