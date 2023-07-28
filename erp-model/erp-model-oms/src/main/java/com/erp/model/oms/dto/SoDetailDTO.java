@@ -1020,4 +1020,160 @@ public class SoDetailDTO implements Serializable {
         private Integer alreadyDeliveryQty;
 
     }
+
+    /**
+     * 明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CalDetailDTO {
+
+        /**
+         * 序号
+         */
+        @NotNull(message = "序号不能为空")
+        private Integer index;
+
+        /**
+         * sku id
+         */
+        @NotBlank(message = "sku不能为空")
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        @NotBlank(message = "sku不能为空")
+        private String skuNo;
+
+
+        /**
+         * 销售数量
+         */
+        @NotNull(message = "销售数量不能为空")
+        @DecimalMax(value = "999999999",message ="销售数量最大值")
+        @DecimalMin(value = "1",message ="销售数量最小值不能为0")
+        private Integer qty;
+
+        /**
+         * 单价
+         */
+        @NotNull(message = "销售单价不能为空")
+        private BigDecimal price;
+
+        /**
+         * 币种
+         */
+        @NotBlank(message = "币种不能为空")
+        private String currency;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 是否赠品
+         */
+        @NotNull(message = "是否赠品不能为空")
+        private Boolean isGift;
+
+    }
+
+
+    /**
+     * 明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CalDetailResultDTO {
+
+        /**
+         * 序号
+         */
+        private Integer index;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * 销售数量
+         */
+        private Integer qty;
+
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 是否赠品
+         */
+        private Boolean isGift;
+
+        /**
+         * 销售金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 金额含税（折扣后）
+         */
+        private BigDecimal taxAmount;
+
+        /**
+         * 折扣额
+         */
+        private BigDecimal discountAmount;
+
+
+        /**
+         * 采购单价
+         */
+        private BigDecimal purchasePrice;
+
+        /**
+         * 销售总成本
+         */
+        private BigDecimal saleCost;
+
+        /**
+         * 销售毛利
+         */
+        private BigDecimal saleProfit;
+
+        /**
+         * 销售毛利率
+         */
+        private BigDecimal saleProfitRate;
+
+        /**
+         * 本位币的计算汇率值
+         */
+        private BigDecimal exchangeRate;
+
+    }
+
 }

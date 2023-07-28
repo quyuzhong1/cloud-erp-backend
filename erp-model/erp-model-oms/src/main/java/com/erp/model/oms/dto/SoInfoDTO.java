@@ -613,6 +613,12 @@ public class SoInfoDTO implements Serializable {
         @Size(min = 1, message = "销售订单详情不能为空", groups = {AddGroup.class})
         private List<SoDetailDTO.AddDTO> detailList;
 
+        /**
+         * 折扣总额
+         */
+        @DecimalMin(value = "0.00", message = "折扣总额不能小于0")
+        private BigDecimal discountAmount;
+
     }
 
 
@@ -1175,6 +1181,12 @@ public class SoInfoDTO implements Serializable {
         @Valid
         @Size(min = 1, message = "销售订单详情不能为空", groups = {AddGroup.class})
         private List<SoDetailDTO.UpdateDTO> detailList;
+
+        /**
+         * 折扣总额
+         */
+        @DecimalMin(value = "0.00", message = "折扣总额不能小于0")
+        private BigDecimal discountAmount;
     }
 
     @Data
@@ -1799,6 +1811,57 @@ public class SoInfoDTO implements Serializable {
          * 数量
          */
         private Integer qty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DetailCalDTO {
+
+        /**
+         * 序号
+         */
+        private Integer idx;
+
+        /**
+         * 价税合计（折前）
+         */
+        private BigDecimal taxAmount;
+
+        /**
+         * 折扣额
+         */
+        private BigDecimal detailDiscountAmount;
+
+        /**
+         * 价税合计折扣比例
+         */
+        private BigDecimal taxAmountRate;
+
+    }
+
+    /**
+     * 计算毛利成本数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CalCostProfitDTO {
+
+        /**
+         * 单据日期
+         */
+        @NotNull(message = "单据日期不能为空")
+        private LocalDate billDate;
+
+        /**
+         * 折扣总额
+         */
+        @DecimalMin(value = "0.00", message = "折扣总额不能小于0")
+        private BigDecimal discountAmount;
+
+        @Valid
+        @Size(min = 1, message = "销售订单详情不能为空")
+        private List<SoDetailDTO.CalDetailDTO> detailList;
+
     }
 
 }

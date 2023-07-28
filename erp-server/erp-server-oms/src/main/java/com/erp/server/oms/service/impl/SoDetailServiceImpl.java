@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.constant.SearchType;
@@ -23,6 +24,7 @@ import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -458,38 +460,17 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //币种列表
         List<String> currencyList = detailList.stream().map(SoDetailDTO.UpdateDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(skuIdList);
-        Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap = Maps.newHashMap();
-        if (CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
-            purchaseOrderDetailMap = purchaseOrderDetailEntityList.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
+        // 供应商id集合
+        List<String> supplierIds = skuList.stream().filter(r->StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
+        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(supplierIds)) {
+            purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
         }
+        SoInfoEntity soInfoEntity = soInfoService.getById(mainId);
         for (SoDetailEntity item : saveOrUpdateList) {
             item.setMainId(mainId);
             String skuId = item.getSkuId();
             String currency = item.getCurrency();
-            //是否赠品
-            Boolean isGift = item.getIsGift();
-            BigDecimal price = item.getPrice();
-            Integer qty = item.getQty();
-            //当是赠品的时候  单价为0
-            if (isGift) {
-                price = BigDecimal.ZERO;
-            }
-            item.setPrice(price);
-
-            //税率
-            BigDecimal taxRate = item.getTaxRate();
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-            //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
-            //金额
-            BigDecimal amount = MathUtil.multiply(price, qty);
-            item.setAmount(amount);
-
-            //价税金额
-            BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
-            item.setTaxAmount(taxAmount);
             String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             item.setSkuNo(skuNo);
@@ -497,9 +478,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
             item.setCurrencySymbol(symbol);
-
+        }
+        // 金额信息加上折扣额计算
+        SoUtils.handleDetailAmount(soInfoEntity.getDiscountAmount(), saveOrUpdateList);
+        for (SoDetailEntity item : saveOrUpdateList) {
             // 计算毛利成本
-            calCost(purchaseOrderDetailMap, item, Boolean.FALSE);
+            calCost(purchasePriceList,skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);
         }
         //这是删除
         List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
@@ -1111,40 +1095,20 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //币种列表
         List<String> currencyList = detailList.stream().map(SoDetailDTO.AddDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(skuIdList);
-        Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap = Maps.newHashMap();
-        if (CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
-            purchaseOrderDetailMap = purchaseOrderDetailEntityList.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
+
+        // 供应商id集合
+        List<String> supplierIds = skuList.stream().filter(r->StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
+        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(supplierIds)) {
+            purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
         }
-        for (SoDetailEntity item : saveOrUpdateList) {
+
+        SoInfoEntity soInfoEntity = soInfoService.getById(mainId);
+        for (int i = 0; i < saveOrUpdateList.size(); i ++) {
+            SoDetailEntity item = saveOrUpdateList.get(i);
             item.setMainId(mainId);
             String skuId = item.getSkuId();
             String currency = item.getCurrency();
-            //是否赠品
-            Boolean isGift = item.getIsGift();
-            BigDecimal price = item.getPrice();
-            Integer qty = item.getQty();
-            //当是赠品的时候  单价为0
-            if (Objects.nonNull(isGift) && isGift) {
-                price = BigDecimal.ZERO;
-            }
-            item.setPrice(price);
-
-            //税率
-            BigDecimal taxRate = item.getTaxRate();
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-
-            //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
-            //金额
-            BigDecimal amount = MathUtil.multiply(price, qty);
-
-            //含税金额
-            BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
-            item.setTaxAmount(taxAmount);
-            item.setAmount(amount);
             String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             item.setSkuNo(skuNo);
@@ -1152,9 +1116,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
             item.setCurrencySymbol(symbol);
-
+        }
+        // 金额折扣处理
+        SoUtils.handleDetailAmount(soInfoEntity.getDiscountAmount(), saveOrUpdateList);
+        for (int i = 0; i < saveOrUpdateList.size(); i ++) {
+            SoDetailEntity item = saveOrUpdateList.get(i);
             // 计算毛利成本
-            calCost(purchaseOrderDetailMap, item, Boolean.FALSE);
+            calCost(purchasePriceList,skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
@@ -1206,19 +1174,24 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     /**
      * 计算毛利成本
      *
-     * @param purchaseOrderDetailMap
+     * @param purchasePriceList
      * @param item
      */
     @Override
-    public void calCost(Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap, SoDetailEntity item, Boolean isBrush) {
-        PurchaseOrderDetailEntity purchaseOrderDetailEntity = null;
-        if (purchaseOrderDetailMap.containsKey(item.getSkuId())) {
-            purchaseOrderDetailEntity = purchaseOrderDetailMap.get(item.getSkuId()).get(0);
+    public void calCost(List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList, List<SkuVO> skuList, LocalDate saleOrderBillDate, SoDetailEntity item, Boolean isBrush) {
+        String skuId = item.getSkuId();
+        // sku对应的一级供应商
+        String supplierId = skuList.stream().filter(r->Objects.equals(r.getSkuId(), skuId)).findFirst().map(SkuVO::getSupplierId).orElse(null);
+        log.warn("SKU编号【{}】对应的一级供应商id：【{}】", item.getSkuNo(), supplierId);
+        // 一级供应商+SKU对应的采购价目信息
+        PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = null;
+        if(StrUtil.isNotEmpty(skuId) && StrUtil.isNotEmpty(supplierId)) {
+            supplierSkuPrice = purchasePriceList.stream().filter(r->Objects.equals(r.getSkuId(), skuId) && Objects.equals(r.getSupplierId(), supplierId)).findFirst().orElse(null);
         }
         BigDecimal purchasePrice = BigDecimal.ZERO;
-        if (Objects.nonNull(purchaseOrderDetailEntity)) {
-            purchasePrice = purchaseOrderDetailEntity.getTaxPrice();
-            BigDecimal purchaseTaxRate = purchaseOrderDetailEntity.getTaxRate();
+        if (Objects.nonNull(supplierSkuPrice)) {
+            purchasePrice = supplierSkuPrice.getTaxPrice();
+            BigDecimal purchaseTaxRate = supplierSkuPrice.getTaxRate();
             //不含税单价（不含税价格=含税价格/（1+增值税税率））
             purchasePrice= MathUtil.divide(purchasePrice, MathUtil.add(BigDecimal.ONE, purchaseTaxRate));
 
@@ -1227,14 +1200,15 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         // 最新的采购单价币制转换（非人民币）
         if (Objects.nonNull(purchasePrice) &&
                 purchasePrice.compareTo(BigDecimal.ZERO) == 1 &&
-                !Objects.equals(purchaseOrderDetailEntity.getCurrency(), "CNY")) {
-            String purchaseDate = purchaseOrderDetailEntity.getPurchaseDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            BigDecimal rate = dmpTaskFeign.getRate(purchaseDate, purchaseOrderDetailEntity.getCurrency());
-            log.info("找到的最新的采购订单:{} 的币制：{}，采购订单日期：{}，转换后汇率：{}", purchaseOrderDetailEntity.getPurchaseOrderId(), purchaseOrderDetailEntity.getCurrency(), rate);
+                !Objects.equals(supplierSkuPrice.getCurrency(), "CNY")) {
+            String billDate = saleOrderBillDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            BigDecimal rate = dmpTaskFeign.getRate(billDate, supplierSkuPrice.getCurrency());
+            log.info("找到的最新的采购价目的币制：{}，含税单价：【{}】, 销售订单日期：{}，转换后汇率：{}", supplierSkuPrice.getCurrency(), supplierSkuPrice.getTaxPrice(), rate);
             // 未找到汇率直接返回
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 purchasePrice = BigDecimal.ZERO;
             } else {
+                // item.setExchangeRate(rate);
                 // 转换成人民币采购单价
                 purchasePrice = rate.multiply(purchasePrice).setScale(4, BigDecimal.ROUND_HALF_UP);
             }
@@ -1242,6 +1216,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
         // 销售金额转换
         BigDecimal saleAmount = item.getAmount();
+        if(Objects.equals(item.getCurrency(), "CNY")) {
+            item.setExchangeRate(BigDecimal.ONE);
+        }
         if (Objects.nonNull(saleAmount) &&
                 saleAmount.compareTo(BigDecimal.ZERO) == 1 &&
                 !Objects.equals(item.getCurrency(), "CNY")) {
@@ -1256,6 +1233,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 saleAmount = BigDecimal.ZERO;
             } else {
                 // 转换成人民币销售金额
+                item.setExchangeRate(rate);
                 saleAmount = rate.multiply(saleAmount).setScale(4, BigDecimal.ROUND_HALF_UP);
             }
         }
