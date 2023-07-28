@@ -141,8 +141,11 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
             //更新数据
             Boolean flag = kingdeeCommonService.saveOrUpdateCustomerContact(platformEntity, map, apiUtils, json, param, type);
             if (flag) {
-                //启用、禁用
-                excuteOperation(apiUtils,platformEntity,map,type);
+                //如果新增是禁用状态需要调用禁用接口
+                if (Boolean.valueOf(map.get("disabled").toString())) {
+                    //启用、禁用
+                    excuteOperation(apiUtils,platformEntity,map,type);
+                }
             }
             return;
         }
