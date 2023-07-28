@@ -431,7 +431,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void submit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type) {
+    public Boolean submit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type) {
         //提交
         List<String> ids = new ArrayList<>();
         ids.add(id);
@@ -441,13 +441,14 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             //提交失败操作日志及定时任务
             log.error("提交失败", e);
             insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(ids), e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
-            return;
+            return Boolean.FALSE;
         }
         log.info("提交成功,数据Id = 【{}】", JSONUtil.toJsonStr(ids));
         //提交成功操作日志
         insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(ids), "提交成功", type, ApiSendStatusEnum.SUCCESS.getCode());
         //提交成功后继续审核直至已审核
-        audit(platformEntity, map, apiUtils, id, type);
+        Boolean audit = audit(platformEntity, map, apiUtils, id, type);
+        return audit;
     }
 
     /**
@@ -462,7 +463,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void audit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type) {
+    public Boolean audit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type) {
         LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
         viewMap.put("Id", id);
         JSONObject model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
@@ -478,7 +479,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                 //审核失败操作日志及定时任务
                 log.error("审核失败", JSONUtil.toJsonStr(viewMap));
                 insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(viewMap), e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
-                return;
+                return Boolean.FALSE;
             }
             //审核成功操作日志
             log.info("审核成功,数据【{}】", JSONUtil.toJsonStr(viewMap));
@@ -488,6 +489,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
         //更新业务单据状态
         kingdeeCommonService.updateBusinessSyncKingdeeStatus(type, map.get("id").toString(), SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(), id);
+        return Boolean.TRUE;
     }
 
 

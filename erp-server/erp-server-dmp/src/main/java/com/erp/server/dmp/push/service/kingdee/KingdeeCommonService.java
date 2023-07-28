@@ -104,7 +104,7 @@ public interface KingdeeCommonService {
      * @param apiUtils
      * @param id
      */
-    void submit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id,Integer type);
+    Boolean submit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id,Integer type);
 
     /**
      * @description: 审核
@@ -116,7 +116,7 @@ public interface KingdeeCommonService {
      * @param id
      * @param type
      */
-     void audit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type);
+     Boolean audit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type);
 
     /**
      *  反审核
