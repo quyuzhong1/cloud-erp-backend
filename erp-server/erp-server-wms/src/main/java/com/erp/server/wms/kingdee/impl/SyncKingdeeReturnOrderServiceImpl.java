@@ -22,6 +22,7 @@ import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -138,9 +139,9 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         }
 
         if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
-            resultMap.put("sourceType", "检验退料");
+            resultMap.put("returnType", ReturnOrderSourceEnum.QC.getCode());
         } else {
-            resultMap.put("sourceType", "库存退料");
+            resultMap.put("returnType", ReturnOrderSourceEnum.OTHER.getCode());
         }
 
         //供应商联系人
