@@ -22,7 +22,6 @@ import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
-import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -88,7 +87,6 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         }
 
         PurchaseOrderEntity purchaseOrderEntity = new PurchaseOrderEntity();
-        Map<String, Object> resultMap = new HashMap<>();
 
         //更新同步状态为待同步
         purchaseReturnOrderService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
