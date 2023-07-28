@@ -4,6 +4,7 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
@@ -225,7 +226,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         }
 
         //下推单据明细id查询
-        List<PoInstockDetailEntity> stockInDetails = this.listDetailByPodIds(ids);
+        List<PoInstockDetailEntity> stockInDetails = this.listDetailByPodIds(podIds);
 
         //查收货单明细
         List<WarehouseReceiveDetailEntity> receiveDetails = warehouseReceiveDetailService.listByIds(ids);
@@ -233,7 +234,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             throw new ServiceException(ApiError.ERROR_98026);
         }
         //查询退货明细
-        List<PurchaseReturnOrderDetailEntity> returnOrderDetailList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(ids);
+        List<PurchaseReturnOrderDetailEntity> returnOrderDetailList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
 
 
         for (PoInstockDetailEntity detailEntity : list) {
@@ -254,7 +255,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             //退货单补货数量
             Integer returnQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
-                returnQty = returnOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getId())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+                returnQty = returnOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
 
