@@ -96,7 +96,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
                 throw new ServiceException(ApiError.ERROR_98073);
             }
-            if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(subcontractOrderEntity.getSyncKingdeeStatus())) {
+            if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(subcontractOrderEntity.getSyncKingdeeStatus()) && !SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode().equals(subcontractOrderEntity.getSyncKingdeeStatus())) {
                 log.error("委外订单未推送成功，不支持推送采购订单，委外订单号【{}】",subcontractOrderEntity.getCode());
                 return;
             }
@@ -106,7 +106,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             //委外变更单
             List<SubcontractChangeEntity> subcontractChangeList = subcontractChangeService.listBySourceIds(Arrays.asList(subcontractOrderEntity.getId()));
             if (CollectionUtils.isNotEmpty(subcontractChangeList)) {
-                String changeCodes = subcontractChangeList.stream().filter(obj -> !SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(obj.getSyncKingdeeStatus())).map(SubcontractChangeEntity::getCode).collect(Collectors.joining(","));
+                String changeCodes = subcontractChangeList.stream().filter(obj -> !SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(obj.getSyncKingdeeStatus()) && !SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode().equals(obj.getSyncKingdeeStatus())).map(SubcontractChangeEntity::getCode).collect(Collectors.joining(","));
                 if (StringUtils.isNotBlank(changeCodes)) {
                     log.error("委外变更单未推送成功，不支持推送采购订单，委外变更单号【{}】",changeCodes);
                     return;

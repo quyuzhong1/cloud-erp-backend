@@ -73,7 +73,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             throw new ServiceException(ApiError.ERROR_98024);
         }
 
-        if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(purchasePriceEntity.getSyncKingdeeStatus())) {
+        if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(purchasePriceEntity.getSyncKingdeeStatus()) && !SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode().equals(purchasePriceEntity.getSyncKingdeeStatus())) {
             log.error("采购价目未推送成功，不支持推送采购调价，采购价目单号【{}】",purchasePriceEntity.getCode());
             return;
         }
