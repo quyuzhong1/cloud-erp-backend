@@ -1,6 +1,7 @@
 package com.erp.server.dmp.push.consumer;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -18,6 +19,7 @@ import com.erp.server.dmp.push.service.kingdee.impl.KingdeeCommonServiceImpl;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
+import com.kingdee.bos.webapi.entity.SaveResult;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -120,10 +122,11 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(), map);
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(), (String)map.get("syncKingdeeId"),String.valueOf(map.get("code")));
         } catch (Exception e) {
+
             //更新数据
-            Boolean flag = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            Boolean flag = kingdeeCommonService.saveOrUpdateCustomerContact(platformEntity, map, apiUtils, json, param, type);
             if (flag) {
                 //启用、禁用
                 excuteOperation(apiUtils,platformEntity,map,type);
@@ -138,13 +141,12 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
         ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
         param.setNeedUpDateFields(apiFieldList);
         //更新数据
-        kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+        kingdeeCommonService.saveOrUpdateCustomerContact(platformEntity,map,apiUtils,json,param,type);
         if ((forbidStatus.equals("B") && Boolean.valueOf(map.get("disabled").toString()) == Boolean.FALSE) || (forbidStatus.equals("A") && Boolean.valueOf(map.get("disabled").toString()))) {
             //启用、禁用
             excuteOperation(apiUtils,platformEntity,map,type);
         }
     }
-
 
     /**
      * 启用、禁用
