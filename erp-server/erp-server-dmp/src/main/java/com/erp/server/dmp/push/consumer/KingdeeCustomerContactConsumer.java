@@ -20,6 +20,7 @@ import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_customer_contact_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CUSTOMER_CONTACT)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_customer_contact_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CUSTOMER_CONTACT, consumeMode = ConsumeMode.ORDERLY)
 public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
@@ -134,7 +135,7 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
         String id = String.valueOf(model.get("Id")) ;
         //主单据id
         KingdeeUtils.makeFieldJson(json,"FCONTACTID",".", id);
-        String forbidStatus = String.valueOf(model.get("FForbidStatus")) ;
+        String forbidStatus = String.valueOf(model.get("ForbidStatus")) ;
         StringBuffer allKey = FastJsonUtil.getAllKey(json);
         ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
         param.setNeedUpDateFields(apiFieldList);
