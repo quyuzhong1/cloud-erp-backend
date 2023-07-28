@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SubcontractTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -123,7 +124,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         resultMap.put("purchaseDate",entity.getPurchaseDate());
 
         //委外采购订单
-        if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType())) {
+        if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType()) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())) {
             resultMap.put("sourceType",SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
         } else {
             resultMap.put("sourceType",SourceTypeEnum.PURCHASE_ORDER.getCode());
@@ -212,26 +213,27 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             }
             jsonObject.set("isGift",detailEntity.getIsGift());
             jsonObject.set("detailRemark",detailEntity.getRemark());
-            //来源单据类型类型
-            if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType())) {
+            //来源单据类型类型(只有委外父级SKU生成的采购订单需要设置委外采购)
+            if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType()) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())) {
                 jsonObject.set("detailSourceType", KingdeePushModuleEnum.SUB_SUBREQORDER.getCode());
-            }
-            if (ObjectUtils.isNotEmpty(subcontractOrderEntity)) {
-                //委外单号
-                jsonObject.set("refCode", subcontractOrderEntity.getCode());
-            }
-
-            //委外订单关联关系
-            List<Map<String,Object>> refList = new ArrayList<>();
-            JSONObject refJsonObject = new JSONObject();
-            if (ObjectUtils.isNotEmpty(subcontractOrderEntity)) {
-                refJsonObject.set("refKingdeeId",subcontractOrderEntity.getSyncKingdeeId());
-                if (CollectionUtils.isNotEmpty(subcontractOrderDetailList)) {
-                    String subDetailKingdeeId = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeDetailId())).orElse("");
-                    refJsonObject.set("refDetailKingdeeId",subDetailKingdeeId);
+                if (ObjectUtils.isNotEmpty(subcontractOrderEntity)) {
+                    //委外单号
+                    jsonObject.set("refCode", subcontractOrderEntity.getCode());
                 }
-                refList.add(refJsonObject);
-                jsonObject.set("refList",refList);
+                //委外订单关联关系
+                List<Map<String,Object>> refList = new ArrayList<>();
+                JSONObject refJsonObject = new JSONObject();
+                if (ObjectUtils.isNotEmpty(subcontractOrderEntity)) {
+                    refJsonObject.set("refKingdeeId",subcontractOrderEntity.getSyncKingdeeId());
+                    if (CollectionUtils.isNotEmpty(subcontractOrderDetailList)) {
+                        String subDetailKingdeeId = subcontractOrderDetailList.stream()
+                                .filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeDetailId()))
+                                .orElse("");
+                        refJsonObject.set("refDetailKingdeeId",subDetailKingdeeId);
+                    }
+                    refList.add(refJsonObject);
+                    jsonObject.set("refList",refList);
+                }
             }
             list.add(jsonObject);
         }
