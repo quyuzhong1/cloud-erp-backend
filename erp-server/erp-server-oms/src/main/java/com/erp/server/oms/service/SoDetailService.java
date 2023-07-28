@@ -6,10 +6,14 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -230,10 +234,13 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
 
     /**
      * 计算毛利成本
-     * @param purchaseOrderDetailMap
+     * @param purchasePriceList
+     * @param skuList
+     * @param saleOrderBillDate
      * @param item
+     * @param isBrush
      */
-    void calCost(Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap, SoDetailEntity item, Boolean isBrush);
+    void calCost(List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList, List<SkuVO> skuList, LocalDate saleOrderBillDate, SoDetailEntity item, Boolean isBrush);
 
     /**
      * 更新成本毛利信息

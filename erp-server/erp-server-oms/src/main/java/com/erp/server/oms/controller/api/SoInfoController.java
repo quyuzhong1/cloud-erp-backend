@@ -521,4 +521,28 @@ public class SoInfoController extends BaseController {
         Boolean aBoolean = soInfoService.temporaryUpdate();
         return aBoolean ? success() : failure();
     }
+
+    /**
+     * 根据销售订单判断是否已经下推过有效发货通知单
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult<Boolean>
+     * @author zhangchunlin
+     * @date 2023-07-26 17:40
+     */
+    @PostMapping("/checkPushDownDeliveryNotice")
+    public ApiResult<Boolean> checkPushDownDeliveryNotice(@RequestParam(value = "id") String id) {
+        Boolean isPush = soInfoService.checkSoPushDeliveryNotice(id);
+        return success(isPush);
+    }
+
+    /**
+     * 获取销售成本毛利信息
+     * @param calCostProfitDTO
+     * @return
+     */
+    @PostMapping("/calSkuCostProfit")
+    public ApiResult<List<SoDetailDTO.CalDetailResultDTO>> calSkuCostProfit(@RequestBody @Validated SoInfoDTO.CalCostProfitDTO calCostProfitDTO) {
+        return success(soInfoService.calSkuCostProfit(calCostProfitDTO));
+    }
+
 }

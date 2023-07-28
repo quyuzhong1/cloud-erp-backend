@@ -192,7 +192,8 @@
             p.sku_id,
             p.sku_no,
             p.tax_price,
-            p.tax_rate
+            p.tax_rate,
+            p.currency
         from(
             SELECT
                 pp.supplier_id,
@@ -201,6 +202,7 @@
                 ppd.tax_price,
                 ppd.tax_rate,
                 ppd.min_qty,
+                ppd.currency,
                 row_number() over(partition by pp.supplier_id,
                 ppd.sku_id,
                 ppd.sku_no order by ppd.min_qty ASC,ppd.update_time desc) as rank

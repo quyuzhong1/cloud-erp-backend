@@ -81,7 +81,7 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     private BigDecimal amount;
 
    /**
-    * 金额含税
+    * 金额含税（折扣后）
     */
    @TableField("tax_amount")
    private BigDecimal taxAmount;
@@ -167,6 +167,26 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField("all_amount_local_currency")
     private BigDecimal allAmountLocalCurrency;
 
+    /**
+     * 折扣金额
+     */
+    @TableField(value = "discount_amount")
+    private BigDecimal discountAmount;
+
+    /**
+     * 含税的销售金额（折扣前）
+     */
+    @TableField(value = "tax_amount_before")
+    private BigDecimal taxAmountBefore;
+
+    @TableField(exist = false)
+    private Integer index;
+
+    @TableField(exist = false)
+    private BigDecimal taxPrice;
+
+    @TableField(exist = false)
+    private BigDecimal exchangeRate;
 
     public static final String MAIN_ID = "main_id";
 

@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * SKU成本毛利
@@ -52,6 +53,12 @@ public class SkuCostProfitDTO implements Serializable {
         @NotEmpty(message = "币制不能为空")
         private String currency;
 
+        /**
+         * 单据日期
+         */
+        @NotNull(message = "销售订单单据日期不能为空")
+        private LocalDate billDate;
+
     }
 
 
@@ -65,6 +72,16 @@ public class SkuCostProfitDTO implements Serializable {
          * SKU ID
          */
         private String skuId;
+
+        /**
+         * 销售金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 金额含税（折扣后）
+         */
+        private BigDecimal taxAmount;
 
 
         /**
