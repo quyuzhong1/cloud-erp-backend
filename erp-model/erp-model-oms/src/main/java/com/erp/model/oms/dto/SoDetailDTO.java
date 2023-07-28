@@ -1144,6 +1144,11 @@ public class SoDetailDTO implements Serializable {
         private BigDecimal taxAmount;
 
         /**
+         * 金额含税（折扣前）
+         */
+        private BigDecimal taxAmountBefore;
+
+        /**
          * 折扣额
          */
         private BigDecimal discountAmount;
