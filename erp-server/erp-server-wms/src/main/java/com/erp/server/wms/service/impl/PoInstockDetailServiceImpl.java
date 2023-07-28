@@ -251,10 +251,10 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
                 stockInQty = stockInDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getPurchaseOrderDetailId()) && !obj.getId().equals(detailEntity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
-            //退货单数量
+            //退货单补货数量
             Integer returnQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
-                returnQty = returnOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                returnQty = returnOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getId())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
 
