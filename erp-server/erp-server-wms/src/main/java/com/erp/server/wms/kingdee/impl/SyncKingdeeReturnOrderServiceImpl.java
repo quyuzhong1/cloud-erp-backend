@@ -3,6 +3,7 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -78,13 +79,21 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
     @Override
     public void syncDataToKingdee(PurchaseReturnOrderEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+        if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
+            resultMap.put("returnType", ReturnOrderSourceEnum.QC.getCode());
+            return;
+        } else {
+            resultMap.put("returnType", ReturnOrderSourceEnum.OTHER.getCode());
+        }
+
+        PurchaseOrderEntity purchaseOrderEntity = new PurchaseOrderEntity();
 
         //更新同步状态为待同步
         purchaseReturnOrderService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
         //如果上游单据未发送成功则无需发送
         if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
             //采购订单
-            PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
+            purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
             if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(purchaseOrderEntity.getSyncKingdeeStatus()) && !SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode().equals(purchaseOrderEntity.getSyncKingdeeStatus())) {
                 log.error("采购订单未推送成功，不支持推送采购入库单，采购订单号【{}】",purchaseOrderEntity.getCode());
                 return;
@@ -142,11 +151,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             resultMap.put("returnMode", "A");
         }
 
-        if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
-            resultMap.put("sourceType", "检验退料");
-        } else {
-            resultMap.put("sourceType", "库存退料");
-        }
+
 
         //供应商联系人
         resultMap.put("supplierContactName", entity.getSupplierContactName());
@@ -155,6 +160,9 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
 
         //退货原因
         resultMap.put("returnRemark", entity.getReturnRemark());
+
+        //退货原因
+        resultMap.put("purchaseOrderCode", entity.getPurchaseOrderCode());
 
         //退货单明细
         List<PurchaseReturnOrderDetailEntity> detailList = purchaseReturnOrderDetailService.getDetailByMainId(entity.getId());
@@ -199,6 +207,17 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             //退款单价
             jsonObject.set("returnPrice", detail.getReturnPrice());
 
+            if (StringUtils.isNotBlank(entity.getPurchaseOrderCode())) {
+                List<Map<String,Object>> mapList = new ArrayList<>();
+                Map<String,Object> entityMap = new HashMap<>();
+                entityMap.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
+                if (ObjectUtils.isNotEmpty(purchaseOrderEntity)) {
+                    entityMap.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
+                }
+                mapList.add(entityMap);
+                //销售单金蝶明细id
+                jsonObject.set("FPURMRBENTRY_Link", mapList);
+            }
             list.add(jsonObject);
         }
         resultMap.put("list",list);
