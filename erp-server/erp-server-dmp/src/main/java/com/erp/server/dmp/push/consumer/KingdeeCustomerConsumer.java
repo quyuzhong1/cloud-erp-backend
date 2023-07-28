@@ -97,6 +97,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         }
         //判断金蝶系统是否已存在该数据
         SaveParam param = new SaveParam(json);
+        Boolean erpForbidStatus = ObjectUtil.isNotEmpty(map.get("disabled")) ? (Boolean) map.get("disabled") : Boolean.FALSE;
         JSONObject model;
         try {
             model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
@@ -107,7 +108,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
 
             //更新数据
             Boolean saveOrUpdateResult = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
-            if (saveOrUpdateResult) {
+            if (saveOrUpdateResult && erpForbidStatus) {
                 //启用、禁用
                 excuteOperation(apiUtils, platformEntity, map, type);
             }
@@ -122,7 +123,6 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         Boolean flag = Boolean.FALSE;
         // A启用 B禁用
         Boolean kingdeeForbidStatus = "B".equals(forbidStatus) ? Boolean.TRUE : Boolean.FALSE;
-        Boolean erpForbidStatus = ObjectUtil.isNotEmpty(map.get("disabled")) ? (Boolean) map.get("disabled") : Boolean.FALSE;
         //操作项
         String operate = (String) map.get("operate");
         boolean allowUnApproveStatus = KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus);
