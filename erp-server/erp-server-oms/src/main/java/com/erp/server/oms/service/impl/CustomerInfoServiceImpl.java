@@ -978,7 +978,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (ObjectUtils.isNotEmpty(dictCountryEntity)) {
             base.setCountryName(dictCountryEntity.getNameCn());
         }
-
+        base.setSellerId(customer.getSellerId());
         String currencySymbol = "";
         if (CollectionUtils.isNotEmpty(currencyList)) {
             currencySymbol = currencyList.get(0).getSymbol();
@@ -993,11 +993,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             base.setPerson(address.getPerson());
             base.setTelNumber(address.getTelNumber());
         }
-        List<SellerDTO.ViewDTO> sellerList = customerSellerService.listByMainId(customerId);
-        if (CollectionUtils.isNotEmpty(sellerList)) {
-            SellerDTO.ViewDTO seller = sellerList.get(0);
-            base.setSellerId(seller.getSellerId());
-        }
+
         if (StrUtils.isNotEmpty(customer.getConditionDict())) {
             base.setReceiveCondition(customer.getConditionDict());
             List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicEnum.COLLECTION_TERMS.getType());
