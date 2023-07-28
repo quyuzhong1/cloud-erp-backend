@@ -127,6 +127,23 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         String operate = (String) map.get("operate");
         boolean allowUnApproveStatus = KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus);
 
+        if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
+            // 判断禁用状态是否与金蝶系统一致 A启用 B禁用
+            if (erpForbidStatus.equals(kingdeeForbidStatus)) {
+                log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}], 无需{}，跳过{}操作", forbidStatus, map.get("disabled"), operate, operate);
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(map), "金蝶状态与ERP相同不需要修改", type, ApiSendStatusEnum.SUCCESS.getCode());
+                return;
+            }
+            //启用、禁用
+            excuteOperation(apiUtils,platformEntity,map,type);
+            return;
+        }else if (kingdeeForbidStatus && erpForbidStatus){
+            // 判断禁用状态是否与金蝶系统一致
+            log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}]，跳过{}操作", forbidStatus, map.get("disabled"), operate);
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(map), "金蝶状态与ERP数据都为禁用状态数据不需要修改", type, ApiSendStatusEnum.SUCCESS.getCode());
+            return;
+        }
+
         if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             // 判断状态是否为审核中或已审核
             if (!allowUnApproveStatus) {
@@ -142,17 +159,6 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
             }
             //反审核
             kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
-            return;
-        }
-        if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
-            // 判断禁用状态是否与金蝶系统一致 A启用 B禁用
-            if (erpForbidStatus.equals(kingdeeForbidStatus)) {
-                log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}], 无需{}，跳过{}操作", forbidStatus, map.get("disabled"), operate, operate);
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(map), "金蝶状态与ERP相同不需要修改", type, ApiSendStatusEnum.SUCCESS.getCode());
-                return;
-            }
-            //启用、禁用
-            excuteOperation(apiUtils,platformEntity,map,type);
             return;
         }
 
