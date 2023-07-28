@@ -4,11 +4,11 @@ package com.erp.server.dmp.push.consumer;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.druid.support.json.JSONUtils;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
@@ -23,11 +23,9 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
-import com.google.gson.JsonObject;
 import com.kingdee.bos.webapi.entity.SaveParam;
-import com.kingdee.bos.webapi.entity.SaveResult;
-import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -43,7 +41,7 @@ import java.util.stream.Collectors;
  **/
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_stock_in_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_STOCK_IN)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_stock_in_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_STOCK_IN,consumeMode = ConsumeMode.ORDERLY)
 public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Object>> {
     @Resource
     private KingdeeCommonService kingdeeCommonService;
@@ -179,6 +177,8 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
         //操作项
         String operate = (String) map.get("operate");
 
+
+
         /**
          * 作废
          */
@@ -200,6 +200,24 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
     }
 
     private void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type, String code,String operate) {
+        //判断金蝶系统是否已存在该数据
+        JSONObject model;
+        try {
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
+        } catch (Exception e) {
+            //更新业务表中的金蝶id
+            kingdeeCommonService.updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode(), "");
+            return;
+        }
+        String documentStatus = (String)model.get("DocumentStatus");
+        String id = String.valueOf(model.get("Id")) ;
+        if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+            //反审核
+            Boolean unAudit = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, ApiModuleTypeEnum.PURCHASE_ORDER.getCode());
+            if (!unAudit) {
+                return;
+            }
+        }
         //作废
         kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
         return;
@@ -234,7 +252,7 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("code"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
             /*Map<String, Object> pushMap = new HashMap<>();
             pushMap.put("ids", map.get("poSyncKingdeeId"));

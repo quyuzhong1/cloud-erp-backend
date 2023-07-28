@@ -73,6 +73,22 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
     public void syncDataToKingdee(SubcontractChangeEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
+
+        //更新同步状态为待同步
+        subcontractChangeService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
+        //如果上游单据未发送成功则无需发送
+        SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
+        //委外订单主表数据
+        if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
+            throw new ServiceException(ApiError.ERROR_98073);
+        }
+        if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(subcontractOrderEntity.getSyncKingdeeStatus())) {
+            log.error("委外订单未推送成功，不支持推送委外变更单，委外订单单号【{}】",subcontractOrderEntity.getCode());
+            return;
+        }
+
+
         //业务id
         resultMap.put("id",entity.getId());
         //编码
@@ -107,11 +123,6 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
         List<String> skuIds = parentList.stream().map(SubcontractChangeDetailEntity::getSkuId).collect(Collectors.toList());
         List<BomInfoEntity> bomInfoList = plmTaskFeign.listBomByParentSkuIds(skuIds);
 
-        //委外订单主表数据
-        SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
-        if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98073);
-        }
 
         //组织机构
         List<String> orgIdList = new ArrayList<>();

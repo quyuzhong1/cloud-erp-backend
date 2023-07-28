@@ -61,6 +61,10 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
     @Override
     public void syncDataToKingdee(OtherOutstockEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+
+        //更新同步状态为待同步
+        otherOutstockService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id

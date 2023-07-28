@@ -982,10 +982,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             if (CollectionUtils.isNotEmpty(stockInDetailList)) {
                 hasStockInQty = stockInDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            //已退货数量
+            //已退货补货数量
             Integer hasReturnQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
-                hasReturnQty = returnOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                hasReturnQty = returnOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
             //未入库数量
@@ -1137,8 +1137,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         for (PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO item : list) {
             item.setSourceType(type);
             Integer qty = stockInSkuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId()) &&
-                    item.getPurchaseOrderDetailId().equals(s.getPurchaseOrderDetailId())).
-                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getStockInQty())).orElse(0);
+                    item.getPurchaseOrderDetailId().equals(s.getPurchaseOrderDetailId()))
+                            .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO,Integer::sum);
             item.setStockInQty(qty);
 
 
@@ -1880,9 +1880,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 .set(PurchaseOrderEntity::getApproveUserName, userInfo.getUserName())
                 .set(PurchaseOrderEntity::getApproveStatus, approveStatus)
                 .set(PurchaseOrderEntity::getApproveTime, LocalDateTime.now())
-                .set(ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus), PurchaseOrderEntity::getSyncKingdeeStatus, SyncKingdeeStatusEnum.TO_BE_SYNC.getCode())
                 .update();
     }
+
 
     /**
      * 根据ids查询数据

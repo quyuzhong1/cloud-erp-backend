@@ -78,6 +78,10 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
     @Override
     public void syncDataToKingdee(CustomerInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+
+        //更新同步状态为待同步
+        customerInfoService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
@@ -200,12 +204,13 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         }
         resultMap.put("disabled", entity.getDisabled());
         resultMap.put("operate", operate);
+        //同步好客户信息后再同步客户联系人
+        List<CustomerContactEntity> contactEntities = customerContactService.listEntityByMainId(entity.getId());
+        resultMap.put("customerList", contactEntities);
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_CUSTOMER_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                //同步好客户信息后再同步客户联系人
-                List<CustomerContactEntity> contactEntities = customerContactService.listEntityByMainId(entity.getId());
                 //审核通过发送金蝶
                 contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
                 //mq发送成更新业务表状态及时间

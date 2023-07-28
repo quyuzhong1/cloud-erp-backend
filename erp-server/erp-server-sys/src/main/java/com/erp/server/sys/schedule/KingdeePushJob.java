@@ -8,12 +8,14 @@ import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysUserInfoService;
 import com.erp.server.sys.service.SysDepartmentService;
 import com.erp.server.sys.service.SysUserInfoService;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -53,7 +55,7 @@ public class KingdeePushJob {
             return;
         }
         list.forEach(obj->{
-            syncKingdeeSysDeptService.syncDataToKingdee(obj, obj.getSyncOperate());
+            //syncKingdeeSysDeptService.syncDataToKingdee(obj, obj.getSyncOperate());
         });
 
     }
@@ -65,13 +67,19 @@ public class KingdeePushJob {
     public void kingdeePushSysUserInfo() {
         List<SysUserInfoEntity> list = sysUserInfoService.lambdaQuery()
                 .in(SysUserInfoEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(SysUserInfoEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(SysUserInfoEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的用户");
             return;
         }
         list.forEach(obj->{
-            syncKingdeeSysUserInfoService.syncDataToKingdee(obj, obj.getSyncOperate());
+            try {
+                syncKingdeeSysUserInfoService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("用户【{}】推送金蝶失败",obj.getCode());
+                log.error("用户【{}】推送金蝶失败",obj.getCode());
+            }
         });
     }
 

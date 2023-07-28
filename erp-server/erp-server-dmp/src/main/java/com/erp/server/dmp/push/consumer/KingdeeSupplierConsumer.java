@@ -20,6 +20,7 @@ import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -37,7 +38,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_supplier_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SUPPLIER)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_supplier_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SUPPLIER,consumeMode = ConsumeMode.ORDERLY)
 public class KingdeeSupplierConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
@@ -95,7 +96,7 @@ public class KingdeeSupplierConsumer implements RocketMQListener<Map<String, Obj
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("code"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
 
             //更新数据

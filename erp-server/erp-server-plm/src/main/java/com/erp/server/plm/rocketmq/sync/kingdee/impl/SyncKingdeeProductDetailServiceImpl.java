@@ -73,6 +73,10 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
      */
     @Override
     public void syncDataToKingdee(ProductDetailEntity entity,String operate) {
+
+        //更新同步状态为待同步
+        productDetailService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"");
+
         //产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
         if (ObjectUtils.isEmpty(productInfoEntity)) {

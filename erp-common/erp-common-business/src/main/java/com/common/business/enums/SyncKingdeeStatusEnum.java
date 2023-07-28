@@ -28,6 +28,16 @@ public enum SyncKingdeeStatusEnum {
         this.name = name;
     }
 
+    public static String getCodeBySendStatus(Integer status) {
+        if( 0 == status){
+            return SyncKingdeeStatusEnum.FAILED_SYNC.getCode();
+        }
+        if (1== status) {
+            return SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode();
+        }
+        return SyncKingdeeStatusEnum.FAILED_SYNC.getCode();
+    }
+
     public String getCode() {
         return code;
     }
