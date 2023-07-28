@@ -59,6 +59,11 @@ public class SkuCostProfitDTO implements Serializable {
         @NotNull(message = "销售订单单据日期不能为空")
         private LocalDate billDate;
 
+        /**
+         * 折扣金额
+         */
+        private BigDecimal discountAmount;
+
     }
 
 
@@ -72,17 +77,6 @@ public class SkuCostProfitDTO implements Serializable {
          * SKU ID
          */
         private String skuId;
-
-        /**
-         * 销售金额
-         */
-        private BigDecimal amount;
-
-        /**
-         * 金额含税（折扣后）
-         */
-        private BigDecimal taxAmount;
-
 
         /**
          * 采购单价
