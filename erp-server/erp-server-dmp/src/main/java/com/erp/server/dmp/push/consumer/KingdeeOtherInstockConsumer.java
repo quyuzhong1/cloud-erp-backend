@@ -21,6 +21,7 @@ import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_other_instock_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_OTHER_INSTOCK)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_other_instock_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_OTHER_INSTOCK,consumeMode = ConsumeMode.ORDERLY)
 public class KingdeeOtherInstockConsumer implements RocketMQListener<Map<String, Object>> {
     @Resource
     private KingdeeCommonService kingdeeCommonService;
