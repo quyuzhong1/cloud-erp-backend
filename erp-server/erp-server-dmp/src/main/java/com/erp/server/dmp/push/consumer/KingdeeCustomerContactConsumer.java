@@ -12,6 +12,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
+import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.kingdee.impl.KingdeeCommonServiceImpl;
@@ -136,11 +137,7 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
         JSONObject model;
         try {
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(), map);
-            map.put("FCONTACTID", String.valueOf(model.get("Id")));
-            json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
-            param = new SaveParam(json);
         } catch (Exception e) {
-
             //更新数据
             Boolean flag = kingdeeCommonService.saveOrUpdateCustomerContact(platformEntity, map, apiUtils, json, param, type);
             if (flag) {
@@ -149,18 +146,31 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
             }
             return;
         }
+        String id = String.valueOf(model.get("Id"));
         String forbidStatus = String.valueOf(model.get("ForbidStatus")) ;
         StringBuffer allKey = FastJsonUtil.getAllKey(json);
+        Boolean flag = Boolean.FALSE;
+        //查找到数据后，判断其审核状态
+        String documentStatus = (String) model.get("DocumentStatus");
+
+        //审核中或已审核则要先反审
+        if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+        }
+        //给修改json对象赋值ID
+        KingdeeUtils.makeFieldJson(json,"FCONTACTID",".", id);
         ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
         param.setNeedUpDateFields(apiFieldList);
         //更新数据
-        kingdeeCommonService.saveOrUpdateCustomerContact(platformEntity,map,apiUtils,json,param,type);
-        if ((forbidStatus.equals("B") && Boolean.valueOf(map.get("disabled").toString()) == Boolean.FALSE) || (forbidStatus.equals("A") && Boolean.valueOf(map.get("disabled").toString()))) {
-            //启用、禁用
-            excuteOperation(apiUtils,platformEntity,map,type);
+        //创建状态则直接修改、删除
+        if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
+            kingdeeCommonService.saveOrUpdateCustomerContact(platformEntity,map,apiUtils,json,param,type);
+            if ((forbidStatus.equals("B") && Boolean.valueOf(map.get("disabled").toString()) == Boolean.FALSE) || (forbidStatus.equals("A") && Boolean.valueOf(map.get("disabled").toString()))) {
+                //启用、禁用
+                excuteOperation(apiUtils,platformEntity,map,type);
+            }
         }
     }
-
 
     /**
      * 启用、禁用
