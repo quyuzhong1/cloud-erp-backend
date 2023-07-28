@@ -248,9 +248,26 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         if (!approve.equals(approveStatus)) {
             throw new ServiceException(ApiError.ERROR_92033);
         }
-
-
     }
+
+    /**
+     * 验证销售变更单
+     * @param soId
+     * @param dto
+     */
+    /*
+    private void checkChangeCustomerInfo(String soId, SoInfoDTO.AddDTO dto) {
+        SoInfoEntity soInfo = soInfoService.getById(soId);
+        Boolean isPush = soInfoService.checkSoPushDeliveryNotice(soId);
+        if(Objects.equals(isPush, Boolean.TRUE)) {
+            log.warn("销售订单【{}】存在有效下推发货通知单，验证地址联系人信息是否发生改变", soInfo.getCode());
+            CustomerInfoEntity customerInfo = customerInfoService.getById(soInfo.getCustomerId());
+            //收货地址id
+            String receiverAddressId = soInfo.getReceiveAddressId();
+            String receiveAddress =  soInfo.getReceiveAddress();
+        }
+    }
+     */
 
 
     /**
