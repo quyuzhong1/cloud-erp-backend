@@ -537,11 +537,13 @@ public class SoInfoController extends BaseController {
      * @author zhangchunlin
      * @date 2023-07-26 17:40
      */
+    /*
     @PostMapping("/checkPushDownDeliveryNotice")
     public ApiResult<Boolean> checkPushDownDeliveryNotice(@RequestParam(value = "id") String id) {
         Boolean isPush = soInfoService.checkSoPushDeliveryNotice(id);
         return success(isPush);
     }
+     */
 
     /**
      * 获取销售成本毛利信息
