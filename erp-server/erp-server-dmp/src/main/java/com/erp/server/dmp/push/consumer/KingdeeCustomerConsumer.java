@@ -136,7 +136,8 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
             //主单据id
-            KingdeeUtils.makeFieldJson(json, "FCustId", ".", id);
+            KingdeeUtils.makeFieldJson(json, "FCUSTID", ".", id);
+            json = json.putOpt("FCUSTID",id);
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);

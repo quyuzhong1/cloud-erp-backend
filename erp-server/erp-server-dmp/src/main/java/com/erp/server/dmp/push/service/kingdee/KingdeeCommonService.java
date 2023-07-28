@@ -69,6 +69,20 @@ public interface KingdeeCommonService {
     Boolean saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type);
 
     /**
+     * 新增或修改客户地址
+     * @Author Luo_WG
+     * @Date 2023/7/28 10:34
+     * @param platformEntity
+     * @param map
+     * @param apiUtils
+     * @param json
+     * @param param
+     * @return java.lang.Boolean
+     **/
+    Boolean saveOrUpdateCustomerContact(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type);
+
+
+    /**
      * @description: 下推
      * @author Will
      * @date: 2023/3/3 14:52

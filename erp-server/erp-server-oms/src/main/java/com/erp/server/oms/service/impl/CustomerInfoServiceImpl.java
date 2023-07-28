@@ -667,11 +667,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
 
-            for (CustomerInfoEntity customerInfoEntity : list) {
+            /*for (CustomerInfoEntity customerInfoEntity : list) {
                 List<CustomerContactEntity> contactEntities = customerContactService.listEntityByMainId(customerInfoEntity.getId());
                 //审核通过发送金蝶
                 contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
-            }
+            }*/
             //批量保存销售员信息
             customerSellerService.batchSellerHistory(list);
 

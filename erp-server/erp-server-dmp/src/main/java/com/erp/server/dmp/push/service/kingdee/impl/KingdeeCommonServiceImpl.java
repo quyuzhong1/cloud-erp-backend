@@ -318,7 +318,33 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(json), msg, type, ApiSendStatusEnum.SUCCESS.getCode());
         //提交
         submit(platformEntity, map, apiUtils, id, type);
+        return Boolean.TRUE;
+    }
 
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean saveOrUpdateCustomerContact(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type) {
+        SaveResult save;
+        String msg = "新增数据";
+        if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
+            msg = "修改数据";
+        }
+        try {
+            save = apiUtils.save(param);
+        } catch (Exception e) {
+            //新增失败时添加日志及定时任务
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(json), msg.concat("；").concat(e.getMessage()), type, ApiSendStatusEnum.FAILURE.getCode());
+            return Boolean.FALSE;
+        }
+        //数据id
+        String id = save.getResult().getId();
+        //金蝶id
+        map.put("syncKingdeeId", id);
+        //更新业务表中的金蝶id
+        updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(), id);
+        //新增成功操作日志
+        insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(json), msg, type, ApiSendStatusEnum.SUCCESS.getCode());
         return Boolean.TRUE;
     }
 
