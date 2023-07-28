@@ -22,6 +22,7 @@ import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_order_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_ORDER)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_order_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_ORDER,consumeMode = ConsumeMode.ORDERLY)
 public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
@@ -75,8 +76,6 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
         Integer type = ApiModuleTypeEnum.PURCHASE_ORDER.getCode();
         //业务id
         String  businessId = String.valueOf(map.get("id"));
-        //业务编码
-        String code = (String) map.get("code");
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
@@ -95,45 +94,76 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
             kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,"","未配置同步字段",type, ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
-
         //判断金蝶系统是否已存在该数据
         SaveParam param = new SaveParam(json);
+        Boolean isAdd = Boolean.FALSE;
         JSONObject model;
         try {
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
-
-            //更新数据
-            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
-            if (isAdd) {
-                //给明细id赋值
-                JSONArray jsonArray = setDetailIdForJSONObject(apiUtils,platformEntity, map, type);
-                //更新明细id
-                updateKingdeeDetailId(jsonArray);
+            //新增数据
+            Boolean isSaveOrUpdate = saveOrUpdate(apiUtils, platformEntity, map, type, json, param);
+            if (!isSaveOrUpdate) {
+                return;
             }
+            isAdd = Boolean.TRUE;
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
+            //执行操作
+            operate (platformEntity,map,apiUtils,model,json,isAdd);
             return;
         }
+        //执行操作
+        operate (platformEntity,map,apiUtils,model,json,isAdd);
+    }
 
+
+    /**
+     * 采购订单操作
+     */
+    private void operate (PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils,JSONObject model,JSONObject json,Boolean isAdd) {
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
         String id = String.valueOf(model.get("Id")) ;
-        Boolean flag = Boolean.FALSE;
-
         //操作项
         String operate = (String) map.get("operate");
+        //作废
         if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-            //作废
-            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
-            return;
+            invalid(platformEntity,map,apiUtils,id,documentStatus);
         }
+        //反审核
         if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            //反审核
-            kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
-            return;
+            disApprove(platformEntity,map,apiUtils,id,documentStatus);
         }
+        //审核
+        if (SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate) && !isAdd) {
+            approve(platformEntity,map,apiUtils,id,documentStatus,json);
+        }
+    }
+
+
+    /**
+     * 反审核
+     */
+    private void disApprove (PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id,String documentStatus){
+        if (KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
+            //提交审核
+            Boolean submit = kingdeeCommonService.submit(platformEntity, map, apiUtils, id, ApiModuleTypeEnum.PURCHASE_ORDER.getCode());
+            if (!submit) {
+                return;
+            }
+        }
+        //反审核
+        kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, ApiModuleTypeEnum.PURCHASE_ORDER.getCode());
+    }
+    /**
+     * 审核
+     */
+    private void approve (PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id,String documentStatus,JSONObject json){
+        Boolean flag = Boolean.FALSE;
+        SaveParam param = new SaveParam(json);
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, ApiModuleTypeEnum.PURCHASE_ORDER.getCode());
         }
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
@@ -143,14 +173,38 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
             ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
-            if (isAdd) {
-                //给明细id赋值
-                JSONArray jsonArray = setDetailIdForJSONObject(apiUtils,platformEntity, map, type);
-                //更新明细id
-                updateKingdeeDetailId(jsonArray);
+            saveOrUpdate(apiUtils,platformEntity,map,ApiModuleTypeEnum.PURCHASE_ORDER.getCode(),json,param);
+        }
+    }
+
+    /**
+     * 作废
+     */
+    private void invalid (PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id,String documentStatus){
+        if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+            //反审核
+            Boolean unAudit = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, ApiModuleTypeEnum.PURCHASE_ORDER.getCode());
+            if (!unAudit) {
+                return;
             }
         }
+        //作废
+        kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,ApiModuleTypeEnum.PURCHASE_ORDER.getCode(),(String) map.get("code"),(String) map.get("operate"));
+    }
+
+    /**
+     * 新增
+     */
+    private Boolean saveOrUpdate (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json,SaveParam param) {
+
+        Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+        if (isAdd) {
+            //给明细id赋值
+            JSONArray jsonArray = setDetailIdForJSONObject(apiUtils,platformEntity, map, type);
+            //更新明细id
+            updateKingdeeDetailId(jsonArray);
+        }
+        return  isAdd;
     }
 
     /**
@@ -209,46 +263,4 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
         params.put("details",jsonArray);
         scmTaskFeign.updateBusinessSyncKingdeeStatus(params);
     }
-
-    /**
-     * 给修改json对象赋值ID
-     */
-    private void setQueryJSONObject (String id, KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json) {
-        LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FId = '%s'", id));
-        String filterStr = String.join(" and ", queryFilters);
-        //查询子单据id
-        String fieldKeys = "FPOOrderEntry_FEntryID,FMaterialId.FNumber";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
-        if (CollectionUtils.isEmpty(queryList)) {
-            //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),filterStr,"未查询到子单据id",type,ApiSendStatusEnum.FAILURE.getCode());
-            return;
-        }
-        //主单据id
-        KingdeeUtils.makeFieldJson(json,"FId",".", id);
-        //比较
-        for (Map<String, Object> queryMap: queryList) {
-            JSONArray obj = (JSONArray)json.get("FPOOrderEntry") ;
-            JSONArray removeObj = new JSONArray();
-            JSONArray addObj = new JSONArray();
-            for (Object o : obj) {
-                JSONObject jsonObject = JSONUtil.parseObj(o);
-                JSONObject newJson = new JSONObject(new LinkedHashMap<>());
-                Object o1 = queryMap.get("FMaterialId.FNumber");
-                JSONObject o2 = (JSONObject)jsonObject.get("FMaterialId");
-                Object fNumber = o2.get("FNumber");
-                if (o1.equals(fNumber)) {
-                    newJson.set("FEntryId",queryMap.get("FPOOrderEntry_FEntryID"));
-                }
-                newJson.putAll(jsonObject);
-                removeObj.set(o);
-                addObj.set(newJson);
-            }
-            obj.removeAll(removeObj);
-            obj.addAll(addObj);
-        }
-
-    }
-
 }

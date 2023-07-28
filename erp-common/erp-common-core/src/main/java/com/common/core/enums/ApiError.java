@@ -502,7 +502,7 @@ public enum ApiError implements Serializable {
     ERROR_INTERVAL_EXIST(98047,"区间有误，不可提交"),
     ERROR_INTERVAL_DIFFERENT(98048,"区间从,区间到 两个值不能相同"),
     ERROR_INTERVAL_SIZE(98050,"区间从值不能大于区间到值"),
-    ERROR_PRICE_ZERO_SKUNO(98102,"以下SKU【{}】价格为零"),
+    ERROR_PRICE_ZERO_SKUNO(98102,"以下SKU【{}】价格不能为零"),
 
 
     ERROR_98024(98024,"采购价目表不存在"),
@@ -680,6 +680,7 @@ public enum ApiError implements Serializable {
     ERROR_99082(99082,"质检未完成不允许下推退货入库单"),
     ERROR_99083(99083,"退货入库单不存在"),
     ERROR_IN_ORG_BLANK(99080,"调入组织不能为空"),
+
 
 
     /**

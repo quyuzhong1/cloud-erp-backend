@@ -272,7 +272,7 @@ public class DataPermissionAspect {
             return;
         } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
             long containsUserCount = users.stream().filter(u -> userList.contains(u)).count();
-            if (containsUserCount==0) {
+            if (containsUserCount == 0) {
                 throw new ServiceException(ApiError.NO_PERMISSION);
             }
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
@@ -377,7 +377,7 @@ public class DataPermissionAspect {
             return;
         } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
             long containsUserCount = users.stream().filter(u -> userList.contains(u)).count();
-            if (containsUserCount==0) {
+            if (containsUserCount == 0) {
                 throw new ServiceException(ApiError.NO_PERMISSION);
             }
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {

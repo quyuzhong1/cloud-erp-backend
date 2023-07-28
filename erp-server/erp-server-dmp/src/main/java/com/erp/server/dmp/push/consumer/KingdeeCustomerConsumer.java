@@ -24,6 +24,7 @@ import com.kingdee.bos.webapi.entity.OperateParam;
 import com.kingdee.bos.webapi.entity.OperatorResult;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_customer_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CUSTOMER_INFO)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_customer_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CUSTOMER_INFO, consumeMode = ConsumeMode.ORDERLY)
 public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Object>> {
     public static void main(String[] args) {
 
@@ -51,17 +52,11 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         KingdeeApiUtils apiUtils = new KingdeeApiUtils("BD_Customer");
         LinkedList<String> queryFilters = new LinkedList<>();
         // queryFilters.add(String.format("FNumber = '%s'", "CUST23060900001"));
-        queryFilters.add(StrUtil.format("FNumber in ({})", "'CUST3630'"));
+        queryFilters.add(StrUtil.format("FNumber in ({})", "'CUST5188'"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FCUSTID,FForbidStatus";
-        OperateParam param = new OperateParam();
-        param.setNumber("CUST3630");
-//        param.setCreateOrgId("236226");
-        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("Number","CUST3630");
-//        viewMap.put("createOrgId","236226");
-        JSONObject viewJson = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
-        System.out.println(viewJson);
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 11);
+        System.out.println(queryList);
         /* JSONObject entries = apiUtils.customerGroupDelete("");*/
 
 
@@ -102,6 +97,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         }
         //判断金蝶系统是否已存在该数据
         SaveParam param = new SaveParam(json);
+        Boolean erpForbidStatus = ObjectUtil.isNotEmpty(map.get("disabled")) ? (Boolean) map.get("disabled") : Boolean.FALSE;
         JSONObject model;
         try {
             model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
@@ -109,12 +105,14 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
             json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
             param = new SaveParam(json);
         } catch (Exception e) {
+
             //更新数据
             Boolean saveOrUpdateResult = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
-            if (saveOrUpdateResult) {
+            if (saveOrUpdateResult && erpForbidStatus) {
                 //启用、禁用
                 excuteOperation(apiUtils, platformEntity, map, type);
             }
+
             return;
         }
 
@@ -125,10 +123,26 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         Boolean flag = Boolean.FALSE;
         // A启用 B禁用
         Boolean kingdeeForbidStatus = "B".equals(forbidStatus) ? Boolean.TRUE : Boolean.FALSE;
-        Boolean erpForbidStatus = ObjectUtil.isNotEmpty(map.get("disabled")) ? (Boolean) map.get("disabled") : Boolean.FALSE;
         //操作项
         String operate = (String) map.get("operate");
         boolean allowUnApproveStatus = KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus);
+
+        if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
+            // 判断禁用状态是否与金蝶系统一致 A启用 B禁用
+            if (erpForbidStatus.equals(kingdeeForbidStatus)) {
+                log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}], 无需{}，跳过{}操作", forbidStatus, map.get("disabled"), operate, operate);
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(map), "金蝶状态与ERP相同不需要修改", type, ApiSendStatusEnum.SUCCESS.getCode());
+                return;
+            }
+            //启用、禁用
+            excuteOperation(apiUtils,platformEntity,map,type);
+            return;
+        }else if (kingdeeForbidStatus && erpForbidStatus){
+            // 判断禁用状态是否与金蝶系统一致
+            log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}]，跳过{}操作", forbidStatus, map.get("disabled"), operate);
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(map), "金蝶状态与ERP数据都为禁用状态数据不需要修改", type, ApiSendStatusEnum.SUCCESS.getCode());
+            return;
+        }
 
         if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             // 判断状态是否为审核中或已审核
@@ -145,17 +159,6 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
             }
             //反审核
             kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
-            return;
-        }
-        if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
-            // 判断禁用状态是否与金蝶系统一致 A启用 B禁用
-            if (erpForbidStatus.equals(kingdeeForbidStatus)) {
-                log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}], 无需{}，跳过{}操作", forbidStatus, map.get("disabled"), operate, operate);
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(map), "金蝶状态与ERP相同不需要修改", type, ApiSendStatusEnum.SUCCESS.getCode());
-                return;
-            }
-            //启用、禁用
-            excuteOperation(apiUtils,platformEntity,map,type);
             return;
         }
 
@@ -186,7 +189,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
     /**
      * 启用、禁用
      */
-    private void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+    private void excuteOperation(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type) {
         //仓库状态 true禁用,false启用
         Object disabled = map.get("disabled");
         if (ObjectUtils.isEmpty(disabled)) {
@@ -204,7 +207,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
             operate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
         }
         if (StringUtils.isNotBlank(operate)) {
-            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
+            kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
         }
     }
 
