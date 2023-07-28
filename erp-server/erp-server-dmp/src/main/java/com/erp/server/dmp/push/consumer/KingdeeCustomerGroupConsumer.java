@@ -47,33 +47,23 @@ public class KingdeeCustomerGroupConsumer implements RocketMQListener<Map<String
 
     public static void main(String[] args) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.CUSTOMER_INFO.getCode();
+        Integer type = ApiModuleTypeEnum.CUSTOMER_GROUP.getCode();
         KingdeeCommonService kingdeeCommonService = new KingdeeCommonServiceImpl();
         Map<String, Object> map = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PAT.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_CUSTOMER.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", "CGTJ23050500001"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FId,FPUR_PATENTRY_FEntryID,FMaterialId.FNumber,FSrcEntryID,FIsPriceListPush";
-        map.put("groupName", "测试分组");
+        map.put("groupName", "B类：100-300万");
+        map.put("syncKingdeeId", "1262928");
 
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
-        if (ObjectUtils.isEmpty(platformEntity)) {
-            return;
-        }
+        JSONObject model = kingdeeCommonService.queryGroupInfo(apiUtils, (String) map.get("syncKingdeeId"), String.valueOf(map.get("groupName")));
+        map.put("GroupPkId", String.valueOf(model.get("FID")));
 
-        //根据录入值和字段配置生成JSONObject
-        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
-        SaveParam param = new SaveParam(json);
-        Boolean aBoolean = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
-        System.out.println(aBoolean);
+        System.out.println(map.toString());
 
-       /* LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("Number","CGDD-230413-8806");
-        JSONObject viewJson = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
-        System.out.println(viewJson);
-*/
     }
 
     @Override
@@ -113,7 +103,7 @@ public class KingdeeCustomerGroupConsumer implements RocketMQListener<Map<String
 
             return;
         }
-        String id = String.valueOf(model.get("GroupPkId")) ;
+        String id = String.valueOf(model.get("FID")) ;
         //主单据id
         KingdeeUtils.makeFieldJson(json,"GroupPkId",".", id);
         StringBuffer allKey = FastJsonUtil.getAllKey(json);

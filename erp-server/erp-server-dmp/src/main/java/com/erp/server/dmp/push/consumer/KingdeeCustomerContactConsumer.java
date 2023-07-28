@@ -117,11 +117,28 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
             kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,"","未配置同步字段",type, ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
+
+
+        //地址编号
+        String addressCode = String.valueOf(map.get("addressCode"));
+        //联系人金蝶id
+        String syncKingdeeId = String.valueOf(map.get("syncKingdeeId"));
+        //联系人编号
+        String code = String.valueOf(map.get("code"));
+        //如果所有编码都没有无法同步，需要手动设置好编号
+        if (StringUtils.isBlank(addressCode) && StringUtils.isBlank(syncKingdeeId) && StringUtils.isBlank(code)) {
+            //错误日志
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,"","地址编码、联系人金蝶id、联系人编号都是空，同步金蝶失败，请手动维护数据",type, ApiSendStatusEnum.FAILURE.getCode());
+        }
+
         //判断金蝶系统是否已存在该数据
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(), map);
+            map.put("FCONTACTID", String.valueOf(model.get("Id")));
+            json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
+            param = new SaveParam(json);
         } catch (Exception e) {
 
             //更新数据
@@ -132,9 +149,6 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
             }
             return;
         }
-        String id = String.valueOf(model.get("Id")) ;
-        //主单据id
-        KingdeeUtils.makeFieldJson(json,"FCONTACTID",".", id);
         String forbidStatus = String.valueOf(model.get("ForbidStatus")) ;
         StringBuffer allKey = FastJsonUtil.getAllKey(json);
         ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());

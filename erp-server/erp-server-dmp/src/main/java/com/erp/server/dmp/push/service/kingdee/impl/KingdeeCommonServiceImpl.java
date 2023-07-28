@@ -330,7 +330,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                 //金蝶id
                 map.put("syncKingdeeId", id);
                 //更新业务表中的金蝶id
-                updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), "", id);
+                updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(), id);
                 //新增成功操作日志
                 insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(json), msg, type, ApiSendStatusEnum.SUCCESS.getCode());
             }
