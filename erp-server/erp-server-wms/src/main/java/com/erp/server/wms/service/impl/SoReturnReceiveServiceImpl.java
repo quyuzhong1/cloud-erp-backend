@@ -729,11 +729,11 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             throw new ServiceException(ApiError.ERROR_99081);
         }
 
-        List<QcInfoEntity> qcInfoEntities = qcInfoService.listQCBySourceIds(ids);
+/*        List<QcInfoEntity> qcInfoEntities = qcInfoService.listQCBySourceIds(ids);
         long qcCount = qcInfoEntities.stream().filter(req -> QcBillStatusEnum.FINISH_QC.equals(req.getQcStatus()) || QcBillStatusEnum.EXEMPTION.equals(req.getQcStatus())).count();
         if (qcCount != qcInfoEntities.size()) {
             throw new ServiceException(ApiError.ERROR_99082);
-        }
+        }*/
 
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         //获取sku的id集合
