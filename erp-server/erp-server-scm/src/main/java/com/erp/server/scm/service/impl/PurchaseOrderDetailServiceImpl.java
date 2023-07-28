@@ -429,7 +429,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                  receiveQty = receiveDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
-            Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
 
             //收货数量
             viewProductDTO.setReceiveQty(receiveQty);
@@ -462,7 +462,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             viewProductDTO.setHasStockInQty(hasStockInQty);
             viewProductDTO.setEffectiveStockInQty(effectiveStockInQty);
             //未入库数量
-            viewProductDTO.setUnStockInQty(viewProductDTO.getPurchaseQty() - effectiveStockInQty);
+            viewProductDTO.setUnStockInQty(viewProductDTO.getPurchaseQty() - effectiveStockInQty + returnQty );
         }
         return list;
     }

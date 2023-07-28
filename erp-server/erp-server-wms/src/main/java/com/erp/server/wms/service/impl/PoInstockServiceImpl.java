@@ -121,6 +121,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     @Autowired
     private InventoryTransCoreService inventoryTransCoreService;
 
+    @Autowired
+    private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
 
     @Override
     public PagingVO<PoInstockDTO.ListDTO> paging(PagingDTO<PoInstockDTO.SearchParamDTO> pagingDTO) {
@@ -395,6 +397,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
+        //采购订单明细下所有入库数据
+        List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailByPodIds(podIds);
+
+        //查询退货明细
+        List<PurchaseReturnOrderDetailEntity> returnOrderDetailList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
+
         //收货单明细
         List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
 
@@ -413,10 +421,16 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 obj.setPurchaseQty(purchaseQty);
             }
 
-            if (CollectionUtils.isNotEmpty(entityDetails)) {
-                Integer effectiveStockInQty = entityDetails.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseOrderDetailId()) && !obj.getId().equals(e.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            //退货单补货数量
+            Integer returnQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
+                returnQty = returnOrderDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+
+            if (CollectionUtils.isNotEmpty(poInstockDetailList)) {
+                Integer effectiveStockInQty = poInstockDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                 obj.setEffectiveStockInQty(effectiveStockInQty);
-                obj.setUnStockInQty(obj.getPurchaseQty() - effectiveStockInQty);
+                obj.setUnStockInQty(obj.getPurchaseQty() - effectiveStockInQty + returnQty);
             }
 
             if (CollectionUtils.isNotEmpty(receiveDetailList)) {
