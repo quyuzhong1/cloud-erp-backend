@@ -4,7 +4,6 @@ package com.erp.server.dmp.push.consumer;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.druid.support.json.JSONUtils;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -23,11 +22,9 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
-import com.google.gson.JsonObject;
 import com.kingdee.bos.webapi.entity.SaveParam;
-import com.kingdee.bos.webapi.entity.SaveResult;
-import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -43,7 +40,7 @@ import java.util.stream.Collectors;
  **/
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_stock_in_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_STOCK_IN)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_stock_in_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_STOCK_IN,consumeMode = ConsumeMode.ORDERLY)
 public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Object>> {
     @Resource
     private KingdeeCommonService kingdeeCommonService;
@@ -234,7 +231,7 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("code"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
             /*Map<String, Object> pushMap = new HashMap<>();
             pushMap.put("ids", map.get("poSyncKingdeeId"));

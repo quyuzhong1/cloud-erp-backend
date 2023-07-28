@@ -502,6 +502,8 @@ public enum ApiError implements Serializable {
     ERROR_INTERVAL_EXIST(98047,"区间有误，不可提交"),
     ERROR_INTERVAL_DIFFERENT(98048,"区间从,区间到 两个值不能相同"),
     ERROR_INTERVAL_SIZE(98050,"区间从值不能大于区间到值"),
+    ERROR_PRICE_ZERO_SKUNO(98102,"以下SKU【{}】价格不能为零"),
+
 
     ERROR_98024(98024,"采购价目表不存在"),
     ERROR_98025(98025,"未找到采购订单"),
@@ -578,7 +580,8 @@ public enum ApiError implements Serializable {
     ERROR_NOT_FOUND_PURCHASE_PRICE_DETAIL(98099,"未找到采购价目明细"),
     ERROR_PURCHASE_PRICE_ID_REPEAT(98100,"请选择同一采购价目表下明细进行变更"),
     ERROR_PURCHASE_ORDER_ID_REPEAT(98101,"请选择同一采购订单下明细进行变更"),
-    ERROR_PURCHASE_WAREHOUSE_ORG(98102,"交货仓库【{}】与收料组织【{}】不匹配"),
+    ERROR_PURCHASE_DATE(98102,"采购订单SKU【{}】预计交货日期不能小于【{}】"),
+    ERROR_PURCHASE_PRICE(98103,"采购订单SKU【{}】单价必须大于0"),
 
 
 
@@ -672,9 +675,6 @@ public enum ApiError implements Serializable {
     ERROR_99077(99077,"ERP已存在直接调拨单【{}】"),
     ERROR_99078(99078,"调拨申请单已下推加工单，不支持反审核"),
     ERROR_99079(99079,"【{}】退货数量不能大于待质检数量"),
-    ERROR_99081(99081,"只有已审核的单据才能下推退货入库单"),
-    ERROR_99082(99082,"质检未完成不允许下推退货入库单"),
-    ERROR_99083(99083,"退货入库单不存在"),
     ERROR_IN_ORG_BLANK(99080,"调入组织不能为空"),
 
 

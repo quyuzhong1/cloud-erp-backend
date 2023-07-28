@@ -32,6 +32,7 @@ import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceHistoryService;
 import com.erp.server.scm.service.PurchasePriceService;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -97,6 +98,14 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     public void checkSkuInterval(List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList, List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList, List<PurchasePriceDetailDTO.AddDTO> historyList) {
 
         if (CollectionUtils.isNotEmpty(purchasePriceDetailList)) {
+            //价格为零的 sku no
+            List<String> priceZeroSkuNoList = purchasePriceDetailList.stream().filter(p -> BigDecimal.ZERO.compareTo(p.getTaxPrice()) == 0).map(PurchasePriceDetailDTO.AddDTO::getSkuNo).collect(Collectors.toList());
+            //不为空的时候
+            if (CollectionUtils.isNotEmpty(priceZeroSkuNoList)) {
+                String priceZeroSkuNo = priceZeroSkuNoList.stream().collect(Collectors.joining(","));
+                throw new ServiceException(ApiError.ERROR_PRICE_ZERO_SKUNO, priceZeroSkuNo);
+            }
+
             //这个是要检查的
             List<PurchasePriceDetailDTO.AddDTO> checkList = new ArrayList<>(10);
             checkList.addAll(purchasePriceDetailList);
@@ -650,7 +659,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         if (StringUtils.isBlank(mainId)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().eq(PurchasePriceDetailEntity::getPurchasePriceId,mainId).list();
+        return this.lambdaQuery().eq(PurchasePriceDetailEntity::getPurchasePriceId, mainId).list();
     }
 
 
@@ -728,10 +737,10 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     /**
+     * @param viewList
      * @description: 处理采购价目明细信息
      * @author Will
      * @date: 2023/7/17 12:12
-     * @param viewList
      */
     private void handlePurchasePriceDetail(List<PurchasePriceDetailDTO.ViewDTO> viewList) {
         if (CollectionUtils.isEmpty(viewList)) {

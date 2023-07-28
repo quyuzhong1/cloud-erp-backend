@@ -66,6 +66,9 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
     public void syncDataToKingdee(MachineInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
+        //更新同步状态为待同步
+        machineInfoService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
         //加工明细
         List<MachineDetailEntity> detailList = machineDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {

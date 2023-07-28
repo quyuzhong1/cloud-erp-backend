@@ -23,6 +23,7 @@ import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -41,7 +42,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_price_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_PRICE)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_price_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_PRICE,consumeMode = ConsumeMode.ORDERLY)
 public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
@@ -56,9 +57,9 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PRICECATEGORY.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "CGJM23050400004"));
+        queryFilters.add(String.format("FNumber = '%s'", "CGJM23072100001"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FPriceListEntry_FEntryID,FFROMQTY,FToQty,FDisablerId";
+        String fieldKeys = "FPriceListEntry_FEntryID,FFROMQTY,FToQty,FCreateOrgId.FName";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
         System.out.println(queryList);
 /*
@@ -107,7 +108,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("code"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
 
             log.error("采购价目表查看失败 map = {}",JSONUtil.toJsonStr(map));

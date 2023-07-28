@@ -1,32 +1,21 @@
 package com.erp.server.oms.kingdee.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
-import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.oms.dto.InvoiceDTO;
 import com.erp.model.oms.entity.CustomerGroupEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerGroupService;
-import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.service.CustomerGroupService;
 import com.erp.server.oms.service.CustomerInfoService;
-import com.erp.server.oms.service.CustomerInvoiceService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -50,6 +39,10 @@ public class SyncKingdeeCustomerGroupServiceImpl implements SyncKingdeeCustomerG
     @Override
     public void syncDataToKingdee(CustomerGroupEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+
+        //更新同步状态为待同步
+        customerGroupService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
         //金蝶id
         if (StringUtils.isNotBlank(entity.getSyncKingdeeId())) {
             resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());

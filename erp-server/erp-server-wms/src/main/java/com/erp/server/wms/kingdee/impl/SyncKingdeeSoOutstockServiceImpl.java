@@ -95,6 +95,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     @Override
     public void syncDataToKingdee(SoOutstockEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+
+        //更新同步状态为待同步
+        soOutstockService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
         //获取销售出库单详情
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
         //销售单信息

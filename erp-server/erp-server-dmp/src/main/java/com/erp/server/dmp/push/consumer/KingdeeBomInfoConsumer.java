@@ -18,6 +18,7 @@ import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_bom_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_BOM_INFO)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_bom_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_BOM_INFO,consumeMode = ConsumeMode.ORDERLY)
 public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
@@ -66,6 +67,9 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         Integer type = ApiModuleTypeEnum.BOM_INFO.getCode();
         //业务id
         String  businessId = String.valueOf(map.get("id"));
+        //编码转换
+        map.put("code",map.get("version"));
+
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
@@ -85,7 +89,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         JSONObject model;
         SaveParam param = new SaveParam(json);
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("version"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
             //未查找到数据，新增数据
             SaveResult save;

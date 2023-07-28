@@ -67,6 +67,9 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         if (ThirdPartySystemEnum.ENUM_MB.getCode().equals(entity.getThirdPartySystem())) {
             return;
         }
+        //更新同步状态为待同步
+        transferInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());

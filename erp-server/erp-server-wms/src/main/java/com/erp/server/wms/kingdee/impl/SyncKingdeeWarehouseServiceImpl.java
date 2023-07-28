@@ -56,6 +56,10 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
     @Override
     public void syncDataToKingdee(WarehouseEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+
+        //更新同步状态为待同步
+        warehouseService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
         //业务id
@@ -68,8 +72,13 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             String orgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
+            String orgKingdeeId = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getFlagId())).orElse("");
+
             //仓库组织
             resultMap.put("orgCode",orgCode);
+
+            //组织的金蝶id
+            resultMap.put("createOrgId",orgKingdeeId);
         }
 
         //仓库地址

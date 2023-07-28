@@ -51,6 +51,10 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
 
         Map<String, Object> resultMap = new HashMap<>();
 
+        //更新同步状态为待同步
+        bomInfoService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"");
+
+
         List<Map<String, Object>> mapList = new ArrayList<>();
 
         List<BomSkuDTO> bomList = bomSkuService.getByBomId(entity.getId());

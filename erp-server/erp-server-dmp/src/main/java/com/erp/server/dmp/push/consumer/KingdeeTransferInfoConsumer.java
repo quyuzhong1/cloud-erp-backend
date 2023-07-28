@@ -1,18 +1,14 @@
 package com.erp.server.dmp.push.consumer;
 
 
-import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
-import com.common.core.constant.CommonConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
-import com.common.core.utils.date.EnumTimePattern;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -25,13 +21,12 @@ import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,7 +37,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_transfer_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_TRANSFER_INFO)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_transfer_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_TRANSFER_INFO,consumeMode = ConsumeMode.ORDERLY)
 public class KingdeeTransferInfoConsumer implements RocketMQListener<Map<String, Object>> {
     @Resource
     private KingdeeCommonService kingdeeCommonService;
@@ -52,24 +47,10 @@ public class KingdeeTransferInfoConsumer implements RocketMQListener<Map<String,
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_TRANSFERDIRECT.getCode());
-        LocalDateTime lastTime = LocalDateTimeUtil.now().minusDays(2L);
-        LocalDateTime nextTime = LocalDateTimeUtil.now();
-        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         LinkedList<String> queryFilters = new LinkedList<>();
-
-        queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'B','C','D'"));
-        queryFilters.add(StrUtil.format("FThirdSystem != '{}'", CommonConstants.SYSTEM));
-        queryFilters.add(StrUtil.format(" ((FModifyDate >= '{}' and FModifyDate <= '{}') or (FApproveDate >= '{}' and FApproveDate < '{}'))",sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime),sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime)));
-        String filterStr = String.join(" and ",  queryFilters );
-
-        String fieldKeys = "FId,FBillNo,FBizType,FTransferDirect,FTransferBizType,FSaleOrgId,FSaleOrgId.FName," +
-                "FSettleOrgId,FSettleOrgId.FName,FStockOutOrgId,FStockOutOrgId.FName,FOwnerOutIdHead,FOwnerOutIdHead.FName," +
-                "FStockOrgId,FStockOrgId.FName,FSettleCurrId,FSettleCurrId.FName,FExchangeTypeId,FExchangeTypeId.FName,FExchangeRate," +
-                "FDate,FNote,FBaseCurrId,FBaseCurrId.FName,FDocumentStatus,FDocumentStatus.FCaption,FApproverId,FApproverId.FName,FApproveDate," +
-                "FCancellerId,FCancellerId.FName,FCreateDate,FCreatorId,FCreatorId.FName,FModifierId,FModifierId.FName,FModifyDate,FCancelStatus,FCancelStatus.FCaption,FCancelDate," +
-                "FBillEntry_FEntryID,FSrcStockId,FSrcStockId.FName,FDestStockId,FDestStockId.FName," +
-                "FRowType,FMaterialId,FMaterialId.FName,FUnitID,FUnitID.FName,FQty," +
-                "FSrcStockStatusId,FSrcStockStatusId.FName,FDestStockStatusId,FDestStockStatusId.FName,FBusinessDate,FIsFree,FDestMaterialId,FDestMaterialId.FName";;
+        queryFilters.add(String.format("FBillNo = '%s'", "ZJDB23060500005"));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FID,FTransferDirect";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
         System.out.println(queryList);
 
@@ -180,7 +161,7 @@ public class KingdeeTransferInfoConsumer implements RocketMQListener<Map<String,
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("code"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);

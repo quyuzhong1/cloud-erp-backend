@@ -3,6 +3,7 @@ package com.erp.server.scm.kingdee.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -10,15 +11,10 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
-import com.erp.model.scm.entity.PurchasePriceChangeEntity;
-import com.erp.model.scm.entity.PurchasePriceDetailEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceChangeService;
-import com.erp.server.scm.service.PurchasePriceChangeDetailService;
-import com.erp.server.scm.service.PurchasePriceChangeService;
-import com.erp.server.scm.service.PurchasePriceDetailService;
-import com.erp.server.scm.service.SupplierService;
+import com.erp.server.scm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -43,6 +39,9 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
     private MQProducerService mQProducerService;
 
     @Resource
+    private PurchasePriceService purchasePriceService;
+
+    @Resource
     private PurchasePriceChangeService purchasePriceChangeService;
 
     @Resource
@@ -54,6 +53,8 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
     @Resource
     private SupplierService supplierService;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     /**
      * 组装数据发送到金蝶
@@ -61,6 +62,21 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
     @Override
     public void syncDataToKingdee(PurchasePriceChangeEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+
+        //更新同步状态为待同步
+        purchasePriceChangeService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+
+        //如果上游单据未发送成功则无需发送
+        PurchasePriceEntity purchasePriceEntity = purchasePriceService.getById(entity.getPurchasePriceId());
+        //采购价目主表数据
+        if (ObjectUtils.isEmpty(purchasePriceEntity)) {
+            throw new ServiceException(ApiError.ERROR_98024);
+        }
+
+        if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(purchasePriceEntity.getSyncKingdeeStatus())) {
+            log.error("采购价目未推送成功，不支持推送采购调价，采购价目单号【{}】",purchasePriceEntity.getCode());
+            return;
+        }
 
         //业务id
         resultMap.put("id",entity.getId());
@@ -76,8 +92,14 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
         //调价日期
         resultMap.put("adjustDate",entity.getAdjustDate());
 
-        //采购组织
-        resultMap.put("purchaseOrgName",entity.getPurchaseOrgName());
+        //组织机构编码
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId()));
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            //采购组织
+            String orgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+            resultMap.put("purchaseOrgCode", orgCode);
+        }
 
         //查询供应商
         SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
