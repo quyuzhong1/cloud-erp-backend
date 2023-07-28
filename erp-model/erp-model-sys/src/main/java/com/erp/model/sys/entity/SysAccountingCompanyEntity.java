@@ -50,6 +50,11 @@ public class SysAccountingCompanyEntity implements Serializable {
     private String currency;
 
     /**
+     * 金蝶的id
+     */
+    private String kingdeeId;
+
+    /**
      * 是否禁用
      */
     @TableField("disabled")

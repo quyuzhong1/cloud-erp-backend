@@ -19,6 +19,7 @@ import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_product_detail_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PRODUCT_DETAIL)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_product_detail_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PRODUCT_DETAIL,consumeMode = ConsumeMode.ORDERLY)
 public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
@@ -48,12 +49,16 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.getTaskName());
-        LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "testtes"));
-        String filterStr = String.join(" and ", queryFilters);
-       String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FIsPurchase";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
-        System.out.println(queryList);
+        LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
+        // viewMap.put("id", "391315");
+           viewMap.put("number", "test-sku04");
+        //创建组织
+        viewMap.put("CreateOrgId", 173616);
+
+        log.info("view方法数据查询,viewJson = {}", JSONUtil.toJsonStr(viewMap));
+        JSONObject model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
+        JSONObject createOrgId = (JSONObject) model.get("CreateOrgId");
+        System.out.println(model);
     }
 
     @Override
@@ -63,6 +68,8 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
         Integer type = ApiModuleTypeEnum.PRODUCT_DETAIL.getCode();
         //业务id
         String  businessId = String.valueOf(map.get("id"));
+        //编码转换
+        map.put("code",map.get("skuNo"));
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
@@ -83,7 +90,7 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
         JSONObject model;
         SaveParam param = new SaveParam(json);
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("skuNo"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
             //未查找到数据，新增数据
             SaveResult save;
@@ -98,7 +105,6 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
             String id = save.getResult().getId();
             //主单据id
             KingdeeUtils.makeFieldJson(json,"FMATERIALID",".",id);
-            //需要修改字段
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
@@ -136,6 +142,8 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
                 KingdeeUtils.makeFieldJson(json, String.valueOf(entry.getKey()),".",entry.getValue());
             }
             //需要修改字段
+            json.remove("FCreateOrgId");
+            json.remove("FUseOrgId");
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);

@@ -1,5 +1,7 @@
 package com.erp.model.scm.dto;
 
+import com.common.core.anno.FieldValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

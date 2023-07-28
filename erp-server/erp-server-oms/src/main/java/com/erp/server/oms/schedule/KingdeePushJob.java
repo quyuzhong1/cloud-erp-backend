@@ -3,15 +3,16 @@ package com.erp.server.oms.schedule;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.erp.model.oms.entity.*;
-import com.erp.model.wms.entity.MachineInfoEntity;
 import com.erp.server.oms.kingdee.*;
 import com.erp.server.oms.service.*;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -56,13 +57,19 @@ public class KingdeePushJob {
     public void kingdeePushCustomerContact() {
         List<CustomerContactEntity> list = customerContactService.lambdaQuery()
                 .in(CustomerContactEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(CustomerContactEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(CustomerContactEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的客户联系人信息");
             return;
         }
         list.forEach(obj->{
-            syncKingdeeCustomerContactService.syncDataToKingdee(obj, obj.getSyncOperate());
+            try {
+                syncKingdeeCustomerContactService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("客户联系人【{}】推送金蝶失败",obj.getCode());
+                log.error("客户联系人【{}】推送金蝶失败",obj.getCode());
+            }
         });
     }
 
@@ -73,13 +80,19 @@ public class KingdeePushJob {
     public void kingdeePushCustomerGroup() {
         List<CustomerGroupEntity> list = customerGroupService.lambdaQuery()
                 .in(CustomerGroupEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(CustomerGroupEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(CustomerGroupEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的客户分组");
             return;
         }
         list.forEach(obj->{
-            syncKingdeeCustomerGroupService.syncDataToKingdee(obj, obj.getSyncOperate());
+            try {
+                syncKingdeeCustomerGroupService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("客户分组【{}】推送金蝶失败",obj.getName());
+                log.error("客户分组【{}】推送金蝶失败",obj.getName());
+            }
         });
     }
 
@@ -90,13 +103,19 @@ public class KingdeePushJob {
     public void kingdeePushCustomerInfo() {
         List<CustomerInfoEntity> list = customerInfoService.lambdaQuery()
                 .in(CustomerInfoEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(CustomerInfoEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(CustomerInfoEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的客户列表");
             return;
         }
         list.forEach(obj->{
-            syncKingdeeCustomerService.syncDataToKingdee(obj, obj.getSyncOperate());
+            try {
+                syncKingdeeCustomerService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("客户【{}】推送金蝶失败",obj.getCode());
+                log.error("客户【{}】推送金蝶失败",obj.getCode());
+            }
         });
     }
 
@@ -107,13 +126,19 @@ public class KingdeePushJob {
     public void kingdeePushSoChange() {
         List<SoChangeEntity> list = soChangeService.lambdaQuery()
                 .in(SoChangeEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(SoChangeEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(SoChangeEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的销售变更");
             return;
         }
         list.forEach(obj->{
-            syncKingdeeSoChangeService.syncDataToKingdee(obj, obj.getSyncOperate());
+            try {
+                syncKingdeeSoChangeService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("销售变更【{}】推送金蝶失败",obj.getCode());
+                log.error("销售变更【{}】推送金蝶失败",obj.getCode());
+            }
         });
     }
 
@@ -125,13 +150,19 @@ public class KingdeePushJob {
     public void kingdeePushSoReturn() {
         List<SoReturnEntity> list = soReturnService.lambdaQuery()
                 .in(SoReturnEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(SoReturnEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(SoReturnEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的销售退货单");
             return;
         }
         list.forEach(obj->{
-            syncKingdeeSoReturnService.syncDataToKingdee(obj, obj.getSyncOperate());
+            try {
+                syncKingdeeSoReturnService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("销售退货单【{}】推送金蝶失败",obj.getCode());
+                log.error("销售退货单【{}】推送金蝶失败",obj.getCode());
+            }
         });
     }
 
@@ -144,13 +175,19 @@ public class KingdeePushJob {
     public void kingdeePushSoInfo() {
         List<SoInfoEntity> list = soInfoService.lambdaQuery()
                 .in(SoInfoEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(SoInfoEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(SoInfoEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
-            log.info("无需要同步的销售退货单");
+            log.info("无需要同步的销售订单");
             return;
         }
         list.forEach(obj->{
-            syncKingdeeSoService.syncDataToKingdee(obj, obj.getSyncOperate());
+            try {
+                syncKingdeeSoService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("销售订单【{}】推送金蝶失败",obj.getCode());
+                log.error("销售订单【{}】推送金蝶失败",obj.getCode());
+            }
         });
     }
 }

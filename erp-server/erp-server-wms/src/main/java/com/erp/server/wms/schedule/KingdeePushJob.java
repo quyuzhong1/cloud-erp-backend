@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -81,6 +82,7 @@ public class KingdeePushJob {
     public void kingdeePushMachineInfo() {
         List<MachineInfoEntity> list = machineInfoService.lambdaQuery()
                 .in(MachineInfoEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(MachineInfoEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(MachineInfoEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的加工单");
@@ -104,6 +106,7 @@ public class KingdeePushJob {
     public void kingdeePushOtherOutstock() {
         List<OtherOutstockEntity> list = otherOutstockService.lambdaQuery()
                 .in(OtherOutstockEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(OtherOutstockEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(OtherOutstockEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的其他出库");
@@ -126,6 +129,7 @@ public class KingdeePushJob {
     public void kingdeePushOtherInstock() {
         List<OtherInstockEntity> list = otherInstockService.lambdaQuery()
                 .in(OtherInstockEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(OtherInstockEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(OtherInstockEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的其他入库");
@@ -149,6 +153,7 @@ public class KingdeePushJob {
     public void kingdeePurchaseReturnOrder() {
         List<PurchaseReturnOrderEntity> list = purchaseReturnOrderService.lambdaQuery()
                 .in(PurchaseReturnOrderEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(PurchaseReturnOrderEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(PurchaseReturnOrderEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的采购退货");
@@ -171,6 +176,7 @@ public class KingdeePushJob {
     public void kingdeePushSoOutstock() {
         List<SoOutstockEntity> list = soOutstockService.lambdaQuery()
                 .in(SoOutstockEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(SoOutstockEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(SoOutstockEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的销售出库单");
@@ -194,6 +200,7 @@ public class KingdeePushJob {
     public void kingdeePushPoInstock() {
         List<PoInstockEntity> list = poInstockService.lambdaQuery()
                 .in(PoInstockEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(PoInstockEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(PoInstockEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的采购入库单");
@@ -216,6 +223,7 @@ public class KingdeePushJob {
     public void kingdeePushTransferInfo() {
         List<TransferInfoEntity> list = transferInfoService.lambdaQuery()
                 .in(TransferInfoEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(TransferInfoEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(TransferInfoEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的直接调拨单");
@@ -238,6 +246,7 @@ public class KingdeePushJob {
     public void kingdeePushWarehouse() {
         List<WarehouseEntity> list = warehouseService.lambdaQuery()
                 .in(WarehouseEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(WarehouseEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(WarehouseEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的仓库");

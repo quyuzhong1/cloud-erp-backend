@@ -46,6 +46,9 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
     public void syncDataToKingdee(BasicCategoryEntity entity,String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
+        //更新同步状态为待同步
+        basicCategoryService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"");
+
         //是否存在上级
         boolean isExistParent = !MathUtil.ZERO.toString().equals(entity.getPid());
         resultMap.put("isExistParent", isExistParent);

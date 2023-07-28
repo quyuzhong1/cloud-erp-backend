@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +28,7 @@ class ErpServerPlmApplicationTests {
         KingdeeApiUtils soApiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
 
         //根据录入值和字段配置生成JSONObject
-        JSONObject soJson = kingdeeCommonService.view(soApiUtils, "","", "XSD23060500001");
+        JSONObject soJson = kingdeeCommonService.view(soApiUtils, "",new HashMap<>());
         List<Map<String, Object>> resultList = (List<Map<String, Object>>) soJson.get("SaleOrderEntry");
         for (Map<String, Object> item : resultList) {
             String id = item.get("Id").toString();

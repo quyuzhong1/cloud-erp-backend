@@ -32,10 +32,11 @@ public interface CfgApiAuthService extends IService<CfgApiAuthEntity> {
      * @author Will
      * @date: 2023/7/3 9:30
      * @param key
+     * @param apiGroup
      * @param apiPlatformId
      * @return CfgApiAuthEntity
      */
-    CfgApiAuthEntity getByKey (String key ,String apiPlatformId);
+    CfgApiAuthEntity getByKey (String key ,String apiGroup,String apiPlatformId);
 
     void saveMongoTest(String type);
     void saveMongoTest(String type, String id);

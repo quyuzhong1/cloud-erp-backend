@@ -22,6 +22,7 @@ import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -34,12 +35,11 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
-
  * @date 2023/4/20 11:12
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_so_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_INFO)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_so_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_INFO,consumeMode = ConsumeMode.ORDERLY)
 public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
@@ -54,13 +54,11 @@ public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> 
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "XSD-20230707-35428"));
+        queryFilters.add(String.format("FBillNo = '%s'", "XSD-20230705-36192"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FBillTypeID.FNUMBER";
+        String fieldKeys = "FSettleOrgIds.FNumber";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 11);
         System.out.println(queryList);
-
-
 
 
     }
@@ -96,7 +94,7 @@ public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> 
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(), (String) map.get("syncKingdeeId"), (String) map.get("code"));
+            model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
         } catch (Exception e) {
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
@@ -113,6 +111,7 @@ public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> 
         //操作项
         String operate = (String) map.get("operate");
         if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+
             //作废
             kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
             return;
