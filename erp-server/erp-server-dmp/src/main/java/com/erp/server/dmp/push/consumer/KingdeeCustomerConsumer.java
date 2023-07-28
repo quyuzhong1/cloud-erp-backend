@@ -51,17 +51,11 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         KingdeeApiUtils apiUtils = new KingdeeApiUtils("BD_Customer");
         LinkedList<String> queryFilters = new LinkedList<>();
         // queryFilters.add(String.format("FNumber = '%s'", "CUST23060900001"));
-        queryFilters.add(StrUtil.format("FNumber in ({})", "'CUST3630'"));
+        queryFilters.add(StrUtil.format("FNumber in ({})", "'CUST5188'"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FCUSTID,FForbidStatus";
-        OperateParam param = new OperateParam();
-        param.setNumber("CUST3630");
-//        param.setCreateOrgId("236226");
-        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("Number","CUST3630");
-//        viewMap.put("createOrgId","236226");
-        JSONObject viewJson = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
-        System.out.println(viewJson);
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 11);
+        System.out.println(queryList);
         /* JSONObject entries = apiUtils.customerGroupDelete("");*/
 
 
@@ -109,12 +103,14 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
             json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
             param = new SaveParam(json);
         } catch (Exception e) {
+
             //更新数据
             Boolean saveOrUpdateResult = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
             if (saveOrUpdateResult) {
                 //启用、禁用
                 excuteOperation(apiUtils, platformEntity, map, type);
             }
+
             return;
         }
 
@@ -186,7 +182,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
     /**
      * 启用、禁用
      */
-    private void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+    private void excuteOperation(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type) {
         //仓库状态 true禁用,false启用
         Object disabled = map.get("disabled");
         if (ObjectUtils.isEmpty(disabled)) {
@@ -204,7 +200,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
             operate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
         }
         if (StringUtils.isNotBlank(operate)) {
-            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
+            kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
         }
     }
 

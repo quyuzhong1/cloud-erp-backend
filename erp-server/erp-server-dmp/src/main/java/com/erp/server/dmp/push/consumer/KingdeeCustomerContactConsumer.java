@@ -124,9 +124,11 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
         } catch (Exception e) {
 
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
-            //启用、禁用
-            excuteOperation(apiUtils,platformEntity,map,type);
+            Boolean flag = kingdeeCommonService.saveOrUpdateCustomerContact(platformEntity, map, apiUtils, json, param, type);
+            if (flag) {
+                //启用、禁用
+                excuteOperation(apiUtils,platformEntity,map,type);
+            }
             return;
         }
         String id = String.valueOf(model.get("Id")) ;
@@ -137,7 +139,7 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
         ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
         param.setNeedUpDateFields(apiFieldList);
         //更新数据
-        kingdeeCommonService.customerGroupSaveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+        kingdeeCommonService.saveOrUpdateCustomerContact(platformEntity,map,apiUtils,json,param,type);
         if ((forbidStatus.equals("B") && Boolean.valueOf(map.get("disabled").toString()) == Boolean.FALSE) || (forbidStatus.equals("A") && Boolean.valueOf(map.get("disabled").toString()))) {
             //启用、禁用
             excuteOperation(apiUtils,platformEntity,map,type);
