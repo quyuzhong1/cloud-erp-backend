@@ -176,11 +176,11 @@ public abstract class AbstractInventoryServiceImpl {
                 transactionFlowService.add(txnFlow, (inventory.getQty()+txnFlow.getQty()));
 
                 // 5，更新库存
-                boolean updateFlag = inventoryDetailService.updateQtyById(inventoryDetail.getId(), inventoryDetail.getQty() + txnFlow.getQty());
+                boolean updateFlag = inventoryDetailService.updateQtyById(inventoryDetail.getId(), txnFlow.getQty());
                 if(!updateFlag) {
                     throw new ServiceException(ApiError.ERROR_1027);
                 }
-                updateFlag =  inventoryService.updateQtyById(inventory.getId(), inventory.getQty() + txnFlow.getQty());
+                updateFlag =  inventoryService.updateQtyById(inventory.getId(), txnFlow.getQty());
                 if(!updateFlag) {
                     throw new ServiceException(ApiError.ERROR_1027);
                 }
@@ -418,7 +418,7 @@ public abstract class AbstractInventoryServiceImpl {
                 inventoryQty=inventoryQty-tradeQty;
 
                 // 更新库存明细
-                boolean updateFlag = inventoryDetailService.updateQtyById(detailEntity.getId(), detailEntity.getQty() + (tradeQty * -1));
+                boolean updateFlag = inventoryDetailService.updateQtyById(detailEntity.getId(), tradeQty * -1);
                 if(!updateFlag) {
                     throw new ServiceException(ApiError.ERROR_1027);
                 }
@@ -448,12 +448,12 @@ public abstract class AbstractInventoryServiceImpl {
             }
 
             // 更新库存表
-            boolean updateFlag =  inventoryService.updateQtyById(inventory.getId(), inventory.getQty() + (param.getQty()*-1));
+            boolean updateFlag =  inventoryService.updateQtyById(inventory.getId(), param.getQty()*-1);
             if(!updateFlag) {
                 throw new ServiceException(ApiError.ERROR_1027);
             }
             // 创建/修改库存历史
-            inventoryHisService.addOrUpdate(inventory.getId(), LocalDate.now(), inventory.getQty() + (param.getQty() * -1));
+            inventoryHisService.addOrUpdate(inventory.getId(), LocalDate.now(), inventory.getQty() + param.getQty() * -1);
 
             // 此处再次验证，防止变成负库存
             InventoryEntity curInventory = inventoryService.getById(inventory.getId());
