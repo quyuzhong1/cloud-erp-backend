@@ -321,6 +321,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //已下推入库明细信息
         List<PoInstockDetailEntity> hasDetailList = poInstockDetailService.listDetailByPodIds(podIds);
 
+        //查询退货明细
+        List<PurchaseReturnOrderDetailEntity> returnOrderDetailList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
+
         //采购订单数量校验
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         if (CollectionUtils.isNotEmpty(purchaseOrderDetailList)) {
@@ -337,13 +340,19 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 //采购单
                 String poCode = list.stream().filter(obj -> obj.getId().equals(poInstockId)).map(PoInstockEntity::getPurchaseOrderCode).findFirst().orElse("");
 
+                //退货单补货数量
+                Integer returnQty = MathUtil.ZERO;
+                if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
+                    returnQty = returnOrderDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+                }
+
                 //入库完成
                 if ( purchaseOrderDetailEntity.getPurchaseQty() == hasInstockQty.intValue()) {
                     throw new ServiceException(ApiError.ERROR_99075,poCode,purchaseOrderDetailEntity.getSkuNo());
                 }
                 //未入库完成，但剩余数量不够
-                if (thisInstockQty > purchaseOrderDetailEntity.getPurchaseQty() - hasInstockQty.intValue()) {
-                    throw new ServiceException(ApiError.ERROR_99074,poCode,purchaseOrderDetailEntity.getSkuNo(),purchaseOrderDetailEntity.getPurchaseQty() - hasInstockQty.intValue());
+                if (thisInstockQty > purchaseOrderDetailEntity.getPurchaseQty() - hasInstockQty.intValue() + returnQty) {
+                    throw new ServiceException(ApiError.ERROR_99074,poCode,purchaseOrderDetailEntity.getSkuNo(),purchaseOrderDetailEntity.getPurchaseQty() - hasInstockQty.intValue() + returnQty);
                 }
             }
         }
