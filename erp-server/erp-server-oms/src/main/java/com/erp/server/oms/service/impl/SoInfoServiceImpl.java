@@ -2317,6 +2317,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return Boolean.TRUE;
     }
 
+    /*
     @Override
     public Boolean checkSoPushDeliveryNotice(String id) {
         SoInfoEntity soInfoEntity = this.getById(id);
@@ -2332,6 +2333,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         return Boolean.FALSE;
     }
+     */
 
     @Override
     public List<SoDetailDTO.CalDetailResultDTO> calSkuCostProfit(SoInfoDTO.CalCostProfitDTO calCostProfitDTO) {
