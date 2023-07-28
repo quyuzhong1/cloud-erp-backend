@@ -185,7 +185,7 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField(exist = false)
     private BigDecimal taxPrice;
 
-    @TableField(exist = false)
+    @TableField(value = "exchange_rate")
     private BigDecimal exchangeRate;
 
     public static final String MAIN_ID = "main_id";

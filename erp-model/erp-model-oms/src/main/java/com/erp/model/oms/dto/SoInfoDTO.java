@@ -878,6 +878,11 @@ public class SoInfoDTO implements Serializable {
         private String sellerName;
 
         /**
+         * 折扣总额
+         */
+        private BigDecimal discountAmount;
+
+        /**
          * 订单产品详情
          */
         private List<SoDetailDTO.ViewDTO> detailList;

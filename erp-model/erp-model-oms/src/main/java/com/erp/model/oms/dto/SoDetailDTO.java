@@ -121,6 +121,11 @@ public class SoDetailDTO implements Serializable {
          */
         private BigDecimal allAmountLocalCurrency;
 
+        /**
+         * 价税合计（折前）
+         */
+        private BigDecimal taxAmountBefore;
+
     }
 
 
@@ -311,6 +316,21 @@ public class SoDetailDTO implements Serializable {
          * 价税合计(本位币)
          */
         private BigDecimal allAmountLocalCurrency;
+
+        /**
+         * 销售金额汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
+         * 折扣金额
+         */
+        private BigDecimal discountAmount;
+
+        /**
+         * 价税合计（折前)
+         */
+        private BigDecimal taxAmountBefore;
 
     }
 
