@@ -79,6 +79,14 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
      **/
     @Override
     public void syncDataToKingdee(PurchaseReturnOrderEntity entity, String operate) {
+        Map<String, Object> resultMap = new HashMap<>();
+        if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
+            resultMap.put("returnType", ReturnOrderSourceEnum.QC.getCode());
+            return;
+        } else {
+            resultMap.put("returnType", ReturnOrderSourceEnum.OTHER.getCode());
+        }
+
         PurchaseOrderEntity purchaseOrderEntity = new PurchaseOrderEntity();
         Map<String, Object> resultMap = new HashMap<>();
 
@@ -145,11 +153,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             resultMap.put("returnMode", "A");
         }
 
-        if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
-            resultMap.put("returnType", ReturnOrderSourceEnum.QC.getCode());
-        } else {
-            resultMap.put("returnType", ReturnOrderSourceEnum.OTHER.getCode());
-        }
+
 
         //供应商联系人
         resultMap.put("supplierContactName", entity.getSupplierContactName());
