@@ -2,6 +2,8 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BillApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,6 +44,19 @@ public class DropDownListController extends BaseController {
         List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(key);
         List<BaseDropDownDTO.CommonDTO> result = list.stream()
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getValue(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
+     * 单据状态下拉
+     *
+     * @return
+     */
+    @GetMapping("/billStatus/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listBillStatusDropDown() {
+        List<BaseDropDownDTO.CommonDTO> result = Arrays.stream(BillApproveStatusEnum.values())
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getStatus(), x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }
