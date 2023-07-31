@@ -274,7 +274,7 @@ public class SoOutstockDTO implements Serializable {
          * approve 已审核
          * reject 审核不通过
          */
-        @StateEnumValue(strValues = {"all", "waitApprove", "approve", "reject"}, message = "搜索类型有误")
+        @StateEnumValue(strValues = {"all","waitSubmit", "waitApprove", "approve", "reject"}, message = "搜索类型有误")
         @NotBlank(message = "搜索类型不能为空")
         private String searchType;
 
