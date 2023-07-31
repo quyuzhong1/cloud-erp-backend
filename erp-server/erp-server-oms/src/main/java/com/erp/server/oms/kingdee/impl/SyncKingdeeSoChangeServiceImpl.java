@@ -150,7 +150,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         //单据类型
         resultMap.put("orderType", "XSDDBGD01_SYS");
         //单据日期
-        resultMap.put("billDate", entity.getBillDate());
+        resultMap.put("billDate", soInfo.getBillDate());
         //客户
         if (StringUtils.isNotBlank(customerId)) {
             CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
