@@ -350,8 +350,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             //含税单价
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             item.setTaxPrice(taxPrice);
-            BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
-            item.setTaxAmount(taxAmount);
+            // BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
+            // item.setTaxAmount(taxAmount);
             //历史价格
             SoDetailDTO.SkuHistoryPriceDTO skuHistoryPrice = skuPriceHistoryList.stream().
                     filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
@@ -913,8 +913,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             item.setTaxPrice(taxPrice);
             //价税金额
-            BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
-            item.setTaxAmount(taxAmount);
+            // BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
+            // item.setTaxAmount(taxAmount);
 
 
         }
@@ -1216,9 +1216,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
         // 销售金额转换
         BigDecimal saleAmount = item.getAmount();
+        // 价税合计（折后）转换
+        BigDecimal taxAmount = item.getTaxAmount();
         if(Objects.equals(item.getCurrency(), "CNY")) {
             item.setExchangeRate(BigDecimal.ONE);
         }
+        item.setAmountLocalCurrency(saleAmount);
+        item.setAllAmountLocalCurrency(taxAmount);
         if (Objects.nonNull(saleAmount) &&
                 saleAmount.compareTo(BigDecimal.ZERO) == 1 &&
                 !Objects.equals(item.getCurrency(), "CNY")) {
@@ -1230,14 +1234,25 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             BigDecimal rate = dmpTaskFeign.getRate(currentDate, item.getCurrency());
             log.info("提交的币制：{}，转换后汇率：{}", item.getCurrency(), rate);
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
+                item.setExchangeRate(BigDecimal.ZERO);
                 saleAmount = BigDecimal.ZERO;
             } else {
                 // 转换成人民币销售金额
                 item.setExchangeRate(rate);
                 saleAmount = rate.multiply(saleAmount).setScale(4, BigDecimal.ROUND_HALF_UP);
             }
+            // 销售金额（本位币）
+            item.setAmountLocalCurrency(saleAmount);
         }
-
+        if(Objects.nonNull(taxAmount) &&
+                taxAmount.compareTo(BigDecimal.ZERO) == 1 &&
+                !Objects.equals(item.getCurrency(), "CNY")) {
+            if(Objects.isNull(item.getExchangeRate()) || item.getExchangeRate().compareTo(BigDecimal.ZERO) <= 0) {
+                item.setAllAmountLocalCurrency(BigDecimal.ZERO);
+            } else {
+                item.setAllAmountLocalCurrency(item.getExchangeRate().multiply(taxAmount).setScale(4, BigDecimal.ROUND_HALF_UP));
+            }
+        }
         SoUtils.updateSoDetailCost(item, purchasePrice, saleAmount);
     }
 

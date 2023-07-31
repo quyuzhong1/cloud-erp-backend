@@ -1199,6 +1199,16 @@ public class SoDetailDTO implements Serializable {
          */
         private BigDecimal exchangeRate;
 
+        /**
+         * 价税合计额（折后）本位币
+         */
+        private BigDecimal allAmountLocalCurrency;
+
+        /**
+         *  销售金额（折后）本位币
+         */
+        private BigDecimal amountLocalCurrency;
+
     }
 
 }

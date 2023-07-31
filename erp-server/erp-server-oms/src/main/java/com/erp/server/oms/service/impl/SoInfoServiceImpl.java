@@ -1989,6 +1989,48 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         skuCostProfitResult.setSaleCost(BigDecimal.ZERO);
         skuCostProfitResult.setSaleProfit(BigDecimal.ZERO);
         skuCostProfitResult.setSaleProfitRate(BigDecimal.ZERO);
+        if(Objects.isNull(costParam.getDiscountAmount())) {
+            costParam.setDiscountAmount(BigDecimal.ZERO);;
+        }
+        skuCostProfitResult.setTaxAmountBefore(costParam.getTaxAmount());
+        skuCostProfitResult.setTaxAmount(costParam.getTaxAmount());
+        skuCostProfitResult.setSaleAmount(costParam.getSaleAmount());
+        // 销售金额需要减去折扣金额
+        if(Objects.nonNull(costParam.getDiscountAmount()) && costParam.getDiscountAmount().compareTo(BigDecimal.ZERO) == 1) {
+            BigDecimal saleAmountAfter = costParam.getSaleAmount().subtract(costParam.getDiscountAmount()).setScale(4, BigDecimal.ROUND_HALF_UP);
+            costParam.setSaleAmount(saleAmountAfter);
+            skuCostProfitResult.setSaleAmount(saleAmountAfter);
+
+            BigDecimal taxAmountAfter = costParam.getTaxAmount().subtract(costParam.getDiscountAmount()).setScale(4, BigDecimal.ROUND_HALF_UP);
+            costParam.setTaxAmount(taxAmountAfter);
+            skuCostProfitResult.setTaxAmount(taxAmountAfter);
+        }
+
+        // 销售金额转换
+        if(Objects.equals(costParam.getCurrency(), "CNY")) {
+            skuCostProfitResult.setAmountLocalCurrency(skuCostProfitResult.getSaleAmount());
+            skuCostProfitResult.setAllAmountLocalCurrency(skuCostProfitResult.getTaxAmount());
+            skuCostProfitResult.setExchangeRate(BigDecimal.ONE);
+        }
+        BigDecimal saleRate;
+        if (Objects.nonNull(costParam.getSaleAmount()) &&
+                costParam.getSaleAmount().compareTo(BigDecimal.ZERO) == 1 &&
+                !Objects.equals(costParam.getCurrency(), "CNY")) {
+            saleRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), costParam.getCurrency());
+            log.info("提交的币制：{}，转换后汇率：{}", costParam.getCurrency(), saleRate);
+            if (Objects.isNull(saleRate) || saleRate.compareTo(BigDecimal.ZERO) <= 0) {
+                costParam.setSaleAmount(BigDecimal.ZERO);
+                costParam.setTaxAmount(BigDecimal.ZERO);
+            } else {
+                skuCostProfitResult.setExchangeRate(saleRate);
+                // 转换成人民币销售金额
+                costParam.setSaleAmount(saleRate.multiply(costParam.getSaleAmount()).setScale(4, BigDecimal.ROUND_HALF_UP));
+                skuCostProfitResult.setAllAmountLocalCurrency(saleRate.multiply(costParam.getTaxAmount()).setScale(4, BigDecimal.ROUND_HALF_UP));
+            }
+            skuCostProfitResult.setExchangeRate(saleRate);
+            skuCostProfitResult.setAmountLocalCurrency(costParam.getSaleAmount());
+        }
+
         BigDecimal purchasePrice = BigDecimal.ZERO;
         // 获取SKU对应的一级供应商
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Lists.newArrayList(costParam.getSkuId()));
@@ -2037,27 +2079,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 purchasePrice = rate.multiply(skuCostProfitResult.getPurchasePrice()).setScale(4, BigDecimal.ROUND_HALF_UP);
             }
         }
-        // 销售金额转换
-        if (Objects.nonNull(costParam.getSaleAmount()) &&
-                costParam.getSaleAmount().compareTo(BigDecimal.ZERO) == 1 &&
-                !Objects.equals(costParam.getCurrency(), "CNY")) {
-             rate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), costParam.getCurrency());
-            log.info("提交的币制：{}，转换后汇率：{}", costParam.getCurrency(), rate);
-            if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
-                costParam.setSaleAmount(BigDecimal.ZERO);
-            } else {
-                // 转换成人民币销售金额
-                costParam.setSaleAmount(rate.multiply(costParam.getSaleAmount()).setScale(4, BigDecimal.ROUND_HALF_UP));
-            }
-        }
-        // 销售金额需要减去折扣金额
-        if(Objects.nonNull(costParam.getDiscountAmount()) && costParam.getDiscountAmount().compareTo(BigDecimal.ZERO) == 1) {
-            BigDecimal saleAmountAfter = costParam.getSaleAmount().subtract(costParam.getDiscountAmount()).setScale(4, BigDecimal.ROUND_HALF_UP);
-            costParam.setSaleAmount(saleAmountAfter);
-        }
         // 计算成本毛利信息
         skuCostProfitResult = SoUtils.calCostProfit(purchasePrice, costParam, skuCostProfitResult);
-        skuCostProfitResult.setExchangeRate(rate);
         return skuCostProfitResult;
     }
 
