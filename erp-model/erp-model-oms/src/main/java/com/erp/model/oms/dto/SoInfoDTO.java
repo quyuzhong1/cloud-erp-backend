@@ -312,6 +312,76 @@ public class SoInfoDTO implements Serializable {
          * 明细备注
          */
         private String detailRemark;
+
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
+         * 销售金额（本位币）
+         */
+        private BigDecimal amountLocalCurrency;
+
+        /**
+         * 价税合计(本位币)
+         */
+        private BigDecimal allAmountLocalCurrency;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 收款账号
+         */
+        private String receiveAccount;
+
+        /**
+         * 收款方式
+         */
+        private String receiveMethod;
+
+        /**
+         * 收款方式
+         */
+        private String receiveMethodName;
+
+        /**
+         * 收款日期
+         */
+        private LocalDate receiveDate;
+
+        /**
+         * 收款金额
+         */
+        private BigDecimal receiveAmount;
+
+        /**
+         * 贸易条款
+         */
+        private String tradeTerm;
+
+        /**
+         * 贸易条款名称
+         */
+        private String tradeTermName;
+
+        /**
+         * 报关费
+         */
+        private BigDecimal customsFee;
+
+        /**
+         * 银行手续费
+         */
+        private BigDecimal bankServiceFee;
+
+        /**
+         * 运费
+         */
+        private BigDecimal shippingFee;
     }
 
     /**
