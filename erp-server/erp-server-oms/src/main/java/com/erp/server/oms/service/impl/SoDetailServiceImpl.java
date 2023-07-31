@@ -382,6 +382,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Override
     public List<String> listParamDetailIdsBySearchType(String searchType) {
         switch (searchType) {
+            case OmsConstant.WAIT_SUBMIT:
+                // 待提交
+                String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+                List<SoDetailDTO.InfoDTO> waitSubmitList = baseMapper.listSoDetailByApprove(Arrays.asList(waitSubmitStatus));
+                return waitSubmitList.stream().map(SoDetailDTO.InfoDTO::getMainId).distinct().collect(Collectors.toList());
             case OmsConstant
                     .WAIT_APPROVE:
                 //待审核
