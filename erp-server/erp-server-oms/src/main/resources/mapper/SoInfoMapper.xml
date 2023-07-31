@@ -123,7 +123,9 @@
         SELECT
             COALESCE(sum(sod.qty),0) as totalQty,
             COALESCE(sum(sod.amount),0) as totalAmount,
-            COALESCE(sum(sod.tax_amount),0) as totalTaxAmount
+            COALESCE(sum(sod.tax_amount),0) as totalTaxAmount,
+            COALESCE(sum(sod.amount_local_currency),0) as amountLocalCurrency,
+            COALESCE(sum(sod.all_amount_local_currency),0) as allAmountLocalCurrency
         FROM so_info si
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false

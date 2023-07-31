@@ -1818,6 +1818,17 @@ public class SoInfoDTO implements Serializable {
          */
         private BigDecimal totalTaxAmount;
 
+        /**
+         * 销售金额(本位币)
+         */
+        private BigDecimal amountLocalCurrency;
+
+        /**
+         * 价税合计(本位币)
+         */
+        private BigDecimal allAmountLocalCurrency;
+
+
     }
 
     /**

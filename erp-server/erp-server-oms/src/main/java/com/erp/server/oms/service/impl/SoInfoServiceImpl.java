@@ -698,7 +698,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             paramDetailIds = Collections.emptyList();
         } else {
             if (paramDetailIds.size() == 0) {
-                SoInfoDTO.PagingTotalDTO pagingTotalDTO = new SoInfoDTO.PagingTotalDTO(MathUtil.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+                SoInfoDTO.PagingTotalDTO pagingTotalDTO = new SoInfoDTO.PagingTotalDTO(MathUtil.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
                 return pagingTotalDTO;
             }
         }
