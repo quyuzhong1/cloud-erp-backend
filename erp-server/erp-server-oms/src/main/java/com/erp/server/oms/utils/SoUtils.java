@@ -179,13 +179,13 @@ public class SoUtils {
             // 折扣金额不可大于价税合计（折扣前）
             if(Objects.nonNull(detailDiscountAmount) && detailDiscountAmount.compareTo(item.getTaxAmountBefore()) == 1) {
                 log.warn("销售订单第【{}】行明细价税合计（折扣前）【{}】，折扣额【{}】",( i + 1),item.getTaxAmountBefore(), detailDiscountAmount);
-                throw new ServiceException(StrUtil.format("销售订单明细第{}行折扣金额【{}】不可大于价税合计【{}】", ( i + 1), detailDiscountAmount, item.getTaxAmountBefore()));
+                throw new ServiceException(StrUtil.format("销售订单明细第{}行折扣金额【{}】不可大于价税合计（折前））【{}】", ( i + 1), detailDiscountAmount, item.getTaxAmountBefore()));
             }
         }
         // 折扣金额不可大于价税合计（折扣前）
         if(Objects.nonNull(discountAmount) && discountAmount.compareTo(totalTaxAmountBefore) == 1) {
             log.warn("销售订单明细汇总价税合计（折扣前）【{}】，总折扣额【{}】", totalTaxAmountBefore, discountAmount);
-            throw new ServiceException(StrUtil.format("折扣金额【{}】不可大于价税合计【{}】", discountAmount, totalTaxAmountBefore));
+            throw new ServiceException(StrUtil.format("折扣金额【{}】不可大于价税合计（折前）【{}】", discountAmount, totalTaxAmountBefore));
         }
     }
 
