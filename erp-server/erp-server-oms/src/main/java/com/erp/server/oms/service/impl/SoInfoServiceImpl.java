@@ -1777,8 +1777,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 dto.setKingdeePushModuleCode(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
                 JSONObject soJson = dmpTaskFeign.getByKingdeeId(dto);
                 List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(id);
-                List<Map<String, Object>> resultList = (List<Map<String, Object>>) soJson.get("SaleOrderEntry");
                 List<SoDetailEntity> updateList = new ArrayList<>(10);
+                if(soJson!=null){
+                List<Map<String, Object>> resultList = (List<Map<String, Object>>) soJson.get("SaleOrderEntry");
                 if (CollectionUtils.isNotEmpty(resultList)) {
                     for (int i = 0; i < resultList.size(); i++) {
                         Map<String, Object> item = resultList.get(i);
@@ -1793,6 +1794,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                             }
                         }
                     }
+                }
                 }
                 if (updateList.size() > 0) {
                     soDetailService.updateBatchById(updateList);
