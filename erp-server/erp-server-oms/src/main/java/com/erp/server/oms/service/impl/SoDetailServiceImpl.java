@@ -1224,7 +1224,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         item.setAmountLocalCurrency(saleAmount);
         item.setAllAmountLocalCurrency(taxAmount);
         if (Objects.nonNull(saleAmount) &&
-                saleAmount.compareTo(BigDecimal.ZERO) == 1 &&
+                saleAmount.compareTo(BigDecimal.ZERO) >= 0 &&
                 !Objects.equals(item.getCurrency(), "CNY")) {
             LocalDate calDate = LocalDate.now();
             if (Objects.equals(isBrush, Boolean.TRUE)) {

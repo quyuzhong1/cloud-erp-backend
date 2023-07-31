@@ -32,7 +32,10 @@
         sod.tax_amount,
         sod.tax_rate,
         sod.remark as detailRemark,
-        ci.country_id as countryId
+        ci.country_id as countryId,
+        sod.exchange_rate,
+        sod.amount_local_currency,
+        sod.all_amount_local_currency
         FROM so_info si
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false
@@ -235,7 +238,18 @@
             sod.sale_profit,
             sod.sale_profit_rate,
             sod.remark as detailRemark,
-            ci.country_id as countryId
+            ci.country_id as countryId,
+            si.receive_account,
+            si.receive_method,
+            si.receive_date,
+            si.receive_amount,
+            si.trade_term,
+            sod.amount_local_currency,
+            sod.all_amount_local_currency,
+            sod.exchange_rate,
+            si.customs_fee,
+            si.bank_service_fee,
+            si.shipping_fee
         FROM so_detail sod
         INNER JOIN so_info si
         ON sod.main_id =si.id AND si.is_deleted=false
