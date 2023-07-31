@@ -1204,6 +1204,8 @@ public class SoInfoDTO implements Serializable {
 
         private LocalDateTime createTime;
 
+        private LocalDate billDate;
+
         /**
          * 审核状态
          */
