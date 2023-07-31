@@ -1777,19 +1777,21 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 dto.setKingdeePushModuleCode(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
                 JSONObject soJson = dmpTaskFeign.getByKingdeeId(dto);
                 List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(id);
-                List<Map<String, Object>> resultList = (List<Map<String, Object>>) soJson.get("SaleOrderEntry");
                 List<SoDetailEntity> updateList = new ArrayList<>(10);
-                if (CollectionUtils.isNotEmpty(resultList)) {
-                    for (int i = 0; i < resultList.size(); i++) {
-                        Map<String, Object> item = resultList.get(i);
-                        String KingdeeId = item.get("Id").toString();
-                        Map<String, Object> materialMap = (Map<String, Object>) item.get("MaterialId");
-                        String skuNo = materialMap.get("Number").toString();
-                        if (soDetailList.size() >= resultList.size()) {
-                            SoDetailEntity soDetail = soDetailList.get(i);
-                            if (soDetail.getSkuNo().equals(skuNo)) {
-                                soDetail.setKingdeeDetailId(KingdeeId);
-                                updateList.add(soDetail);
+                if(soJson!=null){
+                    List<Map<String, Object>> resultList = (List<Map<String, Object>>) soJson.get("SaleOrderEntry");
+                    if (CollectionUtils.isNotEmpty(resultList)) {
+                        for (int i = 0; i < resultList.size(); i++) {
+                            Map<String, Object> item = resultList.get(i);
+                            String KingdeeId = item.get("Id").toString();
+                            Map<String, Object> materialMap = (Map<String, Object>) item.get("MaterialId");
+                            String skuNo = materialMap.get("Number").toString();
+                            if (soDetailList.size() >= resultList.size()) {
+                                SoDetailEntity soDetail = soDetailList.get(i);
+                                if (soDetail.getSkuNo().equals(skuNo)) {
+                                    soDetail.setKingdeeDetailId(KingdeeId);
+                                    updateList.add(soDetail);
+                                }
                             }
                         }
                     }
