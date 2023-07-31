@@ -1495,6 +1495,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             params.setIdList(businessIds);
         }
+        // 待提交
+        if (PurchaseListTypeEnum.WAIT_SUBMIT.getCode().equals(params.getSearchType())) {
+            approveStatusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        }
         //待到货
         if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(params.getSearchType())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
