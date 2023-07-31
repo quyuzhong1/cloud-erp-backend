@@ -87,16 +87,30 @@ public class PurchaseApplicationDetailDTO implements Serializable {
         private String destWarehouseId;
 
         /**
+         * 目的仓库名
+         */
+        private String destWarehouseName;
+
+        /**
          * 采购组织id
          */
         @NotBlank(message = "采购组织不能为空")
         private String purchaseOrgId;
 
         /**
+         * 采购组织名
+         */
+        private String purchaseOrgName;
+        /**
          * 收料组织id
          */
         @NotBlank(message = "收料组织不能为空")
         private String receiveOrgId;
+
+        /**
+         * 收料组织名
+         */
+        private String receiveOrgName;
 
         /**
          * 备注

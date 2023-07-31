@@ -312,6 +312,76 @@ public class SoInfoDTO implements Serializable {
          * 明细备注
          */
         private String detailRemark;
+
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
+         * 销售金额（本位币）
+         */
+        private BigDecimal amountLocalCurrency;
+
+        /**
+         * 价税合计(本位币)
+         */
+        private BigDecimal allAmountLocalCurrency;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 收款账号
+         */
+        private String receiveAccount;
+
+        /**
+         * 收款方式
+         */
+        private String receiveMethod;
+
+        /**
+         * 收款方式
+         */
+        private String receiveMethodName;
+
+        /**
+         * 收款日期
+         */
+        private LocalDate receiveDate;
+
+        /**
+         * 收款金额
+         */
+        private BigDecimal receiveAmount;
+
+        /**
+         * 贸易条款
+         */
+        private String tradeTerm;
+
+        /**
+         * 贸易条款名称
+         */
+        private String tradeTermName;
+
+        /**
+         * 报关费
+         */
+        private BigDecimal customsFee;
+
+        /**
+         * 银行手续费
+         */
+        private BigDecimal bankServiceFee;
+
+        /**
+         * 运费
+         */
+        private BigDecimal shippingFee;
     }
 
     /**
@@ -329,7 +399,7 @@ public class SoInfoDTO implements Serializable {
          * delivery 已发货
          * reject 审核不通过
          */
-        @StateEnumValue(strValues = {"all", "waitApprove", "waitDelivery", "reject", "delivery"}, message = "搜索类型有误")
+        @StateEnumValue(strValues = {"all", "waitSubmit", "waitApprove", "waitDelivery", "reject", "delivery"}, message = "搜索类型有误")
         @NotBlank(message = "搜索类型不能为空")
         private String searchType;
 
@@ -613,6 +683,12 @@ public class SoInfoDTO implements Serializable {
         @Size(min = 1, message = "销售订单详情不能为空", groups = {AddGroup.class})
         private List<SoDetailDTO.AddDTO> detailList;
 
+        /**
+         * 折扣总额
+         */
+        @DecimalMin(value = "0.00", message = "折扣总额不能小于0")
+        private BigDecimal discountAmount;
+
     }
 
 
@@ -870,6 +946,11 @@ public class SoInfoDTO implements Serializable {
          * 销售员名称
          */
         private String sellerName;
+
+        /**
+         * 折扣总额
+         */
+        private BigDecimal discountAmount;
 
         /**
          * 订单产品详情
@@ -1175,6 +1256,12 @@ public class SoInfoDTO implements Serializable {
         @Valid
         @Size(min = 1, message = "销售订单详情不能为空", groups = {AddGroup.class})
         private List<SoDetailDTO.UpdateDTO> detailList;
+
+        /**
+         * 折扣总额
+         */
+        @DecimalMin(value = "0.00", message = "折扣总额不能小于0")
+        private BigDecimal discountAmount;
     }
 
     @Data
@@ -1203,6 +1290,8 @@ public class SoInfoDTO implements Serializable {
         private Boolean invalidStatus;
 
         private LocalDateTime createTime;
+
+        private LocalDate billDate;
 
         /**
          * 审核状态
@@ -1729,6 +1818,17 @@ public class SoInfoDTO implements Serializable {
          */
         private BigDecimal totalTaxAmount;
 
+        /**
+         * 销售金额(本位币)
+         */
+        private BigDecimal amountLocalCurrency;
+
+        /**
+         * 价税合计(本位币)
+         */
+        private BigDecimal allAmountLocalCurrency;
+
+
     }
 
     /**
@@ -1799,6 +1899,57 @@ public class SoInfoDTO implements Serializable {
          * 数量
          */
         private Integer qty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DetailCalDTO {
+
+        /**
+         * 序号
+         */
+        private Integer idx;
+
+        /**
+         * 价税合计（折前）
+         */
+        private BigDecimal taxAmount;
+
+        /**
+         * 折扣额
+         */
+        private BigDecimal detailDiscountAmount;
+
+        /**
+         * 价税合计折扣比例
+         */
+        private BigDecimal taxAmountRate;
+
+    }
+
+    /**
+     * 计算毛利成本数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CalCostProfitDTO {
+
+        /**
+         * 单据日期
+         */
+        @NotNull(message = "单据日期不能为空")
+        private LocalDate billDate;
+
+        /**
+         * 折扣总额
+         */
+        @DecimalMin(value = "0.00", message = "折扣总额不能小于0")
+        private BigDecimal discountAmount;
+
+        @Valid
+        @Size(min = 1, message = "销售订单详情不能为空")
+        private List<SoDetailDTO.CalDetailDTO> detailList;
+
     }
 
 }

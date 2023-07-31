@@ -128,6 +128,45 @@ public class SoChangeEntity extends BaseEntity<SoChangeEntity> {
     @TableField("sync_operate")
     private String syncOperate;
 
+    /**
+     * 收货人
+     */
+    /*
+    @TableField("receiver_name")
+    private String receiverName;
+    */
+    /**
+     * 联系人电话
+     */
+    /*
+    @TableField("tel_number")
+    private String telNumber;
+     */
+
+    /**
+     * 收货地址
+     */
+    /*
+    @TableField("receive_address")
+    private String receiveAddress;
+     */
+
+    /**
+     * 地址类型
+     */
+    /*
+    @TableField("address_type")
+    private String addressType;
+     */
+
+    /**
+     * 收货人id地址
+     */
+    /*
+    @TableField("receive_address_id")
+    private String receiveAddressId;
+     */
+
 
 
     public static final String CODE = "code";

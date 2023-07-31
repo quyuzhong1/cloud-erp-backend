@@ -183,6 +183,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         finance.put("FExchangeRate", 1);
         finance.put("FIsIncludedTax", isTax);
         finance.put("FSettleCurrId.FNumber", currencyCode);
+        finance.put("FAllDisCount", Objects.nonNull(entity.getDiscountAmount()) ? entity.getDiscountAmount() : BigDecimal.ZERO);
         resultMap.put("finance", finance);
 
         if (StringUtils.isNotBlank(salesOrgCode)) {
@@ -290,6 +291,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             jsonObject.set("stockBaseQty", item.getQty());
             jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
             jsonObject.set("remark", item.getRemark());
+            jsonObject.set("detailDiscountAmount", Objects.nonNull(item.getDiscountAmount()) ? item.getDiscountAmount() : BigDecimal.ZERO);
             list.add(jsonObject);
         }
 

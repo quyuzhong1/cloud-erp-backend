@@ -6,6 +6,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
@@ -351,4 +352,18 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return Boolean
      */
     Boolean updateRemark(BaseIdsDTO.RemarkDTO dto);
+
+    /**
+     * 根据销售订单判断是否已经下推过发货通知单
+     * @param id
+     * @return true表示已下推过有效发货通知单，false表示没有下推过有效发货通知单
+     */
+    // Boolean checkSoPushDeliveryNotice(String id);
+
+    /**
+     * 重新计算成本毛利
+     * @param calCostProfitDTO
+     * @return
+     */
+    List<SoDetailDTO.CalDetailResultDTO> calSkuCostProfit(SoInfoDTO.CalCostProfitDTO calCostProfitDTO);
 }
