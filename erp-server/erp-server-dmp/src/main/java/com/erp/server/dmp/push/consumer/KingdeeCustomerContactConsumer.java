@@ -127,7 +127,7 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
         //联系人编号
         String code = String.valueOf(map.get("code"));
         //如果所有编码都没有无法同步，需要手动设置好编号
-        if (StringUtils.isBlank(addressCode) || StringUtils.isBlank(syncKingdeeId) && StringUtils.isBlank(code)) {
+        if (StringUtils.isBlank(addressCode) || (StringUtils.isBlank(syncKingdeeId) && StringUtils.isBlank(code))) {
             //错误日志
             kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,"","地址编码或联系人编号是空，同步金蝶失败，请手动维护数据",type, ApiSendStatusEnum.FAILURE.getCode());
         }
