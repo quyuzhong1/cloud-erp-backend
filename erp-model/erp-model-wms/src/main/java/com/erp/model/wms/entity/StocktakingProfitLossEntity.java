@@ -1,0 +1,64 @@
+package com.erp.model.wms.entity;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+/**
+ * <p>
+ * 盘盈盘亏单
+ * </p>
+ *
+ * @author Lambda
+ * @since 2023-07-31
+ */
+@Getter
+@Setter
+@Accessors(chain = true)
+@TableName("stocktaking_profit_loss")
+public class StocktakingProfitLossEntity extends BaseEntity<StocktakingProfitLossEntity> {
+
+    /**
+     * 单号
+     */
+    @TableField("code")
+    private String code;
+
+    /**
+     * 来源id 盘点任务id
+     */
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源code 盘点任务code
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
+    /**
+     * 单据类型
+     */
+    @TableField("bill_type")
+    private String billType;
+
+
+    public static final String CODE = "code";
+
+    public static final String SOURCE_ID = "source_id";
+
+    public static final String SOURCE_CODE = "source_code";
+
+    public static final String BILL_TYPE = "bill_type";
+
+    @Override
+    public Serializable pkVal() {
+        return null;
+    }
+
+}

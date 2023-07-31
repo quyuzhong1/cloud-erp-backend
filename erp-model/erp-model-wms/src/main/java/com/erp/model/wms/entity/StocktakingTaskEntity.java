@@ -1,0 +1,74 @@
+package com.erp.model.wms.entity;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+
+/**
+ * <p>
+ * 盘点任务表
+ * </p>
+ *
+ * @author Lambda
+ * @since 2023-07-31
+ */
+@Getter
+@Setter
+@Accessors(chain = true)
+@TableName("stocktaking_task")
+public class StocktakingTaskEntity extends BaseEntity<StocktakingTaskEntity> {
+
+    /**
+     * 单号
+     */
+    @TableField("code")
+    private String code;
+
+    /**
+     * 盘点状态
+     */
+    @TableField("status")
+    private String status;
+
+    /**
+     * 来源id 来源盘点计划
+     */
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源code 来源盘点计划code
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
+    /**
+     * 审核状态
+     */
+    @TableField("approve_status")
+    private String approveStatus;
+
+
+    public static final String CODE = "code";
+
+    public static final String STATUS = "status";
+
+    public static final String SOURCE_ID = "source_id";
+
+    public static final String SOURCE_CODE = "source_code";
+
+    public static final String APPROVE_STATUS = "approve_status";
+
+    @Override
+    public Serializable pkVal() {
+        return null;
+    }
+
+}
