@@ -329,7 +329,7 @@ public class SoInfoDTO implements Serializable {
          * delivery 已发货
          * reject 审核不通过
          */
-        @StateEnumValue(strValues = {"all", "waitApprove", "waitDelivery", "reject", "delivery"}, message = "搜索类型有误")
+        @StateEnumValue(strValues = {"all", "waitSubmit", "waitApprove", "waitDelivery", "reject", "delivery"}, message = "搜索类型有误")
         @NotBlank(message = "搜索类型不能为空")
         private String searchType;
 
