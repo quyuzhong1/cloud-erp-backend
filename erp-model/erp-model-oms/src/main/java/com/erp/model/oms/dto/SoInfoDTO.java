@@ -495,6 +495,11 @@ public class SoInfoDTO implements Serializable {
          */
         private Boolean isClose;
 
+        /**
+         * 客户SKU
+         */
+        private String platformSkuNo;
+
     }
 
     /**
