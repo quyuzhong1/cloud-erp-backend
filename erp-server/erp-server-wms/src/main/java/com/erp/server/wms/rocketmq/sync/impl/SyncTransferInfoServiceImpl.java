@@ -127,7 +127,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         BaseApproveParamDTO paramDTO = new BaseApproveParamDTO();
         paramDTO.setIds(Arrays.asList(id));
         paramDTO.setType(WmsConstant.PASS);
-        transferInfoService.approve(paramDTO);
+        transferInfoService.approve(paramDTO,Boolean.FALSE);
     }
 
 

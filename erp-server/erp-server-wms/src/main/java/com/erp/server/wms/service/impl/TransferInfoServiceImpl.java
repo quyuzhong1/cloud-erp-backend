@@ -72,7 +72,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -438,7 +437,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void approve(BaseApproveParamDTO baseApproveParamDTO) {
+    public void approve(BaseApproveParamDTO baseApproveParamDTO,Boolean isSyncKingDee) {
         List<String> ids = baseApproveParamDTO.getIds();
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);
@@ -467,8 +466,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
             //更新库存
             updateInventoryTransCore(list);
-            //发送金蝶
-            list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            if (isSyncKingDee) {
+                //发送金蝶
+                list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            } else {
+                //更新金蝶状态
+                updateSyncKingdeeStatus(ids,SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(),"",SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+            }
             //发送马帮（非马帮平台的才需要推送）
             // TODO 正式上线时需注释掉
             log.warn("直接调拨单同步马帮开关：【{}】", transferSyncToMb);
