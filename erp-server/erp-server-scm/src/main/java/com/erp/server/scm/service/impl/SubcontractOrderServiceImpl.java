@@ -879,8 +879,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             generatePoDTO.setReceiveOrgId(mainEntity.getReceiveOrgId());
             //新品首批暂时默认
             generatePoDTO.setIsFirstMassProduct(ObjectUtils.isEmpty(generatePoDTO.getIsFirstMassProduct()) ? mainEntity.getIsFirstMassProduct() : generatePoDTO.getIsFirstMassProduct());
-            //预计交货日期
-            generatePoDTO.setPlanDeliveryDate(detailEntity.getPlanDeliveryDate());
             //备注
             generatePoDTO.setRemark(detailEntity.getRemark());
             //付款条件
