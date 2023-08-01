@@ -784,6 +784,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailAddDTO.setIsGift(addDetailDTO.getIsGift());
                 poDetailAddDTO.setPurchaseApplicationId(addDetailDTO.getPurchaseApplicationId());
                 poDetailAddDTO.setPurchaseApplicationDetailId(addDetailDTO.getPurchaseApplicationDetailId());
+                poDetailAddDTO.setPlanDeliveryDate(addDetailDTO.getPlanDeliveryDate());
                 if (!addDetailDTO.getIsGift()) {
                     //供应商报价信息
                     PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();

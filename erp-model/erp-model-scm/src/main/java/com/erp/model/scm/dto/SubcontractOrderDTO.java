@@ -525,6 +525,12 @@ public class SubcontractOrderDTO implements Serializable {
         private String supplierId;
 
         /**
+         * 预计交货日期
+         */
+        private LocalDate planDeliveryDate;
+
+
+        /**
          * 供应商名称
          */
         private String supplierName;
@@ -604,6 +610,12 @@ public class SubcontractOrderDTO implements Serializable {
          * 付款条件
          */
         private String paymentCondition;
+
+        /**
+         * 预计交货日期
+         */
+        @NotNull(message = "预计交货日期不能为空")
+        private LocalDate planDeliveryDate;
 
     }
 
