@@ -90,7 +90,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public void add(List<PurchaseOrderDetailDTO.AddDTO> details, String purchaseOrderId) {
         if (CollectionUtils.isEmpty(details)) {
