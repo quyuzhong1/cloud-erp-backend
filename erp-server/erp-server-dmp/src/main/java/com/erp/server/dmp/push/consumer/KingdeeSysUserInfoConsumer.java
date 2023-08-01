@@ -72,7 +72,7 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
         //业务id
         String businessId = String.valueOf(map.get("id"));
         //业务编码
-        String code = (String) map.get("code");
+        String code =  String.valueOf(map.get("code"));
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
@@ -107,10 +107,10 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
         }
 
         //查找到数据后，判断其审核状态
-        String documentStatus = (String) model.get("DocumentStatus");
+        String documentStatus = model.getStr("DocumentStatus","");
         //禁用日期（用于判断是否禁用）
-        String forbidDate = (String) model.get("ForbidDate");
-        String forbidStatus = String.valueOf(model.get("ForbidStatus"));
+        String forbidStatus = model.getStr("ForbidStatus", "");
+
 
         // A启用 B禁用
         Boolean kingdeeForbidStatus = "B".equals(forbidStatus) ? Boolean.TRUE : Boolean.FALSE;
