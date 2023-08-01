@@ -144,7 +144,7 @@ public class SoUtils {
             if (Objects.nonNull(isGift) && isGift) {
                 price = BigDecimal.ZERO;
             }
-            if (!Objects.equals(isGift, Boolean.TRUE) || (Objects.nonNull(price) && price.compareTo(BigDecimal.ZERO) != 0) ) {
+            if (Objects.nonNull(price) && price.compareTo(BigDecimal.ZERO) != 0) {
                 lastNoGiftIndex = i;
             }
         }
