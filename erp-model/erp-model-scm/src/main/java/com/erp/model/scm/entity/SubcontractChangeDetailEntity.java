@@ -71,6 +71,12 @@ public class SubcontractChangeDetailEntity extends BaseEntity<SubcontractChangeD
     private BigDecimal price;
 
     /**
+     * 采购金额
+     */
+    @TableField("amount")
+    private BigDecimal amount;
+
+    /**
     * 币别
     */
     @TableField("currency")
@@ -105,12 +111,6 @@ public class SubcontractChangeDetailEntity extends BaseEntity<SubcontractChangeD
     */
     @TableField("old_price")
     private BigDecimal oldPrice;
-
-    /**
-    * 采购金额
-    */
-    @TableField("amount")
-    private BigDecimal amount;
 
     /**
     * 原采购金额

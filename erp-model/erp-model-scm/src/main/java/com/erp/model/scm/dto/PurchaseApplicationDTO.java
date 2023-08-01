@@ -857,14 +857,12 @@ public class PurchaseApplicationDTO implements Serializable {
         /**
          * 供应商id
          */
-        @NotBlank(message = "供应商不能为空")
         private String supplierId;
 
 
         /**
          * 预计交货日期
          */
-        @NotNull(message = "预计交货日期不能为空")
         private LocalDate planDeliveryDate;
 
         /**
@@ -887,6 +885,7 @@ public class PurchaseApplicationDTO implements Serializable {
         /**
          * 单价
          */
+        @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
         private BigDecimal price;
 
         /**
@@ -897,6 +896,7 @@ public class PurchaseApplicationDTO implements Serializable {
         /**
          * 备注
          */
+        @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
 
         /**
