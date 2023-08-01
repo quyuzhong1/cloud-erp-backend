@@ -543,9 +543,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<String> supplierIds = detailList.stream().map(SubcontractOrderDetailEntity::getSupplierId).collect(Collectors.toList());
         log.info("查询供应商信息，supplierId集合：【{}】", JSONUtil.toJsonStr(supplierIds));
         List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
-        if (CollectionUtils.isEmpty(supplierList)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
-        }
 
         //明细父级sku
         List<SubcontractOrderDetailEntity> parentList = detailList.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
@@ -568,9 +565,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //产品名称
             String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSkuName())).orElse("");
             viewDTO.setProductName(productName);
-            //供应商名称
-            String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(viewDTO.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getName())).orElse("");
-            viewDTO.setSupplierName(supplierName);
+
+            if (CollectionUtils.isNotEmpty(supplierList)) {
+                //供应商名称
+                String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(viewDTO.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getName())).orElse("");
+                viewDTO.setSupplierName(supplierName);
+            }
 
             //根据组织、仓库、sku查询可用库存
             List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(Arrays.asList(viewDTO.getSkuId()),viewDTO.getWarehouseId(),null);
@@ -600,9 +600,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 //产品名称
                 String childProductName = skuList.stream().filter(obj -> obj.getSkuId().equals(childViewDTO.getSkuId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSkuName())).orElse("");
                 childViewDTO.setProductName(childProductName);
-                //供应商名称
-                String childSupplierName = supplierList.stream().filter(obj -> obj.getId().equals(childViewDTO.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getName())).orElse("");
-                childViewDTO.setSupplierName(childSupplierName);
+                if (CollectionUtils.isNotEmpty(supplierList)) {
+                    //供应商名称
+                    String childSupplierName = supplierList.stream().filter(obj -> obj.getId().equals(childViewDTO.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getName())).orElse("");
+                    childViewDTO.setSupplierName(childSupplierName);
+                }
 
                 //根据组织、仓库、sku查询可用库存
                 List<InventoryQtyDTO.SkuInventoryTotalDTO> childSkuInventoryTotalList = listSkuInventoryTotalList(Arrays.asList(childViewDTO.getSkuId()),childViewDTO.getWarehouseId(),childViewDTO.getWarehouseLocation());
