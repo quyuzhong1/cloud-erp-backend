@@ -1072,7 +1072,7 @@ public class SoDetailDTO implements Serializable {
          */
         @NotNull(message = "销售数量不能为空")
         @DecimalMax(value = "999999999",message ="销售数量最大值")
-        @DecimalMin(value = "1",message ="销售数量最小值不能为0")
+        @Min(value = 0,message ="销售数量最小值小于0")
         private Integer qty;
 
         /**

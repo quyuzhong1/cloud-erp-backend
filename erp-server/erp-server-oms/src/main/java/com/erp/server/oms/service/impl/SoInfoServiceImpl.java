@@ -262,6 +262,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //保存成功
         Boolean addResult = this.saveOrUpdate(addEntity);
         if (addResult) {
+            // 此处调整为明细的币制取主单的币制
+            if(StrUtils.isNotEmpty(dto.getCurrency()) && CollUtil.isNotEmpty(dto.getDetailList())) {
+                dto.getDetailList().stream().forEach(detail-> detail.setCurrency(dto.getCurrency()));
+            }
             //添加明细
             soDetailService.addSoDetail(id, dto.getDetailList());
 
@@ -775,6 +779,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //保存成功
         Boolean draftResult = this.saveOrUpdate(draftEntity);
         if (draftResult) {
+            // 此处调整为明细的币制取主单的币制
+            if(StrUtils.isNotEmpty(dto.getCurrency()) && CollUtil.isNotEmpty(dto.getDetailList())) {
+                dto.getDetailList().stream().forEach(detail-> detail.setCurrency(dto.getCurrency()));
+            }
             //添加明细
             soDetailService.addSoDetail(id, dto.getDetailList());
 
@@ -880,6 +888,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
              * 添加修改日志
              */
             operateLogService.addModuleOperateLogByObj(old, soInfo, ModuleTypeEnum.SO.getCode(), id, "", "");
+            // 此处调整为明细的币制取主单的币制
+            if(StrUtils.isNotEmpty(dto.getCurrency()) && CollUtil.isNotEmpty(dto.getDetailList())) {
+                dto.getDetailList().stream().forEach(detail-> detail.setCurrency(dto.getCurrency()));
+            }
             //修改 订单详情
             soDetailService.updateSoDetail(id, dto.getDetailList());
             return id;
