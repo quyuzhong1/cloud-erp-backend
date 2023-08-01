@@ -889,13 +889,6 @@ public class PurchaseApplicationDTO implements Serializable {
         private BigDecimal price;
 
         /**
-         * 税率
-         */
-        @Digits(integer = 16,fraction = 4,message = "税率最大16字符，小数位不能大于4个字符")
-        private BigDecimal taxRate;
-
-
-        /**
          * 是否赠品
          */
         private Boolean isGift;

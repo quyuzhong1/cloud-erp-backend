@@ -262,12 +262,6 @@ public class SubcontractChangeDetailDTO implements Serializable {
         private BigDecimal price;
 
         /**
-         * 税率
-         */
-        @Digits(integer = 16,fraction = 4,message = "税率最大16字符，小数位不能大于4个字符")
-        private BigDecimal taxRate;
-
-        /**
         * 币别
         */
         @NotBlank(message = "币别不能为空")

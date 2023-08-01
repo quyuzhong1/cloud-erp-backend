@@ -384,7 +384,6 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         //子件SKU默认取供应商报价
         if (isChild) {
             entity.setPrice(viewDTO.getTaxPrice());
-            entity.setTaxRate(viewDTO.getTaxRate());
         }
         entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
     }
