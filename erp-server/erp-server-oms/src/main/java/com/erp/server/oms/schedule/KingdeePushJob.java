@@ -42,10 +42,6 @@ public class KingdeePushJob {
     @Resource
     private SyncKingdeeSoChangeService syncKingdeeSoChangeService;
     @Resource
-    private SoReturnService soReturnService;
-    @Resource
-    private SyncKingdeeSoReturnService syncKingdeeSoReturnService;
-    @Resource
     private SoInfoService soInfoService;
     @Resource
     private SyncKingdeeSoService syncKingdeeSoService;
@@ -141,32 +137,6 @@ public class KingdeePushJob {
             }
         });
     }
-
-
-    /**
-     * 推送销售退货单
-     */
-    @XxlJob("kingdeePushSoReturn")
-    public void kingdeePushSoReturn() {
-        List<SoReturnEntity> list = soReturnService.lambdaQuery()
-                .in(SoReturnEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
-                .or(obj -> obj.eq(SoReturnEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(SoReturnEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
-                .list();
-        if (ObjectUtils.isEmpty(list)) {
-            log.info("无需要同步的销售退货单");
-            return;
-        }
-        list.forEach(obj->{
-            try {
-                syncKingdeeSoReturnService.syncDataToKingdee(obj, obj.getSyncOperate());
-            } catch (Exception e) {
-                XxlJobHelper.log("销售退货单【{}】推送金蝶失败",obj.getCode());
-                log.error("销售退货单【{}】推送金蝶失败",obj.getCode());
-            }
-        });
-    }
-
-
 
     /**
      * 推送销售订单
