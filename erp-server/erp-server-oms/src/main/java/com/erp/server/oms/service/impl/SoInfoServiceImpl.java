@@ -65,6 +65,7 @@ import com.erp.server.oms.service.*;
 import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -1478,6 +1479,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if(CollUtil.isNotEmpty(nopermitFields)) {
             headMap.keySet().removeIf(r->nopermitFields.contains(r));
         }
+        // 隐藏主单列
+        SoUtils.hideForExport(dataList);
+        // 去除id字段
+        headMap.keySet().removeIf(r->Objects.equals("id", r));
+        dataList.stream().forEach(data->data.keySet().removeIf(r->Objects.equals("id", r)));
         String fileName = StrUtil.format("销售订单{}.xlsx", System.currentTimeMillis());
         ExcelUtil.easyUtilStr(new ArrayList<>(headMap.values()), "销售订单", dataList, fileName, response);
         return Boolean.TRUE;
