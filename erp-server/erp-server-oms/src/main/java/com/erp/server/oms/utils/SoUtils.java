@@ -235,7 +235,7 @@ public class SoUtils {
         headMap.put("warehouseOrgName", "库存组织");
         headMap.put("bankServiceFee", "银行手续费");
         headMap.put("shippingFee", "运费金额");
-        headMap.put("receiveAccount", "收款账号");
+        headMap.put("receiveAccountName", "收款账号");
         headMap.put("receiveMethodName", "收款方式");
         headMap.put("receiveDate", "收款日期");
         headMap.put("receiveAmount", "收款金额");
@@ -250,6 +250,7 @@ public class SoUtils {
         headMap.put("deliveryStatusName", "发货状态");
         headMap.put("skuNo", "sku");
         headMap.put("productName", "产品名称");
+        headMap.put("platformSkuNo", "客户SKU");
         headMap.put("qty", "销售数量");
         headMap.put("scarceQty", "缺货数量");
         headMap.put("availableQty", "可出数量");
@@ -340,7 +341,7 @@ public class SoUtils {
                 data.put("warehouseOrgName", "");
                 data.put("bankServiceFee", "");
                 data.put("shippingFee", "");
-                data.put("receiveAccount", "");
+                data.put("receiveAccountName", "");
                 data.put("receiveMethodName", "");
                 data.put("receiveDate", "");
                 data.put("receiveAmount", "");

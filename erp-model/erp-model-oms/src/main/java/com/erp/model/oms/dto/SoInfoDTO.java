@@ -480,6 +480,21 @@ public class SoInfoDTO implements Serializable {
          */
         private BigDecimal taxAmountBefore;
 
+        /**
+         * 是否赠品 true 是
+         */
+        private Boolean isGift;
+
+        /**
+         * 是否补发 true 是
+         */
+        private Boolean isReissue;
+
+        /**
+         * 是否关闭 true 是
+         */
+        private Boolean isClose;
+
     }
 
     /**

@@ -270,7 +270,8 @@
             sod.tax_amount_before,
             sod.is_gift,
             sod.is_reissue,
-            sod.is_close
+            sod.is_close,
+            sod.platform_sku_no
         FROM so_detail sod
         INNER JOIN so_info si
         ON sod.main_id =si.id AND si.is_deleted=false
