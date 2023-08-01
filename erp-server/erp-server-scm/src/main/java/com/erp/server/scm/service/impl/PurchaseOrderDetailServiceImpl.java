@@ -352,7 +352,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         //非正品单价必须大于0
         String notGiftSkuNos = details.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getIsGift()) && !obj.getIsGift() && MathUtil.compareTo(obj.getTaxPrice(), MathUtil.ZERO) <= MathUtil.ZERO).map(PurchaseOrderDetailDTO.AddDTO::getSkuNo).collect(Collectors.joining(","));
         if (StringUtils.isNotBlank(notGiftSkuNos)) {
-            throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE,entity.getCode(),notGiftSkuNos);
+            throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE,notGiftSkuNos);
         }
 
         //验证录入的SKU明细报价信息是否正确
