@@ -583,9 +583,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(viewDTO.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             viewDTO.setPaymentConditionName(paymentConditionName);
 
-            //汇率
-            viewDTO.setTaxRate(MathUtil.multiply(viewDTO.getTaxRate(),MathUtil.BigDecimal_100));
-
             //子集SKU
             List<SubcontractOrderDetailEntity> childList = detailList.stream().filter(obj -> obj.getParentId().equals(viewDTO.getId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(childList)) {
@@ -617,9 +614,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 //付款条件
                 String childPaymentConditionName = paymentConditionList.stream().filter(obj -> obj.getValue().equals(childViewDTO.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 childViewDTO.setPaymentConditionName(childPaymentConditionName);
-
-                //汇率
-                childViewDTO.setTaxRate(MathUtil.multiply(childViewDTO.getTaxRate(),MathUtil.BigDecimal_100));
             }
 
             viewDTO.setChildList(childDTOList);
