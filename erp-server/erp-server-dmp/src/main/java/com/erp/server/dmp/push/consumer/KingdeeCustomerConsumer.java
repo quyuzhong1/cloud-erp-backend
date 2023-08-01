@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_customer_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CUSTOMER_INFO, consumeMode = ConsumeMode.ORDERLY)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_customer_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CUSTOMER_INFO)
 public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Object>> {
     public static void main(String[] args) {
 
