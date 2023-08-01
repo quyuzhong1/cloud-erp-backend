@@ -15,7 +15,10 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.SkuApproveConfigureEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -3707,7 +3710,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateOccupyStatus(List<String> skuIds) {
-        return lambdaUpdate().set(ProductDetailEntity::getOccupyStatus, Boolean.TRUE).in(ProductDetailEntity::getId, skuIds).update();
+        return lambdaUpdate()
+                .set(ProductDetailEntity::getOccupyStatus, Boolean.TRUE)
+                .in(ProductDetailEntity::getId, skuIds)
+                .eq(ProductDetailEntity::getOccupyStatus, Boolean.FALSE)
+                .update();
     }
 
 }

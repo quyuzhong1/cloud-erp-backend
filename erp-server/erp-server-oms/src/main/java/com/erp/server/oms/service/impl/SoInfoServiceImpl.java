@@ -26,10 +26,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
@@ -68,6 +65,7 @@ import com.erp.server.oms.service.*;
 import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -175,6 +173,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Autowired
     private CustomerInvoiceService customerInvoiceService;
 
+
     /**
      * 添加销售订单
      *
@@ -262,6 +261,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //保存成功
         Boolean addResult = this.saveOrUpdate(addEntity);
         if (addResult) {
+            // 此处调整为明细的币制取主单的币制
+            if(StrUtils.isNotEmpty(dto.getCurrency()) && CollUtil.isNotEmpty(dto.getDetailList())) {
+                dto.getDetailList().stream().forEach(detail-> detail.setCurrency(dto.getCurrency()));
+            }
             //添加明细
             soDetailService.addSoDetail(id, dto.getDetailList());
 
@@ -775,6 +778,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //保存成功
         Boolean draftResult = this.saveOrUpdate(draftEntity);
         if (draftResult) {
+            // 此处调整为明细的币制取主单的币制
+            if(StrUtils.isNotEmpty(dto.getCurrency()) && CollUtil.isNotEmpty(dto.getDetailList())) {
+                dto.getDetailList().stream().forEach(detail-> detail.setCurrency(dto.getCurrency()));
+            }
             //添加明细
             soDetailService.addSoDetail(id, dto.getDetailList());
 
@@ -880,6 +887,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
              * 添加修改日志
              */
             operateLogService.addModuleOperateLogByObj(old, soInfo, ModuleTypeEnum.SO.getCode(), id, "", "");
+            // 此处调整为明细的币制取主单的币制
+            if(StrUtils.isNotEmpty(dto.getCurrency()) && CollUtil.isNotEmpty(dto.getDetailList())) {
+                dto.getDetailList().stream().forEach(detail-> detail.setCurrency(dto.getCurrency()));
+            }
             //修改 订单详情
             soDetailService.updateSoDetail(id, dto.getDetailList());
             return id;
@@ -1274,6 +1285,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicEnum.RECEIVE_METHOD.getType());
         // 收款条件
         List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicEnum.COLLECTION_TERMS.getType());
+        // 仓库
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
+        // 仓库组织
+        List<BaseIdDTO> accountingCompanyList = sysUserFeign.listAccountingCompany();
+        // 收款账号
+        List<BankAccountEntity> bankAccountList =  bankAccountService.list();
+        // 收货地址
+        List<String> receiveAddressIds = list.stream().filter(r->StrUtils.isNotEmpty(r.getReceiveAddressId())).map(SoInfoDTO.PagingViewDTO::getReceiveAddressId).collect(Collectors.toList());
+        List<CustomerAddressEntity> customerAddressEntities = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(receiveAddressIds)) {
+            customerAddressEntities = customerAddressService.getByIds(receiveAddressIds);
+        }
         for (SoInfoDTO.PagingViewDTO item : list) {
             BillApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
@@ -1293,6 +1316,20 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (CollectionUtils.isNotEmpty(countryList)) {
                 String countryName = countryList.stream().filter(obj -> obj.getId().equals(item.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
                 item.setCountryName(countryName);
+            }
+
+            // 仓库
+            if(StrUtil.isNotEmpty(item.getWarehouseId())) {
+                String warehouseName = warehouseList.stream().filter(w -> w.getId().equals(item.getWarehouseId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                item.setWarehouseName(warehouseName);
+            }
+
+            // 仓库组织
+            if(StrUtil.isNotEmpty(item.getWarehouseOrgId())) {
+                String warehouseOrgName = accountingCompanyList.stream().filter(w -> w.getId().equals(item.getWarehouseOrgId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                item.setWarehouseOrgName(warehouseOrgName);
             }
 
             //作废状态
@@ -1373,8 +1410,49 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     item.setReceiveMethodName(dictBasicEntity.getName());
                 }
             }
+            // 银行账号
+            if (StrUtils.isNotEmpty(item.getReceiveAccount())) {
+                String bankAccountName = bankAccountList.stream().filter(r -> Objects.equals(r.getOrgId(), item.getSalesOrgId())
+                        && (Objects.equals(r.getBankAccountNo(), item.getReceiveAccount())) ).findFirst().flatMap(r -> Optional.ofNullable(r.getAccountName())).orElse("");
+                item.setReceiveAccountName(bankAccountName);
+            }
+            // 交货方式
+            if(StrUtils.isNotEmpty(item.getDeliveryMode())) {
+                String deliveryModeName = DeliveryModeEnum.getName(item.getDeliveryMode());
+                item.setDeliveryModeName(deliveryModeName);
+            }
+            // 地址类型
+            if(StrUtils.isNotEmpty(item.getAddressType())) {
+                String addressTypeName = AddressTypeEnum.getName(item.getAddressType());
+                item.setAddressTypeName(addressTypeName);
+            }
+            // 收款条件
+            if(StrUtils.isNotEmpty(item.getReceiveCondition())) {
+                if (CollectionUtils.isNotEmpty(receiveConditionList) && StrUtils.isNotEmpty(item.getReceiveCondition())) {
+                    DictBasicEntity dictBasicEntity = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getValue(), item.getReceiveCondition())).findFirst().orElse(null);
+                    if(Objects.nonNull(dictBasicEntity)) {
+                        item.setReceiveConditionName(dictBasicEntity.getName());
+                    }
+                }
+            }
+            // 收货地址
+            if(StrUtils.isNotEmpty(item.getReceiveAddressId())) {
+                CustomerAddressEntity customerAddressEntity = customerAddressEntities.stream().filter(req -> req.getId().equals(item.getReceiveAddressId())).findFirst().orElse(new CustomerAddressEntity());
+                item.setReceiveAddress(customerAddressEntity.getAddress());
+            }
+            // 含税单价
+            BigDecimal taxRate = item.getTaxRate();
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+            //单价
+            BigDecimal price = item.getPrice();
+            //含税单价=销售单价*（税率+1）
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
+            //含税单价
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            item.setTaxPrice(taxPrice);
         }
 
+        /**
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/SoInfo.xlsx";
         String name = "销售订单列表";
@@ -1387,6 +1465,27 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             log.error("销售订单列表导出出错 {}", e);
             return Boolean.FALSE;
         }
+         */
+        List<String> nopermitFields = dto.getNopermitFields();
+        Map<String, String> headMap = SoUtils.getExportHeadList();
+        List<LinkedHashMap<String, Object>> dataList = new ArrayList<>();
+        if(CollUtil.isNotEmpty(list)) {
+            for(SoInfoDTO.PagingViewDTO item : list) {
+                LinkedHashMap<String, Object> data = SoUtils.fillToMap(item, headMap, nopermitFields);
+                dataList.add(data);
+            }
+        }
+        // 去除掉无权限字段
+        if(CollUtil.isNotEmpty(nopermitFields)) {
+            headMap.keySet().removeIf(r->nopermitFields.contains(r));
+        }
+        // 隐藏主单列
+        SoUtils.hideForExport(dataList);
+        // 去除id字段
+        headMap.keySet().removeIf(r->Objects.equals("id", r));
+        dataList.stream().forEach(data->data.keySet().removeIf(r->Objects.equals("id", r)));
+        String fileName = StrUtil.format("销售订单{}.xlsx", System.currentTimeMillis());
+        ExcelUtil.easyUtilStr(new ArrayList<>(headMap.values()), "销售订单", dataList, fileName, response);
         return Boolean.TRUE;
     }
 

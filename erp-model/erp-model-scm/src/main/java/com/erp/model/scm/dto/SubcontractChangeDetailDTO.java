@@ -241,7 +241,6 @@ public class SubcontractChangeDetailDTO implements Serializable {
         /**
          * 供应商id
          */
-        @NotBlank(message = "供应商id不能为空")
         @Size(max = 19,message = "供应商id最大长度不能超过19位")
         private String supplierId;
         /**
@@ -255,12 +254,13 @@ public class SubcontractChangeDetailDTO implements Serializable {
         */
         @NotNull(message = "采购数量不能为空")
         private Integer qty;
+
         /**
         * 含税单价
         */
-        @NotNull(message = "含税单价不能为空")
         @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
         private BigDecimal price;
+
         /**
         * 币别
         */

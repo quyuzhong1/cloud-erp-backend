@@ -441,7 +441,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
-        List<SoDetailEntity> saveOrUpdateList = new ArrayList<>(detailList.size());
+        // List<SoDetailEntity> saveOrUpdateList = new ArrayList<>(detailList.size());
         //这是修改的
         List<SoDetailDTO.UpdateDTO> updateList = detailList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
         //这是要添加的
@@ -450,8 +450,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<SoDetailEntity> updateEntityList = BeanMapper.copyList(updateList, SoDetailEntity.class);
         //这个是要添加的
         List<SoDetailEntity> addEntityList = BeanMapper.copyList(addList, SoDetailEntity.class);
+        /**
         saveOrUpdateList.addAll(updateEntityList);
         saveOrUpdateList.addAll(addEntityList);
+         */
+        List<SoDetailEntity> saveOrUpdateList = BeanMapper.copyList(detailList, SoDetailEntity.class);
+
         List<SoDetailEntity> dbList = this.listBaseByMainId(mainId);
 
         List<Pair<String, String>> pairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
@@ -1073,12 +1077,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
-        List<SoDetailEntity> saveOrUpdateList = new ArrayList<>(detailList.size());
+        // List<SoDetailEntity> saveOrUpdateList = new ArrayList<>(detailList.size());
         //这是修改的
         List<SoDetailDTO.AddDTO> updateList = detailList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
         //这是要添加的
         List<SoDetailDTO.AddDTO> addList = detailList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
+        /**
         //这个是要修改的实体
         List<SoDetailEntity> updateEntityList = BeanMapper.copyList(updateList, SoDetailEntity.class);
 
@@ -1087,6 +1092,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
         saveOrUpdateList.addAll(updateEntityList);
         saveOrUpdateList.addAll(addEntityList);
+         */
+        List<SoDetailEntity> saveOrUpdateList = BeanMapper.copyList(detailList, SoDetailEntity.class);
 
         List<SoDetailEntity> dbList = this.listBaseByMainId(mainId);
 

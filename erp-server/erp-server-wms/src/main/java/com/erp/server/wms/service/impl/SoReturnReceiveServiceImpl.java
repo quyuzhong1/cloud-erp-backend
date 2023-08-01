@@ -787,4 +787,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         }
         return list;
     }
+
+    @Override
+    public List<SoReturnReceiveEntity> listByIds(List<String> ids) {
+        return lambdaQuery().in(SoReturnReceiveEntity::getId, ids).list();
+    }
 }

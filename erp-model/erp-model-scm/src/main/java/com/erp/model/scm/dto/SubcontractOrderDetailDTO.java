@@ -213,7 +213,6 @@ public class SubcontractOrderDetailDTO implements Serializable {
         /**
         * 供应商id
         */
-        @NotBlank(message = "供应商id不能为空")
         @Size(max = 19,message = "供应商id最大长度不能超过19位")
         private String supplierId;
         /**
@@ -229,9 +228,14 @@ public class SubcontractOrderDetailDTO implements Serializable {
         /**
         * 含税单价
         */
-        @NotNull(message = "含税单价不能为空")
         @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
         private BigDecimal price;
+
+        /**
+         * 税率
+         */
+        @Digits(integer = 16,fraction = 4,message = "税率最大16字符，小数位不能大于4个字符")
+        private BigDecimal taxRate;
 
         /**
         * 仓库id
@@ -248,7 +252,6 @@ public class SubcontractOrderDetailDTO implements Serializable {
         /**
         * 预计交货日期
         */
-        @NotNull(message = "预计交货日期不能为空")
         private LocalDate planDeliveryDate;
 
         /**

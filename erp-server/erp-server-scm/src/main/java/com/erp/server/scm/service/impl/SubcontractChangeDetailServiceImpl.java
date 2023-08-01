@@ -215,9 +215,14 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             List<String> warehouseIdList = obj.getChildList().stream().map(SubcontractChangeDetailDTO.UpdateDTO::getWarehouseId).collect(Collectors.toList());
             warehouseIds.addAll(warehouseIdList);
 
-            supplierIds.add(obj.getSupplierId());
-            List<String> supplierIdList = obj.getChildList().stream().map(SubcontractChangeDetailDTO.UpdateDTO::getSupplierId).collect(Collectors.toList());
-            supplierIds.addAll(supplierIdList);
+            //供应商信息
+            if (StringUtils.isNotEmpty(obj.getSupplierId())) {
+                supplierIds.add(obj.getSupplierId());
+            }
+            List<String> supplierIdList = obj.getChildList().stream().filter(e -> StringUtils.isNotEmpty(e.getSupplierId())).map(SubcontractChangeDetailDTO.UpdateDTO::getSupplierId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(supplierIdList)) {
+                supplierIds.addAll(supplierIdList);
+            }
 
             sourceDetailIds.add(obj.getSourceDetailId());
             List<String> sourceDetailList = obj.getChildList().stream().map(SubcontractChangeDetailDTO.UpdateDTO::getSourceDetailId).collect(Collectors.toList());
@@ -237,10 +242,11 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             throw new ServiceException(ApiError.ERROR_95084);
         }
         //供应商信息
-        List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
-        if (CollectionUtils.isEmpty(supplierList)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        List<SupplierEntity> supplierList = null;
+        if (CollectionUtils.isNotEmpty(supplierIds)) {
+            supplierList = supplierService.listByIds(supplierIds);
         }
+
         //仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIds);
 
@@ -351,6 +357,12 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
      * @param isChild
      */
     private void handleSupplierTaxPrice(SubcontractChangeDetailEntity entity,SubcontractOrderDetailEntity subEntity  , Boolean isChild) {
+
+        //供应商为空
+        if (StringUtils.isBlank(entity.getSupplierId())) {
+            return;
+        }
+
         //赠品无需报价,默认人民币
         if (ObjectUtils.isNotEmpty(subEntity.getIsGift()) && subEntity.getIsGift()) {
             entity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());

@@ -185,6 +185,11 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
         return viewDTO;
     }
 
+    @Override
+    public List<CustomerAddressEntity> getByIds(List<String> ids) {
+        return lambdaQuery().in(CustomerAddressEntity::getId, ids).list();
+    }
+
 
     /**
      * 獲取刪除id

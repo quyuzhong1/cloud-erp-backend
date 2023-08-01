@@ -251,7 +251,27 @@
             sod.exchange_rate,
             si.customs_fee,
             si.bank_service_fee,
-            si.shipping_fee
+            si.shipping_fee,
+            si.warehouse_id,
+            si.warehouse_org_id,
+            si.bill_date,
+            si.discount_amount,
+            sod.discount_amount as detailDiscountAmount,
+            si.sales_org_id,
+            si.receiver_name,
+            si.tel_number,
+            si.receive_address,
+            si.receive_address_id,
+            si.delivery_mode,
+            si.address_type,
+            si.receive_condition,
+            sod.tax_rate,
+            sod.price,
+            sod.tax_amount_before,
+            sod.is_gift,
+            sod.is_reissue,
+            sod.is_close,
+            sod.platform_sku_no
         FROM so_detail sod
         INNER JOIN so_info si
         ON sod.main_id =si.id AND si.is_deleted=false

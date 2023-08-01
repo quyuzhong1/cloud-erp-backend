@@ -9,8 +9,8 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -38,7 +38,6 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.model.sys.dto.DictBasicDTO;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -127,6 +126,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Autowired
     private SysDictFeign sysDictFeign;
+
+    @Autowired
+    private DocNoGenHelper docNoGenHelper;
+
 
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -262,7 +265,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         log.info("开始新增委外订单");
         if (StringUtils.isBlank(addDTO.getCode())) {
             // 生成单号
-            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.SUB, BusinessNoTypeEnum.CODE_SUB.getCode()));
+            String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SUB);
             subcontractOrderEntity.setCode(code);
         }
 
@@ -543,9 +546,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<String> supplierIds = detailList.stream().map(SubcontractOrderDetailEntity::getSupplierId).collect(Collectors.toList());
         log.info("查询供应商信息，supplierId集合：【{}】", JSONUtil.toJsonStr(supplierIds));
         List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
-        if (CollectionUtils.isEmpty(supplierList)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
-        }
 
         //明细父级sku
         List<SubcontractOrderDetailEntity> parentList = detailList.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
@@ -568,9 +568,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //产品名称
             String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSkuName())).orElse("");
             viewDTO.setProductName(productName);
-            //供应商名称
-            String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(viewDTO.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getName())).orElse("");
-            viewDTO.setSupplierName(supplierName);
+
+            if (CollectionUtils.isNotEmpty(supplierList)) {
+                //供应商名称
+                String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(viewDTO.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getName())).orElse("");
+                viewDTO.setSupplierName(supplierName);
+            }
 
             //根据组织、仓库、sku查询可用库存
             List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(Arrays.asList(viewDTO.getSkuId()),viewDTO.getWarehouseId(),null);
@@ -600,9 +603,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 //产品名称
                 String childProductName = skuList.stream().filter(obj -> obj.getSkuId().equals(childViewDTO.getSkuId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSkuName())).orElse("");
                 childViewDTO.setProductName(childProductName);
-                //供应商名称
-                String childSupplierName = supplierList.stream().filter(obj -> obj.getId().equals(childViewDTO.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getName())).orElse("");
-                childViewDTO.setSupplierName(childSupplierName);
+                if (CollectionUtils.isNotEmpty(supplierList)) {
+                    //供应商名称
+                    String childSupplierName = supplierList.stream().filter(obj -> obj.getId().equals(childViewDTO.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getName())).orElse("");
+                    childViewDTO.setSupplierName(childSupplierName);
+                }
 
                 //根据组织、仓库、sku查询可用库存
                 List<InventoryQtyDTO.SkuInventoryTotalDTO> childSkuInventoryTotalList = listSkuInventoryTotalList(Arrays.asList(childViewDTO.getSkuId()),childViewDTO.getWarehouseId(),childViewDTO.getWarehouseLocation());
@@ -664,7 +669,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 dto.setQuantity(bomChildrenSkuDTO.getQuantity());
             }
             //报价信息查询
-            if (ObjectUtils.isNotEmpty(dto.getIsGift()) && !dto.getIsGift()) {
+            if (ObjectUtils.isNotEmpty(dto.getIsGift()) && !dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId())) {
                 PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO  = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
                 searchDTO.setSkuId(dto.getSkuId());
                 searchDTO.setSkuNo(dto.getSkuNo());
@@ -782,6 +787,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailAddDTO.setIsGift(addDetailDTO.getIsGift());
                 poDetailAddDTO.setPurchaseApplicationId(addDetailDTO.getPurchaseApplicationId());
                 poDetailAddDTO.setPurchaseApplicationDetailId(addDetailDTO.getPurchaseApplicationDetailId());
+                poDetailAddDTO.setPlanDeliveryDate(addDetailDTO.getPlanDeliveryDate());
                 if (!addDetailDTO.getIsGift()) {
                     //供应商报价信息
                     PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
@@ -876,15 +882,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             generatePoDTO.setReceiveOrgId(mainEntity.getReceiveOrgId());
             //新品首批暂时默认
             generatePoDTO.setIsFirstMassProduct(ObjectUtils.isEmpty(generatePoDTO.getIsFirstMassProduct()) ? mainEntity.getIsFirstMassProduct() : generatePoDTO.getIsFirstMassProduct());
-            //预计交货日期
-            generatePoDTO.setPlanDeliveryDate(detailEntity.getPlanDeliveryDate());
             //备注
             generatePoDTO.setRemark(detailEntity.getRemark());
             //付款条件
             generatePoDTO.setPaymentCondition(detailEntity.getPaymentCondition());
             //是否赠品
             generatePoDTO.setIsGift( ObjectUtils.isEmpty(generatePoDTO.getIsGift()) ? detailEntity.getIsGift() : generatePoDTO.getIsGift());
-            generatePoDTO.setTaxPrice(detailEntity.getPrice());
             generatePoDTO.setSupplierId(StringUtils.isBlank(generatePoDTO.getSupplierId()) ? detailEntity.getSupplierId() : generatePoDTO.getSupplierId());
             generatePoDTO.setPurchaseApplicationId(mainEntity.getSourceId());
             generatePoDTO.setPurchaseApplicationDetailId(detailEntity.getSourceDetailId());

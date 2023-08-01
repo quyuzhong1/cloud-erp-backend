@@ -16,7 +16,7 @@ public enum BusinessNoTypeEnum {
     CODE_PL(6, "pl","采购申请单编号"),
     CODE_CGJM(7, "cgjm","采购价目编号"),
     CODE_CGTJ(8, "cgtj","采购价目调价编号"),
-    CODE_PO(9, "po","采购订单"),
+    CODE_PO(9, "po","采购订单","PO"),
     CODE_POC(10, "poc","采购变更单"),
     CODE_ZJGZ(11, "zjgz","质检规则单"),
     CODE_CGSH(12, "cgsh","采购收货单"),
@@ -45,7 +45,7 @@ public enum BusinessNoTypeEnum {
     CODE_XSTH(35, "xsth","销售退货入库单"),
     CODE_KHDZ(36, "khdz","客户地址编号"),
     CODE_KHLXR(37, "khlxr","客户联系人编号"),
-    CODE_SUB(38, "sub","委外订单"),
+    CODE_SUB(38, "sub","委外订单","SUB"),
     CODE_SUBCH(39, "subch","委外变更单"),
 
     ;

@@ -111,6 +111,11 @@ public class SoInfoDTO implements Serializable {
         private String warehouseId;
 
         /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
          * 客户id
          */
         private String customerId;
@@ -129,6 +134,11 @@ public class SoInfoDTO implements Serializable {
          * 国家名称
          */
         private String countryName;
+
+        /**
+         * 销售组织id
+         */
+        private String salesOrgId;
 
         /**
          * 销售组织名
@@ -382,6 +392,114 @@ public class SoInfoDTO implements Serializable {
          * 运费
          */
         private BigDecimal shippingFee;
+
+        /**
+         * 仓库组织名称
+         */
+        private String warehouseOrgName;
+
+        /**
+         * 仓库组织id
+         */
+        private String warehouseOrgId;
+
+        /**
+         * 收款账号名称
+         */
+        private String receiveAccountName;
+
+        /**
+         * 折扣总额
+         */
+        private BigDecimal discountAmount;
+
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 明细折扣金额
+         */
+        private BigDecimal detailDiscountAmount;
+
+        /**
+         * 收货人
+         */
+        private String receiverName;
+
+        /**
+         * 联系电话
+         */
+        private String telNumber;
+
+        /**
+         * 收货地址
+         */
+        private String receiveAddress;
+
+
+        /**
+         * 收货地址
+         */
+        private String receiveAddressId;
+
+        /**
+         * 交货方式
+         */
+        private String deliveryMode;
+
+        /**
+         * 交货方式
+         */
+        private String deliveryModeName;
+
+        /**
+         * 地址类型
+         */
+        private String addressType;
+
+
+        /**
+         * 地址类型
+         */
+        private String addressTypeName;
+
+        /**
+         * 收款条件
+         */
+        private String receiveCondition;
+
+        /**
+         * 收款条件
+         */
+        private String receiveConditionName;
+
+        /**
+         * 价税合计（折前）
+         */
+        private BigDecimal taxAmountBefore;
+
+        /**
+         * 是否赠品 true 是
+         */
+        private Boolean isGift;
+
+        /**
+         * 是否补发 true 是
+         */
+        private Boolean isReissue;
+
+        /**
+         * 是否关闭 true 是
+         */
+        private Boolean isClose;
+
+        /**
+         * 客户SKU
+         */
+        private String platformSkuNo;
+
     }
 
     /**
@@ -1269,6 +1387,11 @@ public class SoInfoDTO implements Serializable {
     public static class ExportDTO extends PagingParamDTO {
 
         private List<String> ids;
+
+        /**
+         * 无权限字段
+         */
+        private List<String> nopermitFields;
     }
 
     /**

@@ -334,10 +334,15 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             List<String> warehouseIdList = obj.getChildList().stream().map(SubcontractOrderDetailDTO.UpdateDTO::getWarehouseId).collect(Collectors.toList());
             warehouseIds.addAll(warehouseIdList);
 
-            supplierIds.add(obj.getSupplierId());
-            List<String> supplierIdList = obj.getChildList().stream().map(SubcontractOrderDetailDTO.UpdateDTO::getSupplierId).collect(Collectors.toList());
-            supplierIds.addAll(supplierIdList);
 
+            //供应商信息
+            if (StringUtils.isNotEmpty(obj.getSupplierId())) {
+                supplierIds.add(obj.getSupplierId());
+            }
+            List<String> supplierIdList = obj.getChildList().stream().filter(e -> StringUtils.isNotEmpty(e.getSupplierId())).map(SubcontractOrderDetailDTO.UpdateDTO::getSupplierId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(supplierIdList)) {
+                supplierIds.addAll(supplierIdList);
+            }
         });
 
         //申请单下推数量校验
@@ -362,11 +367,11 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-        //供应商信息
-        List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
-        if (CollectionUtils.isEmpty(supplierList)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        List<SupplierEntity> supplierList = null;
+        if (CollectionUtils.isNotEmpty(supplierIds)) {
+            supplierList = supplierService.listByIds(supplierIds);
         }
+
         //仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIds);
 
@@ -473,6 +478,11 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
      * @param isChild
      */
     private void handleSupplierTaxPrice(SubcontractOrderDetailEntity entity,Boolean isChild) {
+        //供应商为空
+        if (StringUtils.isBlank(entity.getSupplierId())) {
+            return;
+        }
+
         //赠品无需报价,默认人民币
         if (ObjectUtils.isNotEmpty(entity.getIsGift()) && entity.getIsGift()) {
             entity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
@@ -495,6 +505,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         if (isChild) {
             entity.setPrice(viewDTO.getTaxPrice());
         }
+        entity.setTaxRate(viewDTO.getTaxRate());
         entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
     }
 
