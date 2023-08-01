@@ -343,7 +343,6 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public boolean updateQtyById(String id, Integer qty) {
         LoginUser loginUser = commonService.getUserInfo();
         boolean flag = lambdaUpdate()
-//                .set(InventoryEntity::getQty, qty)
                 .setSql(StrUtil.format("{}={}+{}", "qty","qty", qty))
 //                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
 //                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
