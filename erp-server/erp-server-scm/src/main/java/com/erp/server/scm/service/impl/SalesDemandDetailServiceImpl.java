@@ -57,7 +57,6 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
     private ModuleOperateLogService moduleOperateLogService;
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public void add(List<SalesDemandDetailDTO.AddDTO> details, String salesDemandId) {
         if (CollectionUtils.isEmpty(details)) {
@@ -73,7 +72,6 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public void update(List<SalesDemandDetailDTO.UpdateDTO> details,String salesDemandId) {
         if (details == null) {
