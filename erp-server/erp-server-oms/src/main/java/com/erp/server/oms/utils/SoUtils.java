@@ -14,6 +14,7 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
@@ -219,6 +220,7 @@ public class SoUtils {
      */
     public static Map<String, String> getExportHeadList() {
         Map<String, String> headMap = new LinkedHashMap<>();
+        headMap.put("id", "id");
         headMap.put("code", "单据编号");
         headMap.put("orderTypeName", "单据类型");
         headMap.put("billDate", "单据日期");
@@ -290,8 +292,12 @@ public class SoUtils {
         // 创建时间格式化
         convertData.put("createTime", LocalDateTimeUtil.format(item.getCreateTime(), "yyyy-MM-dd HH:mm:ss"));
         // 汇率
-        if (Objects.nonNull(item.getExchangeRate()) && item.getExchangeRate().compareTo(BigDecimal.ZERO) == 1) {
-            convertData.put("exchangeRate", "");
+        if (Objects.nonNull(item.getExchangeRate())) {
+            if(item.getExchangeRate().compareTo(BigDecimal.ZERO) == 0) {
+                convertData.put("exchangeRate", "");
+            } else {
+                convertData.put("exchangeRate", " " + StrUtils.null2EmptyWithTrim(item.getExchangeRate()));
+            }
         }
 
         List<String> boolList = Lists.newArrayList("isGift", "isReissue", "isClose");
@@ -311,4 +317,48 @@ public class SoUtils {
         return dataMap;
     }
 
+    /**
+     * 导出隐藏主单列
+     * @param dataList
+     */
+    public static void hideForExport(List<LinkedHashMap<String, Object>> dataList) {
+        Set<String> mainIds = Sets.newHashSet();
+        for(LinkedHashMap<String, Object> data : dataList) {
+            String id = StrUtils.null2EmptyWithTrim(data.get("id"));
+            if (mainIds.contains(id)) {
+                data.put("code", "");
+                data.put("orderTypeName", "");
+                data.put("billDate", "");
+                data.put("approveStatusName", "");
+                data.put("invalidStatusName", "");
+                data.put("customerName", "");
+                data.put("countryName", "");
+                data.put("salesOrgName", "");
+                data.put("sellerName", "");
+                data.put("salesDeptName", "");
+                data.put("warehouseName", "");
+                data.put("warehouseOrgName", "");
+                data.put("bankServiceFee", "");
+                data.put("shippingFee", "");
+                data.put("receiveAccount", "");
+                data.put("receiveMethodName", "");
+                data.put("receiveDate", "");
+                data.put("receiveAmount", "");
+                data.put("tradeTermName", "");
+                data.put("discountAmount", "");
+                data.put("receiverName", "");
+                data.put("telNumber", "");
+                data.put("receiveAddress", "");
+                data.put("deliveryModeName", "");
+                data.put("addressTypeName", "");
+                data.put("receiveConditionName", "");
+                data.put("approveUserName", "");
+                data.put("createUserName", "");
+                data.put("createTime", "");
+                data.put("remark", "");
+                continue;
+            }
+            mainIds.add(id);
+        }
+    }
 }
