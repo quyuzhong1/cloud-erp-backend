@@ -186,4 +186,11 @@ public interface SoReturnReceiveService extends SuperService<SoReturnReceiveEnti
      * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.GenerateSoReturnInstockView>
      **/
     List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> generateSoReturnInstockView(List<String> ids);
+
+    /**
+     * 根据id集合获取退货签收单
+     * @param ids
+     * @return
+     */
+    List<SoReturnReceiveEntity> listByIds(List<String> ids);
 }
