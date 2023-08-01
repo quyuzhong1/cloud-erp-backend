@@ -139,7 +139,12 @@ public class SoUtils {
             SoDetailEntity item = saveOrUpdateList.get(i);
             //是否赠品
             Boolean isGift = item.getIsGift();
-            if (!Objects.equals(isGift, Boolean.TRUE)) {
+            BigDecimal price = item.getPrice();
+            //当是赠品的时候  单价为0
+            if (Objects.nonNull(isGift) && isGift) {
+                price = BigDecimal.ZERO;
+            }
+            if (!Objects.equals(isGift, Boolean.TRUE) || (Objects.nonNull(price) && price.compareTo(BigDecimal.ZERO) != 0) ) {
                 lastNoGiftIndex = i;
             }
         }
