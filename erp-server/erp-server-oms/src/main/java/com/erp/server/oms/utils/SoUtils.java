@@ -1,18 +1,24 @@
 package com.erp.server.oms.utils;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 /**
  * 销售订单工具类
@@ -199,6 +205,101 @@ public class SoUtils {
             throw new ServiceException("折扣金额不可大于价税合计（折前）");
             // throw new ServiceException(StrUtil.format("折扣金额【{}】不可大于价税合计（折前）【{}】", discountAmount, totalTaxAmountBefore));
         }
+    }
+
+
+    /**
+     * 获取导出销售订单表头字段
+     * @return
+     */
+    public static Map<String, String> getExportHeadList() {
+        Map<String, String> headMap = new LinkedHashMap<>();
+        headMap.put("code", "单据编号");
+        headMap.put("orderTypeName", "单据类型");
+        headMap.put("billDate", "单据日期");
+        headMap.put("approveStatusName", "单据状态");
+        headMap.put("invalidStatusName", "作废状态");
+        headMap.put("customerName", "客户");
+        headMap.put("countryName", "收货国家");
+        headMap.put("salesOrgName", "销售组织");
+        headMap.put("sellerName", "销售员");
+        headMap.put("salesDeptName", "销售部门");
+        headMap.put("warehouseName", "仓库");
+        headMap.put("warehouseOrgName", "库存组织");
+        headMap.put("bankServiceFee", "银行手续费");
+        headMap.put("shippingFee", "运费金额");
+        headMap.put("receiveAccount", "收款账号");
+        headMap.put("receiveMethodName", "收款方式");
+        headMap.put("receiveDate", "收款日期");
+        headMap.put("receiveAmount", "收款金额");
+        headMap.put("tradeTermName", "贸易条款");
+        headMap.put("discountAmount", "折扣总额");
+        headMap.put("receiverName", "收货人");
+        headMap.put("telNumber", "联系电话");
+        headMap.put("receiveAddress", "收货地址");
+        headMap.put("deliveryModeName", "交货方式");
+        headMap.put("addressTypeName", "地址类型");
+        headMap.put("receiveConditionName", "收款条件");
+        headMap.put("deliveryStatusName", "发货状态");
+        headMap.put("skuNo", "sku");
+        headMap.put("productName", "产品名称");
+        headMap.put("qty", "销售数量");
+        headMap.put("scarceQty", "缺货数量");
+        headMap.put("availableQty", "可出数量");
+        headMap.put("deliveryQty", "已出库数量");
+        headMap.put("waitQty", "剩余未出数量");
+        headMap.put("unit", "单位");
+        headMap.put("amount", "销售金额");
+        headMap.put("price", "销售单价");
+        headMap.put("taxRate", "税率");
+        headMap.put("taxPrice", "含税单价");
+        headMap.put("taxAmount", "价税合计");
+        headMap.put("exchangeRate", "汇率");
+        headMap.put("amountLocalCurrency", "销售金额（本位币）");
+        headMap.put("allAmountLocalCurrency", "价税合计（本位币）");
+        headMap.put("detailDiscountAmount", "折扣额");
+        headMap.put("taxAmountBefore", "价税合计(折前)");
+        headMap.put("isGift", "是否赠品");
+        headMap.put("isReissue", "是否补发");
+        headMap.put("isClose", "是否关闭");
+        headMap.put("purchasePrice", "采购单价");
+        headMap.put("saleCost", "销售总成本");
+        headMap.put("saleProfit", "销售毛利");
+        headMap.put("saleProfitRate", "销售毛利率（%）");
+        headMap.put("customsFee", "报关费");
+        headMap.put("currency", "结算币种");
+        headMap.put("requireDate", "要货日期");
+        headMap.put("remark", "备注");
+        headMap.put("detailRemark", "明细备注");
+        headMap.put("approveUserName", "最新审核人");
+        headMap.put("createUserName", "创建人");
+        headMap.put("createTime", "创建时间");
+
+        return headMap;
+    }
+
+    public static LinkedHashMap<String, Object> fillToMap(SoInfoDTO.PagingViewDTO item, Map<String, String> headMap, List<String> nopermitFields) {
+        LinkedHashMap<String, Object> convertData = new LinkedHashMap<>();
+        BeanUtil.copyProperties(item, convertData);
+
+        // 创建时间格式化
+        convertData.put("createTime", LocalDateTimeUtil.format(item.getCreateTime(), "yyyy-MM-dd HH:mm:ss"));
+
+        List<String> boolList = Lists.newArrayList("isGift", "isReissue", "isClose");
+        LinkedHashMap<String, Object> dataMap = new LinkedHashMap<>();
+        headMap.keySet().stream().forEach(field->{
+            if(CollUtil.isNotEmpty(nopermitFields) && nopermitFields.contains(field)) {
+
+            } else {
+                if(boolList.contains(field)) {
+                    Object boolObj = convertData.get(field);
+                    dataMap.put(field, Objects.equals(boolObj, Boolean.TRUE) ? "是" : " 否");
+                } else {
+                    dataMap.put(field, StrUtils.null2EmptyWithTrim(convertData.get(field)));
+                }
+            }
+        });
+        return dataMap;
     }
 
 }
