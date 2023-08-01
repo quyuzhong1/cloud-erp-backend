@@ -347,7 +347,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 }
 
                 //入库完成
-                if ( purchaseOrderDetailEntity.getPurchaseQty() == hasInstockQty.intValue()) {
+                if ( purchaseOrderDetailEntity.getPurchaseQty() == hasInstockQty.intValue() + returnQty) {
                     throw new ServiceException(ApiError.ERROR_99075,poCode,purchaseOrderDetailEntity.getSkuNo());
                 }
                 //未入库完成，但剩余数量不够
