@@ -9,8 +9,8 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -38,7 +38,6 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.model.sys.dto.DictBasicDTO;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -127,6 +126,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Autowired
     private SysDictFeign sysDictFeign;
+
+    @Autowired
+    private DocNoGenHelper docNoGenHelper;
+
 
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -262,7 +265,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         log.info("开始新增委外订单");
         if (StringUtils.isBlank(addDTO.getCode())) {
             // 生成单号
-            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.SUB, BusinessNoTypeEnum.CODE_SUB.getCode()));
+            String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PO);
             subcontractOrderEntity.setCode(code);
         }
 
@@ -666,7 +669,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 dto.setQuantity(bomChildrenSkuDTO.getQuantity());
             }
             //报价信息查询
-            if (ObjectUtils.isNotEmpty(dto.getIsGift()) && !dto.getIsGift()) {
+            if (ObjectUtils.isNotEmpty(dto.getIsGift()) && !dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId())) {
                 PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO  = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
                 searchDTO.setSkuId(dto.getSkuId());
                 searchDTO.setSkuNo(dto.getSkuNo());
