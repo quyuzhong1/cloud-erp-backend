@@ -265,7 +265,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         log.info("开始新增委外订单");
         if (StringUtils.isBlank(addDTO.getCode())) {
             // 生成单号
-            String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PO);
+            String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SUB);
             subcontractOrderEntity.setCode(code);
         }
 
@@ -888,7 +888,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             generatePoDTO.setPaymentCondition(detailEntity.getPaymentCondition());
             //是否赠品
             generatePoDTO.setIsGift( ObjectUtils.isEmpty(generatePoDTO.getIsGift()) ? detailEntity.getIsGift() : generatePoDTO.getIsGift());
-            generatePoDTO.setTaxPrice(detailEntity.getPrice());
             generatePoDTO.setSupplierId(StringUtils.isBlank(generatePoDTO.getSupplierId()) ? detailEntity.getSupplierId() : generatePoDTO.getSupplierId());
             generatePoDTO.setPurchaseApplicationId(mainEntity.getSourceId());
             generatePoDTO.setPurchaseApplicationDetailId(detailEntity.getSourceDetailId());
