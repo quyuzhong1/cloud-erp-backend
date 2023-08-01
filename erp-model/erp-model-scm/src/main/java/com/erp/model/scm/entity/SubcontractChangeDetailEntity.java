@@ -71,6 +71,12 @@ public class SubcontractChangeDetailEntity extends BaseEntity<SubcontractChangeD
     private BigDecimal price;
 
     /**
+     * 税率
+     */
+    @TableField("tax_rate")
+    private BigDecimal taxRate;
+
+    /**
     * 币别
     */
     @TableField("currency")
