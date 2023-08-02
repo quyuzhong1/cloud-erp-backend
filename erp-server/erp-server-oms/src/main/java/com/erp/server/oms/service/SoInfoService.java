@@ -359,7 +359,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @param id
      * @return true表示已下推过有效发货通知单，false表示没有下推过有效发货通知单
      */
-    // Boolean checkSoPushDeliveryNotice(String id);
+    Boolean checkSoPushDeliveryNotice(String id);
 
     /**
      * 重新计算成本毛利
@@ -367,4 +367,15 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return
      */
     List<SoDetailDTO.CalDetailResultDTO> calSkuCostProfit(SoInfoDTO.CalCostProfitDTO calCostProfitDTO);
+
+    /**
+     * 更新销售订单地址信息
+     * @param soId
+     * @param receiveAddressId
+     * @param addressType
+     * @param receiverName
+     * @param telNumber
+     */
+    void updateAddress(String soId, String receiveAddressId, String addressType, String receiverName, String telNumber);
+
 }
