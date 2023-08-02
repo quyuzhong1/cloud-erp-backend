@@ -81,9 +81,10 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
             model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
         } catch (Exception e) {
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
-
-            sendWarnMsg(businessId);
+            Boolean flag = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            if (!flag) {
+                sendWarnMsg(businessId);
+            }
             return;
         }
 
@@ -101,8 +102,10 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
             return;
         }
         if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            //反审核
-            kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            //审核中或已审核则要先反审
+            if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+                flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            }
             return;
         }
         //审核中或已审核则要先反审
