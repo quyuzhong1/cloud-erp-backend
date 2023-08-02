@@ -133,6 +133,11 @@ public class TransferApplicationDTO implements Serializable {
         private List<String> ids;
 
         /**
+         * 当前登录人能审核的ids
+         */
+        private List<String> idList;
+
+        /**
          * 搜索类型
          */
         private String  searchType;
