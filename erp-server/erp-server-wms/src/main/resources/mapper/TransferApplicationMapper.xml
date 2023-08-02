@@ -62,9 +62,6 @@
         LEFT JOIN machine_info mi ON ta.id = mi.source_id
         <where>
             ta.is_deleted = false
-            <if test="params.searchType != null and params.searchType != ''">
-                AND ta.approve_status = #{params.searchType}
-            </if>
             <if test="params.code != null and params.code != ''">
                 and ta.code like concat('%',#{params.code},'%')
             </if>
@@ -73,6 +70,12 @@
             </if>
             <if test="params.transferDirection != null ">
                 and ta.transfer_direction = #{params.transferDirection}
+            </if>
+            <if test="params.idList != null and params.idList.size > 0">
+                and ta.id in
+                <foreach collection="params.idList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
             </if>
             <if test="params.skuNoList != null and params.skuNoList.size > 0">
                 and tad.sku_no in
@@ -130,6 +133,12 @@
         left join transfer_application_detail tad on ta.id = tad.main_id and tad.is_deleted = false
         <where>
             ta.is_deleted = false
+            <if test="params.idList != null and params.idList.size > 0">
+                and ta.id in
+                <foreach collection="params.idList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
             <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
                 and ta.approve_status in
                 <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
@@ -183,6 +192,12 @@
                 </if>
                 <if test="params.transferDirection != null ">
                     and ta.transfer_direction = #{params.transferDirection}
+                </if>
+                <if test="params.idList != null and params.idList.size > 0">
+                    and ta.id in
+                    <foreach collection="params.idList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
                 </if>
                 <if test="params.skuNoList != null and params.skuNoList.size > 0">
                     and tad.sku_no in
