@@ -148,6 +148,8 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
             //禁用的不能烦审核
             if (!kingdeeForbidStatus) {
                 flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            }else{
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(map), "金蝶状态为禁用状态数据不需要修改", type, ApiSendStatusEnum.SUCCESS.getCode());
             }
 
         }
@@ -202,5 +204,10 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
             kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
         }
     }
+
+
+
+
+
 
 }
