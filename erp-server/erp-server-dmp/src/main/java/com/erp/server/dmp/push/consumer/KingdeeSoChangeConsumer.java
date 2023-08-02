@@ -59,7 +59,6 @@ public class KingdeeSoChangeConsumer implements RocketMQListener<Map<String, Obj
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void onMessage(Map<String, Object> map) {
          try {
              kingdeeSoChangeConsumerService.executeConsumer(map);

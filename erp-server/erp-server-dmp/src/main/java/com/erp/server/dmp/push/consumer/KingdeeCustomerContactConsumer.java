@@ -14,6 +14,7 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.server.dmp.push.service.business.KingdeeCustomerContactConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.kingdee.impl.KingdeeCommonServiceImpl;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
@@ -44,7 +45,7 @@ import java.util.stream.Collectors;
 public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
-    private KingdeeCommonService kingdeeCommonService;
+    private KingdeeCustomerContactConsumerService kingdeeCustomerContactConsumerService;
 
     public static void main(String[] args) {
         //模块类型
