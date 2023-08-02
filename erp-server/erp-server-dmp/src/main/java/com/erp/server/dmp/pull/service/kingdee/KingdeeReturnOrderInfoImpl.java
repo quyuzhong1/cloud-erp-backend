@@ -222,7 +222,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
                 "FStockId," +
                 "FStockId.FNumber," +
                 "FStockId.FName," +
-                "FStocklocId," +
+                "FStockLocId.FF100014.FNumber," +
                 "FStockstatusId," +
                 "FNote," +
                 "FSrcBillNo," +

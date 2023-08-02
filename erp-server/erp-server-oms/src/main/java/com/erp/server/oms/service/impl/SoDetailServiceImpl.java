@@ -1303,23 +1303,30 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<SoDetailDTO.SkuDTO> resultList = new ArrayList<>(skuNoList.size());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         List<String> skuIdList = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
-        //存在的sku no list
-        List<String> existSkuNoList = skuList.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
+
         List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
 
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(skuIdList, warehouseId);
-        for (SkuVO item : skuList) {
-            String skuId = item.getSkuId();
+        for (String skuNo : skuNoList) {
             SoDetailDTO.SkuDTO result = new SoDetailDTO.SkuDTO();
-            result.setProductName(item.getSkuName());
+            SkuVO item = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).
+                    findFirst().orElse(null);
+            String skuId = "";
+            if (item != null) {
+                skuId = item.getSkuId();
+                result.setProductName(item.getSkuName());
+                result.setUnit(item.getUnitName());
+            } else {
+                result.setProductName("");
+                result.setUnit("");
+            }
+
             result.setSkuId(skuId);
             result.setQty(0);
-            result.setProductName(item.getSkuName());
-            result.setUnit(item.getUnitName());
-            result.setSkuNo(item.getSkuNo());
-
+            result.setSkuNo(skuNo);
             //即时库存
-            Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+            String finalSkuId = skuId;
+            Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(finalSkuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
             result.setCurInventoryQty(curInventoryQty);
 
@@ -1376,7 +1383,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             result.setRemark("");
             //历史价格
             SoDetailDTO.SkuHistoryPriceDTO skuHistoryPrice = skuPriceHistoryList.stream().
-                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+                    filter(p -> p.getSkuId().equals(finalSkuId)).findFirst().orElse(null);
             if (skuHistoryPrice != null) {
                 result.setMaxPrice(skuHistoryPrice.getMaxPrice());
                 result.setMinPrice(skuHistoryPrice.getMinPrice());
@@ -1388,76 +1395,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             }
             resultList.add(result);
         }
-        //不存在的
-        List<String> absentSkuNoList = skuNoList.stream().filter(s -> !existSkuNoList.contains(s)).collect(Collectors.toList());
-        for (String absentSkuNo : absentSkuNoList) {
-            SoDetailDTO.SkuDTO result = new SoDetailDTO.SkuDTO();
-            result.setProductName("");
-            result.setSkuId("");
-            result.setQty(0);
-            result.setProductName("");
-            result.setUnit("");
-            result.setSkuNo(absentSkuNo);
-
-            //即时库存
-            Integer curInventoryQty = 0;
-            result.setCurInventoryQty(curInventoryQty);
-
-            //销售数量
-            Integer qty = 0;
-            /**
-             * 缺货数量
-             * 当可用即时库存数量小于销售数量时，
-             * 缺货数量=销售数量-可用即时库存数量；
-             * 当可用即时库存数量大于销售数量时，缺货数量为0
-             */
-            Integer scarceQty = 0;
-
-            /**
-             * 已出库数量
-             * 新增时默认为0
-             * 编辑时根据关联出库单
-             * 总共已发货数量同步
-             *
-             */
-            Integer deliveryQty = 0;
-
-            /**
-             * 剩余数量
-             * 销售数量-已出库数量
-             */
-            Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
-            if (qty > curInventoryQty) {
-                scarceQty = qty - curInventoryQty;
-            }
-            result.setScarceQty(scarceQty);
-            result.setAvailableQty(getAvailableQty(curInventoryQty, qty));
-            result.setDeliveryQty(deliveryQty);
-            result.setWaitQty(waitQty);
-            //税率
-            BigDecimal taxRate = BigDecimal.ZERO;
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-            //单价
-            BigDecimal price = BigDecimal.ZERO;
-
-            //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
-            result.setTaxPrice(taxPrice);
-            result.setPrice(price);
-            result.setAmount(MathUtil.multiply(price, qty));
-            result.setTaxRate(taxRate);
-            result.setIsGift(Boolean.FALSE);
-            result.setIsReissue(Boolean.FALSE);
-            result.setIsClose(Boolean.FALSE);
-            result.setTaxAmount(MathUtil.multiply(taxPrice, qty));
-            result.setRemark("");
-            result.setMaxPrice(price);
-            result.setMinPrice(price);
-            result.setAvgPrice(price);
-            resultList.add(result);
-        }
-
         return resultList;
     }
 
