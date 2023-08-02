@@ -1,4 +1,4 @@
-package com.erp.server.dmp.push.consumer;
+package com.erp.server.dmp.push.service.business.impl;
 
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -10,8 +10,6 @@ import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.RocketMqConsumerGroup;
-import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
@@ -24,10 +22,8 @@ import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.ConsumeMode;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -35,47 +31,25 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * @author Will
- * @version 1.0
- * @date 2023/4/20 11:12
+ * @author Lambda
+ * @Classname KingdeePurchasePriceConsumerServiceImpl
+ * @Description TODO
+ * @Date 2023-08-01 21:08
+ * @Created by yl
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_price_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_PRICE, consumeMode = ConsumeMode.ORDERLY)
-public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String, Object>> {
-
-    @Resource
-    private KingdeePurchasePriceConsumerService kingdeePurchasePriceConsumerService;
+public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchasePriceConsumerService {
     @Resource
     private KingdeeCommonService kingdeeCommonService;
+
     @Resource
     private ScmTaskFeign scmTaskFeign;
 
-
-    public static void main(String[] args) {
-
-        Map<String, Object> resultMap = new LinkedHashMap<>();
-        //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PRICECATEGORY.getCode());
-        LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "CGJM23072100001"));
-        String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FPriceListEntry_FEntryID,FFROMQTY,FToQty,FCreateOrgId.FName";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 0);
-        System.out.println(queryList);
-    }
-
     @Override
-    public void onMessage(Map<String, Object> map) {
-        try {
-            kingdeePurchasePriceConsumerService.executeConsumer(map);
-        } catch (Exception e) {
-            log.error("KingdeePurchasePriceConsumer>>>onMessage>>>map ={}", map, e);
-        }
+    @Transactional(rollbackFor = Exception.class)
+    public void executeConsumer(Map<String, Object> map) {
 
-    }
-
-    private void executePurchasePriceConsumer(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.PURCHASE_PRICE.getCode();
         //业务id
@@ -153,12 +127,14 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
                 updateKingdeeDetailId(jsonArray);
             }
         }
+
     }
+
 
     /**
      * 给修改json对象赋值ID
      */
-    private void setQueryJSONObject(String id, KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, JSONObject json) {
+    public void setQueryJSONObject(String id, KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, JSONObject json) {
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FId = '%s'", id));
         String filterStr = String.join(" and ", queryFilters);
@@ -203,7 +179,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
     /**
      * 启用、禁用
      */
-    private JSONArray excuteOperation(PlatformEntity platformEntity, KingdeeApiUtils apiUtils, Map<String, Object> map, String operate) {
+    public JSONArray excuteOperation(PlatformEntity platformEntity, KingdeeApiUtils apiUtils, Map<String, Object> map, String operate) {
 
         JSONArray list = JSONUtil.parseArray(map.get("list"));
         String id = (String) map.get("syncKingdeeId");
@@ -289,7 +265,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
      * @author Will
      * @date: 2023/4/28 11:36
      */
-    private void excuteOperation(PlatformEntity platformEntity, KingdeeApiUtils apiUtils, List<String> list, String id, String operate) {
+    public void excuteOperation(PlatformEntity platformEntity, KingdeeApiUtils apiUtils, List<String> list, String id, String operate) {
         JSONObject viewMap = new JSONObject(new LinkedHashMap<>());
         JSONObject newObj = new JSONObject();
         JSONArray pkEntryIds = new JSONArray();
@@ -315,13 +291,11 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
     /**
      * 更新明细id
      */
-    private void updateKingdeeDetailId(JSONArray jsonArray) {
+    public void updateKingdeeDetailId(JSONArray jsonArray) {
         //更新业务单据状态
         Map<String, Object> params = new HashMap<>(MathUtil.THREE);
         params.put("code", ApiModuleTypeEnum.PURCHASE_PRICE.getCode().toString());
         params.put("details", jsonArray);
         scmTaskFeign.updateBusinessSyncKingdeeStatus(params);
     }
-
-
 }

@@ -17,11 +17,9 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.server.dmp.push.service.business.KingdeeCustomerConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
-import com.erp.server.dmp.utils.KingdeeUtils;
-import com.kingdee.bos.webapi.entity.OperateParam;
-import com.kingdee.bos.webapi.entity.OperatorResult;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -43,8 +41,13 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_customer_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CUSTOMER_INFO)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_customer_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CUSTOMER_INFO, consumeMode = ConsumeMode.ORDERLY)
 public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Object>> {
+
+
+    @Resource
+    private KingdeeCustomerConsumerService kingdeeCustomerConsumerService;
+
     public static void main(String[] args) {
 
         Map<String, Object> resultMap = new LinkedHashMap<>();
@@ -67,148 +70,16 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
 
     }
 
-    @Resource
-    private KingdeeCommonService kingdeeCommonService;
 
     @Override
     public void onMessage(Map<String, Object> map) {
-        //模块类型
-        Integer type = ApiModuleTypeEnum.CUSTOMER_INFO.getCode();
-
-        //业务id
-        String businessId = String.valueOf(map.get("id"));
-
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
-        if (ObjectUtils.isEmpty(platformEntity)) {
-            return;
-        }
-        //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_CUSTOMER.getCode());
-
-        //根据录入值和字段配置生成JSONObject
-        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
-
-        //未配置发送字段
-        if (CollectionUtils.isEmpty(json)) {
-            log.error(ApiError.ERROR_97025.msg);
-            //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(map), "未配置同步字段", type, ApiSendStatusEnum.FAILURE.getCode());
-            return;
-        }
-        //判断金蝶系统是否已存在该数据
-        SaveParam param = new SaveParam(json);
-        Boolean erpForbidStatus = ObjectUtil.isNotEmpty(map.get("disabled")) ? (Boolean) map.get("disabled") : Boolean.FALSE;
-        JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
-            map.put("syncKingdeeId", String.valueOf(model.get("Id")));
-            json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
-            param = new SaveParam(json);
-        } catch (Exception e) {
-
-            //更新数据
-            Boolean saveOrUpdateResult = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
-            if (saveOrUpdateResult && erpForbidStatus) {
-                //启用、禁用
-                excuteOperation(apiUtils, platformEntity, map, type);
-            }
-
-            return;
+            kingdeeCustomerConsumerService.executeCustomerContactConsumer(map);
+        }catch (Exception e){
+            log.error("KingdeeAssistantDataDetailConsumer>>>onMessage>>>map ={}", map, e);
         }
 
-        //查找到数据后，判断其审核状态
-        String documentStatus = (String) model.get("DocumentStatus");
-        String id = String.valueOf(model.get("Id"));
-        String forbidStatus = String.valueOf(model.get("ForbidStatus"));
-        Boolean flag = Boolean.FALSE;
-        // A启用 B禁用
-        Boolean kingdeeForbidStatus = "B".equals(forbidStatus) ? Boolean.TRUE : Boolean.FALSE;
-        //操作项
-        String operate = (String) map.get("operate");
-        boolean allowUnApproveStatus = KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus);
-
-        if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
-            // 判断禁用状态是否与金蝶系统一致 A启用 B禁用
-            if (erpForbidStatus.equals(kingdeeForbidStatus)) {
-                log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}], 无需{}，跳过{}操作", forbidStatus, map.get("disabled"), operate, operate);
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(map), "金蝶状态与ERP相同不需要修改", type, ApiSendStatusEnum.SUCCESS.getCode());
-                return;
-            }
-            //启用、禁用
-            excuteOperation(apiUtils,platformEntity,map,type);
-            return;
-        }else if (kingdeeForbidStatus && erpForbidStatus){
-            // 判断禁用状态是否与金蝶系统一致
-            log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}]，跳过{}操作", forbidStatus, map.get("disabled"), operate);
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(map), "金蝶状态与ERP数据都为禁用状态数据不需要修改", type, ApiSendStatusEnum.SUCCESS.getCode());
-            return;
-        }
-
-        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            // 判断状态是否为审核中或已审核
-            if (!allowUnApproveStatus) {
-                //反审核
-                log.warn("单据状态为[{}], 无法反审核，跳过反审核操作", KingdeeDocStatusEnum.getByCode(documentStatus));
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "金蝶数据可修改不需要反审核", type, ApiSendStatusEnum.SUCCESS.getCode());
-                return;
-            }
-            // 判断禁用状态已禁用数据 先启用再反审核
-            if (kingdeeForbidStatus) {
-                // 同步ERP禁用状态
-                excuteOperation(apiUtils, platformEntity, map, type);
-            }
-            //反审核
-            kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
-            return;
-        }
-
-        //审核中或已审核则要先反审
-        if (allowUnApproveStatus) {
-            // 判断禁用状态已禁用数据 先启用再反审核
-            if (kingdeeForbidStatus) {
-                // 同步ERP禁用状态
-                excuteOperation(apiUtils, platformEntity, map, type);
-            }
-            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
-        }
-        //创建状态则直接修改、删除
-        if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
-            //主单据id
-            StringBuffer allKey = FastJsonUtil.getAllKey(json);
-            ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
-            param.setNeedUpDateFields(apiFieldList);
-            //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
-            if (!erpForbidStatus.equals(kingdeeForbidStatus)) {
-                //启用、禁用
-                excuteOperation(apiUtils,platformEntity,map,type);
-            }
-        }
     }
 
-    /**
-     * 启用、禁用
-     */
-    private void excuteOperation(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type) {
-        //仓库状态 true禁用,false启用
-        Object disabled = map.get("disabled");
-        if (ObjectUtils.isEmpty(disabled)) {
-            return;
-        }
-
-        String code = (String) map.get("code");
-        String operate = null;
-        //启用
-        if (!(Boolean) disabled) {
-            operate = SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
-        }
-        //禁用
-        if ((Boolean) disabled) {
-            operate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
-        }
-        if (StringUtils.isNotBlank(operate)) {
-            kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
-        }
-    }
 
 }

@@ -1,82 +1,65 @@
-package com.erp.server.dmp.push.consumer;
+package com.erp.server.dmp.push.service.business.impl;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
-import com.common.message.constant.RocketMqConsumerGroup;
-import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.server.dmp.push.service.business.KingdeeOtherOutstockConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.push.service.kingdee.impl.KingdeeCommonServiceImpl;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.ConsumeMode;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 对接金蝶销售出库
- * @Author Luo_WG
- * @Date 2023/6/1 14:45
- **/
+ * @author Lambda
+ * @Classname KingdeeOtherOutstockConsumerServiceImpl
+ * @Description TODO
+ * @Date 2023-08-01 20:01
+ * @Created by yl
+ */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_so_outstock_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_OUTSTOCK,consumeMode = ConsumeMode.ORDERLY)
-public class KingdeeSoOutstockConsumer implements RocketMQListener<Map<String, Object>> {
+public class KingdeeOtherOutstockConsumerServiceImpl implements KingdeeOtherOutstockConsumerService {
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
 
-    public static void main(String[] args) {
-        //模块类型
-        Integer type = ApiModuleTypeEnum.SO_OUTSTOCK.getCode();
-        KingdeeCommonService kingdeeCommonService = new KingdeeCommonServiceImpl();
-        Map<String, Object> map = new LinkedHashMap<>();
-        //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
-        LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "XSCK23072100008"));
-        String filterStr = String.join(" and ", queryFilters);//5814757
-        String fieldKeys = "FModifyDate,FDocumentStatus,FApproveDate,FBillTypeID.FNUMBER";
-        map.put("FCustMatID.FNumber", "XSCKD01_SYS，XSCKD07_SYS");
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
-        System.out.println(queryList);
-
-    }
-
     @Override
-    public void onMessage(Map<String, Object> map) {
-        //模块类型
-        Integer type = ApiModuleTypeEnum.SO_OUTSTOCK.getCode();
+    @Transactional(rollbackFor = Exception.class)
+    public void executeConsumer(Map<String, Object> map) {
 
-        //业务id
-        String  businessId = String.valueOf(map.get("id"));
+        //模块类型
+        Integer type = ApiModuleTypeEnum.OTHER_OUTSTOCK.getCode();
+
 
         //业务编码
         String code = (String) map.get("code");
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
+
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
-
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_MISDELIVERY.getCode());
 
         //操作项
         String operate = (String) map.get("operate");
@@ -98,15 +81,36 @@ public class KingdeeSoOutstockConsumer implements RocketMQListener<Map<String, O
         if (SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
             operateApprove(apiUtils,platformEntity, map,type);
         }
+
     }
 
-    private void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type, String code,String operate) {
+    /**
+     * @description: 作废
+     * @author Will
+     * @date: 2023/5/24 17:57
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @param code
+     * @param operate
+     */
+    public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type, String code,String operate) {
         //作废
         kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
         return;
     }
 
-    private void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+    /**
+     * @description: 反审核
+     * @author Will
+     * @date: 2023/5/24 17:57
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     */
+    public void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
         String syncKingdeeId = (String) map.get("syncKingdeeId");
         if (StringUtils.isBlank(syncKingdeeId)) {
             return;
@@ -116,7 +120,17 @@ public class KingdeeSoOutstockConsumer implements RocketMQListener<Map<String, O
         return;
     }
 
-    private void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+
+    /**
+     * @description: 审核
+     * @author Will
+     * @date: 2023/5/24 18:10
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     */
+    public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
         //业务id
         String  businessId = String.valueOf(map.get("id"));
 
@@ -137,16 +151,7 @@ public class KingdeeSoOutstockConsumer implements RocketMQListener<Map<String, O
         try {
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
-            Map<String, Object> pushMap = new HashMap<>();
-//            pushMap.put("ids", Arrays.asList(map.get("soSyncKingdeeId")));
-/*            pushMap.put("EntryIds", map.get("soKingdeeDetailIds"));
-            pushMap.put("RuleId", "SaleOrder-OutStock");
-            pushMap.put("TargetFormId", KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
-            pushMap.put("CustomParams", json);
-            //读取配置，初始化SDK
-            KingdeeApiUtils sourceApiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
             //更新数据
-            kingdeeCommonService.push(platformEntity,map,sourceApiUtils,apiUtils,JSONUtil.parseObj(pushMap),param,type,json);*/
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             return;
         }
