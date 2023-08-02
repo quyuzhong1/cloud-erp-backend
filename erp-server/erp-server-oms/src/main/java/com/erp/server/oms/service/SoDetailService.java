@@ -256,4 +256,13 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @param remark
      */
     void updateRemarkByIds(List<String> ids, String remark);
+
+    /**
+     * 获取集合
+     * @author yl
+     * @date 2023-08-02 10:53
+     * @param dto
+     * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.SkuDTO>
+     */
+    List<SoDetailDTO.SkuDTO> listSkuInfoBySkuNo(SoDetailDTO.ListSkuParamDTO dto);
 }
