@@ -3,6 +3,7 @@ package com.erp.server.dmp.task;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
@@ -48,11 +49,21 @@ public class DmpSyncTaskJob {
     public ReturnT<String> dmpSyncTaskJob() {
         XxlJobHelper.log("DmpSyncTaskJob start");
         String jobParam = XxlJobHelper.getJobParam();
-        Integer diffMinute = StrUtil.isNotBlank(jobParam) ? Integer.valueOf(jobParam) : 60;
+        Integer diffMinute = 60;
+        Integer size = 1000;
+        if(StrUtil.isNotBlank(jobParam)){
+            XxlJobHelper.log("DmpSyncTaskJob jobParam:{}", jobParam);
+            JSONObject jsonParam = JSONUtil.parseObj(jobParam);
+            diffMinute = jsonParam.getInt("diffMinute", 60);
+            size = jsonParam.getInt("size", 1000);
+        }
+
         // 查询DMP同步数据
         List<DmpSyncTaskEntity> recordEntityList = dmpSyncTaskService.lambdaQuery()
                 .in(DmpSyncTaskEntity::getStatus, Arrays.asList(SyncKingdeeStatusEnum.FAILED_SYNC.getCode(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode()))
                 .le(DmpSyncTaskEntity::getUpdateTime, LocalDateTime.now().minusMinutes(diffMinute))
+                .orderByAsc(DmpSyncTaskEntity::getUpdateTime)
+                .last(null != size && size > 0, StrUtil.format("limit {}", size))
                 .list();
         XxlJobHelper.log("DmpSyncTaskJob 查询到{}条待推送数据", recordEntityList.size());
         // 按修改时间升序
