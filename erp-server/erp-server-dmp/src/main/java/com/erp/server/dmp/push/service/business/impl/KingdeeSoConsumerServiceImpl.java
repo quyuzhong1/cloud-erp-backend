@@ -105,6 +105,8 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
             //审核中或已审核则要先反审
             if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
                 flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            }else{
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "已经反审核", type, ApiSendStatusEnum.SUCCESS.getCode());
             }
             return;
         }
