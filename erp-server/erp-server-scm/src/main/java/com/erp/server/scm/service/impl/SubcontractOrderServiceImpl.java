@@ -263,11 +263,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         handleData(subcontractOrderEntity);
 
         log.info("开始新增委外订单");
-        if (StringUtils.isBlank(addDTO.getCode())) {
-            // 生成单号
-            String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SUB);
-            subcontractOrderEntity.setCode(code);
-        }
+        // 生成单号
+        String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SUB);
+        subcontractOrderEntity.setCode(code);
 
         boolean save = super.save(subcontractOrderEntity);
         if(!save) {
@@ -277,7 +275,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         subcontractOrderDetailService.add(addDTO.getDetailList(),subcontractOrderEntity.getId());
 
         // 操作日志
-        operateLogService.addModuleOperateLog(String.format("新增了一个委外订单【%s】", addDTO.getCode()), ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), subcontractOrderEntity.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(String.format("新增了一个委外订单【%s】", subcontractOrderEntity.getCode()), ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), subcontractOrderEntity.getId(), "新增操作");
         return subcontractOrderEntity.getId();
     }
 

@@ -397,11 +397,6 @@ public class PurchaseOrderDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         /**
-         * 编码 （用于同步数据）
-         */
-        private String code;
-
-        /**
          * 供应商信息
          */
         @Valid
