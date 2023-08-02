@@ -1,16 +1,15 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
-import com.erp.model.oms.entity.SoChangeDetailEntity;
-import com.erp.model.oms.entity.SoChangeEntity;
-import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -26,20 +25,22 @@ import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoChangeDetailMapper;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SoChangeDetailService;
-import com.erp.server.oms.service.SoDetailService;
-import com.erp.server.oms.service.SoInfoService;
+import com.erp.server.oms.service.*;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -50,6 +51,7 @@ import java.util.stream.Collectors;
  * @author lambda
  * @since 2023-05-10
  */
+@Slf4j
 @Service
 public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMapper, SoChangeDetailEntity> implements SoChangeDetailService {
 
@@ -79,6 +81,12 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
     @Resource
     private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
+
+    @Autowired
+    private CustomerAddressService customerAddressService;
+
+    @Autowired
+    private SoReturnService soReturnService;
 
     /**
      * 添加变更详情信息
@@ -440,6 +448,34 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        // 更新销售订单和销售退货订单的地址信息（地址信息发生了变更的情况下）
+        List<String> soIds = list.stream().map(SoChangeEntity::getSoId).distinct().collect(Collectors.toList());
+        List<SoInfoEntity> soInfoList = soInfoService.listByIds(soIds);
+        if(CollUtil.isNotEmpty(soInfoList)) {
+            Map<String, SoInfoEntity> soInfoMap = soInfoList.stream().collect(Collectors.toMap(SoInfoEntity::getId, Function.identity()));
+            List<String> receiveAddressIds = list.stream().filter(r->StrUtils.isNotEmpty(r.getReceiveAddressId())).map(SoChangeEntity::getReceiveAddressId).distinct().collect(Collectors.toList());
+            Map<String, CustomerAddressEntity> customerAddressMap = Maps.newHashMap();
+            if(CollUtil.isNotEmpty(receiveAddressIds)) {
+              List<CustomerAddressEntity> customerAddressList =  customerAddressService.listByIds(receiveAddressIds);
+                customerAddressMap = customerAddressList.stream().collect(Collectors.toMap(CustomerAddressEntity::getId, Function.identity()));
+            }
+
+            for(SoChangeEntity soChangeEntity : list) {
+                SoInfoEntity soInfoEntity = soInfoMap.get(soChangeEntity.getSoId());
+                if(!Objects.equals(soInfoEntity.getReceiveAddressId(), soChangeEntity.getReceiveAddressId())
+                        || !Objects.equals(soInfoEntity.getAddressType(), soChangeEntity.getAddressType())
+                        || !Objects.equals(soInfoEntity.getReceiverName(), soChangeEntity.getReceiverName())
+                        || !Objects.equals(soInfoEntity.getTelNumber(), soChangeEntity.getTelNumber()) ) {
+                    log.warn("销售订单【{}】销售变更单【{}】地址信息发生变化，同步更新销售订单和销售退货订单的地址信息", soInfoEntity.getCode(), soChangeEntity.getCode());
+                    soInfoService.updateAddress(soInfoEntity.getId(), soChangeEntity.getReceiveAddressId(), soChangeEntity.getAddressType(),
+                            soChangeEntity.getReceiverName(), soChangeEntity.getTelNumber());
+
+                    String receiveAddress = customerAddressMap.getOrDefault(soChangeEntity.getReceiveAddressId(),new CustomerAddressEntity()).getAddress();
+                    soReturnService.updateAddress(soInfoEntity.getId(), receiveAddress, soChangeEntity.getReceiverName(), soChangeEntity.getTelNumber());
+                }
+            }
+        }
+
         List<String> mainIds = list.stream().map(SoChangeEntity::getId).collect(Collectors.toList());
         List<SoChangeDetailEntity> soChangeDetailList = this.listDetailByMainIds(mainIds);
         if (CollectionUtils.isNotEmpty(soChangeDetailList)) {

@@ -765,4 +765,15 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 .set(StringUtils.isNotBlank(operate),SoReturnEntity::getSyncOperate,operate)
                 .update();
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateAddress(String soId, String receiveAddress, String receiverName, String telNumber) {
+        lambdaUpdate().set(StringUtils.isNotBlank(receiveAddress), SoReturnEntity::getReceiveAddress, receiveAddress)
+                .set(StringUtils.isNotBlank(receiverName), SoReturnEntity::getReceiverName, receiverName)
+                .set(StringUtils.isNotBlank(telNumber), SoReturnEntity::getTelNumber, telNumber)
+                .eq(SoReturnEntity::getSourceType, SourceTypeEnum.SO_INFO)
+                .eq(SoReturnEntity::getSourceId, soId)
+                .update();
+    }
 }

@@ -4,12 +4,14 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.CustomerAddressTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -323,6 +325,34 @@ public class SoChangeDTO implements Serializable {
         @Size(max = 200, message = "变更原因最大200字符")
         private String remark;
 
+        /**
+         * 收货人id地址
+         * 来源 http://172.16.100.11:3002/project/110/interface/api/13561
+         * <p>
+         * 这个是地址下拉 http://172.16.100.11:3002/project/110/interface/api/13786
+         */
+        @NotEmpty(message = "请选择收货地址")
+        private String receiveAddressId;
+
+        /**
+         * 收货人
+         * 来源 http://172.16.100.11:3002/project/110/interface/api/13561
+         */
+        @Size(max = 50, message = "收货人最大50字符")
+        private String receiverName;
+
+        /**
+         * 电话
+         */
+        @Size(max = 50, message = "联系电话最大50字符")
+        private String telNumber;
+
+        /**
+         * 地址类型
+         */
+        @StateEnumValue(clazz = CustomerAddressTypeEnum.class, message = "地址类型有误")
+        // @StateEnumValue(strValues = {"forwarder", "receive", "company"}, message = "地址类型有误", groups = {AddGroup.class})
+        private String addressType;
 
         /**
          * 产品信息
@@ -441,6 +471,11 @@ public class SoChangeDTO implements Serializable {
         private String receiverName;
 
         /**
+         * 地址类型
+         */
+        private String addressType;
+
+        /**
          * 电话
          */
         private String telNumber;
@@ -449,6 +484,11 @@ public class SoChangeDTO implements Serializable {
          * 收货地址
          */
         private String receiveAddress;
+
+        /**
+         * 收货地址id
+         */
+        private String receiveAddressId;
 
         /**
          * 交货方式
@@ -532,6 +572,28 @@ public class SoChangeDTO implements Serializable {
          * 变更原因
          */
         private String remark;
+
+        /**
+         * 收货人
+         */
+        private String receiverName;
+
+        /**
+         * 联系人电话
+         */
+        private String telNumber;
+
+
+        /**
+         * 地址类型
+         */
+        private String addressType;
+
+        /**
+         * 收货人id地址
+         */
+        @NotEmpty(message = "请选择收货地址")
+        private String receiveAddressId;
 
         /**
          * 产品信息

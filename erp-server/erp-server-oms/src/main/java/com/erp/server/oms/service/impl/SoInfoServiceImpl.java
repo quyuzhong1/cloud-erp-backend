@@ -1291,7 +1291,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> receiveAddressIds = list.stream().filter(r->StrUtils.isNotEmpty(r.getReceiveAddressId())).map(SoInfoDTO.PagingViewDTO::getReceiveAddressId).collect(Collectors.toList());
         List<CustomerAddressEntity> customerAddressEntities = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(receiveAddressIds)) {
-            customerAddressEntities = customerAddressService.getByIds(receiveAddressIds);
+            customerAddressEntities = customerAddressService.listByIds(receiveAddressIds);
         }
         for (SoInfoDTO.PagingViewDTO item : list) {
             BillApproveStatusEnum approveStatus = item.getApproveStatus();
@@ -1549,7 +1549,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String deliveryMode = customer.getDeliveryMode();
         String deliveryModeName = DeliveryModeEnum.getName(deliveryMode);
         customer.setDeliveryModeName(deliveryModeName);
-        String addressType = customer.getAddressType();
+        String addressType = soInfo.getAddressType();
         String addressTypeName = CustomerAddressTypeEnum.getName(addressType);
         customer.setAddressTypeName(addressTypeName);
         //销售部门id
@@ -2460,7 +2460,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return Boolean.TRUE;
     }
 
-    /*
     @Override
     public Boolean checkSoPushDeliveryNotice(String id) {
         SoInfoEntity soInfoEntity = this.getById(id);
@@ -2476,7 +2475,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         return Boolean.FALSE;
     }
-     */
 
     @Override
     public List<SoDetailDTO.CalDetailResultDTO> calSkuCostProfit(SoInfoDTO.CalCostProfitDTO calCostProfitDTO) {
@@ -2502,6 +2500,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             resultList.add(result);
         }
         return resultList;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateAddress(String soId, String receiveAddressId, String addressType, String receiverName, String telNumber) {
+        lambdaUpdate().set(SoInfoEntity::getReceiveAddressId, receiveAddressId).set(SoInfoEntity::getAddressType, addressType)
+                .set(SoInfoEntity::getReceiverName, receiverName).set(SoInfoEntity::getTelNumber, telNumber)
+                .eq(SoInfoEntity::getId, soId)
+                .update();
     }
 
     public SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfitt(SkuCostProfitDTO.SkuCostProfitParam costParam) {
