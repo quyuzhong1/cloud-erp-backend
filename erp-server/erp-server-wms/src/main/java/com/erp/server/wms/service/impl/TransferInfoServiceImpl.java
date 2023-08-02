@@ -456,12 +456,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             log.info("直接调拨单【{}】审核通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //审核通过 TODO(判断是否存在流程)
 
-            //非金蝶拉取数据需要更新发送金蝶状态为待发送
-            List<String> sendIds = list.stream().filter(obj -> !SourceTypeEnum.STK_TRANSFERDIRECT.getCode().equals(obj.getSourceType())).map(TransferInfoEntity::getId).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(sendIds)) {
-                updateSyncKingdeeStatus(sendIds,SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),null,null);
-            }
-
             //更新单据(后面有流程了调用监听可删)
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
             //更新库存
@@ -598,6 +592,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String operate) {
         return  this.lambdaUpdate()
                 .in(TransferInfoEntity::getId,ids)
+                .ne(TransferInfoEntity::getThirdPartySystem,ThirdPartySystemEnum.ENUM_MB.getCode())
                 .set(StringUtils.isNotBlank(syncKingdeeStatus),TransferInfoEntity::getSyncKingdeeStatus,syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus),TransferInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId),TransferInfoEntity::getSyncKingdeeId,syncKingdeeId)
