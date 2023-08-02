@@ -65,11 +65,11 @@ public class KingdeeApiUtils {
 
     public KingdeeApiUtils(String formId) {
         IdentifyInfo identifyInfo = new IdentifyInfo();
-        identifyInfo.setdCID("64ba3050372551");
-        identifyInfo.setAppId("253721_453ORdst1oCU24TO472M2YWIyqQ81tqp");
-        identifyInfo.setUserName("Administrator");
-        identifyInfo.setServerUrl("http://47.106.224.95:8089/k3cloud/");
-        identifyInfo.setAppSecret("500dc0a67bd04b588b8b7f98c37a8461");
+        identifyInfo.setdCID(DCID);
+        identifyInfo.setAppId(APPID);
+        identifyInfo.setUserName(USERNAME);
+        identifyInfo.setServerUrl(SERVERURL);
+        identifyInfo.setAppSecret(APPSECRET);
         this.client = new K3CloudApi(identifyInfo);
         this.formId = formId;
     }
