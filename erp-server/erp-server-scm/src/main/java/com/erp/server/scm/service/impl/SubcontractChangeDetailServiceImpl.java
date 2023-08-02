@@ -84,7 +84,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             list.add(entity);
         }
         //处理父子级数据
-        List<SubcontractChangeDetailEntity> resultList = generateResultDetail(list, mainId);
+        List<SubcontractChangeDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.TRUE);
         this.saveBatch(resultList);
     }
 
@@ -114,7 +114,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         checkSourceDetailQty(list,mainId);
 
         //处理父子级数据
-        List<SubcontractChangeDetailEntity> resultList = generateResultDetail(list, mainId);
+        List<SubcontractChangeDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.FALSE);
 
         this.saveOrUpdateBatch(resultList);
     }
@@ -190,7 +190,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
     /**
      * 生成明细结果
      */
-    private List<SubcontractChangeDetailEntity> generateResultDetail (List<SubcontractChangeDetailEntity> newList, String mainId) {
+    private List<SubcontractChangeDetailEntity> generateResultDetail (List<SubcontractChangeDetailEntity> newList, String mainId,Boolean isAdd) {
         List<SubcontractChangeDetailEntity> resultList = new ArrayList<>();
         //父级skuIds
         List<String> parentSkuIds = new ArrayList<>();
@@ -340,9 +340,9 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                 moduleOperateLogService.addModuleOperateLogByObj(old,resultEntity, ModuleTypeEnum.SUBCONTRACT_CHANGE.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }
         }
-        //新增SKU添加操作日志
+        //新增SKU添加操作日志,仅修改提交
         List<SubcontractChangeDetailEntity> addList = newList.stream().filter(c ->c.getIsAdd()).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(addList)) {
+        if (CollectionUtils.isNotEmpty(addList) && !isAdd) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             moduleOperateLogService.batchAddModuleOperateLog("新增了一条父级SKU【%s】", ModuleTypeEnum.SUBCONTRACT_CHANGE.getCode(), addPairList, "编辑操作");
         }

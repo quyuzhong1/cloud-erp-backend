@@ -57,7 +57,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             return;
         }
         List<PurchaseApplicationDetailEntity> list = BeanMapperUtils.copyList(PurchaseApplicationDetailEntity.class, details);
-        doOpHandleDataId(list,purchaseApplicationId);
+        doOpHandleDataId(list,purchaseApplicationId,Boolean.TRUE);
         this.saveBatch(list);
         //更新sku为不可删除标识
         List<String> skuIds = list.stream().map(PurchaseApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -82,7 +82,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             this.removeByIds(deleteIds);
         }
         List<PurchaseApplicationDetailEntity> newList = BeanMapperUtils.copyList(PurchaseApplicationDetailEntity.class, details);
-        doOpHandleDataId(newList,purchaseApplicationId);
+        doOpHandleDataId(newList,purchaseApplicationId,Boolean.FALSE);
         this.saveOrUpdateBatch(newList);
         //更新sku为不可删除标识
         List<String> skuIds = newList.stream().map(PurchaseApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -125,7 +125,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
     /**
      * 处理明细中的数据id
      */
-    private void doOpHandleDataId (List<PurchaseApplicationDetailEntity> newList,String purchaseApplicationId) {
+    private void doOpHandleDataId (List<PurchaseApplicationDetailEntity> newList,String purchaseApplicationId,Boolean isAdd) {
         //仓库信息
         List<String> destWarehouseIdList = newList.stream().map(PurchaseApplicationDetailEntity::getDestWarehouseId).collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
@@ -147,7 +147,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
 
         //添加操作日志
         List<PurchaseApplicationDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(addList)) {
+        if (CollectionUtils.isNotEmpty(addList) && !isAdd) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(purchaseApplicationId, obj.getSkuNo())).collect(Collectors.toList());
             moduleOperateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(), addPairList, "编辑操作");
         }
