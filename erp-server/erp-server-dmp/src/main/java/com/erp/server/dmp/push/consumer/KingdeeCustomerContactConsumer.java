@@ -158,6 +158,10 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
 
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+            //禁用的不操作
+            if (forbidStatus.equals("B")) {
+                return;
+            }
             flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
         }
         //给修改json对象赋值ID
