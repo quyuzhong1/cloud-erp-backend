@@ -80,7 +80,8 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
-
+        //0 是禁用
+        Boolean erpForbidStatus = String.valueOf(MathUtil.ZERO).equals(String.valueOf(userState));
         //未配置发送字段
         if (CollectionUtils.isEmpty(json)) {
             log.error(ApiError.ERROR_97025.msg);
@@ -98,6 +99,16 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
 
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
+            String forbidStatus = model.getStr("ForbidStatus", "");
+            // A启用 B禁用
+            Boolean kingdeeForbidStatus = "B".equals(forbidStatus) ? Boolean.TRUE : Boolean.FALSE;
+            //如果是一致就不处理
+            if (erpForbidStatus.equals(kingdeeForbidStatus)) {
+                log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}], 无需{}，跳过{}操作", forbidStatus, map.get("disabled"), enableOperate, enableOperate);
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(map), "金蝶状态与ERP相同不需要修改", type, ApiSendStatusEnum.SUCCESS.getCode());
+                return;
+            }
             //启用、禁用
             excuteOperation(apiUtils, platformEntity, map, type, enableOperate);
             return;
@@ -108,15 +119,11 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
         //禁用日期（用于判断是否禁用）
         String forbidStatus = model.getStr("ForbidStatus", "");
 
-
         // A启用 B禁用
         Boolean kingdeeForbidStatus = "B".equals(forbidStatus) ? Boolean.TRUE : Boolean.FALSE;
-
         String id = String.valueOf(model.get("Id"));
         Boolean flag = Boolean.FALSE;
 
-        //0 是禁用
-        Boolean erpForbidStatus = String.valueOf(MathUtil.ZERO).equals(String.valueOf(userState));
         //操作项
         String operate = (String) map.get("operate");
         if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
@@ -138,7 +145,11 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
 
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            //禁用的不能烦审核
+            if (!kingdeeForbidStatus) {
+                flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            }
+
         }
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
@@ -186,7 +197,7 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
         if (ObjectUtils.isEmpty(userState)) {
             return;
         }
-        String code = String.valueOf(map.getOrDefault("code",""));
+        String code = String.valueOf(map.getOrDefault("code", ""));
         if (StringUtils.isNotBlank(operate)) {
             kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
         }
