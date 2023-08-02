@@ -91,4 +91,19 @@ public interface InventoryFeign {
     @PostMapping(value = "/feign/instockForcast/finishDeliveryBatch")
     void finishDeliveryBatch(@RequestBody @Valid List<InstockForcastDTO.FinishDeliveryDTO> dataList);
 
+
+    /**
+     * 根据采购订单生成入库预报单（批量）
+     * @param dataList
+     */
+    @PostMapping(value = "/feign/instockForcast/generateByPurchaseOrderBatch")
+    void generateByPurchaseOrderBatch(@RequestBody @Valid List<InstockForcastDTO.AddDTO> dataList);
+
+    /**
+     * 采购订单变更单审核通过（批量）
+     * @param dataList
+     */
+    @PostMapping(value = "/feign/instockForcast/poChangeBatch")
+    void poChangeBatch(@RequestBody @Valid List<InstockForcastDTO.PoChangeDTO> dataList);
+
 }

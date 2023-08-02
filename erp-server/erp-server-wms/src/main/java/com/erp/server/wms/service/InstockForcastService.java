@@ -62,4 +62,16 @@ public interface InstockForcastService extends SuperService<InstockForcastEntity
      */
     void finishDeliveryBatch(List<InstockForcastDTO.FinishDeliveryDTO> dataList);
 
+    /**
+     * 根据采购订单生成入库预报单（批量）
+     * @param dataList
+     */
+    void generateByPurchaseOrderBatch(List<InstockForcastDTO.AddDTO> dataList);
+
+    /**
+     * 采购订单变更单审核通过（批量）
+     * @param dataList
+     */
+    void poChangeBatch(List<InstockForcastDTO.PoChangeDTO> dataList);
+
 }
