@@ -180,12 +180,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //是否含税
         Boolean isTax = entity.getIsTax();
         Map<String, Object> finance = new HashMap<>();
-        finance.put("FExchangeRate", 1);
-        finance.put("FIsIncludedTax", isTax);
-        finance.put("FSettleCurrId.FNumber", currencyCode);
-        finance.put("FAllDisCount", Objects.nonNull(entity.getDiscountAmount()) ? entity.getDiscountAmount() : BigDecimal.ZERO);
-        resultMap.put("finance", finance);
-
+        resultMap.put("isTax", isTax);
+        resultMap.put("currencyCode", currencyCode);
+        resultMap.put("discountAmount", Objects.nonNull(entity.getDiscountAmount()) ? entity.getDiscountAmount() : BigDecimal.ZERO);
         if (StringUtils.isNotBlank(salesOrgCode)) {
             resultMap.put("salesOrgCode", salesOrgCode);
         }
