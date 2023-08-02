@@ -69,7 +69,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
         //验证数量、单价是否符合供应商报价
         checkPurchasePrice(list,purchaseChangeId);
         //计算金额
-        doOpCalculateAmount(list,purchaseChangeId);
+        doOpCalculateAmount(list,purchaseChangeId,Boolean.TRUE);
         this.saveBatch(list);
     }
 
@@ -94,7 +94,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
         //验证数量、单价是否符合供应商报价
         checkPurchasePrice(newList,purchaseChangeId);
         //计算金额
-        doOpCalculateAmount(newList,purchaseChangeId);
+        doOpCalculateAmount(newList,purchaseChangeId,Boolean.FALSE);
         this.saveOrUpdateBatch(newList);
     }
 
@@ -117,30 +117,35 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
     /**
      * 更新金额
      */
-    private void doOpCalculateAmount(List<PurchaseChangeDetailEntity> list,String purchaseChangeId) {
-        if (CollectionUtils.isEmpty(list)) {
+    private void doOpCalculateAmount(List<PurchaseChangeDetailEntity> newList,String purchaseChangeId,Boolean isAdd) {
+        if (CollectionUtils.isEmpty(newList)) {
             return;
         }
         //查询编辑前数据
-        List<String> detailIds = list.stream().map(PurchaseChangeDetailEntity::getId).collect(Collectors.toList());
+        List<String> detailIds = newList.stream().map(PurchaseChangeDetailEntity::getId).collect(Collectors.toList());
         List<PurchaseChangeDetailEntity> oldList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(detailIds)) {
              oldList = this.listByIds(detailIds);
         }
 
-        for (PurchaseChangeDetailEntity entity : list) {
+        for (PurchaseChangeDetailEntity entity : newList) {
             entity.setPurchaseChangeId(purchaseChangeId);
             entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
             //操作日志
-            if (StringUtils.isBlank(entity.getId())) {
-                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_CHANGE.getCode(),purchaseChangeId,"编辑操作");
-            } else {
+            if (StringUtils.isNotBlank(entity.getId())) {
                 PurchaseChangeDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(entity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_98043);
                 }
                 moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_CHANGE.getCode(),purchaseChangeId,"",String.format("【%s】",old.getSkuNo()));
             }
+        }
+
+        //添加操作日志
+        List<PurchaseChangeDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(addList) && !isAdd) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(purchaseChangeId, obj.getSkuNo())).collect(Collectors.toList());
+            moduleOperateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.PURCHASE_CHANGE.getCode(), addPairList, "编辑操作");
         }
     }
 

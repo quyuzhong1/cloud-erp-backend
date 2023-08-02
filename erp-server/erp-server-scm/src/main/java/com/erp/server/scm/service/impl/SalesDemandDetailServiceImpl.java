@@ -9,7 +9,6 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.SalesDemandDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -19,7 +18,6 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SalesDemandDetailMapper;
 import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.SalesDemandDetailService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -67,7 +65,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         List<String> skuIds = list.stream().map(SalesDemandDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         plmTaskFeign.updateOccupyStatus(skuIds);
         //处理关联数据
-        doOpHandleDataId(list,salesDemandId);
+        doOpHandleDataId(list,salesDemandId,Boolean.TRUE);
         this.saveBatch(list);
     }
 
@@ -91,7 +89,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         //如果是下推单据则需要验证修改的数量
         checkPlanStockQty(newList);
 
-        doOpHandleDataId(newList,salesDemandId);
+        doOpHandleDataId(newList,salesDemandId,Boolean.FALSE);
         this.saveOrUpdateBatch(newList);
         //更新sku为不可删除标识
         List<String> skuIds = newList.stream().map(SalesDemandDetailEntity::getSkuId).collect(Collectors.toList());
@@ -188,7 +186,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
     /**
      * 处理明细中的数据id
      */
-    private void doOpHandleDataId (List<SalesDemandDetailEntity> newList, String salesDemandId) {
+    private void doOpHandleDataId (List<SalesDemandDetailEntity> newList, String salesDemandId,Boolean isAdd) {
 
         //仓库信息
         List<String> destWarehouseIdList = newList.stream().map(SalesDemandDetailEntity::getDestWarehouseId).collect(Collectors.toList());
@@ -203,7 +201,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
 
         //添加操作日志
         List<SalesDemandDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(addList)) {
+        if (CollectionUtils.isNotEmpty(addList) && !isAdd) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(salesDemandId, obj.getSkuNo())).collect(Collectors.toList());
             moduleOperateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.SALES_DEMAND.getCode(), addPairList, "编辑操作");
         }
