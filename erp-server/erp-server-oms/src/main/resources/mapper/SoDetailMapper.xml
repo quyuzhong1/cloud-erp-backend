@@ -34,15 +34,16 @@
 
     <select id="listSkuPriceHistory" resultType="com.erp.model.oms.dto.SoDetailDTO$SkuHistoryPriceDTO">
          SELECT
-          MAX(sd.price) AS maxPrice,
-          MIN(sd.price) AS minPrice,
+          MAX(sd.price*sd.exchange_rate) AS maxPrice,
+          MIN(sd.price*sd.exchange_rate) AS minPrice,
           sd.sku_id,
           COUNT(sd.sku_id) AS count,
-	      round( SUM (sd.price*qty ) / sum(sd.qty), 2 ) avgPrice
+	      round( SUM (sd.amount_local_currency) / sum(sd.qty), 2 ) avgPrice
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id
         AND si.is_deleted = FALSE
-        WHERE sd.is_deleted=FALSE AND si.approve_status=#{approveStatus}
+        WHERE sd.is_deleted=FALSE
+        AND si.approve_status=#{approveStatus}
         AND sku_id!='' and qty!=0
         GROUP BY sku_id
     </select>
@@ -89,24 +90,25 @@
 
     <select id="listSoDetailByDeliveryStatus" resultType="com.erp.model.oms.dto.SoDetailDTO$InfoDTO">
         SELECT
-            tt.main_id,
-            tt.type AS deliveryStatus
+        tt.main_id,
+        tt.type AS deliveryStatus
         FROM so_info si
         INNER JOIN (
-            SELECT
-                sd.delivery_status AS type,
-                sd.main_id,
-                COUNT(sd.main_id) ,
-                t.skuQty AS skuQty
-            FROM so_detail sd
-            LEFT JOIN (
-                SELECT main_id, COUNT(main_id) skuQty FROM so_detail WHERE is_deleted = false AND is_close = false GROUP BY main_id
-            )t ON sd.main_id = t.main_id
-            WHERE sd.is_deleted = false AND sd.is_close = false
-            GROUP BY
-            sd.delivery_status,
-            sd.main_id,t.skuQty
-            order by sd.delivery_status
+        SELECT
+        sd.delivery_status AS type,
+        sd.main_id,
+        COUNT(sd.main_id) ,
+        t.skuQty AS skuQty
+        FROM so_detail sd
+        LEFT JOIN (
+        SELECT main_id, COUNT(main_id) skuQty FROM so_detail WHERE is_deleted = false AND is_close = false GROUP BY
+        main_id
+        )t ON sd.main_id = t.main_id
+        WHERE sd.is_deleted = false AND sd.is_close = false
+        GROUP BY
+        sd.delivery_status,
+        sd.main_id,t.skuQty
+        order by sd.delivery_status
         )tt on si.id = tt.main_id
         WHERE si.is_deleted = false AND si.approve_status = 'approve'
         AND CASE WHEN tt.type = 'completeShipment' THEN tt.skuQty = tt.count ELSE 1=1 END
@@ -165,24 +167,26 @@
 
     <select id="listDeliveryCount" resultType="com.erp.model.oms.dto.SoDetailDTO$TypeCountDTO">
         SELECT
-            tt.type,
-            SUM(CASE WHEN type = 'completeShipment' AND tt.count = tt.skuQty OR (type != 'completeShipment') THEN 1 ELSE 0 END) AS count
+        tt.type,
+        SUM(CASE WHEN type = 'completeShipment' AND tt.count = tt.skuQty OR (type != 'completeShipment') THEN 1 ELSE 0
+        END) AS count
         FROM so_info si
         INNER JOIN (
-            SELECT
-                sd.delivery_status AS type,
-                sd.main_id,
-                COUNT(sd.main_id) ,
-                t.skuQty AS skuQty
-            FROM so_detail sd
-            LEFT JOIN (
-                SELECT main_id, COUNT(main_id) skuQty FROM so_detail WHERE is_deleted = FALSE AND is_close = FALSE GROUP BY main_id
-            )t ON sd.main_id = t.main_id
-            WHERE sd.is_deleted = FALSE AND sd.is_close = FALSE
-            GROUP BY
-            sd.delivery_status,
-            sd.main_id,t.skuQty
-            order by sd.delivery_status
+        SELECT
+        sd.delivery_status AS type,
+        sd.main_id,
+        COUNT(sd.main_id) ,
+        t.skuQty AS skuQty
+        FROM so_detail sd
+        LEFT JOIN (
+        SELECT main_id, COUNT(main_id) skuQty FROM so_detail WHERE is_deleted = FALSE AND is_close = FALSE GROUP BY
+        main_id
+        )t ON sd.main_id = t.main_id
+        WHERE sd.is_deleted = FALSE AND sd.is_close = FALSE
+        GROUP BY
+        sd.delivery_status,
+        sd.main_id,t.skuQty
+        order by sd.delivery_status
         )tt ON si.id = tt.main_id
         WHERE si.is_deleted = FALSE AND si.approve_status = 'approve'
         <if test="permissionSql!=null and permissionSql!=''">
