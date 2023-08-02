@@ -349,5 +349,23 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         dataList.stream().forEach(data->finishDelivery(data));
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void generateByPurchaseOrderBatch(List<InstockForcastDTO.AddDTO> dataList) {
+        if(CollUtil.isEmpty(dataList)) {
+            throw new ServiceException("库存交易数据不能为空");
+        }
+        dataList.stream().forEach(this::generateByPurchaseOrder);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void poChangeBatch(List<InstockForcastDTO.PoChangeDTO> dataList) {
+        if(CollUtil.isEmpty(dataList)) {
+            throw new ServiceException("库存交易数据不能为空");
+        }
+        dataList.stream().forEach(this::poChange);
+    }
+
 
 }

@@ -1727,7 +1727,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @param list
      */
     public void updateInventoryTransCore (List<PurchaseOrderEntity> list) {
+
         Map<String,PurchaseOrderEntity> orderMap =  list.stream().collect(Collectors.toMap(PurchaseOrderEntity::getId, Function.identity()));
+        List<InstockForcastDTO.AddDTO> dataList = Lists.newArrayList();
         // 获取采购订单明细
         orderMap.forEach((id,order)->{
             List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailService.listByPurchaseOrderId(id);
@@ -1753,8 +1755,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 details.add(member);
             });
             inventoryForcastDTO.setDetails(details);
-            inventoryFeign.generateByPurchaseOrder(inventoryForcastDTO);
+            dataList.add(inventoryForcastDTO);
         });
+        if(CollUtil.isNotEmpty(dataList)) {
+            inventoryFeign.generateByPurchaseOrderBatch(dataList);
+        }
     }
 
     /**
