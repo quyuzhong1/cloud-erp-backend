@@ -2,6 +2,7 @@ package com.erp.server.wms.schedule;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.wms.entity.*;
 import com.erp.server.wms.kingdee.*;
 import com.erp.server.wms.service.*;
@@ -27,8 +28,8 @@ import java.util.List;
 @EnableScheduling
 public class KingdeePushJob {
 
-   @Resource
-   private MachineInfoService machineInfoService;
+    @Resource
+    private MachineInfoService machineInfoService;
 
     @Resource
     private SyncKingdeeMachineInfoService syncKingdeeMachineInfoService;

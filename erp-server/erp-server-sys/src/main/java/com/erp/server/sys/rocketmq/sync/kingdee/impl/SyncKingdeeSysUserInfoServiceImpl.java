@@ -8,6 +8,7 @@ import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysUserInfoService;
 import com.erp.server.sys.service.SysUserInfoService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,6 @@ import java.util.concurrent.CompletableFuture;
 /**
  * @author Will
  * @version 1.0
-
  * @date 2023/4/4 12:25
  */
 @Slf4j
@@ -38,20 +38,26 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
      * 组装数据发送到金蝶
      */
     @Override
-    public void syncDataToKingdee(SysUserInfoEntity entity,String operate) {
+    public void syncDataToKingdee(SysUserInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+        String code = entity.getCode();
+        //表示没有金蝶的code 那就无需推送的
+        if (StringUtils.isBlank(code)) {
+            sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getUid()), SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode(), "", operate);
+            return;
+        }
 
         //更新同步状态为待同步
-        sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getUid()),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getUid()), SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), "", operate);
 
         //业务id
-        resultMap.put("id",entity.getUid());
+        resultMap.put("id", entity.getUid());
         //编码
-        resultMap.put("code",entity.getCode());
+        resultMap.put("code", entity.getCode());
         //名称
-        resultMap.put("userName",entity.getUserName());
+        resultMap.put("userName", entity.getUserName());
         //金蝶id
-        resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //邮箱
         resultMap.put("email", entity.getEmail());
         //电话号码
@@ -66,7 +72,7 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SYS_USER_INFO_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getUid()), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"",operate);
+                return sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getUid()), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "", operate);
             }
             return Boolean.TRUE;
         });
