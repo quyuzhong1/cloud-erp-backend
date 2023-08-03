@@ -312,7 +312,7 @@ public abstract class AbstractInventoryServiceImpl {
             }
             // 保存库存
             InventorySaveDTO inventorySaveDTO = inventoryService.addOrUpdate(param.getWarehouseId(), warehouseInfo.getOrgId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getQty());
-            InventoryDetailEntity inventoryDetail = inventoryDetailService.addOrUpdate(inventorySaveDTO.getInventoryId(), param.getBillDate(), param.getQty());
+            InventoryDetailEntity inventoryDetail = inventoryDetailService.addOrUpdate(inventorySaveDTO.getInventoryId(), param.getBillDate(), param.getQty(), inventoryStatusEnum);
             InventoryEntity entity = inventoryService.getById(inventorySaveDTO.getInventoryId());
             // 时间为交易日期
             inventoryHisService.addOrUpdate(inventorySaveDTO.getInventoryId(), LocalDate.now(), entity.getQty());

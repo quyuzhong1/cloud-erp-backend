@@ -10,6 +10,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.entity.InventoryDetailEntity;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.mapper.InventoryDetailMapper;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.InventoryDetailService;
@@ -50,7 +51,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
         List<InventoryDetailEntity> inventoryDetails = lambdaQuery().eq(InventoryDetailEntity::getInfoId, inventoryInfoId).gt(InventoryDetailEntity::getQty, 0).list();
         if(CollUtil.isNotEmpty(inventoryDetails)) {
             // 先按入库批次时间排序，再按id排序，防止时间冲突
-            inventoryDetails = inventoryDetails.stream().sorted(Comparator.comparing(InventoryDetailEntity::getInstockBatchDate).thenComparing(InventoryDetailEntity::getId)).collect(Collectors.toList());
+            inventoryDetails = inventoryDetails.stream().sorted(Comparator.comparing(InventoryDetailEntity::getInstockBatchDate, Comparator.nullsFirst(LocalDate::compareTo)).thenComparing(InventoryDetailEntity::getId)).collect(Collectors.toList());
 
         }
         return inventoryDetails;
@@ -73,14 +74,16 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public InventoryDetailEntity addOrUpdate(String inventoryInfoId, LocalDate billDate, Integer qty) {
+    public InventoryDetailEntity addOrUpdate(String inventoryInfoId, LocalDate billDate, Integer qty, InventoryStatusEnum inventoryStatusEnum) {
         // 入库批次日期取单据日期
-        InventoryDetailEntity inventoryDetail =  this.findOneDetail(inventoryInfoId, billDate);
+        // 在途库存入库批次日期置为空
+        LocalDate instockBatchDate = Objects.equals(InventoryStatusEnum.IN_TRANSIT, inventoryStatusEnum) ? null : billDate;
+        InventoryDetailEntity inventoryDetail =  this.findOneDetail(inventoryInfoId, instockBatchDate);
         if (Objects.isNull(inventoryDetail)) {
-            log.info("单据日期：【{}】,库存表id：【{}】，不存在库存明细数据，新增数据", billDate, inventoryInfoId);
+            log.info("单据日期：【{}】,批次日期：【{}】，库存表id：【{}】，不存在库存明细数据，新增数据", billDate, instockBatchDate, inventoryInfoId);
             inventoryDetail = new InventoryDetailEntity();
             inventoryDetail.setInfoId(inventoryInfoId);
-            inventoryDetail.setInstockBatchDate(billDate);
+            inventoryDetail.setInstockBatchDate(instockBatchDate);
             inventoryDetail.setQty(qty);
             inventoryDetail.setVersion(1);
             boolean save = super.save(inventoryDetail);
