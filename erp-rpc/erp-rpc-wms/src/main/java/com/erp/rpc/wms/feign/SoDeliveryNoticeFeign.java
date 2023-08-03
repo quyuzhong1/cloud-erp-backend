@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
-import java.util.Map;
 
 @FeignClient(name = "erp-wms", contextId = "soDeliveryNotice")
 public interface SoDeliveryNoticeFeign {
@@ -24,6 +23,8 @@ public interface SoDeliveryNoticeFeign {
      */
     @PostMapping("feign/soDeliveryNotice/listBySourceIdList")
     List<SoDeliveryNoticeDetailDTO.ListDTO> listBySourceIdList(@RequestBody List<String> sourceIdList);
+
+
 
     /**
      * 根据来源id list 查询已下推的发货通知单数量
