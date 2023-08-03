@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.entity.InventoryDetailEntity;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -44,7 +45,7 @@ public interface InventoryDetailService  extends SuperService<InventoryDetailEnt
      * @param qty
      * @return
      */
-    InventoryDetailEntity addOrUpdate(String inventoryInfoId, LocalDate billDate, Integer qty);
+    InventoryDetailEntity addOrUpdate(String inventoryInfoId, LocalDate billDate, Integer qty, InventoryStatusEnum inventoryStatusEnum);
 
 
     /**
