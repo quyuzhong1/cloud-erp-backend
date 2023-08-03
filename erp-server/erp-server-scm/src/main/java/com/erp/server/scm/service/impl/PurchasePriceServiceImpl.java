@@ -47,6 +47,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -760,6 +761,15 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             return new ArrayList<>();
         }
         return baseMapper.listSupplierSkuPrice(ids);
+    }
+
+    @Override
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        //用户信息
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        // 查询所有审核通过的产品信息
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        return null;
     }
 
     /**

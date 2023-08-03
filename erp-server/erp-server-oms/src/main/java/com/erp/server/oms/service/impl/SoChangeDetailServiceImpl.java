@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -12,6 +13,7 @@ import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -20,10 +22,7 @@ import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.InventoryFeign;
-import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.mapper.SoChangeDetailMapper;
 import com.erp.server.oms.service.*;
 import com.google.common.collect.Lists;
@@ -87,6 +86,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
     @Autowired
     private SoReturnService soReturnService;
+
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
 
     /**
      * 添加变更详情信息
@@ -451,8 +453,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         // 更新销售订单和销售退货订单的地址信息（地址信息发生了变更的情况下）
         List<String> soIds = list.stream().map(SoChangeEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoInfoEntity> soInfoList = soInfoService.listByIds(soIds);
+        Map<String, SoInfoEntity> soInfoMap = Maps.newHashMap();
         if(CollUtil.isNotEmpty(soInfoList)) {
-            Map<String, SoInfoEntity> soInfoMap = soInfoList.stream().collect(Collectors.toMap(SoInfoEntity::getId, Function.identity()));
+            soInfoMap = soInfoList.stream().collect(Collectors.toMap(SoInfoEntity::getId, Function.identity()));
             List<String> receiveAddressIds = list.stream().filter(r->StrUtils.isNotEmpty(r.getReceiveAddressId())).map(SoChangeEntity::getReceiveAddressId).distinct().collect(Collectors.toList());
             Map<String, CustomerAddressEntity> customerAddressMap = Maps.newHashMap();
             if(CollUtil.isNotEmpty(receiveAddressIds)) {
@@ -524,6 +527,27 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 saveOrUpdateList.add(soDetail);
             }
             soDetailService.saveOrUpdateBatch(saveOrUpdateList);
+            // 重算销售订单的成本毛利
+            List<SoDetailEntity> soDetailList = soDetailService.listSoDetailByMainIds(soIds);
+            if(CollUtil.isNotEmpty(soDetailList)) {
+                List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
+                List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+                // 供应商id集合
+                List<String> supplierIds = skuList.stream().filter(r-> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
+                List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
+                if(CollUtil.isNotEmpty(supplierIds)) {
+                    purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
+                }
+                Map<String,List<SoDetailEntity>> soDetailMap =  soDetailList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
+                for(Map.Entry<String, List<SoDetailEntity>> soEntry : soDetailMap.entrySet()){
+                    SoInfoEntity soInfoEntity = soInfoMap.get(soEntry.getKey());
+                    for (SoDetailEntity item : soEntry.getValue()) {
+                        // 重新计算毛利成本
+                        soDetailService.calCost(purchasePriceList, skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);
+                        soDetailService.updateCost(item.getId(), item);
+                    }
+                }
+            }
             //关闭关联单据的关闭状态
             wmsTaskFeign.closeBySoDetailIds(terminateSoDetailIds);
         }
