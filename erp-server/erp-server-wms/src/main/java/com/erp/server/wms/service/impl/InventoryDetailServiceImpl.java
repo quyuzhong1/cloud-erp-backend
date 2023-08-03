@@ -39,10 +39,14 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
     private CommonService commonService;
 
     @Override
-    public InventoryDetailEntity findOneDetail(String inventoryInfoId, LocalDate instockBatchDate) {
+    public InventoryDetailEntity findOneDetail(String inventoryInfoId, LocalDate instockBatchDate, InventoryStatusEnum inventoryStatusEnum) {
         LambdaQueryWrapper<InventoryDetailEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(InventoryDetailEntity::getInfoId, inventoryInfoId)
-                .eq(InventoryDetailEntity::getInstockBatchDate, instockBatchDate).last("limit 1");
+        queryWrapper.eq(InventoryDetailEntity::getInfoId, inventoryInfoId);
+        if (Objects.equals(inventoryStatusEnum, InventoryStatusEnum.IN_TRANSIT)) {
+            queryWrapper.isNull(InventoryDetailEntity::getInstockBatchDate).last("limit 1");
+        } else {
+            queryWrapper.eq(InventoryDetailEntity::getInstockBatchDate, instockBatchDate).last("limit 1");
+        }
         return baseMapper.selectOne(queryWrapper);
     }
 
@@ -78,7 +82,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
         // 入库批次日期取单据日期
         // 在途库存入库批次日期置为空
         LocalDate instockBatchDate = Objects.equals(InventoryStatusEnum.IN_TRANSIT, inventoryStatusEnum) ? null : billDate;
-        InventoryDetailEntity inventoryDetail =  this.findOneDetail(inventoryInfoId, instockBatchDate);
+        InventoryDetailEntity inventoryDetail =  this.findOneDetail(inventoryInfoId, instockBatchDate, inventoryStatusEnum);
         if (Objects.isNull(inventoryDetail)) {
             log.info("单据日期：【{}】,批次日期：【{}】，库存表id：【{}】，不存在库存明细数据，新增数据", billDate, instockBatchDate, inventoryInfoId);
             inventoryDetail = new InventoryDetailEntity();
