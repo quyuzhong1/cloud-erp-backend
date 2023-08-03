@@ -7,12 +7,9 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.validator.AddGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
-import com.common.core.utils.StrUtils;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.server.wms.service.TransferInfoService;
 import org.apache.commons.lang3.StringUtils;
@@ -232,7 +229,7 @@ public class TransferInfoController extends BaseController {
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        transferInfoService.approve(baseApproveParamDTO);
+        transferInfoService.approve(baseApproveParamDTO,Boolean.TRUE);
         return success();
     }
 

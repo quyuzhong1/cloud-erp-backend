@@ -39,7 +39,7 @@ public class KingdeeReturnOrderItemEntity {
     private String fStockNumber;
     @Alias("FStockId.FName")
     private String fStockName;
-    @Alias("FStocklocId")
+    @Alias("FStockLocId.FF100014.FNumber")
     private String fStockLocId;
     @Alias("FStockstatusId")
     private String fStockStatusId;

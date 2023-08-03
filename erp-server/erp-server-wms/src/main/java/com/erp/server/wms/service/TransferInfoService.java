@@ -106,7 +106,7 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @date: 2023/5/15 11:25
      * @param baseApproveParamDTO
      */
-    void approve(BaseApproveParamDTO baseApproveParamDTO);
+    void approve(BaseApproveParamDTO baseApproveParamDTO,Boolean isSyncKingDee);
     /**
      * @description: 反审核
      * @author Will

@@ -137,6 +137,16 @@ public interface WmsTaskFeign {
     Boolean purchaseReturnOrderApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 
     /**
+     * 调拨申请单审核
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:06
+     * @param baseApproveParamDTO baseApproveParamDTO
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("feign/wmsWorkOption/transferApplicationApprove")
+    Boolean transferApplicationApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
      * 根据销售 销售订单详情ids 获取是否有下推的单据
      * @author yl
      * @date 2023-05-25 10:27

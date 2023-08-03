@@ -101,16 +101,6 @@ public class PurchaseApplicationDetailDTO implements Serializable {
          * 采购组织名
          */
         private String purchaseOrgName;
-        /**
-         * 收料组织id
-         */
-        @NotBlank(message = "收料组织不能为空")
-        private String receiveOrgId;
-
-        /**
-         * 收料组织名
-         */
-        private String receiveOrgName;
 
         /**
          * 备注
@@ -128,6 +118,26 @@ public class PurchaseApplicationDetailDTO implements Serializable {
          */
         private String id;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO extends AddDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 收料组织id
+         */
+        private String receiveOrgId;
+
+        /**
+         * 收料组织名
+         */
+        private String receiveOrgName;
+    }
+
 
     @Data
     @NoArgsConstructor

@@ -288,6 +288,11 @@ public class TransferInfoDTO implements Serializable {
         private String thirdPartySystem;
 
         /**
+         * 金蝶同步id
+         */
+        private String syncKingdeeId;
+
+        /**
          * 金蝶同步状态
          */
         private String syncKingdeeStatus;

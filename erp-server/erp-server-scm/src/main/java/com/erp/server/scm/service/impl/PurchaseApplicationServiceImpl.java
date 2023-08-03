@@ -140,7 +140,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 boolean contains = list.contains(obj.getId());
                 if (contains) {
                     obj.setCode(null);
-                    // obj.setApproveStatus(null);
                     obj.setApproveStatusName(null);
                     obj.setIsFirstMassProduct(null);
                     obj.setCreateUserName(null);
@@ -203,8 +202,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     public String add(PurchaseApplicationDTO.AddDTO dto) {
         PurchaseApplicationEntity entity = new PurchaseApplicationEntity();
         BeanMapperUtils.copy(dto,entity);
-        //校验明细是否有重复sku
-        //checkAddDetailsRepeatSku(dto.getDetails());
         //处理数据id
         doOpHandleDataId(dto.getApplyUserId(),dto.getApplyDeptId(),entity);
         log.info("采购申请单新增");
@@ -229,8 +226,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         BeanMapperUtils.copy(dto,entity);
 
         List<PurchaseApplicationDetailDTO.UpdateDTO> details = dto.getDetails();
-        //校验明细是否有重复sku
-        //checkUpdateDetailsRepeatSku(details,dto.getId());
+
         //处理数据id
         doOpHandleDataId(dto.getApplyUserId(),dto.getApplyDeptId(),entity);
 
@@ -461,8 +457,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 throw new ServiceException(ApiError.ERROR_98016);
             }
             addDTO.setPurchaseUserId(entity.getApproveUserId());
-            addDTO.setReceiveOrgId(value.get(0).getReceiveOrgId());
-            // addDTO.setPurchaseDeptId(entity.getApplyDeptId());
             addDTO.setPurchaseOrgId(value.get(0).getPurchaseOrgId());
             addDTO.setPurchaseDate(LocalDate.now());
             addDTO.setDeliveryWarehouseId(value.get(0).getDestWarehouseId());
@@ -670,7 +664,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (CollectionUtils.isEmpty(entityDetails)) {
             throw new ServiceException(ApiError.ERROR_98017);
         }
-        List<PurchaseApplicationDetailDTO.UpdateDTO> details = BeanMapperUtils.copyList(PurchaseApplicationDetailDTO.UpdateDTO.class, entityDetails);
+        List<PurchaseApplicationDetailDTO.ViewDTO> details = BeanMapperUtils.copyList(PurchaseApplicationDetailDTO.ViewDTO.class, entityDetails);
         dto.setDetails(details);
         return dto;
     }

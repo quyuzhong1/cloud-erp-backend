@@ -111,7 +111,7 @@ public abstract class AbstractInventoryServiceImpl {
      * @param transactionNo
      */
     public abstract <T extends InventoryStockBaseDTO> void singleHandler(T baseParam,  InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams,
-                               String transactionNo);
+                                                                         String transactionNo);
 
     /**
      * 反审核
@@ -312,7 +312,7 @@ public abstract class AbstractInventoryServiceImpl {
             }
             // 保存库存
             InventorySaveDTO inventorySaveDTO = inventoryService.addOrUpdate(param.getWarehouseId(), warehouseInfo.getOrgId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getQty());
-            InventoryDetailEntity inventoryDetail = inventoryDetailService.addOrUpdate(inventorySaveDTO.getInventoryId(), param.getBillDate(), param.getQty());
+            InventoryDetailEntity inventoryDetail = inventoryDetailService.addOrUpdate(inventorySaveDTO.getInventoryId(), param.getBillDate(), param.getQty(), inventoryStatusEnum);
             InventoryEntity entity = inventoryService.getById(inventorySaveDTO.getInventoryId());
             // 时间为交易日期
             inventoryHisService.addOrUpdate(inventorySaveDTO.getInventoryId(), LocalDate.now(), entity.getQty());
@@ -343,7 +343,7 @@ public abstract class AbstractInventoryServiceImpl {
      */
     @SneakyThrows
     public  void outStockCore (InOutStockCoreDTO param, InventoryBusinessTypeEnum businessType, InventoryStatusEnum inventoryStatusEnum, String tansactionRuleId,
-                              String transactionNo) {
+                               String transactionNo) {
         // 仓库信息
         WarehouseDTO.UpdateDTO warehouseInfo = warehouseService.detailWithCache(param.getWarehouseId());
         if(Objects.isNull(warehouseInfo) || StrUtil.isEmpty(warehouseInfo.getId())) {

@@ -642,6 +642,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //销售信息 禁用字段
             List<String> saleDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_SALE_SHOW_LIST, skuFiledConfigList);
             req.setDisableFieldList(saleDisableFields);
+
+            if (req.getIsFinishedImg() == null) {
+                req.setIsFinishedImg(MathUtil.TWO);
+            }
+            if (req.getIsFinishedVideo() == null) {
+                req.setIsFinishedVideo(MathUtil.TWO);
+            }
+            if (req.getIsMarketable() == null) {
+                req.setIsMarketable(MathUtil.ZERO);
+            }
+            if (req.getSaleState() == null) {
+                req.setSaleState(MathUtil.ONE);
+            }
         });
 
         productManyDetail.setProductSaleShowDTOList(saleShowDTOList);

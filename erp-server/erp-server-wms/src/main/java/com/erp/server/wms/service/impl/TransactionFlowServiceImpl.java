@@ -44,6 +44,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -128,7 +129,9 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         }
         transactionFlowEntity.setDictInventoryStatus(param.getDictInventoryStatus());
         // 批次日期取库存明细表上关联的日期
-        transactionFlowEntity.setInstockBatchDate(param.getInstockBatchDate());
+        // 在途库存入库批次日期置为空
+        LocalDate instockBatchDate = Objects.equals(InventoryStatusEnum.IN_TRANSIT, inventoryStatus) ? null : param.getInstockBatchDate();
+        transactionFlowEntity.setInstockBatchDate(instockBatchDate);
         transactionFlowEntity.setSkuId(param.getSkuId());
         transactionFlowEntity.setSkuNo(param.getSkuNo());
         transactionFlowEntity.setSourceType(param.getSourceType());

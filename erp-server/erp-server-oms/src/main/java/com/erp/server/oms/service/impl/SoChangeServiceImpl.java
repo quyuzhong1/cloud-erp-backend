@@ -23,15 +23,15 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.SoChangeEntity;
-import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.CustomerAddressTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -43,11 +43,13 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoChangeService;
 import com.erp.server.oms.mapper.SoChangeMapper;
 import com.erp.server.oms.service.*;
+import com.erp.server.oms.utils.SoUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -104,6 +106,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Resource
     private WorkflowFeign workflowFeign;
 
+    @Autowired
+    private CustomerAddressService customerAddressService;
+
     /**
      * 添加销售订单
      *
@@ -143,6 +148,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         soChange.setDeptName(deptName);
         soChange.setUserName(useName);
         soChange.setId(id);
+
+        // 判断是否可以修改地址和联系人信息
+        checkChangeCustomerInfo(soId, dto.getReceiveAddressId(), dto.getAddressType(), dto.getReceiverName(), dto.getTelNumber());
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSBG, BusinessNoTypeEnum.CODE_XSBG.getCode()));
         soChange.setCode(code);
         Boolean addResult = this.save(soChange);
@@ -200,6 +208,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         }
         soChange.setDeptName(deptName);
         soChange.setUserName(useName);
+
+
+        // 判断是否可以修改地址和联系人信息
+        checkChangeCustomerInfo(soChange.getSoId(), dto.getReceiveAddressId(), dto.getAddressType(), dto.getReceiverName(), dto.getTelNumber());
+
         Boolean updateResult = this.updateById(soChange);
         if (updateResult) {
             operateLogService.addModuleOperateLogByObj(old, soChange, ModuleTypeEnum.SO_CHANGE.getCode(), id, "", "");
@@ -253,21 +266,26 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     /**
      * 验证销售变更单
      * @param soId
-     * @param dto
+     * @param receiveAddressId
+     * @param addressType
+     * @param receiverName
+     * @param telNumber
      */
-    /*
-    private void checkChangeCustomerInfo(String soId, SoInfoDTO.AddDTO dto) {
-        SoInfoEntity soInfo = soInfoService.getById(soId);
-        Boolean isPush = soInfoService.checkSoPushDeliveryNotice(soId);
-        if(Objects.equals(isPush, Boolean.TRUE)) {
-            log.warn("销售订单【{}】存在有效下推发货通知单，验证地址联系人信息是否发生改变", soInfo.getCode());
-            CustomerInfoEntity customerInfo = customerInfoService.getById(soInfo.getCustomerId());
-            //收货地址id
-            String receiverAddressId = soInfo.getReceiveAddressId();
-            String receiveAddress =  soInfo.getReceiveAddress();
+    private void checkChangeCustomerInfo(String soId, String receiveAddressId, String addressType, String receiverName, String telNumber) {
+        // 判断是否可以修改地址和联系人信息
+        Boolean isPushed = soInfoService.checkSoPushDeliveryNotice(soId);
+        if(Objects.equals(isPushed, Boolean.TRUE)) {
+            // 已下推发货通知单不允许修改收货地址和联系人信息
+            SoInfoEntity soInfoEntity = soInfoService.getById(soId);
+            ValidatorUtil.isTrue(Objects.nonNull(soInfoEntity),()->new ServiceException(ApiError.ERROR_92016));
+            Boolean isChange = !Objects.equals(soInfoEntity.getReceiveAddressId(), receiveAddressId)
+                    || !Objects.equals(StrUtils.null2EmptyWithTrim(soInfoEntity.getAddressType()), StrUtils.null2EmptyWithTrim(addressType))
+                    || !Objects.equals(StrUtils.null2EmptyWithTrim(soInfoEntity.getReceiverName()), StrUtils.null2EmptyWithTrim(receiverName))
+                    || !Objects.equals(StrUtils.null2EmptyWithTrim(soInfoEntity.getTelNumber()), StrUtils.null2EmptyWithTrim(telNumber)) ;
+
+            ValidatorUtil.isTrue(Objects.equals(isChange, Boolean.FALSE),()->new ServiceException("销售订单已下推发货通知单，不允许修改地址"));
         }
     }
-     */
 
 
     /**
@@ -590,11 +608,23 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         view.setDeliveryModeName(soInfo.getDeliveryModeName());
         view.setOrderTypeName(soInfo.getOrderTypeName());
         view.setOrderType(soInfo.getOrderType());
-        view.setReceiveAddress(soInfo.getReceiveAddress());
-        view.setReceiverName(soInfo.getReceiverName());
+        view.setReceiveAddressId(soChange.getReceiveAddressId());
+        if(StrUtils.isNotEmpty(view.getReceiveAddressId())) {
+            CustomerAddressEntity addressEntity = customerAddressService.getById(view.getReceiveAddressId());
+            if (Objects.nonNull(addressEntity)) {
+                view.setReceiveAddress(addressEntity.getAddress());
+            }
+        } else {
+            view.setReceiveAddress(soInfo.getReceiveAddress());
+        }
+        view.setReceiverName(soChange.getReceiverName());
         view.setSoCode(soInfo.getCode());
         view.setSoId(soInfo.getId());
-        view.setTelNumber(soInfo.getTelNumber());
+        view.setTelNumber(soChange.getTelNumber());
+        view.setAddressType(soChange.getAddressType());
+        if(StrUtils.isNotEmpty(view.getAddressType())) {
+            view.setAddressTypeName(CustomerAddressTypeEnum.getName(view.getAddressType()));
+        }
         view.setSalesOrgName(soInfo.getSalesOrgName());
         view.setSellerId(soInfo.getSellerId());
         view.setSellerName(soInfo.getSellerName());

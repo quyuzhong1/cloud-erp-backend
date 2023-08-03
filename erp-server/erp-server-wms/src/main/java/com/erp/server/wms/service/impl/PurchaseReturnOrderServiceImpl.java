@@ -139,6 +139,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         if (CollectionUtils.isNotEmpty(records)) {
+            records.stream().forEach(record->{
+                ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(record.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
+                        ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
+                record.setReturnOrderSource(returnOrderSourceEnum.getCode());
+                record.setReturnOrderSourceName(returnOrderSourceEnum.getName());
+            });
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
                 boolean contains = list.contains(obj.getId());
@@ -150,6 +156,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     obj.setApproveStatusName(null);
                     obj.setInvalidStatus(null);
                     obj.setInvalidStatusName(null);
+                    obj.setReturnOrderSource(null);
+                    obj.setReturnOrderSourceName(null);
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));

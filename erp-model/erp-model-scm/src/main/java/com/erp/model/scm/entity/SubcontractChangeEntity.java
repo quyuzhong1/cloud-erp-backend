@@ -46,18 +46,6 @@ public class SubcontractChangeEntity extends BaseEntity<SubcontractChangeEntity>
     private LocalDate billDate;
 
     /**
-    * 收料组织id
-    */
-    @TableField("receive_org_id")
-    private String receiveOrgId;
-
-    /**
-    * 收料组织名称
-    */
-    @TableField("receive_org_name")
-    private String receiveOrgName;
-
-    /**
     * 采购组织id
     */
     @TableField("purchase_org_id")

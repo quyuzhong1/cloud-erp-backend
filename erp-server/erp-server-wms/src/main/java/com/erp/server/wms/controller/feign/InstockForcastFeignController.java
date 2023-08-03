@@ -81,4 +81,22 @@ public class InstockForcastFeignController extends BaseController {
         instockForcastService.finishDeliveryBatch(dataList);
     }
 
+    /**
+     * 根据采购订单生成入库预报单（批量）
+     * @param dataList
+     */
+    @PostMapping(value = "/generateByPurchaseOrderBatch")
+    public void generateByPurchaseOrderBatch(@RequestBody @Valid List<InstockForcastDTO.AddDTO> dataList) {
+        instockForcastService.generateByPurchaseOrderBatch(dataList);
+    }
+
+    /**
+     * 采购订单变更单审核通过（批量）
+     * @param dataList
+     */
+    @PostMapping(value = "/poChangeBatch")
+    public void poChangeBatch(@RequestBody @Valid List<InstockForcastDTO.PoChangeDTO> dataList) {
+        instockForcastService.poChangeBatch(dataList);
+    }
+
 }

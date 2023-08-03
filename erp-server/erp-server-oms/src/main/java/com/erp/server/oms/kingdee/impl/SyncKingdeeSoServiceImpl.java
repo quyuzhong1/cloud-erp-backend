@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -95,13 +96,17 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     @Transactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(SoInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
-
-        //更新同步状态为待同步
-        soInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), "", operate);
-
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         String id = entity.getId();
+        String warehouseId = entity.getWarehouseId();
+        List<SoDetailDTO.ViewDTO> details = soDetailService.listByMainId(id, warehouseId);
+        if (CollectionUtils.isEmpty(details)) {
+            return;
+        }
+        //更新同步状态为待同步
+        soInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), "", operate);
+
         //业务id
         resultMap.put("id", id);
         //编码
@@ -179,13 +184,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
         //是否含税
         Boolean isTax = entity.getIsTax();
-        Map<String, Object> finance = new HashMap<>();
-        finance.put("FExchangeRate", 1);
-        finance.put("FIsIncludedTax", isTax);
-        finance.put("FSettleCurrId.FNumber", currencyCode);
-        finance.put("FAllDisCount", Objects.nonNull(entity.getDiscountAmount()) ? entity.getDiscountAmount() : BigDecimal.ZERO);
-        resultMap.put("finance", finance);
-
+        resultMap.put("isTax", isTax);
+        resultMap.put("currencyCode", currencyCode);
+        resultMap.put("discountAmount", Objects.nonNull(entity.getDiscountAmount()) ? entity.getDiscountAmount() : BigDecimal.ZERO);
         if (StringUtils.isNotBlank(salesOrgCode)) {
             resultMap.put("salesOrgCode", salesOrgCode);
         }
@@ -201,7 +202,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             }
 
         }
-        String warehouseId = entity.getWarehouseId();
+
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         String kingdeeWarehouseCode = "";
         if (CollectionUtils.isNotEmpty(warehouseList)) {
@@ -263,10 +264,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         resultMap.put("receiveAddress", receiveAddress);
         //交货地点
         resultMap.put("receiveAddressCode", receiveAddressCode);
-        List<SoDetailDTO.ViewDTO> details = soDetailService.listByMainId(id, warehouseId);
-        if (CollectionUtils.isEmpty(details)) {
-            return;
-        }
+        BigDecimal exchangeRate=Objects.isNull(details.get(0).getExchangeRate())||details.get(0).getExchangeRate().compareTo(BigDecimal.ZERO)==0? MathUtil.BigDecimal_1:details.get(0).getExchangeRate();
+        //汇率
+        resultMap.put("exchangeRate",exchangeRate);
         //要货日期
         LocalDate requireDate = entity.getRequireDate();
         List<JSONObject> list = new ArrayList<>(details.size());

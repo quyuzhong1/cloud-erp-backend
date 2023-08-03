@@ -1215,6 +1215,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             // 未找到汇率直接返回
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 purchasePrice = BigDecimal.ZERO;
+                log.warn("汇率日期【{}】，币制【{}】", billDate, supplierSkuPrice.getCurrency());
+                throw new ServiceException(StrUtil.format("未找到币制对应的汇率，请联系系统管理员配置"));
             } else {
                 // item.setExchangeRate(rate);
                 // 转换成人民币采购单价
@@ -1244,6 +1246,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 item.setExchangeRate(BigDecimal.ZERO);
                 saleAmount = BigDecimal.ZERO;
+                log.warn("汇率日期【{}】，币制【{}】", currentDate, supplierSkuPrice.getCurrency());
+                throw new ServiceException(StrUtil.format("未找到币制对应的汇率，请联系系统管理员配置"));
             } else {
                 // 转换成人民币销售金额
                 item.setExchangeRate(rate);
@@ -1303,21 +1307,31 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<SoDetailDTO.SkuDTO> resultList = new ArrayList<>(skuNoList.size());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         List<String> skuIdList = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+
         List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
 
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(skuIdList, warehouseId);
-        for (SkuVO item : skuList) {
-            String skuId = item.getSkuId();
+        for (String skuNo : skuNoList) {
             SoDetailDTO.SkuDTO result = new SoDetailDTO.SkuDTO();
-            result.setProductName(item.getSkuName());
+            SkuVO item = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).
+                    findFirst().orElse(null);
+            String skuId = "";
+            if (item != null) {
+                skuId = item.getSkuId();
+                result.setProductName(item.getSkuName());
+                result.setUnit(item.getUnitName());
+                result.setSkuNo(item.getSkuNo());
+            } else {
+                result.setProductName("");
+                result.setUnit("");
+                result.setSkuNo("");
+            }
+
             result.setSkuId(skuId);
             result.setQty(0);
-            result.setProductName(item.getSkuName());
-            result.setUnit(item.getUnitName());
-            result.setSkuNo(item.getSkuNo());
-
             //即时库存
-            Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+            String finalSkuId = skuId;
+            Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(finalSkuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
             result.setCurInventoryQty(curInventoryQty);
 
@@ -1374,7 +1388,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             result.setRemark("");
             //历史价格
             SoDetailDTO.SkuHistoryPriceDTO skuHistoryPrice = skuPriceHistoryList.stream().
-                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+                    filter(p -> p.getSkuId().equals(finalSkuId)).findFirst().orElse(null);
             if (skuHistoryPrice != null) {
                 result.setMaxPrice(skuHistoryPrice.getMaxPrice());
                 result.setMinPrice(skuHistoryPrice.getMinPrice());
@@ -1386,7 +1400,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             }
             resultList.add(result);
         }
-        
         return resultList;
     }
 

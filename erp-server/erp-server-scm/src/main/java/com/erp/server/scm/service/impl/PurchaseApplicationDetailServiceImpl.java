@@ -129,16 +129,15 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
         //仓库信息
         List<String> destWarehouseIdList = newList.stream().map(PurchaseApplicationDetailEntity::getDestWarehouseId).collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
-
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        List<String> orgIds = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).distinct().collect(Collectors.toList());
 
         //采购组织Ids
         List<String> purchaseOrgIds = newList.stream().map(PurchaseApplicationDetailEntity::getPurchaseOrgId).collect(Collectors.toList());
-
-        //收料组织Ids
-        List<String> receiveOrgIds = newList.stream().map(PurchaseApplicationDetailEntity::getReceiveOrgId).collect(Collectors.toList());
-
-        purchaseOrgIds.addAll(receiveOrgIds);
-
+        purchaseOrgIds.addAll(orgIds);
+        //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(purchaseOrgIds);
 
         //产品信息
@@ -155,11 +154,13 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
         for (PurchaseApplicationDetailEntity entity : newList) {
             entity.setPurchaseApplicationId(purchaseApplicationId);
             //仓库名称
-            if (CollectionUtils.isEmpty(warehouseList)) {
+
+            WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(warehouseDTO)) {
                 throw new ServiceException(ApiError.ERROR_99002);
             }
-            String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
-            entity.setDestWarehouseName(warehouseName);
+            entity.setDestWarehouseName(warehouseDTO.getName());
+            entity.setReceiveOrgId(warehouseDTO.getOrgId());
 
             //核算公司
             if (CollectionUtils.isEmpty(accountingCompanyList)) {

@@ -1,5 +1,6 @@
 package com.erp.server.wms.kingdee.impl;
 
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
@@ -12,9 +13,12 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeWarehouseService;
 import com.erp.server.wms.service.DictBasicService;
+import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -24,6 +28,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * 同步金蝶采购退货单
@@ -44,6 +49,10 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
 
     @Resource
     private MQProducerService mQProducerService;
+
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
+
 
     /**
      * 发送消息同步金蝶
@@ -87,6 +96,8 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         resultMap.put("tel",entity.getContactTelNumber());
         //是否禁用
         resultMap.put("disabled",entity.getDisabled());
+        //是否启用仓位
+        resultMap.put("isEnableLocation",entity.getIsEnableLocation());
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
 
@@ -104,6 +115,43 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getChargeId());
         if (ObjectUtils.isNotEmpty(findUserDTO)) {
             resultMap.put("chargeCode",findUserDTO.getCode());
+        }
+        //查询仓位
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIds(Arrays.asList(entity.getId()));
+        if (CollectionUtils.isNotEmpty(warehouseLocationList) && entity.getIsEnableLocation()) {
+            //区域
+            List<WarehouseLocationEntity> areaList = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(obj.getWarehouseId()) && WarehouseLocationTypeEnum.AREA.getCode().equals(obj.getType())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(areaList)) {
+                log.error("仓库对应区域未找到，code = {},name = {}",entity.getKingdeeWarehouseCode(),entity.getName());
+                return;
+            }
+            //仓位
+            List<WarehouseLocationEntity> locationList = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(obj.getWarehouseId()) && WarehouseLocationTypeEnum.LOCATION.getCode().equals(obj.getType())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(locationList)) {
+                log.error("仓库对应仓位未找到，code = {},name = {}",entity.getKingdeeWarehouseCode(),entity.getName());
+                return;
+            }
+            List<JSONObject> areaJsonList = new ArrayList<>();
+            for (WarehouseLocationEntity area : areaList) {
+                JSONObject areaJson = new JSONObject();
+                areaJson.set("code",area.getCode());
+
+                //区域下仓位
+                List<WarehouseLocationEntity> childLocationList = locationList.stream().filter(obj -> area.getId().equals(obj.getParentId())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(locationList)) {
+                    log.error("仓库对应区域下仓位未找到，code = {},name = {},area = {}",entity.getKingdeeWarehouseCode(),entity.getName(),area.getCode());
+                    return;
+                }
+                List<JSONObject> locationJsonList = new ArrayList<>();
+                for (WarehouseLocationEntity childLocation : childLocationList) {
+                    JSONObject childLocationJson = new JSONObject();
+                    childLocationJson.set("code",childLocation.getCode());
+                    locationJsonList.add(childLocationJson);
+                }
+                areaJson.set("locationJsonList",locationJsonList);
+                areaJsonList.add(areaJson);
+            }
+            resultMap.put("areaJsonList",areaJsonList);
         }
 
         //异步推送mq
