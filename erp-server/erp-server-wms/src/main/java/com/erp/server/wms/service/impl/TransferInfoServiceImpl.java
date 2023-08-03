@@ -72,7 +72,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -438,7 +437,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void approve(BaseApproveParamDTO baseApproveParamDTO) {
+    public void approve(BaseApproveParamDTO baseApproveParamDTO,Boolean isSyncKingDee) {
         List<String> ids = baseApproveParamDTO.getIds();
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);
@@ -457,18 +456,17 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             log.info("直接调拨单【{}】审核通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //审核通过 TODO(判断是否存在流程)
 
-            //非金蝶拉取数据需要更新发送金蝶状态为待发送
-            List<String> sendIds = list.stream().filter(obj -> !SourceTypeEnum.STK_TRANSFERDIRECT.getCode().equals(obj.getSourceType())).map(TransferInfoEntity::getId).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(sendIds)) {
-                updateSyncKingdeeStatus(sendIds,SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),null,null);
-            }
-
             //更新单据(后面有流程了调用监听可删)
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
             //更新库存
             updateInventoryTransCore(list);
-            //发送金蝶
-            list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            if (isSyncKingDee) {
+                //发送金蝶
+                list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            } else {
+                //更新金蝶状态
+                updateSyncKingdeeStatus(ids,SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(),"",SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+            }
             //发送马帮（非马帮平台的才需要推送）
             // TODO 正式上线时需注释掉
             log.warn("直接调拨单同步马帮开关：【{}】", transferSyncToMb);
@@ -594,6 +592,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String operate) {
         return  this.lambdaUpdate()
                 .in(TransferInfoEntity::getId,ids)
+                .ne(TransferInfoEntity::getThirdPartySystem,ThirdPartySystemEnum.ENUM_MB.getCode())
                 .set(StringUtils.isNotBlank(syncKingdeeStatus),TransferInfoEntity::getSyncKingdeeStatus,syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus),TransferInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId),TransferInfoEntity::getSyncKingdeeId,syncKingdeeId)

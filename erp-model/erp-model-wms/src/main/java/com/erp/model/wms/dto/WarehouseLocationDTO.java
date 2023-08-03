@@ -1,11 +1,11 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * 仓位请求响应实体
@@ -148,6 +148,7 @@ public class WarehouseLocationDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class WarehouseLocationSearchParamDTO extends SortDTO {
 
         /**

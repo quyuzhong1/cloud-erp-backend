@@ -2,10 +2,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.business.service.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
@@ -14,7 +12,6 @@ import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.server.wms.mapper.WarehouseLocationMapper;
 import com.erp.server.wms.service.WarehouseLocationService;
-import com.common.business.service.SuperServiceImpl;
 import com.google.common.collect.Lists;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -106,6 +103,14 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         LambdaQueryWrapper<WarehouseLocationEntity> lambdaQuery = new LambdaQueryWrapper<WarehouseLocationEntity>().eq(WarehouseLocationEntity::getWarehouseId, warehouseId).eq(WarehouseLocationEntity::getCode, code)
                 .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode()).last("limit 1");
         return baseMapper.selectOne(lambdaQuery);
+    }
+
+    @Override
+    public List<WarehouseLocationEntity> listByWarehouseIdAndCode(List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> listParam) {
+        if (CollectionUtils.isEmpty(listParam)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listByWarehouseIdAndCode(listParam);
     }
 
     @Override
