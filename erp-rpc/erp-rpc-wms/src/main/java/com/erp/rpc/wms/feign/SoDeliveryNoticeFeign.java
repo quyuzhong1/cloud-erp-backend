@@ -25,6 +25,8 @@ public interface SoDeliveryNoticeFeign {
     @PostMapping("feign/soDeliveryNotice/listBySourceIdList")
     List<SoDeliveryNoticeDetailDTO.ListDTO> listBySourceIdList(@RequestBody List<String> sourceIdList);
 
+
+
     /**
      * 根据来源id list 查询已下推的发货通知单数量
      * @param soIds

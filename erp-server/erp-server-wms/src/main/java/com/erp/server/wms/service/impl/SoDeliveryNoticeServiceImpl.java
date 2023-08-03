@@ -921,7 +921,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    public Map<String, Long> getPushDownDeliveryNoticeCnt(List<String> soIds) {
+    public Map<String,Long> getPushDownDeliveryNoticeCnt(List<String> soIds) {
         if(CollUtil.isEmpty(soIds)) {
             return Maps.newHashMap();
         }
@@ -935,5 +935,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         return deliveryNoticeList.stream().collect(Collectors.groupingBy(SoDeliveryNoticeEntity::getSourceId, Collectors.counting()));
     }
+
 
 }

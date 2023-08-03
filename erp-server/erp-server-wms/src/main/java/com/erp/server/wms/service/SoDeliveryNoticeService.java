@@ -189,7 +189,6 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      */
     Integer getPushDownBySourceIds(List<String> soIds);
 
-
     /**
      * 根据销售订单ids获取下推发货通知单的数量
      * @param soIds
