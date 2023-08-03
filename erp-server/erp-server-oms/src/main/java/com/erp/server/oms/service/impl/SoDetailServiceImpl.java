@@ -1316,14 +1316,15 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 skuId = item.getSkuId();
                 result.setProductName(item.getSkuName());
                 result.setUnit(item.getUnitName());
+                result.setSkuNo(item.getSkuNo());
             } else {
                 result.setProductName("");
                 result.setUnit("");
+                result.setSkuNo("");
             }
 
             result.setSkuId(skuId);
             result.setQty(0);
-            result.setSkuNo(skuNo);
             //即时库存
             String finalSkuId = skuId;
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(finalSkuId)).findFirst().

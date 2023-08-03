@@ -106,6 +106,10 @@ public class KingdeeCustomerContactConsumerServiceImpl implements KingdeeCustome
 
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+            //已禁用不
+            if (forbidStatus.equals("B")) {
+                return;
+            }
             flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
         }
         //给修改json对象赋值ID
