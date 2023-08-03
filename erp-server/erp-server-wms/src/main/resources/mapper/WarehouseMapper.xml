@@ -18,7 +18,8 @@
          org_id AS orgId,
          kingdee_warehouse_code AS kingdeeWarehouseCode,
          is_virtual AS isVirtual,
-         approve_status AS approveStatus
+         approve_status AS approveStatus,
+         is_enable_location as isEnableLocation
       FROM  warehouse  WHERE is_deleted=false
 
         <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
@@ -26,6 +27,9 @@
             <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
                 #{createUserId}
             </foreach>
+        </if>
+        <if test="params.isEnableLocation != null ">
+            AND  is_enable_location = #{params.isEnableLocation}
         </if>
         <if test="params.address !=null  and params.address!=''">
            AND  address LIKE concat('%', #{params.address} ,'%')
@@ -77,7 +81,8 @@
          org_id,
          kingdee_warehouse_code,
          is_virtual,
-         approve_status
+         approve_status,
+         is_enable_location
       FROM  warehouse  WHERE is_deleted=false
       <choose>
           <when test="params.ids!=null and params.ids.size>0">
@@ -92,6 +97,9 @@
                   <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
                       #{createUserId}
                   </foreach>
+              </if>
+              <if test="params.isEnableLocation != null ">
+                  AND  is_enable_location = #{params.isEnableLocation}
               </if>
               <if test="params.address !=null  and params.address!=''">
                   AND  address LIKE concat('%', #{params.address} ,'%')

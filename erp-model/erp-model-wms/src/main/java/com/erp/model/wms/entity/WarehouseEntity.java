@@ -103,6 +103,12 @@ public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
     private ApproveStatusEnum approveStatus;
 
     /**
+     * 是否启用仓位，true 启用 false 不启用
+     */
+    @TableField(value = "is_enable_location")
+    private Boolean isEnableLocation;
+
+    /**
      * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
      */
     @TableField("sync_kingdee_status")
