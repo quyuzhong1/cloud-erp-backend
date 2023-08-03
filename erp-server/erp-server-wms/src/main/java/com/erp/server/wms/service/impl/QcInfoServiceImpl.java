@@ -1494,6 +1494,101 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     }
 
     /**
+     * 销售退货签收单自动下推质检单
+     * @Author Luo_WG
+     * @Date 2023/8/3 10:07
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    public Boolean autoSoReturnReceiveToQcDTO(List<QcInfoDTO.SoReturnReceiveToQcDTO>  dto) {
+        if (CollectionUtils.isEmpty(dto)) {
+            return Boolean.TRUE;
+        }
+        List<QcInfoEntity> addQcList = new ArrayList<>(dto.size());
+        //质检结果
+        List<QcResultEntity> addQcResultList = new ArrayList<>(dto.size());
+
+        //质检产品
+        List<QcProductEntity> addQcProductList = new ArrayList<>(dto.size());
+
+        //质检报告
+        List<QcReportDetailEntity> addQcReportDetailList = new ArrayList<>(dto.size());
+
+
+        //质检类型
+        List<String> qcTypeList = dto.stream().map(QcInfoDTO.SoReturnReceiveToQcDTO::getQcType).collect(Collectors.toList());
+        //质检类型的集合
+        List<QcReportDTO.ListDTO> list = qcReportService.listByQcType(qcTypeList);
+        Map<String, List<QcReportDTO.ListDTO>> qcTypeMap = list.stream().collect(Collectors.groupingBy(QcReportDTO.ListDTO::getQcType));
+        String qcUserId = "";
+        String qcUserName = "";
+        String departId = "";
+        String departName = "";
+        //质检员
+        if (StringUtils.isNotBlank(qcUserId)) {
+            SysDepartmentUserNumberDTO userDTO = sysUserFeign.getDeptByUserId(qcUserId);
+            departId = userDTO.getDepartmentId();
+            departName = userDTO.getDepartmentName();
+        }
+
+
+        for (QcInfoDTO.SoReturnReceiveToQcDTO item : dto) {
+            QcInfoEntity qcInfo = new QcInfoEntity();
+            String id = IdWorker.getIdStr();
+            qcInfo.setId(id);
+            qcInfo.setPurchaseOrderCode("");
+            qcInfo.setPurchaseOrderId("");
+            qcInfo.setSupplierId(item.getSupplierId());
+            qcInfo.setWarehouseId(item.getDeliveryWarehouseId());
+            qcInfo.setQcDeptId(departId);
+            qcInfo.setQcDeptName(departName);
+            qcInfo.setQcUserId(qcUserId);
+            qcInfo.setQcUserName(qcUserName);
+            qcInfo.setSourceId(item.getSourceId());
+            qcInfo.setSourceType(item.getSourceType());
+            qcInfo.setSourceDetailId(item.getSourceDetailId());
+            addQcList.add(qcInfo);
+            //质检结果
+            QcResultEntity qcResult = new QcResultEntity();
+            qcResult.setMainId(id);
+            String qcType = item.getQcType();
+            Boolean isInside = QcTypeEnum.getIsInsideByCode(qcType);
+            qcResult.setQcType(item.getQcType());
+            qcResult.setIsInside(isInside);
+            qcResult.setTotalQty(item.getTotalQty());
+            qcResult.setPurchaseOrderDetailId("");
+            addQcResultList.add(qcResult);
+
+            //质检产品
+            QcProductEntity qcProduct = new QcProductEntity();
+            BeanMapper.copy(item, qcProduct);
+            qcProduct.setMainId(id);
+            addQcProductList.add(qcProduct);
+
+            //质检报告信息
+            List<QcReportDTO.ListDTO> reportList = qcTypeMap.get(qcType);
+            if (CollectionUtils.isNotEmpty(reportList)) {
+                for (QcReportDTO.ListDTO report : reportList) {
+                    QcReportDetailEntity qcReportDetail = new QcReportDetailEntity();
+                    qcReportDetail.setMainId(id);
+                    qcReportDetail.setQcReportId(report.getQcReportId());
+                    addQcReportDetailList.add(qcReportDetail);
+                }
+
+            }
+
+        }
+        //添加质检单
+        Boolean batchQc = this.saveBatch(addQcList);
+        if (batchQc) {
+            qcProductService.saveBatch(addQcProductList);
+            qcResultService.saveBatch(addQcResultList);
+            qcReportDetailService.saveBatch(addQcReportDetailList);
+        }
+        return batchQc;
+    }
+
+    /**
      * 退货签收单下推质检单-保存
      *
      * @param receiveIds receiveIds

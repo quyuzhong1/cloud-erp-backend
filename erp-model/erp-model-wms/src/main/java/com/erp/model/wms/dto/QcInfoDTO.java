@@ -258,6 +258,147 @@ public class QcInfoDTO implements Serializable {
     }
 
     /**
+     * 销售退货签收单自动下推质检单
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SoReturnReceiveToQcDTO {
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 来源type
+         */
+        private String sourceType;
+
+        /**
+         * 销售单id
+         */
+        private String soId;
+
+        /**
+         * 销售单编号
+         */
+        private String soCode;
+
+        /**
+         * 退货单id
+         */
+        private String soReturnId;
+
+        /**
+         * 退货单明细id
+         */
+        private String soReturnDetailId;
+
+        /**
+         * 退货单编号
+         */
+        private String soReturnCode;
+
+        /**
+         * 是否新品
+         */
+        private Boolean isFirstMassProduct;
+
+        /**
+         * 质检类型
+         */
+        private String qcType;
+
+        /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品等级
+         */
+        private String productGrade;
+
+        /**
+         * 销售方式
+         */
+        private String saleMethod;
+
+
+        /**
+         * 变体属性
+         */
+        private String variantProperty;
+
+        /**
+         * 产品长
+         */
+        private BigDecimal productLength;
+
+        /**
+         * 产品宽
+         */
+        private BigDecimal productWidth;
+
+        /**
+         * 产品高
+         */
+        private BigDecimal productHeight;
+
+        /**
+         * 箱长
+         */
+        private BigDecimal boxLength;
+
+        /**
+         * 箱宽
+         */
+        private BigDecimal boxWidth;
+
+        /**
+         * 箱高
+         */
+        private BigDecimal boxHeight;
+
+        /**
+         * 产品净重
+         */
+        private BigDecimal productNetWeight;
+
+        /**
+         * 外箱重量
+         */
+        private BigDecimal boxWeight;
+
+        /**
+         * 质检总数量
+         */
+        private Integer totalQty;
+
+
+    }
+
+    /**
      * tab
      */
     @Data
