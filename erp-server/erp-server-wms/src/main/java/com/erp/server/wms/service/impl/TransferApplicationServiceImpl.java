@@ -36,6 +36,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -1248,16 +1249,27 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
      * @param list
      */
     private void startProcess(List<TransferApplicationEntity> list) {
-        LoginUser userInfo = commonService.getUserInfo();
         ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
+
+        List<String> applyUserIdList = list.stream().map(TransferApplicationEntity::getApplyUserId).collect(Collectors.toList());
+        List<SysDepartmentUserNumberDTO> deptList = sysUserFeign.listDeptUserByUserIdList(applyUserIdList);
+
         list.forEach(obj -> {
             ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
             startDTO.setBusinessId(obj.getId());
             startDTO.setBusinessCode(obj.getCode());
             startDTO.setBusinessKey(SourceTypeEnum.TRANSFER_APPLICATION.getCode());
             startDTO.setBusinessName(obj.getCode());
-            startDTO.setUserId(userInfo.getUid());
-            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            startDTO.setUserId(obj.getApplyUserId());
+            Map<String, Object> map = BeanUtil.beanToMap(obj);
+            //申请人一级部门
+            if (CollectionUtils.isNotEmpty(deptList)) {
+                List<String> deptIdList = deptList.stream().filter(e -> e.getUserId().equals(obj.getApplyUserId())).map(e -> e.getDepartmentId()).distinct().collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(deptIdList)) {
+                    map.put("deptIdList",deptIdList);
+                }
+            }
+            startDTO.setVariablesMap(map);
             resultList.add(startDTO);
         });
         ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
