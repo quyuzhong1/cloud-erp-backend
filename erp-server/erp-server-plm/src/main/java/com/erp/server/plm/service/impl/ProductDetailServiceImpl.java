@@ -643,13 +643,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> saleDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_SALE_SHOW_LIST, skuFiledConfigList);
             req.setDisableFieldList(saleDisableFields);
 
-            if (req.getIsFinishedImg() != null) {
+            if (req.getIsFinishedImg() == null) {
                 req.setIsFinishedImg(MathUtil.TWO);
             }
-            if (req.getIsFinishedVideo() != null) {
+            if (req.getIsFinishedVideo() == null) {
                 req.setIsFinishedVideo(MathUtil.TWO);
             }
-            if (req.getIsFinishedVideo() != null) {
+            if (req.getIsFinishedVideo() == null) {
                 req.setIsMarketable(MathUtil.ONE);
             }
         });

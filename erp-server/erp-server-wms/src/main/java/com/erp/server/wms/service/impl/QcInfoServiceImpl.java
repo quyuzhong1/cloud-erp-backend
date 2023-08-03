@@ -1539,7 +1539,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcInfo.setPurchaseOrderCode("");
             qcInfo.setPurchaseOrderId("");
             qcInfo.setSupplierId(item.getSupplierId());
-            qcInfo.setWarehouseId(item.getDeliveryWarehouseId());
+            qcInfo.setWarehouseId(item.getWarehouseId());
             qcInfo.setQcDeptId(departId);
             qcInfo.setQcDeptName(departName);
             qcInfo.setQcUserId(qcUserId);
