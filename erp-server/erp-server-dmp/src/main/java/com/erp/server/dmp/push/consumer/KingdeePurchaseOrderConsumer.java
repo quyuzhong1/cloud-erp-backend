@@ -1,53 +1,36 @@
 package com.erp.server.dmp.push.consumer;
 
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncKingdeeOperateEnum;
-import com.common.core.enums.ApiError;
-import com.common.core.utils.FastJsonUtil;
-import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.ApiModuleTypeEnum;
-import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
-import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
-import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
+import com.erp.server.dmp.push.service.business.KingdeePurchaseOrderConsumerService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
-import com.erp.server.dmp.utils.KingdeeUtils;
-import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
  * @version 1.0
-
  * @date 2023/4/20 11:12
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_order_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_ORDER,consumeMode = ConsumeMode.ORDERLY)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_order_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_ORDER, consumeMode = ConsumeMode.ORDERLY)
 public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
-    private KingdeeCommonService kingdeeCommonService;
+    private KingdeePurchaseOrderConsumerService kingdeePurchaseOrderConsumerService;
 
-    @Resource
-    private ScmTaskFeign scmTaskFeign;
+
 
     public static void main(String[] args) {
 
@@ -58,209 +41,22 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
         queryFilters.add(String.format("FBillNo = '%s'", "CGDD-230302-9349"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FId,FModifyDate,FPurchaserId.FNumber";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 1);
         System.out.println(queryList);
 
-
-      /* LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("Number","CGDD-230413-8806");
-        JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
-        System.out.println(viewJson);*/
 
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void onMessage(Map<String, Object> map) {
-        //模块类型
-        Integer type = ApiModuleTypeEnum.PURCHASE_ORDER.getCode();
-        //业务id
-        String  businessId = String.valueOf(map.get("id"));
-
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
-        if (ObjectUtils.isEmpty(platformEntity)) {
-            return;
-        }
-        //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PURCHASEORDER.getCode());
-
-        //根据录入值和字段配置生成JSONObject
-        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
-
-        //未配置发送字段
-        if (CollectionUtils.isEmpty(json)) {
-            log.error(ApiError.ERROR_97025.msg);
-            //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,"","未配置同步字段",type, ApiSendStatusEnum.FAILURE.getCode());
-            return;
-        }
-        //判断金蝶系统是否已存在该数据
-        SaveParam param = new SaveParam(json);
-        Boolean isAdd = Boolean.FALSE;
-        JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
+            kingdeePurchaseOrderConsumerService.executeConsumer(map);
         } catch (Exception e) {
-            //新增数据
-            Boolean isSaveOrUpdate = saveOrUpdate(apiUtils, platformEntity, map, type, json, param);
-            if (!isSaveOrUpdate) {
-                return;
-            }
-            isAdd = Boolean.TRUE;
-            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
-            //执行操作
-            operate (platformEntity,map,apiUtils,model,json,isAdd);
-            return;
+            log.error("KingdeePurchaseOrderConsumer>>>onMessage>>>map ={}>>>e={}", map, e);
         }
-        //执行操作
-        operate (platformEntity,map,apiUtils,model,json,isAdd);
+
+
     }
 
 
-    /**
-     * 采购订单操作
-     */
-    private void operate (PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils,JSONObject model,JSONObject json,Boolean isAdd) {
-        //查找到数据后，判断其审核状态
-        String documentStatus = (String)model.get("DocumentStatus");
-        String id = String.valueOf(model.get("Id")) ;
-        //操作项
-        String operate = (String) map.get("operate");
-        //作废
-        if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-            invalid(platformEntity,map,apiUtils,id,documentStatus);
-        }
-        //反审核
-        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            disApprove(platformEntity,map,apiUtils,id,documentStatus);
-        }
-        //审核
-        if (SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate) && !isAdd) {
-            approve(platformEntity,map,apiUtils,id,documentStatus,json);
-        }
-    }
-
-
-    /**
-     * 反审核
-     */
-    private void disApprove (PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id,String documentStatus){
-        if (KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
-            //提交审核
-            Boolean submit = kingdeeCommonService.submit(platformEntity, map, apiUtils, id, ApiModuleTypeEnum.PURCHASE_ORDER.getCode());
-            if (!submit) {
-                return;
-            }
-        }
-        //反审核
-        kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, ApiModuleTypeEnum.PURCHASE_ORDER.getCode());
-    }
-    /**
-     * 审核
-     */
-    private void approve (PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id,String documentStatus,JSONObject json){
-        Boolean flag = Boolean.FALSE;
-        SaveParam param = new SaveParam(json);
-        //审核中或已审核则要先反审
-        if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, ApiModuleTypeEnum.PURCHASE_ORDER.getCode());
-        }
-        //创建状态则直接修改、删除
-        if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
-            //主单据id
-            KingdeeUtils.makeFieldJson(json,"FId",".", id);
-            StringBuffer allKey = FastJsonUtil.getAllKey(json);
-            ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
-            param.setNeedUpDateFields(apiFieldList);
-            //更新数据
-            saveOrUpdate(apiUtils,platformEntity,map,ApiModuleTypeEnum.PURCHASE_ORDER.getCode(),json,param);
-        }
-    }
-
-    /**
-     * 作废
-     */
-    private void invalid (PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id,String documentStatus){
-        if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-            //反审核
-            Boolean unAudit = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, ApiModuleTypeEnum.PURCHASE_ORDER.getCode());
-            if (!unAudit) {
-                return;
-            }
-        }
-        //作废
-        kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,ApiModuleTypeEnum.PURCHASE_ORDER.getCode(),(String) map.get("code"),(String) map.get("operate"));
-    }
-
-    /**
-     * 新增
-     */
-    private Boolean saveOrUpdate (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json,SaveParam param) {
-
-        Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
-        if (isAdd) {
-            //给明细id赋值
-            JSONArray jsonArray = setDetailIdForJSONObject(apiUtils,platformEntity, map, type);
-            //更新明细id
-            updateKingdeeDetailId(jsonArray);
-        }
-        return  isAdd;
-    }
-
-    /**
-     * 给明细id赋值
-     * @Author Luo_WG
-     * @Date 2023/7/12 10:18
-     * @param apiUtils
-     * @param platformEntity
-     * @param map
-     * @param type
-     * @return cn.hutool.json.JSONArray
-     **/
-    private JSONArray setDetailIdForJSONObject (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-
-        JSONArray list = JSONUtil.parseArray(map.get("list"));
-        String id = (String)map.get("syncKingdeeId");
-
-        LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FId = '%s'", id));
-        String filterStr = String.join(" and ", queryFilters);
-        //查询子单据id
-        String fieldKeys = "FPOOrderEntry_FEntryID";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
-        if (CollectionUtils.isEmpty(queryList)) {
-            //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), filterStr, "未查询到子单据id", type, ApiSendStatusEnum.FAILURE.getCode());
-            return list;
-        }
-        JSONArray removeObj = new JSONArray();
-        JSONArray addObj = new JSONArray();
-        for (int i = 0; i < list.size(); i++) {
-            Object obj = list.get(i);
-            JSONObject jsonObject = JSONUtil.parseObj(obj);
-            JSONObject newJson = new JSONObject(new LinkedHashMap<>());
-            if (list.size() >= queryList.size()) {
-                //金蝶明细id赋值
-                newJson.set("kingdeeDetailId",queryList.get(i).get("FPOOrderEntry_FEntryID"));
-            }
-            newJson.putAll(jsonObject);
-            removeObj.set(obj);
-            addObj.set(newJson);
-        }
-        list.removeAll(removeObj);
-        list.addAll(addObj);
-        return list;
-    }
-
-
-    /**
-     * 更新明细id
-     */
-    private void updateKingdeeDetailId (JSONArray jsonArray) {
-        //更新业务单据状态
-        Map<String,Object> params = new HashMap<>(MathUtil.THREE);
-        params.put("code",ApiModuleTypeEnum.PURCHASE_ORDER.getCode().toString());
-        params.put("details",jsonArray);
-        scmTaskFeign.updateBusinessSyncKingdeeStatus(params);
-    }
 }

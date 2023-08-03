@@ -112,6 +112,15 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      */
     void approve(BaseApproveParamDTO baseApproveParamDTO);
     /**
+     * @description: 审核结束
+     * @author Will
+     * @date: 2023/8/2 15:09
+     * @param dto
+     * @param list
+     * @return Boolean
+     */
+    Boolean approveEnd(BaseApproveParamDTO dto, List<TransferApplicationEntity> list);
+    /**
      * 单个单据的审核
      * @Author Luo_WG
      * @Date 2023/6/30 10:23

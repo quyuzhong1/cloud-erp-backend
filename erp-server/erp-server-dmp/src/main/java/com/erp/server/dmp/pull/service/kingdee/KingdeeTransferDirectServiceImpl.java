@@ -174,7 +174,7 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
                 "FStockOrgId,FStockOrgId.FNumber,FStockOrgId.FName,FSettleCurrId,FSettleCurrId.FName,FExchangeTypeId,FExchangeTypeId.FName,FExchangeRate," +
                 "FDate,FNote,FBaseCurrId,FBaseCurrId.FName,FDocumentStatus,FDocumentStatus.FCaption,FApproverId,FApproverId.FName,FApproveDate,FSTOCKERID.FNumber," +
                 "FCancellerId,FCancellerId.FName,FCreateDate,FCreatorId,FCreatorId.FName,FModifierId,FModifierId.FName,FModifyDate,FCancelStatus,FCancelStatus.FCaption,FCancelDate," +
-                "FBillEntry_FEntryID,FSrcStockId,FSrcStockId.FNumber,FSrcStockId.FName,FDestStockId,FDestStockId.FNumber,FDestStockId.FName," +
+                "FBillEntry_FEntryID,FSrcStockId,FSrcStockId.FNumber,FSrcStockId.FName,FSrcStockLocId.FF100014.FNumber,FDestStockId,FDestStockId.FNumber,FDestStockId.FName,FDestStockLocId.FF100014.FNumber," +
                 "FRowType,FMaterialId,FMaterialId.FNumber,FMaterialId.FName,FUnitID,FUnitID.FName,FQty," +
                 "FSrcStockStatusId,FSrcStockStatusId.FName,FDestStockStatusId,FDestStockStatusId.FName,FBusinessDate,FIsFree,FDestMaterialId,FDestMaterialId.FName";;
 
@@ -268,6 +268,8 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
             itemEntity.setInWarehouseName(item.getFDestStockIdFName());
             itemEntity.setOutWarehouseCode(item.getFSrcStockIdFNumber());
             itemEntity.setOutWarehouseName(item.getFSrcStockIdFName());
+            itemEntity.setInWarehouseLocation(item.getFDestStockLocIdLocation());
+            itemEntity.setOutWarehouseLocation(item.getFSrcStockLocIdLocation());
             orderItemList.add(itemEntity);
         }
         return orderItemList;

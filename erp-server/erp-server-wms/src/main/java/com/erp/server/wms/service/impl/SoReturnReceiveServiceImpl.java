@@ -19,12 +19,16 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.ProductVO;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -35,6 +39,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcBillStatusEnum;
+import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -106,6 +111,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
+
+    @Resource
+    private QcRuleService qcRuleService;
 
     @Override
     public PagingVO<SoReturnReceiveDTO.PagingView> paging(PagingDTO<SoReturnReceiveDTO.PagingParam> pagingParamDTO) {
@@ -487,6 +495,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                     .set(SoReturnReceiveEntity::getApproveTime, LocalDateTime.now())
                     .in(SoReturnReceiveEntity::getId, ids)
                     .update();
+
+            //根据条件生成质检单
+            createQcBill(ids);
         } else {
             //审核不通过
             lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -497,6 +508,94 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个销售退货通知单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), pairList, "审核操作");
         return Boolean.TRUE;
+    }
+
+    /**
+     * 生成质检单
+     * @Author Luo_WG
+     * @Date 2023/8/2 17:07
+     * @param ids
+     * @return void
+     **/
+    private void createQcBill(List<String> ids) {
+        List<QcInfoDTO.SoReturnReceiveToQcDTO> qcList = baseMapper.getQcList(ids);
+        List<String> skuIds = qcList.stream().map(QcInfoDTO.SoReturnReceiveToQcDTO::getSkuId).collect(Collectors.toList());
+        //获取到sku 信息
+        List<ProductVO.ProductPackVO> skuList = plmTaskFeign.getProductPackBySkuIds(skuIds);
+        List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        String sourceType = SourceTypeEnum.SO_RETURN_RECEIVE.getCode();
+        for (QcInfoDTO.SoReturnReceiveToQcDTO item : qcList) {
+            String skuId = item.getSkuId();
+            ProductVO.ProductPackVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                    findFirst().orElse(new ProductVO.ProductPackVO());
+            SkuVO productDetailEntity = skuNoList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                    findFirst().orElse(new SkuVO());
+            item.setSourceType(sourceType);
+            item.setProductGrade(sku.getProductGrade());
+            item.setSaleMethod(productDetailEntity.getSaleMethod());
+            item.setVariantProperty(sku.getVariantProperty());
+            item.setBoxHeight(sku.getBoxHeight());
+            item.setBoxLength(sku.getBoxHeight());
+            item.setBoxWeight(sku.getBoxWeight());
+            item.setBoxWidth(sku.getBoxWidth());
+            item.setProductHeight(sku.getProductHeight());
+            item.setProductLength(sku.getProductLength());
+            item.setProductWidth(sku.getProductWidth());
+            item.setProductNetWeight(sku.getProductNetWeight());
+
+        }
+        //添加质检单的
+        List<QcInfoDTO.SoReturnReceiveToQcDTO> addList = new ArrayList<>(qcList.size());
+        //获取到审核通过的 且启用的质检规则
+        List<QcRuleEntity> qcRuleList = qcRuleService.listByApprove();
+        //退货质检
+        String returnQc = QcTypeEnum.RETURN_QC.getCode();
+        List<String> productGradeList = qcRuleList.stream().filter(r -> r.getQcType().getCode().equals(returnQc)).map(QcRuleEntity::getProductGradeKey).collect(Collectors.toList());
+        String newProductGrade = String.join(",", productGradeList);
+
+        //销售方式
+        List<String> saleMethodList = qcRuleList.stream().filter(r -> r.getQcType().getCode().equals(returnQc)).map(QcRuleEntity::getSaleMethod).collect(Collectors.toList());
+        String newSaleMethod = String.join(",", saleMethodList);
+
+        for (QcInfoDTO.SoReturnReceiveToQcDTO newItem : qcList) {
+            //为空所有的加，等级为空用销售方式，销售方式为空用等级
+            if ((StringUtils.isBlank(newProductGrade) && StringUtils.isBlank(newSaleMethod))) {
+                QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
+                BeanMapper.copy(newItem, newQc);
+                newQc.setQcType(returnQc);
+                addList.add(newQc);
+            } else if (StringUtils.isBlank(newProductGrade)) {
+                String[] split = newItem.getSaleMethod().split(",");
+                for (String s : split) {
+                    if (newSaleMethod.contains(s)) {
+                        QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
+                        BeanMapper.copy(newItem, newQc);
+                        newQc.setQcType(returnQc);
+                        addList.add(newQc);
+                        break;
+                    }
+                }
+            } else if (StringUtils.isBlank(newSaleMethod)) {
+                String[] split = newItem.getProductGrade().split(",");
+                for (String s : split) {
+                    if (newProductGrade.contains(s)) {
+                        QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
+                        BeanMapper.copy(newItem, newQc);
+                        newQc.setQcType(returnQc);
+                        addList.add(newQc);
+                        break;
+                    }
+                }
+            } else {
+                if (newProductGrade.contains(newItem.getProductGrade()) && newSaleMethod.contains(newItem.getSaleMethod())) {
+                    QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
+                    BeanMapper.copy(newItem, newQc);
+                    newQc.setQcType(returnQc);
+                    addList.add(newQc);
+                }
+            }
+        }
+        qcInfoService.autoSoReturnReceiveToQcDTO(addList);
     }
 
     @Override

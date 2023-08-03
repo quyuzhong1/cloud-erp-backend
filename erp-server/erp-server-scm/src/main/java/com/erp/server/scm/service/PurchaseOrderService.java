@@ -310,15 +310,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param purchaseOrderIds
      */
      void updateCreatePoType(List<String> purchaseOrderIds);
-     /**
-      * @description: 金蝶导入采购订单
-      * @author Will
-      * @date: 2023/7/5 14:59
-      * @param excelFile
-      * @param response
-      * @return Boolean
-      */
-     Boolean kingdeePoImportFile(MultipartFile excelFile, HttpServletResponse response);
     /**
      * 导出网采合同
      * @Author Luo_WG

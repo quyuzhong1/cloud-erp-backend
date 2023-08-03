@@ -123,8 +123,14 @@ public class KingdeeTransferDirectItemEntity {
     private String FDestMaterialIdFName;
 
     /**
+     * (明细信息)调出库位
+     */
+    @Alias("FSrcStockLocId.FF100014.FNumber")
+    private String FSrcStockLocIdLocation;
+
+    /**
      * (明细信息)调入库位
      */
-    @Alias("F_ulz_KUWEI")
-    private String FUlzKuWei;
+    @Alias("FDestStockLocId.FF100014.FNumber")
+    private String FDestStockLocIdLocation;
 }

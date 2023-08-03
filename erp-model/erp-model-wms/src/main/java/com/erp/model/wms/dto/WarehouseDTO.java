@@ -110,6 +110,11 @@ public class WarehouseDTO implements Serializable {
          */
         private Boolean allowNegativeInventory;
 
+        /**
+         * 是否启用仓位，true 启用 false 不启用
+         */
+        private Boolean isEnableLocation;
+
     }
 
 
@@ -279,6 +284,11 @@ public class WarehouseDTO implements Serializable {
          * 创建人
          */
         private String CreateUserName;
+
+        /**
+         * 是否启用仓位
+         */
+        private Boolean isEnableLocation;
     }
 
 
@@ -308,6 +318,11 @@ public class WarehouseDTO implements Serializable {
          * 联系人
          */
         private String contacts;
+
+        /**
+         * 是否启用仓位
+         */
+        private Boolean isEnableLocation;
 
 
         /**

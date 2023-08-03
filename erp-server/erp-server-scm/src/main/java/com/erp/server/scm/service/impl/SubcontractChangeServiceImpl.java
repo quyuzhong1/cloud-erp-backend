@@ -730,10 +730,10 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             throw new ServiceException(ApiError.ERROR_95084);
         }
         //供应商信息
-        List<String> supplierIds = subcontractChangeDetailList.stream().map(SubcontractChangeDetailEntity::getSupplierId).collect(Collectors.toList());
-        List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
-        if (CollectionUtils.isEmpty(supplierList)) {
-            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        List<String> supplierIds = subcontractChangeDetailList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSupplierId())).map(SubcontractChangeDetailEntity::getSupplierId).collect(Collectors.toList());
+        List<SupplierEntity> supplierList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(supplierIds)) {
+            supplierList = supplierService.listByIds(supplierIds);
         }
 
         //明细父级sku
@@ -897,9 +897,6 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         }
         entity.setPurchaseOrgId(subcontractOrderEntity.getPurchaseOrgId());
         entity.setPurchaseOrgName(subcontractOrderEntity.getPurchaseOrgName());
-
-        entity.setReceiveOrgId(subcontractOrderEntity.getReceiveOrgId());
-        entity.setReceiveOrgName(subcontractOrderEntity.getReceiveOrgName());
 
         //人员信息
         if (StringUtils.isNotBlank(entity.getChangerId())) {

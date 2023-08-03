@@ -639,6 +639,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
      * @param purchaseChangeDetailList 变更单明细
      */
     public void updateInventoryTransCore(List<PurchaseChangeDetailEntity> purchaseChangeDetailList, List<PurchaseOrderDetailEntity> originPurchaseOrderDetailEntityList) {
+        List<InstockForcastDTO.PoChangeDTO> dataList = Lists.newArrayList();
         Map<String,PurchaseOrderDetailEntity> detailOrderMap = originPurchaseOrderDetailEntityList.stream().collect(Collectors.toMap(PurchaseOrderDetailEntity::getId, Function.identity()));
         for(PurchaseChangeDetailEntity purchaseChangeDetailEntity : purchaseChangeDetailList) {
             InstockForcastDTO.PoChangeDTO dto = new InstockForcastDTO.PoChangeDTO();
@@ -657,8 +658,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             addDTO.setArriveStatus(purchaseOrderDetailEntity.getArrivalStatus());
             members.add(addDTO);
             dto.setMembers(members);
-            inventoryFeign.poChange(dto);
+            dataList.add(dto);
         }
+        inventoryFeign.poChangeBatch(dataList);
     }
 
 }

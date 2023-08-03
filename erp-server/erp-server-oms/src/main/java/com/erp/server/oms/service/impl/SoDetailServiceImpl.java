@@ -451,8 +451,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //这个是要添加的
         List<SoDetailEntity> addEntityList = BeanMapper.copyList(addList, SoDetailEntity.class);
         /**
-        saveOrUpdateList.addAll(updateEntityList);
-        saveOrUpdateList.addAll(addEntityList);
+         saveOrUpdateList.addAll(updateEntityList);
+         saveOrUpdateList.addAll(addEntityList);
          */
         List<SoDetailEntity> saveOrUpdateList = BeanMapper.copyList(detailList, SoDetailEntity.class);
 
@@ -470,9 +470,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<String> currencyList = detailList.stream().map(SoDetailDTO.UpdateDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
         // 供应商id集合
-        List<String> supplierIds = skuList.stream().filter(r->StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
+        List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
         List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(supplierIds)) {
+        if (CollUtil.isNotEmpty(supplierIds)) {
             purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
         }
         SoInfoEntity soInfoEntity = soInfoService.getById(mainId);
@@ -492,7 +492,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         SoUtils.handleDetailAmount(soInfoEntity.getDiscountAmount(), saveOrUpdateList);
         for (SoDetailEntity item : saveOrUpdateList) {
             // 计算毛利成本
-            calCost(purchasePriceList,skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);
+            calCost(purchasePriceList, skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);
         }
         //这是删除
         List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
@@ -921,10 +921,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             item.setTaxPrice(taxPrice);
-            //价税金额
-            // BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
-            // item.setTaxAmount(taxAmount);
-
 
         }
         return resultList;
@@ -1084,14 +1080,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<SoDetailDTO.AddDTO> addList = detailList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
         /**
-        //这个是要修改的实体
-        List<SoDetailEntity> updateEntityList = BeanMapper.copyList(updateList, SoDetailEntity.class);
+         //这个是要修改的实体
+         List<SoDetailEntity> updateEntityList = BeanMapper.copyList(updateList, SoDetailEntity.class);
 
-        //这个是要添加的
-        List<SoDetailEntity> addEntityList = BeanMapper.copyList(addList, SoDetailEntity.class);
+         //这个是要添加的
+         List<SoDetailEntity> addEntityList = BeanMapper.copyList(addList, SoDetailEntity.class);
 
-        saveOrUpdateList.addAll(updateEntityList);
-        saveOrUpdateList.addAll(addEntityList);
+         saveOrUpdateList.addAll(updateEntityList);
+         saveOrUpdateList.addAll(addEntityList);
          */
         List<SoDetailEntity> saveOrUpdateList = BeanMapper.copyList(detailList, SoDetailEntity.class);
 
@@ -1109,14 +1105,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
 
         // 供应商id集合
-        List<String> supplierIds = skuList.stream().filter(r->StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
+        List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
         List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(supplierIds)) {
+        if (CollUtil.isNotEmpty(supplierIds)) {
             purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
         }
 
         SoInfoEntity soInfoEntity = soInfoService.getById(mainId);
-        for (int i = 0; i < saveOrUpdateList.size(); i ++) {
+        for (int i = 0; i < saveOrUpdateList.size(); i++) {
             SoDetailEntity item = saveOrUpdateList.get(i);
             item.setMainId(mainId);
             String skuId = item.getSkuId();
@@ -1131,10 +1127,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         // 金额折扣处理
         SoUtils.handleDetailAmount(soInfoEntity.getDiscountAmount(), saveOrUpdateList);
-        for (int i = 0; i < saveOrUpdateList.size(); i ++) {
+        for (int i = 0; i < saveOrUpdateList.size(); i++) {
             SoDetailEntity item = saveOrUpdateList.get(i);
             // 计算毛利成本
-            calCost(purchasePriceList,skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);
+            calCost(purchasePriceList, skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
@@ -1193,19 +1189,19 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     public void calCost(List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList, List<SkuVO> skuList, LocalDate saleOrderBillDate, SoDetailEntity item, Boolean isBrush) {
         String skuId = item.getSkuId();
         // sku对应的一级供应商
-        String supplierId = skuList.stream().filter(r->Objects.equals(r.getSkuId(), skuId)).findFirst().map(SkuVO::getSupplierId).orElse(null);
+        String supplierId = skuList.stream().filter(r -> Objects.equals(r.getSkuId(), skuId)).findFirst().map(SkuVO::getSupplierId).orElse(null);
         log.warn("SKU编号【{}】对应的一级供应商id：【{}】", item.getSkuNo(), supplierId);
         // 一级供应商+SKU对应的采购价目信息
         PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = null;
-        if(StrUtil.isNotEmpty(skuId) && StrUtil.isNotEmpty(supplierId)) {
-            supplierSkuPrice = purchasePriceList.stream().filter(r->Objects.equals(r.getSkuId(), skuId) && Objects.equals(r.getSupplierId(), supplierId)).findFirst().orElse(null);
+        if (StrUtil.isNotEmpty(skuId) && StrUtil.isNotEmpty(supplierId)) {
+            supplierSkuPrice = purchasePriceList.stream().filter(r -> Objects.equals(r.getSkuId(), skuId) && Objects.equals(r.getSupplierId(), supplierId)).findFirst().orElse(null);
         }
         BigDecimal purchasePrice = BigDecimal.ZERO;
         if (Objects.nonNull(supplierSkuPrice)) {
             purchasePrice = supplierSkuPrice.getTaxPrice();
             BigDecimal purchaseTaxRate = supplierSkuPrice.getTaxRate();
             //不含税单价（不含税价格=含税价格/（1+增值税税率））
-            purchasePrice= MathUtil.divide(purchasePrice, MathUtil.add(BigDecimal.ONE, purchaseTaxRate));
+            purchasePrice = MathUtil.divide(purchasePrice, MathUtil.add(BigDecimal.ONE, purchaseTaxRate));
 
         }
 
@@ -1219,6 +1215,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             // 未找到汇率直接返回
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 purchasePrice = BigDecimal.ZERO;
+                log.warn("汇率日期【{}】，币制【{}】", billDate, supplierSkuPrice.getCurrency());
+                throw new ServiceException(StrUtil.format("未找到币制对应的汇率，请联系系统管理员配置"));
             } else {
                 // item.setExchangeRate(rate);
                 // 转换成人民币采购单价
@@ -1230,7 +1228,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         BigDecimal saleAmount = item.getAmount();
         // 价税合计（折后）转换
         BigDecimal taxAmount = item.getTaxAmount();
-        if(Objects.equals(item.getCurrency(), "CNY")) {
+        if (Objects.equals(item.getCurrency(), "CNY")) {
             item.setExchangeRate(BigDecimal.ONE);
         }
         item.setAmountLocalCurrency(saleAmount);
@@ -1248,6 +1246,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 item.setExchangeRate(BigDecimal.ZERO);
                 saleAmount = BigDecimal.ZERO;
+                log.warn("汇率日期【{}】，币制【{}】", currentDate, supplierSkuPrice.getCurrency());
+                throw new ServiceException(StrUtil.format("未找到币制对应的汇率，请联系系统管理员配置"));
             } else {
                 // 转换成人民币销售金额
                 item.setExchangeRate(rate);
@@ -1256,10 +1256,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             // 销售金额（本位币）
             item.setAmountLocalCurrency(saleAmount);
         }
-        if(Objects.nonNull(taxAmount) &&
+        if (Objects.nonNull(taxAmount) &&
                 taxAmount.compareTo(BigDecimal.ZERO) == 1 &&
                 !Objects.equals(item.getCurrency(), "CNY")) {
-            if(Objects.isNull(item.getExchangeRate()) || item.getExchangeRate().compareTo(BigDecimal.ZERO) <= 0) {
+            if (Objects.isNull(item.getExchangeRate()) || item.getExchangeRate().compareTo(BigDecimal.ZERO) <= 0) {
                 item.setAllAmountLocalCurrency(BigDecimal.ZERO);
             } else {
                 item.setAllAmountLocalCurrency(item.getExchangeRate().multiply(taxAmount).setScale(4, BigDecimal.ROUND_HALF_UP));
@@ -1283,9 +1283,124 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if (CollectionUtils.isEmpty(ids)) {
             return;
         }
-        lambdaUpdate().in(SoDetailEntity::getId,ids)
-                .set(SoDetailEntity::getRemark,remark)
+        lambdaUpdate().in(SoDetailEntity::getId, ids)
+                .set(SoDetailEntity::getRemark, remark)
                 .update(new SoDetailEntity());
+    }
+
+
+    /**
+     * sku集合信息
+     *
+     * @param dto
+     * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.SkuDTO>
+     * @author yl
+     * @date 2023-08-02 10:53
+     */
+    @Override
+    public List<SoDetailDTO.SkuDTO> listSkuInfoBySkuNo(SoDetailDTO.ListSkuParamDTO dto) {
+        String warehouseId = dto.getWarehouseId();
+        List<String> skuNoList = dto.getSkuNoList();
+        if (CollectionUtils.isEmpty(skuNoList)) {
+            return Collections.emptyList();
+        }
+        List<SoDetailDTO.SkuDTO> resultList = new ArrayList<>(skuNoList.size());
+        List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
+        List<String> skuIdList = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+
+        List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
+
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(skuIdList, warehouseId);
+        for (String skuNo : skuNoList) {
+            SoDetailDTO.SkuDTO result = new SoDetailDTO.SkuDTO();
+            SkuVO item = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).
+                    findFirst().orElse(null);
+            String skuId = "";
+            if (item != null) {
+                skuId = item.getSkuId();
+                result.setProductName(item.getSkuName());
+                result.setUnit(item.getUnitName());
+                result.setSkuNo(item.getSkuNo());
+            } else {
+                result.setProductName("");
+                result.setUnit("");
+                result.setSkuNo("");
+            }
+
+            result.setSkuId(skuId);
+            result.setQty(0);
+            //即时库存
+            String finalSkuId = skuId;
+            Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(finalSkuId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+            result.setCurInventoryQty(curInventoryQty);
+
+            //销售数量
+            Integer qty = 0;
+            /**
+             * 缺货数量
+             * 当可用即时库存数量小于销售数量时，
+             * 缺货数量=销售数量-可用即时库存数量；
+             * 当可用即时库存数量大于销售数量时，缺货数量为0
+             */
+            Integer scarceQty = 0;
+
+            /**
+             * 已出库数量
+             * 新增时默认为0
+             * 编辑时根据关联出库单
+             * 总共已发货数量同步
+             *
+             */
+            Integer deliveryQty = 0;
+
+            /**
+             * 剩余数量
+             * 销售数量-已出库数量
+             */
+            Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
+            if (qty > curInventoryQty) {
+                scarceQty = qty - curInventoryQty;
+            }
+
+            result.setScarceQty(scarceQty);
+            result.setAvailableQty(getAvailableQty(curInventoryQty, qty));
+            result.setDeliveryQty(deliveryQty);
+            result.setWaitQty(waitQty);
+            //税率
+            BigDecimal taxRate = BigDecimal.ZERO;
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+
+            //单价
+            BigDecimal price = BigDecimal.ZERO;
+
+            //含税单价=销售单价*（税率+1）
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            result.setTaxPrice(taxPrice);
+            result.setPrice(price);
+            result.setAmount(MathUtil.multiply(price, qty));
+            result.setTaxRate(taxRate);
+            result.setIsGift(Boolean.FALSE);
+            result.setIsReissue(Boolean.FALSE);
+            result.setIsClose(Boolean.FALSE);
+            result.setTaxAmount(MathUtil.multiply(taxPrice, qty));
+            result.setRemark("");
+            //历史价格
+            SoDetailDTO.SkuHistoryPriceDTO skuHistoryPrice = skuPriceHistoryList.stream().
+                    filter(p -> p.getSkuId().equals(finalSkuId)).findFirst().orElse(null);
+            if (skuHistoryPrice != null) {
+                result.setMaxPrice(skuHistoryPrice.getMaxPrice());
+                result.setMinPrice(skuHistoryPrice.getMinPrice());
+                result.setAvgPrice(skuHistoryPrice.getAvgPrice());
+            } else {
+                result.setMaxPrice(price);
+                result.setMinPrice(price);
+                result.setAvgPrice(price);
+            }
+            resultList.add(result);
+        }
+        return resultList;
     }
 
 }

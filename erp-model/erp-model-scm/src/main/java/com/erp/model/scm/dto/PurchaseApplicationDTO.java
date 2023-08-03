@@ -314,7 +314,13 @@ public class PurchaseApplicationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ViewDTO extends UpdateDTO {
+    public static class ViewDTO extends CommonDTO {
+
+
+        /**
+         * 主表id
+         */
+        private String id;
 
         /**
          * 单据编码
@@ -325,6 +331,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * 审核状态
          */
         private String approveStatus;
+
+        /**
+         * 采购申请明细
+         */
+        private List<PurchaseApplicationDetailDTO.ViewDTO> details;
 
     }
 

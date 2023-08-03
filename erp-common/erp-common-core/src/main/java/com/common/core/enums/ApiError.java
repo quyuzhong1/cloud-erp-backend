@@ -132,6 +132,9 @@ public enum ApiError implements Serializable {
     ERROR_9046(9046, "字段编号不正确"),
     SCHEME_NOT_EXIST(9047, "方案不存在"),
     SCHEME_NAME_EXIST(9048, "查询方案[{}]已存在"),
+
+
+
     /**
      * 工作流错误 workflow
      * 从9040 开始  以端口号
@@ -582,6 +585,8 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_ORDER_ID_REPEAT(98101,"请选择同一采购订单下明细进行变更"),
     ERROR_PURCHASE_DATE(98102,"采购订单SKU【{}】预计交货日期不能小于【{}】"),
     ERROR_PURCHASE_PRICE(98103,"采购订单SKU【{}】单价必须大于0"),
+    ERROR_PURCHASE_ORG_NOT_FOUND(98104,"采购组织不存在"),
+    ERROR_RECEIVE_ORG_NOT_FOUND(98105,"收料组织不存在"),
 
 
 
@@ -630,7 +635,7 @@ public enum ApiError implements Serializable {
     ERROR_99032(99032,"库存交易方向不能为空"),
     ERROR_99033(99033,"库存交易规则仓库选项配置错误，请联系系统管理员"),
     ERROR_99034(99034,"库存交易规则未配置业务类型【{}】或配置错误，请联系系统管理员"),
-    ERROR_99035(99035,"库存不足，SKU:{},仓库：{},仓位:{},库存状态:{},库存数量[{}],交易数量[{}]"),
+    ERROR_99035(99035,"库存不足，SKU:[{}],仓库：[{}],仓位:[{}],库存状态:[{}],库存数量[{}],交易数量[{}]"),
     ERROR_99036(99036,"库存交易规则库存状态配置错误，请联系系统管理员"),
     ERROR_99037(99037,"库存交易规则仓库选项配置错误或者调用方调用错误，请联系系统管理员"),
     ERROR_99038(99038,"库存交易规则交易类型配置错误，请联系系统管理员"),
@@ -679,6 +684,7 @@ public enum ApiError implements Serializable {
     ERROR_99082(99082,"质检未完成不允许下推退货入库单"),
     ERROR_99083(99083,"退货入库单不存在"),
     ERROR_IN_ORG_BLANK(99080,"调入组织不能为空"),
+    ERROR_WAREHOUSE_REF_LOCATION(99080,"仓库【{}】下未找到有效仓位【{}】"),
 
 
 

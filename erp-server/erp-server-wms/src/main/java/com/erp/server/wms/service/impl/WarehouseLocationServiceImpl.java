@@ -2,10 +2,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.business.service.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
@@ -14,7 +12,6 @@ import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.server.wms.mapper.WarehouseLocationMapper;
 import com.erp.server.wms.service.WarehouseLocationService;
-import com.common.business.service.SuperServiceImpl;
 import com.google.common.collect.Lists;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,6 +106,14 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
+    public List<WarehouseLocationEntity> listByWarehouseIdAndCode(List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> listParam) {
+        if (CollectionUtils.isEmpty(listParam)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listByWarehouseIdAndCode(listParam);
+    }
+
+    @Override
     public List<WarehouseLocationDTO.LocationSelectDTO> all( ) {
         List<WarehouseLocationEntity> warehouseLocationList =  lambdaQuery()
                 .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode()).list();
@@ -141,5 +146,12 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         return CollUtil.isNotEmpty(list) ? list : Lists.newArrayList();
     }
 
-
+    @Override
+    public List<WarehouseLocationEntity> listByWarehouseIds(List<String> warehouseIds) {
+        if(CollUtil.isEmpty(warehouseIds)) {
+            return Lists.newArrayList();
+        }
+        List<WarehouseLocationEntity> list = lambdaQuery().in(WarehouseLocationEntity::getWarehouseId, warehouseIds).list();
+        return CollUtil.isNotEmpty(list) ? list : Lists.newArrayList();
+    }
 }

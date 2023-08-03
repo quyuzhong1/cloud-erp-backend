@@ -33,7 +33,6 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -100,7 +99,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         List<PurchaseOrderDetailEntity> list = BeanMapperUtils.copyList(PurchaseOrderDetailEntity.class, details);
         //处理明细中的数据id
-        doOpHandleDetails(list,purchaseOrderId);
+        doOpHandleDetails(list,purchaseOrderId,Boolean.TRUE);
         //批量新增
         boolean flag = this.saveBatch(list);
         if (flag) {
@@ -177,7 +176,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         List<PurchaseOrderDetailEntity> newList = BeanMapperUtils.copyList(PurchaseOrderDetailEntity.class, details);
 
         //处理明细id及操作日志
-        doOpHandleDetails(newList,purchaseOrderId);
+        doOpHandleDetails(newList,purchaseOrderId,Boolean.FALSE);
 
         //新增或修改采购订单明细
         this.saveOrUpdateBatch(newList);
@@ -281,11 +280,12 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     /**
      * 处理明细中的数据id
      */
-    private void doOpHandleDetails (List<PurchaseOrderDetailEntity> newList, String purchaseOrderId) {
+    private void doOpHandleDetails (List<PurchaseOrderDetailEntity> newList, String purchaseOrderId,Boolean isAdd) {
 
         //添加操作日志
         List<PurchaseOrderDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(addList)) {
+        //新增不需要添加新增SKU的日志
+        if (CollectionUtils.isNotEmpty(addList) && !isAdd) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(purchaseOrderId, obj.getSkuNo())).collect(Collectors.toList());
             moduleOperateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(), addPairList, "编辑操作");
         }

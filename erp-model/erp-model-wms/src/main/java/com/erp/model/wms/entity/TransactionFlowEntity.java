@@ -3,7 +3,9 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
@@ -21,6 +23,8 @@ import java.time.LocalDateTime;
 @Setter
 @Accessors(chain = true)
 @TableName("transaction_flow")
+@NoArgsConstructor
+@AllArgsConstructor
 public class TransactionFlowEntity extends BaseEntity<TransactionFlowEntity> implements Serializable {
 
     /**
@@ -172,4 +176,8 @@ public class TransactionFlowEntity extends BaseEntity<TransactionFlowEntity> imp
     @TableField("is_unapproved")
     private Boolean isUnapproved;
 
+    public TransactionFlowEntity(String id, Integer afterQty) {
+        super(id);
+        this.curInventoryQty = afterQty;
+    }
 }

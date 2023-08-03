@@ -632,6 +632,33 @@ public class SoDetailDTO implements Serializable {
     }
 
     /**
+     * SKU 信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListSkuParamDTO {
+
+
+        /**
+         * skuNo List
+         */
+        @Size(min = 1,message = "sku至少需要一个")
+        @NotNull(message = "sku不能为空")
+        private List<String> skuNoList;
+
+        /**
+         *仓库id
+         */
+        @NotBlank(message = "仓库不能为空")
+        private String warehouseId;
+
+
+    }
+
+
+
+
+    /**
      * 导入返回
      */
     @Data

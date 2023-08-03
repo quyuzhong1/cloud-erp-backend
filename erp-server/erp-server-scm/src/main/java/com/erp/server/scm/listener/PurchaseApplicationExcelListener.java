@@ -137,15 +137,6 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
                     excelDTO.setPurchaseOrgId(baseIdDTO.getId());
                 }
             }
-            //收料组织验证
-            if (StringUtils.isNotBlank(importExcelDTO.getReceiveOrgName())) {
-                BaseIdDTO baseIdDTO = companyList.stream().filter(obj -> obj.getName().equals(importExcelDTO.getReceiveOrgName())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(baseIdDTO)) {
-                    errorMsgList.add("请录入启用收料组织");
-                } else {
-                    excelDTO.setReceiveOrgId(baseIdDTO.getId());
-                }
-            }
         }
 
         //存在错误数据则直接返回

@@ -24,4 +24,12 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
     IPage<WarehouseLocationDTO.LocationSelectDTO> paging(Page query, @Param("params") WarehouseLocationDTO.WarehouseLocationSearchParamDTO dto);
 
     List<WarehouseLocationEntity> list(@Param(value = "warehouseIds") List<String> warehouseIds);
+    /**
+     * @description: 根据仓库id和库位集合查询
+     * @author Will
+     * @date: 2023/8/2 17:52
+     * @param listParam
+     * @return List<WarehouseLocationEntity>
+     */
+    List<WarehouseLocationEntity> listByWarehouseIdAndCode(@Param("listParam") List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> listParam);
 }

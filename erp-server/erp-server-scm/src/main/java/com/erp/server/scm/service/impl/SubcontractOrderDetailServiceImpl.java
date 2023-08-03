@@ -111,7 +111,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             list.add(entity);
         }
         //处理父子级数据
-        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId);
+        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.TRUE);
         this.saveBatch(resultList);
     }
 
@@ -123,7 +123,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         }
         List<SubcontractOrderDetailEntity> list = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailList);
         //处理父子级数据
-        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId);
+        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.FALSE);
         this.saveBatch(resultList);
     }
 
@@ -184,7 +184,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         checkSourceDetailQty(list,mainId);
 
         //处理父子级数据
-        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId);
+        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.FALSE);
 
         this.saveOrUpdateBatch(resultList);
     }
@@ -199,7 +199,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
 
         checkSourceDetailQty(list,mainId);
         //处理父子级数据
-        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId);
+        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId,Boolean.FALSE);
 
         this.saveOrUpdateBatch(resultList);
     }
@@ -312,7 +312,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
      * @param mainId
      * @return List<SubcontractOrderDetailEntity>
      */
-    private List<SubcontractOrderDetailEntity> generateResultDetail (List<SubcontractOrderDetailEntity> newList, String mainId) {
+    private List<SubcontractOrderDetailEntity> generateResultDetail (List<SubcontractOrderDetailEntity> newList, String mainId,Boolean isAdd) {
         List<SubcontractOrderDetailEntity> resultList = new ArrayList<>();
         //父级skuIds
         List<String> parentSkuIds = new ArrayList<>();
@@ -463,7 +463,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         }
         //新增SKU添加操作日志
         List<SubcontractOrderDetailEntity> addList = newList.stream().filter(c ->c.getIsAdd()).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(addList)) {
+        if (CollectionUtils.isNotEmpty(addList) && !isAdd) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             moduleOperateLogService.batchAddModuleOperateLog("新增了一条父级SKU【%s】", ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), addPairList, "编辑操作");
         }

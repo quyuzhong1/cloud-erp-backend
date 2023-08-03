@@ -126,7 +126,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pa.create_time desc , pad.create_po_type asc
+        pa.id desc , pad.id asc
     </select>
 
     <select id="pagingTotal" resultType="com.erp.model.scm.dto.PurchaseApplicationDTO$PagingTotalDTO">
@@ -316,7 +316,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pa.create_time desc
+        pa.id desc , pad.id asc
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">

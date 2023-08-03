@@ -51,6 +51,16 @@ public class SoDetailController extends BaseController {
         return success(skuDTO);
     }
 
+    /**
+     * 根据skuNo list 获取到sku 信息
+     *
+     */
+    @PostMapping("/listSkuInfoBySkuNo")
+    public ApiResult<List<SoDetailDTO.SkuDTO>> listSkuInfoBySkuNo(@RequestBody @Validated SoDetailDTO.ListSkuParamDTO dto) {
+        List<SoDetailDTO.SkuDTO> resultList = soDetailService.listSkuInfoBySkuNo(dto);
+        return success(resultList);
+    }
+
 
     /**
      * 根据销售订单id 获取到对应产品明细

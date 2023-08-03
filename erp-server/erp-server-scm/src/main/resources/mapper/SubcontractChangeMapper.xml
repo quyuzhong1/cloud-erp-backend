@@ -15,8 +15,6 @@
        <result column="approve_status" property="approveStatus" />
        <result column="code" property="code" />
        <result column="bill_date" property="billDate" />
-       <result column="receive_org_id" property="receiveOrgId" />
-       <result column="receive_org_name" property="receiveOrgName" />
        <result column="purchase_org_id" property="purchaseOrgId" />
        <result column="purchase_org_name" property="purchaseOrgName" />
        <result column="changer_id" property="changerId" />
