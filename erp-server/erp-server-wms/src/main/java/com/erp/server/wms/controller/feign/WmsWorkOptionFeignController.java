@@ -5,10 +5,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.WorkOptionDTO;
-import com.erp.server.wms.service.PoInstockService;
-import com.erp.server.wms.service.PurchaseReturnOrderService;
-import com.erp.server.wms.service.WarehouseReceiveService;
-import com.erp.server.wms.service.WorkOptionService;
+import com.erp.server.wms.service.*;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,6 +35,9 @@ public class WmsWorkOptionFeignController {
 
     @Resource
     private PurchaseReturnOrderService purchaseReturnOrderService;
+
+    @Resource
+    private TransferApplicationService transferApplicationService;
 
     /**
      * 根据入参查询单据数量
@@ -84,5 +84,18 @@ public class WmsWorkOptionFeignController {
     public Boolean purchaseReturnOrderApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
         Boolean flag = purchaseReturnOrderService.approve(baseApproveParamDTO);
         return flag;
+    }
+
+    /**
+     * 调拨申请单审核
+     * @Author Luo_WG
+     * @Date 2023/8/3 16:38
+     * @param baseApproveParamDTO
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/transferApplicationApprove")
+    public Boolean transferApplicationApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
+        transferApplicationService.approve(baseApproveParamDTO);
+        return Boolean.TRUE;
     }
 }
