@@ -62,7 +62,7 @@
         sd.amount AS salesAmount,
         sd.is_gift,
         sd.is_close,
-        sd.remark,
+        srd.remark,
         si.warehouse_id,
         sd.currency,
         sd.currency_Symbol,
