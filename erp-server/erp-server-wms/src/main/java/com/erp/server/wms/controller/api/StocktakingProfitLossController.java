@@ -7,15 +7,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
 
 /**
- * <p>
- * 盘盈盘亏单 前端控制器
- * </p>
+ * 盘点管理-盘盈盘亏单
  *
  * @author Lambda
  * @since 2023-07-31
  */
 @RestController
-@RequestMapping("/stocktaking-profit-loss-entity")
+@RequestMapping("/stocktakingProfitLoss")
 public class StocktakingProfitLossController extends BaseController {
 
 }

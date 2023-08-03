@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,6 +22,7 @@ import java.util.List;
  * @Date 2023-07-31 14:29
  * @Created by yl
  */
+
 public class StocktakingTaskDTO implements Serializable {
 
     /**
@@ -63,12 +68,12 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 盘点方式集合
          */
-        private List<String> inventoryModeList;
+        private List<String> stocktakingModeList;
 
         /**
          * 盘点类型集合
          */
-        private List<String> inventoryTypeList;
+        private List<String> stocktakingTypeList;
 
 
         /**
@@ -122,22 +127,22 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 盘点方式编码
          */
-        private String inventoryMode;
+        private String stocktakingMode;
 
         /**
          * 盘点方式名
          */
-        private String inventoryModeName;
+        private String stocktakingModeName;
 
         /**
          * 盘点类型
          */
-        private String inventoryType;
+        private String stocktakingType;
 
         /**
          * 盘点类型名
          */
-        private String inventoryTypeName;
+        private String stocktakingTypeName;
 
         /**
          * 单据状态编码
@@ -162,13 +167,13 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 盘点状态
          */
-        private String inventoryStatus;
+        private String stocktakingStatus;
 
 
         /**
          * 盘点状态名
          */
-        private String inventoryStatusName;
+        private String stocktakingStatusName;
 
         /**
          * 仓库id
@@ -194,8 +199,137 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 盘点人
          */
-        private String inventoryUserName;
+        private String stocktakingUserName;
 
 
     }
+
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 盘点任务单号
+         */
+        private String code;
+
+        /**
+         * 盘点计划单号
+         */
+        private String sourceCode;
+
+        /**
+         * 盘点方式编码
+         */
+        private String stocktakingMode;
+
+        /**
+         * 盘点方式名
+         */
+        private String stocktakingModeName;
+
+        /**
+         * 盘点类型
+         */
+        private String stocktakingType;
+
+        /**
+         * 盘点类型名
+         */
+        private String stocktakingTypeName;
+
+        /**
+         * 单据状态编码
+         */
+        private String approveStatus;
+
+        /**
+         * 单据状态名
+         */
+        private String approveStatusName;
+
+        /**
+         * 分单规则编码
+         */
+        private String separateRule;
+
+        /**
+         * 分单规则编码名
+         */
+        private String separateRuleName;
+
+        /**
+         * 盘点状态
+         */
+        private String stocktakingStatus;
+
+
+        /**
+         * 盘点状态名
+         */
+        private String stocktakingStatusName;
+
+
+        /**
+         * 盘点人
+         */
+        private String stocktakingUserName;
+
+
+        /**
+         * 创建时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createTime;
+
+        /**
+         * 详情列表
+         */
+        private List<StocktakingTaskDetailDTO.ViewDTO> detailList;
+
+
+    }
+
+
+    /**
+     * 导出
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+
+        private List<String> ids;
+    }
+
+    /**
+     * 分配盘点人
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AssignUserDTO {
+        /**
+         * id 集合
+         */
+        @NotNull(message ="盘点任务不能为空")
+        @Size(min = 1, message = "至少需要选择一个盘点任务")
+        private List<String> ids;
+
+
+        /**
+         * 分配用户集合
+         */
+        @NotNull(message ="分配用户不能为空")
+        @Size(min = 1, message = "至少需要选择一个分配用户")
+        private List<String> userIdList;
+    }
+
 }
