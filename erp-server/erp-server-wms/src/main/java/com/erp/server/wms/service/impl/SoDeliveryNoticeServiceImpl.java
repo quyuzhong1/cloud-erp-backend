@@ -57,6 +57,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.SoDeliveryNoticeMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -917,6 +918,22 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
         Integer soOutStockCount = soOutstockService.getPushDownCountBySoIds(soIds);
         return deliveryNoticeCount + soOutStockCount;
+    }
+
+    @Override
+    public Map<String, Long> getPushDownDeliveryNoticeCnt(List<String> soIds) {
+        if(CollUtil.isEmpty(soIds)) {
+            return Maps.newHashMap();
+        }
+        List<SoDeliveryNoticeEntity> deliveryNoticeList = this.lambdaQuery()
+                .in(SoDeliveryNoticeEntity::getSourceId, soIds)
+                .eq(SoDeliveryNoticeEntity::getSourceType, SourceTypeEnum.SO_INFO.getCode())
+                .eq(SoDeliveryNoticeEntity::getInvalidStatus, Boolean.FALSE).list();
+
+        if(CollUtil.isEmpty(deliveryNoticeList)) {
+            return Maps.newHashMap();
+        }
+        return deliveryNoticeList.stream().collect(Collectors.groupingBy(SoDeliveryNoticeEntity::getSourceId, Collectors.counting()));
     }
 
 }

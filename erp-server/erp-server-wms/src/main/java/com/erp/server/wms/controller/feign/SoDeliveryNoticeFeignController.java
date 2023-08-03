@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("feign/soDeliveryNotice")
@@ -86,5 +87,17 @@ public class SoDeliveryNoticeFeignController {
     public List<SoDeliveryNoticeDetailDTO.ListDTO> listBySourceIdList(@RequestBody List<String> sourceIdList) {
         List<SoDeliveryNoticeDetailDTO.ListDTO> resultList = soDeliveryNoticeDetailService.listBySourceIdList(sourceIdList);
         return resultList;
+    }
+
+    /**
+     * 根据来源id list 查询已下推的发货通知单数量
+     * @param soIds
+     * @return Map<String,Long>
+     * @author zhangchunlin
+     * @date 2023-07-26 17:30
+     */
+    @PostMapping("/getPushDownDeliveryNoticeCnt")
+    public Map<String,Long> getPushDownDeliveryNoticeCnt(@RequestBody List<String> soIds) {
+        return soDeliveryNoticeService.getPushDownDeliveryNoticeCnt(soIds);
     }
 }
