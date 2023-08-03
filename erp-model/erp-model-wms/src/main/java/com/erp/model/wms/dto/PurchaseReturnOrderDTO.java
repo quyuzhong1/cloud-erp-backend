@@ -534,6 +534,23 @@ public class PurchaseReturnOrderDTO {
          * 仓位
          */
         private String warehouseLocation;
+
+        /**
+         * 单据来源
+         */
+        private String sourceType;
+
+        /**
+         * 退货来源
+         * 参考枚举ReturnOrderSourceEnum
+         */
+        private String returnOrderSource;
+
+        /**
+         * 退货来源名称
+         */
+        private String returnOrderSourceName;
+
     }
 
     /**
@@ -606,6 +623,12 @@ public class PurchaseReturnOrderDTO {
          * 创建时间
          */
         private List<LocalDate> createTimeList;
+
+        /**
+         * 退货来源
+         * 参考枚举ReturnOrderSourceEnum
+         */
+        private String returnOrderSource;
 
     }
 
