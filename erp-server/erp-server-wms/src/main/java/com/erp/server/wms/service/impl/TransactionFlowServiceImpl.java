@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -23,6 +25,7 @@ import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
+import com.erp.model.wms.entity.InventoryHisEntity;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.model.wms.enums.inventory.*;
@@ -40,6 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -48,6 +52,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -83,6 +88,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Autowired
     private ScmTaskFeign scmTaskFeign;
+    @Resource
+    private InventoryHisService inventoryHisService;
 
     @Override
     public List<TransactionFlowEntity> getUnApprovedTxnFlows(String sourceType, String sourceId) {
@@ -292,6 +299,53 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         IPage<InventoryReportDTO.ListTransportPagingDTO> pageData = this.baseMapper.transportList(query, pagingParamDTO.getParams());
         fillTransportListData(pageData.getRecords());
         return new PagingVO(pageData);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void overrideInventoryFlow(LocalDateTime startTime, LocalDateTime endTime, String status, String inventoryId) {
+        // 悲观锁 锁表
+//        List<TransactionFlowEntity> lockTableList = lambdaQuery().last("for update").list();
+
+        List<TransactionFlowEntity> lockTableList = lambdaQuery()
+                .ge(ObjUtil.isNotEmpty(startTime), TransactionFlowEntity::getTradeTime, startTime)
+                .le(ObjUtil.isNotEmpty(endTime), TransactionFlowEntity::getTradeTime, endTime)
+                .eq(ObjUtil.isNotEmpty(status), TransactionFlowEntity::getDictInventoryStatus, status)
+                .eq(ObjUtil.isNotEmpty(inventoryId), TransactionFlowEntity::getInventoryId, inventoryId)
+                .last("for update")
+                .list();
+        if(CollUtil.isEmpty(lockTableList)) {
+            return;
+        }
+        // 获取需要覆盖的数据
+        Map<String, List<TransactionFlowEntity>> flowMap = lockTableList.stream()
+                .sorted(Comparator.comparing(TransactionFlowEntity::getId))
+                .filter(x -> (ObjUtil.isNotEmpty(startTime) ? x.getTradeTime().isAfter(startTime) : Boolean.TRUE)
+                        && (ObjUtil.isNotEmpty(endTime) ? x.getTradeTime().isBefore(endTime) : Boolean.TRUE)
+                        && (StrUtil.isNotBlank(status) ? x.getDictInventoryStatus().equals(status) : Boolean.TRUE)
+                        && (StrUtil.isNotBlank(inventoryId) ? x.getInventoryId().equals(inventoryId) : Boolean.TRUE)
+                ).collect(Collectors.groupingBy(TransactionFlowEntity::getInventoryId, Collectors.toList()));
+
+        // 重算库存流水
+        flowMap.keySet().parallelStream().forEach(flow -> {
+            List<TransactionFlowEntity> flowList = flowMap.get(flow);
+            InventoryHisEntity hisEntity = inventoryHisService.findLastInventory(flow, startTime.toLocalDate().minusDays(1));
+            // 重算库存流水
+            overrideFlowByInventoryId(flowList, hisEntity);
+        });
+    }
+
+    /**
+     * 重算单条及时库存流水
+     * @param flowList
+     */
+    private void overrideFlowByInventoryId(List<TransactionFlowEntity> flowList, InventoryHisEntity hisEntity) {
+        AtomicReference<Integer> afterQty = ObjectUtil.isNotEmpty(hisEntity) ? new AtomicReference<>(hisEntity.getQty()) : new AtomicReference<>(0);
+        flowList.stream().forEachOrdered(flow -> {
+            afterQty.set(flow.getQty() + afterQty.get());
+            updateById(new TransactionFlowEntity(flow.getId(), afterQty.get()));
+        });
+
     }
 
     /**

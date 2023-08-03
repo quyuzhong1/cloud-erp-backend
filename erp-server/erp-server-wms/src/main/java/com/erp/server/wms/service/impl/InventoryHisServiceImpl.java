@@ -71,5 +71,15 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
         }
     }
 
+    @Override
+    public InventoryHisEntity findLastInventory(String inventoryId, LocalDate localDate) {
+        LambdaQueryWrapper<InventoryHisEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(InventoryHisEntity::getInfoId, inventoryId)
+                .le(InventoryHisEntity::getBillDate, localDate)
+                .orderByDesc(InventoryHisEntity::getBillDate)
+                .last("limit 1");;
+        return baseMapper.selectOne(queryWrapper);
+    }
+
 
 }
