@@ -6,6 +6,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -157,4 +158,15 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDTO.SupplierSkuPrice>
      **/
     List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(List<String> ids);
+
+    /**
+     * 采购价目表导入
+     *
+     * @param excelFile
+     * @param response
+     * @return java.lang.Boolean
+     * @author zhangchunlin
+     * @date 2023-08-03 18:00:00
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 }
