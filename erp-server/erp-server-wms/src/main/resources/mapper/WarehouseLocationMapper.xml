@@ -19,11 +19,34 @@
         FROM
             warehouse_location
         WHERE
-            type = 'location' and
+            is_deleted = false and type = 'location' and
             warehouse_id IN
             <foreach collection="warehouseIds" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
         group by warehouse_id,code
+    </select>
+
+    <!-- 根据仓库id和库位集合查询  -->
+    <select id="listByWarehouseIdAndCode" resultType="com.erp.model.wms.entity.WarehouseLocationEntity">
+        select
+           wl.id,
+           wl.type,
+           wl.code,
+           wl.name,
+           wl.status,
+           wl.warehouse_id,
+           wl.parent_id,
+           wl.disabled,
+           wl.remark,
+           wl.occupy_status
+        from warehouse_location wl
+        where wl.is_deleted = false
+        <if test="listParam != null and listParam.size > 0">
+            and
+            <foreach collection="listParam" item="item" open="(" separator="or" close=")">
+               (wl.warehouse_id = #{item.warehouseId} and wl.code = #{item.code})
+            </foreach>
+        </if>
     </select>
 </mapper>

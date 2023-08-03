@@ -679,6 +679,7 @@ public enum ApiError implements Serializable {
     ERROR_99082(99082,"质检未完成不允许下推退货入库单"),
     ERROR_99083(99083,"退货入库单不存在"),
     ERROR_IN_ORG_BLANK(99080,"调入组织不能为空"),
+    ERROR_WAREHOUSE_REF_LOCATION(99080,"仓库【{}】下未找到有效仓位【{}】"),
 
 
 
