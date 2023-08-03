@@ -317,7 +317,7 @@ public class QcInfoDTO implements Serializable {
         /**
          * 交货仓库id
          */
-        private String deliveryWarehouseId;
+        private String warehouseId;
 
         /**
          * 供应商id

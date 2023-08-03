@@ -296,20 +296,20 @@
     </select>
 
     <select id="getQcList" resultType="com.erp.model.wms.dto.QcInfoDTO$SoReturnReceiveToQcDTO">
-
         SELECT
         srrd.main_id AS sourceId,
         srrd.id AS sourceDetailId,
         srrd.sku_id,
         srrd.sku_no,
         srrd.receive_qty AS totalQty,
+        srr.source_id AS soReturnId,
         srrd.source_detail_id AS soReturnDetailId,
-        wr.supplier_id,
-        wr.purchase_order_id,
-        wr.purchase_order_code,
-        wr.delivery_warehouse_id
+        srr.source_code AS soReturnCode,
+        srr.so_code,
+        srr.so_id,
+        srr.warehouse_id
         FROM  so_return_receive_detail srrd
-        LEFT JOIN so_return_receive sr ON srrd.main_id = sr.id AND sr.is_deleted = FALSE
+        LEFT JOIN so_return_receive srr ON srrd.main_id = srr.id AND srr.is_deleted = FALSE
         WHERE srrd.is_deleted = FALSE
         AND srrd.main_id IN
         <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
