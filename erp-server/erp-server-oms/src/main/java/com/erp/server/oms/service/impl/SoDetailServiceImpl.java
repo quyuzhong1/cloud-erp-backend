@@ -1215,6 +1215,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             // 未找到汇率直接返回
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 purchasePrice = BigDecimal.ZERO;
+                log.warn("汇率日期【{}】，币制【{}】", billDate, supplierSkuPrice.getCurrency());
+                throw new ServiceException(StrUtil.format("未找到币制对应的汇率，请联系系统管理员配置"));
             } else {
                 // item.setExchangeRate(rate);
                 // 转换成人民币采购单价
@@ -1244,6 +1246,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 item.setExchangeRate(BigDecimal.ZERO);
                 saleAmount = BigDecimal.ZERO;
+                log.warn("汇率日期【{}】，币制【{}】", currentDate, supplierSkuPrice.getCurrency());
+                throw new ServiceException(StrUtil.format("未找到币制对应的汇率，请联系系统管理员配置"));
             } else {
                 // 转换成人民币销售金额
                 item.setExchangeRate(rate);
