@@ -15,8 +15,6 @@
        <result column="approve_status" property="approveStatus" />
        <result column="code" property="code" />
        <result column="bill_date" property="billDate" />
-       <result column="receive_org_id" property="receiveOrgId" />
-       <result column="receive_org_name" property="receiveOrgName" />
        <result column="purchase_org_id" property="purchaseOrgId" />
        <result column="purchase_org_name" property="purchaseOrgName" />
        <result column="purchaser_id" property="purchaserId" />
@@ -274,8 +272,6 @@
             sod.variant_property as variantProperty,
             so.purchase_org_id as purchaseOrgId,
             so.purchase_org_name as purchaseOrgName,
-            so.receive_org_id as receiveOrgId,
-            so.receive_org_name as receiveOrgName,
             sod.warehouse_id as warehouseId,
             sod.warehouse_name as warehouseName,
             sod.qty,
