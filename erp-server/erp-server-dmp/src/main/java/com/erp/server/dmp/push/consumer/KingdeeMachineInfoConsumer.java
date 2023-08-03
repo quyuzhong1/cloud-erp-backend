@@ -50,7 +50,7 @@ public class KingdeeMachineInfoConsumer implements RocketMQListener<Map<String, 
         try {
             kingdeeMachineInfoConsumerService.executeConsumer(map);
         }catch (Exception e){
-            log.error("KingdeeMachineInfoConsumer>>>onMessage>>>map ={}", map, e);
+            log.error("KingdeeMachineInfoConsumer>>>onMessage>>>map ={}>>>e={}", map, e);
         }
     }
 

@@ -57,7 +57,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         try {
             kingdeeBomInfoConsumerService.executeBomInfoConsumer(map);
         } catch (Exception e) {
-            log.error("KingdeeBomInfoConsumer>>>onMessage>>>map ={}", map, e);
+            log.error("KingdeeBomInfoConsumer>>>onMessage>>>map ={}>>>e={}", map, e);
         }
 
     }

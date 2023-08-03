@@ -83,7 +83,7 @@ public class ProductSaleShowDTO implements Serializable {
     /**
      * 图片是否完成 1.是 2.否
      */
-    @StateEnumValue(intValues = {1, 2}, message = "图片是否完成0或者1")
+    @StateEnumValue(intValues = {1, 2}, message = "图片是否完成1或者2")
     private Integer isFinishedImg;
 
     /**

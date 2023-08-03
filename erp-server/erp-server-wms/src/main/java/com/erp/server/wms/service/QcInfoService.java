@@ -192,6 +192,15 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
     Boolean autoReceiveToQcDTO(List<QcInfoDTO.ReceiveToQcDTO>  dto);
 
     /**
+     * 销售退货签收单自动下推质检单
+     * @Author Luo_WG
+     * @Date 2023/8/3 10:07
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean autoSoReturnReceiveToQcDTO(List<QcInfoDTO.SoReturnReceiveToQcDTO>  dto);
+
+    /**
      * 退货签收单下推质检单
      * @Author Luo_WG
      * @Date 2023/5/23 14:05
