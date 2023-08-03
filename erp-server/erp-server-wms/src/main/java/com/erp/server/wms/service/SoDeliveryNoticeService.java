@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -187,4 +188,11 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return java.lang.Integer
      */
     Integer getPushDownBySourceIds(List<String> soIds);
+
+    /**
+     * 根据销售订单ids获取下推发货通知单的数量
+     * @param soIds
+     * @return
+     */
+    Map<String,Long> getPushDownDeliveryNoticeCnt(List<String> soIds);
 }
