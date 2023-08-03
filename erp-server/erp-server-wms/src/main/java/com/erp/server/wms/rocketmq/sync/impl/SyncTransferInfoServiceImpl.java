@@ -208,7 +208,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
 
         //仓库信息
-        List<String> warehouseCodeList = dmpDetailList.stream().flatMap(obj -> Stream.of(obj.getInWarehouseCode(), obj.getOutWarehouseCode())).collect(Collectors.toList());
+        List<String> warehouseCodeList = dmpDetailList.stream().flatMap(obj -> Stream.of(obj.getInWarehouseCode(), obj.getOutWarehouseCode())).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByKingdeeCodeList(warehouseCodeList);
         if (CollectionUtils.isEmpty(warehouseList)) {
             throw new ServiceException(ApiError.ERROR_99076, JSONUtil.toJsonStr(warehouseCodeList));
@@ -248,7 +248,8 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
             detailEntity.setSkuId(skuId);
             detailEntity.setSkuNo(dmpDetailEntity.getSkuNo());
             detailEntity.setQty(dmpDetailEntity.getQty());
-            detailEntity.setInWarehouseLocation(dmpDetailEntity.getWarehouseLocation());
+            detailEntity.setInWarehouseLocation(dmpDetailEntity.getInWarehouseLocation());
+            detailEntity.setOutWarehouseLocation(dmpDetailEntity.getOutWarehouseLocation());
             detailEntity.setSourceDetailId(dmpDetailEntity.getSourceDetailId());
             detailList.add(detailEntity);
         }

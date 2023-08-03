@@ -11,12 +11,10 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
-import com.erp.model.wms.entity.PickingDetailEntity;
-import com.erp.model.wms.entity.TransferInfoDetailEntity;
-import com.erp.model.wms.entity.TransferInfoEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.TransferInfoDetailMapper;
 import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -55,7 +53,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     private WarehouseService warehouseService;
 
     @Resource
-    private SysUserFeign sysUserFeign;
+    private WarehouseLocationService warehouseLocationService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -193,11 +191,23 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             list = this.listByIds(ids);
         }
 
+        //仓库信息
         List<String> warehouseIdList = newList.stream().flatMap(obj -> Stream.of(obj.getInWarehouseId(), obj.getOutWarehouseId())).collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
         if (CollectionUtils.isEmpty(warehouseList)) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
+
+        //仓位信息
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> listParam = newList
+                .stream()
+                .filter(obj -> StringUtils.isNotBlank(obj.getInWarehouseLocation()) || StringUtils.isNotBlank(obj.getOutWarehouseLocation()))
+                .flatMap(obj -> Stream.of(new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getInWarehouseId(), obj.getInWarehouseLocation())
+                        , new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getOutWarehouseId(), obj.getOutWarehouseLocation())))
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdAndCode(listParam);
 
         //SKU信息
         List<String> skuIds = newList.stream().map(TransferInfoDetailEntity::getSkuId).collect(Collectors.toList());
@@ -205,6 +215,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
+
         for (TransferInfoDetailEntity detail:newList) {
 
             //调入仓库
@@ -219,6 +230,32 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
                 throw new ServiceException(ApiError.ERROR_99002);
             }
             detail.setOutWarehouseName(outWarehouse.getName());
+            //验证调入仓位
+            if (StringUtils.isNotBlank(detail.getInWarehouseLocation())) {
+                long count = warehouseLocationList
+                        .stream()
+                        .filter(obj -> detail.getInWarehouseLocation().equals(obj.getCode())
+                                && detail.getInWarehouseId().equals(obj.getWarehouseId())
+                                && WarehouseLocationTypeEnum.LOCATION.getCode().equals(obj.getType())
+                                && (ObjectUtils.isNotEmpty(obj.getDisabled()) && !obj.getDisabled()))
+                        .count();
+                if (count == 0) {
+                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_REF_LOCATION,detail.getInWarehouseName(),detail.getInWarehouseLocation());
+                }
+            }
+            //验证调出仓位
+            if (StringUtils.isNotBlank(detail.getOutWarehouseLocation())) {
+                long count = warehouseLocationList
+                        .stream()
+                        .filter(obj -> detail.getOutWarehouseLocation().equals(obj.getCode())
+                                && detail.getOutWarehouseId().equals(obj.getWarehouseId())
+                                && WarehouseLocationTypeEnum.LOCATION.getCode().equals(obj.getType())
+                                && (ObjectUtils.isNotEmpty(obj.getDisabled()) && !obj.getDisabled()))
+                        .count();
+                if (count == 0) {
+                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_REF_LOCATION,detail.getInWarehouseName(),detail.getInWarehouseLocation());
+                }
+            }
 
             //单位
             String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");

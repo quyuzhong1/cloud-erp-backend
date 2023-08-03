@@ -72,7 +72,12 @@ public class DmpTransferInfoDetailDTO {
     /**
      * 调入库位
      */
-    private String warehouseLocation;
+    private String inWarehouseLocation;
+
+    /**
+     * 调出库位
+     */
+    private String outWarehouseLocation;
 
     /**
     * 入库时间
