@@ -342,31 +342,37 @@ public class SubcontractOrderDTO implements Serializable {
         /**
          * 单据日期
          */
+        @NotNull(message = "单据日期不能为空")
         private LocalDate billDate;
-        /**
-         * 收料组织id
-         */
-        private String  receiveOrgId;
+
         /**
          * 采购组织id
          */
+        @NotBlank(message = "采购组织不能为空")
         private String purchaseOrgId;
+
         /**
          * 采购员id
          */
         private String purchaserId;
+
         /**
          * 采购部门id
          */
+
         private String deptId;
+
         /**
          * 委外组织id
          */
+        @NotBlank(message = "委外组织不能为空")
         private String subcontractOrgId;
+
         /**
          * 新品首批（false否,true是）
          */
         private Boolean isFirstMassProduct;
+
         /**
         * 来源id
         */
@@ -446,16 +452,6 @@ public class SubcontractOrderDTO implements Serializable {
          * 采购组织名称
          */
         private String purchaseOrgName;
-
-        /**
-         * 收料组织id
-         */
-        private String receiveOrgId;
-
-        /**
-         * 收料组织名称
-         */
-        private String receiveOrgName;
 
         /**
          * 仓库id
@@ -685,7 +681,6 @@ public class SubcontractOrderDTO implements Serializable {
          * 收料组织id
          */
         private String receiveOrgId;
-
 
         /**
          * 新品首批（false否,true是）

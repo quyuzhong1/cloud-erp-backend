@@ -196,7 +196,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //校验明细是否有重复sku
         //checkAddDetailsRepeatSku(dto.getDetails());
         //处理数据id
-        doOpHandleDataId(dto.getPurchaseUserId(), dto.getPurchaseDeptId(), dto.getPurchaseOrgId(), dto.getReceiveOrgId(), dto.getDeliveryWarehouseId(), entity);
+        doOpHandleDataId(entity);
         log.info("采购订单新增");
         //生成单号
         String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PO);
@@ -232,7 +232,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //校验明细是否有重复sku
         //checkUpdateDetailsRepeatSku(dto.getDetails(), dto.getId());
         //处理数据id
-        doOpHandleDataId(dto.getPurchaseUserId(), dto.getPurchaseDeptId(), dto.getPurchaseOrgId(), dto.getReceiveOrgId(), dto.getDeliveryWarehouseId(), entity);
+        doOpHandleDataId(entity);
 
         log.info("采购订单修改，id=【{}】", dto.getId());
 
@@ -1544,10 +1544,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     /**
      * 处理数据id
      */
-    private void doOpHandleDataId(String purchaseUserId, String purchaseDeptId, String purchaseOrgId, String receiveOrgId, String deliveryWarehouseId, PurchaseOrderEntity entity) {
-        //申请人
-        if (StringUtils.isNotBlank(purchaseUserId)) {
-            FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(purchaseUserId);
+    private void doOpHandleDataId(PurchaseOrderEntity entity) {
+        //采购员
+        if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
+            FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
             if (ObjectUtils.isEmpty(purchaseUser)) {
                 throw new ServiceException(ApiError.USER_NOT_EXIST);
             }
@@ -1557,54 +1557,39 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             entity.setPurchaseDeptId(purchaseUser.getDepartmentId());
             entity.setPurchaseDeptName(purchaseUser.getDepartmentName());
         }
-        //申请部门
-        /*
-        if (StringUtils.isNotBlank(purchaseDeptId)) {
-            SysDepartmentDTO depart = sysUserFeign.getUserDeptById(purchaseDeptId);
-            if (ObjectUtils.isEmpty(depart)) {
-                throw new ServiceException(ApiError.ERROR_9029);
-            }
-            entity.setPurchaseDeptName(depart.getName());
+
+        //仓库信息
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(entity.getDeliveryWarehouseId()));
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException(ApiError.ERROR_99002);
         }
-         */
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(purchaseOrgId, receiveOrgId));
+        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDeliveryWarehouseId())).findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(updateDTO)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        entity.setDeliveryWarehouseName(updateDTO.getName());
+        entity.setReceiveOrgId(updateDTO.getOrgId());
+
+
+        //组织信息
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId(),entity.getReceiveOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
             throw new ServiceException(ApiError.ERROR_9029);
         }
         //采购组织
-        if (StringUtils.isNotBlank(purchaseOrgId)) {
-            BaseIdDTO.CodeDTO baseIdDTO = accountingCompanyList.stream().filter(obj -> obj.getId().equals(purchaseOrgId)).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(baseIdDTO)) {
-                throw new ServiceException(ApiError.ERROR_9029);
-            }
-            entity.setPurchaseOrgName(baseIdDTO.getName());
+        BaseIdDTO.CodeDTO purchaseOrgDTO = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId())).findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(purchaseOrgDTO)) {
+            throw new ServiceException(ApiError.ERROR_PURCHASE_ORG_NOT_FOUND);
         }
-        //收料组织
-        if (StringUtils.isNotBlank(receiveOrgId)) {
-            BaseIdDTO.CodeDTO baseIdDTO = accountingCompanyList.stream().filter(obj -> obj.getId().equals(receiveOrgId)).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(baseIdDTO)) {
-                throw new ServiceException(ApiError.ERROR_9029);
-            }
-            entity.setReceiveOrgName(baseIdDTO.getName());
-        }
+        entity.setPurchaseOrgName(purchaseOrgDTO.getName());
 
-        //仓库
-        if (StringUtils.isNotBlank(deliveryWarehouseId)) {
-            //仓库信息
-            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(deliveryWarehouseId));
-            if (CollectionUtils.isEmpty(warehouseList)) {
-                throw new ServiceException(ApiError.ERROR_99002);
-            }
-            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDeliveryWarehouseId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(updateDTO)) {
-                throw new ServiceException(ApiError.ERROR_99002);
-            }
-            //交货仓库和收料组织校验
-            if (!updateDTO.getOrgId().equals(entity.getReceiveOrgId())) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_WAREHOUSE_ORG,updateDTO.getName(),entity.getReceiveOrgName());
-            }
-            entity.setDeliveryWarehouseName(updateDTO.getName());
+        //收料组织
+        BaseIdDTO.CodeDTO receiveOrgDTO = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(receiveOrgDTO)) {
+            throw new ServiceException(ApiError.ERROR_RECEIVE_ORG_NOT_FOUND);
         }
+        entity.setReceiveOrgName(receiveOrgDTO.getName());
+
     }
 
 

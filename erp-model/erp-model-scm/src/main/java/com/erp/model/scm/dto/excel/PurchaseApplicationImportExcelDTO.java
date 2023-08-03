@@ -59,22 +59,15 @@ public class PurchaseApplicationImportExcelDTO implements Serializable {
     private String  purchaseOrgName;
 
     /**
-     * 收料组织
-     */
-    @ExcelProperty(value = "*收料组织", index = 6)
-    @FieldValid(fieldName = "收料组织",isNotBlank = true)
-    private String  receiveOrgName;
-
-    /**
      * 备注
      */
-    @ExcelProperty(value = "备注", index = 7)
+    @ExcelProperty(value = "备注", index = 6)
     @FieldValid(fieldName = "备注",maxLength = 255)
     private String  remark;
 
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 8)
+    @ExcelProperty(value = "错误数据", index = 7)
     private String  errorMsg;
 }

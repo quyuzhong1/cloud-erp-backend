@@ -132,6 +132,9 @@ public enum ApiError implements Serializable {
     ERROR_9046(9046, "字段编号不正确"),
     SCHEME_NOT_EXIST(9047, "方案不存在"),
     SCHEME_NAME_EXIST(9048, "查询方案[{}]已存在"),
+
+
+
     /**
      * 工作流错误 workflow
      * 从9040 开始  以端口号
@@ -583,6 +586,8 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_DATE(98102,"采购订单SKU【{}】预计交货日期不能小于【{}】"),
     ERROR_PURCHASE_PRICE(98103,"采购订单SKU【{}】单价必须大于0"),
     ERROR_PURCHASE_WAREHOUSE_ORG(98102,"交货仓库【{}】与收料组织【{}】不匹配"),
+    ERROR_PURCHASE_ORG_NOT_FOUND(98104,"采购组织不存在"),
+    ERROR_RECEIVE_ORG_NOT_FOUND(98105,"收料组织不存在"),
 
 
 

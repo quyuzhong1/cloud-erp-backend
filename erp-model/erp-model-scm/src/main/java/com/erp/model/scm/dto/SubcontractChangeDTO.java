@@ -292,16 +292,6 @@ public class SubcontractChangeDTO implements Serializable {
         private String sourceCode;
 
         /**
-        * 收料组织id
-        */
-        private String receiveOrgId;
-
-        /**
-         * 收料组织名称
-         */
-        private String receiveOrgName;
-
-        /**
         * 采购组织id
         */
         private String purchaseOrgId;

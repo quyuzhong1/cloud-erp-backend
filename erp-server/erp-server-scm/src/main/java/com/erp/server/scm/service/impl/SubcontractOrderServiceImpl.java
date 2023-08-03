@@ -40,6 +40,7 @@ import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
@@ -850,6 +851,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             throw new ServiceException(ApiError.ERROR_98070);
         }
 
+        //仓库信息
+        List<String> warehouseIdList = detailList.stream().map(SubcontractOrderDetailEntity::getWarehouseId).collect(Collectors.toList());
+        List<WarehouseDTO.UpdateDTO> updateList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
+        if (CollectionUtils.isEmpty(updateList)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
 
         for (SubcontractOrderDTO.GeneratePoAddDTO generatePoDTO :  resultList) {
             //主表
@@ -876,8 +883,13 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             generatePoDTO.setPurchaseDeptId(mainEntity.getDeptId());
             //采购组织
             generatePoDTO.setPurchaseOrgId(mainEntity.getPurchaseOrgId());
+
+            String orgId = updateList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getOrgId())).orElse("");
+            if (StringUtils.isBlank(orgId)) {
+                throw new ServiceException(ApiError.ERROR_99002);
+            }
             //收料组织
-            generatePoDTO.setReceiveOrgId(mainEntity.getReceiveOrgId());
+            generatePoDTO.setReceiveOrgId(orgId);
             //新品首批暂时默认
             generatePoDTO.setIsFirstMassProduct(ObjectUtils.isEmpty(generatePoDTO.getIsFirstMassProduct()) ? mainEntity.getIsFirstMassProduct() : generatePoDTO.getIsFirstMassProduct());
             //备注
@@ -1378,7 +1390,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     */
     private void handleData(SubcontractOrderEntity entity) {
         //核算公司信息
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId(), entity.getReceiveOrgId(), entity.getSubcontractOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId(), entity.getSubcontractOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
             throw new ServiceException(ApiError.ERROR_9014);
         }
@@ -1399,10 +1411,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //采购组织名称
         String purchaseOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         entity.setPurchaseOrgName(purchaseOrgName);
-
-        //收料组织名称
-        String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        entity.setReceiveOrgName(receiveOrgName);
 
         //委外组织名称
         String subcontractOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getSubcontractOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
