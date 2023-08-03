@@ -1266,7 +1266,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             if (CollectionUtils.isNotEmpty(deptList)) {
                 List<String> deptIdList = deptList.stream().filter(e -> e.getUserId().equals(obj.getApplyUserId())).map(e -> e.getDepartmentId()).distinct().collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(deptIdList)) {
-                    map.put("deptIdList",deptIdList);
+                    map.put("deptId",deptIdList.get(0));
                 }
             }
             startDTO.setVariablesMap(map);
