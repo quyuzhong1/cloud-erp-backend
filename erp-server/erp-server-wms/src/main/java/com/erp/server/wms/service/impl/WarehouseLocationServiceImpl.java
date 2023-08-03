@@ -146,5 +146,12 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         return CollUtil.isNotEmpty(list) ? list : Lists.newArrayList();
     }
 
-
+    @Override
+    public List<WarehouseLocationEntity> listByWarehouseIds(List<String> warehouseIds) {
+        if(CollUtil.isEmpty(warehouseIds)) {
+            return Lists.newArrayList();
+        }
+        List<WarehouseLocationEntity> list = lambdaQuery().in(WarehouseLocationEntity::getWarehouseId, warehouseIds).list();
+        return CollUtil.isNotEmpty(list) ? list : Lists.newArrayList();
+    }
 }

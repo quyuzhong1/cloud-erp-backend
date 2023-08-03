@@ -117,7 +117,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
             resultMap.put("chargeCode",findUserDTO.getCode());
         }
         //查询仓位
-        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.list(Arrays.asList(entity.getId()));
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isNotEmpty(warehouseLocationList) && entity.getIsEnableLocation()) {
             //区域
             List<WarehouseLocationEntity> areaList = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(obj.getWarehouseId()) && WarehouseLocationTypeEnum.AREA.getCode().equals(obj.getType())).collect(Collectors.toList());
