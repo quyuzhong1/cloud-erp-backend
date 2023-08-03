@@ -217,4 +217,13 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @return Boolean
      **/
     Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String operate);
+
+    /**
+     * 更新销售订单地址信息
+     * @param soId
+     * @param receiveAddress
+     * @param receiverName
+     * @param telNumber
+     */
+    void updateAddress(String soId, String receiveAddress, String receiverName, String telNumber);
 }

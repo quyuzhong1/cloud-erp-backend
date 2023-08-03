@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @CreateTime: 2023-06-28  11:46
@@ -75,23 +76,42 @@ public class MabangUtil {
         mabangInOutStockDTO.setRemark(StrUtil.format("ERP同步：{}", StrUtils.null2EmptyWithTrim(transferInfo.getCode()) ));
         mabangInOutStockDTO.setApproveType(opType);
 
+        Map<String, MabangInOutStockDTO.SkuItem> skuItemMap = Maps.newHashMap();
         transferDetailList.stream().forEach(transferSku->{
-            MabangInOutStockDTO.SkuItem skuItem = new MabangInOutStockDTO.SkuItem();
-            skuItem.setStockSku(transferSku.getSkuNo());
+            String gridCode = "";
+            // 审核
+            if(Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), opType)) {
+                gridCode = StrUtils.null2EmptyWithTrim(Objects.equals(inOutType, InventoryInOutEnum.IN_STOCK.getCode() )? StrUtils.null2EmptyWithTrim(transferSku.getInWarehouseLocation()) : StrUtils.null2EmptyWithTrim(transferSku.getOutWarehouseLocation()));
+            } else if(Objects.equals(SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode(), opType)) {
+                // 反审核
+                gridCode = StrUtils.null2EmptyWithTrim(Objects.equals(inOutType, InventoryInOutEnum.IN_STOCK.getCode() )? StrUtils.null2EmptyWithTrim(transferSku.getOutWarehouseLocation()) : StrUtils.null2EmptyWithTrim(transferSku.getInWarehouseLocation()));
+            }
+            String skuNo = transferSku.getSkuNo();
+            String skuWareLocation = skuNo + "-" + gridCode;
+            MabangInOutStockDTO.SkuItem skuItem;
+            if(skuItemMap.containsKey(skuWareLocation)) {
+                skuItem =   skuItemMap.get(skuWareLocation);
+            } else {
+                skuItem = new MabangInOutStockDTO.SkuItem();
+            }
+
             if (CollUtil.isNotEmpty(productDetailList)) {
                 String productName = productDetailList.stream().filter(e -> Objects.equals(e.getId(), transferSku.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
                 skuItem.setProductName(productName);
             }
-            skuItem.setQuantity(StrUtils.null2EmptyWithTrim(transferSku.getQty()));
-            // 审核
-            if(Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), opType)) {
-                skuItem.setGridCode(StrUtils.null2EmptyWithTrim(Objects.equals(inOutType, InventoryInOutEnum.IN_STOCK.getCode() )? StrUtils.null2EmptyWithTrim(transferSku.getInWarehouseLocation()) : StrUtils.null2EmptyWithTrim(transferSku.getOutWarehouseLocation())));
-            } else if(Objects.equals(SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode(), opType)) {
-                // 反审核
-                skuItem.setGridCode(StrUtils.null2EmptyWithTrim(Objects.equals(inOutType, InventoryInOutEnum.IN_STOCK.getCode() )? StrUtils.null2EmptyWithTrim(transferSku.getOutWarehouseLocation()) : StrUtils.null2EmptyWithTrim(transferSku.getInWarehouseLocation())));
+            skuItem.setStockSku(transferSku.getSkuNo());
+            skuItem.setGridCode(gridCode);
+
+            Integer qty = transferSku.getQty();
+            if(skuItemMap.containsKey(skuWareLocation)) {
+                qty = Integer.valueOf(skuItem.getQuantity()) + qty;
             }
-            skuItem.setSourceDetailId(transferSku.getId());
-            data.add(skuItem);
+            skuItem.setQuantity(StrUtils.null2EmptyWithTrim(qty));
+            skuItem.setSourceDetailId("");
+            if(!skuItemMap.containsKey(skuWareLocation)) {
+                skuItemMap.put(skuWareLocation, skuItem);
+                data.add(skuItem);
+            }
         });
         mabangInOutStockDTO.setData(data);
         return mabangInOutStockDTO;
@@ -121,16 +141,23 @@ public class MabangUtil {
         mabangInOutStockDTO.setEmployeeName(StrUtils.null2EmptyWithTrim(employeeName));
         mabangInOutStockDTO.setRemark(StrUtil.format("ERP同步：{}", StrUtils.null2EmptyWithTrim(machineInfoEntity.getCode()) ));
 
-        machineDetailList.stream().forEach(parentMachine->{
+        Map<String, List<MachineDetailEntity>> machineDetailMap = machineDetailList.stream().collect(
+                Collectors.groupingBy(r -> r.getSkuId() + "-" + StrUtils.null2EmptyWithTrim(r.getWarehouseLocation()), Collectors.toList()));
+
+        machineDetailMap.forEach((key, multiList)->{
             MabangInOutStockDTO.SkuItem skuItem = new MabangInOutStockDTO.SkuItem();
-            skuItem.setStockSku(parentMachine.getSkuNo());
+            String skuNo = multiList.get(0).getSkuNo();
+            String skuId = multiList.get(0).getSkuId();
+            String warehouseLocation = StrUtils.null2EmptyWithTrim(multiList.get(0).getWarehouseLocation());
+            int sumQty = multiList.stream().mapToInt(MachineDetailEntity::getQty).sum();
+            skuItem.setStockSku(skuNo);
             if (CollUtil.isNotEmpty(productDetailList)) {
-                String productName = productDetailList.stream().filter(e -> Objects.equals(e.getId(), parentMachine.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
+                String productName = productDetailList.stream().filter(e -> Objects.equals(e.getId(), skuId)).map(ProductDetailEntity::getName).findFirst().orElse(null);
                 skuItem.setProductName(productName);
             }
-            skuItem.setQuantity(StrUtils.null2EmptyWithTrim(parentMachine.getQty()));
-            skuItem.setGridCode(StrUtils.null2EmptyWithTrim(parentMachine.getWarehouseLocation() ));
-            skuItem.setSourceDetailId(parentMachine.getId());
+            skuItem.setQuantity(StrUtils.null2EmptyWithTrim(sumQty));
+            skuItem.setGridCode(StrUtils.null2EmptyWithTrim(warehouseLocation));
+            skuItem.setSourceDetailId("");
             data.add(skuItem);
         });
         mabangInOutStockDTO.setData(data);
@@ -161,16 +188,24 @@ public class MabangUtil {
         mabangInOutStockDTO.setEmployeeName(StrUtils.null2EmptyWithTrim(employeeName));
         mabangInOutStockDTO.setRemark(StrUtil.format("ERP同步：{}", StrUtils.null2EmptyWithTrim(machineInfoEntity.getCode()) ));
 
-        machineSubList.stream().forEach(subMachine->{
+        Map<String, List<MachineSubComponentsEntity>> machineDetailMap = machineSubList.stream().collect(
+                Collectors.groupingBy(r -> r.getSkuId() + "-" + StrUtils.null2EmptyWithTrim(r.getWarehouseLocation()), Collectors.toList()));
+
+        machineDetailMap.forEach((key, multiList)-> {
             MabangInOutStockDTO.SkuItem skuItem = new MabangInOutStockDTO.SkuItem();
-            skuItem.setStockSku(subMachine.getSkuNo());
+            String skuNo = multiList.get(0).getSkuNo();
+            String skuId = multiList.get(0).getSkuId();
+            String warehouseLocation = StrUtils.null2EmptyWithTrim(multiList.get(0).getWarehouseLocation());
+            int sumQty = multiList.stream().mapToInt(MachineSubComponentsEntity::getQty).sum();
+
+            skuItem.setStockSku(skuNo);
             if (CollUtil.isNotEmpty(productDetailList)) {
-                String productName = productDetailList.stream().filter(e -> Objects.equals(e.getId(), subMachine.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
+                String productName = productDetailList.stream().filter(e -> Objects.equals(e.getId(), skuId)).map(ProductDetailEntity::getName).findFirst().orElse(null);
                 skuItem.setProductName(productName);
             }
-            skuItem.setQuantity(StrUtils.null2EmptyWithTrim(subMachine.getQty()));
-            skuItem.setGridCode(StrUtils.null2EmptyWithTrim(subMachine.getWarehouseLocation() ));
-            skuItem.setSourceDetailId(subMachine.getId());
+            skuItem.setQuantity(StrUtils.null2EmptyWithTrim(sumQty));
+            skuItem.setGridCode(StrUtils.null2EmptyWithTrim(warehouseLocation ));
+            skuItem.setSourceDetailId("");
             data.add(skuItem);
         });
         mabangInOutStockDTO.setData(data);
