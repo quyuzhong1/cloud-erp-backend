@@ -164,7 +164,7 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
         try {
             kingdeeStockInConsumerService.executeConsumer(map);
         }catch (Exception e){
-            log.error("KingdeeStockInConsumer>>>onMessage>>>map ={}", map, e);
+            log.error("KingdeeStockInConsumer>>>onMessage>>>map ={}>>>e={}", map, e);
         }
 
     }

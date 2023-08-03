@@ -506,7 +506,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             apiUtils.unAuditById(ids);
         } catch (Exception e) {
             //反审核失败操作日志及定时任务
-            log.error("反审核失败", e);
+            log.error("反审核失败 >>>{}", e);
             insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), id, e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
             return Boolean.FALSE;
         }

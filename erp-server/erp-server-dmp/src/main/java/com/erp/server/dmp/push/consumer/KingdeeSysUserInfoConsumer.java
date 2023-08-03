@@ -52,7 +52,7 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
         try {
             kingdeeSysUserInfoConsumerService.executeSysUserConsumer(map);
         } catch (Exception e) {
-            log.error("KingdeeSysUserInfoConsumer>>>onMessage>>>map ={}", map, e);
+            log.error("KingdeeSysUserInfoConsumer>>>onMessage>>>map ={}>>>e={}", map, e);
         }
     }
 

@@ -59,7 +59,7 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
         try {
             kingdeeCustomerContactConsumerService.executeConsumer(map);
         }catch (Exception e){
-            log.error("KingdeeCustomerContactConsumer>>>onMessage>>>map ={}", map, e);
+            log.error("KingdeeCustomerContactConsumer>>>onMessage>>>map ={}>>>e={}", map, e);
         }
 
 

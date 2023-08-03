@@ -122,7 +122,7 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
         try {
             kingdeeSoReturnConsumerService.executeConsumer(map);
         }catch (Exception e){
-            log.error("KingdeeSoReturnConsumer>>>onMessage>>>map ={}", map, e);
+            log.error("KingdeeSoReturnConsumer>>>onMessage>>>map ={}>>>e={}", map, e);
 
         }
 

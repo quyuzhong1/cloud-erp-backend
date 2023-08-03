@@ -57,7 +57,7 @@ public class KingdeeAssistantDataDetailConsumer implements RocketMQListener<Map<
         try {
             kingdeeAssistantDataDetailConsumerService.executeAssistantDataDetailConsumer(map);
         } catch (Exception e) {
-            log.error("KingdeeAssistantDataDetailConsumer>>>onMessage>>>map ={}", map, e);
+            log.error("KingdeeAssistantDataDetailConsumer>>>onMessage>>>map ={}>>>e={}", map, e);
         }
     }
 }
