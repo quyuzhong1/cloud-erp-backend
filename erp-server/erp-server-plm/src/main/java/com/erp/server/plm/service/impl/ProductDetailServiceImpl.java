@@ -649,8 +649,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (req.getIsFinishedVideo() == null) {
                 req.setIsFinishedVideo(MathUtil.TWO);
             }
-            if (req.getIsFinishedVideo() == null) {
-                req.setIsMarketable(MathUtil.ONE);
+            if (req.getIsMarketable() == null) {
+                req.setIsMarketable(MathUtil.ZERO);
+            }
+            if (req.getSaleState() == null) {
+                req.setSaleState(MathUtil.ONE);
             }
         });
 
