@@ -348,6 +348,11 @@ public class SoOutstockDTO implements Serializable {
          */
         private List<LocalDate> createTimeList;
 
+        /**
+         * 运单号
+         */
+        private List<String> trackNoList;
+
 
     }
 

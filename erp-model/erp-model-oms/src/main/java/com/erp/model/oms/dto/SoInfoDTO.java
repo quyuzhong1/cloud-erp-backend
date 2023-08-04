@@ -600,6 +600,21 @@ public class SoInfoDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 销售组织
+         */
+        private String salesOrgId;
+
+        /**
+         * 销售部门
+         */
+        private String salesDeptId;
+
+        /**
+         * 平台类型
+         */
+        private String platformType;
     }
 
 

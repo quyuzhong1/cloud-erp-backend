@@ -104,6 +104,12 @@
                 #{approve}
             </foreach>
         </if>
+        <if test="params.trackNoList !=null and params.trackNoList.size>0">
+            AND so.track_no IN
+            <foreach collection="params.trackNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -218,6 +224,12 @@
                     AND so.approve_status IN
                     <foreach collection="approveList" item="approve" open="(" separator="," close=")">
                         #{approve}
+                    </foreach>
+                </if>
+                <if test="params.trackNoList !=null and params.trackNoList.size>0">
+                    AND so.track_no IN
+                    <foreach collection="params.trackNoList" item="item" open="(" separator="," close=")">
+                        #{item}
                     </foreach>
                 </if>
             </otherwise>
