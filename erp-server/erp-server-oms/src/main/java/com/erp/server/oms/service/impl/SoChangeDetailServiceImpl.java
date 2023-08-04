@@ -25,6 +25,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.mapper.SoChangeDetailMapper;
 import com.erp.server.oms.service.*;
+import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -526,11 +527,8 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 }
                 saveOrUpdateList.add(soDetail);
             }
-            soDetailService.saveOrUpdateBatch(saveOrUpdateList);
-            // 重算销售订单的成本毛利
-            List<SoDetailEntity> soDetailList = soDetailService.listSoDetailByMainIds(soIds);
-            if(CollUtil.isNotEmpty(soDetailList)) {
-                List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(saveOrUpdateList)) {
+                List<String> skuIdList = saveOrUpdateList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
                 List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
                 // 供应商id集合
                 List<String> supplierIds = skuList.stream().filter(r-> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
@@ -538,16 +536,19 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 if(CollUtil.isNotEmpty(supplierIds)) {
                     purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
                 }
-                Map<String,List<SoDetailEntity>> soDetailMap =  soDetailList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
-                for(Map.Entry<String, List<SoDetailEntity>> soEntry : soDetailMap.entrySet()){
-                    SoInfoEntity soInfoEntity = soInfoMap.get(soEntry.getKey());
-                    for (SoDetailEntity item : soEntry.getValue()) {
-                        // 重新计算毛利成本
+                Map<String, List<SoDetailEntity>> soDetailSaveMap = saveOrUpdateList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
+                for(Map.Entry<String, List<SoDetailEntity>> soEntry : soDetailSaveMap.entrySet()) {
+                    // 金额信息加上折扣额计算
+                    String soId = soEntry.getKey();
+                    SoInfoEntity soInfoEntity = soInfoMap.get(soId);
+                    SoUtils.handleDetailAmount(soInfoEntity.getDiscountAmount(), saveOrUpdateList);
+                    for(SoDetailEntity item : saveOrUpdateList) {
+                        // 计算毛利成本
                         soDetailService.calCost(purchasePriceList, skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);
-                        soDetailService.updateCost(item.getId(), item);
                     }
                 }
             }
+            soDetailService.saveOrUpdateBatch(saveOrUpdateList);
             //关闭关联单据的关闭状态
             wmsTaskFeign.closeBySoDetailIds(terminateSoDetailIds);
         }
