@@ -91,7 +91,7 @@ public class KingdeeBusinessOperatorExcelListener extends AnalysisEventListener<
         String disabledStr = excelDTO.getDisabled();
         Boolean disabled = Boolean.TRUE;
         if (StringUtils.isNotBlank(disabledStr)) {
-            disabled = disabledStr.equals("否");
+            disabled = !"否".equals(disabledStr);
         }
         business.setDisabled(disabled);
         addOrUpdateList.add(business);
