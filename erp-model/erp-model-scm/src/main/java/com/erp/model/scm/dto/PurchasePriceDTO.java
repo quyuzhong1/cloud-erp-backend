@@ -8,8 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -465,5 +464,63 @@ public class PurchasePriceDTO implements Serializable {
 
     }
 
+    /**
+     * 导入DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @Valid
+    public static class ImportAddDTO {
 
-}
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        @NotBlank(message = "供应商名称不能为空")
+        @Size(max = 50, message = "供应商名称最大50字符")
+        private String supplierName;
+
+        /**
+         * 报价日期
+         */
+        private LocalDate quotedDate;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织
+         */
+        @Size(max = 50, message = "采购组织名称最大50字符")
+        private String purchaseOrgName;
+
+        /**
+         * 定价员id
+         */
+        private String pricingUserId;
+
+        /**
+         * 定价员
+         */
+        @Size(max = 50, message = "定价员名称最大50字符")
+        private String pricingUserName;
+
+        /**
+         * 明细信息
+         */
+        @Valid
+        private List<PurchasePriceDetailDTO.ImportAddDTO> detailList;
+
+
+
+    }
+
+
+
+    }

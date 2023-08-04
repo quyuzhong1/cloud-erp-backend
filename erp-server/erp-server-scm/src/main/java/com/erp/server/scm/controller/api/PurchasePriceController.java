@@ -14,10 +14,8 @@ import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.server.scm.service.PurchasePriceService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -231,5 +229,12 @@ public class PurchasePriceController extends BaseController {
         return success();
     }
 
+    /**
+     * 批量导入
+     */
+    @PostMapping("/import")
+    public void importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        purchasePriceService.importFile(excelFile, response);
+    }
 
 }
