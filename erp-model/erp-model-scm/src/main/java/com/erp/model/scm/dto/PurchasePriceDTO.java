@@ -8,8 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -465,5 +464,130 @@ public class PurchasePriceDTO implements Serializable {
 
     }
 
+    /**
+     * 导入DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @Valid
+    public static class ImportAddDTO {
 
-}
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        @NotBlank(message = "供应商名称不能为空")
+        @Size(max = 50, message = "供应商名称最大50字符")
+        private String supplierName;
+
+        /**
+         * 报价日期
+         */
+        private LocalDate quotedDate;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织
+         */
+        @Size(max = 50, message = "采购组织名称最大50字符")
+        private String purchaseOrgName;
+
+        /**
+         * 定价员id
+         */
+        private String pricingUserId;
+
+        /**
+         * 定价员
+         */
+        @Size(max = 50, message = "定价员名称最大50字符")
+        private String pricingUserName;
+
+        //-----------------以下信息为明细信息------------------
+
+        /**
+         * sku id
+         */
+        @NotBlank(message = "sku不能为空")
+        private String skuId;
+
+
+        /**
+         * sku id
+         */
+        @Size(max = 50, message = "SKU编号最大50字符")
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 采购交期
+         */
+        private Integer deliveryDay;
+
+        /**
+         * 最小数量
+         */
+        @DecimalMax(value = "999999999",message ="最大值为999999999" )
+        @DecimalMin(value = "0",message ="最小值为0" )
+        @NotNull(message = "区间从 不能为空")
+        private Integer minQty;
+
+        /**
+         * 最大数量
+         */
+        @DecimalMax(value = "999999999",message ="最大值为999999999" )
+        @DecimalMin(value = "0",message ="最小值为0" )
+        @NotNull(message = "区间到 不能为空")
+        private Integer maxQty;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+
+        /**
+         * 生效时间
+         */
+        private LocalDate effectiveDate;
+
+
+        /**
+         * 含税单价
+         */
+        @NotNull(message = "含税单价不能为空")
+        private BigDecimal taxPrice;
+
+
+        /**
+         * 税率
+         */
+        @NotNull(message = "税率不能为空")
+        private BigDecimal taxRate;
+
+
+        /**
+         * true 禁用
+         * false 启用
+         * 默认false
+         */
+        private Boolean disabled;
+
+
+    }
+
+
+
+    }
