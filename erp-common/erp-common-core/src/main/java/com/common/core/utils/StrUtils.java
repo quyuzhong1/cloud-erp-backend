@@ -195,4 +195,16 @@ public class StrUtils {
         return true;
     }
 
+
+    /**
+     * 字符串"null"转空字符串
+     * @param str
+     */
+    public static String strNullToEmpty(String str) {
+        if (str == null || "null".equals(str)) {
+            return "";
+        }
+        return str;
+    }
+
 }

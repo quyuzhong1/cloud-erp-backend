@@ -14,6 +14,7 @@ import com.common.business.enums.ThirdPartySystemEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.DmpTransferInfoDTO;
 import com.erp.model.dmp.dto.DmpTransferInfoDetailDTO;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
@@ -248,8 +249,8 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
             detailEntity.setSkuId(skuId);
             detailEntity.setSkuNo(dmpDetailEntity.getSkuNo());
             detailEntity.setQty(dmpDetailEntity.getQty());
-            detailEntity.setInWarehouseLocation(dmpDetailEntity.getInWarehouseLocation());
-            detailEntity.setOutWarehouseLocation(dmpDetailEntity.getOutWarehouseLocation());
+            detailEntity.setInWarehouseLocation(StrUtils.strNullToEmpty(dmpDetailEntity.getInWarehouseLocation()));
+            detailEntity.setOutWarehouseLocation(StrUtils.strNullToEmpty(dmpDetailEntity.getOutWarehouseLocation()));
             detailEntity.setSourceDetailId(dmpDetailEntity.getSourceDetailId());
             detailList.add(detailEntity);
         }
@@ -257,6 +258,5 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         return resultEntity;
 
     }
-
 }
 
