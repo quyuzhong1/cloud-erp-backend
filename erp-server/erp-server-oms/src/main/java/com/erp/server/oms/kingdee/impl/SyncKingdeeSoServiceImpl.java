@@ -282,9 +282,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             jsonObject.set("isGift", item.getIsGift());
             //结算组织
             jsonObject.set("settleOrgCode", salesOrgCode);
-            // 临时改成折扣前销售金额测试
-            BigDecimal discountAmount = Objects.nonNull(item.getDiscountAmount()) ? item.getDiscountAmount() : BigDecimal.ZERO;
-            jsonObject.set("amount", item.getAmount().subtract(discountAmount).setScale(4, BigDecimal.ROUND_HALF_UP));
+            jsonObject.set("amount", item.getAmount());
             //单位
             String unit = item.getUnit();
             jsonObject.set("unit", StringUtils.isNotBlank(unit) ? unit : "Pcs");
