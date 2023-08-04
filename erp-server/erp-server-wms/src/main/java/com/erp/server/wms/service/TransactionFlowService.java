@@ -12,6 +12,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -108,4 +109,12 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
      */
     PagingVO<InventoryReportDTO.ListTransportPagingDTO> transportList(PagingDTO<InventoryReportDTO.ListTransportSearchParam> pagingParamDTO);
 
+    /**
+     * 在途查询单据明细导出
+     * @param startTime
+     * @param endTime
+     * @param status
+     * @param inventoryId
+     */
+    void overrideInventoryFlow(LocalDateTime startTime, LocalDateTime endTime, String status, String inventoryId);
 }

@@ -37,4 +37,11 @@ public interface InventoryHisService extends SuperService<InventoryHisEntity> {
      */
     void addOrUpdate(String inventoryInfoId, LocalDate billDate, Integer inventoryQty);
 
+    /**
+     * 获取最近一次的历史库存
+     * @param inventoryId
+     * @param localDate
+     * @return
+     */
+    InventoryHisEntity findLastInventory(String inventoryId, LocalDate localDate);
 }
