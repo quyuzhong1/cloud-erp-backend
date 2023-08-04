@@ -33,6 +33,11 @@ public class UserManageDTO implements Serializable {
      * 电话号码
      */
     private String mobile;
+
+    /**
+     * 邮箱
+     */
+    private String email;
     /**
      * 用户状态1：正常 0：禁用
      */
