@@ -92,30 +92,28 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
      */
     @Override
     public void syncDataToKingdee(SoChangeEntity entity, String operate) {
-
+        String id = entity.getId();
+        List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailByMainId(id);
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        String soId = entity.getSoId();
+        SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
+        if (Objects.isNull(soInfo)) {
+            return;
+        }
         //更新同步状态为待同步
         soChangeService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), "", operate);
 
-        String soId = entity.getSoId();
-        SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
         //填充数据
         fillDb(entity, soInfo.getSyncKingdeeId(), soInfo.getCode());
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
-        String id = entity.getId();
         //业务id
         resultMap.put("id", id);
         //编码
         resultMap.put("code", entity.getCode());
-        if (Objects.isNull(soInfo)) {
-            return;
-        }
-        List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailByMainId(id);
-        if (CollectionUtils.isEmpty(detailList)) {
-            return;
-        }
-
         List<String> orgIdList = new ArrayList<>(2);
         //库存组织
         String warehouseOrgId = soInfo.getWarehouseOrgId();
@@ -284,7 +282,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             List<SoChangeDetailEntity> updateList = new ArrayList<>(10);
             //如果成功了
             if (isSuccess) {
-                List<JSONObject> dataList = (List<JSONObject>) json.get("Datas");
+                List<JSONObject> dataList = (List<JSONObject>) json.getOrDefault("Datas","[]");
                 if (CollectionUtils.isNotEmpty(dataList)) {
                     JSONObject dataJson = dataList.get(0);
                     String syncKingdeeId = dataJson.get("FID").toString();
