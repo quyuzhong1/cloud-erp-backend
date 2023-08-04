@@ -282,18 +282,18 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             List<SoChangeDetailEntity> updateList = new ArrayList<>(10);
             //如果成功了
             if (isSuccess) {
-                List<JSONObject> dataList = (List<JSONObject>) json.getOrDefault("Datas","[]");
+                List<JSONObject> dataList = (List<JSONObject>) json.getOrDefault("Datas",new ArrayList<>());
                 if (CollectionUtils.isNotEmpty(dataList)) {
                     JSONObject dataJson = dataList.get(0);
                     String syncKingdeeId = dataJson.get("FID").toString();
                     entity.setSyncKingdeeId(syncKingdeeId);
-                    List<JSONObject> detailList = (List<JSONObject>) dataJson.get("SaleOrderEntry");
+                    List<JSONObject> detailList = (List<JSONObject>) dataJson.getOrDefault("SaleOrderEntry",new ArrayList<>());
                     for (int i = 0; i < detailList.size(); i++) {
                         if (soDetailList.size() >= detailList.size()) {
                             JSONObject detailJson = detailList.get(i);
                             SoDetailEntity soDetail = soDetailList.get(i);
                             String soDetailId = soDetail.getId();
-                            String KingdeeDetailId = detailJson.get("FEntryID").toString();
+                            String KingdeeDetailId = String.valueOf(detailJson.getOrDefault("FEntryID",""));
                             SoChangeDetailEntity soChangeDetail = details.stream().filter(d -> d.getSoDetailId().equals(soDetailId)).
                                     findFirst().orElse(null);
                             if (soChangeDetail != null) {
@@ -312,4 +312,6 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
 
         return entity;
     }
+
+
 }
