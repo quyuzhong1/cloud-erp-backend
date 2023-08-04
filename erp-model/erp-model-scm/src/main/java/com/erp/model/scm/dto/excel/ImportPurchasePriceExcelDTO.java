@@ -86,7 +86,8 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      * 币制
      */
     @ColumnWidth(20)
-    @FieldValid(fieldName = "币制", maxLength = 8)
+    @ExcelProperty(value = "币制", index = 8)
+    @FieldValid(fieldName = "币制", maxLength = 3)
     private String currency;
 
     /**
@@ -94,7 +95,7 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "含税单价", index = 9)
-    @FieldValid(fieldName = "含税单价", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "含税单价", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String taxPrice;
 
     /**
@@ -102,7 +103,7 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "税率", index = 10)
-    @FieldValid(fieldName = "税率", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "税率", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String taxRate;
 
     /**
@@ -121,5 +122,12 @@ public class ImportPurchasePriceExcelDTO implements Serializable {
     @ExcelProperty(value = "启用状态", index = 12)
     @FieldValid(fieldName = "启用状态",isNotBlank = true,fieldValues ="启用,停用" )
     private String disabled;
+
+    /**
+     * 错误数据
+     */
+    @ExcelProperty(value = "错误数据", index =14)
+    @ColumnWidth(50)
+    private String  errorMsg;
 
 }

@@ -1,6 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -26,6 +27,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
+import com.erp.model.scm.dto.excel.ImportPurchasePriceExcelDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceExportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
@@ -33,12 +35,14 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
+import com.erp.server.scm.listener.PurchasePriceExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceMapper;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -764,12 +768,30 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     }
 
     @Override
-    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+    public void importFile(MultipartFile excelFile, HttpServletResponse response) {
         //用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         // 查询所有审核通过的产品信息
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        return null;
+        // 组织
+        List<BaseIdDTO> orgList = sysUserFeign.listAccountingCompany();
+        // 币制
+        List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
+        // 供应商
+        List<Map<String, Object>> supplierList = supplierService.listApproveSupplier();
+        PurchasePriceExcelListener excelListener = new PurchasePriceExcelListener(userList, skuList, currencyList, supplierList, orgList, priceDetailService);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), ImportPurchasePriceExcelDTO.class, excelListener).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("供应商导入错误！", e);
+            return;
+        }
+        List<ImportPurchasePriceExcelDTO> errorList = excelListener.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "采购价目导入错误信息";
+            ExcelUtil.export(fileName, "导入异常", errorList, ImportPurchasePriceExcelDTO.class, response);
+            return;
+        }
     }
 
     /**

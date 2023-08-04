@@ -168,5 +168,5 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @author zhangchunlin
      * @date 2023-08-03 18:00:00
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    void importFile(MultipartFile excelFile, HttpServletResponse response);
 }

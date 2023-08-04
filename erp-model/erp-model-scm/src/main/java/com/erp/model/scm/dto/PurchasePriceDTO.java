@@ -511,79 +511,12 @@ public class PurchasePriceDTO implements Serializable {
         @Size(max = 50, message = "定价员名称最大50字符")
         private String pricingUserName;
 
-        //-----------------以下信息为明细信息------------------
-
         /**
-         * sku id
+         * 明细信息
          */
-        @NotBlank(message = "sku不能为空")
-        private String skuId;
+        @Valid
+        private List<PurchasePriceDetailDTO.ImportAddDTO> detailList;
 
-
-        /**
-         * sku id
-         */
-        @Size(max = 50, message = "SKU编号最大50字符")
-        private String skuNo;
-
-        /**
-         * 产品名称
-         */
-        private String productName;
-
-        /**
-         * 采购交期
-         */
-        private Integer deliveryDay;
-
-        /**
-         * 最小数量
-         */
-        @DecimalMax(value = "999999999",message ="最大值为999999999" )
-        @DecimalMin(value = "0",message ="最小值为0" )
-        @NotNull(message = "区间从 不能为空")
-        private Integer minQty;
-
-        /**
-         * 最大数量
-         */
-        @DecimalMax(value = "999999999",message ="最大值为999999999" )
-        @DecimalMin(value = "0",message ="最小值为0" )
-        @NotNull(message = "区间到 不能为空")
-        private Integer maxQty;
-
-        /**
-         * 币种
-         */
-        private String currency;
-
-
-        /**
-         * 生效时间
-         */
-        private LocalDate effectiveDate;
-
-
-        /**
-         * 含税单价
-         */
-        @NotNull(message = "含税单价不能为空")
-        private BigDecimal taxPrice;
-
-
-        /**
-         * 税率
-         */
-        @NotNull(message = "税率不能为空")
-        private BigDecimal taxRate;
-
-
-        /**
-         * true 禁用
-         * false 启用
-         * 默认false
-         */
-        private Boolean disabled;
 
 
     }
