@@ -123,10 +123,10 @@ public class KingdeeTransferInfoConsumerServiceImpl implements KingdeeTransferIn
      * @date: 2023/5/24 17:57
      */
     public void operateInvalid (PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id,String documentStatus){
-        if (KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
-            //提交审核
-            Boolean submit = kingdeeCommonService.submit(platformEntity, map, apiUtils, id, ApiModuleTypeEnum.TRANSFER_INFO.getCode());
-            if (!submit) {
+        if (KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus)) {
+            //反审核
+            Boolean unAudit = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, ApiModuleTypeEnum.TRANSFER_INFO.getCode());
+            if (!unAudit) {
                 return;
             }
         }
