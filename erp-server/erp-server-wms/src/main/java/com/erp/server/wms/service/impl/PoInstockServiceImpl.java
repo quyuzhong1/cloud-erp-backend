@@ -1326,7 +1326,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         //委外订单父级+子级明细
         List<String> subDetailIds = childList.stream()
-                .flatMap(obj -> Stream.of(obj.getSubChildId(), obj.getSubChildDetailId()))
+                .flatMap(obj -> Stream.of(obj.getSubParentDetailId(), obj.getSubChildDetailId()))
                 .distinct()
                 .collect(Collectors.toList());
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByIds(subDetailIds);
@@ -1350,7 +1350,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
             //子级委外明细id
             List<SubcontractOrderDetailEntity> subChildList = subcontractOrderDetailList.stream()
-                    .filter(obj -> obj.getId().equals(subParentDetailId))
+                    .filter(obj -> obj.getParentId().equals(subParentDetailId))
                     .collect(Collectors.toList());
             if (CollectionUtils.isEmpty(subChildList)) {
                 throw new ServiceException(ApiError.ERROR_98072);
@@ -1386,7 +1386,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 Integer thisChildQty = parentInstockDetail.getStockInQty() * quantity;
 
                 //如果是最后一次出库则将多余领料数量加上
-                if (CollectionUtils.isEmpty(hasParentDetailList)) {
+                if (CollectionUtils.isNotEmpty(hasParentDetailList)) {
                     Integer hasInstockInQty = hasParentDetailList.stream().map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (MathUtil.compareTo(parentQty,hasInstockInQty) == MathUtil.ZERO) {
                         //领料超出数量
