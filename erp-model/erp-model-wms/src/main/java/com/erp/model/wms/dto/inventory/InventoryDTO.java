@@ -444,6 +444,11 @@ public class InventoryDTO implements Serializable {
          */
         private Boolean hideUnApprove;
 
+        /**
+         * 单据日期范围
+         */
+        private List<LocalDate> billDateList;
+
     }
 
     /**
@@ -505,6 +510,11 @@ public class InventoryDTO implements Serializable {
          * true则会过滤，false则不过滤展示所有流水数据
          */
         private Boolean hideUnApprove;
+
+        /**
+         * 单据日期
+         */
+        private List<LocalDate> billDateList;
 
     }
 
