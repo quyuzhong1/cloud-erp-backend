@@ -5,6 +5,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.UserInfoDTO;
 import com.erp.model.sys.dto.excel.KingdeeBusinessOperatorImportExcelDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
@@ -103,21 +104,21 @@ public class KingdeeBusinessOperatorServiceImpl extends SuperServiceImpl<Kingdee
      * @date 2023-07-08 11:33
      */
     @Override
-    public List<FindUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
-        List<FindUserDTO> resultList = new ArrayList<>(10);
+    public List<UserInfoDTO.BusinessOperationUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
+        List<UserInfoDTO.BusinessOperationUserDTO> resultList = new ArrayList<>(10);
         String orgId = dto.getOrgId();
         SysAccountingCompanyEntity orgInfo = sysAccountingCompanyService.getById(orgId);
         String code=orgInfo!=null?orgInfo.getCode():"";
-        List<FindUserDTO> dbList = baseMapper.listInfo(dto,code);
+        List<UserInfoDTO.BusinessOperationUserDTO> dbList = baseMapper.listInfo(dto,code);
         String userId = commonService.getUserInfo().getUid();
-        FindUserDTO findUser = dbList.stream().filter(d -> d.getUserId().equals(userId)).findFirst().orElse(null);
+        UserInfoDTO.BusinessOperationUserDTO findUser = dbList.stream().filter(d -> d.getUserId().equals(userId)).findFirst().orElse(null);
         if (findUser != null) {
             findUser.setIsMyState(1);
             resultList.add(findUser);
         } else {
             dbList.forEach(d -> d.setIsMyState(0));
         }
-        List<FindUserDTO> wantList = dbList.stream().filter(d -> !userId.equals(d.getUserId())).collect(Collectors.toList());
+        List<UserInfoDTO.BusinessOperationUserDTO> wantList = dbList.stream().filter(d -> !userId.equals(d.getUserId())).collect(Collectors.toList());
         resultList.addAll(wantList);
         return resultList;
 
