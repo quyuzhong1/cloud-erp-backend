@@ -233,8 +233,9 @@ public class PurchasePriceController extends BaseController {
      * 批量导入
      */
     @PostMapping("/import")
-    public void importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        purchasePriceService.importFile(excelFile, response);
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = purchasePriceService.importFile(excelFile, response);
+        return result ? success() : failure();
     }
 
     /**
@@ -245,6 +246,21 @@ public class PurchasePriceController extends BaseController {
     public ApiResult downloadTemplate(HttpServletResponse response) {
         purchasePriceService.downloadTemplate(response);
         return success();
+    }
+
+    /**
+     * 反审核
+     */
+    @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:disApprove",
+            serviceClass = PurchasePriceService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchasePriceService.disApprove(dto.getIds());
+        return result ? success() : failure();
     }
 
 }
