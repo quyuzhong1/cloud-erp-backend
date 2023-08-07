@@ -587,6 +587,9 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_PRICE(98103,"采购订单SKU【{}】单价必须大于0"),
     ERROR_PURCHASE_ORG_NOT_FOUND(98104,"采购组织不存在"),
     ERROR_RECEIVE_ORG_NOT_FOUND(98105,"收料组织不存在"),
+    ERROR_PURCHASE_WH_REQUIRED(98105,"采购订单【{}】交货仓库不能为空"),
+    ERROR_PURCHASE_ORG_REQUIRED(98105,"采购订单【{}】收料组织不能为空"),
+    ERROR_PURCHASE_DETAIL_DATE(98105,"采购订单【{}】SKU【{}】预计交货日期不能为空"),
 
 
 

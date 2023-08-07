@@ -33,10 +33,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.ArrivalStatusEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PurchaseListTypeEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
@@ -748,10 +745,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             addDTO.setPurchaseDate(LocalDate.now());
             //委外类型
             if (generatePoAddDTO.getIsParent()) {
+                addDTO.setType(PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode());
                 addDTO.setSubcontractType(SubcontractTypeEnum.ENUM_PARENT.getCode());
             } else {
+                addDTO.setType(PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode());
                 addDTO.setSubcontractType(SubcontractTypeEnum.ENUM_CHILD.getCode());
-
             }
             //采购供应商
             PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();

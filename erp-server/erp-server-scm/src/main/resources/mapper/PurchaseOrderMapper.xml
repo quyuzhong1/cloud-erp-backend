@@ -32,6 +32,7 @@
         select
             po.id,
             pod.id as purchaseDetailId,
+            po.type as type,
             po.code,
             pos.supplier_name as supplierName,
             po.approve_status as approveStatus,
@@ -74,6 +75,12 @@
             </if>
             <if test="params.isFirstMassProduct != null ">
                 and po.is_first_mass_product = #{params.isFirstMassProduct}
+            </if>
+            <if test="params.typeList != null and params.typeList.size > 0">
+                and po.type in
+                <foreach collection="params.typeList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
             </if>
             <if test="params.idList != null and params.idList.size > 0">
                 and po.id in
@@ -166,6 +173,12 @@
             <if test="params.isFirstMassProduct != null ">
                 and po.is_first_mass_product = #{params.isFirstMassProduct}
             </if>
+            <if test="params.typeList != null and params.typeList.size > 0">
+                and po.type in
+                <foreach collection="params.typeList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
             <if test="params.idList != null and params.idList.size > 0">
                 and po.id in
                 <foreach collection="params.idList" item="item" open="(" separator="," close=")">
@@ -231,6 +244,7 @@
         select
             po.id,
             pod.id as purchaseDetailId,
+            po.type as type,
             po.code,
             pos.supplier_name as supplierName,
             po.approve_status as approveStatus,
@@ -274,6 +288,12 @@
                 </if>
                 <if test="params.isFirstMassProduct != null ">
                     and po.is_first_mass_product = #{params.isFirstMassProduct}
+                </if>
+                <if test="params.typeList != null and params.typeList.size > 0">
+                    and po.type in
+                    <foreach collection="params.typeList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
                 </if>
                 <if test="params.idList != null and params.idList.size > 0">
                     and po.id in

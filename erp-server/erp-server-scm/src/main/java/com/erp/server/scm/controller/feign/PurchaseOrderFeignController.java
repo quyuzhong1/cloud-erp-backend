@@ -190,6 +190,21 @@ public class PurchaseOrderFeignController {
         return supplierContactService.getById(supplierContactId);
     }
 
+    /**
+     * @description: 根据联系人ids查询供应商联系人信息
+     * @author Will
+     * @date: 2023/8/4 12:10
+     * @param supplierContactIds
+     * @return List<SupplierContactEntity>
+     */
+    @PostMapping("/listSupplierContactByIds")
+    public List<SupplierContactEntity> listSupplierContactByIds(@RequestBody List<String> supplierContactIds) {
+        if (CollectionUtils.isEmpty(supplierContactIds)) {
+            return Collections.emptyList();
+        }
+        return supplierContactService.listByIds(supplierContactIds);
+    }
+
 
     /**
      * 修改采购订单明细表
@@ -241,6 +256,19 @@ public class PurchaseOrderFeignController {
     public List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildByParentPodIds(@RequestBody List<String> parentPodIds) {
         return purchaseOrderService.listPoRefSubChildByParentPodIds(parentPodIds);
     }
+
+    /**
+     * @description: 新增采购订单
+     * @author Will
+     * @date: 2023/8/4 14:07
+     * @param addDTO
+     * @return String
+     */
+    @PostMapping("/addPurchaseOrder")
+    public String addPurchaseOrder(@RequestBody PurchaseOrderDTO.AddDTO addDTO) {
+        return purchaseOrderService.add(addDTO);
+    }
+
 
     /**
      * @description: 自动提交审核采购订单

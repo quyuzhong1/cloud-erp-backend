@@ -25,6 +25,10 @@ import java.time.LocalDateTime;
 @TableName("purchase_order")
 public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
 
+    /**
+     * 单据类型
+     */
+    private String type;
 
     /**
      * 审核状态
