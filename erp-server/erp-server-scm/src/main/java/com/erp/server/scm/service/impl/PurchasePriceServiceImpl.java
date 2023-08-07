@@ -65,6 +65,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -831,18 +832,29 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             List<PurchasePriceDetailEntity> updateItemList = Lists.newArrayList();
             // 此处需要过滤掉修改的明细
             for(PurchasePriceDetailDTO.ImportSaveDTO detailItem : detailList) {
-                PurchasePriceDetailEntity savePurchasePriceDetailEntity = new PurchasePriceDetailEntity();
-                BeanMapper.copy(detailItem, savePurchasePriceDetailEntity);
-                if(Objects.nonNull(savePurchasePriceDetailEntity.getEffectiveDate())) {
-                    savePurchasePriceDetailEntity.setExpireDate(savePurchasePriceDetailEntity.getEffectiveDate().plusDays(100));
+                LocalDate expireDate = null;
+                if(Objects.nonNull(detailItem.getEffectiveDate())) {
+                    expireDate = detailItem.getEffectiveDate().plusDays(100);
                 }
-                if(Objects.nonNull(savePurchasePriceDetailEntity.getTaxRate())) {
-                    BigDecimal rate = savePurchasePriceDetailEntity.getTaxRate().divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
-                    savePurchasePriceDetailEntity.setTaxRate(rate);
+                BigDecimal taxRate = null;
+                if(Objects.nonNull(detailItem.getTaxRate())) {
+                    BigDecimal rate = detailItem.getTaxRate().divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
+                    taxRate = rate;
                 }
-                if(StrUtils.isNotEmpty(detailItem.getId())) {
-                    updateItemList.add(savePurchasePriceDetailEntity);
+                if(CollUtil.isNotEmpty(detailItem.getIds())) {
+                    for(String detailId : detailItem.getIds()) {
+                        PurchasePriceDetailEntity savePurchasePriceDetailEntity = new PurchasePriceDetailEntity();
+                        BeanMapper.copy(detailItem, savePurchasePriceDetailEntity);
+                        savePurchasePriceDetailEntity.setExpireDate(expireDate);
+                        savePurchasePriceDetailEntity.setTaxRate(taxRate);
+                        savePurchasePriceDetailEntity.setId(detailId);
+                        updateItemList.add(savePurchasePriceDetailEntity);
+                    }
                 } else {
+                    PurchasePriceDetailEntity savePurchasePriceDetailEntity = new PurchasePriceDetailEntity();
+                    BeanMapper.copy(detailItem, savePurchasePriceDetailEntity);
+                    savePurchasePriceDetailEntity.setExpireDate(expireDate);
+                    savePurchasePriceDetailEntity.setTaxRate(taxRate);
                     addItemList.add(savePurchasePriceDetailEntity);
                 }
             }

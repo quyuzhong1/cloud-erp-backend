@@ -264,6 +264,7 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             if(existPriceMap.containsKey(detailDTO.getSkuId())) {
                 int[] addRange = {detailDTO.getMinQty(), detailDTO.getMaxQty()};
                 List<PurchasePriceDetailEntity> existPriceList = existPriceMap.get(detailDTO.getSkuId());
+                List<String> detailIds = Lists.newArrayList();
                 for(PurchasePriceDetailEntity price : existPriceList) {
                     int[] existRange = {price.getMinQty(), price.getMaxQty()};
                     // 相同的SKU区间需要更新，区间一样可以更新，不算做区间交叉
@@ -284,17 +285,21 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
                             break;
                         } else {
                             // 此处审核不通过，可以存在同区间的多个，会存在覆盖问题
-                            detailDTO.setId(price.getId());
+                            detailIds.add(price.getId());
                         }
                     }
+                }
+                if(CollUtil.isNotEmpty(detailIds)) {
+                    detailDTO.setIds(detailIds);
                 }
             }
         }
 
         // 与该Excel已有的行做关联验证
         if(CollUtil.isNotEmpty(importList)) {
-            Map<String, List<ImportPurchasePriceExcelDTO>> importPurchaseMap = importList.stream().collect(Collectors.groupingBy(ImportPurchasePriceExcelDTO::getSupplierName));
-            List<ImportPurchasePriceExcelDTO> importPriceList = importPurchaseMap.get(supplierName);
+            Map<String, List<ImportPurchasePriceExcelDTO>> importPurchaseMap = importList.stream().collect(Collectors.groupingBy(r->StrUtils.null2EmptyWithTrim(r.getSupplierName()) + "-" + StrUtils.null2EmptyWithTrim(r.getSkuNo())));
+            String checkKey = StrUtils.null2EmptyWithTrim(addDTO.getSupplierName()) + "-" + StrUtils.null2EmptyWithTrim(detailDTO.getSkuNo());
+            List<ImportPurchasePriceExcelDTO> importPriceList = importPurchaseMap.get(checkKey);
             if(CollUtil.isNotEmpty(importPriceList)) {
                 for(ImportPurchasePriceExcelDTO price : importPriceList) {
                     if(StrUtils.isInteger(price.getMinQty()) && StrUtils.isInteger(price.getMaxQty())
