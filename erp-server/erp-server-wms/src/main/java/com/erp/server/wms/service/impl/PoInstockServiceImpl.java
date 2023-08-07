@@ -1112,8 +1112,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //查询委外订单所有子级SKU生成的采购订单信息
         List<PurchaseOrderDTO.SubcontractOrderChildDTO> childList = scmTaskFeign.listPoRefSubChildByParentPodIds(parentPodIds);
         if (CollectionUtils.isEmpty(childList)) {
-            log.info("未生成子采购订单，无需自动入库，parentPodIds = {}",parentPodIds);
-            return;
+            throw new ServiceException(ApiError.ERROR_98073);
         }
         //自动审核采购订单
         List<String> childPoIds = childList.stream().map(PurchaseOrderDTO.SubcontractOrderChildDTO::getChildPoId).distinct().collect(Collectors.toList());
