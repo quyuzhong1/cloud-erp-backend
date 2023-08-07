@@ -295,15 +295,17 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
         if(CollUtil.isNotEmpty(importList)) {
             Map<String, List<ImportPurchasePriceExcelDTO>> importPurchaseMap = importList.stream().collect(Collectors.groupingBy(ImportPurchasePriceExcelDTO::getSupplierName));
             List<ImportPurchasePriceExcelDTO> importPriceList = importPurchaseMap.get(supplierName);
-            for(ImportPurchasePriceExcelDTO price : importPriceList) {
-                if(StrUtils.isInteger(price.getMinQty()) && StrUtils.isInteger(price.getMaxQty())
-                   && StrUtils.isInteger(excelDTO.getMinQty()) && StrUtils.isInteger(excelDTO.getMaxQty()) ) {
-                    int[] addRange = {Integer.parseInt(excelDTO.getMinQty()), Integer.parseInt(excelDTO.getMaxQty())};
-                    int[] existRange = {Integer.parseInt(price.getMinQty()), Integer.parseInt(price.getMaxQty())};
-                    boolean isCross = checkCross(addRange, existRange);
-                    if(isCross) {
-                        errorMsgList.add(StrUtil.format("区间存在重叠，导入Excel已存在区间[{}, {}]", price.getMinQty(),price.getMaxQty() ));
-                        break;
+            if(CollUtil.isNotEmpty(importPriceList)) {
+                for(ImportPurchasePriceExcelDTO price : importPriceList) {
+                    if(StrUtils.isInteger(price.getMinQty()) && StrUtils.isInteger(price.getMaxQty())
+                            && StrUtils.isInteger(excelDTO.getMinQty()) && StrUtils.isInteger(excelDTO.getMaxQty()) ) {
+                        int[] addRange = {Integer.parseInt(excelDTO.getMinQty()), Integer.parseInt(excelDTO.getMaxQty())};
+                        int[] existRange = {Integer.parseInt(price.getMinQty()), Integer.parseInt(price.getMaxQty())};
+                        boolean isCross = checkCross(addRange, existRange);
+                        if(isCross) {
+                            errorMsgList.add(StrUtil.format("区间存在重叠，导入Excel已存在区间[{}, {}]", price.getMinQty(),price.getMaxQty() ));
+                            break;
+                        }
                     }
                 }
             }
