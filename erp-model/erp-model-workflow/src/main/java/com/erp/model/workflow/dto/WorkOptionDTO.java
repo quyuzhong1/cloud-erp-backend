@@ -5,6 +5,7 @@ import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -420,9 +421,19 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private String userId;
 
         /**
-         * 单据名称
+         * 单据编号
          */
         private String sourceCode;
+
+        /**
+         * 申请人id
+         */
+        private List<String> createUserIdList;
+
+        /**
+         * 申请时间
+         */
+        private List<LocalDate> createTimeList;
     }
 
     /**
