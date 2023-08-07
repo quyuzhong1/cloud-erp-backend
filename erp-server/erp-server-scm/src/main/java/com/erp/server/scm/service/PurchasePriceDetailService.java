@@ -174,4 +174,13 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return java.util.List<java.lang.String>
      */
     List<PurchasePriceDetailEntity> listDetailByMainId(String id);
+
+    /**
+     * 根据供应商和状态查询价目信息
+     * @author yl
+     * @date 2023-08-06 9:37
+     * @param supplierId
+     * @return java.util.List<PurchasePriceDetailEntity>
+     */
+    List<PurchasePriceDetailEntity> getBySupplierIdAndStatus(String supplierId,List<String> statusList);
 }

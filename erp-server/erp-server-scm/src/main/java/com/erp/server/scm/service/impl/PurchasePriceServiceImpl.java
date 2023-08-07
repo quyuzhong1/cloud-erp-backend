@@ -1,6 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -23,6 +24,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
@@ -45,6 +47,7 @@ import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
 import com.erp.server.scm.listener.PurchasePriceExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceMapper;
 import com.erp.server.scm.service.*;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -779,11 +782,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
         // 供应商
         List<Map<String, Object>> supplierList = supplierService.listApproveSupplier();
-        PurchasePriceExcelListener excelListener = new PurchasePriceExcelListener(userList, skuList, currencyList, supplierList, orgList, priceDetailService);
+        PurchasePriceExcelListener excelListener = new PurchasePriceExcelListener(userList, skuList, currencyList, supplierList, orgList, priceDetailService, this);
         try {
             EasyExcel.read(excelFile.getInputStream(), ImportPurchasePriceExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
-            log.error("供应商导入错误！", e);
+            log.error("采购价目导入错误", e);
             return;
         }
         List<ImportPurchasePriceExcelDTO> errorList = excelListener.getErrorList();
@@ -791,6 +794,82 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             String fileName = "采购价目导入错误信息";
             ExcelUtil.export(fileName, "导入异常", errorList, ImportPurchasePriceExcelDTO.class, response);
             return;
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void batchImport(List<PurchasePriceDTO.ImportAddDTO> handList) {
+        if(CollUtil.isEmpty(handList)) {
+            return;
+        }
+        // 新增的采购价目信息
+        List<PurchasePriceEntity> addList = Lists.newArrayList();
+        // 新增采购价目明细信息
+        List<PurchasePriceDetailEntity> addDetailList = Lists.newArrayList();
+        // 修改的采购价目明细信息
+        List<PurchasePriceDetailEntity> updateDetailList = Lists.newArrayList();
+        for(PurchasePriceDTO.ImportAddDTO item : handList) {
+            PurchasePriceEntity purchasePriceEntity = new PurchasePriceEntity();
+            purchasePriceEntity.setSupplierId(item.getSupplierId());
+            purchasePriceEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+            purchasePriceEntity.setQuotedDate(item.getQuotedDate());
+            purchasePriceEntity.setPricingUserId(item.getPricingUserId());
+            purchasePriceEntity.setPricingUserName(item.getPricingUserName());
+            purchasePriceEntity.setPurchaseOrgId(item.getPurchaseOrgId());
+            purchasePriceEntity.setPurchaseOrgName(item.getPurchaseOrgName());
+            // 明细信息
+            List<PurchasePriceDetailDTO.ImportSaveDTO> detailList = item.getDetailList();
+            List<PurchasePriceDetailEntity> addItemList = Lists.newArrayList();
+            List<PurchasePriceDetailEntity> updateItemList = Lists.newArrayList();
+            // 此处需要过滤掉修改的明细
+            for(PurchasePriceDetailDTO.ImportSaveDTO detailItem : detailList) {
+                PurchasePriceDetailEntity savePurchasePriceDetailEntity = new PurchasePriceDetailEntity();
+                BeanMapper.copy(detailItem, savePurchasePriceDetailEntity);
+                if(Objects.nonNull(savePurchasePriceDetailEntity.getEffectiveDate())) {
+                    savePurchasePriceDetailEntity.setExpireDate(savePurchasePriceDetailEntity.getEffectiveDate().plusDays(100));
+                }
+                if(Objects.nonNull(savePurchasePriceDetailEntity.getTaxRate())) {
+                    BigDecimal rate = savePurchasePriceDetailEntity.getTaxRate().divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
+                    savePurchasePriceDetailEntity.setTaxRate(rate);
+                }
+                if(StrUtils.isNotEmpty(detailItem.getId())) {
+                    updateItemList.add(savePurchasePriceDetailEntity);
+                } else {
+                    addItemList.add(savePurchasePriceDetailEntity);
+                }
+            }
+            // 当该新增的主单有明细时才新增
+            if(CollUtil.isNotEmpty(addItemList)) {
+                //生成单号
+                String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGJM, BusinessNoTypeEnum.CODE_CGJM.getCode()));
+                purchasePriceEntity.setCode(code);
+                String id = IdWorker.getIdStr();
+                purchasePriceEntity.setId(id);
+                addList.add(purchasePriceEntity);
+                addItemList.stream().forEach(data->data.setPurchasePriceId(id));
+                addDetailList.addAll(addItemList);
+            }
+            if(CollUtil.isNotEmpty(updateItemList)) {
+                updateDetailList.addAll(updateItemList);
+            }
+        }
+        // 保存主单
+        if(CollUtil.isNotEmpty(addList)) {
+            super.saveBatch(addList);
+            List<Pair<String, String>> pairList = addList.stream().
+                    map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            String content = "导入采购价目信息[%s]";
+            batchAddModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), pairList, "新增操作");
+        }
+        // 保存采购价目明细信息
+        if(CollUtil.isNotEmpty(addDetailList)) {
+            priceDetailService.saveBatch(addDetailList);
+        }
+        if(CollUtil.isNotEmpty(updateDetailList)) {
+            for(PurchasePriceDetailEntity updateDetail : updateDetailList) {
+                priceDetailService.updateById(updateDetail);
+            }
         }
     }
 

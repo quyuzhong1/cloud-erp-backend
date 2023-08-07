@@ -1,21 +1,23 @@
 package com.erp.server.scm.listener;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.excel.ImportPurchasePriceExcelDTO;
-import com.erp.model.scm.dto.excel.SupplierImportExcelDTO;
+import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.server.scm.service.PurchasePriceDetailService;
+import com.erp.server.scm.service.PurchasePriceService;
+import com.google.common.collect.Lists;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -41,6 +43,8 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
 
     private PurchasePriceDetailService priceDetailService;
 
+    private PurchasePriceService purchasePriceService;
+
     /**
      * 错误信息
      */
@@ -49,7 +53,8 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
     /**
      * 可以添加的数据
      */
-    private List<PurchasePriceDTO.ImportAddDTO> addList = new ArrayList<>();
+    private List<PurchasePriceDTO.ImportAddDTO> handleList = new ArrayList<>();
+
 
     /**
      * 已经解析的上传数据
@@ -62,14 +67,21 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
 
     private static final String DEFAULT_CURRENCY = "CNY";
 
+    private static final List<String> CHECK_STATUS_LIST = Lists.newArrayList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus(), ApproveStatusEnum.APPROVE.getStatus(),
+            ApproveStatusEnum.REJECT.getStatus());
+
+    private static final List<String> NO_CROSS_STATUS_LIST = Lists.newArrayList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus(), ApproveStatusEnum.APPROVE.getStatus());
+
+
     public PurchasePriceExcelListener(List<FindUserDTO> userList, List<SkuVO> skuList, List<DictCurrencyEntity> currencyList, List<Map<String, Object>> supplierList,
-                                      List<BaseIdDTO> orgList, PurchasePriceDetailService priceDetailService) {
+                                      List<BaseIdDTO> orgList, PurchasePriceDetailService priceDetailService, PurchasePriceService purchasePriceService) {
         this.userList = userList;
         this.skuList = skuList;
         this.currencyList = currencyList;
         this.supplierList = supplierList;
         this.orgList = orgList;
         this.priceDetailService = priceDetailService;
+        this.purchasePriceService = purchasePriceService;
     }
 
     @Override
@@ -80,8 +92,16 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
         if (CollUtil.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        PurchasePriceDTO.ImportAddDTO addDTO = new PurchasePriceDTO.ImportAddDTO();
+        PurchasePriceDTO.ImportAddDTO addDTO;
         String supplierName = StrUtils.null2EmptyWithTrim(excelDTO.getSupplierName());
+
+        PurchasePriceDTO.ImportAddDTO existSupplierPurchasePrice = handleList.stream().filter(r -> Objects.equals(supplierName, r.getSupplierName())).findFirst().orElse(null);
+        if(Objects.isNull(existSupplierPurchasePrice)) {
+            addDTO = new PurchasePriceDTO.ImportAddDTO();
+        } else {
+            addDTO = existSupplierPurchasePrice;
+        }
+
         Map<String, Object> supplierMap  = supplierList.stream().filter(r->Objects.equals(supplierName, StrUtils.null2EmptyWithTrim(r.get("name")))).findFirst().orElse(null);
         if(Objects.isNull(supplierMap)) {
             errorMsgList.add("供应商不存在");
@@ -98,6 +118,8 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
                 LocalDate quotedDate = LocalDate.parse(quotedDateStr, TIME_FORMAT);
                 addDTO.setQuotedDate(quotedDate);
             }
+        } else {
+            addDTO.setQuotedDate(LocalDate.now());
         }
 
         // 定价员
@@ -110,6 +132,7 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
                 errorMsgList.add("定价员不存在");
             }
             addDTO.setPricingUserId(userId);
+            addDTO.setPricingUserName(pricingUserName);
         }
         // 采购组织
         String purchaseOrgName = excelDTO.getPurchaseOrgName();
@@ -132,7 +155,7 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             addDTO.setPurchaseOrgId(orgId);
         }
 
-        PurchasePriceDetailDTO.ImportAddDTO detailDTO = new  PurchasePriceDetailDTO.ImportAddDTO();
+        PurchasePriceDetailDTO.ImportSaveDTO detailDTO = new  PurchasePriceDetailDTO.ImportSaveDTO();
         // 明细
         String skuNo = excelDTO.getSkuNo();
         SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(skuNo)).findFirst().orElse(null);
@@ -218,11 +241,13 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
                 LocalDate effectiveDate = LocalDate.parse(effectiveDateStr, TIME_FORMAT);
                 detailDTO.setEffectiveDate(effectiveDate);
             }
+        } else {
+            detailDTO.setEffectiveDate(LocalDate.now());
         }
 
         // 启用状态
         String disabledStr = excelDTO.getDisabled();
-        detailDTO.setDisabled(Objects.equals(disabledStr, "启用") || StrUtils.isEmpty(disabledStr));
+        detailDTO.setDisabled(Objects.equals(disabledStr, "停用"));
 
         // 验证 区间从和区间到
         if(detailDTO.getMaxQty().intValue() == detailDTO.getMinQty().intValue()) {
@@ -234,20 +259,32 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
 
         //根据供应商 获取到系统已有的区间
         if(StrUtils.isNotEmpty(addDTO.getSupplierId())) {
-            List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(addDTO.getSupplierId(), new ArrayList<>());
-            Map<String, List<PurchasePriceDetailDTO.AddDTO>> existPriceMap = supplierPriceDetailList.stream().collect(Collectors.groupingBy(PurchasePriceDetailDTO.AddDTO::getSkuId));
+            List<PurchasePriceDetailEntity> supplierPriceDetailList = priceDetailService.getBySupplierIdAndStatus(addDTO.getSupplierId(), CHECK_STATUS_LIST);
+            Map<String, List<PurchasePriceDetailEntity>> existPriceMap = supplierPriceDetailList.stream().collect(Collectors.groupingBy(PurchasePriceDetailEntity::getSkuId));
             if(existPriceMap.containsKey(detailDTO.getSkuId())) {
                 int[] addRange = {detailDTO.getMinQty(), detailDTO.getMaxQty()};
-                List<PurchasePriceDetailDTO.AddDTO> existPriceList = existPriceMap.get(detailDTO.getSkuId());
-                for(PurchasePriceDetailDTO.AddDTO price : existPriceList) {
+                List<PurchasePriceDetailEntity> existPriceList = existPriceMap.get(detailDTO.getSkuId());
+                for(PurchasePriceDetailEntity price : existPriceList) {
                     int[] existRange = {price.getMinQty(), price.getMaxQty()};
                     // 相同的SKU区间需要更新，区间一样可以更新，不算做区间交叉
                     if(detailDTO.getMinQty().intValue() != price.getMinQty().intValue()
-                       || price.getMinQty().intValue() != price.getMaxQty().intValue()) {
-                        boolean isCross = checkCross(addRange, existRange);
-                        if(isCross) {
+                       || price.getMaxQty().intValue() != price.getMaxQty().intValue()) {
+                        if(NO_CROSS_STATUS_LIST.contains(price.getApproveStatus())) {
+                            boolean isCross = checkCross(addRange, existRange);
+                            if(isCross) {
+                                errorMsgList.add(StrUtil.format("区间存在重叠，系统已存在区间[{}, {}]", price.getMinQty(),price.getMaxQty() ));
+                                break;
+                            }
+                        }
+                    } else {
+                        // 待提交可以区间相同
+                        if(!Objects.equals(price.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                           && !Objects.equals(price.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus())) {
                             errorMsgList.add(StrUtil.format("区间存在重叠，系统已存在区间[{}, {}]", price.getMinQty(),price.getMaxQty() ));
                             break;
+                        } else {
+                            // 此处审核不通过，可以存在同区间的多个，会存在覆盖问题
+                            detailDTO.setId(price.getId());
                         }
                     }
                 }
@@ -274,21 +311,29 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
 
         importList.add(excelDTO);
 
-        PurchasePriceDTO.ImportAddDTO existSupplierPurchasePrice = addList.stream().filter(r -> Objects.equals(addDTO.getSupplierName(), r.getSupplierName())).findFirst().orElse(null);
-        if (Objects.isNull(existSupplierPurchasePrice)) {
-            addList.add(addDTO);
-        }
-
         if(CollUtil.isNotEmpty(errorMsgList)) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;
         }
+
+        List<PurchasePriceDetailDTO.ImportSaveDTO> detailList = addDTO.getDetailList();
+        if(CollUtil.isEmpty(detailList)) {
+            detailList = Lists.newArrayList();
+        }
+        detailList.add(detailDTO);
+        addDTO.setDetailList(detailList);
+
+        if (Objects.isNull(existSupplierPurchasePrice)) {
+            handleList.add(addDTO);
+        }
     }
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        if(CollUtil.isNotEmpty(handleList)) {
+            purchasePriceService.batchImport(handleList);
+        }
     }
 
     /**
