@@ -1,5 +1,7 @@
 package com.erp.server.dmp.push.consumer;
 
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -8,6 +10,9 @@ import com.erp.server.dmp.push.service.business.KingdeeCustomerContactConsumerSe
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.kingdee.impl.KingdeeCommonServiceImpl;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.kingdee.bos.webapi.entity.SaveParam;
+import com.kingdee.bos.webapi.entity.SaveResult;
+import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -37,7 +42,7 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
     private KingdeeCustomerContactConsumerService kingdeeCustomerContactConsumerService;
 
     public static void main(String[] args) {
-        //模块类型
+/*        //模块类型
         Integer type = ApiModuleTypeEnum.CUSTOMER_CONTACT.getCode();
         KingdeeCommonService kingdeeCommonService = new KingdeeCommonServiceImpl();
         Map<String, Object> map = new LinkedHashMap<>();
@@ -49,8 +54,31 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
         String fieldKeys = "FForbidStatus,FNumber,FCONTACTID";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 2);
 
-        System.out.println(queryList);
+        System.out.println(queryList);*/
 
+        K3CloudApi client = new K3CloudApi();
+        JSONObject json = JSONUtil.parseObj("{ \"FCompanyType\" : \"BD_Customer\", \"FCompany\" :{ \"FNumber\" : \"CUST0320\" }, \"FCustId\" :{ \"FNUMBER\" : \"CUST0320\" },\n" +
+                "\"FBizLocNumber\" : \"BIZ20230720120215\",\n" +
+                "\"FBizLocation\" : \"Fotonordic Oy,  Kempeleentie 5, 90400 Oulu,Filand\",\n" +
+                "\"FBizAddress\" : \"Fotonordic Oy,  Kempeleentie 5, 90400 Oulu,Filand\",\n" +
+                "\"FEmail\" : \"\",\n" +
+                "\"FMobile\" : \"358442592400\",\n" +
+                "\"FName\" : \"Juuso\",\n" +
+                "\"FNumber\" : \"CXR021025\",\n" +
+                "\"FPost\" : \"\",\n" +
+                "\"FCONTACTID\" : \"1415337\"}");
+
+        //判断金蝶系统是否已存在该数据
+        SaveParam param = new SaveParam(json);
+        SaveResult result;
+        try {
+            result = client.save(KingdeePushModuleEnum.BD_COMMONCONTACT.getCode(), param);
+            if (!result.isSuccessfully()) {
+                throw new RuntimeException("【保存】出错:" + JSONUtil.toJsonStr(result.getResult().getResponseStatus().getErrors()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
 
     }
 

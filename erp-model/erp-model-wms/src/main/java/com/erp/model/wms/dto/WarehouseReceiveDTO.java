@@ -63,7 +63,7 @@ public class WarehouseReceiveDTO {
         private String deliveryWarehouseId;
 
         /**
-         * 报价明细
+         * 收货单明细
          */
         @Valid
         private List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList;
