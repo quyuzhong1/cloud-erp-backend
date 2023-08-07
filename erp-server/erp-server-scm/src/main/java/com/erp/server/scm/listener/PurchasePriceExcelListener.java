@@ -70,7 +70,8 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
     private static final List<String> CHECK_STATUS_LIST = Lists.newArrayList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus(), ApproveStatusEnum.APPROVE.getStatus(),
             ApproveStatusEnum.REJECT.getStatus());
 
-    private static final List<String> NO_CROSS_STATUS_LIST = Lists.newArrayList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus(), ApproveStatusEnum.APPROVE.getStatus());
+    private static final List<String> NO_CROSS_STATUS_LIST = Lists.newArrayList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus(), ApproveStatusEnum.APPROVE.getStatus(),
+            ApproveStatusEnum.REJECT.getStatus());
 
 
     public PurchasePriceExcelListener(List<FindUserDTO> userList, List<SkuVO> skuList, List<DictCurrencyEntity> currencyList, List<Map<String, Object>> supplierList,
