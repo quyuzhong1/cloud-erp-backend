@@ -91,7 +91,10 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
 
     @Override
     public List<PurchaseApplicationDetailEntity> listByPurchaseApplicationId(String purchaseApplicationId) {
-        return  lambdaQuery().eq(PurchaseApplicationDetailEntity::getPurchaseApplicationId,purchaseApplicationId).list();
+        return  lambdaQuery()
+                .eq(PurchaseApplicationDetailEntity::getPurchaseApplicationId,purchaseApplicationId)
+                .orderByAsc(PurchaseApplicationDetailEntity::getId)
+                .list();
     }
 
     @Override
