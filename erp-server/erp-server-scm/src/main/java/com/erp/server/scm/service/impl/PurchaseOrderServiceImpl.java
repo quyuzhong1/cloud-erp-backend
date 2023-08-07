@@ -174,6 +174,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             boolean contains = list.contains(obj.getId());
             if (contains) {
                 obj.setCode(null);
+                obj.setTypeName(null);
                 obj.setSupplierName(null);
                 obj.setDeliveryWarehouseName(null);
                 obj.setApproveStatusName(null);

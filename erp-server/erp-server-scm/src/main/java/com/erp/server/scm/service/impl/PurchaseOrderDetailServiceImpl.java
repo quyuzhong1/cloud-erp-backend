@@ -194,7 +194,10 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
     @Override
     public List<PurchaseOrderDetailEntity> listByPurchaseOrderId(String purchaseOrderId) {
-        return  lambdaQuery().eq(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderId).list();
+        return  lambdaQuery()
+                .eq(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderId)
+                .orderByAsc(PurchaseOrderDetailEntity::getId)
+                .list();
     }
 
     @Override
