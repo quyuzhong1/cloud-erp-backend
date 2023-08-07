@@ -12,7 +12,6 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.server.wms.service.PoInstockService;
 import com.erp.server.wms.service.PurchaseReturnOrderService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
@@ -316,6 +315,19 @@ public class PurchaseReturnOrderController extends BaseController {
     public ApiResult<String> checkSkuInventory(@RequestBody @Validated() PurchaseReturnOrderDTO.AddDTO dto) {
         String msg = purchaseReturnOrderService.checkSkuInventory(dto, dto.getPurchasePriceDetailList());
         return success( "", msg);
+    }
+
+    /**
+     * 下推自动生成采购订单
+     * @author Will
+     * @date: 2023/8/7 10:51
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/autoGeneratePurchaseOrder")
+    public ApiResult autoGeneratePurchaseOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = purchaseReturnOrderService.autoGeneratePurchaseOrder(dto);
+        return flag?success():failure();
     }
 
 }

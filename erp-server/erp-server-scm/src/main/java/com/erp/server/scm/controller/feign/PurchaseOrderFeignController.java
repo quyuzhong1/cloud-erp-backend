@@ -294,6 +294,18 @@ public class PurchaseOrderFeignController {
     }
 
     /**
+     * @description: 根据来源id查询采购订单数据
+     * @author Will
+     * @date: 2023/8/7 11:05
+     * @param sourceIds
+     * @return List<PurchaseOrderEntity>
+     */
+    @PostMapping("/listPoBySourceIds")
+    public List<PurchaseOrderEntity> listPoBySourceIds(@RequestBody List<String> sourceIds) {
+        return purchaseOrderService.listPoBySourceIds(sourceIds);
+    }
+
+    /**
      * @description: 根据sku id集合获取审核通过的最新的采购订单明细信息
      * @author zhangchunlin
      * @date: 2023/6/26 10:20

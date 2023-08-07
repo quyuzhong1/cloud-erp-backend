@@ -1464,6 +1464,16 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
        return Boolean.TRUE;
     }
 
+    @Override
+    public List<PurchaseOrderEntity> listPoBySourceIds(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(PurchaseOrderEntity::getSourceId,sourceIds)
+                .eq(PurchaseOrderEntity::getInvalidStatus,Boolean.FALSE)
+                .list();
+    }
+
     /**
      * @description: 列表Tab查询状态处理
      * @author Will

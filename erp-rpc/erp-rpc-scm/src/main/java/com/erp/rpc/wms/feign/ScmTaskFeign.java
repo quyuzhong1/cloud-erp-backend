@@ -275,6 +275,16 @@ public interface ScmTaskFeign {
     void autoApprovePurchaseOrder(@RequestBody List<String> poIds);
 
     /**
+     * @description: 根据来源id查询采购订单数据
+     * @author Will
+     * @date: 2023/8/7 11:04
+     * @param sourceIds
+     * @return List<PurchaseOrderEntity>
+     */
+    @PostMapping("feign/purchaseOrder/listPoBySourceIds")
+    List<PurchaseOrderEntity> listPoBySourceIds(@RequestBody List<String> sourceIds);
+
+    /**
      * 根据来源ids查询采购明细
      */
     @PostMapping("feign/purchaseOrder/listPodBySourceDetailIds")
@@ -325,4 +335,5 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/purchaseOrder/addPurchaseOrder")
     String addPurchaseOrder(@RequestBody PurchaseOrderDTO.AddDTO addDTO);
+
 }

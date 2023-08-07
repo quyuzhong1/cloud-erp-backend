@@ -335,4 +335,13 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return Boolean
      */
     Boolean updateRemark(BaseIdsDTO.RemarkDTO dto);
+
+    /**
+     * @description: 根据来源id查询采购订单数据
+     * @author Will
+     * @date: 2023/8/7 11:05
+     * @param sourceIds
+     * @return List<PurchaseOrderEntity>
+     */
+    List<PurchaseOrderEntity> listPoBySourceIds(List<String> sourceIds);
 }
