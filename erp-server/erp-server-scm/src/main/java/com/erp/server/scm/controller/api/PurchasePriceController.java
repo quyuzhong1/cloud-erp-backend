@@ -237,4 +237,14 @@ public class PurchasePriceController extends BaseController {
         purchasePriceService.importFile(excelFile, response);
     }
 
+    /**
+     * 下载模板
+     * @return
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        purchasePriceService.downloadTemplate(response);
+        return success();
+    }
+
 }

@@ -175,4 +175,10 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @param handList
      */
     void batchImport(List<PurchasePriceDTO.ImportAddDTO> handList);
+
+    /**
+     * 下载模板
+     * @param response
+     */
+    void downloadTemplate(HttpServletResponse response);
 }
