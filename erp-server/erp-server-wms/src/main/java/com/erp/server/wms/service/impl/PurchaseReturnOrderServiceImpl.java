@@ -1187,6 +1187,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_99008);
         }
+        //判断是否已生成采购订单
         List<PurchaseOrderEntity> poList = scmTaskFeign.listPoBySourceIds(dto.getIds());
         if (CollectionUtils.isNotEmpty(poList)) {
             List<String> sourceIds = poList.stream().map(PurchaseOrderEntity::getSourceId).collect(Collectors.toList());
@@ -1195,11 +1196,13 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_REF_PO,codes);
             }
         }
-        List<PurchaseReturnOrderEntity> resultList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getPurchaseOrderId())).collect(Collectors.toList());
-        //下推采购订单
-        if (CollectionUtils.isEmpty(resultList)) {
-            autoAddPurchaseOrder(resultList);
+        //判断单据是否审核完成
+        String codes = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PurchaseReturnOrderEntity::getCode).collect(Collectors.joining(","));
+        if (StringUtils.isNotBlank(codes)) {
+            throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_REF_PO_APPROVE,codes);
         }
+        //下推采购订单
+        autoAddPurchaseOrder(list);
         return Boolean.TRUE;
     }
 
@@ -1415,8 +1418,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         if (CollectionUtils.isEmpty(purchaseReturnOrderEntityList)) {
             return;
         }
-        List<PurchaseReturnOrderEntity> returnList = purchaseReturnOrderEntityList.stream().filter(obj -> StringUtils.isBlank(obj.getPurchaseOrderId())).collect(Collectors.toList());
+        List<PurchaseReturnOrderEntity> returnList = purchaseReturnOrderEntityList
+                .stream()
+                .filter(obj -> StringUtils.isBlank(obj.getPurchaseOrderId()) && ReturnModeEnum.REPLENISHMENT.getCode().equals(obj.getReturnMode())
+        ).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(returnList)) {
+            log.info("采购退货单下存在采购订单或者退货扣款的采购退货单不支持自动生成");
             return;
         }
         log.info("自动生成退货采购订单，退货单号 = {}",returnList.stream().map(PurchaseReturnOrderEntity::getCode).collect(Collectors.joining(",")));
