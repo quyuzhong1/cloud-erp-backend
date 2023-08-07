@@ -7,10 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
@@ -59,6 +56,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,6 +80,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
+@RefreshScope
 public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseReturnOrderMapper, PurchaseReturnOrderEntity> implements PurchaseReturnOrderService {
 
     @Resource
@@ -121,6 +121,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     @Autowired
     private InventoryService inventoryService;
+
+    @Value("${companyCode}")
+    private String companyCode;
 
     /**
      * 主页分页查询
@@ -643,6 +646,15 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         if (count != purchaseReturnOrderEntityList.size()) {
             throw new ServiceException(ApiError.ERROR_99003);
+        }
+        //判断是否已生成采购订单
+        List<PurchaseOrderEntity> poList = scmTaskFeign.listPoBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(poList)) {
+            List<String> sourceIds = poList.stream().map(PurchaseOrderEntity::getSourceId).collect(Collectors.toList());
+            String codes = purchaseReturnOrderEntityList.stream().filter(obj -> sourceIds.contains(obj.getId())).map(PurchaseReturnOrderEntity::getCode).distinct().collect(Collectors.joining(","));
+            if (StringUtils.isNotBlank(codes)) {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_REF_PO,codes);
+            }
         }
         //TODO 待加审核流程
         //修改状态为待提交
@@ -1187,15 +1199,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_99008);
         }
-        //判断是否已生成采购订单
-        List<PurchaseOrderEntity> poList = scmTaskFeign.listPoBySourceIds(dto.getIds());
-        if (CollectionUtils.isNotEmpty(poList)) {
-            List<String> sourceIds = poList.stream().map(PurchaseOrderEntity::getSourceId).collect(Collectors.toList());
-            String codes = list.stream().filter(obj -> sourceIds.contains(obj.getId())).map(PurchaseReturnOrderEntity::getCode).distinct().collect(Collectors.joining(","));
-            if (StringUtils.isNotBlank(codes)) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_REF_PO,codes);
-            }
-        }
         //判断单据是否审核完成
         String codes = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PurchaseReturnOrderEntity::getCode).collect(Collectors.joining(","));
         if (StringUtils.isNotBlank(codes)) {
@@ -1418,6 +1421,16 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         if (CollectionUtils.isEmpty(purchaseReturnOrderEntityList)) {
             return;
         }
+        List<String> ids = purchaseReturnOrderEntityList.stream().map(PurchaseReturnOrderEntity::getId).collect(Collectors.toList());
+        //判断是否已生成采购订单
+        List<PurchaseOrderEntity> poList = scmTaskFeign.listPoBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(poList)) {
+            List<String> sourceIds = poList.stream().map(PurchaseOrderEntity::getSourceId).collect(Collectors.toList());
+            String codes = purchaseReturnOrderEntityList.stream().filter(obj -> sourceIds.contains(obj.getId())).map(PurchaseReturnOrderEntity::getCode).distinct().collect(Collectors.joining(","));
+            if (StringUtils.isNotBlank(codes)) {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_REF_PO,codes);
+            }
+        }
         List<PurchaseReturnOrderEntity> returnList = purchaseReturnOrderEntityList
                 .stream()
                 .filter(obj -> StringUtils.isBlank(obj.getPurchaseOrderId()) && ReturnModeEnum.REPLENISHMENT.getCode().equals(obj.getReturnMode())
@@ -1449,6 +1462,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99008);
         }
+        //主体公司信息
+        List<BaseIdDTO.CodeDTO> companyCodeList = sysUserFeign.listAccountingCompanyByCodeList(Arrays.asList(companyCode));
+        if (CollectionUtils.isEmpty(companyCodeList)) {
+            throw new ServiceException(ApiError.ERROR_9014);
+        }
 
         for (PurchaseReturnOrderEntity entity : returnList) {
             PurchaseOrderDTO.AddDTO addDTO = new PurchaseOrderDTO.AddDTO();
@@ -1463,7 +1481,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 String deptId = departList.stream().filter(obj -> obj.getUserId().equals(entity.getPurchaseUserId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getDepartmentId())).orElse("");
                 addDTO.setPurchaseDeptId(deptId);
             }
-            addDTO.setPurchaseOrgId("1676922104164913154");
+            //采购组织
+            addDTO.setPurchaseOrgId(companyCodeList.get(0).getId());
             addDTO.setDeliveryWarehouseId("");
             //采购供应商信息
             PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();
