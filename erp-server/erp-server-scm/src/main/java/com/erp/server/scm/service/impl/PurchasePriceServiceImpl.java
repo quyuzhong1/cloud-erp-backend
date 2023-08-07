@@ -25,6 +25,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
@@ -776,7 +777,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     }
 
     @Override
-    public void importFile(MultipartFile excelFile, HttpServletResponse response) {
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         //用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         // 查询所有审核通过的产品信息
@@ -792,14 +793,15 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             EasyExcel.read(excelFile.getInputStream(), ImportPurchasePriceExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
             log.error("采购价目导入错误", e);
-            return;
+            return Boolean.FALSE;
         }
         List<ImportPurchasePriceExcelDTO> errorList = excelListener.getErrorList();
         if (errorList.size() > 0) {
             String fileName = "采购价目导入错误信息";
             ExcelUtil.export(fileName, "导入异常", errorList, ImportPurchasePriceExcelDTO.class, response);
-            return;
+            return Boolean.FALSE;
         }
+        return Boolean.TRUE;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -898,6 +900,27 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         } catch (Exception e) {
             throw new ServiceException(ApiError.Default);
         }
+    }
+
+    @Override
+    public Boolean disApprove(List<String> ids) {
+        List<PurchasePriceEntity> list = this.listByIds(ids);
+        long count = list.stream().filter(r -> !Objects.equals(ApproveStatusEnum.APPROVE, r.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98014);
+        }
+
+        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.APPROVE)).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.WAIT_SUBMIT);
+        if(result) {
+            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
+            //发送金蝶
+            list.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        }
+        return result;
     }
 
     /**

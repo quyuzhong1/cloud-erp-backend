@@ -168,7 +168,7 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @author zhangchunlin
      * @date 2023-08-03 18:00:00
      */
-    void importFile(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
     /**
      * 批量导入
@@ -181,4 +181,11 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @param response
      */
     void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 反审核
+     * @param ids
+     * @return
+     */
+    Boolean disApprove(List<String> ids);
 }
