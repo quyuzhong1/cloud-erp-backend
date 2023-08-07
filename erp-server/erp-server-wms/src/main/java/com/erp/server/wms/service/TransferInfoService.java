@@ -114,7 +114,7 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @param ids
      * @return Boolean
      */
-    Boolean disApprove(List<String> ids);
+    Boolean disApprove(List<String> ids, Boolean isPushKingDee);
     /**
      * @description: 取消流程
      * @author Will

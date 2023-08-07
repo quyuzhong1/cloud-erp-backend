@@ -1,5 +1,6 @@
 package com.erp.server.dmp.utils;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 
 import java.util.Iterator;
@@ -26,7 +27,7 @@ public class KingdeeUtils {
         String[] split = fieldKeys.split(",");
         Map<String, String> map = new LinkedHashMap();
         for (String val : split) {
-            map.put(val, null);
+            map.put(StrUtil.trim(val), null);
         }
         Integer indexSign = 0;
         Iterator<Map.Entry<String, String>> iterator = map.entrySet().iterator();
@@ -44,7 +45,7 @@ public class KingdeeUtils {
 
         String[] fieldKeyArray = fieldKeys.split(",");
         for (String val : fieldKeyArray) {
-            map.put(val, null);
+            map.put(StrUtil.trim(val), null);
         }
         Integer indexSign = 0;
         Iterator<Map.Entry<String, Object>> iterator = map.entrySet().iterator();
