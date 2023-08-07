@@ -1252,7 +1252,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
             obj.setReturnQty(returnQtyt);
             obj.setStockInQty(stockInQty);
-
+            obj.setTaxRateStr(MathUtil.multiply(obj.getTaxRate(),MathUtil.BigDecimal_100).toString().concat("%"));
 
             //是否是组合SKU
             if (CollectionUtils.isNotEmpty(bomChildrenList)) {

@@ -135,6 +135,16 @@ public class PurchaseOrderDTO implements Serializable {
         private BigDecimal taxPrice;
 
         /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 税率
+         */
+        private String taxRateStr;
+
+        /**
          * 货币符号
          */
         private String currencySymbol;
