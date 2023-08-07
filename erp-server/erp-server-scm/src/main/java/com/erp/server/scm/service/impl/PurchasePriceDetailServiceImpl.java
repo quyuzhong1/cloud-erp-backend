@@ -662,6 +662,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         return this.lambdaQuery().eq(PurchasePriceDetailEntity::getPurchasePriceId, mainId).list();
     }
 
+    @Override
+    public List<PurchasePriceDetailEntity> getBySupplierIdAndStatus(String supplierId, List<String> statusList) {
+        return this.baseMapper.getBySupplierAndStatus(supplierId, statusList);
+    }
+
 
     /**
      * 获取到删除的集合

@@ -169,4 +169,10 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @date 2023-08-03 18:00:00
      */
     void importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 批量导入
+     * @param handList
+     */
+    void batchImport(List<PurchasePriceDTO.ImportAddDTO> handList);
 }

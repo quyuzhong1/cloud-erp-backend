@@ -473,6 +473,11 @@ public class PurchasePriceDTO implements Serializable {
     public static class ImportAddDTO {
 
         /**
+         * 采购价目主表id（更新时使用）
+         */
+        private String id;
+
+        /**
          * 供应商id
          */
         private String supplierId;
@@ -515,7 +520,7 @@ public class PurchasePriceDTO implements Serializable {
          * 明细信息
          */
         @Valid
-        private List<PurchasePriceDetailDTO.ImportAddDTO> detailList;
+        private List<PurchasePriceDetailDTO.ImportSaveDTO> detailList;
 
 
 

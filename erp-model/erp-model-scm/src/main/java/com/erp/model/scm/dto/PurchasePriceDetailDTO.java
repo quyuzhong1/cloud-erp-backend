@@ -390,7 +390,9 @@ public class PurchasePriceDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ImportAddDTO {
+    public static class ImportSaveDTO {
+
+        private String id;
 
         /**
          * sku id
