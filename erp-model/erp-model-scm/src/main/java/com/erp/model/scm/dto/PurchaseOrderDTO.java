@@ -40,6 +40,16 @@ public class PurchaseOrderDTO implements Serializable {
         private String purchaseDetailId;
 
         /**
+         * 单据类型
+         */
+        private String type;
+
+        /**
+         * 单据类型名称
+         */
+        private String typeName;
+
+        /**
          * 采购单号
          */
         private String code;
@@ -253,6 +263,11 @@ public class PurchaseOrderDTO implements Serializable {
         private List<String> idList;
 
         /**
+         * 单据类型集合
+         */
+        private List<String> typeList;
+
+        /**
          * 采购订单编号
          */
         private String code;
@@ -326,6 +341,7 @@ public class PurchaseOrderDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+
         /**
          * 采购日期
          */
@@ -391,6 +407,12 @@ public class PurchaseOrderDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         /**
+         * 单据类型
+         */
+        @NotBlank(message = "单据类型不能为空")
+        private String type;
+
+        /**
          * 供应商信息
          */
         @Valid
@@ -439,6 +461,16 @@ public class PurchaseOrderDTO implements Serializable {
          * 单据编码
          */
         private String code;
+
+        /**
+         * 单据类型
+         */
+        private String type;
+
+        /**
+         * 单据类型名称
+         */
+        private String typeName;
 
         /**
          * 审核状态

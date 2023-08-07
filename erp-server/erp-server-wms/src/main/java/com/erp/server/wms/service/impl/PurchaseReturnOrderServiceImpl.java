@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
@@ -16,15 +17,17 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.ArrivalStatusEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PageListTypeEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.SysUserDTO;
@@ -597,7 +600,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     }
                 }
             }
-
+            //自动生成补货采购订单
+            autoAddPurchaseOrder(purchaseReturnOrderEntityList);
             // 更新库存信息
             updateInventoryTransCore(purchaseReturnOrderEntityList);
             //审核通过发送金蝶
@@ -1177,6 +1181,28 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         return errmsg.toString();
     }
 
+    @Override
+    public Boolean autoGeneratePurchaseOrder(BaseIdsDTO.IdsDTO dto) {
+        List<PurchaseReturnOrderEntity> list = this.listByIds(dto.getIds());
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_99008);
+        }
+        List<PurchaseOrderEntity> poList = scmTaskFeign.listPoBySourceIds(dto.getIds());
+        if (CollectionUtils.isNotEmpty(poList)) {
+            List<String> sourceIds = poList.stream().map(PurchaseOrderEntity::getSourceId).collect(Collectors.toList());
+            String codes = list.stream().filter(obj -> sourceIds.contains(obj.getId())).map(PurchaseReturnOrderEntity::getCode).distinct().collect(Collectors.joining(","));
+            if (StringUtils.isNotBlank(codes)) {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_REF_PO,codes);
+            }
+        }
+        List<PurchaseReturnOrderEntity> resultList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getPurchaseOrderId())).collect(Collectors.toList());
+        //下推采购订单
+        if (CollectionUtils.isEmpty(resultList)) {
+            autoAddPurchaseOrder(resultList);
+        }
+        return Boolean.TRUE;
+    }
+
     /**
      * 更新库存信息
      * @param list
@@ -1377,6 +1403,106 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         }
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.PURCHASE_RETURN_ORDER, unApproveIds);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+    }
+
+    /**
+     * @description: 自动生成
+     * @author Will
+     * @date: 2023/8/7 10:48
+     * @param purchaseReturnOrderEntityList
+     */
+    private void autoAddPurchaseOrder (List<PurchaseReturnOrderEntity> purchaseReturnOrderEntityList) {
+        if (CollectionUtils.isEmpty(purchaseReturnOrderEntityList)) {
+            return;
+        }
+        List<PurchaseReturnOrderEntity> returnList = purchaseReturnOrderEntityList.stream().filter(obj -> StringUtils.isBlank(obj.getPurchaseOrderId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(returnList)) {
+            return;
+        }
+        log.info("自动生成退货采购订单，退货单号 = {}",returnList.stream().map(PurchaseReturnOrderEntity::getCode).collect(Collectors.joining(",")));
+
+        //部门信息
+        List<String> purchaseUserIds = returnList.stream().filter(obj -> StringUtils.isNotBlank(obj.getPurchaseUserId())).map(PurchaseReturnOrderEntity::getPurchaseOrderId).collect(Collectors.toList());
+        List<SysDepartmentUserNumberDTO> departList = sysUserFeign.listDeptUserByUserIdList(purchaseUserIds);
+
+        //供应商信息
+        List<String> supplierIds = returnList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSupplierId())).map(PurchaseReturnOrderEntity::getSupplierId).collect(Collectors.toList());
+        List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIds);
+        if (CollectionUtils.isEmpty(supplierList)) {
+            log.error("未找到供应商信息，supplierIds = {} ",supplierIds);
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+        //供应商联系人信息
+        List<String> supplierContactIds = returnList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSupplierContactId())).map(PurchaseReturnOrderEntity::getSupplierContactId).collect(Collectors.toList());
+        List<SupplierContactEntity> supplierContactList = scmTaskFeign.listSupplierContactByIds(supplierContactIds);
+
+        //退货明细信息
+        List<String> mainIds = returnList.stream().map(PurchaseReturnOrderEntity::getId).collect(Collectors.toList());
+        List<PurchaseReturnOrderDetailEntity> detailList = purchaseReturnOrderDetailService.listByMainIds(mainIds);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99008);
+        }
+
+        for (PurchaseReturnOrderEntity entity : returnList) {
+            PurchaseOrderDTO.AddDTO addDTO = new PurchaseOrderDTO.AddDTO();
+            addDTO.setSourceId(entity.getId());
+            addDTO.setSourceCode(entity.getCode());
+            addDTO.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
+            addDTO.setType(PurchaseOrderTypeEnum.ENUM_RETURN.getCode());
+            addDTO.setPurchaseDate(LocalDate.now());
+            addDTO.setPurchaseUserId(entity.getPurchaseUserId());
+            //采购部门
+            if (CollectionUtils.isNotEmpty(departList)) {
+                String deptId = departList.stream().filter(obj -> obj.getUserId().equals(entity.getPurchaseUserId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getDepartmentId())).orElse("");
+                addDTO.setPurchaseDeptId(deptId);
+            }
+            addDTO.setPurchaseOrgId("1676922104164913154");
+            addDTO.setDeliveryWarehouseId("");
+            //采购供应商信息
+            PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();
+            supplierDTO.setSupplierId(entity.getSupplierId());
+            supplierDTO.setSupplierContactId(entity.getSupplierContactId());
+            //供应商信息
+            if (CollectionUtils.isNotEmpty(supplierList)) {
+                SupplierEntity supplierEntity = supplierList.stream().filter(obj -> obj.getId().equals(entity.getSupplierId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(supplierEntity)) {
+                    log.error("未找到供应商信息，supplierId = {} ",entity.getSupplierId());
+                    throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+                }
+                supplierDTO.setPaymentCondition(supplierEntity.getPaymentCondition());
+                supplierDTO.setPayMethodId(supplierEntity.getPayMethodId());
+                supplierDTO.setPayCurrency(supplierEntity.getPayCurrency());
+            }
+            //供应商联系人信息
+            if (CollectionUtils.isNotEmpty(supplierContactList)) {
+                SupplierContactEntity supplierContactEntity = supplierContactList.stream().filter(obj -> obj.getId().equals(entity.getSupplierContactId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(supplierContactEntity)) {
+                    //联系人电话
+                    supplierDTO.setContactTelNumber(supplierContactEntity.getTelNumber());
+                }
+            }
+            addDTO.setPurchaseOrderSupplierDTO(supplierDTO);
+            //明细信息
+            List<PurchaseReturnOrderDetailEntity> details = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(details)) {
+                log.error("未找到退货明细信息，mainId = {} ",entity.getId());
+                throw new ServiceException(ApiError.ERROR_99008);
+            }
+            List<PurchaseOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+            for (PurchaseReturnOrderDetailEntity detailEntity:details) {
+                PurchaseOrderDetailDTO.AddDTO addDetailDTO = new PurchaseOrderDetailDTO.AddDTO();
+                addDetailDTO.setSourceDetailId(detailEntity.getId());
+                addDetailDTO.setSkuId(detailEntity.getSkuId());
+                addDetailDTO.setSkuNo(detailEntity.getSkuNo());
+                addDetailDTO.setPurchaseQty(detailEntity.getReplenishQty());
+                addDetailDTO.setPlanDeliveryDate(null);
+                addDetailDTO.setRemark(detailEntity.getRemark());
+                addDetailList.add(addDetailDTO);
+            }
+            addDTO.setDetails(addDetailList);
+            //新增采购订单
+            scmTaskFeign.addPurchaseOrder(addDTO);
+        }
     }
 
 }
