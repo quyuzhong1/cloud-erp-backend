@@ -76,7 +76,7 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
     @Alias("F_ULZ_data_sources")
     private String fULZDataSources;
     @Alias("FISGENFORIOS")
-    private String fIsGenForIos;
+    private Boolean fIsGenForIos;
 
 
     private List<KingdeeReturnOrderItemEntity> itemEntityList;
