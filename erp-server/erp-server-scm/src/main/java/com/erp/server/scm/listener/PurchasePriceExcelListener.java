@@ -181,22 +181,26 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
 
         // 区间从
         String minQtyStr = excelDTO.getMinQty();
-        if(StrUtils.isNotEmpty(minQtyStr) && StrUtils.isInteger(minQtyStr)) {
-            int minQty = Integer.parseInt(minQtyStr);
-            if(minQty < 0) {
-                errorMsgList.add("区间从最小值错误");
+        if(StrUtils.isNotEmpty(minQtyStr)) {
+            if(StrUtils.isInteger(minQtyStr)) {
+                int minQty = Integer.parseInt(minQtyStr);
+                if(minQty < 0) {
+                    errorMsgList.add("区间从最小值错误");
+                }
+                detailDTO.setMinQty(minQty);
+            } else {
+                detailDTO.setMinQty(0);
             }
-            detailDTO.setMinQty(minQty);
-        } else {
-            detailDTO.setMinQty(0);
         }
         // 区间到
         String maxQtyStr = excelDTO.getMaxQty();
-        if(StrUtils.isNotEmpty(maxQtyStr) && StrUtils.isInteger(maxQtyStr)) {
-            int maxQty = Integer.parseInt(maxQtyStr);
-            detailDTO.setMaxQty(maxQty);
-        } else {
-            detailDTO.setMaxQty(9999999);
+        if(StrUtils.isNotEmpty(maxQtyStr)) {
+            if(StrUtils.isInteger(maxQtyStr)) {
+                int maxQty = Integer.parseInt(maxQtyStr);
+                detailDTO.setMaxQty(maxQty);
+            } else {
+                detailDTO.setMaxQty(9999999);
+            }
         }
         // 币制代码
         String currency = excelDTO.getCurrency();
@@ -215,8 +219,8 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
         String taxPriceStr = excelDTO.getTaxPrice();
         if(StrUtils.isNotEmpty(taxPriceStr) && isBigDecimal(taxPriceStr)) {
             BigDecimal taxPrice = new BigDecimal(taxPriceStr);
-            if(taxPrice.compareTo(BigDecimal.ZERO) < 0) {
-                errorMsgList.add("含税单价错误不能小于0");
+            if(taxPrice.compareTo(BigDecimal.ZERO) < 1) {
+                errorMsgList.add("含税单价错误不能小于等于0");
             } else {
                 detailDTO.setTaxPrice(taxPrice);
             }
@@ -251,66 +255,72 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
         detailDTO.setDisabled(Objects.equals(disabledStr, "停用"));
 
         // 验证 区间从和区间到
-        if(detailDTO.getMaxQty().intValue() == detailDTO.getMinQty().intValue()) {
+        if(Objects.nonNull(detailDTO.getMaxQty()) && Objects.nonNull(detailDTO.getMinQty())
+                && detailDTO.getMaxQty().intValue() == detailDTO.getMinQty().intValue()) {
             errorMsgList.add("区间从，区间到两个值不能相同");
         }
-        if(detailDTO.getMaxQty().intValue() < detailDTO.getMinQty().intValue()) {
+        if(Objects.nonNull(detailDTO.getMaxQty()) && Objects.nonNull(detailDTO.getMinQty())
+                  && detailDTO.getMaxQty().intValue() < detailDTO.getMinQty().intValue()) {
             errorMsgList.add("区间从值不能大于区间到值");
         }
 
         //根据供应商 获取到系统已有的区间
         if(StrUtils.isNotEmpty(addDTO.getSupplierId())) {
-            List<PurchasePriceDetailEntity> supplierPriceDetailList = priceDetailService.getBySupplierIdAndStatus(addDTO.getSupplierId(), CHECK_STATUS_LIST);
-            Map<String, List<PurchasePriceDetailEntity>> existPriceMap = supplierPriceDetailList.stream().collect(Collectors.groupingBy(PurchasePriceDetailEntity::getSkuId));
-            if(existPriceMap.containsKey(detailDTO.getSkuId())) {
-                int[] addRange = {detailDTO.getMinQty(), detailDTO.getMaxQty()};
-                List<PurchasePriceDetailEntity> existPriceList = existPriceMap.get(detailDTO.getSkuId());
-                List<String> detailIds = Lists.newArrayList();
-                for(PurchasePriceDetailEntity price : existPriceList) {
-                    int[] existRange = {price.getMinQty(), price.getMaxQty()};
-                    // 相同的SKU区间需要更新，区间一样可以更新，不算做区间交叉
-                    if(detailDTO.getMinQty().intValue() != price.getMinQty().intValue()
-                       || price.getMaxQty().intValue() != price.getMaxQty().intValue()) {
-                        if(NO_CROSS_STATUS_LIST.contains(price.getApproveStatus())) {
-                            boolean isCross = checkCross(addRange, existRange);
-                            if(isCross) {
+            if(Objects.nonNull(detailDTO.getMinQty()) && Objects.nonNull(detailDTO.getMaxQty())) {
+                List<PurchasePriceDetailEntity> supplierPriceDetailList = priceDetailService.getBySupplierIdAndStatus(addDTO.getSupplierId(), CHECK_STATUS_LIST);
+                Map<String, List<PurchasePriceDetailEntity>> existPriceMap = supplierPriceDetailList.stream().collect(Collectors.groupingBy(PurchasePriceDetailEntity::getSkuId));
+                if(existPriceMap.containsKey(detailDTO.getSkuId())) {
+                    int[] addRange = {detailDTO.getMinQty(), detailDTO.getMaxQty()};
+                    List<PurchasePriceDetailEntity> existPriceList = existPriceMap.get(detailDTO.getSkuId());
+                    List<String> detailIds = Lists.newArrayList();
+                    for(PurchasePriceDetailEntity price : existPriceList) {
+                        int[] existRange = {price.getMinQty(), price.getMaxQty()};
+                        // 相同的SKU区间需要更新，区间一样可以更新，不算做区间交叉
+                        if(detailDTO.getMinQty().intValue() != price.getMinQty().intValue()
+                                || price.getMaxQty().intValue() != price.getMaxQty().intValue()) {
+                            if(NO_CROSS_STATUS_LIST.contains(price.getApproveStatus())) {
+                                boolean isCross = checkCross(addRange, existRange);
+                                if(isCross) {
+                                    errorMsgList.add(StrUtil.format("区间存在重叠，系统已存在区间[{}, {}]", price.getMinQty(),price.getMaxQty() ));
+                                    break;
+                                }
+                            }
+                        } else {
+                            // 待提交可以区间相同
+                            if(!Objects.equals(price.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                                    && !Objects.equals(price.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus())) {
                                 errorMsgList.add(StrUtil.format("区间存在重叠，系统已存在区间[{}, {}]", price.getMinQty(),price.getMaxQty() ));
                                 break;
+                            } else {
+                                // 此处审核不通过，可以存在同区间的多个，会存在覆盖问题
+                                detailIds.add(price.getId());
                             }
                         }
-                    } else {
-                        // 待提交可以区间相同
-                        if(!Objects.equals(price.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-                           && !Objects.equals(price.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus())) {
-                            errorMsgList.add(StrUtil.format("区间存在重叠，系统已存在区间[{}, {}]", price.getMinQty(),price.getMaxQty() ));
-                            break;
-                        } else {
-                            // 此处审核不通过，可以存在同区间的多个，会存在覆盖问题
-                            detailIds.add(price.getId());
-                        }
                     }
-                }
-                if(CollUtil.isNotEmpty(detailIds)) {
-                    detailDTO.setIds(detailIds);
+                    if(CollUtil.isNotEmpty(detailIds)) {
+                        detailDTO.setIds(detailIds);
+                    }
                 }
             }
         }
 
         // 与该Excel已有的行做关联验证
         if(CollUtil.isNotEmpty(importList)) {
-            Map<String, List<ImportPurchasePriceExcelDTO>> importPurchaseMap = importList.stream().collect(Collectors.groupingBy(r->StrUtils.null2EmptyWithTrim(r.getSupplierName()) + "-" + StrUtils.null2EmptyWithTrim(r.getSkuNo())));
-            String checkKey = StrUtils.null2EmptyWithTrim(addDTO.getSupplierName()) + "-" + StrUtils.null2EmptyWithTrim(detailDTO.getSkuNo());
-            List<ImportPurchasePriceExcelDTO> importPriceList = importPurchaseMap.get(checkKey);
-            if(CollUtil.isNotEmpty(importPriceList)) {
-                for(ImportPurchasePriceExcelDTO price : importPriceList) {
-                    if(StrUtils.isInteger(price.getMinQty()) && StrUtils.isInteger(price.getMaxQty())
-                            && StrUtils.isInteger(excelDTO.getMinQty()) && StrUtils.isInteger(excelDTO.getMaxQty()) ) {
-                        int[] addRange = {Integer.parseInt(excelDTO.getMinQty()), Integer.parseInt(excelDTO.getMaxQty())};
-                        int[] existRange = {Integer.parseInt(price.getMinQty()), Integer.parseInt(price.getMaxQty())};
-                        boolean isCross = checkCross(addRange, existRange);
-                        if(isCross) {
-                            errorMsgList.add(StrUtil.format("区间存在重叠，导入Excel已存在区间[{}, {}]", price.getMinQty(),price.getMaxQty() ));
-                            break;
+            if(Objects.nonNull(detailDTO.getMinQty()) && Objects.nonNull(detailDTO.getMaxQty())) {
+                Map<String, List<ImportPurchasePriceExcelDTO>> importPurchaseMap = importList.stream().collect(Collectors.groupingBy(r->StrUtils.null2EmptyWithTrim(r.getSupplierName()) + "-" + StrUtils.null2EmptyWithTrim(r.getSkuNo())));
+                String checkKey = StrUtils.null2EmptyWithTrim(addDTO.getSupplierName()) + "-" + StrUtils.null2EmptyWithTrim(detailDTO.getSkuNo());
+                List<ImportPurchasePriceExcelDTO> importPriceList = importPurchaseMap.get(checkKey);
+                if(CollUtil.isNotEmpty(importPriceList)) {
+                    for(ImportPurchasePriceExcelDTO price : importPriceList) {
+                        if(StrUtils.isInteger(price.getMinQty()) && StrUtils.isInteger(price.getMaxQty())
+                                && StrUtils.isInteger(excelDTO.getMinQty()) && StrUtils.isInteger(excelDTO.getMaxQty()) ) {
+                            int[] addRange = {Integer.parseInt(excelDTO.getMinQty()), Integer.parseInt(excelDTO.getMaxQty())};
+                            int[] existRange = {Integer.parseInt(price.getMinQty()), Integer.parseInt(price.getMaxQty())};
+                            boolean isCross = checkCross(addRange, existRange);
+                            if(isCross) {
+                                errorMsgList.add(StrUtil.format("区间存在重叠，导入Excel已存在区间[{}, {}]", price.getMinQty(),price.getMaxQty() ));
+                                break;
+                            }
                         }
                     }
                 }
