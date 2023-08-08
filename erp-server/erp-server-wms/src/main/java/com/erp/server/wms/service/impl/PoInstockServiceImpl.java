@@ -1382,7 +1382,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                         .filter(obj -> obj.getSkuId().equals(subDetail.getSkuId()) && obj.getParentSkuId().equals(parentSubDetail.getSkuId()))
                         .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(null);
                 //子级采购数量
-                Integer childQty = subDetail.getQty() * quantity;
+                Integer childQty = subDetail.getQty();
                 //本次出库数量
                 Integer thisChildQty = parentInstockDetail.getStockInQty() * quantity;
 
