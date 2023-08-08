@@ -1256,6 +1256,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 if (count > 0) {
                     return;
                 }
+
                 PoInstockDTO.AddDTO addDTO = new PoInstockDTO.AddDTO();
                 addDTO.setSourceId(purchaseOrderEntity.getId());
                 addDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
@@ -1267,17 +1268,22 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 List<PoInstockDetailDTO.AddDTO> detailList = new ArrayList<>();
                 for (PurchaseOrderDetailEntity detailEntity : detailEntityList) {
                     PoInstockDetailDTO.AddDTO addDetailDTO = new PoInstockDetailDTO.AddDTO();
-
+                    //剩余入库数量
                     BaseDTO.QtyDTO qtyDTO = baseQtyList.stream().filter(obj -> obj.getId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
-                    if (ObjectUtils.isEmpty(qtyDTO) || MathUtil.ZERO.equals(qtyDTO.getQty())) {
+                    if (ObjectUtils.isEmpty(qtyDTO) || MathUtil.compareTo(MathUtil.ZERO,qtyDTO.getQty()) == MathUtil.ZERO) {
+                        continue;
+                    }
+                    //已下推入库明细数量
+                    Integer hasInstockQty = childPoInstockList.stream().filter(obj -> detailEntity.getId().equals(obj.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (MathUtil.compareTo(detailEntity.getPurchaseQty(),hasInstockQty) == MathUtil.ZERO) {
                         continue;
                     }
                     //本次入库数量
                     Integer thisInstockQty ;
-                    if (detailEntity.getPurchaseQty().intValue() >= qtyDTO.getQty()) {
+                    if (detailEntity.getPurchaseQty().intValue() - hasInstockQty >= qtyDTO.getQty()) {
                         thisInstockQty = qtyDTO.getQty();
                     } else {
-                        thisInstockQty = detailEntity.getPurchaseQty();
+                        thisInstockQty = detailEntity.getPurchaseQty() - hasInstockQty;
                     }
                     addDetailDTO.setStockInQty(thisInstockQty);
                     addDetailDTO.setSourceDetailId(detailEntity.getId());
