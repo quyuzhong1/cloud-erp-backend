@@ -12,6 +12,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -42,12 +43,17 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -363,10 +369,57 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     }
 
-
+    /**
+     * 撤销流程
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-08-08 18:08
+     */
     @Override
     public Boolean cancelProcess(List<String> ids) {
-        return null;
+        List<StocktakingTaskEntity> taskList = this.listByIds(ids);
+        ApproveStatusEnum ingStatus = ApproveStatusEnum.APPROVE_ING;
+        long count = taskList.stream().filter(s -> !ingStatus.equals(s.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        String userId = commonService.getUserInfo().getUid();
+        for (StocktakingTaskEntity taskEntity : taskList) {
+            handleCancelProcess(taskEntity, userId);
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 处理取消流程
+     *
+     * @param taskEntity
+     * @param userId
+     * @return void
+     * @author yl
+     * @date 2023-08-08 18:14
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void handleCancelProcess(StocktakingTaskEntity taskEntity, String userId) {
+        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setBusinessId(taskEntity.getId());
+        revokeDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
+        revokeDTO.setUserId(userId);
+        ApiResult<ProcessManagementDTO.RevokeResultDTO> apiResult = workflowFeign.revokeProcess(revokeDTO);
+        if (apiResult.isSuccess()) {
+            ApproveStatusEnum waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT;
+            taskEntity.setApproveStatus(waitSubmitStatus);
+            Boolean result = this.updateById(taskEntity);
+            if(result){
+                List<Pair<String, String>> pairList = Arrays.asList(taskEntity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+
+                operateLogService.batchAddModuleOperateLog("盘点任务单【%s】取消流程", ModuleTypeEnum.STOCKTAKING_TASK.getCode(), pairList, "取消流程操作");
+            }
+
+        }
     }
 
     @Override
@@ -431,6 +484,24 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-
+        String path = "classpath:excel/StocktakingTaskTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("盘点任务点 downloadTemplate  出错了 e==={}", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
     }
 }

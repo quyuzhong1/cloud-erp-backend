@@ -117,7 +117,6 @@ public class StocktakingTaskController extends BaseController {
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = stocktakingTaskService.approve(dto);
         return result ? success() : failure();
-
     }
 
     /**
