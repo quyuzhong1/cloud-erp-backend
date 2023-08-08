@@ -37,6 +37,7 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseListTypeEnum;
+import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -456,6 +457,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             if (ObjectUtils.isEmpty(entity)) {
                 throw new ServiceException(ApiError.ERROR_98016);
             }
+            addDTO.setType(PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode());
             addDTO.setPurchaseUserId(entity.getApproveUserId());
             addDTO.setPurchaseOrgId(value.get(0).getPurchaseOrgId());
             addDTO.setPurchaseDate(LocalDate.now());

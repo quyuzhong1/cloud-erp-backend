@@ -115,6 +115,12 @@ public class PurchasePriceDetailEntity extends BaseEntity<PurchasePriceDetailEnt
     @TableField("kingdee_detail_id")
     private String kingdeeDetailId;
 
+    /**
+     *  主单单据状态
+     */
+    @TableField(exist = false)
+    private String approveStatus;
+
     @Override
     public Serializable pkVal() {
         return null;

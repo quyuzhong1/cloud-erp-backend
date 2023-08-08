@@ -119,6 +119,9 @@
         <if test="params.dateList != null and params.dateList.size > 0">
             and t.trade_time >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > t.trade_time
         </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and t.bill_date >= #{params.billDateList[0]} and (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > t.bill_date
+        </if>
         <if test="params.hideUnApprove">
             and  t.is_unapproved = false
         </if>
@@ -207,6 +210,9 @@
         </if>
         <if test="params.dateList != null and params.dateList.size > 0">
             and t.trade_time >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > t.trade_time
+        </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and t.bill_date >= #{params.billDateList[0]} and (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > t.bill_date
         </if>
         <if test="params.hideUnApprove">
             and  t.is_unapproved = false

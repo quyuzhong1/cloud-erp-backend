@@ -14,10 +14,8 @@ import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.server.scm.service.PurchasePriceService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -231,5 +229,38 @@ public class PurchasePriceController extends BaseController {
         return success();
     }
 
+    /**
+     * 批量导入
+     */
+    @PostMapping("/import")
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = purchasePriceService.importFile(excelFile, response);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 下载模板
+     * @return
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        purchasePriceService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 反审核
+     */
+    @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:disApprove",
+            serviceClass = PurchasePriceService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchasePriceService.disApprove(dto.getIds());
+        return result ? success() : failure();
+    }
 
 }

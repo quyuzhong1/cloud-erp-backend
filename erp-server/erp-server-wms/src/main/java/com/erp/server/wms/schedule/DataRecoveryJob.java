@@ -24,6 +24,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.SoReturnInstockService;
+import com.erp.server.wms.service.TransferInfoService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +52,8 @@ public class DataRecoveryJob {
 
     @Resource
     private SoReturnInstockService soReturnInstockService;
+    @Resource
+    private TransferInfoService transferInfoService;
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -79,7 +82,9 @@ public class DataRecoveryJob {
             try {
                 if(StrUtil.isNotBlank(type) && "soReturnInstockService".equals(type)){
                     soReturnInstockService.disApprove(idsDTO.getIds(), Boolean.FALSE);
-                }else {
+                }else if(StrUtil.isNotBlank(type) && "transferInfoService".equals(type)){
+                    transferInfoService.disApprove(idsDTO.getIds(), Boolean.FALSE);
+                }else if(StrUtil.isNotBlank(type) && "soOutstockService".equals(type)){
                     soOutstockService.disApprove(idsDTO, Boolean.FALSE);
                 }
             } catch (Exception e) {

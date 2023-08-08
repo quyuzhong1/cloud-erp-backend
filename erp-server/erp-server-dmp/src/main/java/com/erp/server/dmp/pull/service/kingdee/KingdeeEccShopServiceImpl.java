@@ -228,7 +228,7 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeEccS
         //读取配置，初始化SDK
         LinkedList<String> queryFilters = new LinkedList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        queryFilters.add(StrUtil.format(" ((FModifyDate >= '{}' and FModifyDate <= '{}') or (FApproveDate >= '{}' and FApproveDate < '{}'))",sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime),sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime)));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FId,FNumber,FName,FSaleOrgId,FSaleOrgId.FNumber,FSaleOrgId.FName," +
                 "FCreateOrgId,FCreateOrgId.FNumber,FCreateOrgId.FName,FShopType,FShopName,FStartDate,FSettlementCurrency," +

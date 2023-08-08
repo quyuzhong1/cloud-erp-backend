@@ -25,6 +25,7 @@ import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
@@ -193,7 +194,10 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
     @Override
     public List<PurchaseOrderDetailEntity> listByPurchaseOrderId(String purchaseOrderId) {
-        return  lambdaQuery().eq(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderId).list();
+        return  lambdaQuery()
+                .eq(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderId)
+                .orderByAsc(PurchaseOrderDetailEntity::getId)
+                .list();
     }
 
     @Override
@@ -345,7 +349,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         }
 
         //采购日期不能大于预计交货日期
-        String skuNos = details.stream().filter(obj -> entity.getPurchaseDate().isAfter(obj.getPlanDeliveryDate())).map(PurchaseOrderDetailDTO.AddDTO::getSkuNo).collect(Collectors.joining(","));
+        String skuNos = details.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getPlanDeliveryDate()) && entity.getPurchaseDate().isAfter(obj.getPlanDeliveryDate())).map(PurchaseOrderDetailDTO.AddDTO::getSkuNo).collect(Collectors.joining(","));
         if (StringUtils.isNotBlank(skuNos)) {
             throw new ServiceException(ApiError.ERROR_PURCHASE_DATE,skuNos,entity.getPurchaseDate());
         }
@@ -374,9 +378,12 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
                 throw new ServiceException(new ApiResult(1,error));
             }
-            if (MathUtil.compareTo(taxPrice,addDTO.getTaxPrice()) != MathUtil.ZERO && StringUtils.isBlank(entity.getSubcontractType())) {
+            if (MathUtil.compareTo(taxPrice,addDTO.getTaxPrice()) != MathUtil.ZERO && PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType())) {
                 String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
                 throw new ServiceException(new ApiResult(1,error));
+            }
+            if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())) {
+                addDTO.setTaxPrice(taxPrice);
             }
             addDTO.setTaxRate(taxRate);
         }

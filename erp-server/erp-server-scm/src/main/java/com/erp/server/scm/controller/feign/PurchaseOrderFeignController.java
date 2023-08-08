@@ -190,6 +190,21 @@ public class PurchaseOrderFeignController {
         return supplierContactService.getById(supplierContactId);
     }
 
+    /**
+     * @description: 根据联系人ids查询供应商联系人信息
+     * @author Will
+     * @date: 2023/8/4 12:10
+     * @param supplierContactIds
+     * @return List<SupplierContactEntity>
+     */
+    @PostMapping("/listSupplierContactByIds")
+    public List<SupplierContactEntity> listSupplierContactByIds(@RequestBody List<String> supplierContactIds) {
+        if (CollectionUtils.isEmpty(supplierContactIds)) {
+            return Collections.emptyList();
+        }
+        return supplierContactService.listByIds(supplierContactIds);
+    }
+
 
     /**
      * 修改采购订单明细表
@@ -243,6 +258,19 @@ public class PurchaseOrderFeignController {
     }
 
     /**
+     * @description: 新增采购订单
+     * @author Will
+     * @date: 2023/8/4 14:07
+     * @param addDTO
+     * @return String
+     */
+    @PostMapping("/addPurchaseOrder")
+    public String addPurchaseOrder(@RequestBody PurchaseOrderDTO.AddDTO addDTO) {
+        return purchaseOrderService.add(addDTO);
+    }
+
+
+    /**
      * @description: 自动提交审核采购订单
      * @author Will
      * @date: 2023/6/15 18:50
@@ -263,6 +291,18 @@ public class PurchaseOrderFeignController {
     @PostMapping("/listPodBySourceDetailIds")
     public List<PurchaseOrderDetailEntity> listPodBySourceDetailIds(@RequestBody List<String> sourceDetailIds) {
         return purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
+    }
+
+    /**
+     * @description: 根据来源id查询采购订单数据
+     * @author Will
+     * @date: 2023/8/7 11:05
+     * @param sourceIds
+     * @return List<PurchaseOrderEntity>
+     */
+    @PostMapping("/listPoBySourceIds")
+    public List<PurchaseOrderEntity> listPoBySourceIds(@RequestBody List<String> sourceIds) {
+        return purchaseOrderService.listPoBySourceIds(sourceIds);
     }
 
     /**

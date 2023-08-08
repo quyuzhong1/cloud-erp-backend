@@ -223,6 +223,12 @@ public class PoInstockEntity extends BaseEntity<PoInstockEntity> {
     @TableField("sync_operate")
     private String syncOperate;
 
+    /**
+     * 是否是自动入库
+     */
+    @TableField("is_auto_instock")
+    private Boolean isAutoInstock;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

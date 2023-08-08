@@ -529,10 +529,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId, List<String> detailIds) {
-        List<String> statusList = new ArrayList<>(3);
+        List<String> statusList = new ArrayList<>(4);
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE.getStatus());
+        statusList.add(ApproveStatusEnum.REJECT.getStatus());
         List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList, detailIds);
         return list;
     }
@@ -660,6 +661,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             return Collections.emptyList();
         }
         return this.lambdaQuery().eq(PurchasePriceDetailEntity::getPurchasePriceId, mainId).list();
+    }
+
+    @Override
+    public List<PurchasePriceDetailEntity> getBySupplierIdAndStatus(String supplierId, List<String> statusList) {
+        return this.baseMapper.getBySupplierAndStatus(supplierId, statusList);
     }
 
 

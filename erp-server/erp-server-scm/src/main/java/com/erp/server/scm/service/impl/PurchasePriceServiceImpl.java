@@ -1,6 +1,8 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -22,10 +24,13 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
+import com.erp.model.scm.dto.excel.ImportPurchasePriceExcelDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceExportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
@@ -33,25 +38,34 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
+import com.erp.server.scm.listener.PurchasePriceExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceMapper;
 import com.erp.server.scm.service.*;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -769,7 +783,156 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         // 查询所有审核通过的产品信息
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        return null;
+        // 组织
+        List<BaseIdDTO> orgList = sysUserFeign.listAccountingCompany();
+        // 币制
+        List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
+        // 供应商
+        List<Map<String, Object>> supplierList = supplierService.listApproveSupplier();
+        PurchasePriceExcelListener excelListener = new PurchasePriceExcelListener(userList, skuList, currencyList, supplierList, orgList, priceDetailService, this);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), ImportPurchasePriceExcelDTO.class, excelListener).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("采购价目导入错误", e);
+            return Boolean.FALSE;
+        }
+        List<ImportPurchasePriceExcelDTO> errorList = excelListener.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "采购价目导入错误信息";
+            ExcelUtil.export(fileName, "导入异常", errorList, ImportPurchasePriceExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void batchImport(List<PurchasePriceDTO.ImportAddDTO> handList) {
+        if(CollUtil.isEmpty(handList)) {
+            return;
+        }
+        // 新增的采购价目信息
+        List<PurchasePriceEntity> addList = Lists.newArrayList();
+        // 新增采购价目明细信息
+        List<PurchasePriceDetailEntity> addDetailList = Lists.newArrayList();
+        // 修改的采购价目明细信息
+        List<PurchasePriceDetailEntity> updateDetailList = Lists.newArrayList();
+        for(PurchasePriceDTO.ImportAddDTO item : handList) {
+            PurchasePriceEntity purchasePriceEntity = new PurchasePriceEntity();
+            purchasePriceEntity.setSupplierId(item.getSupplierId());
+            purchasePriceEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+            purchasePriceEntity.setQuotedDate(item.getQuotedDate());
+            purchasePriceEntity.setPricingUserId(item.getPricingUserId());
+            purchasePriceEntity.setPricingUserName(item.getPricingUserName());
+            purchasePriceEntity.setPurchaseOrgId(item.getPurchaseOrgId());
+            purchasePriceEntity.setPurchaseOrgName(item.getPurchaseOrgName());
+            // 明细信息
+            List<PurchasePriceDetailDTO.ImportSaveDTO> detailList = item.getDetailList();
+            List<PurchasePriceDetailEntity> addItemList = Lists.newArrayList();
+            List<PurchasePriceDetailEntity> updateItemList = Lists.newArrayList();
+            // 此处需要过滤掉修改的明细
+            for(PurchasePriceDetailDTO.ImportSaveDTO detailItem : detailList) {
+                LocalDate expireDate = null;
+                if(Objects.nonNull(detailItem.getEffectiveDate())) {
+                    expireDate = detailItem.getEffectiveDate().plusDays(100);
+                }
+                BigDecimal taxRate = null;
+                if(Objects.nonNull(detailItem.getTaxRate())) {
+                    BigDecimal rate = detailItem.getTaxRate().divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
+                    taxRate = rate;
+                }
+                if(CollUtil.isNotEmpty(detailItem.getIds())) {
+                    for(String detailId : detailItem.getIds()) {
+                        PurchasePriceDetailEntity savePurchasePriceDetailEntity = new PurchasePriceDetailEntity();
+                        BeanMapper.copy(detailItem, savePurchasePriceDetailEntity);
+                        savePurchasePriceDetailEntity.setExpireDate(expireDate);
+                        savePurchasePriceDetailEntity.setTaxRate(taxRate);
+                        savePurchasePriceDetailEntity.setId(detailId);
+                        updateItemList.add(savePurchasePriceDetailEntity);
+                    }
+                } else {
+                    PurchasePriceDetailEntity savePurchasePriceDetailEntity = new PurchasePriceDetailEntity();
+                    BeanMapper.copy(detailItem, savePurchasePriceDetailEntity);
+                    savePurchasePriceDetailEntity.setExpireDate(expireDate);
+                    savePurchasePriceDetailEntity.setTaxRate(taxRate);
+                    addItemList.add(savePurchasePriceDetailEntity);
+                }
+            }
+            // 当该新增的主单有明细时才新增
+            if(CollUtil.isNotEmpty(addItemList)) {
+                //生成单号
+                String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGJM, BusinessNoTypeEnum.CODE_CGJM.getCode()));
+                purchasePriceEntity.setCode(code);
+                String id = IdWorker.getIdStr();
+                purchasePriceEntity.setId(id);
+                addList.add(purchasePriceEntity);
+                addItemList.stream().forEach(data->data.setPurchasePriceId(id));
+                addDetailList.addAll(addItemList);
+            }
+            if(CollUtil.isNotEmpty(updateItemList)) {
+                updateDetailList.addAll(updateItemList);
+            }
+        }
+        // 保存主单
+        if(CollUtil.isNotEmpty(addList)) {
+            super.saveBatch(addList);
+            List<Pair<String, String>> pairList = addList.stream().
+                    map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            String content = "导入采购价目信息[%s]";
+            batchAddModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), pairList, "新增操作");
+        }
+        // 保存采购价目明细信息
+        if(CollUtil.isNotEmpty(addDetailList)) {
+            priceDetailService.saveBatch(addDetailList);
+        }
+        if(CollUtil.isNotEmpty(updateDetailList)) {
+            for(PurchasePriceDetailEntity updateDetail : updateDetailList) {
+                priceDetailService.updateById(updateDetail);
+            }
+        }
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/purchasePriceTemplate.xlsx";
+        String excelName = "purchasePriceTemplate.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.Default);
+        }
+    }
+
+    @Override
+    public Boolean disApprove(List<String> ids) {
+        List<PurchasePriceEntity> list = this.listByIds(ids);
+        long count = list.stream().filter(r -> !Objects.equals(ApproveStatusEnum.APPROVE, r.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98014);
+        }
+
+        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.APPROVE)).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.WAIT_SUBMIT);
+        if(result) {
+            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
+            //发送金蝶
+            list.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        }
+        return result;
     }
 
     /**

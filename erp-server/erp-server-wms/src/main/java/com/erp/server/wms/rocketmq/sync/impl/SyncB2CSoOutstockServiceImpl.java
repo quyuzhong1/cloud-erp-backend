@@ -5,6 +5,8 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -30,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -140,11 +144,19 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setSourceType(sourceType);
         String warehouseOrgId = "";
         soOutstock.setWarehouseOrgId(warehouseOrgId);
+        LocalDate billDate = null;
+        String billDateStr = entity.getFDate();
+        if (StringUtils.isNotBlank(billDateStr)) {
+            LocalDateTime billDateTime = LocalDateUtil.strToLocalDateTime(billDateStr);
+            billDate = billDateTime.toLocalDate();
+        }
+        if (Objects.isNull(billDate)) {
+            billDate = LocalDate.now();
+        }
         // 出库日期
-        soOutstock.setBillDate(LocalDate.now());
+        soOutstock.setBillDate(billDate);
         String id = IdWorker.getIdStr();
         soOutstock.setId(id);
-        LocalDate now = LocalDate.now();
         List<SoOutstockDetailEntity> addDetailList = new ArrayList<>(kingdeeDetailList.size());
         List<InOutStockDTO> inOutStockList = new ArrayList<>();
         for (KingdeeDeliveryDetailItemEntity detail : kingdeeDetailList) {
@@ -193,7 +205,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 inOutStock.setSourceId(id);
                 inOutStock.setSourceDetailId(detailId);
                 inOutStock.setSourceType(sourceTypeEnum);
-                inOutStock.setBillDate(now);
+                inOutStock.setBillDate(billDate);
                 inOutStock.setQty(actualQty);
                 inOutStock.setSkuId(skuId);
                 inOutStock.setSkuNo(skuNo);
@@ -221,6 +233,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         result.setInventoryInOutStockRuleDTO(inventoryInOutStockRuleDTO);
         return result;
     }
+
 
 }
 

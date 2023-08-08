@@ -494,7 +494,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
+    public Boolean disApprove(List<String> ids, Boolean isPushKingDee) {
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);
         //已审核允许反审核
@@ -512,9 +512,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //回扣库存
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_INFO,ids);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-
-        //发送金蝶
-        list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        if(isPushKingDee){
+            //发送金蝶
+            list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        }
 
         //发送马帮（非马帮平台的才需要推送）
         // TODO 正式上线时需注释掉
