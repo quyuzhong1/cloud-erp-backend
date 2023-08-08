@@ -7,17 +7,14 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Arrays;
 
 /**
- * 盘点类型枚举
+ * 盘点方式枚举
  * @author Cloud
  */
-public enum StocktakingTypeEnum implements EnumMessage {
+public enum StocktakingMethodEnum implements EnumMessage {
 
 
-    by_Warehouse("byWarehouse", "按仓库盘点"),
-    by_Location("byLocation", "按仓位盘点"),
-    by_Sku("bySku", "按SKU盘点"),
-
-    ;
+    OPEN_COUNT("openCount", "明盘"),
+    BLIND_COUNT("blindCount", "盲盘");
 
     /**
      * 类型
@@ -30,7 +27,7 @@ public enum StocktakingTypeEnum implements EnumMessage {
      */
     private String name;
 
-    StocktakingTypeEnum(String code, String name) {
+    StocktakingMethodEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -45,8 +42,8 @@ public enum StocktakingTypeEnum implements EnumMessage {
         return name;
     }
 
-    public static StocktakingTypeEnum getByCode(String code) {
-        return Arrays.stream(StocktakingTypeEnum.values())
+    public static StocktakingMethodEnum getByCode(String code) {
+        return Arrays.stream(StocktakingMethodEnum.values())
                 .filter(item -> item.getCode().equals(code))
                 .findFirst()
                 .orElse(null);
