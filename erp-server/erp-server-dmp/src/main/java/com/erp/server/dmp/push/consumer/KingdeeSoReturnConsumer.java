@@ -57,12 +57,12 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_RETURNSTOCK.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
 //        queryFilters.add(String.format("FDocumentStatus = '%s'", "C"));
-        queryFilters.add(String.format("FBillNo = '%s'", "CGTH23070600017"));
-        queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'B','C','D'"));
+        queryFilters.add(String.format("FBillNo = '%s'", "XSTHD12791749"));
         String filterStr = String.join(" and ", queryFilters);
-
-
-        K3CloudApi client = new K3CloudApi();
+        String fieldKeys = "FBillNo,FID";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 2);
+        System.out.println(queryList);
+       /* K3CloudApi client = new K3CloudApi();
         JSONObject json = JSONUtil.parseObj("{ \"FBillTypeID\" :{ \"FNUMBER\" : \"XSTHD01_SYS\" },\n" +
                 "\"FStockOrgId\" :{ \"FNumber\" : \"113\" },\n" +
                 "\"FSaleOrgId\" :{ \"FNumber\" : \"112\" },\n" +
@@ -114,7 +114,7 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
             }
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
-        }
+        }*/
     }
 
     @Override
