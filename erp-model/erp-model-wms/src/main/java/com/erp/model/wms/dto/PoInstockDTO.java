@@ -299,6 +299,11 @@ public class PoInstockDTO implements Serializable {
         private String sourceType;
 
         /**
+         * 是否是自动入库
+         */
+        private Boolean isAutoInstock;
+
+        /**
          * 明细
          */
         @NotEmpty(message = "明细不能为空")
