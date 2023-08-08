@@ -670,12 +670,18 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Override
     public void updateDetail(PurchasePriceDetailEntity purchasePriceDetailEntity, PurchasePriceDetailEntity old) {
-        purchasePriceDetailEntity.setEffectiveDate(old.getEffectiveDate());
-        purchasePriceDetailEntity.setExpireDate(old.getExpireDate());
-        super.updateById(purchasePriceDetailEntity);
+        lambdaUpdate().set(PurchasePriceDetailEntity::getDeliveryDay, purchasePriceDetailEntity.getDeliveryDay())
+                .set(PurchasePriceDetailEntity::getMinQty, purchasePriceDetailEntity.getMinQty())
+                .set(PurchasePriceDetailEntity::getMaxQty, purchasePriceDetailEntity.getMaxQty())
+                .set(PurchasePriceDetailEntity::getCurrency, purchasePriceDetailEntity.getCurrency())
+                .set(PurchasePriceDetailEntity::getTaxPrice, purchasePriceDetailEntity.getTaxPrice())
+                .set(PurchasePriceDetailEntity::getTaxRate, purchasePriceDetailEntity.getTaxRate())
+                .set(PurchasePriceDetailEntity::getDisabled, purchasePriceDetailEntity.getDisabled())
+                .eq(PurchasePriceDetailEntity::getId, purchasePriceDetailEntity.getId())
+                .update();
 
         if (old != null) {
-            moduleOperateLogService.addModuleOperateLogByObj(old, purchasePriceDetailEntity, ModuleTypeEnum.PURCHASE_PRICE.getCode(), purchasePriceDetailEntity.getPurchasePriceId(), "", "");
+            moduleOperateLogService.addModuleOperateLogByObj(old, purchasePriceDetailEntity, ModuleTypeEnum.PURCHASE_PRICE.getCode(), old.getPurchasePriceId(), "", "");
         }
     }
 
