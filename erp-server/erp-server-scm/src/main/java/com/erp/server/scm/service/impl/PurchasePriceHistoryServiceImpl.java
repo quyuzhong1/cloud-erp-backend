@@ -3,9 +3,11 @@ package com.erp.server.scm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceHistoryEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.PurchasePriceHistoryMapper;
 import com.erp.server.scm.service.PurchasePriceHistoryService;
@@ -33,16 +35,22 @@ public class PurchasePriceHistoryServiceImpl extends SuperServiceImpl<PurchasePr
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
 
     @Override
     public List<PurchasePriceDetailDTO.HistoryDTO> getHistory(String priceDetailId) {
         List<PurchasePriceHistoryEntity> list = this.getByPriceDetailId(priceDetailId);
         BigDecimal hundred = new BigDecimal("100");
         List<PurchasePriceDetailDTO.HistoryDTO> resultList = BeanMapper.copyList(list, PurchasePriceDetailDTO.HistoryDTO.class);
+        List<String> skuIdList = resultList.stream().map(PurchasePriceDetailDTO.HistoryDTO::getSkuId).collect(Collectors.toList());
         List<String> currencyIdList = resultList.stream().map(PurchasePriceDetailDTO.HistoryDTO::getCurrency).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         //币种信息
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
         for (PurchasePriceDetailDTO.HistoryDTO item : resultList) {
+            String skuId = item.getSkuId();
             //币种
             String currency = item.getCurrency();
             BigDecimal taxRate = item.getTaxRate();
@@ -50,6 +58,10 @@ public class PurchasePriceHistoryServiceImpl extends SuperServiceImpl<PurchasePr
             String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
             item.setCurrencySymbol(currencySymbol);
+            String skuName = skuList.stream().filter(s -> skuId.equals(s.getSkuId())).findFirst().
+                    map(SkuVO::getSkuName).orElse(item.getProductName());
+            item.setProductName(skuName);
+
         }
         return resultList;
     }
