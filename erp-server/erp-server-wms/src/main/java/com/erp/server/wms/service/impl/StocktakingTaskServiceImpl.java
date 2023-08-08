@@ -27,7 +27,7 @@ import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.model.wms.entity.StocktakingTaskUserEntity;
 import com.erp.model.wms.enums.SeparateRuleEnum;
-import com.erp.model.wms.enums.StocktakingMethodEnum;
+import com.erp.model.wms.enums.StocktakingModeEnum;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -161,7 +161,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             SeparateRuleEnum separateRule = item.getSeparateRule();
             item.setSeparateRuleName(separateRule.getName());
             //盘点方式
-            StocktakingMethodEnum stocktakingMode = item.getStocktakingMode();
+            StocktakingModeEnum stocktakingMode = item.getStocktakingMode();
             item.setStocktakingModeName(stocktakingMode.getName());
             //盘点类型
             StocktakingTypeEnum itemStocktakingType = item.getStocktakingType();
@@ -271,7 +271,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
         }
         //盘点方式
-        StocktakingMethodEnum stocktakingMode = view.getStocktakingMode();
+        StocktakingModeEnum stocktakingMode = view.getStocktakingMode();
         view.setStocktakingModeName(stocktakingMode.getName());
         //盘点类型
         StocktakingTypeEnum stocktakingType = view.getStocktakingType();

@@ -4,7 +4,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.SeparateRuleEnum;
-import com.erp.model.wms.enums.StocktakingMethodEnum;
+import com.erp.model.wms.enums.StocktakingModeEnum;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -136,7 +136,7 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 盘点方式编码
          */
-        private StocktakingMethodEnum stocktakingMode;
+        private StocktakingModeEnum stocktakingMode;
 
         /**
          * 盘点方式名
@@ -251,7 +251,7 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 盘点方式编码
          */
-        private StocktakingMethodEnum stocktakingMode;
+        private StocktakingModeEnum stocktakingMode;
 
         /**
          * 盘点方式名
