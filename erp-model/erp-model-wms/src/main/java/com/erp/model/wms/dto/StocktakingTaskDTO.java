@@ -1,5 +1,7 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -49,7 +51,7 @@ public class StocktakingTaskDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO {
+    public static class PagingParamDTO extends SortDTO {
         /**
          * 盘点计划单号/盘点任务单号
          */
@@ -89,7 +91,7 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 创建人id
          */
-        private List<LocalDate> createUserId;
+        private List<String> createUserIdList;
 
         /**
          * 仓库
@@ -98,6 +100,8 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 标识
          */
+        @StateEnumValue(strValues = {"all", "waitSubmit", "waitApprove", "approveIng", "approve"}, message = "tab类型有误")
+        @NotBlank(message = "tab不能为空")
         private String tabFlag;
 
     }
@@ -179,6 +183,11 @@ public class StocktakingTaskDTO implements Serializable {
          * 仓库id
          */
         private String warehouseId;
+
+        /**
+         * 仓库名
+         */
+        private String warehouseName;
 
         /**
          * sku 统计数

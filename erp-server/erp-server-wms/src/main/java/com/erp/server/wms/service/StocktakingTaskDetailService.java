@@ -7,6 +7,7 @@ import com.common.business.service.SuperService;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -43,4 +44,20 @@ public interface StocktakingTaskDetailService extends SuperService<StocktakingTa
      * @return 
      */
     Boolean updateDetail(StocktakingTaskDetailDTO.UpdateDTO dto);
+
+    /**
+     * 根据仓库id 集合 获取到任务明细
+     * @param warehouseIdList
+     * @return
+     */
+    List<StocktakingTaskDetailEntity> listByWarehouseIds(List<String> warehouseIdList);
+
+    /**
+     * 根据主表id 获取到详情
+     * @author yl
+     * @date 2023-08-08 12:08
+     * @param mainIdList
+     * @return java.util.List<com.erp.model.wms.entity.StocktakingTaskDetailEntity>
+     */
+    List<StocktakingTaskDetailEntity> listBaseByMainIds(List<String> mainIdList);
 }

@@ -1,8 +1,14 @@
 package com.erp.server.wms.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +21,14 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface StocktakingTaskMapper extends BaseMapper<StocktakingTaskEntity> {
 
+    List<StocktakingTaskDTO.TabDTO> tabList(@Param("permissionSql") String permissionSql);
+
+    /**
+     * 分页获取
+     * @param query
+     * @param params
+     * @param tabList
+     * @return
+     */
+    IPage<StocktakingTaskDTO.PagingViewDTO> paging(Page query, @Param("params") StocktakingTaskDTO.PagingParamDTO params, @Param("tabList")List<String> tabList,@Param("mainIdList")List<String> mainIdList);
 }

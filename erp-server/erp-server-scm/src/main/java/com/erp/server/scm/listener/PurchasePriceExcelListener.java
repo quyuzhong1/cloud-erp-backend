@@ -73,6 +73,8 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
     private static final List<String> NO_CROSS_STATUS_LIST = Lists.newArrayList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus(), ApproveStatusEnum.APPROVE.getStatus(),
             ApproveStatusEnum.REJECT.getStatus());
 
+    private static final int MAX_QTY = 9999999;
+
 
     public PurchasePriceExcelListener(List<FindUserDTO> userList, List<SkuVO> skuList, List<DictCurrencyEntity> currencyList, List<Map<String, Object>> supplierList,
                                       List<BaseIdDTO> orgList, PurchasePriceDetailService priceDetailService, PurchasePriceService purchasePriceService) {
@@ -170,13 +172,17 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
 
         // 采购交期
         String deliveryDayStr = excelDTO.getDeliveryDay();
-        if(StrUtils.isNotEmpty(deliveryDayStr) && StrUtils.isInteger(deliveryDayStr)) {
-            Integer deliveryDay = Integer.parseInt(deliveryDayStr);
-            if(deliveryDay < 0) {
-                errorMsgList.add("采购交期不能小于0");
-            } else {
-                detailDTO.setDeliveryDay(deliveryDay);
+        if(StrUtils.isNotEmpty(deliveryDayStr)) {
+            if(StrUtils.isInteger(deliveryDayStr)) {
+                Integer deliveryDay = Integer.parseInt(deliveryDayStr);
+                if(deliveryDay < 0) {
+                    errorMsgList.add("采购交期不能小于0");
+                } else {
+                    detailDTO.setDeliveryDay(deliveryDay);
+                }
             }
+        } else {
+            detailDTO.setDeliveryDay(0);
         }
 
         // 区间从
@@ -189,18 +195,25 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
                 }
                 detailDTO.setMinQty(minQty);
             } else {
-                detailDTO.setMinQty(0);
+                detailDTO.setMinQty(null);
             }
+        } else {
+            detailDTO.setMinQty(0);
         }
         // 区间到
         String maxQtyStr = excelDTO.getMaxQty();
         if(StrUtils.isNotEmpty(maxQtyStr)) {
             if(StrUtils.isInteger(maxQtyStr)) {
                 int maxQty = Integer.parseInt(maxQtyStr);
+                if(maxQty > MAX_QTY) {
+                    errorMsgList.add("区间到最大值错误");
+                }
                 detailDTO.setMaxQty(maxQty);
             } else {
-                detailDTO.setMaxQty(9999999);
+                detailDTO.setMaxQty(null);
             }
+        } else {
+            detailDTO.setMaxQty(MAX_QTY);
         }
         // 币制代码
         String currency = excelDTO.getCurrency();

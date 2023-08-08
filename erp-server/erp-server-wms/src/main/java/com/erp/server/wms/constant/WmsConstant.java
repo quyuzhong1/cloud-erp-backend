@@ -48,4 +48,9 @@ public interface WmsConstant {
      */
     String QC_RESULT_HANDLE_MODE="returnSupplier";
 
+    /**
+     * 所有
+     */
+    String ALL = "all";
+
 }

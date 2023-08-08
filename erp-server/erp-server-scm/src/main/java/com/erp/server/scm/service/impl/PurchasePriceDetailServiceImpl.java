@@ -668,6 +668,23 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         return this.baseMapper.getBySupplierAndStatus(supplierId, statusList);
     }
 
+    @Override
+    public void updateDetail(PurchasePriceDetailEntity purchasePriceDetailEntity, PurchasePriceDetailEntity old) {
+        lambdaUpdate().set(PurchasePriceDetailEntity::getDeliveryDay, purchasePriceDetailEntity.getDeliveryDay())
+                .set(PurchasePriceDetailEntity::getMinQty, purchasePriceDetailEntity.getMinQty())
+                .set(PurchasePriceDetailEntity::getMaxQty, purchasePriceDetailEntity.getMaxQty())
+                .set(PurchasePriceDetailEntity::getCurrency, purchasePriceDetailEntity.getCurrency())
+                .set(PurchasePriceDetailEntity::getTaxPrice, purchasePriceDetailEntity.getTaxPrice())
+                .set(PurchasePriceDetailEntity::getTaxRate, purchasePriceDetailEntity.getTaxRate())
+                .set(PurchasePriceDetailEntity::getDisabled, purchasePriceDetailEntity.getDisabled())
+                .eq(PurchasePriceDetailEntity::getId, purchasePriceDetailEntity.getId())
+                .update();
+
+        if (old != null) {
+            moduleOperateLogService.addModuleOperateLogByObj(old, purchasePriceDetailEntity, ModuleTypeEnum.PURCHASE_PRICE.getCode(), old.getPurchasePriceId(), "", "");
+        }
+    }
+
 
     /**
      * 获取到删除的集合

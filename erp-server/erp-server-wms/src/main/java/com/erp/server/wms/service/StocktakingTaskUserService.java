@@ -3,6 +3,8 @@ package com.erp.server.wms.service;
 import com.erp.model.wms.entity.StocktakingTaskUserEntity;
 import com.common.business.service.SuperService;
 
+import java.util.List;
+
 /**
  * <p>
  * 盘点任务 盘点人表 服务类
@@ -13,4 +15,5 @@ import com.common.business.service.SuperService;
  */
 public interface StocktakingTaskUserService extends SuperService<StocktakingTaskUserEntity> {
 
+    List<StocktakingTaskUserEntity> listBaseByTaskIds(List<String> taskIdList);
 }
