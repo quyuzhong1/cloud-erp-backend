@@ -1,34 +1,47 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.ApproveType;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BillApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.R;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
+import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.model.wms.entity.StocktakingTaskUserEntity;
+import com.erp.model.wms.enums.SeparateRuleEnum;
+import com.erp.model.wms.enums.StocktakingMethodEnum;
+import com.erp.model.wms.enums.StocktakingStatusEnum;
+import com.erp.model.wms.enums.StocktakingTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
-import com.erp.server.wms.service.StocktakingTaskDetailService;
-import com.erp.server.wms.service.StocktakingTaskService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
-import com.erp.server.wms.service.StocktakingTaskUserService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -55,6 +68,14 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     private StocktakingTaskDetailService stocktakingTaskDetailService;
     @Resource
     private StocktakingTaskUserService stocktakingTaskUserService;
+    @Resource
+    private WorkflowFeign workflowFeign;
+
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private OperateLogService operateLogService;
 
 
     /**
@@ -72,34 +93,16 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         all.setTabFlag(WmsConstant.ALL);
         all.setCount(allCount);
         tabList.add(all);
-        // 待提交
-        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        StocktakingTaskDTO.TabDTO waitSubmit = new StocktakingTaskDTO.TabDTO();
-        waitSubmit.setTabFlag(waitSubmitStatus);
-        int waitSubmitCount = dbList.stream().filter(a -> waitSubmitStatus.equals(a.getTabFlag())).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        waitSubmit.setCount(waitSubmitCount);
-        tabList.add(waitSubmit);
-
-        //审核中
-        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
-        StocktakingTaskDTO.TabDTO waitApprove = new StocktakingTaskDTO.TabDTO();
-        waitApprove.setTabFlag(approveIngStatus);
-        int waitApproveCount = dbList.stream().filter(a -> approveIngStatus.equals(a.getTabFlag())).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        waitApprove.setCount(waitApproveCount);
-        tabList.add(waitApprove);
-
-        //审核通过
-        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        StocktakingTaskDTO.TabDTO approve = new StocktakingTaskDTO.TabDTO();
-        approve.setTabFlag(approveStatus);
-        int approveCount = dbList.stream().filter(a -> approveStatus.equals(a.getTabFlag())).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        approve.setCount(approveCount);
-        tabList.add(waitApprove);
+        for (ApproveStatusEnum approveStatus : ApproveStatusEnum.values()) {
+            String tabFlag = approveStatus.getStatus();
+            StocktakingTaskDTO.TabDTO tabDTO = new StocktakingTaskDTO.TabDTO();
+            tabDTO.setTabFlag(tabFlag);
+            int count = dbList.stream().filter(a -> tabFlag.equals(a.getTabFlag())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+            tabDTO.setCount(count);
+            tabList.add(tabDTO);
+        }
         return tabList;
-
     }
 
     /**
@@ -151,18 +154,21 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseByTaskIds(idList);
         for (StocktakingTaskDTO.PagingViewDTO item : list) {
             String id = item.getId();
-            String approveStatus = item.getApproveStatus();
-            String approveStatusName = ApproveStatusEnum.getName(approveStatus);
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            String approveStatusName = approveStatus.getName();
             item.setApproveStatusName(approveStatusName);
             //分担规则
-            String separateRule = item.getSeparateRule();
+            SeparateRuleEnum separateRule = item.getSeparateRule();
+            item.setSeparateRuleName(separateRule.getName());
             //盘点方式
-            String stocktakingMode = item.getStocktakingMode();
+            StocktakingMethodEnum stocktakingMode = item.getStocktakingMode();
+            item.setStocktakingModeName(stocktakingMode.getName());
             //盘点类型
-            String itemStocktakingType = item.getStocktakingType();
+            StocktakingTypeEnum itemStocktakingType = item.getStocktakingType();
+            item.setStocktakingTypeName(itemStocktakingType.getName());
             //盘点状态
-            String stocktakingStatus = item.getStocktakingStatus();
-
+            StocktakingStatusEnum stocktakingStatus = item.getStocktakingStatus();
+            item.setStocktakingStatusName(stocktakingStatus.name());
             //盘点人
             String stocktakingUserName = taskUserList.stream().filter(t -> id.equals(t.getStocktakingTaskId())).
                     map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
@@ -203,17 +209,42 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
         List<Pair<String, String>> rejectPairList = taskList.stream().filter(t -> rejectStatus.equals(t.getApproveStatus())).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-
+        //改状态
         Boolean result = this.updateApproveStatus(taskList, ingStatus);
+        if (result) {
+            //添加日志
+            String content = String.format("状态由[%s]变更为[%s]", BillApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), pairList, "状态变更");
+            //审核不通过
+            String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            operateLogService.batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), rejectPairList, "状态变更");
+        }
+        return result;
 
-        return null;
     }
 
     /**
      * 启动流程
+     *
      * @param taskList
      */
     public void startProcess(List<StocktakingTaskEntity> taskList) {
+        ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
+        String userId = commonService.getUserInfo().getUid();
+        taskList.forEach(obj -> {
+            ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+            startDTO.setBusinessId(obj.getId());
+            startDTO.setBusinessCode(obj.getCode());
+            startDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_TASK.getCode());
+            startDTO.setBusinessName(obj.getCode());
+            startDTO.setUserId(userId);
+            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            resultList.add(startDTO);
+        });
+        ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
+        if (!listApiResult.isSuccess()) {
+            throw new ServiceException(listApiResult.getMsg());
+        }
     }
 
     /**
@@ -224,18 +255,114 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
      * @return
      */
     public Boolean updateApproveStatus(List<StocktakingTaskEntity> taskList, ApproveStatusEnum statusEnum) {
+        if (CollectionUtils.isNotEmpty(taskList)) {
+            for (StocktakingTaskEntity item : taskList) {
+                item.setApproveStatus(statusEnum);
+            }
+            return this.updateBatchById(taskList);
+        }
         return Boolean.TRUE;
     }
 
     @Override
     public StocktakingTaskDTO.ViewDTO view(String id) {
-        return null;
+        StocktakingTaskDTO.ViewDTO view = baseMapper.getViewById(id);
+        if (Objects.isNull(view)) {
+            throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
+        }
+        //盘点方式
+        StocktakingMethodEnum stocktakingMode = view.getStocktakingMode();
+        view.setStocktakingModeName(stocktakingMode.getName());
+        //盘点类型
+        StocktakingTypeEnum stocktakingType = view.getStocktakingType();
+        view.setStocktakingTypeName(stocktakingType.getName());
+        //审核状态
+        ApproveStatusEnum approveStatus = view.getApproveStatus();
+        view.setApproveStatusName(approveStatus.getName());
+
+        //分单规则
+        SeparateRuleEnum separateRule = view.getSeparateRule();
+        view.setSeparateRuleName(separateRule.getName());
+        //盘点状态
+        StocktakingStatusEnum stocktakingStatus = view.getStocktakingStatus();
+        view.setApproveStatusName(stocktakingStatus.getName());
+
+        //盘点人信息
+        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseByTaskIds(Arrays.asList(id));
+        //盘点人
+        String stocktakingUserName = taskUserList.stream().filter(t -> id.equals(t.getStocktakingTaskId())).
+                map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
+        view.setStocktakingUserName(stocktakingUserName);
+        //获取到对应的详情
+        List<StocktakingTaskDetailDTO.ViewDTO> detailList = stocktakingTaskDetailService.listByMainId(id);
+        view.setDetailList(detailList);
+        return view;
     }
 
     @Override
     public Boolean approve(BaseApproveParamDTO dto) {
-        return null;
+        List<String> ids = dto.getIds();
+        List<StocktakingTaskEntity> taskList = this.listByIds(ids);
+        ApproveStatusEnum ingStatus = ApproveStatusEnum.APPROVE_ING;
+        long count = taskList.stream().filter(s -> !ingStatus.equals(s.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        //意见
+        String comment = dto.getComment();
+        //审核类型
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+        String approveUserId = commonService.getUserInfo().getUid();
+        for (StocktakingTaskEntity taskEntity : taskList) {
+            this.handleApproveProcess(taskEntity, comment, approveType, approveUserId);
+        }
+
+        return Boolean.TRUE;
     }
+
+    /**
+     * 处理流程
+     *
+     * @param taskEntity
+     * @param comment
+     * @param approveType
+     * @param approveUserId
+     * @return void
+     * @author yl
+     * @date 2023-08-08 17:22
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void handleApproveProcess(StocktakingTaskEntity taskEntity, String comment, ApproveTypeEnum approveType, String approveUserId) {
+        ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(taskEntity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_TASK.getCode());
+        approveDTO.setApproveType(approveType);
+        approveDTO.setComment(comment);
+        approveDTO.setUserId(approveUserId);
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(taskEntity));
+        resultList.add(approveDTO);
+        ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
+        //审核通过
+        ApproveStatusEnum statusEnum = ApproveStatusEnum.APPROVE;
+        if (listApiResult.isSuccess()) {
+            if (ApproveType.REJECT.equals(approveType.getStatus())) {
+                statusEnum = ApproveStatusEnum.REJECT;
+            }
+        }
+        List<StocktakingTaskEntity> list = new ArrayList<>(1);
+        list.add(taskEntity);
+        Boolean result = this.updateApproveStatus(list, statusEnum);
+        if (result) {
+            //添加日志
+            List<Pair<String, String>> pairList = list.stream().
+                    map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个盘点任务单", approveType.getName()).concat("【%s】").concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.STOCKTAKING_TASK.getCode(), pairList, "审核操作");
+        }
+
+    }
+
 
     @Override
     public Boolean cancelProcess(List<String> ids) {

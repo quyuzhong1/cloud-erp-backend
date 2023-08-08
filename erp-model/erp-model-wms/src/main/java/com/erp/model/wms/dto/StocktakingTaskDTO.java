@@ -1,7 +1,12 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.SeparateRuleEnum;
+import com.erp.model.wms.enums.StocktakingMethodEnum;
+import com.erp.model.wms.enums.StocktakingStatusEnum;
+import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -131,7 +136,7 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 盘点方式编码
          */
-        private String stocktakingMode;
+        private StocktakingMethodEnum stocktakingMode;
 
         /**
          * 盘点方式名
@@ -141,7 +146,7 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 盘点类型
          */
-        private String stocktakingType;
+        private StocktakingTypeEnum stocktakingType;
 
         /**
          * 盘点类型名
@@ -151,7 +156,7 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 单据状态编码
          */
-        private String approveStatus;
+        private ApproveStatusEnum approveStatus;
 
         /**
          * 单据状态名
@@ -161,7 +166,7 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 分单规则编码
          */
-        private String separateRule;
+        private SeparateRuleEnum separateRule;
 
         /**
          * 分单规则编码名
@@ -171,7 +176,7 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 盘点状态
          */
-        private String stocktakingStatus;
+        private StocktakingStatusEnum stocktakingStatus;
 
 
         /**
@@ -246,7 +251,7 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 盘点方式编码
          */
-        private String stocktakingMode;
+        private StocktakingMethodEnum stocktakingMode;
 
         /**
          * 盘点方式名
@@ -256,7 +261,7 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 盘点类型
          */
-        private String stocktakingType;
+        private StocktakingTypeEnum stocktakingType;
 
         /**
          * 盘点类型名
@@ -266,7 +271,7 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 单据状态编码
          */
-        private String approveStatus;
+        private ApproveStatusEnum approveStatus;
 
         /**
          * 单据状态名
@@ -276,7 +281,7 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 分单规则编码
          */
-        private String separateRule;
+        private SeparateRuleEnum separateRule;
 
         /**
          * 分单规则编码名
@@ -286,7 +291,7 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 盘点状态
          */
-        private String stocktakingStatus;
+        private StocktakingStatusEnum stocktakingStatus;
 
 
         /**

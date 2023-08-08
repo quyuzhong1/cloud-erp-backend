@@ -1,18 +1,25 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.erp.server.wms.mapper.StocktakingTaskDetailMapper;
+import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.StocktakingTaskDetailService;
 import com.common.business.service.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -25,6 +32,8 @@ import java.util.List;
 @Service
 public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<StocktakingTaskDetailMapper, StocktakingTaskDetailEntity> implements StocktakingTaskDetailService {
 
+    @Resource
+    private ProductDetailService productDetailService;
 
     @Override
     public Boolean exportExcel(BaseIdDTO dto, HttpServletResponse response) {
@@ -66,10 +75,11 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
     /**
      * 根据主表id 获取到详情
-     * @author yl
-     * @date 2023-08-08 12:08
+     *
      * @param mainIdList
      * @return java.util.List<com.erp.model.wms.entity.StocktakingTaskDetailEntity>
+     * @author yl
+     * @date 2023-08-08 12:08
      */
     @Override
     public List<StocktakingTaskDetailEntity> listBaseByMainIds(List<String> mainIdList) {
@@ -77,5 +87,28 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(StocktakingTaskDetailEntity::getMainId, mainIdList).list();
+    }
+
+    /**
+     * 获取到对应的详情
+     *
+     * @param mainId
+     * @return java.util.List<com.erp.model.wms.dto.StocktakingTaskDetailDTO.ViewDTO>
+     * @author yl
+     * @date 2023-08-08 16:48
+     */
+    @Override
+    public List<StocktakingTaskDetailDTO.ViewDTO> listByMainId(String mainId) {
+        List<StocktakingTaskDetailEntity> dbList = this.listBaseByMainIds(Arrays.asList(mainId));
+        List<StocktakingTaskDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, StocktakingTaskDetailDTO.ViewDTO.class);
+        List<String> skuIdList = resultList.stream().map(StocktakingTaskDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = productDetailService.ListProductDetailByIds(skuIdList);
+        for (StocktakingTaskDetailDTO.ViewDTO item : resultList) {
+            String skuId = item.getSkuId();
+            String skuName = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().
+                    map(ProductDetailEntity::getName).orElse("");
+            item.setSkuName(skuName);
+        }
+        return resultList;
     }
 }

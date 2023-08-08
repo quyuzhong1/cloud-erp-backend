@@ -228,5 +228,23 @@
 
     </select>
 
+    <select id="getViewById" resultType="com.erp.model.wms.dto.StocktakingTaskDTO$ViewDTO">
+        SELECT
+          st.id,
+          st.code,
+          st.source_code,
+          st.source_id,
+          st.approve_status,
+          st.create_time,
+          st.update_user_name,
+          sp.mode AS stocktakingMode,
+          sp.type AS stocktakingType,
+          sp.status AS stocktakingStatus,
+        FROM stocktaking_task st
+          LEFT JOIN stocktaking_plan sp
+          ON st.source_id=sp.id AND sp.is_deleted=FALSE
+          WHERE st.is_deleted=FALSE AND st.id=#{id}
+    </select>
+
 
 </mapper>

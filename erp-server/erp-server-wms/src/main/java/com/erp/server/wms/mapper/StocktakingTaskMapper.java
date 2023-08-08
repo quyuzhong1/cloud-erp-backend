@@ -41,4 +41,12 @@ public interface StocktakingTaskMapper extends BaseMapper<StocktakingTaskEntity>
      * @return java.util.List<com.erp.model.wms.dto.StocktakingTaskDTO.PagingViewDTO>
      */
     List<StocktakingTaskDTO.PagingViewDTO> listExport(@Param("params") StocktakingTaskDTO.ExportDTO params, @Param("tabList")List<String> tabList, @Param("mainIdList")List<String> mainIdList);
+    /**
+     * 任务详情
+     * @author yl
+     * @date 2023-08-08 16:29
+     * @param id
+     * @return com.erp.model.wms.dto.StocktakingTaskDTO.ViewDTO
+     */
+    StocktakingTaskDTO.ViewDTO getViewById(@Param("id") String id);
 }

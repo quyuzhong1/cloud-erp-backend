@@ -38,6 +38,7 @@ public enum ModuleTypeEnum {
     TRANSFER_IN("27", "分步式调入单"),
     SUBCONTRACT_ORDER("28", "委外订单"),
     SUBCONTRACT_CHANGE("29", "委外变更单"),
+    STOCKTAKING_TASK("30", "盘点任务单"),
     ;
 
 
