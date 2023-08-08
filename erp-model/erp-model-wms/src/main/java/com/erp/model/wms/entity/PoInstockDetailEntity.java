@@ -104,7 +104,7 @@ public class PoInstockDetailEntity extends BaseEntity<PoInstockDetailEntity> {
     /**
      * 是否是自动入库
      */
-    @TableField("is_auto_instock")
+    @TableField(exist = false)
     private Boolean isAutoInstock;
 
     @TableField(exist = false)
