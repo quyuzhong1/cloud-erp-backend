@@ -1252,7 +1252,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
 
                 //已存在下推过入库单的采购订单则无需自动下推
-                long count = childPoInstockList.stream().filter(obj -> thisChildPodIds.contains(obj.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
+                long count = childPoInstockList.stream().filter(obj -> thisChildPodIds.contains(obj.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus()) && !obj.getIsAutoInstock()).count();
                 if (count > 0) {
                     return;
                 }
@@ -1263,6 +1263,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 addDTO.setDeliveryWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
                 addDTO.setStockInUserId(userInfo.getUid());
                 addDTO.setStockInDate(poInstockEntity.getStockInDate());
+                addDTO.setIsAutoInstock(Boolean.TRUE);
                 List<PoInstockDetailDTO.AddDTO> detailList = new ArrayList<>();
                 for (PurchaseOrderDetailEntity detailEntity : detailEntityList) {
                     PoInstockDetailDTO.AddDTO addDetailDTO = new PoInstockDetailDTO.AddDTO();
