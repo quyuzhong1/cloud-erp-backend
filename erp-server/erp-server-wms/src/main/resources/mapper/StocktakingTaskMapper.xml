@@ -112,7 +112,119 @@
                 #{createUserId}
             </foreach>
         </if>
-
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        st.id DESC
+    </select>
+    <select id="listExport" resultType="com.erp.model.wms.dto.StocktakingTaskDTO$PagingViewDTO">
+        SELECT
+          st.id,
+          st.code,
+          st.source_code,
+          st.source_id,
+          st.approve_status,
+          st.create_time,
+          st.update_user_name,
+          sp.mode AS stocktakingMode,
+          sp.type AS stocktakingType,
+          sp.status AS stocktakingStatus,
+        FROM stocktaking_task st
+          LEFT JOIN stocktaking_plan sp
+          ON st.source_id=sp.id AND sp.is_deleted=FALSE
+        WHERE st.is_deleted=FALSE
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0">
+                AND st.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="tabList!=null and tabList.size>0">
+                    AND st.approve_status IN
+                    <foreach collection="tabList" item="tab" open="(" separator="," close=")">
+                        #{tab}
+                    </foreach>
+                </if>
+                <if test="params.code !=null and params.code!=''">
+                    AND (
+                    st.code ILIKE concat('%', #{params.code} ,'%') OR
+                    sp.code ILIKE concat('%', #{params.code} ,'%') OR
+                    )
+                </if>
+                <if test="params.mainIdList !=null and params.mainIdList.size>0">
+                    AND st.id IN
+                    <foreach collection="params.mainIdList" item="mainId" open="(" separator="," close=")">
+                        #{mainId}
+                    </foreach>
+                </if>
+                <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
+                    AND st.approve_status IN
+                    <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
+                        #{approveStatus}
+                    </foreach>
+                </if>
+                /*盘点状态*/
+                <if test="params.stocktakingStatusList !=null and params.stocktakingStatusList.size>0">
+                    AND sp.status IN
+                    <foreach collection="params.stocktakingStatusList" item="status" open="(" separator="," close=")">
+                        #{status}
+                    </foreach>
+                </if>
+                /*盘点方式*/
+                <if test="params.stocktakingModeList !=null and params.stocktakingModeList.size>0">
+                    AND sp.mode IN
+                    <foreach collection="params.stocktakingModeList" item="mode" open="(" separator="," close=")">
+                        #{mode}
+                    </foreach>
+                </if>
+                /*盘点类型*/
+                <if test="params.stocktakingTypeList !=null and params.stocktakingTypeList.size>0">
+                    AND sp.type IN
+                    <foreach collection="params.stocktakingTypeList" item="type" open="(" separator="," close=")">
+                        #{type}
+                    </foreach>
+                </if>
+                /*分单规则 */
+                <if test="params.separateRuleList !=null and params.separateRuleList.size>0">
+                    AND sp.separate_rule IN
+                    <foreach collection="params.separateRuleList" item="separateRule" open="(" separator="," close=")">
+                        #{separateRule}
+                    </foreach>
+                </if>
+                /*创建时间 */
+                <if test="params.createTimeList !=null and params.createTimeList.size>0">
+                    AND st.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > st.create_time
+                </if>
+                /*创建人 */
+                <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+                    AND st.create_user_id IN
+                    <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                        #{createUserId}
+                    </foreach>
+                </if>
+                <!--权限-->
+                <if test="params.permissionSql!=null and params.permissionSql!=''">
+                    ${params.permissionSql}
+                </if>
+            </otherwise>
+        </choose>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        st.id DESC
 
     </select>
 

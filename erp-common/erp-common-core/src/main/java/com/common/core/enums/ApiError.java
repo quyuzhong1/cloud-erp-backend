@@ -691,7 +691,8 @@ public enum ApiError implements Serializable {
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
     ERROR_PURCHASE_RETURN_REF_PO_APPROVE(99087,"采购退货单【{}】未审核完成，不支持下推采购订单"),
-
+    ERROR_BILL_NOT_EXIST(99088,"单据不存在"),
+    ERROR_99089(99089,"只有待提交的单据支持分配盘点人"),
 
 
     /**

@@ -179,10 +179,7 @@ public class StocktakingTaskDTO implements Serializable {
          */
         private String stocktakingStatusName;
 
-        /**
-         * 仓库id
-         */
-        private String warehouseId;
+
 
         /**
          * 仓库名
@@ -209,6 +206,16 @@ public class StocktakingTaskDTO implements Serializable {
          * 盘点人
          */
         private String stocktakingUserName;
+
+        /**
+         * 待审核人
+         */
+        private String waitApproveUserName;
+
+        /**
+         * 最新审核人
+         */
+        private String approveUserName;
 
 
     }

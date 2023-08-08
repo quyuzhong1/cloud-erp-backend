@@ -138,6 +138,12 @@ public class StocktakingTaskController extends BaseController {
         return result ? success() : failure();
     }
 
+
+    /**
+     * 分配盘点人
+     * @param dto
+     * @return
+     */
     @PostMapping("/assignUser")
     public ApiResult assignStocktakingUser(@RequestBody @Validated StocktakingTaskDTO.AssignUserDTO dto){
         Boolean result = stocktakingTaskService.assignUser(dto);
