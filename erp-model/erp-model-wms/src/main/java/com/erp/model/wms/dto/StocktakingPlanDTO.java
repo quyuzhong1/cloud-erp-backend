@@ -36,7 +36,7 @@ public class StocktakingPlanDTO implements Serializable {
          /**
          * 类型
          */
-         private String searchType;
+         private String tabFlag;
 
          /**
          * 数量
@@ -54,7 +54,7 @@ public class StocktakingPlanDTO implements Serializable {
          /**
          * 搜索类型
          */
-         private String  searchType;
+         private String  tabFlag;
 
      }
     /**
