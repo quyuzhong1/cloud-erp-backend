@@ -68,7 +68,7 @@ public class ${table.dtoName} implements Serializable {
          /**
          * 类型
          */
-         private String searchType;
+         private String tabFlag;
 
          /**
          * 数量
@@ -88,7 +88,7 @@ public class ${table.dtoName} implements Serializable {
          /**
          * 搜索类型
          */
-         private String  searchType;
+         private String  tabFlag;
 
      }
      </#if>
