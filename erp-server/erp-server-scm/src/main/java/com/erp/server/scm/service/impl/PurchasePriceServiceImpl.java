@@ -886,8 +886,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             priceDetailService.saveBatch(addDetailList);
         }
         if(CollUtil.isNotEmpty(updateDetailList)) {
+            List<String> detailIds = updateDetailList.stream().map(PurchasePriceDetailEntity::getId).distinct().collect(Collectors.toList());
+            List<PurchasePriceDetailEntity> detailList = priceDetailService.listByIds(detailIds);
             for(PurchasePriceDetailEntity updateDetail : updateDetailList) {
-                priceDetailService.updateById(updateDetail);
+                PurchasePriceDetailEntity old = detailList.stream().filter(r -> Objects.equals(r.getId(), updateDetail.getId())).findFirst().orElse(null);
+                priceDetailService.updateDetail(updateDetail, old);
             }
         }
     }
