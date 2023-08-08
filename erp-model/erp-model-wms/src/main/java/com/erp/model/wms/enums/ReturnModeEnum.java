@@ -6,8 +6,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ReturnModeEnum implements EnumMessage {
 
-    DEDUCTION("deduction","退货扣款"),
-    REPLENISHMENT("replenishment","退货补货");
+    DEDUCTION("deduction","退货扣款", "B"),
+    REPLENISHMENT("replenishment","退货补货", "A");
 
     /**
      * 类型
@@ -19,11 +19,16 @@ public enum ReturnModeEnum implements EnumMessage {
      * 名称
      */
     private String name;
+    /**
+     * 金蝶编号
+     */
+    private String kingdeeCode;
 
 
-    ReturnModeEnum(String code, String name) {
+    ReturnModeEnum(String code, String name, String kingdeeCode) {
         this.code = code;
         this.name = name;
+        this.kingdeeCode = kingdeeCode;
     }
 
     public String getCode() {
@@ -32,6 +37,10 @@ public enum ReturnModeEnum implements EnumMessage {
 
     public String getName() {
         return name;
+    }
+
+    public String getKingdeeCode() {
+        return kingdeeCode;
     }
 
     public static String getName(String code) {
