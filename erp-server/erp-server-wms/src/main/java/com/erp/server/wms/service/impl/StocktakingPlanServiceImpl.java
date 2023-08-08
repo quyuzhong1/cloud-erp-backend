@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.server.wms.mapper.StocktakingPlanMapper;
 import com.erp.server.wms.service.StocktakingPlanService;
@@ -77,6 +78,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     public List<StocktakingPlanDTO.TabListDTO> tabList(PermissionsDTO param) {
         StocktakingPlanDTO.PagingParamDTO searchParam = new StocktakingPlanDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
+
 
         return null;
     }
@@ -173,7 +175,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
           throw new ServiceException("未找到盘点计划单数据");
        }
        // 待提交或审核不通过并且未作废允许提交
-       long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+       long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus()))).count();
        if (count > 0) {
           throw new ServiceException(ApiError.ERROR_98010);
        }
