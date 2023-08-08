@@ -99,8 +99,6 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         }
         // 数据处理
         fillList(pageData.getRecords());
-        // 同一主单多行明细只有第一行显示主单字段，其他行赋空
-        hideData(pageData.getRecords());
         return new PagingVO(pageData);
     }
 
