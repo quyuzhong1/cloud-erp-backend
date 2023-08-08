@@ -203,7 +203,8 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             jsonObject.set("purchaseQty", purchaseOrderDetailEntity.getPurchaseQty());
             //退款单价
             jsonObject.set("returnPrice", detail.getReturnPrice());
-
+            //采购单号
+            jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
             if (StringUtils.isNotBlank(entity.getPurchaseOrderCode())) {
                 List<Map<String,Object>> mapList = new ArrayList<>();
                 Map<String,Object> entityMap = new HashMap<>();
