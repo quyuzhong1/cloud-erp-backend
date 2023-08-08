@@ -197,6 +197,8 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             } else {
                 detailDTO.setMinQty(null);
             }
+        } else {
+            detailDTO.setMinQty(0);
         }
         // 区间到
         String maxQtyStr = excelDTO.getMaxQty();
@@ -210,6 +212,8 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             } else {
                 detailDTO.setMaxQty(null);
             }
+        } else {
+            detailDTO.setMaxQty(MAX_QTY);
         }
         // 币制代码
         String currency = excelDTO.getCurrency();
