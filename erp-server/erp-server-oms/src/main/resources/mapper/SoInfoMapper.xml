@@ -112,6 +112,15 @@
         <if test="params.remark !=null and params.remark!=''">
             AND (si.remark ILIKE concat('%', #{params.remark} ,'%') or sod.remark ILIKE concat('%', #{params.remark} ,'%'))
         </if>
+        <if test="params.salesOrgId != null and params.salesOrgId != '' ">
+            AND si.sales_org_id = #{params.salesOrgId}
+        </if>
+        <if test="params.salesDeptId != null and params.salesDeptId != '' ">
+            AND si.sales_dept_id = #{params.salesDeptId}
+        </if>
+        <if test="params.platformType != null and params.platformType != '' ">
+            AND ci.platform_type = #{params.platformType}
+        </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -201,6 +210,15 @@
         </if>
         <if test="params.remark !=null and params.remark!=''">
             AND (si.remark ILIKE concat('%', #{params.remark} ,'%') or sod.remark ILIKE concat('%', #{params.remark} ,'%'))
+        </if>
+        <if test="params.salesOrgId != null and params.salesOrgId != '' ">
+            AND si.sales_org_id = #{params.salesOrgId}
+        </if>
+        <if test="params.salesDeptId != null and params.salesDeptId != '' ">
+            AND si.sales_dept_id = #{params.salesDeptId}
+        </if>
+        <if test="params.platformType != null and params.platformType != '' ">
+            AND ci.platform_type = #{params.platformType}
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
@@ -357,6 +375,15 @@
                 </if>
                 <if test="params.remark !=null and params.remark!=''">
                     AND (si.remark ILIKE concat('%', #{params.remark} ,'%') or sod.remark ILIKE concat('%', #{params.remark} ,'%'))
+                </if>
+                <if test="params.salesOrgId != null and params.salesOrgId != '' ">
+                    AND si.sales_org_id = #{params.salesOrgId}
+                </if>
+                <if test="params.salesDeptId != null and params.salesDeptId != '' ">
+                    AND si.sales_dept_id = #{params.salesDeptId}
+                </if>
+                <if test="params.platformType != null and params.platformType != '' ">
+                    AND ci.platform_type = #{params.platformType}
                 </if>
                 <!--权限-->
                 <if test="params.permissionSql!=null and params.permissionSql!=''">

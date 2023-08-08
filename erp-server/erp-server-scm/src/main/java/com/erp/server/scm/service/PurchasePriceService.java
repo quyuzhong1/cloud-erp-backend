@@ -169,4 +169,23 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @date 2023-08-03 18:00:00
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 批量导入
+     * @param handList
+     */
+    void batchImport(List<PurchasePriceDTO.ImportAddDTO> handList);
+
+    /**
+     * 下载模板
+     * @param response
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 反审核
+     * @param ids
+     * @return
+     */
+    Boolean disApprove(List<String> ids);
 }

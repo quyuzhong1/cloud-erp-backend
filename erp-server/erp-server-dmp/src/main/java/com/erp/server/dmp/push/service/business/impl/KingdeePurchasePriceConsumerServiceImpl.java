@@ -107,6 +107,17 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
         String id = String.valueOf(model.get("Id"));
         Boolean flag = Boolean.FALSE;
 
+        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+            //反审核
+            //审核中或已审核则要先反审
+            if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+                flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            } else {
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "已经反审核", type, ApiSendStatusEnum.SUCCESS.getCode());
+            }
+            return;
+        }
+
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);

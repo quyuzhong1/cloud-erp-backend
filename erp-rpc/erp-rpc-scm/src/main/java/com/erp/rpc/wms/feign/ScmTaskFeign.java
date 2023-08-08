@@ -10,7 +10,6 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
@@ -95,6 +94,14 @@ public interface ScmTaskFeign {
     @PostMapping("feign/purchaseOrder/getSupplierContactById")
     SupplierContactEntity getSupplierContactById(@RequestBody String supplierContactId);
 
+    /**
+     * @description: klop[ - -    * @author Will
+     * @date: 2023/8/4 12:09
+     * @param supplierContactIds
+     * @return List<SupplierContactEntity>
+     */
+    @PostMapping("feign/purchaseOrder/listSupplierContactByIds")
+    List<SupplierContactEntity> listSupplierContactByIds(@RequestBody List<String> supplierContactIds);
 
     /**
      * 根据采购订单id获取到
@@ -268,6 +275,16 @@ public interface ScmTaskFeign {
     void autoApprovePurchaseOrder(@RequestBody List<String> poIds);
 
     /**
+     * @description: 根据来源id查询采购订单数据
+     * @author Will
+     * @date: 2023/8/7 11:04
+     * @param sourceIds
+     * @return List<PurchaseOrderEntity>
+     */
+    @PostMapping("feign/purchaseOrder/listPoBySourceIds")
+    List<PurchaseOrderEntity> listPoBySourceIds(@RequestBody List<String> sourceIds);
+
+    /**
      * 根据来源ids查询采购明细
      */
     @PostMapping("feign/purchaseOrder/listPodBySourceDetailIds")
@@ -308,4 +325,15 @@ public interface ScmTaskFeign {
      **/
     @PostMapping("feign/subcontractOrder/subcontractOrderApprove")
     Boolean subcontractOrderApprove(@RequestBody BaseApproveParamDTO dto);
+
+    /**
+     * @description: 新增采购订单
+     * @author Will
+     * @date: 2023/8/4 14:04
+     * @param addDTO
+     * @return Boolean
+     */
+    @PostMapping("feign/purchaseOrder/addPurchaseOrder")
+    String addPurchaseOrder(@RequestBody PurchaseOrderDTO.AddDTO addDTO);
+
 }

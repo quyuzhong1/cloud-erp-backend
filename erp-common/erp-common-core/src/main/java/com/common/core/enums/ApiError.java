@@ -587,6 +587,9 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_PRICE(98103,"采购订单SKU【{}】单价必须大于0"),
     ERROR_PURCHASE_ORG_NOT_FOUND(98104,"采购组织不存在"),
     ERROR_RECEIVE_ORG_NOT_FOUND(98105,"收料组织不存在"),
+    ERROR_PURCHASE_WH_REQUIRED(98105,"采购订单【{}】交货仓库不能为空"),
+    ERROR_PURCHASE_ORG_REQUIRED(98105,"采购订单【{}】收料组织不能为空"),
+    ERROR_PURCHASE_DETAIL_DATE(98105,"采购订单【{}】SKU【{}】预计交货日期不能为空"),
 
 
 
@@ -683,8 +686,11 @@ public enum ApiError implements Serializable {
     ERROR_99081(99081,"只有已审核的单据才能下推退货入库单"),
     ERROR_99082(99082,"质检未完成不允许下推退货入库单"),
     ERROR_99083(99083,"退货入库单不存在"),
-    ERROR_IN_ORG_BLANK(99080,"调入组织不能为空"),
-    ERROR_WAREHOUSE_REF_LOCATION(99080,"仓库【{}】下未找到有效仓位【{}】"),
+    ERROR_IN_ORG_BLANK(99084,"调入组织不能为空"),
+    ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
+    ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
+    ERROR_PURCHASE_RETURN_REF_PO_APPROVE(99087,"采购退货单【{}】未审核完成，不支持下推采购订单"),
+    ERROR_SUB_CHILD_LOCATION_BLANK(99088,"委外订单子SKU【{}】仓位不能为空"),
 
 
 

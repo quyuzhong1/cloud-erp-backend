@@ -529,10 +529,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId, List<String> detailIds) {
-        List<String> statusList = new ArrayList<>(3);
+        List<String> statusList = new ArrayList<>(4);
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE.getStatus());
+        statusList.add(ApproveStatusEnum.REJECT.getStatus());
         List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList, detailIds);
         return list;
     }
@@ -660,6 +661,28 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             return Collections.emptyList();
         }
         return this.lambdaQuery().eq(PurchasePriceDetailEntity::getPurchasePriceId, mainId).list();
+    }
+
+    @Override
+    public List<PurchasePriceDetailEntity> getBySupplierIdAndStatus(String supplierId, List<String> statusList) {
+        return this.baseMapper.getBySupplierAndStatus(supplierId, statusList);
+    }
+
+    @Override
+    public void updateDetail(PurchasePriceDetailEntity purchasePriceDetailEntity, PurchasePriceDetailEntity old) {
+        lambdaUpdate().set(PurchasePriceDetailEntity::getDeliveryDay, purchasePriceDetailEntity.getDeliveryDay())
+                .set(PurchasePriceDetailEntity::getMinQty, purchasePriceDetailEntity.getMinQty())
+                .set(PurchasePriceDetailEntity::getMaxQty, purchasePriceDetailEntity.getMaxQty())
+                .set(PurchasePriceDetailEntity::getCurrency, purchasePriceDetailEntity.getCurrency())
+                .set(PurchasePriceDetailEntity::getTaxPrice, purchasePriceDetailEntity.getTaxPrice())
+                .set(PurchasePriceDetailEntity::getTaxRate, purchasePriceDetailEntity.getTaxRate())
+                .set(PurchasePriceDetailEntity::getDisabled, purchasePriceDetailEntity.getDisabled())
+                .eq(PurchasePriceDetailEntity::getId, purchasePriceDetailEntity.getId())
+                .update();
+
+        if (old != null) {
+            moduleOperateLogService.addModuleOperateLogByObj(old, purchasePriceDetailEntity, ModuleTypeEnum.PURCHASE_PRICE.getCode(), old.getPurchasePriceId(), "", "");
+        }
     }
 
 

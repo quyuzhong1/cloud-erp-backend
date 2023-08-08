@@ -32,6 +32,7 @@
         select
             po.id,
             pod.id as purchaseDetailId,
+            po.type as type,
             po.code,
             pos.supplier_name as supplierName,
             po.approve_status as approveStatus,
@@ -45,6 +46,7 @@
             pod.is_urgent as isUrgent,
             po.delivery_warehouse_name as deliveryWarehouseName,
             pod.tax_price as taxPrice,
+            pod.tax_rate as taxRate,
             pod.currency_symbol,
             pod.purchase_qty as purchaseQty,
             pod.purchase_amount as purchaseAmount,
@@ -74,6 +76,12 @@
             </if>
             <if test="params.isFirstMassProduct != null ">
                 and po.is_first_mass_product = #{params.isFirstMassProduct}
+            </if>
+            <if test="params.typeList != null and params.typeList.size > 0">
+                and po.type in
+                <foreach collection="params.typeList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
             </if>
             <if test="params.idList != null and params.idList.size > 0">
                 and po.id in
@@ -166,6 +174,12 @@
             <if test="params.isFirstMassProduct != null ">
                 and po.is_first_mass_product = #{params.isFirstMassProduct}
             </if>
+            <if test="params.typeList != null and params.typeList.size > 0">
+                and po.type in
+                <foreach collection="params.typeList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
             <if test="params.idList != null and params.idList.size > 0">
                 and po.id in
                 <foreach collection="params.idList" item="item" open="(" separator="," close=")">
@@ -231,6 +245,7 @@
         select
             po.id,
             pod.id as purchaseDetailId,
+            po.type as type,
             po.code,
             pos.supplier_name as supplierName,
             po.approve_status as approveStatus,
@@ -244,6 +259,7 @@
             pod.is_urgent as isUrgent,
             po.delivery_warehouse_name as deliveryWarehouseName,
             pod.tax_price as taxPrice,
+            pod.tax_rate as taxRate,
             pod.purchase_qty as purchaseQty,
             pod.purchase_amount as purchaseAmount,
             pod.remark,
@@ -274,6 +290,12 @@
                 </if>
                 <if test="params.isFirstMassProduct != null ">
                     and po.is_first_mass_product = #{params.isFirstMassProduct}
+                </if>
+                <if test="params.typeList != null and params.typeList.size > 0">
+                    and po.type in
+                    <foreach collection="params.typeList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
                 </if>
                 <if test="params.idList != null and params.idList.size > 0">
                     and po.id in
@@ -541,9 +563,9 @@
         inner join subcontract_order_detail sod on sod.parent_id = psod.id and sod.is_deleted = false
         inner join subcontract_order so on sod.main_id = so.id and so.is_deleted = false
         left join purchase_order_detail pod on pod.source_detail_id = sod.id and pod.is_deleted = false
-        left join purchase_order po on po.id = pod.purchase_order_id and po.is_deleted = false
+        left join purchase_order po on po.id = pod.purchase_order_id and po.is_deleted = false and po.invalid_status = false
         <where>
-            psod.is_deleted = false and po.invalid_status = false
+            psod.is_deleted = false
             <if test="parentPodIds != null and parentPodIds.size > 0">
                 AND ppod.id IN
                 <foreach collection="parentPodIds" item="item" open="(" close=")" separator=",">

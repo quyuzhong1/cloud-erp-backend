@@ -6,10 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.DecimalMax;
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -386,6 +383,85 @@ public class PurchasePriceDetailDTO implements Serializable {
 
 
         private LocalDateTime createTime;
+
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ImportSaveDTO {
+
+        private List<String> ids;
+
+        /**
+         * sku id
+         */
+        @NotBlank(message = "sku不能为空")
+        private String skuId;
+
+
+        /**
+         * sku id
+         */
+        @Size(max = 50, message = "SKU编号最大50字符")
+        private String skuNo;
+
+        private String productName;
+
+        /**
+         * 采购交期
+         */
+        private Integer deliveryDay;
+
+        /**
+         * 最小数量
+         */
+        @DecimalMax(value = "999999999",message ="最大值为999999999" )
+        @DecimalMin(value = "0",message ="最小值为0" )
+        @NotNull(message = "区间从 不能为空")
+        private Integer minQty;
+
+        /**
+         * 最大数量
+         */
+        @DecimalMax(value = "999999999",message ="最大值为999999999" )
+        @DecimalMin(value = "0",message ="最小值为0" )
+        @NotNull(message = "区间到 不能为空")
+        private Integer maxQty;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+
+        /**
+         * 生效时间
+         */
+        private LocalDate effectiveDate;
+
+
+        /**
+         * 含税单价
+         */
+        @NotNull(message = "含税单价不能为空")
+        private BigDecimal taxPrice;
+
+
+        /**
+         * 税率
+         */
+        @NotNull(message = "税率不能为空")
+        private BigDecimal taxRate;
+
+
+        /**
+         * true 禁用
+         * false 启用
+         * 默认false
+         */
+        private Boolean disabled;
 
 
     }

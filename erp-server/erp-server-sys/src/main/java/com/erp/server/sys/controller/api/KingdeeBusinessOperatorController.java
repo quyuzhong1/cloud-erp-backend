@@ -6,6 +6,8 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.UserDTO;
+import com.erp.model.sys.dto.UserInfoDTO;
 import com.erp.server.sys.service.KingdeeBusinessOperatorService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,8 +44,8 @@ public class KingdeeBusinessOperatorController extends BaseController {
      * 业务员列表
      */
     @PostMapping("/list")
-    public ApiResult<List<FindUserDTO>> list (@RequestBody KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
-        List<FindUserDTO> list = kingdeeBusinessOperatorService.listInfo(dto);
+    public ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> list (@RequestBody KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
+        List<UserInfoDTO.BusinessOperationUserDTO> list = kingdeeBusinessOperatorService.listInfo(dto);
         return success(list);
     }
 

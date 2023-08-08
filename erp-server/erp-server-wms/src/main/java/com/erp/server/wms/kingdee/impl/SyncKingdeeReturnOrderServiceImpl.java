@@ -80,10 +80,10 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
     public void syncDataToKingdee(PurchaseReturnOrderEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
-            resultMap.put("returnType", ReturnOrderSourceEnum.QC.getCode());
+            resultMap.put("returnType", ReturnOrderSourceEnum.QC.getKingdeeCode());
             return;
         } else {
-            resultMap.put("returnType", ReturnOrderSourceEnum.OTHER.getCode());
+            resultMap.put("returnType", ReturnOrderSourceEnum.OTHER.getKingdeeCode());
         }
 
         PurchaseOrderEntity purchaseOrderEntity = new PurchaseOrderEntity();
@@ -146,12 +146,10 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
 
         //退货方式
         if (entity.getReturnMode().equals(ReturnModeEnum.DEDUCTION.getCode())) {
-            resultMap.put("returnMode", "B");
+            resultMap.put("returnMode", ReturnModeEnum.DEDUCTION.getKingdeeCode());
         } else {
-            resultMap.put("returnMode", "A");
+            resultMap.put("returnMode", ReturnModeEnum.REPLENISHMENT.getKingdeeCode());
         }
-
-
 
         //供应商联系人
         resultMap.put("supplierContactName", entity.getSupplierContactName());
@@ -206,7 +204,8 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             jsonObject.set("purchaseQty", purchaseOrderDetailEntity.getPurchaseQty());
             //退款单价
             jsonObject.set("returnPrice", detail.getReturnPrice());
-
+            //采购单号
+            jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
             if (StringUtils.isNotBlank(entity.getPurchaseOrderCode())) {
                 List<Map<String,Object>> mapList = new ArrayList<>();
                 Map<String,Object> entityMap = new HashMap<>();

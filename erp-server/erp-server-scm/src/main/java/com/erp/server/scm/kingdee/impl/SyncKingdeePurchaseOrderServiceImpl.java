@@ -123,13 +123,8 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         //采购日期
         resultMap.put("purchaseDate",entity.getPurchaseDate());
 
-        //委外采购订单
-        if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType()) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())) {
-            resultMap.put("sourceType",SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
-        } else {
-            resultMap.put("sourceType",SourceTypeEnum.PURCHASE_ORDER.getCode());
-        }
-
+        //单据类型
+        resultMap.put("type",entity.getType());
 
         //查询采购供应商
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getId());

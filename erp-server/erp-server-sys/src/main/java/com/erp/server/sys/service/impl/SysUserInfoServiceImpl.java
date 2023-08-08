@@ -161,6 +161,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         entity.setRealName(sysUserInfoDTO.getRealName());
         entity.setMobile(sysUserInfoDTO.getMobile());
         entity.setUserName(sysUserInfoDTO.getUserName());
+        entity.setEmail(sysUserInfoDTO.getEmail());
         List<String> roleIds = sysUserInfoDTO.getRoleIdList();
         boolean updateResult = this.updateById(entity);
         if (updateResult) {

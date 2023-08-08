@@ -24,7 +24,7 @@
         <if test="id != null and id != ''">
             AND si.id = #{id}
         </if>
-        <if test="skuNoList != null and skuNoList != ''">
+        <if test="skuNoList != null and skuNoList.size > 0">
             AND sd.sku_no IN
             <foreach collection="skuNoList" item="skuNo" open="(" separator="," close=")">
                 #{skuNo}

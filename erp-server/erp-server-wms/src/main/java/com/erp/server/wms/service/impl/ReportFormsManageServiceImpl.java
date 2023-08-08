@@ -166,7 +166,9 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
     public Boolean exportExcelPurchaseBusiness(PurchaseBusinessGatherTableDTO.PagingParamDTO dto, HttpServletResponse response) {
         List<PurchaseBusinessGatherTableDTO.PagingViewDTO> viewDTOList = baseMapper.paging(dto);
         for (PurchaseBusinessGatherTableDTO.PagingViewDTO viewDTO : viewDTOList) {
-            viewDTO.setReturnAmount(viewDTO.getAvgPrice().multiply(BigDecimal.valueOf(viewDTO.getRefundQty() + viewDTO.getReplenishQty())));
+            if (viewDTO.getAvgPrice() != null) {
+                viewDTO.setReturnAmount(viewDTO.getAvgPrice().multiply(BigDecimal.valueOf(viewDTO.getRefundQty() + viewDTO.getReplenishQty())));
+            }
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/purchaseBusinessGatherExport.xlsx";

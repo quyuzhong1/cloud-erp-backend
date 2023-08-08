@@ -133,6 +133,12 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         String id = String.valueOf(model.get("Id"));
         Boolean flag = Boolean.FALSE;
 
+        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+            //反审核
+            kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            return;
+        }
+
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);

@@ -62,4 +62,29 @@
         </if>
 
     </select>
+    <select id="getBySupplierAndStatus" resultType="com.erp.model.scm.entity.PurchasePriceDetailEntity">
+
+        SELECT
+        ppd.id,
+        ppd.sku_id,
+        ppd.delivery_day,
+        ppd.min_qty,
+        ppd.max_qty,
+        ppd.currency,
+        ppd.tax_price,
+        ppd.tax_rate,
+        ppd.disabled,
+        pp.approve_status
+        FROM purchase_price_detail ppd
+        inner join purchase_price pp on pp.id = ppd.purchase_price_id
+        WHERE
+        ppd.is_deleted=FALSE AND pp.is_deleted=FALSE
+        and pp.supplier_id = #{supplierId}
+        <if test="statusList!=null and statusList.size>0">
+            AND pp.approve_status IN
+            <foreach collection="statusList" item="status" open="(" separator="," close=")">
+                #{status}
+            </foreach>
+        </if>
+    </select>
 </mapper>
