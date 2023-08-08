@@ -69,8 +69,6 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         // 数据处理
         fillList(pageData.getRecords());
-        // 同一主单多行明细只有第一行显示主单字段，其他行赋空
-        hideData(pageData.getRecords());
         return new PagingVO(pageData);
     }
 
@@ -78,9 +76,19 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     public List<StocktakingPlanDTO.TabListDTO> tabList(PermissionsDTO param) {
         StocktakingPlanDTO.PagingParamDTO searchParam = new StocktakingPlanDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
-
-
-        return null;
+        List<StocktakingPlanDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        // 获取状态列表
+        List<String> statusList = ApproveStatusEnum.getStatusList();
+        // 不存在的状态赋值为0
+        List<String> existStatusList = list.stream().map(StocktakingPlanDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
+        statusList.parallelStream().forEach(status -> {
+            if(!existStatusList.contains(status)) {
+               list.add(new StocktakingPlanDTO.TabListDTO(status, 0));
+            }
+        });
+        list.add(new StocktakingPlanDTO.TabListDTO("all", list.stream().mapToInt(StocktakingPlanDTO.TabListDTO::getCount).sum()));
+        // 计算合计数量
+        return list;
     }
 
     @Override

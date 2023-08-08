@@ -10,7 +10,7 @@ import java.util.Arrays;
  * 盘点方式枚举
  * @author Cloud
  */
-public enum StocktakingMethodEnum implements EnumMessage {
+public enum StocktakingModeEnum implements EnumMessage {
 
 
     OPEN_COUNT("openCount", "明盘"),
@@ -27,7 +27,7 @@ public enum StocktakingMethodEnum implements EnumMessage {
      */
     private String name;
 
-    StocktakingMethodEnum(String code, String name) {
+    StocktakingModeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -42,8 +42,8 @@ public enum StocktakingMethodEnum implements EnumMessage {
         return name;
     }
 
-    public static StocktakingMethodEnum getByCode(String code) {
-        return Arrays.stream(StocktakingMethodEnum.values())
+    public static StocktakingModeEnum getByCode(String code) {
+        return Arrays.stream(StocktakingModeEnum.values())
                 .filter(item -> item.getCode().equals(code))
                 .findFirst()
                 .orElse(null);

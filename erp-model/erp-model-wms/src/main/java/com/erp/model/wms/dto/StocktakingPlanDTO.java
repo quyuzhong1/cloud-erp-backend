@@ -3,6 +3,12 @@ package com.erp.model.wms.dto;
 import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
+
+import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.wms.enums.SeparateRuleEnum;
+import com.erp.model.wms.enums.StocktakingModeEnum;
+import com.erp.model.wms.enums.StocktakingStatusEnum;
+import com.erp.model.wms.enums.StocktakingTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -82,27 +88,27 @@ public class StocktakingPlanDTO implements Serializable {
         /**
         * 单据审核状态
         */
-        private String approveStatus;
+        private ApproveStatusEnum approveStatus;
 
         /**
         * 盘点状态
         */
-        private String status;
+        private StocktakingStatusEnum status;
 
         /**
         * 盘点方式
         */
-        private String mode;
+        private StocktakingModeEnum mode;
 
         /**
         * 分单规则
         */
-        private String separateRule;
+        private SeparateRuleEnum separateRule;
 
         /**
         * 盘点类型
         */
-        private String type;
+        private StocktakingTypeEnum type;
 
         /**
         * 提交审核时间

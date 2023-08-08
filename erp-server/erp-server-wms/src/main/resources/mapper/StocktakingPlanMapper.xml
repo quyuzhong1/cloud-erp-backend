@@ -54,5 +54,16 @@
     <select id="listExport" resultType="com.erp.model.wms.dto.StocktakingPlanDTO$ListDTO">
 
     </select>
+    <select id="tabList" resultType="com.erp.model.wms.dto.StocktakingPlanDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  stocktaking_plan
+        WHERE is_deleted=FALSE
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
 
 </mapper>

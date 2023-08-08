@@ -45,4 +45,10 @@ public interface StocktakingPlanMapper extends BaseMapper<StocktakingPlanEntity>
     */
     List<StocktakingPlanDTO.ListDTO> listExport(@Param("params") StocktakingPlanDTO.ExportDTO params);
 
+    /**
+     * 获取状态统计
+     * @param searchParam
+     * @return
+     */
+    List<StocktakingPlanDTO.TabListDTO> tabList(StocktakingPlanDTO.PagingParamDTO searchParam);
 }
