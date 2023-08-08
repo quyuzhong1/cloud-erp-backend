@@ -668,6 +668,17 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         return this.baseMapper.getBySupplierAndStatus(supplierId, statusList);
     }
 
+    @Override
+    public void updateDetail(PurchasePriceDetailEntity purchasePriceDetailEntity, PurchasePriceDetailEntity old) {
+        purchasePriceDetailEntity.setEffectiveDate(old.getEffectiveDate());
+        purchasePriceDetailEntity.setExpireDate(old.getExpireDate());
+        super.updateById(purchasePriceDetailEntity);
+
+        if (old != null) {
+            moduleOperateLogService.addModuleOperateLogByObj(old, purchasePriceDetailEntity, ModuleTypeEnum.PURCHASE_PRICE.getCode(), purchasePriceDetailEntity.getPurchasePriceId(), "", "");
+        }
+    }
+
 
     /**
      * 获取到删除的集合
