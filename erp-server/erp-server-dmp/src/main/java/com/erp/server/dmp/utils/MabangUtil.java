@@ -50,6 +50,11 @@ public class MabangUtil {
      */
     public static final String SEPARATOR = ",";
 
+    /**
+     * 马帮手工出入库明细最大条数
+     */
+    public static final int MAX_DETAIL_SIZE = 500;
+
 
     /**
      * 填充马帮出入库实体(直接调拨单)

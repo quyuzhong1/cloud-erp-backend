@@ -1,6 +1,7 @@
 package com.erp.server.dmp.push.consumer.mabang;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
@@ -136,9 +137,20 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
                 || (Objects.equals(SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode(), operate) && Objects.equals(machineInfoEntity.getWorkType(), WorkTypeEnum.DISASSEMBLE.getCode()) ) ) {
             // 父SKU手工入库
             if(Objects.nonNull(dmpWarehouseMappingEntity) && permitWarehouseCodeList.contains(dmpWarehouseMappingEntity.getWarehouseCode())) {
-                MabangInOutStockDTO mabangInStockDTO = MabangUtil.fillMabangInOutStock(dmpWarehouseMappingEntity.getWarehouseCode(), dmpWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
-                        productDetailList, machineInfoEntity, machineDetailList, InventoryInOutEnum.IN_STOCK.getCode());
-                mabangInOutStockService.inOutStock(mabangInStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                if(machineDetailList.size() <= MabangUtil.MAX_DETAIL_SIZE) {
+                    MabangInOutStockDTO mabangInStockDTO = MabangUtil.fillMabangInOutStock(dmpWarehouseMappingEntity.getWarehouseCode(), dmpWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
+                            productDetailList, machineInfoEntity, machineDetailList, InventoryInOutEnum.IN_STOCK.getCode());
+
+                    mabangInOutStockService.inOutStock(mabangInStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                } else {
+                    List<List<MachineDetailEntity>> partitionList = ListUtil.partition(machineDetailList, MabangUtil.MAX_DETAIL_SIZE);
+                    for(List<MachineDetailEntity> dataList : partitionList) {
+                        MabangInOutStockDTO mabangInStockDTO = MabangUtil.fillMabangInOutStock(dmpWarehouseMappingEntity.getWarehouseCode(), dmpWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
+                                productDetailList, machineInfoEntity, dataList, InventoryInOutEnum.IN_STOCK.getCode());
+
+                        mabangInOutStockService.inOutStock(mabangInStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                    }
+                }
             }
 
             // 手工出库（按仓库维度）
@@ -146,9 +158,18 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
             subWarehouseMap.forEach((warehouseCode, subWareList)->{
                 DmpWarehouseMappingEntity dmpSubWarehouseMappingEntity = warehouseMap.get(warehouseCode);
                 if(Objects.nonNull(dmpSubWarehouseMappingEntity) && permitWarehouseCodeList.contains(warehouseCode)) {
-                    MabangInOutStockDTO mabangOutStockDTO = MabangUtil.fillMabangInOutStockSub(dmpSubWarehouseMappingEntity.getWarehouseCode(), dmpSubWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
-                            productDetailList, machineInfoEntity, subWareList, InventoryInOutEnum.OUT_STOCK.getCode());
-                    mabangInOutStockService.inOutStock(mabangOutStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                    if(subWareList.size() <= MabangUtil.MAX_DETAIL_SIZE) {
+                        MabangInOutStockDTO mabangOutStockDTO = MabangUtil.fillMabangInOutStockSub(dmpSubWarehouseMappingEntity.getWarehouseCode(), dmpSubWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
+                                productDetailList, machineInfoEntity, subWareList, InventoryInOutEnum.OUT_STOCK.getCode());
+                        mabangInOutStockService.inOutStock(mabangOutStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                    } else {
+                        List<List<MachineSubComponentsEntity>> partitionList = ListUtil.partition(subWareList, MabangUtil.MAX_DETAIL_SIZE);
+                        for(List<MachineSubComponentsEntity> dataList : partitionList) {
+                            MabangInOutStockDTO mabangOutStockDTO = MabangUtil.fillMabangInOutStockSub(dmpSubWarehouseMappingEntity.getWarehouseCode(), dmpSubWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
+                                    productDetailList, machineInfoEntity, dataList, InventoryInOutEnum.OUT_STOCK.getCode());
+                            mabangInOutStockService.inOutStock(mabangOutStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                        }
+                    }
                 }
             });
         }
@@ -158,9 +179,18 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
                 || (Objects.equals(SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode(), operate) &&  Objects.equals(machineInfoEntity.getWorkType(), WorkTypeEnum.ASSEMBLE.getCode()))) {
              // 父SKU手工出库
             if(Objects.nonNull(dmpWarehouseMappingEntity) && permitWarehouseCodeList.contains(dmpWarehouseMappingEntity.getWarehouseCode())) {
-                MabangInOutStockDTO mabangOutStockDTO = MabangUtil.fillMabangInOutStock(dmpWarehouseMappingEntity.getWarehouseCode(), dmpWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
-                        productDetailList, machineInfoEntity, machineDetailList, InventoryInOutEnum.OUT_STOCK.getCode());
-                mabangInOutStockService.inOutStock(mabangOutStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                if(machineDetailList.size() <= MabangUtil.MAX_DETAIL_SIZE) {
+                    MabangInOutStockDTO mabangOutStockDTO = MabangUtil.fillMabangInOutStock(dmpWarehouseMappingEntity.getWarehouseCode(), dmpWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
+                            productDetailList, machineInfoEntity, machineDetailList, InventoryInOutEnum.OUT_STOCK.getCode());
+                    mabangInOutStockService.inOutStock(mabangOutStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                } else {
+                    List<List<MachineDetailEntity>> partitionList = ListUtil.partition(machineDetailList, MabangUtil.MAX_DETAIL_SIZE);
+                    for(List<MachineDetailEntity> dataList : partitionList) {
+                        MabangInOutStockDTO mabangOutStockDTO = MabangUtil.fillMabangInOutStock(dmpWarehouseMappingEntity.getWarehouseCode(), dmpWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
+                                productDetailList, machineInfoEntity, dataList, InventoryInOutEnum.OUT_STOCK.getCode());
+                        mabangInOutStockService.inOutStock(mabangOutStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                    }
+                }
             }
 
             // 子SKU手工入库（按仓库维度）
@@ -168,9 +198,19 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
             subWarehouseMap.forEach((warehouseCode, subWareList)->{
                 DmpWarehouseMappingEntity dmpSubWarehouseMappingEntity = warehouseMap.get(warehouseCode);
                 if(Objects.nonNull(dmpSubWarehouseMappingEntity) && permitWarehouseCodeList.contains(warehouseCode)) {
-                    MabangInOutStockDTO mabangInStockDTO = MabangUtil.fillMabangInOutStockSub(dmpSubWarehouseMappingEntity.getWarehouseCode(), dmpSubWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
-                            productDetailList, machineInfoEntity, subWareList, InventoryInOutEnum.IN_STOCK.getCode());
-                    mabangInOutStockService.inOutStock(mabangInStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                    if(subWareList.size() <= MabangUtil.MAX_DETAIL_SIZE) {
+                        MabangInOutStockDTO mabangInStockDTO = MabangUtil.fillMabangInOutStockSub(dmpSubWarehouseMappingEntity.getWarehouseCode(), dmpSubWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
+                                productDetailList, machineInfoEntity, subWareList, InventoryInOutEnum.IN_STOCK.getCode());
+                        mabangInOutStockService.inOutStock(mabangInStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                    } else {
+                        List<List<MachineSubComponentsEntity>> partitionList = ListUtil.partition(subWareList, MabangUtil.MAX_DETAIL_SIZE);
+                        for(List<MachineSubComponentsEntity> dataList : partitionList) {
+                            MabangInOutStockDTO mabangInStockDTO = MabangUtil.fillMabangInOutStockSub(dmpSubWarehouseMappingEntity.getWarehouseCode(), dmpSubWarehouseMappingEntity.getWarehouseName(), opEmployeeName,
+                                    productDetailList, machineInfoEntity, dataList, InventoryInOutEnum.IN_STOCK.getCode());
+                            mabangInOutStockService.inOutStock(mabangInStockDTO, machineInfoEntity.getId(), machineInfoEntity.getCode(), sourceType, operate);
+                        }
+                    }
+
                 }
             });
         }
