@@ -59,12 +59,18 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         if (CollectionUtils.isEmpty(exportList)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-        for(StocktakingTaskDetailDTO.ExportDTO item:exportList){
+        List<String> skuIdList=exportList.stream().map(StocktakingTaskDetailDTO.ExportDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = productDetailService.ListProductDetailByIds(skuIdList);
+
+        for (StocktakingTaskDetailDTO.ExportDTO item : exportList) {
             item.setStocktakingUserName(stocktakingUserName);
+            String skuName = skuList.stream().filter(s -> s.getId().equals(item.getSkuId())).findFirst().
+                    map(ProductDetailEntity::getName).orElse("");
+            item.setSkuName(skuName);
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/StocktakingTaskDetail.xlsx";
-        String name = "盘点任务明细列表.xlsx";
+        String name = "盘点任务明细列表";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
         sb.append(name);
@@ -98,7 +104,15 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         if (Objects.isNull(taskDetail)) {
             throw new ServiceException(ApiError.ERROR_99090);
         }
-        taskDetail.setQty(dto.getStocktakingQty());
+        Integer qty = dto.getQty();
+        taskDetail.setQty(qty);
+        //可用库存
+        Integer usableQty = taskDetail.getUsableQty();
+        //冻结数量
+        Integer frozenQty = taskDetail.getFrozenQty();
+        //差异数量 等于盘点库存-可用库存-冻结库存
+        Integer diffQty = qty - usableQty - frozenQty;
+        taskDetail.setDiffQty(diffQty);
         return this.updateById(taskDetail);
     }
 
@@ -159,10 +173,11 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
     /**
      * 下载模板
-     * @author yl
-     * @date 2023-08-09 14:04
+     *
      * @param response
      * @return void
+     * @author yl
+     * @date 2023-08-09 14:04
      */
     @Override
     public void downloadTemplate(HttpServletResponse response) {

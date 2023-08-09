@@ -78,7 +78,7 @@ public class StocktakingTaskDetailDTO implements Serializable {
         /**
          * 盘点数量
          */
-        private Integer stocktakingQty;
+        private Integer qty;
 
         /**
          * 差异数量
@@ -103,7 +103,7 @@ public class StocktakingTaskDetailDTO implements Serializable {
 
         @NotNull(message = "盘点数量不能为空")
         @DecimalMin(value = "1",message ="盘点数量最小为1" )
-        private Integer stocktakingQty;
+        private Integer qty;
     }
 
     /**

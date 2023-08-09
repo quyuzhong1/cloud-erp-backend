@@ -54,11 +54,11 @@ public class StocktakingTaskController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:stocktakingTask:paging",
-            tableAlias = "ti"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "wms:stocktakingTask:paging",
+//            tableAlias = "ti"
+//    )
     public ApiResult<PagingVO<StocktakingTaskDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<StocktakingTaskDTO.PagingParamDTO> dto) {
         PagingVO<StocktakingTaskDTO.PagingViewDTO> pagingVO = stocktakingTaskService.paging(dto);
         return success(pagingVO);
@@ -72,12 +72,12 @@ public class StocktakingTaskController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:stocktakingTask:submit",
-            serviceClass = StocktakingTaskService.class,
-            keyIdName = "ids"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "wms:stocktakingTask:submit",
+//            serviceClass = StocktakingTaskService.class,
+//            keyIdName = "ids"
+//    )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = stocktakingTaskService.submit(dto.getIds());
         return result ? success() : failure();
@@ -90,12 +90,12 @@ public class StocktakingTaskController extends BaseController {
      * @return
      */
     @PostMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:stocktakingTask:view",
-            serviceClass = StocktakingTaskService.class,
-            keyIdName = "id"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "wms:stocktakingTask:view",
+//            serviceClass = StocktakingTaskService.class,
+//            keyIdName = "id"
+//    )
     public ApiResult<StocktakingTaskDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         StocktakingTaskDTO.ViewDTO result = stocktakingTaskService.view(dto.getId());
         return success(result);
@@ -108,12 +108,12 @@ public class StocktakingTaskController extends BaseController {
      * @return
      */
     @PostMapping("/approve")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:stocktakingTask:approve",
-            serviceClass = StocktakingTaskService.class,
-            keyIdName = "ids"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "wms:stocktakingTask:approve",
+//            serviceClass = StocktakingTaskService.class,
+//            keyIdName = "ids"
+//    )
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = stocktakingTaskService.approve(dto);
         return result ? success() : failure();
@@ -126,12 +126,12 @@ public class StocktakingTaskController extends BaseController {
      * @return
      */
     @PostMapping("/cancelProcess")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:stocktakingTask:cancelProcess",
-            serviceClass = StocktakingTaskService.class,
-            keyIdName = "ids"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "wms:stocktakingTask:cancelProcess",
+//            serviceClass = StocktakingTaskService.class,
+//            keyIdName = "ids"
+//    )
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = stocktakingTaskService.cancelProcess(dto.getIds());
         return result ? success() : failure();

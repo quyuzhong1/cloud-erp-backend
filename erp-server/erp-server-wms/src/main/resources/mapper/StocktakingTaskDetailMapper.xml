@@ -27,24 +27,22 @@
 
     <select id="listExportByMainId" resultType="com.erp.model.wms.dto.StocktakingTaskDetailDTO$ExportDTO">
         SELECT
-            id,
-            code,
-            warehouse_id,
-            warehouse_name,
-            warehouse_location,
-            sku_id,
-            sku_no,
-            usable_qty,
-            qty,
-            frozen_qty,
-            diff_qty
+            std.id,
+            st.code,
+            std.warehouse_id,
+            std.warehouse_name,
+            std.warehouse_location,
+            std.sku_id,
+            std.sku_no,
+            std.usable_qty,
+            std.qty,
+            std.frozen_qty,
+            std.diff_qty
         FROM stocktaking_task_detail std
         INNER JOIN stocktaking_task st
-        ON st.id=std.mian_id AND st.is_deleted=FALSE
+        ON st.id=std.main_id AND st.is_deleted=FALSE
         WHERE std.is_deleted=FALSE
         AND std.main_id=#{mainId}
-
-
     </select>
 
 </mapper>

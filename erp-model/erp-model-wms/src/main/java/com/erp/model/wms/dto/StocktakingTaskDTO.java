@@ -194,7 +194,7 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * sku 统计数
          */
-        private String skuCount;
+        private Integer skuCount;
 
         /**
          * 创建人名称

@@ -159,7 +159,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         StocktakingPlanEntity stocktakingPlanEntity =  BeanMapperUtils.map(StocktakingPlanEntity.class, updateDTO);
 
         // 数据处理
-        handleData(stocktakingPlanEntity);
+        //handleData(stocktakingPlanEntity);
 
         log.info("编辑 开始修改盘点计划单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(stocktakingPlanEntity);

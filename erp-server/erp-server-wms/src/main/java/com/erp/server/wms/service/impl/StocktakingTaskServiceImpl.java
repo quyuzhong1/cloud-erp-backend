@@ -134,6 +134,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         if (StringUtils.isNotBlank(warehouseId)) {
             List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listByWarehouseIds(Arrays.asList(warehouseId));
             List<String> mainIds = taskDetailList.stream().map(StocktakingTaskDetailEntity::getMainId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(mainIds)) {
+                return new PagingVO<>(new Page<>());
+            }
             mainIdList.addAll(mainIds);
         }
         IPage pageData = baseMapper.paging(query, params, tabList, mainIdList);
@@ -165,26 +168,32 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             item.setApproveStatusName(approveStatusName);
             //分担规则
             SeparateRuleEnum separateRule = item.getSeparateRule();
-            item.setSeparateRuleName(separateRule.getName());
+            item.setSeparateRuleName(Objects.nonNull(separateRule) ? separateRule.getName() : "");
             //盘点方式
             StocktakingModeEnum stocktakingMode = item.getStocktakingMode();
-            item.setStocktakingModeName(stocktakingMode.getName());
+            item.setStocktakingModeName(Objects.nonNull(stocktakingMode) ? stocktakingMode.getName() : "");
             //盘点类型
             StocktakingTypeEnum itemStocktakingType = item.getStocktakingType();
-            item.setStocktakingTypeName(itemStocktakingType.getName());
+            item.setStocktakingTypeName(Objects.nonNull(itemStocktakingType) ? itemStocktakingType.getName() : "");
             //盘点状态
             StocktakingStatusEnum stocktakingStatus = item.getStocktakingStatus();
-            item.setStocktakingStatusName(stocktakingStatus.name());
+            item.setStocktakingStatusName(Objects.nonNull(stocktakingStatus) ? stocktakingStatus.getName() : "");
             //盘点人
             String stocktakingUserName = taskUserList.stream().filter(t -> id.equals(t.getStocktakingTaskId())).
                     map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
             item.setStocktakingUserName(stocktakingUserName);
+
 
             //仓库
             String warehouseName = taskDetailList.stream().filter(d -> id.equals(d.getMainId())).
                     map(StocktakingTaskDetailEntity::getWarehouseName).collect(Collectors.joining(","));
             item.setWarehouseName(warehouseName);
 
+            //sku 统计数
+            Integer skuCount = Math.toIntExact(taskDetailList.stream().filter(d -> id.equals(d.getMainId())).
+                    map(StocktakingTaskDetailEntity::getSkuId).distinct().count());
+
+            item.setSkuCount(skuCount);
 
         }
     }
@@ -291,7 +300,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         view.setSeparateRuleName(separateRule.getName());
         //盘点状态
         StocktakingStatusEnum stocktakingStatus = view.getStocktakingStatus();
-        view.setApproveStatusName(stocktakingStatus.getName());
+        view.setStocktakingStatusName(stocktakingStatus.getName());
 
         //盘点人信息
         List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseByTaskIds(Arrays.asList(id));
@@ -413,7 +422,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             ApproveStatusEnum waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT;
             taskEntity.setApproveStatus(waitSubmitStatus);
             Boolean result = this.updateById(taskEntity);
-            if(result){
+            if (result) {
                 List<Pair<String, String>> pairList = Arrays.asList(taskEntity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
 
                 operateLogService.batchAddModuleOperateLog("盘点任务单【%s】取消流程", ModuleTypeEnum.STOCKTAKING_TASK.getCode(), pairList, "取消流程操作");
@@ -453,6 +462,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         if (StringUtils.isNotBlank(warehouseId)) {
             List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listByWarehouseIds(Arrays.asList(warehouseId));
             List<String> mainIds = taskDetailList.stream().map(StocktakingTaskDetailEntity::getMainId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(mainIds)) {
+                throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            }
             mainIdList.addAll(mainIds);
         }
         //获取导出数据
@@ -464,7 +476,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         fillDb(list);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/StocktakingTask.xlsx";
-        String name = "盘点任务列表.xlsx";
+        String name = "盘点任务列表";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
         sb.append(name);
