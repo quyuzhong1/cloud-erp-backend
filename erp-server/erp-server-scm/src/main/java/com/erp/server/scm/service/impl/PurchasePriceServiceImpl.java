@@ -24,8 +24,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
@@ -826,6 +824,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             purchasePriceEntity.setPricingUserName(item.getPricingUserName());
             purchasePriceEntity.setPurchaseOrgId(item.getPurchaseOrgId());
             purchasePriceEntity.setPurchaseOrgName(item.getPurchaseOrgName());
+            purchasePriceEntity.setCurrency(item.getCurrency());
             // 明细信息
             List<PurchasePriceDetailDTO.ImportSaveDTO> detailList = item.getDetailList();
             List<PurchasePriceDetailEntity> addItemList = Lists.newArrayList();
@@ -855,6 +854,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                     BeanMapper.copy(detailItem, savePurchasePriceDetailEntity);
                     savePurchasePriceDetailEntity.setExpireDate(expireDate);
                     savePurchasePriceDetailEntity.setTaxRate(taxRate);
+                    savePurchasePriceDetailEntity.setCurrency(item.getCurrency());
                     addItemList.add(savePurchasePriceDetailEntity);
                 }
             }

@@ -76,6 +76,12 @@ public class PurchasePriceEntity extends BaseEntity<PurchasePriceEntity> {
     private String purchaseOrgName;
 
     /**
+     * 币种
+     */
+    @TableField("currency")
+    private String currency;
+
+    /**
      * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
      */
     @TableField("sync_kingdee_status")
