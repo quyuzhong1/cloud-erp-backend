@@ -13,9 +13,9 @@ import java.util.Arrays;
 public enum StocktakingTypeEnum implements EnumMessage {
 
 
-    by_Warehouse("byWarehouse", "按仓库盘点"),
-    by_Location("byLocation", "按仓位盘点"),
-    by_Sku("bySku", "按SKU盘点"),
+    BY_WAREHOUSE("byWarehouse", "按仓库盘点"),
+    BY_LOCATION("byLocation", "按仓位盘点"),
+    BY_SKU("bySku", "按SKU盘点"),
 
     ;
 

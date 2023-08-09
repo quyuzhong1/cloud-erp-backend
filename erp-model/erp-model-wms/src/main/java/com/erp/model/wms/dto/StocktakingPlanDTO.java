@@ -58,9 +58,47 @@ public class StocktakingPlanDTO implements Serializable {
      public static class PagingParamDTO extends SortDTO {
 
          /**
-         * 搜索类型
-         */
-         private String  tabFlag;
+          * 盘点计划单号
+          */
+         private String code;
+         /**
+          * 盘点计划名称
+          */
+         private String name;
+
+        /**
+         * 单据审核状态
+        */
+         private List<ApproveStatusEnum> approveStatusList;
+         /**
+          * 盘点方式
+          */
+         private List<StocktakingModeEnum> modeList;
+         /**
+          * 盘点状态
+          */
+         private List<StocktakingStatusEnum> statusList;
+         /**
+          * 盘点类型
+          */
+         private List<StocktakingTypeEnum> typeList;
+         /**
+          * 分单规则
+          */
+        private List<SeparateRuleEnum> separateRuleList;
+         /**
+          * 提交人id列表
+          */
+         private List<String> submitUserIdList;
+         /**
+          * 提交审核时间列表
+          */
+         private List<LocalDateTime> submitTimeList;
+         /**
+          * tab标识
+          */
+         private String tabFlag;
+
 
      }
     /**
@@ -91,9 +129,19 @@ public class StocktakingPlanDTO implements Serializable {
         private ApproveStatusEnum approveStatus;
 
         /**
+         * 单据审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
         * 盘点状态
         */
         private StocktakingStatusEnum status;
+
+        /**
+         * 盘点状态名称
+         */
+        private String statusName;
 
         /**
         * 盘点方式
@@ -101,14 +149,29 @@ public class StocktakingPlanDTO implements Serializable {
         private StocktakingModeEnum mode;
 
         /**
+         * 盘点方式名称
+         */
+        private String modeName;
+
+        /**
         * 分单规则
         */
         private SeparateRuleEnum separateRule;
 
         /**
+         * 分单规则名称
+         */
+        private String separateRuleName;
+
+        /**
         * 盘点类型
         */
         private StocktakingTypeEnum type;
+
+        /**
+         * 盘点类型名称
+         */
+        private String typeName;
 
         /**
         * 提交审核时间
@@ -124,19 +187,22 @@ public class StocktakingPlanDTO implements Serializable {
         * 提交审核人名称
         */
         private String submitUserName;
-
         /**
-        * 最后审核人id
+         * 待审核人
+         */
+        private String waitApproveUserName;
+        /**
+        * 审核人id
         */
         private String approveUserId;
 
         /**
-        * 最后审核人名称
+        * 审核人名称
         */
         private String approveUserName;
 
         /**
-        * 最后审核时间
+        * 审核时间
         */
         private LocalDateTime approveTime;
 
@@ -149,12 +215,6 @@ public class StocktakingPlanDTO implements Serializable {
         * 动销结束时间
         */
         private LocalDateTime endTime;
-
-
-        /**
-        * 审核状态名称
-        */
-        private String approveStatusName;
 
         /**
         * 创建时间
@@ -306,63 +366,69 @@ public class StocktakingPlanDTO implements Serializable {
         private String name;
 
         /**
-        * 盘点状态
-        */
-        @NotBlank(message = "盘点状态不能为空")
-        @Size(max = 30,message = "盘点状态最大长度不能超过30位")
-        private String status;
-
-        /**
         * 盘点方式
         */
         @NotBlank(message = "盘点方式不能为空")
         @Size(max = 50,message = "盘点方式最大长度不能超过50位")
-        private String mode;
+        private StocktakingModeEnum mode;
 
         /**
         * 分单规则
         */
         @NotBlank(message = "分单规则不能为空")
         @Size(max = 50,message = "分单规则最大长度不能超过50位")
-        private String separateRule;
+        private SeparateRuleEnum separateRule;
 
         /**
         * 盘点类型
         */
         @NotBlank(message = "盘点类型不能为空")
         @Size(max = 50,message = "盘点类型最大长度不能超过50位")
-        private String type;
+        private StocktakingTypeEnum type;
 
         /**
-        * 提交审核时间
+        * 动销时间范围
         */
-        private LocalDateTime submitTime;
+        private List<LocalDateTime> activeSalesTimeList;
 
         /**
-        * 提交审核人id
-        */
-        @NotBlank(message = "提交审核人id不能为空")
-        @Size(max = 19,message = "提交审核人id最大长度不能超过19位")
-        private String submitUserId;
+         * 盘点计划明细
+         */
+        @NotNull(message = "盘点计划明细不能为空")
+        @Size(min = 1,message = "盘点计划明细不能为空")
+        private List<DetailDTO> detailList;
+
+
+    }
+
+    @Data
+    public static class DetailDTO{
 
         /**
-        * 提交审核人名称
-        */
-        @NotBlank(message = "提交审核人名称不能为空")
-        @Size(max = 50,message = "提交审核人名称最大长度不能超过50位")
-        private String submitUserName;
-
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
         /**
-        * 动销开始时间
-        */
-        private LocalDateTime startTime;
-
+         * 库区
+         */
+        @NotBlank(message = "库区不能为空")
+        private String warehouseArea;
         /**
-        * 动销结束时间
-        */
-        private LocalDateTime endTime;
-
-
+         * 仓位
+         */
+        @NotNull(message = "仓位不能为空")
+        private String warehouseLocation;
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+        /**
+         * sku编码
+         */
+        @NotBlank(message = "sku编码不能为空")
+        private String skuNo;
     }
 
 

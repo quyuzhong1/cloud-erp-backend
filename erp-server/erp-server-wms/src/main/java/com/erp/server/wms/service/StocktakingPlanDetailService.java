@@ -1,6 +1,9 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.common.business.service.SuperService;
+
+import java.util.List;
 
 
 /**
@@ -13,5 +16,10 @@ import com.common.business.service.SuperService;
  */
 public interface StocktakingPlanDetailService extends SuperService<StocktakingPlanDetailEntity> {
 
-
+    /**
+     * 保存盘点计划明细
+     * @param detailList
+     * @param mainId
+     */
+    void saveList(List<StocktakingPlanDTO.DetailDTO> detailList, String mainId);
 }

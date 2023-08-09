@@ -11,6 +11,7 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -234,4 +235,9 @@ public class ValidatorUtil {
 		}
 	}
 
+	public static void isNotNull(Object obj, ApiError apiError, String... args) {
+		if(Objects.isNull(obj)) {
+			throw new ServiceException(apiError, args);
+		}
+	}
 }

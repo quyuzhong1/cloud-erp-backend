@@ -48,6 +48,7 @@ public enum BusinessNoTypeEnum {
     CODE_SUB(38, "sub","委外订单","SUB"),
     CODE_SUBCH(39, "subch","委外变更单"),
 
+    STOCKTAKING_PLAN(40, "pdjh","盘点计划","PDJH"),
     ;
 
 

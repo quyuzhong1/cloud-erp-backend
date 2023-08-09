@@ -44,7 +44,76 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.StocktakingPlanDTO$ListDTO">
-
+        SELECT
+        id,
+        code,
+        name,
+        approve_status AS approveStatus,
+        status,
+        mode,
+        separate_rule AS separateRule,
+        type,
+        submit_time AS submitTime,
+        submit_user_id AS submitUserId,
+        submit_user_name AS submitUserName,
+        approve_user_id AS approveUserId,
+        approve_user_name AS approveUserName,
+        approve_time AS approveTime,
+        start_time AS startTime,
+        end_time AS endTime
+        FROM  stocktaking_plan
+        WHERE is_deleted=FALSE
+        <if test="code!=null and code!=''">
+            AND code LIKE CONCAT('%',#{code},'%')
+        </if>
+        <if test="name!=null and name!=''">
+            AND name LIKE CONCAT('%',#{name},'%')
+        </if>
+        <if test="approveStatusList!=null and approveStatusList.size > 0">
+            AND approve_status in
+            <foreach collection="approveStatusList" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="modeList!=null and modeList.size > 0">
+            AND mode in
+            <foreach collection="modeList" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="statusList!=null and statusList.size > 0">
+            AND status in
+            <foreach collection="statusList" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="typeList!=null and typeList.size > 0">
+            AND type in
+            <foreach collection="typeList" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="separateRuleList != null and separateRuleList.size > 0">
+            AND separate_rule in
+            <foreach collection="separateRuleList" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="submitUserIdList != null and submitUserIdList.size > 0">
+            AND submit_user_id in
+            <foreach collection="submitUserIdList" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="submitTimeList != null and submitTimeList.size > 1">
+            AND submit_time >= #{submitTimeList[0]} AND submit_time <![CDATA[<]]> #{submitTimeList[1]}
+        </if>
+        <if test="tabFlag != null and tabFlag != ''">
+            AND approve_status = #{tabFlag}
+        </if>
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

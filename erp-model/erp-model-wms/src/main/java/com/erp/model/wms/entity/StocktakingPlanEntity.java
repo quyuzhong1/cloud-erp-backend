@@ -1,12 +1,20 @@
 package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+
+import com.erp.model.wms.dto.StocktakingPlanDTO;
+import com.erp.model.wms.enums.SeparateRuleEnum;
+import com.erp.model.wms.enums.StocktakingModeEnum;
+import com.erp.model.wms.enums.StocktakingStatusEnum;
+import com.erp.model.wms.enums.StocktakingTypeEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 
@@ -19,6 +27,7 @@ import lombok.experimental.Accessors;
  * @since 2023-08-08
 */
 @Data
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("stocktaking_plan")
@@ -41,31 +50,31 @@ public class StocktakingPlanEntity extends BaseEntity<StocktakingPlanEntity> {
     * 单据审核状态
     */
     @TableField("approve_status")
-    private String approveStatus;
+    private ApproveStatusEnum approveStatus;
 
     /**
     * 盘点状态
     */
     @TableField("status")
-    private String status;
+    private StocktakingStatusEnum status;
 
     /**
     * 盘点方式
     */
     @TableField("mode")
-    private String mode;
+    private StocktakingModeEnum mode;
 
     /**
     * 分单规则
     */
     @TableField("separate_rule")
-    private String separateRule;
+    private SeparateRuleEnum separateRule;
 
     /**
     * 盘点类型
     */
     @TableField("type")
-    private String type;
+    private StocktakingTypeEnum type;
 
     /**
     * 提交审核时间
@@ -145,6 +154,16 @@ public class StocktakingPlanEntity extends BaseEntity<StocktakingPlanEntity> {
     public static final String START_TIME = "start_time";
 
     public static final String END_TIME = "end_time";
+
+    public StocktakingPlanEntity(StocktakingPlanDTO.AddDTO addDTO, String code) {
+        this.code = code;
+        this.name = addDTO.getName();
+//        this.startTime = addDTO.getStartTime();
+//        this.endTime = addDTO.getEndTime();
+        this.mode = addDTO.getMode();
+        this.type = addDTO.getType();
+        this.separateRule = addDTO.getSeparateRule();
+    }
 
     @Override
     public Serializable pkVal() {
