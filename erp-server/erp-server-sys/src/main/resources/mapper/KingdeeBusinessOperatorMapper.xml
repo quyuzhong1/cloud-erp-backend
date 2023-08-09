@@ -7,6 +7,8 @@
         kbo.kingdee_user_code AS code,
         kbo.erp_user_id AS userId,
         kbo.kingdee_user_name AS userName,
+        su.delete_state,
+        su.user_state,
         kbo.disabled
         FROM kingdee_business_operator kbo
         INNER JOIN sys_user_info su
@@ -17,8 +19,6 @@
         WHERE kbo.kingdee_type=#{params.type}
         AND kbo.kingdee_org_code=#{orgCode}
         AND kup.use_org_code=#{orgCode}
-        AND su.delete_state=1
-        AND su.user_state=1
     </select>
 
 </mapper>

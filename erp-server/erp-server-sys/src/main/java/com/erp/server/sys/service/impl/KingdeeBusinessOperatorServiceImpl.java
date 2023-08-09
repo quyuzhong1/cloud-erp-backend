@@ -4,6 +4,7 @@ import com.alibaba.excel.EasyExcel;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.UserInfoDTO;
 import com.erp.model.sys.dto.excel.KingdeeBusinessOperatorImportExcelDTO;
@@ -108,8 +109,8 @@ public class KingdeeBusinessOperatorServiceImpl extends SuperServiceImpl<Kingdee
         List<UserInfoDTO.BusinessOperationUserDTO> resultList = new ArrayList<>(10);
         String orgId = dto.getOrgId();
         SysAccountingCompanyEntity orgInfo = sysAccountingCompanyService.getById(orgId);
-        String code=orgInfo!=null?orgInfo.getCode():"";
-        List<UserInfoDTO.BusinessOperationUserDTO> dbList = baseMapper.listInfo(dto,code);
+        String code = orgInfo != null ? orgInfo.getCode() : "";
+        List<UserInfoDTO.BusinessOperationUserDTO> dbList = baseMapper.listInfo(dto, code);
         String userId = commonService.getUserInfo().getUid();
         UserInfoDTO.BusinessOperationUserDTO findUser = dbList.stream().filter(d -> d.getUserId().equals(userId)).findFirst().orElse(null);
         if (findUser != null) {
@@ -120,6 +121,14 @@ public class KingdeeBusinessOperatorServiceImpl extends SuperServiceImpl<Kingdee
         }
         List<UserInfoDTO.BusinessOperationUserDTO> wantList = dbList.stream().filter(d -> !userId.equals(d.getUserId())).collect(Collectors.toList());
         resultList.addAll(wantList);
+        Integer zero= MathUtil.ZERO;
+        for (UserInfoDTO.BusinessOperationUserDTO item : wantList) {
+            Integer deleteState = item.getDeleteState();
+            Integer userState = item.getUserState();
+            if(zero.equals(deleteState)||zero.equals(userState)){
+                item.setDisabled(Boolean.TRUE);
+            }
+        }
         return resultList;
 
     }
