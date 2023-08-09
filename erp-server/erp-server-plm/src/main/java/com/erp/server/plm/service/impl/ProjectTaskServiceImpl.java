@@ -4152,9 +4152,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             if (taskProperty.equals(generalApproval)) {
                 task.setStatus(TaskStateEnum.ING.getCode());
             }
-            //评审任务 从新开始 改为待审核
+            //评审任务 从新开始 改为发布
             if (taskProperty.equals(reviewTask)) {
-                task.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
+                task.setStatus(TaskStateEnum.TO_BE_RELEASED.getCode());
             }
         }
         return this.saveOrUpdateBatch(list);
