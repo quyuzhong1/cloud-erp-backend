@@ -63,6 +63,8 @@ public enum InventoryBusinessTypeEnum {
     PURCHASE_ORDER_CHANGE("purchase_order_change", "28","采购订单变更"),
 
     PO_RETURN_QC_REF("po_return_qc_ref", "29","采购退货（质检退货，退货退款）"),
+
+    PO_RETURN_REP_NO_PURCHASE("po_return_rep_no_purchase", "30","采购退货（库存退货，无采购单）"),
     ;
 
     private String code;
