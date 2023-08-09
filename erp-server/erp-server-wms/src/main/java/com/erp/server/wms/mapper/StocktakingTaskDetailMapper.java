@@ -1,8 +1,12 @@
 package com.erp.server.wms.mapper;
 
+import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface StocktakingTaskDetailMapper extends BaseMapper<StocktakingTaskDetailEntity> {
 
+    List<StocktakingTaskDetailDTO.ExportDTO> listExportByMainId(@Param("mainId") String mainId);
 }

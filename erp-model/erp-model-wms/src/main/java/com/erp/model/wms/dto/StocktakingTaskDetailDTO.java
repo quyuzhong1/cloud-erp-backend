@@ -105,4 +105,79 @@ public class StocktakingTaskDetailDTO implements Serializable {
         @DecimalMin(value = "1",message ="盘点数量最小为1" )
         private Integer stocktakingQty;
     }
+
+    /**
+     * 导出
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO {
+
+        /**
+         * 详情id
+         */
+        private String id;
+
+
+        private String code;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名
+         */
+        private String warehouseName;
+
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+        /**
+         * sku 名称
+         */
+        private String skuName;
+
+
+        /**
+         * 可用数量
+         */
+        private Integer usableQty;
+
+        /**
+         * 冻结数量
+         */
+        private Integer frozenQty;
+
+        /**
+         * 盘点数量
+         */
+        private Integer qty;
+
+        /**
+         * 差异数量
+         */
+        private Integer diffQty;
+
+
+        /**
+         * 盘点人
+         */
+        private String stocktakingUserName;
+
+    }
 }

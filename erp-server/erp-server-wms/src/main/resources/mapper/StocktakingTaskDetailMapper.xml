@@ -25,4 +25,24 @@
         <result column="diff_qty" property="diffQty" />
     </resultMap>
 
+    <select id="listExportByMainId" resultType="com.erp.model.wms.dto.StocktakingTaskDetailDTO$ExportDTO">
+        SELECT
+            id,
+            code,
+            warehouse_id,
+            warehouse_name,
+            warehouse_location,
+            sku_id,
+            sku_no,
+            usable_qty,
+            qty,
+            frozen_qty,
+            diff_qty
+        FROM stocktaking_task_detail std
+        INNER JOIN stocktaking_task st
+        ON st.id=std.mian_id AND st.is_deleted=FALSE
+
+
+    </select>
+
 </mapper>

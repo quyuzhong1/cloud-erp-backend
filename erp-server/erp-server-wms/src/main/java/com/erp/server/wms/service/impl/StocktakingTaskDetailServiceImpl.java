@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -12,6 +14,7 @@ import com.erp.server.wms.service.StocktakingTaskDetailService;
 import com.common.business.service.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -19,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -37,6 +41,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Override
     public Boolean exportExcel(BaseIdDTO dto, HttpServletResponse response) {
+        List<StocktakingTaskDetailDTO.ExportDTO> exportList=baseMapper.listExportByMainId(dto.getId());
         return null;
     }
 
@@ -54,8 +59,14 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
      * @date 2023-08-03 17:59
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateDetail(StocktakingTaskDetailDTO.UpdateDTO dto) {
-        return null;
+        StocktakingTaskDetailEntity taskDetail = this.getById(dto.getId());
+        if (Objects.isNull(taskDetail)) {
+            throw new ServiceException(ApiError.ERROR_99090);
+        }
+        taskDetail.setQty(dto.getStocktakingQty());
+        return this.updateById(taskDetail);
     }
 
     /**
