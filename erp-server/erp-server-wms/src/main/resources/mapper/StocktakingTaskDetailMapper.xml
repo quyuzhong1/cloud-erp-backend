@@ -41,6 +41,8 @@
         FROM stocktaking_task_detail std
         INNER JOIN stocktaking_task st
         ON st.id=std.mian_id AND st.is_deleted=FALSE
+        WHERE std.is_deleted=FALSE
+        AND std.main_id=#{mainId}
 
 
     </select>

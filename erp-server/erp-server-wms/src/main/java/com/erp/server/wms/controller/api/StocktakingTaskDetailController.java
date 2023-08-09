@@ -46,9 +46,18 @@ public class StocktakingTaskDetailController extends BaseController {
      * 数据
      */
     @PostMapping("/import")
-    public ApiResult exportWarehouse(@RequestParam(value = "mainId") String mainId,@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult exportWarehouse(@RequestParam(value = "mainId") String mainId, @RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = stocktakingTaskDetailService.importFile(excelFile, response);
         return result ? success() : failure();
+    }
+
+    /**
+     * 下载模板
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        stocktakingTaskDetailService.downloadTemplate(response);
+        return success();
     }
 
     /**

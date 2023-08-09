@@ -2,27 +2,33 @@ package com.erp.server.wms.service.impl;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
+import com.erp.model.wms.entity.StocktakingTaskUserEntity;
 import com.erp.server.wms.mapper.StocktakingTaskDetailMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.StocktakingTaskDetailService;
 import com.common.business.service.SuperServiceImpl;
+import com.erp.server.wms.service.StocktakingTaskUserService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -38,11 +44,38 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Resource
     private ProductDetailService productDetailService;
+    @Resource
+    private StocktakingTaskUserService stocktakingTaskUserService;
+
 
     @Override
     public Boolean exportExcel(BaseIdDTO dto, HttpServletResponse response) {
-        List<StocktakingTaskDetailDTO.ExportDTO> exportList=baseMapper.listExportByMainId(dto.getId());
-        return null;
+        String mainId = dto.getId();
+        //盘点人信息
+        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseByTaskIds(Arrays.asList(mainId));
+        String stocktakingUserName = taskUserList.stream().
+                map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
+        List<StocktakingTaskDetailDTO.ExportDTO> exportList = baseMapper.listExportByMainId(mainId);
+        if (CollectionUtils.isEmpty(exportList)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        for(StocktakingTaskDetailDTO.ExportDTO item:exportList){
+            item.setStocktakingUserName(stocktakingUserName);
+        }
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/StocktakingTaskDetail.xlsx";
+        String name = "盘点任务明细列表.xlsx";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(exportList, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            log.error("盘点任务明细列表导出 出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+
     }
 
     @Override
@@ -121,5 +154,36 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             item.setSkuName(skuName);
         }
         return resultList;
+    }
+
+
+    /**
+     * 下载模板
+     * @author yl
+     * @date 2023-08-09 14:04
+     * @param response
+     * @return void
+     */
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/StocktakingTaskDetailTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("盘点任务明细 downloadTemplate  出错了 e==={}", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
     }
 }

@@ -69,4 +69,13 @@ public interface StocktakingTaskDetailService extends SuperService<StocktakingTa
      * @return java.util.List<com.erp.model.wms.dto.StocktakingTaskDetailDTO.ViewDTO>
      */
     List<StocktakingTaskDetailDTO.ViewDTO> listByMainId(String mainId);
+
+    /**
+     * 下载模板
+     * @author yl
+     * @date 2023-08-09 14:04
+     * @param response
+     * @return void
+     */
+    void downloadTemplate(HttpServletResponse response);
 }

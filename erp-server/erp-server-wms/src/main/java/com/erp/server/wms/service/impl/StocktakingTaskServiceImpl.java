@@ -500,7 +500,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            log.error("盘点任务点 downloadTemplate  出错了 e==={}", e);
+            log.error("盘点任务单 downloadTemplate  出错了 e==={}", e);
             throw new ServiceException(ApiError.ERROR_95131);
         }
     }
