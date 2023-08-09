@@ -1851,6 +1851,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     // 退货单（退货补货的才会导致在途数量变化）
                     returnQty = purchaseReturnOrderDetailEntities.stream().filter(e -> e.getPurchaseOrderDetailId().equals(member.getId())
                             && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+                            && StrUtils.isNotEmpty(e.getPurchaseOrderDetailId())
                             && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode()))
                             .map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 }

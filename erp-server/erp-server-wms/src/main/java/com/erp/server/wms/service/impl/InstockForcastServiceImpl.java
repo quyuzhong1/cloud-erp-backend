@@ -11,6 +11,7 @@ import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -302,6 +303,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
                 // 退货单（退货补货的才会导致在途数量变化）
                 returnQty = returnOrderDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), purchaseOrderDetailId)
                         && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode())
+                        && StrUtils.isNotEmpty(e.getPurchaseOrderDetailId())
                         && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
                         .map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             }
