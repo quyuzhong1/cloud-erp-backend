@@ -1178,6 +1178,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             return;
         }
         List<String> ids = poInstockList.stream().filter(obj -> ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PoInstockEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
         disApprove(ids,Boolean.FALSE);
     }
 
