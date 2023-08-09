@@ -125,7 +125,10 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         if (CollectionUtils.isEmpty(roleIds)) {
             return new ArrayList<>();
         }
-        List<SysMenuEntity> allList = sysMenuService.list();
+        List<SysMenuEntity> allList = sysMenuService
+                .lambdaQuery()
+                .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
+                .list();
         List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
         List<String> menuIds;
         if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
@@ -153,7 +156,10 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      **/
     @Override
     public List<SysMenuVO> findMenuAll() {
-        List<SysMenuEntity> allList = sysMenuService.list();
+        List<SysMenuEntity> allList = sysMenuService
+                .lambdaQuery()
+                .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
+                .list();
         List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
         List<String> menuIds = allList.stream().map(s -> s.getMenuId()).collect(Collectors.toList());
         List<SysMenuVO> resultList = menuList.stream().
@@ -290,7 +296,10 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         if (CollectionUtils.isEmpty(roleIds)) {
             return new ArrayList<>();
         }
-        List<SysMenuEntity> allList = sysMenuService.list();
+        List<SysMenuEntity> allList = sysMenuService
+                .lambdaQuery()
+                .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
+                .list();
         List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
         List<String> menuIds;
         if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
@@ -318,7 +327,10 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      **/
     @Override
     public List<SysMenuVO> findLeftMenuAll() {
-        List<SysMenuEntity> allList = sysMenuService.list();
+        List<SysMenuEntity> allList = sysMenuService
+                .lambdaQuery()
+                .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
+                .list();
         List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
         List<String> menuIds = allList.stream().map(s -> s.getMenuId()).collect(Collectors.toList());
         List<SysMenuVO> resultList = menuList.stream().
