@@ -138,7 +138,7 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
             jsonObject.set("planDeliveryDate",detailEntity.getPlanDeliveryDate());
             jsonObject.set("price",detailEntity.getPrice());
             //单据日期
-            jsonObject.put("billDate",entity.getBillDate());
+            jsonObject.set("billDate",entity.getBillDate());
 
             //仓库编码
             if (CollectionUtils.isNotEmpty(warehouseList)) {
@@ -163,7 +163,7 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
             }
             if (CollectionUtils.isNotEmpty(bomInfoList)) {
                 String referenceVersion = bomInfoList.stream().filter(obj -> obj.getParentSkuId().equals(detailEntity.getSkuId()))
-                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getSerialNumber()+ "_"+ obj.getVersion())).orElse(null);
+                        .findFirst().flatMap(obj -> Optional.ofNullable(detailEntity.getSkuNo()+ "_"+ obj.getVersion())).orElse(null);
                 //参照版本
                 jsonObject.set("referenceVersion", referenceVersion);
             }
