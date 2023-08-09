@@ -539,13 +539,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-04-06 9:37
      */
     @Override
-    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId, List<String> detailIds) {
+    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId, List<String> detailIds,List<String> skuIdList) {
         List<String> statusList = new ArrayList<>(4);
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE.getStatus());
         statusList.add(ApproveStatusEnum.REJECT.getStatus());
-        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList, detailIds);
+        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList, detailIds,skuIdList);
         return list;
     }
 

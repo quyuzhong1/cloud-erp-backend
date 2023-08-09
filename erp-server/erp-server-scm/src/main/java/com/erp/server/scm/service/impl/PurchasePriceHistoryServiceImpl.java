@@ -82,9 +82,12 @@ public class PurchasePriceHistoryServiceImpl extends SuperServiceImpl<PurchasePr
      * @date 2023-04-11 14:55
      */
     @Override
-    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId) {
+    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId, List<String> skuIdList) {
         LambdaQueryWrapper<PurchasePriceHistoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PurchasePriceHistoryEntity::getSupplierId, supplierId);
+        if (CollectionUtils.isNotEmpty(skuIdList)) {
+            queryWrapper.in(PurchasePriceHistoryEntity::getSkuId, skuIdList);
+        }
         LocalDate now = LocalDate.now();
         queryWrapper.le(PurchasePriceHistoryEntity::getEffectiveDate, now);
         queryWrapper.ge(PurchasePriceHistoryEntity::getExpireDate, now);
