@@ -100,14 +100,6 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             if (ObjectUtils.isEmpty(productBy)) {
                 errorMsgList.add("sku不存在，请选择导入新增");
             }
-            if (ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productBy.getStatus())
-                    || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())
-                    || ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productBy.getStatus())) {
-                errorMsgList.add("仅{待提交，审核不通过}的状态下可导入修改");
-            }
-            if (ObjectUtils.isEmpty(productBy)) {
-                errorMsgList.add("sku不存在，请选择导入新增");
-            }
             if (errorMsgList.size() > 0) {
                 for (int i = 0; i < errorMsgList.size(); i++) {
                     Integer indexTemp = i + 1;
@@ -116,6 +108,11 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 dto.setErrorMsg(errStr);
                 list.add(dto);
                 return;
+            }
+            if (ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productBy.getStatus())
+                    || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())
+                    || ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productBy.getStatus())) {
+                errorMsgList.add("仅{待提交，审核不通过}的状态下可导入修改");
             }
             productSkuBaseInfoDTO.setId(productBy.getSkuId());
             productInfoDTO.setId(productBy.getId());
