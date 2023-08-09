@@ -158,6 +158,19 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             addDTO.setPurchaseOrgId(orgId);
         }
 
+        // 币制代码
+        String currency = excelDTO.getCurrency();
+        if(StrUtils.isNotEmpty(currency)) {
+            DictCurrencyEntity dictCurrencyEntity = currencyList.stream().filter(r->Objects.equals(currency, r.getId())).findFirst().orElse(null);
+            if(Objects.isNull(dictCurrencyEntity)) {
+                errorMsgList.add("币制编码错误");
+            } else {
+                addDTO.setCurrency(currency);
+            }
+        } else {
+            addDTO.setCurrency(DEFAULT_CURRENCY);
+        }
+
         PurchasePriceDetailDTO.ImportSaveDTO detailDTO = new  PurchasePriceDetailDTO.ImportSaveDTO();
         // 明细
         String skuNo = excelDTO.getSkuNo();
@@ -214,18 +227,6 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
             }
         } else {
             detailDTO.setMaxQty(MAX_QTY);
-        }
-        // 币制代码
-        String currency = excelDTO.getCurrency();
-        if(StrUtils.isNotEmpty(currency)) {
-            DictCurrencyEntity dictCurrencyEntity = currencyList.stream().filter(r->Objects.equals(currency, r.getId())).findFirst().orElse(null);
-            if(Objects.isNull(dictCurrencyEntity)) {
-                errorMsgList.add("币制编码错误");
-            } else {
-                detailDTO.setCurrency(currency);
-            }
-        } else {
-            detailDTO.setCurrency(DEFAULT_CURRENCY);
         }
 
         // 含税单价
