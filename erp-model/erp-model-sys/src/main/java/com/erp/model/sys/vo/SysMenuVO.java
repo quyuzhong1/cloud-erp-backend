@@ -67,4 +67,8 @@ public class SysMenuVO implements Serializable {
 
     @JsonInclude(value= JsonInclude.Include.NON_NULL)
     private List<SysMenuVO> childrenList;
+    /**
+     * 禁用
+     */
+    private Boolean disabled;
 }
