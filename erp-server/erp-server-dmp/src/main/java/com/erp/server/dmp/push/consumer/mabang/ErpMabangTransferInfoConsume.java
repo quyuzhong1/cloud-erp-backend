@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.consumer.mabang;
 
+import cn.hutool.core.collection.ListUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
@@ -114,8 +115,17 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
                 log.warn("ERP直接调拨单【{}】【{}】同步到马帮【{}】：仓库【{}】", transferInfo.getCode(), operateName, inventoryInOutEnum.getName(), inWarehouseCode);
                 String inWarehouseName = warehouseMap.get(inWarehouseCode).getWarehouseName();
                 List<TransferInfoDetailEntity> inWarehouseDetailList = inEntry.getValue();
-                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, inWarehouseDetailList, inventoryInOutEnum.getCode(), operate);
-                mabangInOutStockDTOList.add(mabangInOutStockDTO);
+                // 此处优化，由于马帮一次手工出入库只能最大支持500条明细
+                if(inWarehouseDetailList.size() <= MabangUtil.MAX_DETAIL_SIZE) {
+                    MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, inWarehouseDetailList, inventoryInOutEnum.getCode(), operate);
+                    mabangInOutStockDTOList.add(mabangInOutStockDTO);
+                } else {
+                    List<List<TransferInfoDetailEntity>> partitionList = ListUtil.partition(inWarehouseDetailList, MabangUtil.MAX_DETAIL_SIZE);
+                    for(List<TransferInfoDetailEntity> dataList : partitionList) {
+                        MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, dataList, inventoryInOutEnum.getCode(), operate);
+                        mabangInOutStockDTOList.add(mabangInOutStockDTO);
+                    }
+                }
             }
         }
 
@@ -127,8 +137,17 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
                 log.warn("ERP直接调拨单【{}】【{}】同步到马帮【{}】库：仓库【{}】", transferInfo.getCode(), operateName, inventoryInOutEnum.getName(), outWarehouseCode);
                 String outWarehouseName = warehouseMap.get(outWarehouseCode).getWarehouseName();
                 List<TransferInfoDetailEntity> outWarehouseDetailList = outEntry.getValue();
-                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, outWarehouseDetailList, inventoryInOutEnum.getCode(), operate);
-                mabangInOutStockDTOList.add(mabangInOutStockDTO);
+                // 此处优化，由于马帮一次手工出入库只能最大支持500条明细
+                if(outWarehouseDetailList.size() <= MabangUtil.MAX_DETAIL_SIZE) {
+                    MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, outWarehouseDetailList, inventoryInOutEnum.getCode(), operate);
+                    mabangInOutStockDTOList.add(mabangInOutStockDTO);
+                } else {
+                    List<List<TransferInfoDetailEntity>> partitionList = ListUtil.partition(outWarehouseDetailList, MabangUtil.MAX_DETAIL_SIZE);
+                    for(List<TransferInfoDetailEntity> dataList : partitionList) {
+                        MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, dataList, inventoryInOutEnum.getCode(), operate);
+                        mabangInOutStockDTOList.add(mabangInOutStockDTO);
+                    }
+                }
             }
         }
         mabangInOutStockService.batchInOutStock(mabangInOutStockDTOList, transferInfo.getId(),  transferInfo.getCode(), sourceType, operate);
