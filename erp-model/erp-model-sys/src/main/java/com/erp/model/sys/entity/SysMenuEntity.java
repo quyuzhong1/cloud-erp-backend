@@ -61,6 +61,10 @@ public class SysMenuEntity implements Serializable {
 	private Integer type;
 
 	private String selectLightId;
+	/**
+	 * 禁用
+	 */
+	private Boolean disabled;
 
 
 
