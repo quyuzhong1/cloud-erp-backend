@@ -182,7 +182,11 @@ public class PurchasePriceDTO implements Serializable {
         @NotNull(message = "报价日期不能为空")
         private LocalDate quotedDate;
 
-
+        /**
+         * 币种
+         */
+        @NotBlank(message = "币种不能为空")
+        private String currency;
 
 
         /**
