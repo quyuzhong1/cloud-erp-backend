@@ -519,6 +519,16 @@ public class PurchaseOrderDTO implements Serializable {
         private PurchaseOrderSupplierDTO.UpdateDTO purchaseOrderSupplierDTO;
 
         /**
+         * 收料组织id
+         */
+        private String receiveOrgId;
+
+        /**
+         * 收料组织名称
+         */
+        private String receiveOrgName;
+
+        /**
          * 公司地址
          */
         private String companyAddress;
