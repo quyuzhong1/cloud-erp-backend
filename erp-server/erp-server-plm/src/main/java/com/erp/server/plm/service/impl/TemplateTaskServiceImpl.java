@@ -76,8 +76,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Autowired
     private TemplateTaskRefSkuConfigService templateTaskRefSkuConfigService;
 
-    @Autowired
-    private WorkflowFeign workflowFeign;
 
     @Autowired
     private TemplateRoleService templateRoleService;
@@ -228,6 +226,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         templateDeliveryDocsService.removeByTaskIdAndTemplateId(id, templateId);
         //删除任务审核人
         taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.TWO, id);
+        //批量删除前置任务
+        templatePreTaskService.removeByTaskIds(Arrays.asList(id));
         //删除关注人
         templateTaskFollowerService.deleteByTemplateIdAndTaskIds(templateId, Arrays.asList(id));
         //删除模板任务
@@ -249,6 +249,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         taskChargeDistributionService.removeBySourceAndTaskIds(MathUtil.TWO, ids);
         //删除关注人
         templateTaskFollowerService.deleteByTemplateIdAndTaskIds(templateId, ids);
+        //批量删除前置任务
+        templatePreTaskService.removeByTaskIds(ids);
         //删除模板任务
         return lambdaUpdate()
                 .in(TemplateTaskEntity::getId, ids)
