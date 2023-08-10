@@ -215,6 +215,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             map.put("warehouseLocation", detailEntity.getWarehouseLocation());
             //退货日期
             map.put("billDate", entity.getBillDate());
+            String inventoryOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInventoryOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            //库存组织
+            map.put("inventoryOrgCode", inventoryOrgCode);
             //备注
             map.put("remark", detailEntity.getRemark());
             if (ObjectUtils.isNotEmpty(soReturnEntity)) {
