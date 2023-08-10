@@ -135,13 +135,12 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
 
     /**
      * @param ids
-     * @param isInterface
      * @return Boolean
      * @description: 反审核
      * @author Will
      * @date: 2023/4/12 11:58
      */
-    Boolean disApprove(List<String> ids,Boolean isInterface);
+    Boolean disApprove(List<String> ids);
 
     /**
      * @param ids
