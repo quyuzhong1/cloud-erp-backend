@@ -32,9 +32,10 @@ public interface StocktakingTaskDetailService extends SuperService<StocktakingTa
      * @date 2023-08-03 17:58
      * @param excelFile
      * @param response
+     * @param mainId
      * @return java.lang.Boolean
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importFile(String mainId,MultipartFile excelFile, HttpServletResponse response);
 
     /**
      * 更新明细

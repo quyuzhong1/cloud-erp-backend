@@ -17,9 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 /**
- * <p>
- * 盘点任务明细表 前端控制器
- * </p>
+  盘点管理-盘点任务
  *
  * @author Lambda
  * @since 2023-07-31
@@ -32,8 +30,7 @@ public class StocktakingTaskDetailController extends BaseController {
     private StocktakingTaskDetailService stocktakingTaskDetailService;
 
     /**
-     * 导出
-     * 数据
+     * 导出盘点任务明细数据
      */
     @PostMapping("/export")
     public ApiResult exportWarehouse(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
@@ -42,17 +39,16 @@ public class StocktakingTaskDetailController extends BaseController {
     }
 
     /**
-     * 导入
-     * 数据
+     * 导入盘点任务明细数据
      */
     @PostMapping("/import")
     public ApiResult exportWarehouse(@RequestParam(value = "mainId") String mainId, @RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = stocktakingTaskDetailService.importFile(excelFile, response);
+        Boolean result = stocktakingTaskDetailService.importFile(mainId,excelFile, response);
         return result ? success() : failure();
     }
 
     /**
-     * 下载模板
+     * 下载盘点任务明细模板
      */
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {

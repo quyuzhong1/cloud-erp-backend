@@ -1,21 +1,31 @@
 package com.erp.server.wms.service.impl;
 
+import com.alibaba.excel.EasyExcel;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.dto.excel.KingdeeBusinessOperatorImportExcelDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
+import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
+import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.model.wms.entity.StocktakingTaskUserEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.server.wms.listener.StocktakingTaskDetailExcelListener;
 import com.erp.server.wms.mapper.StocktakingTaskDetailMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.StocktakingTaskDetailService;
 import com.common.business.service.SuperServiceImpl;
+import com.erp.server.wms.service.StocktakingTaskService;
 import com.erp.server.wms.service.StocktakingTaskUserService;
+import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -47,6 +57,11 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
     @Resource
     private StocktakingTaskUserService stocktakingTaskUserService;
 
+    @Resource
+    private StocktakingTaskService stocktakingTaskService;
+
+    @Resource
+    private WarehouseService warehouseService;
 
     @Override
     public Boolean exportExcel(BaseIdDTO dto, HttpServletResponse response) {
@@ -59,7 +74,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         if (CollectionUtils.isEmpty(exportList)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-        List<String> skuIdList=exportList.stream().map(StocktakingTaskDetailDTO.ExportDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = exportList.stream().map(StocktakingTaskDetailDTO.ExportDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.ListProductDetailByIds(skuIdList);
 
         for (StocktakingTaskDetailDTO.ExportDTO item : exportList) {
@@ -84,9 +99,37 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
     }
 
+    /**
+     * 导入明细
+     *
+     * @param excelFile
+     * @param response
+     * @return
+     */
     @Override
-    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        return null;
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean importFile(String mainId, MultipartFile excelFile, HttpServletResponse response) {
+        StocktakingTaskEntity task = stocktakingTaskService.getById(mainId);
+        if (Objects.isNull(task)) {
+            throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
+        }
+        List<StocktakingTaskDetailEntity> taskDetailList = this.listBaseByMainIds(Arrays.asList(mainId));
+        List<WarehouseEntity> warehouseList=warehouseService.list();
+        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(this,task.getCode(),taskDetailList,warehouseList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), StocktakingTaskDetailExcelDTO.class, excelListener).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("盘点任务明细导入错误！>>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        List<StocktakingTaskDetailExcelDTO> errorList = excelListener.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "金蝶业务员错误信息";
+            ExcelUtil.export(fileName, "error", errorList, StocktakingTaskDetailExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+
     }
 
     /**
