@@ -4,13 +4,16 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.wms.enums.BillTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -48,13 +51,25 @@ public class StocktakingProfitLossEntity extends BaseEntity<StocktakingProfitLos
      * 单据类型
      */
     @TableField("bill_type")
-    private String billType;
+    private BillTypeEnum billType;
 
     /**
      * 单据日期
      */
     @TableField("bill_date")
     private LocalDate billDate;
+
+    /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
+
+    /**
+     * 审核时间
+     */
+    @TableField("approve_status")
+    private ApproveStatusEnum approveStatus;
 
 
     public static final String CODE = "code";

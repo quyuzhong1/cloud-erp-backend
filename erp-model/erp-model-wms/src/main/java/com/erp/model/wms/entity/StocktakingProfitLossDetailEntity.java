@@ -58,8 +58,8 @@ public class StocktakingProfitLossDetailEntity extends BaseEntity<StocktakingPro
     /**
      * 盘点数量
      */
-    @TableField("stocktaking_qty")
-    private Integer stocktakingQty;
+    @TableField("qty")
+    private Integer qty;
 
     /**
      * 差异数量
@@ -78,6 +78,12 @@ public class StocktakingProfitLossDetailEntity extends BaseEntity<StocktakingPro
      */
     @TableField("frozen_qty")
     private Integer frozenQty;
+
+    /**
+     * 主表id
+     */
+    @TableField("main_id")
+    private String mainId;
 
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
