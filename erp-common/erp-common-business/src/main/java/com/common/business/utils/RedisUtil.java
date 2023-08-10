@@ -2,6 +2,7 @@ package com.common.business.utils;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -183,7 +184,19 @@ public class RedisUtil {
     public Map<Object, Object> hmget(String key) {
         return redisTemplate.opsForHash().entries(key);
     }
-
+    public <T> T getHashMap(final String key, final String hKey) {
+        HashOperations<String, String, T> opsForHash = redisTemplate.opsForHash();
+        return opsForHash.get(key, hKey);
+    }
+    /**
+     * 缓存Map
+     *
+     * @param key
+     * @param dataMap
+     */
+    public <T> void putAllHashMap(final String key, final Map<String, T> dataMap) {
+        redisTemplate.opsForHash().putAll(key, dataMap);
+    }
     /**
      * 设置多个HashGet
      *

@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqConsumerGroup;
@@ -18,7 +19,9 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.mabang.RedisMabngSkuEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.sync.MabangMachineInfoDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.MachineDetailEntity;
+import com.erp.model.wms.entity.MachineInfoEntity;
+import com.erp.model.wms.entity.MachineSubComponentsEntity;
 import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -32,11 +35,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.HashOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,8 +65,8 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
 
     @Autowired
     private DmpBomService dmpBomService;
-    @Resource
-    private HashOperations<String, String, RedisMabngSkuEntity> hashOperations;
+    @Autowired
+    private RedisUtil redisUtil;
 
     /**
      * 马帮平台加工品JG-开头的对应ERP的加工组合品不是JG-开头的
@@ -131,7 +132,7 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
             List<DmpBomEntity> bomList = dmpBomService.findBom(machineDetailEntity.getSkuNo(),  PlatformEnum.MABANG.getDesc(), "machining");
             if(CollUtil.isEmpty(bomList)) {
                 log.warn("ERP加工单单号【{}】,SKU【{}】未匹配到马帮加工品SKU", machineInfoEntity.getCode(), machineDetailEntity.getSkuNo());
-                RedisMabngSkuEntity mabangSkuInfo = hashOperations.get(RedisKeyConstant.MABANG_SKU_LIST_KEY, machineDetailEntity.getSkuNo());
+                RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_SKU_LIST_KEY, machineDetailEntity.getSkuNo());
                 String makeSkuNo = ObjectUtil.isNotEmpty(mabangSkuInfo) ? mabangSkuInfo.getStockSku() : machineDetailEntity.getSkuNo();
                 bomList = dmpBomService.findBom(makeSkuNo,  PlatformEnum.MABANG.getDesc(), "machining");
                 if(CollUtil.isNotEmpty(bomList)) {

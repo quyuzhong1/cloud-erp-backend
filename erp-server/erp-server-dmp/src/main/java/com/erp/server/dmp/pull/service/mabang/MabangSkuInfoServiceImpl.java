@@ -31,6 +31,7 @@ import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,7 +58,7 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
     @Resource
     private MQProducerService<ComboSkuInfoEntity> mqProducerService;
     @Resource
-    private HashOperations<String, String, RedisMabngSkuEntity> hashOperations;
+    private RedisUtil redisUtil;
 
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
@@ -96,7 +97,7 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
         List<RedisMabngSkuEntity> mabangSkuInfo = mongoService.findMongoData(new OrderMongoDTO(), 0, 0, MongoTableNameContant.ORIGINAL_MABANG_SKU, RedisMabngSkuEntity.class);
         if (CollectionUtil.isNotEmpty(mabangSkuInfo)){
             Map<String, RedisMabngSkuEntity> mabangSkuMap = mabangSkuInfo.stream().collect(Collectors.toMap(RedisMabngSkuEntity::getFinancial, e -> e));
-            hashOperations.putAll(RedisKeyConstant.MABANG_SKU_LIST_KEY, mabangSkuMap);
+            redisUtil.putAllHashMap(RedisKeyConstant.MABANG_SKU_LIST_KEY, mabangSkuMap);
         }
 
         // 推送到MQ

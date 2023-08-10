@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ErpServerModuleEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -36,7 +37,6 @@ import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.HashOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,8 +71,9 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
 
     @Autowired
     private MachineDetailService machineDetailService;
+
     @Resource
-    private HashOperations<String, String, RedisMabngSkuEntity> hashOperations;
+    private RedisUtil redisUtil;
 
     /**
      * 马帮平台加工品JG-开头的对应ERP的加工组合品不是JG-开头的
@@ -84,7 +85,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
     public void syncFbaDelivery(DmpFbaDeliveryEntity entity, String sourceType,  String syncTaskId) {
         // 加工品处理（如果时JG-开头的需要去掉）
         entity.getItemList().stream().forEach(item->{
-            RedisMabngSkuEntity mabangSkuInfo = hashOperations.get(RedisKeyConstant.MABANG_SKU_LIST_KEY, item.getSkuNo());
+            RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_SKU_LIST_KEY, item.getSkuNo());
             if(Objects.isNull(mabangSkuInfo)) {
                 log.warn("马帮FBA发货单【{}】的加工组合品SKU【{}】在马帮SKU列表中不存在", entity.getDeliveryNo(), item.getSkuNo());
                 throw new ServiceException(ApiError.MABANG_SKU_NOT_EXIST, item.getSkuNo());
