@@ -66,5 +66,9 @@ public class DictGlobalAreaDTO implements Serializable {
 
         private Integer index;
 
+        /**
+         * 国家id
+         */
+        private String countryId;
     }
 }
