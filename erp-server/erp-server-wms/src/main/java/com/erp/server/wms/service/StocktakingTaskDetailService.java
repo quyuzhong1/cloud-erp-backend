@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.validator.ValidList;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.common.business.service.SuperService;
@@ -32,9 +33,10 @@ public interface StocktakingTaskDetailService extends SuperService<StocktakingTa
      * @date 2023-08-03 17:58
      * @param excelFile
      * @param response
+     * @param mainId
      * @return java.lang.Boolean
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importFile(String mainId,MultipartFile excelFile, HttpServletResponse response);
 
     /**
      * 更新明细
@@ -43,7 +45,7 @@ public interface StocktakingTaskDetailService extends SuperService<StocktakingTa
      * @param dto
      * @return 
      */
-    Boolean updateDetail(StocktakingTaskDetailDTO.UpdateDTO dto);
+    Boolean updateBatchDetail(List<StocktakingTaskDetailDTO.UpdateDTO> dto);
 
     /**
      * 根据仓库id 集合 获取到任务明细
@@ -60,4 +62,22 @@ public interface StocktakingTaskDetailService extends SuperService<StocktakingTa
      * @return java.util.List<com.erp.model.wms.entity.StocktakingTaskDetailEntity>
      */
     List<StocktakingTaskDetailEntity> listBaseByMainIds(List<String> mainIdList);
+
+    /**
+     * 获取到对应的详情
+     * @author yl
+     * @date 2023-08-08 16:48
+     * @param mainId
+     * @return java.util.List<com.erp.model.wms.dto.StocktakingTaskDetailDTO.ViewDTO>
+     */
+    List<StocktakingTaskDetailDTO.ViewDTO> listByMainId(String mainId);
+
+    /**
+     * 下载模板
+     * @author yl
+     * @date 2023-08-09 14:04
+     * @param response
+     * @return void
+     */
+    void downloadTemplate(HttpServletResponse response);
 }

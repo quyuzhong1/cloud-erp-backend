@@ -1,10 +1,15 @@
 package com.common.business.enums;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Will
@@ -50,5 +55,9 @@ public enum ApproveStatusEnum {
     public static ApproveStatusEnum getByStatus(String status){
         return Arrays.stream(values()).filter(a -> a.getStatus().equals(status))
                 .findFirst().orElse(null);
+    }
+
+    public static List<String> getStatusList() {
+        return Arrays.stream(ApproveStatusEnum.values()).map(ApproveStatusEnum::getStatus).collect(Collectors.toList());
     }
 }

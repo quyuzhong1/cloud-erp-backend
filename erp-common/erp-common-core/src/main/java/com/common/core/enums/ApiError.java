@@ -79,6 +79,8 @@ public enum ApiError implements Serializable {
     ERROR_1040(1040,"未找到{}单据明细数据"),
     ERROR_1041(1041,"{}明细数据不能为空"),
     ERROR_1042(1042,"单据提交失败"),
+    TIME_NOT_NULL(1043,"{}不能为空"),
+    SAVE_BILL_FAIL(1044, "保存{}单据失败"),
 
 
 
@@ -694,6 +696,9 @@ public enum ApiError implements Serializable {
     ERROR_SUB_CHILD_LOCATION_BLANK(99088,"委外订单子SKU【{}】仓位不能为空"),
     ERROR_99089(99089,"已下推退货入库单不能反审核"),
 
+    ERROR_BILL_NOT_EXIST(99088,"单据不存在"),
+    ERROR_99089(99089,"只有待提交的单据支持分配盘点人"),
+    ERROR_99090(99090,"盘点任务明细为空"),
 
 
     /**

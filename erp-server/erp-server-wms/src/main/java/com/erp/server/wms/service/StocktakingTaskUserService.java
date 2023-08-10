@@ -14,6 +14,16 @@ import java.util.List;
  * @since 2023-07-31
  */
 public interface StocktakingTaskUserService extends SuperService<StocktakingTaskUserEntity> {
-
+    /**
+     * 根据任务ids 获取数据
+     * @param taskIdList
+     * @return
+     */
     List<StocktakingTaskUserEntity> listBaseByTaskIds(List<String> taskIdList);
+    /**
+     * 分配任务盘点人
+     * @param taskIdList
+     * @return
+     */
+    Boolean assignUser(List<String> taskIdList, List<String> userIdList);
 }
