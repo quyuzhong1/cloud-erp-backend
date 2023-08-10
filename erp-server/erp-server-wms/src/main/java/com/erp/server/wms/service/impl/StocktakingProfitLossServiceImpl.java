@@ -3,22 +3,21 @@ package com.erp.server.wms.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.common.business.service.SuperServiceImpl;
 import com.erp.model.wms.entity.StocktakingProfitLossDetailEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.server.wms.mapper.StocktakingProfitLossMapper;
+import com.erp.server.wms.service.StocktakingProfitLossDetailService;
 import com.erp.server.wms.service.StocktakingProfitLossService;
-import com.common.business.service.SuperServiceImpl;
 import com.erp.server.wms.service.StocktakingTaskDetailService;
 import jdk.nashorn.internal.ir.annotations.Reference;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.annotation.Id;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -33,11 +32,15 @@ import java.util.stream.Collectors;
  * @author Lambda
  * @since 2023-07-31
  */
+@Slf4j
 @Service
 public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<StocktakingProfitLossMapper, StocktakingProfitLossEntity> implements StocktakingProfitLossService {
 
     @Reference
     private StocktakingTaskDetailService stocktakingTaskDetailService;
+
+    @Reference
+    private StocktakingProfitLossDetailService stocktakingProfitLossDetailService;
 
     @Autowired
     private DocNoGenHelper docNoGenHelper;
@@ -70,10 +73,11 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         List<StocktakingProfitLossDetailEntity> addDetailList = new ArrayList<>(10);
         //单据日期
         LocalDate billDate = LocalDate.now();
-        //盘亏
-        BillTypeEnum loss = BillTypeEnum.LOSS;
         //盘盈
         BillTypeEnum profit = BillTypeEnum.PROFIT;
+        //盘亏
+        BillTypeEnum loss = BillTypeEnum.LOSS;
+
         for (Map.Entry<String, List<StocktakingTaskDetailEntity>> item : warehouseMap.entrySet()) {
             //仓库id
             String warehouseId = item.getKey();
@@ -82,15 +86,37 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             //盘盈的任务明细
             List<StocktakingTaskDetailEntity> profitDetailList = taskDetailList.stream().filter(d -> d.getDiffQty() > 0).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(profitDetailList)) {
-
+                Map<String, Object> profitMap = disposeDb(taskId, taskCode, profitDetailList, billDate, profit);
+                StocktakingProfitLossEntity profitEntity = (StocktakingProfitLossEntity) profitMap.get("stocktakingProfitLoss");
+                List<StocktakingProfitLossDetailEntity> profitDetailEntityList = (List<StocktakingProfitLossDetailEntity>) profitMap.get("detailEntityList");
+                if (Objects.isNull(profitEntity)) {
+                    addList.add(profitEntity);
+                }
+                if (CollectionUtils.isNotEmpty(profitDetailEntityList)) {
+                    addDetailList.addAll(profitDetailEntityList);
+                }
             }
             //盘亏的任务明细
             List<StocktakingTaskDetailEntity> lossDetailList = taskDetailList.stream().filter(d -> d.getDiffQty() < 0).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(lossDetailList)) {
-                disposeDb(taskId, taskCode, lossDetailList, billDate,profit);
+                Map<String, Object> lossMap = disposeDb(taskId, taskCode, lossDetailList, billDate, loss);
+                StocktakingProfitLossEntity lossEntity = (StocktakingProfitLossEntity) lossMap.get("stocktakingProfitLoss");
+                List<StocktakingProfitLossDetailEntity> lossDetailEntityList = (List<StocktakingProfitLossDetailEntity>) lossMap.get("detailEntityList");
+                if (Objects.isNull(lossEntity)) {
+                    addList.add(lossEntity);
+                }
+                if (CollectionUtils.isNotEmpty(lossDetailEntityList)) {
+                    addDetailList.addAll(lossDetailEntityList);
+                }
             }
+        }
 
+        if (CollectionUtils.isNotEmpty(addList)) {
+            this.saveBatch(addList);
+        }
 
+        if (CollectionUtils.isNotEmpty(addDetailList)) {
+            stocktakingProfitLossDetailService.saveBatch(addDetailList);
         }
 
     }

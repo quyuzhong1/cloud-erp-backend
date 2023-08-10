@@ -27,6 +27,7 @@ import com.common.business.service.SuperServiceImpl;
 import com.erp.server.wms.service.StocktakingTaskService;
 import com.erp.server.wms.service.StocktakingTaskUserService;
 import com.erp.server.wms.service.WarehouseService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -50,6 +51,7 @@ import java.util.stream.Collectors;
  * @author Lambda
  * @since 2023-07-31
  */
+@Slf4j
 @Service
 public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<StocktakingTaskDetailMapper, StocktakingTaskDetailEntity> implements StocktakingTaskDetailService {
 

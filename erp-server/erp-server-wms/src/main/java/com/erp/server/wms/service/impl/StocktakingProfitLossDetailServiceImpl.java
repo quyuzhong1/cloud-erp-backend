@@ -4,6 +4,7 @@ import com.erp.model.wms.entity.StocktakingProfitLossDetailEntity;
 import com.erp.server.wms.mapper.StocktakingProfitLossDetailMapper;
 import com.erp.server.wms.service.StocktakingProfitLossDetailService;
 import com.common.business.service.SuperServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
  * @author Lambda
  * @since 2023-07-31
  */
+@Slf4j
 @Service
 public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<StocktakingProfitLossDetailMapper, StocktakingProfitLossDetailEntity> implements StocktakingProfitLossDetailService {
 
