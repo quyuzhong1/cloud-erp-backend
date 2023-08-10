@@ -132,7 +132,7 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
             List<DmpBomEntity> bomList = dmpBomService.findBom(machineDetailEntity.getSkuNo(),  PlatformEnum.MABANG.getDesc(), "machining");
             if(CollUtil.isEmpty(bomList)) {
                 log.warn("ERP加工单单号【{}】,SKU【{}】未匹配到马帮加工品SKU", machineInfoEntity.getCode(), machineDetailEntity.getSkuNo());
-                RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_SKU_LIST_KEY, machineDetailEntity.getSkuNo());
+                RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_FINANCIAL_SKU_LIST_KEY, machineDetailEntity.getSkuNo());
                 String makeSkuNo = ObjectUtil.isNotEmpty(mabangSkuInfo) ? mabangSkuInfo.getStockSku() : machineDetailEntity.getSkuNo();
                 bomList = dmpBomService.findBom(makeSkuNo,  PlatformEnum.MABANG.getDesc(), "machining");
                 if(CollUtil.isNotEmpty(bomList)) {

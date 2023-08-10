@@ -89,7 +89,7 @@ public class MabangUtil {
 
         Map<String, MabangInOutStockDTO.SkuItem> skuItemMap = Maps.newHashMap();
         transferDetailList.stream().forEach(transferSku->{
-            RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_SKU_LIST_KEY, transferSku.getSkuNo());
+            RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_FINANCIAL_SKU_LIST_KEY, transferSku.getSkuNo());
             String gridCode = "";
             // 审核
             if(Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), opType)) {
