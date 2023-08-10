@@ -98,7 +98,7 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
         if (CollectionUtil.isNotEmpty(mabangSkuInfo)){
             Map<String, RedisMabngSkuEntity> mabangFinacialSkuMap = mabangSkuInfo.stream().filter(sku -> StrUtil.isNotBlank(sku.getFinancial())).collect(Collectors.toMap(RedisMabngSkuEntity::getFinancial, e -> e));
             redisUtil.putAllHashMap(RedisKeyConstant.MABANG_FINANCIAL_SKU_LIST_KEY, mabangFinacialSkuMap);
-            Map<String, RedisMabngSkuEntity> mabangStockSkuMap = mabangSkuInfo.stream().filter(sku -> StrUtil.isNotBlank(sku.getFinancial())).collect(Collectors.toMap(RedisMabngSkuEntity::getFinancial, e -> e));
+            Map<String, RedisMabngSkuEntity> mabangStockSkuMap = mabangSkuInfo.stream().filter(sku -> StrUtil.isNotBlank(sku.getStockSku())).collect(Collectors.toMap(RedisMabngSkuEntity::getStockSku, e -> e));
             redisUtil.putAllHashMap(RedisKeyConstant.MABANG_STOCK_SKU_LIST_KEY, mabangStockSkuMap);
         }
 
