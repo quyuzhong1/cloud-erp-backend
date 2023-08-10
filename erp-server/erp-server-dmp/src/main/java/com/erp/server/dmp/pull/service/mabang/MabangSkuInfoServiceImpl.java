@@ -6,7 +6,10 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.service.RedisService;
+import com.common.business.utils.RedisUtil;
 import com.common.core.utils.MapUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -18,6 +21,7 @@ import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.mabang.ComboSkuInfoEntity;
+import com.erp.model.dmp.mabang.RedisMabngSkuEntity;
 import com.erp.model.dmp.mabang.SkuInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
@@ -27,6 +31,7 @@ import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +39,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -50,6 +56,8 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
     private CfgSettingService cfgSettingService;
     @Resource
     private MQProducerService<ComboSkuInfoEntity> mqProducerService;
+    @Resource
+    private HashOperations<String, String, RedisMabngSkuEntity> hashOperations;
 
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
@@ -84,6 +92,13 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_MABANG_SKU);
         }
+        // 把所有马帮sku保存到redis中
+        List<RedisMabngSkuEntity> mabangSkuInfo = mongoService.findMongoData(new OrderMongoDTO(), 0, 0, MongoTableNameContant.ORIGINAL_MABANG_SKU, RedisMabngSkuEntity.class);
+        if (CollectionUtil.isNotEmpty(mabangSkuInfo)){
+            Map<String, RedisMabngSkuEntity> mabangSkuMap = mabangSkuInfo.stream().collect(Collectors.toMap(RedisMabngSkuEntity::getFinancial, e -> e));
+            hashOperations.putAll(RedisKeyConstant.MABANG_SKU_LIST_KEY, mabangSkuMap);
+        }
+
         // 推送到MQ
         if (CollectionUtil.isEmpty(pushToMqList)){
             log.warn("马帮加工SKU订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
