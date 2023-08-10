@@ -20,7 +20,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.DeduplicationUtil;
-import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.service.mq.MQProducerService;
@@ -219,13 +218,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.ApproveResultDTO approveProcess(ProcessManagementDTO.ApproveDTO dto) {
         // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
-        if (null == processBusiness) {
-            // 业务未绑定流程定义
-            return new ProcessManagementDTO.ApproveResultDTO(dto);
-        }
-        List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
-        if (CollectionUtil.isEmpty(processManagementList)) {
+//        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
+//        if (null == processBusiness) {
+//            // 业务未绑定流程定义
+//            return new ProcessManagementDTO.ApproveResultDTO(dto);
+//        }
+        ProcessManagementEntity processManagement = getByBusiness(dto.getBusinessKey(), dto.getBusinessId());
+        if (ObjectUtil.isEmpty(processManagement)) {
             // 业务未启动流程
             return new ProcessManagementDTO.ApproveResultDTO(dto);
         }
@@ -267,7 +266,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 保存流程任务数据
         updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment());
         // 相同审批人去重
-        sameApproverHandler(dto, processBusiness.getProcessDefinitionId());
+        sameApproverHandler(dto, processManagement.getProcessDefinitionId());
         // 返回结果
         return new ProcessManagementDTO.ApproveResultDTO(currentTask.getProcessDefinitionId(), currentTask.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(),currentTask.getId(),currentTask.getName(), currentTask.getTaskDefinitionKey());
     }
@@ -424,13 +423,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.BackResultDTO back(ProcessManagementDTO.BackDTO dto) {
         // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
-        if (null == processBusiness) {
-            // 业务未绑定流程定义
-            return new ProcessManagementDTO.BackResultDTO(dto);
-        }
-        List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
-        if (CollectionUtil.isEmpty(processManagementList)) {
+//        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
+//        if (null == processBusiness) {
+//            // 业务未绑定流程定义
+//            return new ProcessManagementDTO.BackResultDTO(dto);
+//        }
+        ProcessManagementEntity processManagementList = getByBusiness(dto.getBusinessKey(), dto.getBusinessId());
+        if (ObjectUtil.isEmpty(processManagementList)) {
             // 业务未启动流程
             return new ProcessManagementDTO.BackResultDTO(dto);
         }
@@ -541,13 +540,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.RevokeResultDTO revoke(ProcessManagementDTO.RevokeDTO dto) {
         // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
-        if (null == processBusiness) {
-            // 业务未绑定流程定义
-            return new ProcessManagementDTO.RevokeResultDTO(dto);
-        }
-        List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
-        if (CollectionUtil.isEmpty(processManagementList)) {
+//        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
+//        if (null == processBusiness) {
+//            // 业务未绑定流程定义
+//            return new ProcessManagementDTO.RevokeResultDTO(dto);
+//        }
+        ProcessManagementEntity processManagementList = getByBusiness(dto.getBusinessKey(), dto.getBusinessId());
+        if (ObjectUtil.isEmpty(processManagementList)) {
             // 业务未启动流程
             return new ProcessManagementDTO.RevokeResultDTO(dto);
         }
@@ -941,11 +940,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      * @param businessId
      * @return List<ProcessManagementEntity>
      */
-    private List<ProcessManagementEntity> listByBusiness(String businessKey,String businessId) {
-        List<ProcessManagementEntity> list = lambdaQuery().eq(ProcessManagementEntity::getBusinessKey, businessKey)
+    private ProcessManagementEntity getByBusiness(String businessKey, String businessId) {
+        ProcessManagementEntity entity = lambdaQuery().eq(ProcessManagementEntity::getBusinessKey, businessKey)
                 .eq(ProcessManagementEntity::getBusinessId, businessId)
-                .list();
-        return list;
+                .eq(ProcessManagementEntity::getProcessStatus, ProcessStatusEnum.RUNNING)
+                .last("LIMIT 1")
+                .one();
+        return entity;
     }
     /**
      * 根据流程实例ID查询
