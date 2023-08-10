@@ -4,6 +4,7 @@ public class RedisKeyConstant {
     public static final String SKU_LISTING_TIME = "SKU_LISTING_TIME";
 
     public static final String SKU_NOT_LISTING_TIME = "SKU_NOT_LISTING_TIME";
+    public static final String MABANG_SKU_LIST_KEY = "MABANG_SKU_KEY";
 
     //催办
     public static String PRESS="_PRESS";
