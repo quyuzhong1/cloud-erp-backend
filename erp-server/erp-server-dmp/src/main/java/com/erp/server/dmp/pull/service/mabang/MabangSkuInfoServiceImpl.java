@@ -96,8 +96,10 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
         // 把所有马帮sku保存到redis中
         List<RedisMabngSkuEntity> mabangSkuInfo = mongoService.findMongoData(new OrderMongoDTO(), 0, 0, MongoTableNameContant.ORIGINAL_MABANG_SKU, RedisMabngSkuEntity.class);
         if (CollectionUtil.isNotEmpty(mabangSkuInfo)){
-            Map<String, RedisMabngSkuEntity> mabangSkuMap = mabangSkuInfo.stream().filter(sku -> StrUtil.isNotBlank(sku.getFinancial())).collect(Collectors.toMap(RedisMabngSkuEntity::getFinancial, e -> e));
-            redisUtil.putAllHashMap(RedisKeyConstant.MABANG_SKU_LIST_KEY, mabangSkuMap);
+            Map<String, RedisMabngSkuEntity> mabangFinacialSkuMap = mabangSkuInfo.stream().filter(sku -> StrUtil.isNotBlank(sku.getFinancial())).collect(Collectors.toMap(RedisMabngSkuEntity::getFinancial, e -> e));
+            redisUtil.putAllHashMap(RedisKeyConstant.MABANG_FINANCIAL_SKU_LIST_KEY, mabangFinacialSkuMap);
+            Map<String, RedisMabngSkuEntity> mabangStockSkuMap = mabangSkuInfo.stream().filter(sku -> StrUtil.isNotBlank(sku.getFinancial())).collect(Collectors.toMap(RedisMabngSkuEntity::getFinancial, e -> e));
+            redisUtil.putAllHashMap(RedisKeyConstant.MABANG_STOCK_SKU_LIST_KEY, mabangStockSkuMap);
         }
 
         // 推送到MQ

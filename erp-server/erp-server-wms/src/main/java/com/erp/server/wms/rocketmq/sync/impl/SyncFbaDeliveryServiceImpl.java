@@ -85,7 +85,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
     public void syncFbaDelivery(DmpFbaDeliveryEntity entity, String sourceType,  String syncTaskId) {
         // 加工品处理（如果时JG-开头的需要去掉）
         entity.getItemList().stream().forEach(item->{
-            RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_SKU_LIST_KEY, item.getSkuNo());
+            RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_STOCK_SKU_LIST_KEY, item.getSkuNo());
             if(Objects.isNull(mabangSkuInfo)) {
                 log.warn("马帮FBA发货单【{}】的加工组合品SKU【{}】在马帮SKU列表中不存在", entity.getDeliveryNo(), item.getSkuNo());
                 throw new ServiceException(ApiError.MABANG_SKU_NOT_EXIST, item.getSkuNo());
