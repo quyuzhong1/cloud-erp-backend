@@ -692,6 +692,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
     ERROR_PURCHASE_RETURN_REF_PO_APPROVE(99087,"采购退货单【{}】未审核完成，不支持下推采购订单"),
     ERROR_SUB_CHILD_LOCATION_BLANK(99088,"委外订单子SKU【{}】仓位不能为空"),
+    ERROR_99089(99089,"已下推退货入库单不能反审核"),
 
 
 
