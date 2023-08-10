@@ -278,7 +278,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             String result = dmpTaskFeign.createkingdeeSoChange(map);
             log.info("json======{}", result);
             JSONObject json = JSONUtil.parseObj(result);
-            Boolean isSuccess = (Boolean) json.get("IsSuccess");
+            Boolean isSuccess = (Boolean) json.getOrDefault("IsSuccess",Boolean.FALSE);
             List<SoChangeDetailEntity> updateList = new ArrayList<>(10);
             //如果成功了
             if (isSuccess) {
