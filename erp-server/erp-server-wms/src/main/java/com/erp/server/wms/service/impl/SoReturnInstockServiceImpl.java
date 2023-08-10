@@ -741,7 +741,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(qcInfoEntity.getSourceId());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailService.getById(qcInfoEntity.getSourceDetailId());
             SoReturnInstockDTO.Add dto = new SoReturnInstockDTO.Add();
-            if (StringUtils.isBlank(receiveEntity.getSourceId())) {
+/*            if (StringUtils.isBlank(receiveEntity.getSourceId())) {
                 dto.setSourceCode(receiveEntity.getCode());
                 dto.setSourceId(receiveEntity.getId());
                 dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
@@ -749,7 +749,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 dto.setSourceCode(receiveEntity.getSourceCode());
                 dto.setSourceId(receiveEntity.getSourceId());
                 dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
-            }
+            }*/
+            dto.setSourceCode(qcInfoEntity.getCode());
+            dto.setSourceId(qcInfoEntity.getId());
+            dto.setSourceType(SourceTypeEnum.QC_INFO.getCode());
             dto.setSoReturnId(receiveEntity.getSourceId());
             dto.setSoReturnCode(receiveEntity.getSourceCode());
             dto.setCustomerId(receiveEntity.getCustomerId());
@@ -804,7 +807,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(id);
             SoReturnInstockDTO.Add dto = new SoReturnInstockDTO.Add();
             //等于空表示无退货单的下推
-            if (StringUtils.isBlank(soReturnReceiveEntity.getSourceId())) {
+/*            if (StringUtils.isBlank(soReturnReceiveEntity.getSourceId())) {
                 dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
                 dto.setSourceCode(soReturnReceiveEntity.getCode());
                 dto.setSourceId(id);
@@ -812,7 +815,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
                 dto.setSourceCode(soReturnReceiveEntity.getSourceCode());
                 dto.setSourceId(soReturnReceiveEntity.getSourceId());
-            }
+            }*/
+            dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
+            dto.setSourceCode(soReturnReceiveEntity.getCode());
+            dto.setSourceId(soReturnReceiveEntity.getId());
             dto.setSoReturnId(soReturnReceiveEntity.getSourceId());
             dto.setSoReturnCode(soReturnReceiveEntity.getSourceCode());
             dto.setCustomerId(soReturnReceiveEntity.getCustomerId());
