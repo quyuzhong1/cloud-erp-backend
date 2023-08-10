@@ -83,6 +83,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Resource
     private OperateLogService operateLogService;
 
+    @Resource
+    private StocktakingProfitLossService stocktakingProfitLossService;
 
     /**
      * tab list
@@ -225,7 +227,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         List<Pair<String, String>> rejectPairList = taskList.stream().filter(t -> rejectStatus.equals(t.getApproveStatus())).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         //改状态
-        Boolean result = this.updateApproveStatus(taskList, ingStatus);
+        Boolean result = this.updateStatus(taskList, ingStatus, StocktakingStatusEnum.IN_PROGRESS);
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", BillApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
@@ -263,16 +265,19 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     }
 
     /**
-     * 更改审核状态
+     * 更改状态
      *
      * @param taskList
-     * @param statusEnum
-     * @return
+     * @param approveStatus 审核状态
+     * @return billStatus 单据状态
      */
-    public Boolean updateApproveStatus(List<StocktakingTaskEntity> taskList, ApproveStatusEnum statusEnum) {
+    public Boolean updateStatus(List<StocktakingTaskEntity> taskList, ApproveStatusEnum approveStatus, StocktakingStatusEnum billStatus) {
         if (CollectionUtils.isNotEmpty(taskList)) {
             for (StocktakingTaskEntity item : taskList) {
-                item.setApproveStatus(statusEnum);
+                item.setApproveStatus(approveStatus);
+                if (Objects.nonNull(billStatus)) {
+                    item.setStatus(billStatus);
+                }
             }
             return this.updateBatchById(taskList);
         }
@@ -360,16 +365,28 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         resultList.add(approveDTO);
         ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
         //审核通过
-        ApproveStatusEnum statusEnum = ApproveStatusEnum.APPROVE;
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
+        //是否通过
+        Boolean isPass = Boolean.TRUE;
+        //完成
+        StocktakingStatusEnum billStatus = StocktakingStatusEnum.COMPLETED;
         if (listApiResult.isSuccess()) {
             if (ApproveType.REJECT.equals(approveType.getStatus())) {
-                statusEnum = ApproveStatusEnum.REJECT;
+                //变待提交 状态改为复盘中
+                approveStatus = ApproveStatusEnum.REJECT;
+                billStatus = StocktakingStatusEnum.RECOUNT;
+                isPass = Boolean.FALSE;
             }
         }
         List<StocktakingTaskEntity> list = new ArrayList<>(1);
         list.add(taskEntity);
-        Boolean result = this.updateApproveStatus(list, statusEnum);
+        Boolean result = this.updateStatus(list, approveStatus, billStatus);
         if (result) {
+            //当审核通过 自动生成盘盈盘亏单  检查所有该计划下的任务是否完成 完成就更盘点计划的状态
+             if(isPass){
+                 stocktakingProfitLossService.autoCreateBill(taskEntity);
+             }
+
             //添加日志
             List<Pair<String, String>> pairList = list.stream().
                     map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());

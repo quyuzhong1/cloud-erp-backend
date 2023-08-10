@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -48,6 +49,12 @@ public class StocktakingProfitLossEntity extends BaseEntity<StocktakingProfitLos
      */
     @TableField("bill_type")
     private String billType;
+
+    /**
+     * 单据日期
+     */
+    @TableField("bill_date")
+    private LocalDate billDate;
 
 
     public static final String CODE = "code";

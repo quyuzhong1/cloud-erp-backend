@@ -16,7 +16,7 @@ public enum StocktakingStatusEnum implements EnumMessage {
     NOT_STARTED("notStarted", "未开始"),
     IN_PROGRESS("inProgress", "盘点中"),
     COMPLETED("completed", "完成"),
-    RECOUNT("recount", "复盘");
+    RECOUNT("recount", "复盘中");
 
     /**
      * 类型
