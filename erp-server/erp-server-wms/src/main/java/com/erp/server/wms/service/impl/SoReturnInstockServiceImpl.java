@@ -892,6 +892,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    public List<SoReturnInstockEntity> listBySourceIds(List<String> sourceIds) {
+        return lambdaQuery().in(SoReturnInstockEntity::getSourceId, sourceIds).list();
+    }
+
+
+    @Override
     public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String operate) {
         return this.lambdaUpdate()
                 .eq(SoReturnInstockEntity::getId, id)

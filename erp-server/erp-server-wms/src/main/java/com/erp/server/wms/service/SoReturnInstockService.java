@@ -176,6 +176,15 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
     List<SoReturnInstockEntity> listByCode(List<String> codeList);
 
     /**
+     * 根据来源单据id查询
+     * @Author Luo_WG
+     * @Date 2023/6/28 19:53
+     * @param sourceIds sourceIds
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnInstockEntity>
+     **/
+    List<SoReturnInstockEntity> listBySourceIds(List<String> sourceIds);
+
+    /**
      * 更新金蝶状态等信息
      * @Author Luo_WG
      * @date: 2023/5/23 17:41
