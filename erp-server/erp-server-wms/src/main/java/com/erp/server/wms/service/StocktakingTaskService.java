@@ -104,4 +104,6 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
      * @return void
      */
     void downloadTemplate(HttpServletResponse response);
+
+
 }

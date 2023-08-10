@@ -2,6 +2,7 @@ package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -51,7 +52,7 @@ public class StocktakingTaskEntity extends BaseEntity<StocktakingTaskEntity> {
      * 审核状态
      */
     @TableField("approve_status")
-    private String approveStatus;
+    private ApproveStatusEnum approveStatus;
 
 
     public static final String CODE = "code";
