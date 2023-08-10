@@ -185,6 +185,7 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
         comboSkuInfo.setRelationType("machining");
         comboSkuInfo.setPlatformSign(PlatformEnum.MABANG.getDesc());
         comboSkuInfo.set_id(skuInfoEntity.getId());
+        comboSkuInfo.setFinancialCode(skuInfoEntity.getFinancial());
         comboSkuInfo.setComboProductDetail(initOrderItem(skuInfoEntity));
         return comboSkuInfo;
     }
