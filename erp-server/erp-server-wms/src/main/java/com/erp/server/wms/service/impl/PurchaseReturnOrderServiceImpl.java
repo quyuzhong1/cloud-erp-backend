@@ -1315,7 +1315,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 inOutStockDTO.setSkuId(detail.getSkuId());
                 inOutStockDTO.setSkuNo(detail.getSkuNo());
                 // 扣除捕获数量
-                inOutStockDTO.setQty(detail.getReplenishQty());
+                inOutStockDTO.setQty(detail.getReturnQty());
                 inOutStockDTO.setWarehouseId(purchaseReturnOrderEntity.getReturnWarehouseId());
                 inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
                 receiveMembers.add(inOutStockDTO);
