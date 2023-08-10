@@ -262,8 +262,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             if (!Objects.isNull(soReturn)) {
                 dto.setSoReturnId(soReturnId);
                 dto.setSoReturnCode(soReturn.getCode());
-                dto.setSourceId(soReturn.getId());
-                dto.setSourceCode(soReturn.getCode());
+      /*          dto.setSourceId(dto.getSourceId());
+                dto.setSourceCode(soReturn.getCode());*/
             }
 
         }
@@ -750,9 +750,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 dto.setSourceId(receiveEntity.getSourceId());
                 dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
             }*/
-            dto.setSourceCode(qcInfoEntity.getCode());
-            dto.setSourceId(qcInfoEntity.getId());
-            dto.setSourceType(SourceTypeEnum.QC_INFO.getCode());
+            dto.setSourceCode(receiveEntity.getCode());
+            dto.setSourceId(receiveEntity.getId());
+            dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
             dto.setSoReturnId(receiveEntity.getSourceId());
             dto.setSoReturnCode(receiveEntity.getSourceCode());
             dto.setCustomerId(receiveEntity.getCustomerId());
