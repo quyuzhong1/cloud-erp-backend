@@ -262,8 +262,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             if (!Objects.isNull(soReturn)) {
                 dto.setSoReturnId(soReturnId);
                 dto.setSoReturnCode(soReturn.getCode());
-      /*          dto.setSourceId(dto.getSourceId());
-                dto.setSourceCode(soReturn.getCode());*/
+                dto.setSourceId(soReturn.getId());
+                dto.setSourceCode(soReturn.getCode());
             }
 
         }
@@ -741,7 +741,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(qcInfoEntity.getSourceId());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailService.getById(qcInfoEntity.getSourceDetailId());
             SoReturnInstockDTO.Add dto = new SoReturnInstockDTO.Add();
-/*            if (StringUtils.isBlank(receiveEntity.getSourceId())) {
+            if (StringUtils.isBlank(receiveEntity.getSourceId())) {
                 dto.setSourceCode(receiveEntity.getCode());
                 dto.setSourceId(receiveEntity.getId());
                 dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
@@ -749,10 +749,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 dto.setSourceCode(receiveEntity.getSourceCode());
                 dto.setSourceId(receiveEntity.getSourceId());
                 dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
-            }*/
-            dto.setSourceCode(receiveEntity.getCode());
-            dto.setSourceId(receiveEntity.getId());
-            dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
+            }
             dto.setSoReturnId(receiveEntity.getSourceId());
             dto.setSoReturnCode(receiveEntity.getSourceCode());
             dto.setCustomerId(receiveEntity.getCustomerId());
@@ -775,13 +772,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
                 detailAddDTO.setWarehouseLocation(view.getWarehouseLocation());
                 detailAddDTO.setRemark(view.getRemark());
-                /*if (StringUtils.isBlank(receiveEntity.getSourceId())) {
+                if (StringUtils.isBlank(receiveEntity.getSourceId())) {
                     detailAddDTO.setSourceDetailId(view.getSourceDetailId());
                 } else {
                     detailAddDTO.setSourceDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
-                }*/
-                detailAddDTO.setSourceDetailId(view.getSourceDetailId());
-                detailAddDTO.setSoReturnDetailId(view.getId());
+                }
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);
@@ -809,7 +804,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(id);
             SoReturnInstockDTO.Add dto = new SoReturnInstockDTO.Add();
             //等于空表示无退货单的下推
-/*            if (StringUtils.isBlank(soReturnReceiveEntity.getSourceId())) {
+            if (StringUtils.isBlank(soReturnReceiveEntity.getSourceId())) {
                 dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
                 dto.setSourceCode(soReturnReceiveEntity.getCode());
                 dto.setSourceId(id);
@@ -817,10 +812,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
                 dto.setSourceCode(soReturnReceiveEntity.getSourceCode());
                 dto.setSourceId(soReturnReceiveEntity.getSourceId());
-            }*/
-            dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
-            dto.setSourceCode(soReturnReceiveEntity.getCode());
-            dto.setSourceId(soReturnReceiveEntity.getId());
+            }
             dto.setSoReturnId(soReturnReceiveEntity.getSourceId());
             dto.setSoReturnCode(soReturnReceiveEntity.getSourceCode());
             dto.setCustomerId(soReturnReceiveEntity.getCustomerId());
@@ -840,13 +832,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailAddDTO.setRealQty(view.getRealQty());
                 detailAddDTO.setWarehouseLocation(view.getWarehouseLocation());
                 detailAddDTO.setRemark(view.getRemark());
-                /*if (StringUtils.isNotBlank(soReturnReceiveEntity.getSourceId())) {
+                if (StringUtils.isNotBlank(soReturnReceiveEntity.getSourceId())) {
                     detailAddDTO.setSourceDetailId(view.getSourceDetailId());
                 } else {
                     detailAddDTO.setSourceDetailId(view.getId());
-                }*/
-                detailAddDTO.setSoReturnDetailId(view.getSourceDetailId());
-                detailAddDTO.setSourceDetailId(view.getId());
+                }
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
                 detailList.add(detailAddDTO);

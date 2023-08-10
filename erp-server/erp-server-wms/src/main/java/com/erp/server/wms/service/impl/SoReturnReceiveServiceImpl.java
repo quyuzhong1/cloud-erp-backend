@@ -115,9 +115,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Resource
     private QcRuleService qcRuleService;
 
-    @Resource
-    private SoReturnInstockService soReturnInstockService;
-
     @Override
     public PagingVO<SoReturnReceiveDTO.PagingView> paging(PagingDTO<SoReturnReceiveDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -559,7 +556,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
         for (QcInfoDTO.SoReturnReceiveToQcDTO newItem : qcList) {
             //为空所有的加，等级为空用销售方式，销售方式为空用等级
-            if ((StringUtils.isNotBlank(newProductGrade) && StringUtils.isNotBlank(newSaleMethod))) {
+            if ((StringUtils.isBlank(newProductGrade) && StringUtils.isBlank(newSaleMethod))) {
                 QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
                 BeanMapper.copy(newItem, newQc);
                 newQc.setQcType(returnQc);
@@ -619,12 +616,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceIds(ids);
         if (CollectionUtils.isNotEmpty(qcBySourceId)) {
             throw new ServiceException(ApiError.ERROR_99042);
-        }
-
-        //下推退货入库单不能反审核
-        List<SoReturnInstockEntity> soReturnInstockEntityList = soReturnInstockService.listBySourceIds(ids).stream().filter(req -> req.getInvalidStatus().equals(InvalidStatusEnum.NOT_VOIDED.getStatus())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(soReturnInstockEntityList)) {
-            throw new ServiceException(ApiError.ERROR_99089);
         }
 
         //修改状态为待提交
