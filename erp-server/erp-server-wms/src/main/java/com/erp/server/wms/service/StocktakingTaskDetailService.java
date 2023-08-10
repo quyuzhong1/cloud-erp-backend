@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.validator.ValidList;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.common.business.service.SuperService;
@@ -44,7 +45,7 @@ public interface StocktakingTaskDetailService extends SuperService<StocktakingTa
      * @param dto
      * @return 
      */
-    Boolean updateDetail(StocktakingTaskDetailDTO.UpdateDTO dto);
+    Boolean updateBatchDetail(List<StocktakingTaskDetailDTO.UpdateDTO> dto);
 
     /**
      * 根据仓库id 集合 获取到任务明细

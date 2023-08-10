@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.validator.ValidList;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
@@ -60,8 +61,8 @@ public class StocktakingTaskDetailController extends BaseController {
      * 修改盘点数量
      */
     @PostMapping("/update")
-    public ApiResult exportWarehouse(@RequestBody @Validated StocktakingTaskDetailDTO.UpdateDTO dto) {
-        Boolean result = stocktakingTaskDetailService.updateDetail(dto);
+    public ApiResult exportWarehouse(@RequestBody @Validated ValidList<StocktakingTaskDetailDTO.UpdateDTO> dto) {
+        Boolean result = stocktakingTaskDetailService.updateBatchDetail(dto);
         return result ? success() : failure();
     }
 }

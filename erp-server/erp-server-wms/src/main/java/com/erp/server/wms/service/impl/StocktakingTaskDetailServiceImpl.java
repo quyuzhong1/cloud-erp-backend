@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -114,8 +115,8 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
         }
         List<StocktakingTaskDetailEntity> taskDetailList = this.listBaseByMainIds(Arrays.asList(mainId));
-        List<WarehouseEntity> warehouseList=warehouseService.list();
-        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(this,task.getCode(),taskDetailList,warehouseList);
+        List<WarehouseEntity> warehouseList = warehouseService.list();
+        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(this, task.getCode(), taskDetailList, warehouseList);
         try {
             EasyExcel.read(excelFile.getInputStream(), StocktakingTaskDetailExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
@@ -135,28 +136,45 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
     /**
      * 更新明细
      *
-     * @param dto
+     * @param list
      * @return
      * @author yl
      * @date 2023-08-03 17:59
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean updateDetail(StocktakingTaskDetailDTO.UpdateDTO dto) {
-        StocktakingTaskDetailEntity taskDetail = this.getById(dto.getId());
-        if (Objects.isNull(taskDetail)) {
+    public Boolean updateBatchDetail(List<StocktakingTaskDetailDTO.UpdateDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_99090);
         }
-        Integer qty = dto.getQty();
-        taskDetail.setQty(qty);
-        //可用库存
-        Integer usableQty = taskDetail.getUsableQty();
-        //冻结数量
-        Integer frozenQty = taskDetail.getFrozenQty();
-        //差异数量 等于盘点库存-可用库存-冻结库存
-        Integer diffQty = qty - usableQty - frozenQty;
-        taskDetail.setDiffQty(diffQty);
-        return this.updateById(taskDetail);
+        List<String> idList = list.stream().map(StocktakingTaskDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(idList)) {
+            throw new ServiceException(ApiError.ERROR_99090);
+        }
+        List<StocktakingTaskDetailEntity> taskDetailList = this.listByIds(idList);
+        List<StocktakingTaskDetailEntity> updateTaskDetailList = new ArrayList<>(taskDetailList.size());
+        for (StocktakingTaskDetailDTO.UpdateDTO item : list) {
+            StocktakingTaskDetailEntity taskDetail = taskDetailList.stream().
+                    filter(t -> t.getIsDeleted().equals(item.getId())).
+                    findFirst().orElse(null);
+            if (Objects.isNull(taskDetail)) {
+                continue;
+            }
+            Integer qty = item.getQty();
+            taskDetail.setQty(qty);
+            //可用库存
+            Integer usableQty = taskDetail.getUsableQty();
+            //冻结数量
+            Integer frozenQty = taskDetail.getFrozenQty();
+            //差异数量 等于盘点库存-可用库存-冻结库存
+            Integer diffQty = qty - usableQty - frozenQty;
+            taskDetail.setDiffQty(diffQty);
+            updateTaskDetailList.add(taskDetail);
+        }
+        if (CollectionUtils.isNotEmpty(updateTaskDetailList)) {
+            return this.updateBatchById(updateTaskDetailList);
+        }
+        return Boolean.TRUE;
     }
 
     /**
