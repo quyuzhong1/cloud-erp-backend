@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
@@ -74,7 +75,7 @@ public class MabangUtil {
     public static MabangInOutStockDTO fillMabangInOutStock(String warehouseCode, String warehouseName, String employeeName,
                                                            List<ProductDetailEntity> productDetailList,
                                                            TransferInfoEntity transferInfo, List<TransferInfoDetailEntity> transferDetailList,
-                                                           String inOutType, String opType, HashOperations<String, String, RedisMabngSkuEntity> hashOperations) {
+                                                           String inOutType, String opType, RedisUtil redisUtil) {
 
         List<MabangInOutStockDTO.SkuItem> data = Lists.newArrayList();
         MabangInOutStockDTO mabangInOutStockDTO = new MabangInOutStockDTO();
@@ -88,7 +89,7 @@ public class MabangUtil {
 
         Map<String, MabangInOutStockDTO.SkuItem> skuItemMap = Maps.newHashMap();
         transferDetailList.stream().forEach(transferSku->{
-            RedisMabngSkuEntity mabangSkuInfo = hashOperations.get(RedisKeyConstant.MABANG_SKU_LIST_KEY, transferSku.getSkuNo());
+            RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_SKU_LIST_KEY, transferSku.getSkuNo());
             String gridCode = "";
             // 审核
             if(Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), opType)) {

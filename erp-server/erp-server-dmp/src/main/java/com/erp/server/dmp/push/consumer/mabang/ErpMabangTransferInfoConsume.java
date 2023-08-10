@@ -4,13 +4,13 @@ import cn.hutool.core.collection.ListUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.entity.DmpWarehouseMappingEntity;
 import com.erp.model.dmp.enums.SettingEnum;
-import com.erp.model.dmp.mabang.RedisMabngSkuEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.sync.MabangTransferInfoDTO;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
@@ -26,11 +26,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.HashOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -59,8 +57,8 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
-    @Resource
-    private HashOperations<String, String, RedisMabngSkuEntity> hashOperations;
+    @Autowired
+    private RedisUtil redisUtil;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -122,12 +120,12 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
                 List<TransferInfoDetailEntity> inWarehouseDetailList = inEntry.getValue();
                 // 此处优化，由于马帮一次手工出入库只能最大支持500条明细
                 if(inWarehouseDetailList.size() <= MabangUtil.MAX_DETAIL_SIZE) {
-                    MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, inWarehouseDetailList, inventoryInOutEnum.getCode(), operate, hashOperations);
+                    MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, inWarehouseDetailList, inventoryInOutEnum.getCode(), operate, redisUtil);
                     mabangInOutStockDTOList.add(mabangInOutStockDTO);
                 } else {
                     List<List<TransferInfoDetailEntity>> partitionList = ListUtil.partition(inWarehouseDetailList, MabangUtil.MAX_DETAIL_SIZE);
                     for(List<TransferInfoDetailEntity> dataList : partitionList) {
-                        MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, dataList, inventoryInOutEnum.getCode(), operate, hashOperations);
+                        MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, dataList, inventoryInOutEnum.getCode(), operate, redisUtil);
                         mabangInOutStockDTOList.add(mabangInOutStockDTO);
                     }
                 }
@@ -144,12 +142,12 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
                 List<TransferInfoDetailEntity> outWarehouseDetailList = outEntry.getValue();
                 // 此处优化，由于马帮一次手工出入库只能最大支持500条明细
                 if(outWarehouseDetailList.size() <= MabangUtil.MAX_DETAIL_SIZE) {
-                    MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, outWarehouseDetailList, inventoryInOutEnum.getCode(), operate, hashOperations);
+                    MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, outWarehouseDetailList, inventoryInOutEnum.getCode(), operate, redisUtil);
                     mabangInOutStockDTOList.add(mabangInOutStockDTO);
                 } else {
                     List<List<TransferInfoDetailEntity>> partitionList = ListUtil.partition(outWarehouseDetailList, MabangUtil.MAX_DETAIL_SIZE);
                     for(List<TransferInfoDetailEntity> dataList : partitionList) {
-                        MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, dataList, inventoryInOutEnum.getCode(), operate, hashOperations);
+                        MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, dataList, inventoryInOutEnum.getCode(), operate, redisUtil);
                         mabangInOutStockDTOList.add(mabangInOutStockDTO);
                     }
                 }
