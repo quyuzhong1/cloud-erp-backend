@@ -41,9 +41,13 @@ public class SoReturnInstockDetailDTO {
          */
         private String remark;
         /**
-         * 退货单明细表id
+         * 来源明细id
          */
         private String sourceDetailId;
+        /**
+         * 退货单明细表id
+         */
+        private String soReturnDetailId;
         /**
          * 退货类型 wms/common/enumDropDown?type=ReturnType
          * 描述：refund 退货扣款 replenishment 退货补货
@@ -92,9 +96,13 @@ public class SoReturnInstockDetailDTO {
          */
         private String remark;
         /**
-         * 退货单明细表id
+         * 来源明细id
          */
         private String sourceDetailId;
+        /**
+         * 退货单明细表id
+         */
+        private String soReturnDetailId;
         /**
          * 退货类型 wms/common/enumDropDown?type=ReturnType
          * 描述：refund 退货扣款 replenishment 退货补货

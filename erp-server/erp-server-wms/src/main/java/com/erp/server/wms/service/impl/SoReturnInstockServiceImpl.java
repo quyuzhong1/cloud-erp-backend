@@ -775,11 +775,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
                 detailAddDTO.setWarehouseLocation(view.getWarehouseLocation());
                 detailAddDTO.setRemark(view.getRemark());
-                if (StringUtils.isBlank(receiveEntity.getSourceId())) {
+                /*if (StringUtils.isBlank(receiveEntity.getSourceId())) {
                     detailAddDTO.setSourceDetailId(view.getSourceDetailId());
                 } else {
                     detailAddDTO.setSourceDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
-                }
+                }*/
+                detailAddDTO.setSourceDetailId(view.getSourceDetailId());
+                detailAddDTO.setSoReturnDetailId(view.getId());
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);
@@ -838,11 +840,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailAddDTO.setRealQty(view.getRealQty());
                 detailAddDTO.setWarehouseLocation(view.getWarehouseLocation());
                 detailAddDTO.setRemark(view.getRemark());
-                if (StringUtils.isNotBlank(soReturnReceiveEntity.getSourceId())) {
+                /*if (StringUtils.isNotBlank(soReturnReceiveEntity.getSourceId())) {
                     detailAddDTO.setSourceDetailId(view.getSourceDetailId());
                 } else {
                     detailAddDTO.setSourceDetailId(view.getId());
-                }
+                }*/
+                detailAddDTO.setSoReturnDetailId(view.getSourceDetailId());
+                detailAddDTO.setSourceDetailId(view.getId());
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
                 detailList.add(detailAddDTO);
