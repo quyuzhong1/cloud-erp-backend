@@ -442,7 +442,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         ApproveStatusEnum waitSubmit = ApproveStatusEnum.WAIT_SUBMIT;
         long count = taskList.stream().filter(t -> !waitSubmit.equals(t.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_99089);
+            throw new ServiceException(ApiError.ERROR_99090);
         }
         Boolean result = stocktakingTaskUserService.assignUser(dto.getIds(), dto.getUserIdList());
         return result;

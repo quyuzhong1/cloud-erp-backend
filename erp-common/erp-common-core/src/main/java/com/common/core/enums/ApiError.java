@@ -697,8 +697,8 @@ public enum ApiError implements Serializable {
     ERROR_99089(99089,"已下推退货入库单不能反审核"),
 
     ERROR_BILL_NOT_EXIST(99088,"单据不存在"),
-    ERROR_99089(99089,"只有待提交的单据支持分配盘点人"),
-    ERROR_99090(99090,"盘点任务明细为空"),
+    ERROR_99090(99090,"只有待提交的单据支持分配盘点人"),
+    ERROR_99091(99091,"盘点任务明细为空"),
 
 
     /**
