@@ -621,8 +621,10 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             throw new ServiceException(ApiError.ERROR_99042);
         }
 
+        List<String> collect = entityList.stream().map(req -> req.getSourceId()).collect(Collectors.toList());
+        ids.addAll(collect);
         //下推退货入库单不能反审核
-        List<SoReturnInstockEntity> soReturnInstockEntityList = soReturnInstockService.listBySourceIds(ids);
+        List<SoReturnInstockEntity> soReturnInstockEntityList = soReturnInstockService.listBySourceIds(ids).stream().filter(req -> req.getInvalidStatus().equals(InvalidStatusEnum.NOT_VOIDED.getStatus())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(soReturnInstockEntityList)) {
             throw new ServiceException(ApiError.ERROR_99089);
         }
