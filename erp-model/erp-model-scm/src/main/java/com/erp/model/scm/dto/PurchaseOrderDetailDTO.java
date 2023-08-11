@@ -362,4 +362,32 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private String warehouseLocation;
 
     }
+
+    /**
+     * PDA:采购单查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPurchaseOrderDetail {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+    }
 }

@@ -107,13 +107,4 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return List<SubcontractOrderChildDTO>
      */
     List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildByParentPodIds(@Param("parentPodIds") List<String> parentPodIds);
-
-    /**
-     * 根据sku编号查询采购单
-     * @Author Luo_WG
-     * @Date 2023/8/11 10:26
-     * @param skuNo
-     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
-     **/
-    List<PurchaseOrderEntity> listPoBySkuNo(@Param("skuNo") String skuNo);
 }

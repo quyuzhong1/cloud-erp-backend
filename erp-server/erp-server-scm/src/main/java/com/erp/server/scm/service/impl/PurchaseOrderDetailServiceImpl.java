@@ -18,6 +18,7 @@ import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
@@ -577,5 +578,16 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         lambdaUpdate().in(PurchaseOrderDetailEntity::getId,ids)
                 .set(PurchaseOrderDetailEntity::getRemark,remark)
                 .update(new PurchaseOrderDetailEntity());
+    }
+
+    @Override
+    public List<String> listPoIdBySkuNo(String skuNo) {
+        LambdaQueryWrapper<PurchaseOrderDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(PurchaseOrderDetailEntity::getSkuId);
+        queryWrapper.eq(PurchaseOrderDetailEntity::getSkuNo,skuNo);
+        queryWrapper.groupBy(PurchaseOrderDetailEntity::getPurchaseOrderId);
+        queryWrapper.orderByDesc(PurchaseOrderDetailEntity::getCreateTime);
+        return listObjs(queryWrapper, Object::toString);
+
     }
 }

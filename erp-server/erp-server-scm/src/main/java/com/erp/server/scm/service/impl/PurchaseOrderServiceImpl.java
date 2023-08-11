@@ -1938,7 +1938,41 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public List<PurchaseOrderEntity> listPoBySkuNo(String skuNo) {
-        return baseMapper.listPoBySkuNo(skuNo);
+    public List<PurchaseOrderDTO.PdaPurchaseOrder> listPoBySkuNo(String skuNo) {
+        List<String> poIds = purchaseOrderDetailService.listPoIdBySkuNo(skuNo);
+        List<PurchaseOrderEntity> purchaseOrderEntities = this.listByIds(poIds);
+        List<PurchaseOrderSupplierEntity> purchaseOrderSupplierEntities = purchaseOrderSupplierService.listByPurchaseOrderIds(poIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listDetailByIds(poIds);
+        //入库信息
+        List<String> podIds = purchaseOrderDetailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+        List<PurchaseOrderDTO.PdaPurchaseOrder> list = new ArrayList<>();
+        for (PurchaseOrderEntity entity : purchaseOrderEntities) {
+            PurchaseOrderDTO.PdaPurchaseOrder order = new PurchaseOrderDTO.PdaPurchaseOrder();
+            order.setId(entity.getId());
+            order.setCode(entity.getCode());
+            order.setWarehouseName(entity.getDeliveryWarehouseName());
+            PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierEntities.stream().filter(req -> req.getPurchaseOrderId().equals(entity.getId())).distinct().findFirst().orElse(new PurchaseOrderSupplierEntity());
+            order.setSupplierName(supplierEntity.getSupplierName());
+            List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailEntityList.stream().filter(req -> req.getPurchaseOrderId().equals(entity.getId())).collect(Collectors.toList());
+            List<PurchaseOrderDetailDTO.PdaPurchaseOrderDetail> itemList = new ArrayList<>();
+            for (PurchaseOrderDetailEntity detailEntity : detailEntityList) {
+                PurchaseOrderDetailDTO.PdaPurchaseOrderDetail detail = new PurchaseOrderDetailDTO.PdaPurchaseOrderDetail();
+                detail.setId(detailEntity.getId());
+                detail.setSkuNo(detailEntity.getSkuNo());
+                detail.setPurchaseQty(detailEntity.getPurchaseQty());
+                detail.setReceiveQty(detailEntity.getReceiveQty());
+                //入库数量
+                Integer stockInQty = MathUtil.ZERO;
+                if (CollectionUtils.isNotEmpty(stockInDetailList)) {
+                    stockInQty = stockInDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(detailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
+                            .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                }
+                detail.setStockInQty(stockInQty);
+            }
+            order.setItemList(itemList);
+            list.add(order);
+        }
+        return list;
     }
 }
