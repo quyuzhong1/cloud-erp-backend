@@ -28,6 +28,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.oms.entity.CustomerSellerEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
@@ -1942,10 +1943,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> poIds = purchaseOrderDetailService.listPoIdBySkuNo(skuNo);
         List<PurchaseOrderEntity> purchaseOrderEntities = this.listByIds(poIds);
         List<PurchaseOrderSupplierEntity> purchaseOrderSupplierEntities = purchaseOrderSupplierService.listByPurchaseOrderIds(poIds);
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listDetailByIds(poIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listByPurchaseOrderIds(poIds);
         //入库信息
         List<String> podIds = purchaseOrderDetailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
         List<PurchaseOrderDTO.PdaPurchaseOrder> list = new ArrayList<>();
         for (PurchaseOrderEntity entity : purchaseOrderEntities) {
             PurchaseOrderDTO.PdaPurchaseOrder order = new PurchaseOrderDTO.PdaPurchaseOrder();
@@ -1961,7 +1963,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 detail.setId(detailEntity.getId());
                 detail.setSkuNo(detailEntity.getSkuNo());
                 detail.setPurchaseQty(detailEntity.getPurchaseQty());
-                detail.setReceiveQty(detailEntity.getReceiveQty());
+
+                Integer receiveQty = MathUtil.ZERO;
+                if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+                    receiveQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(detailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
+                            .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                }
+                detail.setReceiveQty(receiveQty);
                 //入库数量
                 Integer stockInQty = MathUtil.ZERO;
                 if (CollectionUtils.isNotEmpty(stockInDetailList)) {
@@ -1969,10 +1977,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                             .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
                 detail.setStockInQty(stockInQty);
+                itemList.add(detail);
             }
             order.setItemList(itemList);
             list.add(order);
         }
+        list.sort(Comparator.comparing(PurchaseOrderDTO.PdaPurchaseOrder::getCode).reversed());
         return list;
     }
 }

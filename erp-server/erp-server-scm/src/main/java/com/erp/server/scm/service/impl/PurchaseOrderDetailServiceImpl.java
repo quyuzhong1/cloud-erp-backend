@@ -583,10 +583,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     @Override
     public List<String> listPoIdBySkuNo(String skuNo) {
         LambdaQueryWrapper<PurchaseOrderDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(PurchaseOrderDetailEntity::getSkuId);
+        queryWrapper.select(PurchaseOrderDetailEntity::getPurchaseOrderId);
         queryWrapper.eq(PurchaseOrderDetailEntity::getSkuNo,skuNo);
         queryWrapper.groupBy(PurchaseOrderDetailEntity::getPurchaseOrderId);
-        queryWrapper.orderByDesc(PurchaseOrderDetailEntity::getCreateTime);
         return listObjs(queryWrapper, Object::toString);
 
     }
