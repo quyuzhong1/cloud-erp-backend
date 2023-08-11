@@ -352,5 +352,5 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param skuNo
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
-    List<PurchaseOrderEntity> listPoBySkuNo(String skuNo);
+    List<PurchaseOrderDTO.PdaPurchaseOrder> listPoBySkuNo(String skuNo);
 }
