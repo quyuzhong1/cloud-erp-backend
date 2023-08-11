@@ -739,9 +739,15 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             Integer todayStockInQty = 0;
 
             for (InventoryDTO.PdaHomeInventoryBalanceDTO homeInventoryBalanceDTO : inventory) {
-                usableQty = usableQty + homeInventoryBalanceDTO.getUsableQty();
-                todayDeliveryQty = todayDeliveryQty + homeInventoryBalanceDTO.getTodayDeliveryQty();
-                todayStockInQty = todayStockInQty + homeInventoryBalanceDTO.getTodayStockInQty();
+                if (homeInventoryBalanceDTO.getUsableQty() != null) {
+                    usableQty = usableQty + homeInventoryBalanceDTO.getUsableQty();
+                }
+                if (homeInventoryBalanceDTO.getTodayDeliveryQty() != null) {
+                    todayDeliveryQty = todayDeliveryQty + homeInventoryBalanceDTO.getTodayDeliveryQty();
+                }
+                if (homeInventoryBalanceDTO.getTodayStockInQty() != null) {
+                    todayStockInQty = todayStockInQty + homeInventoryBalanceDTO.getTodayStockInQty();
+                }
             }
             pdaHomeInventoryBalanceDTO.setUsableQty(usableQty);
             pdaHomeInventoryBalanceDTO.setTodayDeliveryQty(todayDeliveryQty);
