@@ -1,0 +1,97 @@
+package com.erp.model.wms.dto;
+
+import com.erp.model.wms.enums.BillTypeEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * @author Lambda
+ * @Classname StocktakingProfitLossDetailDTO
+ * @Description TODO
+ * @Date 2023-08-10 18:41
+ * @Created by yl
+ */
+public class StocktakingProfitLossDetailDTO implements Serializable {
+
+
+    /**
+     * 分页数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * mainId
+         */
+        private String mainId;
+
+        /**
+         * skuid
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * skuName
+         */
+        private String skuName;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
+
+        /**
+         * 盘点数量
+         */
+        private Integer qty;
+
+        /**
+         * 可用数量
+         */
+        private Integer usableQty;
+
+        /**
+         * 冻结数量
+         */
+        private Integer frozenQty;
+
+
+        /**
+         * 差异数量
+         */
+        private Integer diffQty;
+
+
+    }
+}

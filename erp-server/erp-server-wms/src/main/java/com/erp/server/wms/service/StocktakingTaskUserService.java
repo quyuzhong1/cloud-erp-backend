@@ -26,4 +26,13 @@ public interface StocktakingTaskUserService extends SuperService<StocktakingTask
      * @return
      */
     Boolean assignUser(List<String> taskIdList, List<String> userIdList);
+
+    /**
+     * 根据用户获取多信息
+     * @author yl
+     * @date 2023-08-11 9:29
+     * @param asList
+     * @return java.util.List<com.erp.model.wms.entity.StocktakingTaskUserEntity>
+     */
+    List<StocktakingTaskUserEntity> listByUserIds(List<String> asList);
 }
