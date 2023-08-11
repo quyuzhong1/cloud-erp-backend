@@ -72,7 +72,7 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
         List<SkuInfoEntity> insertList = new ArrayList<>();
         List<SkuInfoEntity> pushToMqList = new ArrayList<>();
         for (SkuInfoEntity entity : entityList) {
-            OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getId());
+            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByStockSku(entity.getStockSku());
             List<SkuInfoEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_SKU, SkuInfoEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             entity.setDownloadTime(LocalDateTime.now());
@@ -88,6 +88,7 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
             }
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
+            mapUtil.remove("id");
             mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_SKU, SkuInfoEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
@@ -96,9 +97,11 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
         // 把所有马帮sku保存到redis中
         List<RedisMabngSkuEntity> mabangSkuInfo = mongoService.findMongoData(new OrderMongoDTO(), 0, 0, MongoTableNameContant.ORIGINAL_MABANG_SKU, RedisMabngSkuEntity.class);
         if (CollectionUtil.isNotEmpty(mabangSkuInfo)){
-            Map<String, RedisMabngSkuEntity> mabangFinacialSkuMap = mabangSkuInfo.stream().filter(sku -> StrUtil.isNotBlank(sku.getFinancial())).collect(Collectors.toMap(RedisMabngSkuEntity::getFinancial, e -> e));
+            Map<String, RedisMabngSkuEntity> mabangFinacialSkuMap = mabangSkuInfo.stream().distinct().filter(sku -> StrUtil.isNotBlank(sku.getFinancial())).collect(Collectors.toMap(RedisMabngSkuEntity::getFinancial, e -> e));
             redisUtil.putAllHashMap(RedisKeyConstant.MABANG_FINANCIAL_SKU_LIST_KEY, mabangFinacialSkuMap);
-            Map<String, RedisMabngSkuEntity> mabangStockSkuMap = mabangSkuInfo.stream().filter(sku -> StrUtil.isNotBlank(sku.getStockSku())).collect(Collectors.toMap(RedisMabngSkuEntity::getStockSku, e -> e));
+            Map<String, RedisMabngSkuEntity> mabangStockSkuMap = mabangSkuInfo.stream().distinct()
+                    .filter(sku -> StrUtil.isNotBlank(sku.getStockSku()) && StrUtil.isNotBlank(sku.getFinancial()))
+                    .collect(Collectors.toMap(RedisMabngSkuEntity::getStockSku, e -> e, (existingPerson, newPerson) -> newPerson));
             redisUtil.putAllHashMap(RedisKeyConstant.MABANG_STOCK_SKU_LIST_KEY, mabangStockSkuMap);
         }
 

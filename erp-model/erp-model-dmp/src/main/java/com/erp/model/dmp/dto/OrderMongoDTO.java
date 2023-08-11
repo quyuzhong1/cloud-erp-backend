@@ -183,5 +183,13 @@ public class  OrderMongoDTO {
         orderMongoDTO.setDelivery_no(deliveryNo);
         return orderMongoDTO;
     }
+    public static OrderMongoDTO getByStockSku(String stockSku) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setStockSku(stockSku);
+        return orderMongoDTO;
+    }
+
+
+
 
 }
