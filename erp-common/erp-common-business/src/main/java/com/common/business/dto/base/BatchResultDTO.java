@@ -16,7 +16,6 @@ import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class BatchResultDTO implements Serializable {
 
     /**
