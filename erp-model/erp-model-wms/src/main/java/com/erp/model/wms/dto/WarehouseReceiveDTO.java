@@ -853,5 +853,117 @@ public class WarehouseReceiveDTO {
 
     }
 
+    /**
+     * PDA:分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingViewDTO {
 
+        /**
+         * 表id
+         */
+        private String id;
+
+        /**
+         * 收货单号
+         */
+        private String code;
+
+        /**
+         * 单据状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 供应商名
+         */
+        private String supplierName;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 委外订单类型(child子级，parent父级)
+         */
+        private String subcontractType;
+
+        /**
+         * 详情产品数量
+         */
+        private Integer detailCount;
+
+        /**
+         * 产品信息
+         */
+        private List<PdaItemDTO> itemList;
+    }
+
+    /**
+     * PDA:商品信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaItemDTO {
+        /**
+         * 明细id
+         */
+        private String id;
+        /**
+         * sku
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+    }
+
+    /**
+     * PDA:分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingParamDTO extends SortDTO {
+        /**
+         * 审核状态：根据tab页传审核状态
+         */
+        private List<String> approveStatusList;
+    }
+
+    /**
+     * PDA:列表状态
+     * @Author Luo_WG
+     * @Date 2023/8/11 9:15
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class PdaPoReceiveCountDTO {
+        /**
+         * 类型(waitSubmitAndReject 待提交/审核不通过，approveIng 审核中，approve 已审核)
+         */
+        private String tabFlag;
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
 }

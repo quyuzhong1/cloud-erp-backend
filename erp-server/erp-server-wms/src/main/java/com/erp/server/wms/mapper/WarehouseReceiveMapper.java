@@ -42,4 +42,23 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
      * 根据供应商id集合查询收货批次和收货数量
      */
     List<WarehouseReceiveDTO.SupplierReceiveInfoDTO> getReceiveInfoBySupplierIds(@Param("supplierIds") List<String> supplierIds, @Param("dateList") List<LocalDate> dateList);
+
+    /**
+     * PDA:首页分页查询
+     * @Author Luo_WG
+     * @Date 2023/8/11 9:28
+     * @param query
+     * @param params
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.WarehouseReceiveDTO.PdaPagingViewDTO>
+     **/
+    IPage<WarehouseReceiveDTO.PdaPagingViewDTO> pdaPaging(Page query, @Param("params") WarehouseReceiveDTO.PdaPagingParamDTO params);
+
+    /**
+     * PDA:列表tab页单据数量
+     * @Author Luo_WG
+     * @Date 2023/8/11 9:37
+     * @param params
+     * @return java.lang.Integer
+     **/
+    Integer pdaListCount(@Param("params") WarehouseReceiveDTO.PagingParamDTO params);
 }
