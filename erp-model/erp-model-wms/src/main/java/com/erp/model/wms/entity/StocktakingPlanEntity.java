@@ -1,5 +1,7 @@
 package com.erp.model.wms.entity;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
@@ -158,8 +160,10 @@ public class StocktakingPlanEntity extends BaseEntity<StocktakingPlanEntity> {
     public StocktakingPlanEntity(StocktakingPlanDTO.AddDTO addDTO, String code) {
         this.code = code;
         this.name = addDTO.getName();
-//        this.startTime = addDTO.getStartTime();
-//        this.endTime = addDTO.getEndTime();
+        if (CollUtil.isNotEmpty(addDTO.getActiveSalesTimeList()) && addDTO.getActiveSalesTimeList().size() > 1){
+            this.startTime = addDTO.getActiveSalesTimeList().get(0);
+            this.endTime = addDTO.getActiveSalesTimeList().get(1);
+        }
         this.mode = addDTO.getMode();
         this.type = addDTO.getType();
         this.separateRule = addDTO.getSeparateRule();

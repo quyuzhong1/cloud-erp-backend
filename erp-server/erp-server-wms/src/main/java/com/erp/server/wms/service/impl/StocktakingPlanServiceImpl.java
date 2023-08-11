@@ -159,7 +159,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         StocktakingPlanEntity stocktakingPlanEntity =  BeanMapperUtils.map(StocktakingPlanEntity.class, updateDTO);
 
         // 数据处理
-        //handleData(stocktakingPlanEntity);
+//        handleData(stocktakingPlanEntity);
 
         log.info("编辑 开始修改盘点计划单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(stocktakingPlanEntity);
@@ -434,6 +434,9 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         ValidatorUtil.isNotNull(activeSalesTimeList, ApiError.TIME_NOT_NULL, "动销时间");
         ValidatorUtil.isNotNull(activeSalesTimeList.get(0), ApiError.TIME_NOT_NULL, "动销开始时间");
         ValidatorUtil.isNotNull(activeSalesTimeList.get(1), ApiError.TIME_NOT_NULL, "动销结束时间");
+        if (activeSalesTimeList.get(1).compareTo(activeSalesTimeList.get(0)) <= 0) {
+            throw new ServiceException(ApiError.START_GE_END_ERROR, "动销开始时间", "动销结束时间");
+        }
     }
 
 }

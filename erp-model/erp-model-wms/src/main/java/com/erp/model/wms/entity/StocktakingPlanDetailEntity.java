@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+
+import com.erp.model.wms.dto.StocktakingPlanDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -96,6 +99,18 @@ public class StocktakingPlanDetailEntity extends BaseEntity<StocktakingPlanDetai
     public static final String ORG_ID = "org_id";
 
     public static final String ORG_NAME = "org_name";
+
+    public StocktakingPlanDetailEntity(StocktakingPlanDTO.DetailDTO item, String mainId, WarehouseDTO.UpdateDTO warehouse, String orgName) {
+        this.mainId = mainId;
+        this.warehouseId = item.getWarehouseId();
+        this.warehouseName = warehouse.getName();
+        this.warehouseArea = item.getWarehouseArea();
+        this.warehouseLocation = item.getWarehouseLocation();
+        this.skuId = item.getSkuId();
+        this.skuNo = item.getSkuNo();
+        this.orgId = warehouse.getOrgId();
+        this.orgName = orgName;
+    }
 
     @Override
     public Serializable pkVal() {
