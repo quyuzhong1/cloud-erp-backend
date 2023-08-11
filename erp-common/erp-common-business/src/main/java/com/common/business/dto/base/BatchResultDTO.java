@@ -14,7 +14,7 @@ import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
-public class BatchResult implements Serializable {
+public class BatchResultDTO implements Serializable {
 
     /**
      * 单据编号
@@ -25,7 +25,7 @@ public class BatchResult implements Serializable {
      */
     private String msg;
 
-    public BatchResult(String code, String msg) {
+    public BatchResultDTO(String code, String msg) {
         this.code = code;
         this.msg = msg;
     }
