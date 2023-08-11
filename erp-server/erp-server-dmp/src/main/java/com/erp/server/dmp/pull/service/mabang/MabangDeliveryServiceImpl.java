@@ -203,7 +203,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
         // 只取待配货和作废的单据
         if( (deliveryMongo.getDelivery_status() == null) ||
                 (deliveryMongo.getDelivery_status().intValue() != FbaDeliveryStatusEnum.WAIT_DELIVERY.getCode() && deliveryMongo.getDelivery_status().intValue() != FbaDeliveryStatusEnum.INVALID.getCode()) ) {
-            log.warn("马帮FBA发货单【{}】信息状态不为待配货，作废状态，不需要推送，FBA发货单信息：{}", deliveryMongo.getDelivery_no(), JSONObject.toJSONString(deliveryMongo));
+            log.warn("马帮FBA发货单【{}】信息状态不为待配货，作废状态 为已作废，不需要推送，FBA发货单信息：{}", deliveryMongo.getDelivery_no(), JSONObject.toJSONString(deliveryMongo));
             return null;
         }
 
