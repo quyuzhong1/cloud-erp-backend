@@ -35,4 +35,28 @@ public interface MessageService extends SuperService<MessageEntity> {
      * @return java.util.List<com.erp.model.sys.dto.MessageDTO.NotReadMessageNumDetail>
      **/
     List<MessageDTO.NotReadMessageNumDetail> listNotReadMessageDetail(String type);
+
+    /**
+     * 全部已读
+     * @Author Luo_WG
+     * @Date 2023/8/11 16:18
+     * @return java.lang.Boolean
+     **/
+    Boolean readAll();
+
+    /**
+     * 根据类型查询消息
+     * @Author Luo_WG
+     * @Date 2023/8/11 16:18
+     * @return java.lang.Boolean
+     **/
+    List<MessageEntity> listByType(String type);
+
+    /**
+     * 是否有新的消息
+     * @Author Luo_WG
+     * @Date 2023/8/11 16:44
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.sys.dto.MessageDTO.IsMessageDTO>
+     **/
+    MessageDTO.IsMessageDTO isMessage();
 }

@@ -75,4 +75,13 @@ public class MessageDTO implements Serializable {
          */
         private LinkedList<LinkedHashMap<String, Object>> dataJson;
     }
+
+    /**
+     * 是否存在新的未读消息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class IsMessageDTO {
+        private String remark;
+    }
 }

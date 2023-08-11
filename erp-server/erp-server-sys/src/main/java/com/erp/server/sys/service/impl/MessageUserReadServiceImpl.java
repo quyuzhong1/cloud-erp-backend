@@ -28,4 +28,15 @@ public class MessageUserReadServiceImpl extends SuperServiceImpl<MessageUserRead
     public List<MessageUserReadEntity> listByUserId(String userId) {
         return lambdaQuery().eq(MessageUserReadEntity::getUserId, userId).list();
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean add(MessageUserReadEntity messageUserReadEntity) {
+        return this.save(messageUserReadEntity);
+    }
+
+    @Override
+    public MessageUserReadEntity listByMessageId(String messageId) {
+        return lambdaQuery().eq(MessageUserReadEntity::getMessageId, messageId).last("LIMIT 1").one();
+    }
 }

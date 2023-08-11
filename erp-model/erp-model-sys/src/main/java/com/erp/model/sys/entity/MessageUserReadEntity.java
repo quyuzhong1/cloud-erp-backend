@@ -23,13 +23,6 @@ import lombok.experimental.Accessors;
 @TableName("message_user_read")
 public class MessageUserReadEntity extends BaseEntity<MessageUserReadEntity> {
 
-
-    /**
-    * 审核状态
-    */
-    @TableField("approve_status")
-    private String approveStatus;
-
     /**
     * 消息通知表id
     */
