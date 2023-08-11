@@ -198,6 +198,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+                detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
                 list.add(detailEntity);
                 //修改操作日志
                 if (StringUtils.isNotBlank(detailEntity.getId())) {
