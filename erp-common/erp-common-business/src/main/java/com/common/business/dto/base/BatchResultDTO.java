@@ -1,5 +1,7 @@
 package com.common.business.dto.base;
-
+import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.OperationTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,6 +16,7 @@ import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class BatchResultDTO implements Serializable {
 
     /**
@@ -28,5 +31,30 @@ public class BatchResultDTO implements Serializable {
     public BatchResultDTO(String code, String msg) {
         this.code = code;
         this.msg = msg;
+    }
+    public static BatchResultDTO success(String code, OperationTypeEnum operationType) {
+        if (null == operationType) {
+            return new BatchResultDTO(code, "");
+        }
+        code = null == code ? "" : code;
+        return new BatchResultDTO(code, StrUtil.format("{}_{}",operationType.getName(),"成功"));
+    }
+
+    public static BatchResultDTO success(String code, String msg) {
+        code = null == code ? "" : code;
+        return new BatchResultDTO(code, msg);
+    }
+
+    public static BatchResultDTO fail(String code, OperationTypeEnum operationType) {
+        if (null == operationType) {
+            return new BatchResultDTO(code, "");
+        }
+        code = null == code ? "" : code;
+        return new BatchResultDTO(code, StrUtil.format("{}_{}",operationType.getName(),"失败"));
+    }
+
+    public static BatchResultDTO fail(String code, String msg) {
+        code = null == code ? "" : code;
+        return new BatchResultDTO(code, msg);
     }
 }
