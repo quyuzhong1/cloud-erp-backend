@@ -1246,7 +1246,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                         .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
-           Integer deliveryQty = ArrivalStatusEnum.ARRIVED.getCode().equals(obj.getArrivalStatus()) ? MathUtil.ZERO : obj.getPurchaseQty() + replenishQty - stockInQty;
+           Integer deliveryQty = Boolean.TRUE.equals(obj.getIsEndReceive()) ? MathUtil.ZERO : obj.getPurchaseQty() + replenishQty - stockInQty;
            obj.setReceiveQty(receiveQty);
            obj.setDeliveryQty(deliveryQty);
 
