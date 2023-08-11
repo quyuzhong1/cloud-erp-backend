@@ -200,4 +200,22 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * 根据供应商id集合查询收货批次和收货数量
      */
     List<WarehouseReceiveDTO.SupplierReceiveInfoDTO> getReceiveInfoBySupplierIds(WarehouseReceiveDTO.SupplierReceiveParamDTO dto);
+
+    /**
+     * pda:分页查询
+     * @Author Luo_WG
+     * @Date 2023/4/13 15:41
+     * @param pagingParamDTO pagingParamDTO
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.WarehouseReceiveDTO.PagingViewDTO>
+     **/
+    PagingVO<WarehouseReceiveDTO.PdaPagingViewDTO> pdaPaging(PagingDTO<WarehouseReceiveDTO.PdaPagingParamDTO> pagingParamDTO);
+
+    /**
+     * pda:列表状态数量统计
+     * @Author Luo_WG
+     * @Date 2023/4/17 13:13
+     * @param dto dto
+     * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>
+     **/
+    List<WarehouseReceiveDTO.PdaPoReceiveCountDTO> pdaListCount(PermissionsDTO dto);
 }

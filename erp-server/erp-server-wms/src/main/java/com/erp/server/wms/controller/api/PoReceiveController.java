@@ -31,7 +31,7 @@ import java.util.List;
  **/
 @RestController
 @RequestMapping("/warehouseReceive")
-public class WarehouseReceiveController extends BaseController {
+public class PoReceiveController extends BaseController {
 
     @Resource
     private WarehouseReceiveService warehouseReceiveService;

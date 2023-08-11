@@ -321,4 +321,42 @@
         </if>
         group by pr.supplier_id
     </select>
+
+    <select id="pdaPaging" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PdaPagingViewDTO">
+        SELECT
+        wr.id,
+        wr.code,
+        wr.approve_status,
+        wr.supplier_name,
+        wr.delivery_warehouse_name,
+        wr.subcontract_type as subcontractType
+        FROM po_receive_detail wrd
+        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        WHERE wr.is_deleted = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and wr.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        wr.create_time desc
+    </select>
+
+    <select id="pdaListCount" resultType="java.lang.Integer">
+        select
+        count(distinct wr.id)
+        FROM po_receive_detail wrd
+        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        WHERE wr.is_deleted = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and wr.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
 </mapper>

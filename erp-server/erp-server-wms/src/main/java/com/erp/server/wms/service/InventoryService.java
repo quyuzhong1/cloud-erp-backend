@@ -188,4 +188,12 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return
      */
     List<InventoryEntity> listByStocktakingType(StocktakingPlanEntity entity, List<StocktakingPlanDetailEntity> detailEntityList);
+    /**
+     * 根据仓库id查询库存信息
+     * @Author Luo_WG
+     * @Date 2023/8/10 10:23
+     * @param warehouseId
+     * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaHomeInventoryBalanceDTO
+     **/
+    InventoryDTO.PdaHomeInventoryBalanceDTO getInventoryByWarehouseId(String warehouseId);
 }
