@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -59,10 +60,20 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
     private PlmTaskFeign plmTaskFeign;
     @Autowired
     private RedisUtil redisUtil;
+    @Resource
+    private ErpMabangTransferInfoConsume erpMabangTransferInfoConsume;
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void onMessage(MabangTransferInfoDTO mabangTransferInfoDTO) {
+        try {
+            erpMabangTransferInfoConsume.extracted(mabangTransferInfoDTO);
+        }catch (Exception e){
+            log.error("直接调拨单推送到马帮异常：{}", e);
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void extracted(MabangTransferInfoDTO mabangTransferInfoDTO) {
         log.warn("监听到ERP直接调拨单信息，内容：{}", JSONObject.toJSONString(mabangTransferInfoDTO));
 
         // 主单
@@ -154,7 +165,6 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
             }
         }
         mabangInOutStockService.batchInOutStock(mabangInOutStockDTOList, transferInfo.getId(),  transferInfo.getCode(), sourceType, operate);
-
     }
 
 
