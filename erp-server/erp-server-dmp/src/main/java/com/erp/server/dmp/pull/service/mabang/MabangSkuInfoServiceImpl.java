@@ -87,6 +87,7 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
                 continue;
             }
             pushToMqList.add(entity);
+            entity.setId(null);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
             mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_SKU, SkuInfoEntity.class);
         }
