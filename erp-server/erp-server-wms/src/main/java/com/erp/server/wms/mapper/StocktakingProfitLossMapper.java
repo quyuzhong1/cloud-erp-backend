@@ -38,4 +38,15 @@ public interface StocktakingProfitLossMapper extends BaseMapper<StocktakingProfi
      * @return
      */
     IPage<StocktakingProfitLossDTO.PagingViewDTO> paging(Page query, @Param("params")StocktakingProfitLossDTO.PagingParamDTO params, @Param("billType")String billType,@Param("sourceIdList") List<String> taskIdList);
+
+    /**
+     * 获取到导出数据
+     * @author yl
+     * @date 2023-08-11 12:16
+     * @param params
+     * @param billType
+     * @param taskIdList
+     * @return java.util.List<com.erp.model.wms.dto.StocktakingProfitLossDTO.PagingViewDTO>
+     */
+    List<StocktakingProfitLossDTO.PagingViewDTO> listExport(@Param("params") StocktakingProfitLossDTO.ExportDTO params,@Param("billType") String billType, @Param("sourceIdList")List<String> taskIdList);
 }

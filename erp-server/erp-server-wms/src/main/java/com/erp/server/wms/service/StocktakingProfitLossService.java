@@ -8,6 +8,7 @@ import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -45,4 +46,21 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.StocktakingProfitLossDTO.PagingViewDTO>
      */
     PagingVO<StocktakingProfitLossDTO.PagingViewDTO> paging(PagingDTO<StocktakingProfitLossDTO.PagingParamDTO> dto);
+
+    /**
+     * 详情
+     * @param id
+     * @return
+     */
+    StocktakingProfitLossDTO.ViewDTO view(String id);
+
+    /**
+     * 导出
+     * @author yl
+     * @date 2023-08-11 12:10
+     * @param dto
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean exportExcel(StocktakingProfitLossDTO.ExportDTO dto, HttpServletResponse response);
 }

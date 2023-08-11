@@ -48,7 +48,7 @@ public class StocktakingProfitLossDetailDTO implements Serializable {
         /**
          * skuName
          */
-        private String skuName;
+        private String productName;
 
         /**
          * 单位

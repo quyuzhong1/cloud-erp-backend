@@ -42,7 +42,7 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
      */
     @Override
     public List<StocktakingProfitLossDetailDTO.ViewDTO> listByMainIds(List<String> mainIdList) {
-        if (CollectionUtils.isNotEmpty(mainIdList)) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.emptyList();
         }
         List<StocktakingProfitLossDetailDTO.ViewDTO> viewList = baseMapper.listByMainIds(mainIdList);

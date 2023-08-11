@@ -6,9 +6,15 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
@@ -28,6 +34,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,16 +52,16 @@ import java.util.stream.Collectors;
 @Service
 public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<StocktakingProfitLossMapper, StocktakingProfitLossEntity> implements StocktakingProfitLossService {
 
-    @Reference
+    @Resource
     private StocktakingTaskDetailService stocktakingTaskDetailService;
 
-    @Reference
+    @Resource
     private StocktakingTaskUserService stocktakingTaskUserService;
 
-    @Reference
+    @Resource
     private StocktakingProfitLossDetailService stocktakingProfitLossDetailService;
 
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
 
     /**
@@ -65,8 +73,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      * @author yl
      * @date 2023-08-10 11:52
      */
-    @Transactional(rollbackFor = Exception.class)
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void autoCreateBill(StocktakingTaskEntity taskEntity) {
         if (Objects.isNull(taskEntity)) {
             return;
@@ -101,7 +110,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 Map<String, Object> profitMap = disposeDb(taskId, taskCode, profitDetailList, billDate, profit);
                 StocktakingProfitLossEntity profitEntity = (StocktakingProfitLossEntity) profitMap.get("stocktakingProfitLoss");
                 List<StocktakingProfitLossDetailEntity> profitDetailEntityList = (List<StocktakingProfitLossDetailEntity>) profitMap.get("detailEntityList");
-                if (Objects.isNull(profitEntity)) {
+                if (Objects.nonNull(profitEntity)) {
                     addList.add(profitEntity);
                 }
                 if (CollectionUtils.isNotEmpty(profitDetailEntityList)) {
@@ -114,7 +123,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 Map<String, Object> lossMap = disposeDb(taskId, taskCode, lossDetailList, billDate, loss);
                 StocktakingProfitLossEntity lossEntity = (StocktakingProfitLossEntity) lossMap.get("stocktakingProfitLoss");
                 List<StocktakingProfitLossDetailEntity> lossDetailEntityList = (List<StocktakingProfitLossDetailEntity>) lossMap.get("detailEntityList");
-                if (Objects.isNull(lossEntity)) {
+                if (Objects.nonNull(lossEntity)) {
                     addList.add(lossEntity);
                 }
                 if (CollectionUtils.isNotEmpty(lossDetailEntityList)) {
@@ -206,6 +215,99 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
 
     /**
+     * 详情
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public StocktakingProfitLossDTO.ViewDTO view(String id) {
+        StocktakingProfitLossEntity profitLossEntity = this.getById(id);
+        if (Objects.isNull(profitLossEntity)) {
+            throw new ServiceException("未找到盘盈盘亏单");
+        }
+        StocktakingProfitLossDTO.ViewDTO view = new StocktakingProfitLossDTO.ViewDTO();
+        BeanMapper.copy(profitLossEntity, view);
+        BillTypeEnum billType = view.getBillType();
+        view.setBillTypeName(billType.getName());
+        ApproveStatusEnum approveStatus = view.getApproveStatus();
+        view.setApproveStatusName(approveStatus.getName());
+        String sourceId = view.getSourceId();
+        //盘点人信息
+        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseByTaskIds(Arrays.asList(sourceId));
+        //盘点人
+        String stocktakingUserName = taskUserList.stream().filter(t -> sourceId.equals(t.getStocktakingTaskId())).
+                map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
+        view.setStocktakingUserName(stocktakingUserName);
+        List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Arrays.asList(id));
+        view.setDetailList(detailDbList);
+        return view;
+    }
+
+
+    /**
+     * 导出
+     *
+     * @param params
+     * @param response
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-08-11 12:10
+     */
+    @Override
+    public Boolean exportExcel(StocktakingProfitLossDTO.ExportDTO params, HttpServletResponse response) {
+        String tabFlag = params.getTabFlag();
+        //单据类型
+        String billType = "";
+        String profit = BillTypeEnum.PROFIT.getCode();
+        String loss = BillTypeEnum.LOSS.getCode();
+        if (profit.equals(tabFlag)) {
+            billType = profit;
+        } else if (loss.equals(tabFlag)) {
+            billType = loss;
+        }
+        //盘点人
+        String stocktakingUserId = params.getStocktakingUserId();
+        List<String> taskIdList = new ArrayList<>();
+        if (StringUtils.isNotBlank(stocktakingUserId)) {
+            List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listByUserIds(Arrays.asList(stocktakingUserId));
+            taskIdList = taskUserList.stream().map(StocktakingTaskUserEntity::getStocktakingTaskId).collect(Collectors.toList());
+        }
+        //获取导出数据
+        List<StocktakingProfitLossDTO.PagingViewDTO> list = baseMapper.listExport(params, billType, taskIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        //填充数据
+        fillDb(list);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/StocktakingProfitLoss.xlsx";
+        String name = "盘盈盘亏单";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        List<String> dataFlagList = new ArrayList<>(2);
+        dataFlagList.add("data1");
+        dataFlagList.add("data2");
+        try {
+            Map<String, Object> map = new HashMap<>();
+            map.put("data1", list);
+            List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = new ArrayList<>(list.size() + 10);
+            for (StocktakingProfitLossDTO.PagingViewDTO item : list) {
+                detailList.addAll(item.getDetailList());
+            }
+            map.put("data2", detailList);
+
+            new ExcelPrintUtils().compositeFillExport(map, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            log.error("盘盈盘亏单导出 出错 >>>>{}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+
+    /**
      * 填充列表数据
      *
      * @param list
@@ -222,12 +324,14 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
         List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(idList);
         for (StocktakingProfitLossDTO.PagingViewDTO item : list) {
+            String sourceId = item.getSourceId();
             String id = item.getId();
-            List<StocktakingProfitLossDetailDTO.ViewDTO> detailList=detailDbList.stream().filter(d->d.getMainId().equals(id)).collect(Collectors.toList());
+            List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = detailDbList.stream().filter(d -> d.getMainId().equals(id)).collect(Collectors.toList());
             item.setDetailList(detailList);
-
+            BillTypeEnum billType = item.getBillType();
+            item.setBillTypeName(billType.getName());
             //盘点人
-            String stocktakingUserName = taskUserList.stream().filter(t -> id.equals(t.getStocktakingTaskId())).
+            String stocktakingUserName = taskUserList.stream().filter(t -> sourceId.equals(t.getStocktakingTaskId())).
                     map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
             item.setStocktakingUserName(stocktakingUserName);
 

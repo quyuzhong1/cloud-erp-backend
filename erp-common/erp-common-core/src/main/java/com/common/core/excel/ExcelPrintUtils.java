@@ -23,6 +23,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
@@ -632,6 +633,17 @@ public class ExcelPrintUtils {
 			out.close();
 			bos.flush();
 		}
+	}
+
+
+	/**
+	 * 多组合填充
+	 * @author yl
+	 * @date 2023-08-11 14:28
+	 * @param map 数据集合
+	 * @return void
+	 */
+	public void compositeFillExport(Map<String,Object> map, HttpServletResponse response, String fileName, String excelPath) {
 	}
 
 	/**
