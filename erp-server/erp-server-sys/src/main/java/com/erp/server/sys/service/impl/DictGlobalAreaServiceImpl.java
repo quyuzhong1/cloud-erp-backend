@@ -55,18 +55,8 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
         if (CollectionUtils.isEmpty(countryIds)) {
             return Collections.emptyList();
         }
-        List<DictGlobalAreaEntity> dbList = this.listByCountryIds(countryIds);
-        List<DictGlobalAreaDTO.InfoDTO> resultList = BeanMapper.copyList(dbList, DictGlobalAreaDTO.InfoDTO.class);
+        List<DictGlobalAreaDTO.InfoDTO> resultList = this.baseMapper.listByCountryIds(countryIds);
         return resultList;
-    }
-
-
-    private List<DictGlobalAreaEntity> listByCountryIds(List<String> countryIds) {
-        if (CollectionUtils.isEmpty(countryIds)) {
-            return Collections.emptyList();
-        }
-        return this.lambdaQuery().in(DictGlobalAreaEntity::getId, countryIds).list();
-
     }
 
 

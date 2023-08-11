@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
@@ -32,7 +33,6 @@ import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceHistoryService;
 import com.erp.server.scm.service.PurchasePriceService;
-import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -277,6 +277,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         List<String> skuIds = addList.stream().map(PurchasePriceDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         LocalDate localDate = LocalDate.now();
+
+        PurchasePriceEntity purchasePriceEntity = priceService.getById(purchasePriceId);
+        if (ObjectUtils.isEmpty(purchasePriceEntity)) {
+            throw new ServiceException(ApiError.ERROR_98024);
+        }
         for (PurchasePriceDetailEntity item : addList) {
             String skuId = item.getSkuId();
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
@@ -293,7 +298,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
                 item.setTaxRate(rate);
             }
-
+            item.setCurrency(purchasePriceEntity.getCurrency());
         }
         this.saveBatch(addList);
     }
@@ -371,6 +376,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         List<PurchasePriceDetailEntity> saveOrUpdateList = new ArrayList<>(purchasePriceDetailList.size());
         LocalDate localDate = LocalDate.now();
+
+        PurchasePriceEntity purchasePriceEntity = priceService.getById(purchasePriceId);
+        if (ObjectUtils.isEmpty(purchasePriceEntity)) {
+            throw new ServiceException(ApiError.ERROR_98024);
+        }
         for (PurchasePriceDetailDTO.UpdateDTO item : purchasePriceDetailList) {
             PurchasePriceDetailEntity entity = new PurchasePriceDetailEntity();
             BeanMapper.copy(item, entity);
@@ -389,6 +399,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
                 entity.setTaxRate(rate);
             }
+            entity.setCurrency(purchasePriceEntity.getCurrency());
             saveOrUpdateList.add(entity);
         }
 
@@ -528,13 +539,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-04-06 9:37
      */
     @Override
-    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId, List<String> detailIds) {
+    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId, List<String> detailIds,List<String> skuIdList) {
         List<String> statusList = new ArrayList<>(4);
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE.getStatus());
         statusList.add(ApproveStatusEnum.REJECT.getStatus());
-        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList, detailIds);
+        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList, detailIds,skuIdList);
         return list;
     }
 

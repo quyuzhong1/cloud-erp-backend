@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -564,7 +563,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids,Boolean isInterface) {
+    public Boolean disApprove(List<String> ids) {
         //根据ids查询
         List<PoInstockEntity> list = getList(ids);
         //已审核允许反审核
@@ -576,12 +575,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<PurchaseReturnOrderEntity> purchaseReturnOrderList = purchaseReturnOrderService.listBySourceIds(ids);
         if (CollectionUtils.isNotEmpty(purchaseReturnOrderList)) {
             throw new ServiceException(ApiError.ERROR_99014);
-        }
-        //委外子级SKU不支持反审核
-        List<PoInstockEntity> foundList = list.stream().filter(obj -> SubcontractTypeEnum.ENUM_CHILD.getCode().equals(obj.getSubcontractType())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(foundList) && isInterface) {
-            String codes = foundList.stream().map(PoInstockEntity::getCode).collect(Collectors.joining());
-            throw new ServiceException(new ApiResult(ApiError.ERROR_98078.code, StrUtil.format(ApiError.ERROR_98078.msg,codes)));
         }
 
         log.info("采购入库单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
@@ -1181,7 +1174,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         if (CollectionUtils.isEmpty(ids)) {
             return;
         }
-        disApprove(ids,Boolean.FALSE);
+        disApprove(ids);
     }
 
     /**

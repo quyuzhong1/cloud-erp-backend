@@ -1,7 +1,5 @@
 package com.erp.model.scm.dto;
 
-import com.common.core.anno.FieldValid;
-import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -63,13 +61,6 @@ public class PurchasePriceDetailDTO implements Serializable {
         @DecimalMin(value = "0",message ="最小值为0" )
         @NotNull(message = "区间到 不能为空")
         private Integer maxQty;
-
-        /**
-         * 币种
-         */
-        @NotBlank(message = "币种不能为空")
-        private String currency;
-
 
         /**
          * 生效时间

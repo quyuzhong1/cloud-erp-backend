@@ -99,6 +99,10 @@ public class ComboSkuInfoEntity extends CleanBaseDTO {
      * 平台标识 管易云，马帮
      */
     private String platformSign;
+    /**
+     * 马帮财务编码
+     */
+    private String financialCode;
 
 
     @Override
@@ -118,6 +122,7 @@ public class ComboSkuInfoEntity extends CleanBaseDTO {
                 ", declareFee=" + declareFee +
                 ", declareWeight=" + declareWeight +
                 ", declareCustoms='" + declareCustoms + '\'' +
+                ", financialCode='" + financialCode + '\'' +
                 ", comboProductDetail=" + comboProductDetail +
                 '}';
     }

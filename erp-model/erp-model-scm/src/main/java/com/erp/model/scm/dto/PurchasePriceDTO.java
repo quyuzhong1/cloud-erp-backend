@@ -8,7 +8,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -45,6 +47,11 @@ public class PurchasePriceDTO implements Serializable {
         @NotNull(message = "报价日期不能为空")
         private LocalDate quotedDate;
 
+        /**
+         * 币种
+         */
+        @NotBlank(message = "币种不能为空")
+        private String currency;
 
         /**
          * 报价人id
@@ -103,7 +110,10 @@ public class PurchasePriceDTO implements Serializable {
         @NotNull(message = "报价日期不能为空")
         private LocalDate quotedDate;
 
-
+        /**
+         * 币种
+         */
+        private String currency;
 
         /**
          * 审核状态
@@ -172,7 +182,11 @@ public class PurchasePriceDTO implements Serializable {
         @NotNull(message = "报价日期不能为空")
         private LocalDate quotedDate;
 
-
+        /**
+         * 币种
+         */
+        @NotBlank(message = "币种不能为空")
+        private String currency;
 
 
         /**
@@ -515,6 +529,12 @@ public class PurchasePriceDTO implements Serializable {
          */
         @Size(max = 50, message = "定价员名称最大50字符")
         private String pricingUserName;
+
+        /**
+         * 币种
+         */
+        @NotBlank(message = "币种不能为空")
+        private String currency;
 
         /**
          * 明细信息

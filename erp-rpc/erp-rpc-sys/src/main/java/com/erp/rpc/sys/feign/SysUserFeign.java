@@ -474,4 +474,6 @@ public interface SysUserFeign {
      **/
     @PostMapping("feign/user/listUserByDept")
     List<SysUserInfoEntity> listUserByDept(@RequestBody String deptName);
+
+
 }
