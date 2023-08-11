@@ -1,4 +1,4 @@
-package com.common.core.controller.vo;
+package com.common.business.dto.base;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,4 +24,9 @@ public class BatchResult implements Serializable {
      * 处理结果
      */
     private String msg;
+
+    public BatchResult(String code, String msg) {
+        this.code = code;
+        this.msg = msg;
+    }
 }
