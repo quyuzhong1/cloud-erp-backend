@@ -360,20 +360,16 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      **/
     @Override
     public PurchaseReturnOrderDTO.ViewDTO view(String id) {
-
         PurchaseReturnOrderDTO.ViewDTO viewDTO = new PurchaseReturnOrderDTO.ViewDTO();
         PurchaseReturnOrderEntity purchaseReturnOrderEntity = this.getById(id);
         BeanMapperUtils.copy(purchaseReturnOrderEntity, viewDTO);
-
-
         //查询供应商信息
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(purchaseReturnOrderEntity.getSupplierId());
         viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
-        //获取采购订单主表信息
-        PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(purchaseReturnOrderEntity.getPurchaseOrderId());
-
-        if (ObjectUtil.isNotEmpty(purchaseOrderEntity)) {
+        if (StringUtils.isNotBlank(purchaseReturnOrderEntity.getPurchaseOrderId())) {
+            //获取采购订单主表信息
+            PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(purchaseReturnOrderEntity.getPurchaseOrderId());
             viewDTO.setPurchaseUserDeptId(purchaseOrderEntity.getPurchaseDeptId());
             viewDTO.setPurchaseUserDeptName(purchaseOrderEntity.getPurchaseDeptName());
             viewDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
