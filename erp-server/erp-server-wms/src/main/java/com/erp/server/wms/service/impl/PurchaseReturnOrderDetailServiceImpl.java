@@ -12,7 +12,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
@@ -337,15 +336,16 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
     private List<PurchaseReturnOrderDetailEntity> notProductOrderUpdate(PurchaseReturnOrderDTO.UpdateDTO dto, String id, List<PurchaseReturnOrderDetailEntity> listDetail) {
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
         List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
-        List<String> skuIds = detailList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-        List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuIds);
+        List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
-            SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(updateDTO.getSkuId())).distinct().findFirst().orElse(new SkuVO());
             PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
             BeanMapperUtils.copy(updateDTO, purchaseReturnOrderDetailEntity);
             purchaseReturnOrderDetailEntity.setMainId(id);
             purchaseReturnOrderDetailEntity.setReturnQty(updateDTO.getReturnQty());
-            purchaseReturnOrderDetailEntity.setSkuNo(skuVO.getSkuNo());
+            //获取sku信息
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(updateDTO.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            purchaseReturnOrderDetailEntity.setSkuNo(productDetailEntity.getSkuNo());
             listDetail.add(purchaseReturnOrderDetailEntity);
             //修改操作日志
             if (StringUtils.isNotBlank(purchaseReturnOrderDetailEntity.getId())) {
