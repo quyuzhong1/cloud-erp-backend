@@ -38,6 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -67,6 +68,8 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
     private DmpBomService dmpBomService;
     @Autowired
     private RedisUtil redisUtil;
+    @Resource
+    private ErpMabangMachineInfoConsume erpMabangMachineInfoConsume;
 
     /**
      * 马帮平台加工品JG-开头的对应ERP的加工组合品不是JG-开头的
@@ -74,8 +77,15 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
 //    private static final String MACHINE_SKU_PREFIX = "JG-";
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void onMessage(MabangMachineInfoDTO mabangMachineInfoDTO) {
+        try {
+            erpMabangMachineInfoConsume.extracted(mabangMachineInfoDTO);
+        }catch (Exception e){
+            log.error("加工单推送到马帮异常：{}",e);
+        }
+    }
+    @Transactional(rollbackFor = Exception.class)
+    public void extracted(MabangMachineInfoDTO mabangMachineInfoDTO) {
         log.warn("监听到ERP加工单单信息，内容：{}", JSONObject.toJSONString(mabangMachineInfoDTO));
 
         // 主单
@@ -223,7 +233,6 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
                 }
             });
         }
-
     }
 
 }
