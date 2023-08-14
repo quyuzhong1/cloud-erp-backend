@@ -39,7 +39,7 @@ public enum ModuleTypeEnum {
     SUBCONTRACT_ORDER("28", "委外订单"),
     SUBCONTRACT_CHANGE("29", "委外变更单"),
     STOCKTAKING_TASK("30", "盘点任务单"),
-    STOCKTAKING_PROFIT_LOSS("31", "盘点任务单"),
+    STOCKTAKING_PROFIT_LOSS("31", "盘盈盘亏单"),
     STOCKTAKING_PLAN("40", "盘点计划单"),
     ;
 

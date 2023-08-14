@@ -66,6 +66,18 @@ public class StocktakingProfitLossEntity extends BaseEntity<StocktakingProfitLos
     private LocalDateTime approveTime;
 
     /**
+     * 审核人id
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
+
+    /**
+     * 审核人名
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
+
+    /**
      * 审核时间
      */
     @TableField("approve_status")

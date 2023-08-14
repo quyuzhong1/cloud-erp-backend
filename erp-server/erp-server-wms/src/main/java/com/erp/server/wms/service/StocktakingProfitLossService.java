@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -73,4 +74,23 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @return com.common.business.dto.base.BatchResultDTO
      */
     BatchResultDTO submit(String id);
+
+    /**
+     * 盘盈盘亏单审核
+     * @author yl
+     * @date 2023-08-14 14:02
+     * @param id
+     * @param approveOneDTO
+     * @return com.common.business.dto.base.BatchResultDTO
+     */
+    BatchResultDTO approve(String id, ApproveOneDTO approveOneDTO);
+
+    /**
+     * 取消流程
+     * @author yl
+     * @date 2023-08-14 14:46
+     * @param id
+     * @return com.common.business.dto.base.BatchResultDTO
+     */
+    BatchResultDTO cancelProcess(String id);
 }
