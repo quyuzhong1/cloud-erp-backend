@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.Date;
 
@@ -26,6 +29,9 @@ public class WarehouseReceiveDetailDTO {
         /**
          * 收货数量
          */
+        @NotNull(message = "收货数量不能为空")
+        @Min(value = 1,message = "收货数量最小值为1")
+        @Max(value = 999999999,message = "收货数量最大值为999999999")
         private Integer receiveQty;
 
         /**
@@ -68,6 +74,9 @@ public class WarehouseReceiveDetailDTO {
         /**
          * 收货数量
          */
+        @NotNull(message = "收货数量不能为空")
+        @Min(value = 1,message = "收货数量最小值为1")
+        @Max(value = 999999999,message = "收货数量最大值为999999999")
         private Integer receiveQty;
 
         /**
