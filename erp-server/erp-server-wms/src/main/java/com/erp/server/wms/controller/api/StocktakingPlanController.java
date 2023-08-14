@@ -193,15 +193,15 @@ public class StocktakingPlanController extends BaseController {
         for (String id : ids) {
             StocktakingPlanEntity entity = stocktakingPlanService.getById(id);
             BatchResultDTO approveResult;
-            if (ObjectUtil.isEmpty(entity)) {
-                approveResult = BatchResultDTO.fail(entity.getCode(), "盘点计划不存在, 审核失败");
-                resultDTOS.add(approveResult);
-                continue;
-            }
             try {
                 approveResult = stocktakingPlanService.approve(id, new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
                 log.error("盘点计划审核失败",e);
+                if (ObjectUtil.isEmpty(entity)) {
+                    approveResult = BatchResultDTO.fail(entity.getCode(), "盘点计划不存在, 审核失败");
+                    resultDTOS.add(approveResult);
+                    continue;
+                }
                 approveResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
             }
             resultDTOS.add(approveResult);

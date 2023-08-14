@@ -144,6 +144,6 @@ public interface StocktakingPlanService extends SuperService<StocktakingPlanEnti
      * @param entity
      * @return
      */
-    Boolean approveEnd(ApproveOneDTO dto, StocktakingPlanEntity entity)
+    Boolean approveEnd(ApproveOneDTO dto, StocktakingPlanEntity entity);
 
 }
