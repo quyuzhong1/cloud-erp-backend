@@ -86,19 +86,20 @@ public interface StocktakingPlanService extends SuperService<StocktakingPlanEnti
      * 提交审核
      * @author Cloud
      * @date: 2023-08-08
-     * @param ids
+     * @param id
      * @return
      */
-     void submit(List<String> ids);
+     BatchResultDTO submit(String id);
 
     /**
     * 审核
     * @author Cloud
     * @date: 2023-08-08
     * @param dto
+     * @param id
     * @return
     */
-    void approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(String id,ApproveOneDTO dto);
 
     /**
     * 反审核
@@ -136,5 +137,13 @@ public interface StocktakingPlanService extends SuperService<StocktakingPlanEnti
     * @return
     */
     void exportList(StocktakingPlanDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 审核通过
+     * @param dto
+     * @param entity
+     * @return
+     */
+    Boolean approveEnd(ApproveOneDTO dto, StocktakingPlanEntity entity)
 
 }

@@ -160,13 +160,25 @@ public class StocktakingPlanEntity extends BaseEntity<StocktakingPlanEntity> {
     public StocktakingPlanEntity(StocktakingPlanDTO.AddDTO addDTO, String code) {
         this.code = code;
         this.name = addDTO.getName();
-        if (CollUtil.isNotEmpty(addDTO.getActiveSalesTimeList()) && addDTO.getActiveSalesTimeList().size() > 1){
-            this.startTime = addDTO.getActiveSalesTimeList().get(0);
-            this.endTime = addDTO.getActiveSalesTimeList().get(1);
+        if (addDTO.getStartTime() != null && addDTO.getEndTime() != null){
+            this.startTime = addDTO.getStartTime();
+            this.endTime = addDTO.getEndTime();
         }
         this.mode = addDTO.getMode();
         this.type = addDTO.getType();
         this.separateRule = addDTO.getSeparateRule();
+    }
+
+    public StocktakingPlanEntity(StocktakingPlanDTO.UpdateDTO updateDTO) {
+        super(updateDTO.getId());
+        this.name = updateDTO.getName();
+        if (updateDTO.getStartTime() != null && updateDTO.getEndTime() != null){
+            this.startTime = updateDTO.getStartTime();
+            this.endTime = updateDTO.getEndTime();
+        }
+        this.mode = updateDTO.getMode();
+        this.type = updateDTO.getType();
+        this.separateRule = updateDTO.getSeparateRule();
     }
 
     @Override

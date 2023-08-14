@@ -1,14 +1,12 @@
 package com.common.business.enums;
 
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -59,5 +57,15 @@ public enum ApproveStatusEnum {
 
     public static List<String> getStatusList() {
         return Arrays.stream(ApproveStatusEnum.values()).map(ApproveStatusEnum::getStatus).collect(Collectors.toList());
+    }
+    public static Boolean allowUpdateStatus(ApproveStatusEnum approveStatus) {
+        return approveStatus.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || approveStatus.equals(ApproveStatusEnum.REJECT.getStatus());
+    }
+
+    public static ApproveStatusEnum transferApproveType(ApproveTypeEnum approveType) {
+        return Objects.equals(ApproveTypeEnum.PASS, approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT;
+    }
+    public static ApproveStatusEnum transferApproveType(String approveType) {
+        return Objects.equals(ApproveTypeEnum.PASS.getStatus(), approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT;
     }
 }

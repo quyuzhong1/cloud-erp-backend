@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -53,5 +54,44 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
         }).collect(Collectors.toList());
         // 批量插入
         this.saveBatch(insertList);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateList(List<StocktakingPlanDTO.DetailDTO> detailList, String mainId) {
+        if (CollUtil.isEmpty(detailList)) {
+            throw new RuntimeException("盘点计划明细不能为空");
+        }
+        List<BaseIdDTO> orgList = sysUserFeign.listAccountingCompany();
+        Map<String, String> orgMap = orgList.stream().collect(Collectors.toMap(BaseIdDTO::getId, BaseIdDTO::getName));
+        // 查询仓库与仓库组织信息
+        List<StocktakingPlanDetailEntity> newDetailList = detailList.stream().map(item -> {
+            WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
+            String orgName = orgMap.get(updateDTO.getOrgId());
+            return new StocktakingPlanDetailEntity(item, mainId,updateDTO, orgName);
+        }).collect(Collectors.toList());
+        // 根据main ID 查询所有明细
+        List<StocktakingPlanDetailEntity> oldDetailList = listByMainId(mainId);
+        List<StocktakingPlanDetailEntity> updateList = newDetailList.stream().filter(item -> StrUtil.isNotBlank(item.getId())).collect(Collectors.toList());
+        List<StocktakingPlanDetailEntity> insertList = newDetailList.stream().filter(item -> StrUtil.isBlank(item.getId())).collect(Collectors.toList());
+        List<String> updateIds = updateList.stream().map(StocktakingPlanDetailEntity::getId).collect(Collectors.toList());
+        List<String> removeIds = oldDetailList.stream().filter(item -> !updateIds.contains(item.getId())).map(StocktakingPlanDetailEntity::getId).collect(Collectors.toList());
+        // 删除移除的明细数据
+        if (CollUtil.isNotEmpty(removeIds)){
+            removeByIds(removeIds);
+        }
+        // 更新存在的明细数据
+        if (CollUtil.isNotEmpty(updateList)){
+            updateBatchById(updateList);
+        }
+        // 新增不存在的明细数据
+        if (CollUtil.isNotEmpty(insertList)){
+            saveBatch(insertList);
+        }
+    }
+
+    @Override
+    public List<StocktakingPlanDetailEntity> listByMainId(String mainId) {
+        return lambdaQuery().eq(StocktakingPlanDetailEntity::getMainId, mainId).list();
     }
 }

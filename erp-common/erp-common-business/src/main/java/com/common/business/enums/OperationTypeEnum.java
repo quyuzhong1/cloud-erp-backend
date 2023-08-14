@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * @author Cloud
@@ -31,6 +32,20 @@ public enum OperationTypeEnum {
     OperationTypeEnum(String status, String name) {
         this.status = status;
         this.name = name;
+    }
+
+    public static String approveStatus(ApproveStatusEnum approveStatus) {
+        if (Objects.nonNull(approveStatus)) {
+            switch (approveStatus) {
+                case APPROVE:
+                    return OperationTypeEnum.APPROVE_PASS.getStatus();
+                case REJECT:
+                    return OperationTypeEnum.APPROVE_REJECT.getStatus();
+                default:
+                    return null;
+            }
+        }
+        return null;
     }
 
     public String getStatus() {

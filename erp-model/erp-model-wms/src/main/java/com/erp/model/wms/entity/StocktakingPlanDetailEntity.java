@@ -101,6 +101,7 @@ public class StocktakingPlanDetailEntity extends BaseEntity<StocktakingPlanDetai
     public static final String ORG_NAME = "org_name";
 
     public StocktakingPlanDetailEntity(StocktakingPlanDTO.DetailDTO item, String mainId, WarehouseDTO.UpdateDTO warehouse, String orgName) {
+        super(item.getId());
         this.mainId = mainId;
         this.warehouseId = item.getWarehouseId();
         this.warehouseName = warehouse.getName();

@@ -22,4 +22,18 @@ public interface StocktakingPlanDetailService extends SuperService<StocktakingPl
      * @param mainId
      */
     void saveList(List<StocktakingPlanDTO.DetailDTO> detailList, String mainId);
+
+    /**
+     * 更新盘点计划明细
+     * @param detailList
+     * @param mainId
+     */
+    void updateList(List<StocktakingPlanDTO.DetailDTO> detailList, String mainId);
+
+    /**
+     * 根据主表id查询明细
+     * @param mainId
+     * @return
+     */
+    List<StocktakingPlanDetailEntity> listByMainId(String mainId);
 }

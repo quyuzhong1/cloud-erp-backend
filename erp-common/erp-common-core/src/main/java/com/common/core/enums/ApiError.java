@@ -347,6 +347,7 @@ public enum ApiError implements Serializable {
     ERROR_MSG_IS_NOT_NULL(95158, "消息模板不能为空"),
     ERROR_NOT_FOUND_SKU(95159,"SKU【{}】不存在"),
     ERROR_95160(95160,"文件不可超过{}m"),
+    REJECT_COMMENT_NOT_EMPTY(95161, "审核不通过必须填写审核意见"),
 
 
 
@@ -697,6 +698,7 @@ public enum ApiError implements Serializable {
     ERROR_BILL_NOT_EXIST(99088,"单据不存在"),
     ERROR_99089(99089,"只有待提交的单据支持分配盘点人"),
     ERROR_99090(99090,"盘点任务明细为空"),
+    NOT_EXIST_BILL(99091, "{}单据不存在"),
 
 
     /**
