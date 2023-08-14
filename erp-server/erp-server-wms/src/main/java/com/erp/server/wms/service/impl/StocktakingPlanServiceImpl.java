@@ -199,7 +199,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         // 更新单据审核状态
         log.info("提交 开始修改盘点计划单状态数据，id=：【{}】", JSONObject.toJSONString(entity.getId()));
-        this.updateApproveStatus(Lists.newArrayList(entity.getId()), ApproveStatusEnum.APPROVE_ING.getStatus());
+        this.updateApproveStatus(entity.getId(), ApproveStatusEnum.APPROVE_ING.getStatus());
         // 启动流程
         log.info("提交 开始启动盘点计划单流程，id=：【{}】", JSONObject.toJSONString(entity.getId()));
         startProcess(entity);
@@ -299,7 +299,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtils.isEmpty(data.getIsExistProcess()) || data.getIsExistProcess()) {
-            //无需走流程的数据则直接更新状态
+            // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
         }
     }
@@ -385,12 +385,10 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     }
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, StocktakingPlanEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
-
         ApproveStatusEnum approveStatus;
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
@@ -399,20 +397,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT;
         }
-        ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.transferApproveType(dto.getType());
-//        Boolean result = this.updateApproveStatus(entity.getId(), approveStatus.getStatus());
-//        if (!result) {
-//            throw new ServiceException(ApiError.ERROR_94006);
-//        }
-//        if (dto.getType().equals(ApproveType.PASS)) {
-//            // 更新库存信息（生成入库预报）
-//            updateInventoryTransCore(list);
-//            //审核通过发送金蝶
-//            list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
-//            //同步到WMS
-//            List<PurchaseOrderEntity> toWmsList = this.getList(ids);
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
-//        }
+        updateForApprove(entity.getId(), approveStatus.getStatus());
         return Boolean.TRUE;
     }
     /**
@@ -420,7 +405,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     * @param ids
     * @param approveStatus
     */
-    public void updateForApprove(List<String> ids, String approveStatus) {
+    public void updateForSubmit(List<String> ids, String approveStatus) {
         //当前登录人
         LoginUser userInfo = commonService.getUserInfo();
         this.lambdaUpdate().in(StocktakingPlanEntity::getId, ids)
@@ -471,6 +456,17 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         .set(StocktakingPlanEntity::getSubmitUserId, commonService.getUserInfo().getUid())
         .set(StocktakingPlanEntity::getSubmitUserName, commonService.getUserInfo().getUserName())
         .update(new StocktakingPlanEntity());
+    }
+    /**
+     * 更新审核状态
+     */
+    public void updateApproveStatus(String id, String approveStatus) {
+        lambdaUpdate().eq(StocktakingPlanEntity::getId, id)
+                .set(StocktakingPlanEntity::getApproveStatus, approveStatus)
+                .set(StocktakingPlanEntity::getSubmitTime, LocalDateTime.now())
+                .set(StocktakingPlanEntity::getSubmitUserId, commonService.getUserInfo().getUid())
+                .set(StocktakingPlanEntity::getSubmitUserName, commonService.getUserInfo().getUserName())
+                .update(new StocktakingPlanEntity());
     }
 
     /**

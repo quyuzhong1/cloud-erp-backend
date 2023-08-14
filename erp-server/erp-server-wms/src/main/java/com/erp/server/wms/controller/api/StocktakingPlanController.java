@@ -157,16 +157,16 @@ public class StocktakingPlanController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
-            StocktakingPlanEntity entity = stocktakingPlanService.getById(id);
-            if (ObjectUtil.isEmpty(entity)) {
-                submit = BatchResultDTO.fail(entity.getCode(), "盘点计划不存在, 提交失败");
-                resultDTOS.add(submit);
-                continue;
-            }
             try {
                 submit = stocktakingPlanService.submit(id);
             }catch (Exception e){
                 log.error("盘点计划 提交审核失败",e);
+                StocktakingPlanEntity entity = stocktakingPlanService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, "盘点计划不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
                 submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
