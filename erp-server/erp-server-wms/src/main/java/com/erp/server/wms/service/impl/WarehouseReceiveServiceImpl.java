@@ -1261,6 +1261,21 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if (ObjectUtils.isEmpty(detailEntity)) {
                 throw new ServiceException(ApiError.ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST);
             }
+
+
+            List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailEntityList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
+            //校验sku是否有重复，重复需要拆单
+            if (detailEntityList.size() > MathUtil.ONE){
+
+                for (PurchaseOrderDetailEntity entity : detailEntityList) {
+
+                    if (entity.getId().equals(detailEntity.getId())) {
+                        addDTO.getReceiveQty();
+                    }
+                }
+                WarehouseReceiveDetailDTO.AddDTO addSkuDTO = new WarehouseReceiveDetailDTO.AddDTO();
+
+            }
             //如果收货数量大于采购数量，可能是重复sku合单
             if (addDTO.getReceiveQty() > detailEntity.getPurchaseQty()) {
 
