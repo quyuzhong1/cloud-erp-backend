@@ -1030,7 +1030,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             throw new ServiceException(ApiError.ERROR_99022);
         }
         //删除操作日志
-        operateLogService.removeByBusinessIds(ids);
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的质检单", commonService.getUserInfo().getUserName(), qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "删除操作");
         Boolean result = this.removeByIds(ids);
         qcResultService.removeByMainIds(ids);
         qcRemarkService.removeByMainIds(ids);

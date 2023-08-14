@@ -94,4 +94,11 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
     public List<StocktakingPlanDetailEntity> listByMainId(String mainId) {
         return lambdaQuery().eq(StocktakingPlanDetailEntity::getMainId, mainId).list();
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean removeByMainId(String mainId) {
+        lambdaUpdate().eq(StocktakingPlanDetailEntity::getMainId, mainId).remove();
+        return Boolean.TRUE;
+    }
 }

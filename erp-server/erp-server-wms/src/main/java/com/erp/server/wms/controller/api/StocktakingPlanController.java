@@ -187,7 +187,7 @@ public class StocktakingPlanController extends BaseController {
             menuCode = "wms:stocktakingPlan:approve",
             serviceClass = StocktakingPlanService.class,
             keyIdName = "ids")
-    public ApiResult<Void> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : ids) {
@@ -206,7 +206,7 @@ public class StocktakingPlanController extends BaseController {
             }
             resultDTOS.add(approveResult);
         }
-        return success();
+        return success(resultDTOS);
     }
 
     /**
@@ -214,7 +214,7 @@ public class StocktakingPlanController extends BaseController {
     * @author Cloud
     * @date:  2023-08-08
     * @param dto
-    * @return ApiResult<Void>
+    * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -222,9 +222,25 @@ public class StocktakingPlanController extends BaseController {
             menuCode = "wms:stocktakingPlan:disApprove",
             serviceClass = StocktakingPlanService.class,
             keyIdName = "ids")
-    public ApiResult<Void> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        stocktakingPlanService.disApprove(dto.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            StocktakingPlanEntity entity = stocktakingPlanService.getById(id);
+            BatchResultDTO disApproveResult;
+            try {
+                disApproveResult = stocktakingPlanService.disApprove(id);
+            }catch (Exception e){
+                log.error("盘点计划反审核失败",e);
+                if (ObjectUtil.isEmpty(entity)) {
+                    disApproveResult = BatchResultDTO.fail(entity.getCode(), "盘点计划不存在, 反审核失败");
+                    resultDTOS.add(disApproveResult);
+                    continue;
+                }
+                disApproveResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(disApproveResult);
+        }
+        return success(resultDTOS);
     }
 
 
@@ -233,7 +249,7 @@ public class StocktakingPlanController extends BaseController {
     * @author Cloud
     * @date:  2023-08-08
     * @param dto
-    * @return ApiResult<Void>
+    * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -241,9 +257,26 @@ public class StocktakingPlanController extends BaseController {
             menuCode = "wms:stocktakingPlan:delete",
             serviceClass = StocktakingPlanService.class,
             keyIdName = "ids")
-    public ApiResult<Void> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        stocktakingPlanService.delete(dto.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = stocktakingPlanService.delete(id);
+            }catch (Exception e){
+                log.error("盘点计划删除失败",e);
+                StocktakingPlanEntity entity = stocktakingPlanService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(entity.getCode(), "盘点计划不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return success(resultDTOS);
     }
 
     /**

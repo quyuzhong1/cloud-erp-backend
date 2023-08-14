@@ -36,4 +36,11 @@ public interface StocktakingPlanDetailService extends SuperService<StocktakingPl
      * @return
      */
     List<StocktakingPlanDetailEntity> listByMainId(String mainId);
+
+    /**
+     * 根据主表id删除明细
+     * @param mainId
+     * @return
+     */
+    Boolean removeByMainId(String mainId);
 }

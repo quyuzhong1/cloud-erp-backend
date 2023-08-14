@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -34,10 +35,7 @@ import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.MachineDetailEntity;
-import com.erp.model.wms.entity.MachineInfoEntity;
-import com.erp.model.wms.entity.MachineSubComponentsEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -411,7 +409,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //删除明细数据
         machineDetailService.removeByMainIds(ids);
         //删除操作日志
-        operateLogService.removeByBusinessIds(ids);
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的加工单", commonService.getUserInfo().getUserName(), list.stream().map(MachineInfoEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "删除操作");
         //删除主表数据
         return this.removeByIds(ids);
     }

@@ -1,61 +1,56 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.ApproveType;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
-import com.common.business.validator.ValidList;
+import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
-import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
+import com.erp.model.wms.entity.StocktakingTaskEntity;
+import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.StocktakingPlanMapper;
-import com.erp.server.wms.service.StocktakingPlanDetailService;
-import com.erp.server.wms.service.StocktakingPlanService;
-import com.common.business.service.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-
-import lombok.extern.slf4j.Slf4j;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import org.apache.commons.math3.util.Pair;
 import io.seata.spring.annotation.GlobalTransactional;
-
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.StocktakingPlanDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.utils.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -78,6 +73,8 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     private StocktakingPlanDetailService stocktakingPlanDetailService;
     @Resource
     private WorkflowFeign workflowFeign;
+    @Resource
+    private StocktakingTaskService stocktakingTaskService;
 
 
     @Override
@@ -209,7 +206,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // 操作日志
         List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
-        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), pairList, msg);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), msg);
         return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -272,9 +269,8 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         approveProcess(entity, dto);
         // 操作日志
         List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
-        operateLogService.batchAddModuleOperateLog(String.format(msg, approveType.getName()).concat("【%s】").concat(StrUtils.isNotEmpty(dto.getComment()) ? String.format("，意见：%s", dto.getComment()) : ""),
-                ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), pairList, "审核操作");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划", approveType.getName(), dto.getComment());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -308,48 +304,53 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void disApprove(List<String> ids) {
-        List<StocktakingPlanEntity> list = super.listByIds(ids);
-        if (CollUtil.isEmpty(list)) {
-            throw new ServiceException("未找到盘点计划单数据");
-        }
+    public BatchResultDTO disApprove(String id) {
+        StocktakingPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到盘点计划单数据"));
+        // 反审核条件判断
+        validateDisApprove(entity);
+        // 删除盘点任务及明细
+        stocktakingTaskService.removeBySourceId(id);
+        // 更新审核信息
+        updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "反审核操作");
+        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.DISAPPROVE);
+    }
+
+    private Boolean validateDisApprove(StocktakingPlanEntity entity) {
         // 已审核支持反审核
-        long count = list.stream().filter(obj -> !Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), obj.getApproveStatus())).count();
-        if (count > 0) {
+        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 检查是否有下推单据（如果支持下推的话）
-
-        // 更新审核信息
-        updateForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
-        // 操作日志
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("反审核了一个盘点计划单【%s】", null, pairList, "反审核操作");
+        // 下游盘点计划单全部为未开始时允许反审核
+        List<StocktakingTaskEntity> taskEntityList = stocktakingTaskService.listBySourceId(entity.getId());
+        if(CollUtil.isEmpty(taskEntityList)){
+            return true;
+        }
+        Optional<StocktakingTaskEntity> first = taskEntityList.stream().filter(item -> !Objects.equals(item.getStatus(), StocktakingStatusEnum.NOT_STARTED)).findFirst();
+        if(first.isPresent()){
+            throw new ServiceException(ApiError.STOCKTAKING_TASK_STARTED);
+        }
+        return true;
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void delete(List<String> ids) {
-       List<StocktakingPlanEntity> list = super.listByIds(ids);
-       if (CollUtil.isEmpty(list)) {
-         throw new ServiceException("未找到盘点计划单数据");
-       }
-       // 只有待提交且未作废的数据允许删除
-       long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) ).count();
-       if (count > 0) {
-         throw new ServiceException(ApiError.ERROR_98009);
-       }
-       // 删除日志数据
-       log.info("删除 开始删除盘点计划单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
-       operateLogService.removeByBusinessIds(ids);
-
-       // TODO 删除明细数据（如果有明细数据的话）
-
-       // 删除主单数据
-       log.info("删除 开始删除盘点计划单主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
-       super.removeByIds(ids);
+    public BatchResultDTO delete(String id) {
+        StocktakingPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到盘点计划单数据"));
+        // 只有待提交数据允许删除
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98032);
+        }
+        // 删除日志数据
+        log.info("删除 开始删除盘点计划单日志数据，id集合：【{}】", JSONObject.toJSONString(id));
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getCode(), "删除盘点计划单数据");
+        // 删除明细数据
+        stocktakingPlanDetailService.removeByMainId(id);
+        // 删除主单数据
+        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.DELETE);
     }
 
     /**
@@ -392,23 +393,9 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
+        //TODO 生成盘点任务
         return Boolean.TRUE;
     }
-    /**
-    * 审核更新审核信息
-    * @param ids
-    * @param approveStatus
-    */
-    public void updateForSubmit(List<String> ids, String approveStatus) {
-        //当前登录人
-        LoginUser userInfo = commonService.getUserInfo();
-        this.lambdaUpdate().in(StocktakingPlanEntity::getId, ids)
-            .set(StocktakingPlanEntity::getApproveUserId, userInfo.getUid())
-            .set(StocktakingPlanEntity::getApproveUserName, userInfo.getUserName())
-            .set(StocktakingPlanEntity::getApproveStatus, approveStatus)
-            .set(StocktakingPlanEntity::getApproveTime, LocalDateTime.now())
-            .update();
-     }
     /**
      * 审核更新审核信息
      * @param id
@@ -427,12 +414,12 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
 
     /**
     * 反审核更新审核信息
-    * @param ids
+    * @param id
     * @param approveStatus
     */
     @Transactional(rollbackFor = Exception.class)
-    public void updateForDisApprove(List<String> ids, String approveStatus) {
-        this.lambdaUpdate().in(StocktakingPlanEntity::getId, ids)
+    public void updateForDisApprove(String id, String approveStatus) {
+        this.lambdaUpdate().in(StocktakingPlanEntity::getId, id)
             .set(StocktakingPlanEntity::getApproveUserId, "")
             .set(StocktakingPlanEntity::getApproveUserName, "")
             .set(StocktakingPlanEntity::getApproveStatus, approveStatus)
