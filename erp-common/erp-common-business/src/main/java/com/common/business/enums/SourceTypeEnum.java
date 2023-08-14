@@ -41,6 +41,9 @@ public enum SourceTypeEnum {
     STOCKTAKING_TASK("stocktakingTask", "盘点任务单","stocktaking_task"),
     STOCKTAKING_PLAN("stocktakingPlan", "盘点计划单","stocktaking_plan"),
 
+    STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘赢盘亏单","stocktaking_profit_loss"),
+
+
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),

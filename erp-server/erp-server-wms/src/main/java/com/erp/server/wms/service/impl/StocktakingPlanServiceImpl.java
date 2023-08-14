@@ -79,6 +79,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     @Resource
     private WorkflowFeign workflowFeign;
 
+
     @Override
     public PagingVO<StocktakingPlanDTO.ListDTO> paging(PagingDTO<StocktakingPlanDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());

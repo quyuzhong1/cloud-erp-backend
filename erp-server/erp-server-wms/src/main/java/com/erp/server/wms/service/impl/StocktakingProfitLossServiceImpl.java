@@ -1,35 +1,43 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.BillTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.StocktakingProfitLossMapper;
-import com.erp.server.wms.service.StocktakingProfitLossDetailService;
-import com.erp.server.wms.service.StocktakingProfitLossService;
-import com.erp.server.wms.service.StocktakingTaskDetailService;
-import com.erp.server.wms.service.StocktakingTaskUserService;
+import com.erp.server.wms.service.*;
+import com.google.common.collect.Lists;
+import io.seata.spring.annotation.GlobalTransactional;
 import jdk.nashorn.internal.ir.annotations.Reference;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -63,6 +72,17 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+
+
+    @Autowired
+    private CommonService commonService;
+
+    @Resource
+    private WorkflowFeign workflowFeign;
+
+    @Autowired
+    private OperateLogService operateLogService;
+
 
     /**
      * 盘点任务单审核通过生成盘盈盘亏单
@@ -304,6 +324,73 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
+    }
+
+
+    /**
+     * 盘盈盘亏单提交
+     *
+     * @param id
+     * @return com.common.business.dto.base.BatchResultDTO
+     * @author yl
+     * @date 2023-08-14 11:45
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO submit(String id) {
+        StocktakingProfitLossEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException("未找到盘盈盘亏单");
+        }
+        if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+        Boolean result = this.updateApproveStatus(entity.getId(), ApproveStatusEnum.APPROVE_ING);
+        if(!result){
+            throw new ServiceException("保存失败");
+        }
+        //启动流程
+        startProcess(entity);
+
+        // 操作日志
+        List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, msg);
+        return null;
+    }
+
+    /**
+     * 启动流程
+     * @param entity
+     */
+    public void startProcess(StocktakingProfitLossEntity entity) {
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode());
+        startDTO.setBusinessName(entity.getCode());
+        startDTO.setUserId(commonService.getUserInfo().getUid());
+        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
+        if (!result.isSuccess()) {
+            throw new ServiceException(result.getMsg());
+        }
+    }
+
+    /**
+     * 修改审核状态
+     *
+     * @param id
+     * @param approveStatus
+     * @return void
+     * @author yl
+     * @date 2023-08-14 12:05
+     */
+    public Boolean updateApproveStatus(String id, ApproveStatusEnum approveStatus) {
+        return lambdaUpdate().eq(StocktakingProfitLossEntity::getId, id)
+                .set(StocktakingProfitLossEntity::getApproveStatus, approveStatus)
+                .update(new StocktakingProfitLossEntity());
     }
 
 

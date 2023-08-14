@@ -1,16 +1,13 @@
 package com.erp.server.wms.controller.api;
 
 
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
-import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.server.wms.service.StocktakingProfitLossService;
-import org.springframework.data.annotation.Reference;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,7 +19,9 @@ import com.common.core.controller.BaseController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 盘点管理-盘盈盘亏单
@@ -30,6 +29,7 @@ import java.util.List;
  * @author Lambda
  * @since 2023-07-31
  */
+@Slf4j
 @RestController
 @RequestMapping("/stocktakingProfitLoss")
 public class StocktakingProfitLossController extends BaseController {
@@ -109,6 +109,23 @@ public class StocktakingProfitLossController extends BaseController {
 //            keyIdName = "ids"
 //    )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return null;
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO submit = null;
+            try {
+                submit = stocktakingProfitLossService.submit(id);
+            }catch (Exception e){
+                log.error("盘盈盘亏单 提交审核失败",e);
+                if(Objects.nonNull(submit)&& StringUtils.isNotBlank(submit.getCode())){
+                    submit = BatchResultDTO.fail(submit.getCode(), e.getMessage());
+                }else{
+                    submit = BatchResultDTO.fail(id, e.getMessage());
+                }
+                resultDTOS.add(submit);
+            }
+        }
+
+        return success(resultDTOS);
     }
 }
