@@ -145,6 +145,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 签收数量
          */
         private Integer receiveQty;
+
+        /**
+         * 未交货数量
+         */
+        private Integer unReceiveQty;
     }
 
     @Data

@@ -23,6 +23,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
@@ -1261,26 +1262,168 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if (ObjectUtils.isEmpty(detailEntity)) {
                 throw new ServiceException(ApiError.ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST);
             }
-
-
-            List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailEntityList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
-            //校验sku是否有重复，重复需要拆单
-            if (detailEntityList.size() > MathUtil.ONE){
-
-                for (PurchaseOrderDetailEntity entity : detailEntityList) {
-
-                    if (entity.getId().equals(detailEntity.getId())) {
-                        addDTO.getReceiveQty();
-                    }
-                }
-                WarehouseReceiveDetailDTO.AddDTO addSkuDTO = new WarehouseReceiveDetailDTO.AddDTO();
-
-            }
             //如果收货数量大于采购数量，可能是重复sku合单
             if (addDTO.getReceiveQty() > detailEntity.getPurchaseQty()) {
+                List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailEntityList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
+                //校验sku是否有重复，重复需要拆单
+                if (detailEntityList.size() > MathUtil.ONE){
+                    Integer receiveQty = addDTO.getReceiveQty();
 
+                    for (PurchaseOrderDetailEntity entity : detailEntityList) {
+                        if (entity.getId().equals(detailEntity.getId())) {
+                            addDTO.setReceiveQty(detailEntity.getPurchaseQty());
+                        } else {
+                            WarehouseReceiveDetailDTO.AddDTO addSkuDTO = new WarehouseReceiveDetailDTO.AddDTO();
+                            addSkuDTO.setPurchaseOrderDetailId(entity.getId());
+                            if (receiveQty > detailEntity.getPurchaseQty()) {
+                                receiveQty = receiveQty - detailEntity.getPurchaseQty();
+                                addSkuDTO.setReceiveQty(receiveQty);
+                            }
+                            if (receiveQty <= detailEntity.getPurchaseQty()) {
+                                addSkuDTO.setReceiveQty(receiveQty);
+                                break;
+                            }
+                            addSkuDTO.setReceiveQty(receiveQty);
+                            addSkuDTO.setExceedQty(MathUtil.ZERO);
+                            addSkuDTO.setRemark(addDTO.getRemark());
+                            dto.getWarehouseReceiveDetailList().add(addSkuDTO);
+                        }
+                    }
+                }
             }
         }
-        return null;
+        return this.add(dto);
+    }
+
+    @Override
+    public Boolean pdaUpdate(WarehouseReceiveDTO.UpdateDTO dto) {
+        List<WarehouseReceiveDetailDTO.UpdateDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
+        List<String> poReceiveDetailIds = warehouseReceiveDetailList.stream().map(WarehouseReceiveDetailDTO.UpdateDTO::getPurchaseOrderDetailId).distinct().collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.listPurchaseOrderDetailById(poReceiveDetailIds);
+        for (WarehouseReceiveDetailDTO.UpdateDTO updateDTO : warehouseReceiveDetailList) {
+            PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailEntityList.stream().filter(req -> req.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(detailEntity)) {
+                throw new ServiceException(ApiError.ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST);
+            }
+            //如果收货数量大于采购数量，可能是重复sku合单
+            if (updateDTO.getReceiveQty() > detailEntity.getPurchaseQty()) {
+                //如果收货数量大于采购数量，可能是重复sku合单
+                List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailEntityList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
+                //校验sku是否有重复，重复需要拆单
+                if (detailEntityList.size() > MathUtil.ONE) {
+                    warehouseReceiveDetailService.deleteBySkuId(dto.getId(), detailEntity.getSkuId());
+                    Integer receiveQty = updateDTO.getReceiveQty();
+                    for (PurchaseOrderDetailEntity entity : detailEntityList) {
+                        if (entity.getId().equals(detailEntity.getId())) {
+                            updateDTO.setId("");
+                            if (receiveQty > detailEntity.getPurchaseQty()) {
+                                updateDTO.setReceiveQty(detailEntity.getPurchaseQty());
+                            } else {
+                                updateDTO.setReceiveQty(receiveQty);
+                                break;
+                            }
+                        } else {
+                            WarehouseReceiveDetailDTO.UpdateDTO updateSkuDTO = new WarehouseReceiveDetailDTO.UpdateDTO();
+                            updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
+                            if (receiveQty > detailEntity.getPurchaseQty()) {
+                                receiveQty = receiveQty - detailEntity.getPurchaseQty();
+                                updateSkuDTO.setReceiveQty(receiveQty);
+                            }
+                            if (receiveQty <= detailEntity.getPurchaseQty()) {
+                                updateSkuDTO.setReceiveQty(receiveQty);
+                                break;
+                            }
+                            updateSkuDTO.setReceiveQty(receiveQty);
+                            updateSkuDTO.setExceedQty(MathUtil.ZERO);
+                            updateSkuDTO.setRemark(updateDTO.getRemark());
+                            dto.getWarehouseReceiveDetailList().add(updateSkuDTO);
+                        }
+                    }
+                }
+            }
+        }
+        return this.update(dto);
+    }
+
+    @Override
+    public WarehouseReceiveDTO.ViewDTO pdaView(String id) {
+        WarehouseReceiveDTO.ViewDTO viewDTO = new WarehouseReceiveDTO.ViewDTO();
+        WarehouseReceiveEntity warehouseReceiveEntity = this.getById(id);
+        BeanMapperUtils.copy(warehouseReceiveEntity, viewDTO);
+        //获取采购订单主表信息
+        PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(warehouseReceiveEntity.getPurchaseOrderId());
+        //获取采购单供应商信息
+        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
+
+        //查询供应商信息
+        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(warehouseReceiveEntity.getSupplierId());
+        viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
+        viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
+        viewDTO.setSupplierContactId(orderSupplierByOrderId.getSupplierContactId());
+        viewDTO.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
+        viewDTO.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
+        viewDTO.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
+        viewDTO.setPurchaseDeptId(purchaseOrderEntity.getPurchaseDeptId());
+
+        //创库保存详情表的集合
+        List<WarehouseReceiveDetailDTO.ViewDTO> detailViewDTOS = new ArrayList<>();
+        //根据收货单主表id获取详情信息
+        List<WarehouseReceiveDetailEntity> detail = warehouseReceiveDetailService.getDetailByMainId(id);
+        //获取sku的id集合
+        List<String> skuIdList = detail.stream().map(WarehouseReceiveDetailEntity::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        //获取采购单详情的id集合
+        List<String> detailId = detail.stream().map(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        //获取收货数量
+        List<WarehouseReceiveDetailEntity> detailEntitieList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(detailId);
+        List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(detailId);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
+        for (WarehouseReceiveDetailEntity warehouseReceiveDetailEntity : detail) {
+            WarehouseReceiveDetailDTO.ViewDTO detailView = new WarehouseReceiveDetailDTO.ViewDTO();
+            BeanMapperUtils.copy(warehouseReceiveDetailEntity, detailView);
+            //获取采购单详情
+            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(entityClass -> entityClass.getId().equals(detailView.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_99006);
+            }
+            Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+
+
+            Integer receive = detailEntitieList.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderDetailId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            detailView.setUnReceiveQty(purchaseOrderDetailEntity.getPurchaseQty() + returnQty - receive);
+            //获取sku信息
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailView.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95107);
+            }
+            detailView.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
+            detailView.setPlanDeliveryDate(purchaseOrderDetailEntity.getPlanDeliveryDate());
+            detailView.setProductName(productDetailEntity.getName());
+            detailViewDTOS.add(detailView);
+        }
+
+        Map<String, WarehouseReceiveDetailDTO.ViewDTO> collect = detailViewDTOS.stream().collect(Collectors.groupingBy(n -> n.getSkuNo(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+            int purchaseQty = m.stream().mapToInt(WarehouseReceiveDetailDTO.ViewDTO::getPurchaseQty).sum();
+            int receiveQty = m.stream().mapToInt(WarehouseReceiveDetailDTO.ViewDTO::getReceiveQty).sum();
+            int unReceiveQty = m.stream().mapToInt(WarehouseReceiveDetailDTO.ViewDTO::getUnReceiveQty).sum();
+            int exceedQty = m.stream().mapToInt(WarehouseReceiveDetailDTO.ViewDTO::getExceedQty).sum();
+            String podId = m.stream().max(Comparator.comparing(WarehouseReceiveDetailDTO.ViewDTO::getId)).map(WarehouseReceiveDetailDTO.ViewDTO::getId).get();
+            WarehouseReceiveDetailDTO.ViewDTO updateDTO = new WarehouseReceiveDetailDTO.ViewDTO();
+            BeanMapper.copy(m.get(MathUtil.ZERO), updateDTO);
+            updateDTO.setId(podId);
+            updateDTO.setPurchaseQty(purchaseQty);
+            updateDTO.setReceiveQty(receiveQty);
+            updateDTO.setUnReceiveQty(unReceiveQty);
+            updateDTO.setExceedQty(exceedQty);
+            return updateDTO;
+        })));
+
+        List<WarehouseReceiveDetailDTO.ViewDTO> viewDTOS = new ArrayList<>();
+        for (Map.Entry<String, WarehouseReceiveDetailDTO.ViewDTO> stringUpdateDTOEntry : collect.entrySet()) {
+            viewDTOS.add(stringUpdateDTOEntry.getValue());
+        }
+        viewDTO.setWarehouseReceiveDetailList(viewDTOS);
+        return viewDTO;
     }
 }
