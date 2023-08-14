@@ -2042,7 +2042,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             int receiveQty = m.stream().mapToInt(PurchaseOrderDetailDTO.UpdateDTO::getReceiveQty).sum();
             String podId = m.stream().max(Comparator.comparing(PurchaseOrderDetailDTO.UpdateDTO::getId)).map(PurchaseOrderDetailDTO.UpdateDTO::getId).get();
             PurchaseOrderDetailDTO.UpdateDTO updateDTO = new PurchaseOrderDetailDTO.UpdateDTO();
-            BeanMapper.copy(m, updateDTO);
+            BeanMapper.copy(m.get(MathUtil.ZERO), updateDTO);
             updateDTO.setId(podId);
             updateDTO.setPurchaseQty(purchaseQty);
             updateDTO.setReceiveQty(receiveQty);

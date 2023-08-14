@@ -64,6 +64,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -1248,5 +1249,23 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             list.add(resultDTO);
         }
         return list;
+    }
+
+    @Override
+    public String pdaAdd(WarehouseReceiveDTO.AddDTO dto) {
+        List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
+        List<String> poReceiveDetailIds = warehouseReceiveDetailList.stream().map(WarehouseReceiveDetailDTO.AddDTO::getPurchaseOrderDetailId).distinct().collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.listPurchaseOrderDetailById(poReceiveDetailIds);
+        for (WarehouseReceiveDetailDTO.AddDTO addDTO : warehouseReceiveDetailList) {
+            PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailEntityList.stream().filter(req -> req.getId().equals(addDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(detailEntity)) {
+                throw new ServiceException(ApiError.ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST);
+            }
+            //如果收货数量大于采购数量，可能是重复sku合单
+            if (addDTO.getReceiveQty() > detailEntity.getPurchaseQty()) {
+
+            }
+        }
+        return null;
     }
 }
