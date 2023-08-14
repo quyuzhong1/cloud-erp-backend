@@ -123,10 +123,10 @@ public interface StocktakingPlanService extends SuperService<StocktakingPlanEnti
     * 撤销
     * @author Cloud
     * @date: 2023-08-08
-    * @param ids
+    * @param id
     * @return
     */
-    void cancelProcess(List<String> ids);
+    BatchResultDTO cancelProcess(String id);
 
     /**
     * 导出Excel

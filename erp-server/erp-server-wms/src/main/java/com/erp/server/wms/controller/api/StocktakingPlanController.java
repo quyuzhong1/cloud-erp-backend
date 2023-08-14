@@ -260,7 +260,6 @@ public class StocktakingPlanController extends BaseController {
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
-
             BatchResultDTO deleteResult;
             try {
                 deleteResult = stocktakingPlanService.delete(id);
@@ -292,9 +291,25 @@ public class StocktakingPlanController extends BaseController {
             menuCode = "wms:stocktakingPlan:cancel",
             serviceClass = StocktakingPlanService.class,
             keyIdName = "ids")
-    public ApiResult<Void> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        stocktakingPlanService.cancelProcess(dto.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = stocktakingPlanService.cancelProcess(id);
+            }catch (Exception e){
+                log.error("盘点计划撤回流程失败",e);
+                StocktakingPlanEntity entity = stocktakingPlanService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(entity.getCode(), "盘点计划不存在, 撤回流程失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return success(resultDTOS);
     }
 
     /**

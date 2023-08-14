@@ -28,6 +28,8 @@ import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
+import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
+import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
@@ -47,10 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -356,35 +355,56 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     /**
     * 撤销
     */
-    @Transactional(rollbackFor = Exception.class)
     @Override
-    public void cancelProcess(List<String> ids) {
-        List<StocktakingPlanEntity> list = super.listByIds(ids);
-        // 只有待提交的数据允许撤销
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
-           throw new ServiceException(ApiError.ERROR_98007);
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO cancelProcess(String id) {
+        StocktakingPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到盘点计划单数据"));
+        // 只有审核中的单据允许撤销
+        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_98007);
         }
-        // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id集合：【{}】",JSONObject.toJSONString(ids));
-
-        log.info("撤销 开始修改盘点计划单状态，id集合：【{}】", JSONObject.toJSONString(ids));
-        updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        // 撤销流程
+        log.info("撤销 开始修改盘点计划单状态，id：【{}】", id);
+        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //操作日志
-        log.info("撤销 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.batchAddModuleOperateLog("盘点计划单【%s】取消流程", null, pairList, "取消流程操作");
+        log.info("撤销 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(id));
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "取消流程操作");
+        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setBusinessId(entity.getId());
+        revokeDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_INFO.getCode());
+        revokeDTO.setUserId(commonService.getUserInfo().getUid());
+        workflowFeign.revokeProcess(revokeDTO);
+        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
     @Override
     public StocktakingPlanDTO.ViewDTO view(String id) {
         StocktakingPlanEntity stocktakingPlanEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到盘点计划单数据"));
         StocktakingPlanDTO.ViewDTO data = BeanMapperUtils.map(StocktakingPlanDTO.ViewDTO.class, stocktakingPlanEntity);
-        // TODO 查询明细数据（如果有的话）
+        // 数据填充处理
+        fillOne(data);
+        // 查询明细数据
+        List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(id);
+        if (CollUtil.isNotEmpty(detailEntityList)) {
+            List<StocktakingPlanDetailDTO.ViewDTO> detailDTOList = BeanUtil.copyToList(detailEntityList, StocktakingPlanDetailDTO.ViewDTO.class);
+            data.setDetailList(detailDTOList);
+        }
         return data;
     }
+
+    private void fillOne(StocktakingPlanDTO.ViewDTO data) {
+        if (ObjectUtil.isEmpty(data)) {
+            return;
+        }
+        data.setApproveStatusName(data.getApproveStatus().getName());
+        data.setModeName(data.getMode().getName());
+        data.setTypeName(data.getType().getName());
+        data.setStatusName(data.getStatus().getName());
+        data.setSeparateRuleName(data.getSeparateRule().getName());
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, StocktakingPlanEntity entity) {
@@ -393,7 +413,10 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
+        // TODO 锁定库存变更
+
         //TODO 生成盘点任务
+
         return Boolean.TRUE;
     }
     /**
@@ -461,7 +484,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         for(StocktakingPlanDTO.ListDTO data : list) {
             data.setApproveStatusName(data.getApproveStatus().getName());
             data.setModeName(data.getMode().getName());
-            data.setTypeName(data.getMode().getName());
+            data.setTypeName(data.getType().getName());
             data.setStatusName(data.getStatus().getName());
             data.setSeparateRuleName(data.getSeparateRule().getName());
         }
