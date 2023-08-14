@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.business.dto.base.SortDTO;
 
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,7 +54,7 @@ public class MessageDTO implements Serializable {
         /**
          * 最新的消息时间
          */
-        public String latestTime;
+        public LocalDateTime latestTime;
     }
 
     /**

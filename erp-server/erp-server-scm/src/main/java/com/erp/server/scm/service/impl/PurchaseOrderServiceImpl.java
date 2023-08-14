@@ -2017,4 +2017,71 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         list.sort(Comparator.comparing(PurchaseOrderDTO.PdaPurchaseOrder::getCode).reversed());
         return list;
     }
+
+    @Override
+    public PurchaseOrderDTO.ViewDTO pdaView(String id) {
+        PurchaseOrderDTO.ViewDTO dto = new PurchaseOrderDTO.ViewDTO();
+
+        //主表信息
+        PurchaseOrderEntity entity = this.getById(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        BeanMapperUtils.copy(entity, dto);
+
+        // 采购员名称
+        if(StrUtils.isNotEmpty(dto.getPurchaseUserId())) {
+            FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(dto.getPurchaseUserId());
+            if (ObjectUtils.isEmpty(purchaseUser)) {
+                dto.setPurchaseUserName(purchaseUser.getUserName());
+            }
+        }
+
+        //供应商信息
+        PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(id);
+        PurchaseOrderSupplierDTO.UpdateDTO supplierUpdateDTO = new PurchaseOrderSupplierDTO.UpdateDTO();
+        if (ObjectUtils.isEmpty(supplierUpdateDTO)) {
+            throw new ServiceException(ApiError.ERROR_98031);
+        }
+        BeanMapperUtils.copy(purchaseOrderSupplierEntity, supplierUpdateDTO);
+        dto.setPurchaseOrderSupplierDTO(supplierUpdateDTO);
+
+        //单据类型
+        List<DictBasicDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.PURCHASE_ORDER_TYPE.getType());
+        String typeName = dictBasicList.stream().filter(obj -> obj.getValue().equals(entity.getType())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        dto.setTypeName(typeName);
+
+        //明细信息
+        List<PurchaseOrderDetailEntity> entityDetails = purchaseOrderDetailService.listByPurchaseOrderId(id);
+        if (CollectionUtils.isEmpty(entityDetails)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        List<String> podIds = entityDetails.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<WarehouseReceiveDetailEntity> receiveDetailEntities = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+
+        List<PurchaseOrderDetailDTO.UpdateDTO> details = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.UpdateDTO.class, entityDetails);
+        for (PurchaseOrderDetailDTO.UpdateDTO detail : details) {
+            detail.setTaxRate(MathUtil.multiply(detail.getTaxRate(), MathUtil.BigDecimal_100));
+            Integer receiveQty = receiveDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(detail.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            detail.setReceiveQty(receiveQty);
+        }
+        Map<String, PurchaseOrderDetailDTO.UpdateDTO> collect = details.stream().collect(Collectors.groupingBy(n -> n.getSkuNo(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+            int purchaseQty = m.stream().mapToInt(PurchaseOrderDetailDTO.UpdateDTO::getPurchaseQty).sum();
+            int receiveQty = m.stream().mapToInt(PurchaseOrderDetailDTO.UpdateDTO::getReceiveQty).sum();
+            String podId = m.stream().max(Comparator.comparing(PurchaseOrderDetailDTO.UpdateDTO::getId)).map(PurchaseOrderDetailDTO.UpdateDTO::getId).get();
+            PurchaseOrderDetailDTO.UpdateDTO updateDTO = new PurchaseOrderDetailDTO.UpdateDTO();
+            BeanMapper.copy(m, updateDTO);
+            updateDTO.setId(podId);
+            updateDTO.setPurchaseQty(purchaseQty);
+            updateDTO.setReceiveQty(receiveQty);
+            return updateDTO;
+        })));
+
+        List<PurchaseOrderDetailDTO.UpdateDTO> updateDTOS = new ArrayList<>();
+        for (Map.Entry<String, PurchaseOrderDetailDTO.UpdateDTO> stringUpdateDTOEntry : collect.entrySet()) {
+            updateDTOS.add(stringUpdateDTOEntry.getValue());
+        }
+        dto.setDetails(updateDTOS);
+        return dto;
+    }
 }
