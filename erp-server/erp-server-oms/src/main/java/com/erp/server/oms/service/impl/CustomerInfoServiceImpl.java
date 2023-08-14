@@ -444,10 +444,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String areaId = customer.getAreaId();
         String payCode = customer.getPayCode();
         view.setPayCodeList(StringUtils.isNotBlank(payCode) ? Arrays.asList(payCode.split(",")) : Collections.emptyList());
-        DictGlobalAreaEntity globalArea = sysUserFeign.getGlobalAreaById(areaId);
         String areaName = "";
-        if (Objects.nonNull(globalArea)) {
-            areaName = globalArea.getRegionName();
+        if (StringUtils.isNotBlank(areaId)) {
+            DictGlobalAreaEntity globalArea = sysUserFeign.getGlobalAreaById(areaId);
+            if (Objects.nonNull(globalArea)) {
+                areaName = globalArea.getRegionName();
+            }
         }
         view.setAreaName(areaName);
         view.setApproveStatusName(customer.getApproveStatus().getName());
