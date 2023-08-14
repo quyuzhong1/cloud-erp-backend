@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
@@ -63,4 +64,13 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @return java.lang.Boolean
      */
     Boolean exportExcel(StocktakingProfitLossDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 盘盈盘亏单提交
+     * @author yl
+     * @date 2023-08-14 11:45
+     * @param id
+     * @return com.common.business.dto.base.BatchResultDTO
+     */
+    BatchResultDTO submit(String id);
 }

@@ -456,11 +456,11 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         if (CollectionUtils.isEmpty(taskList)) {
             throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
         }
-        ApproveStatusEnum waitSubmit = ApproveStatusEnum.WAIT_SUBMIT;
-        long count = taskList.stream().filter(t -> !waitSubmit.equals(t.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_99090);
-        }
+//        ApproveStatusEnum waitSubmit = ApproveStatusEnum.WAIT_SUBMIT;
+//        long count = taskList.stream().filter(t -> !waitSubmit.equals(t.getApproveStatus())).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_99089);
+//        }
         Boolean result = stocktakingTaskUserService.assignUser(dto.getIds(), dto.getUserIdList());
         return result;
     }
