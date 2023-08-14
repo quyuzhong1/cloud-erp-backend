@@ -84,7 +84,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             item.setStocktakingUserName(stocktakingUserName);
             String skuName = skuList.stream().filter(s -> s.getId().equals(item.getSkuId())).findFirst().
                     map(ProductDetailEntity::getName).orElse("");
-            item.setSkuName(skuName);
+            item.setProductName(skuName);
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/StocktakingTaskDetail.xlsx";
@@ -228,7 +228,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             String skuId = item.getSkuId();
             String skuName = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().
                     map(ProductDetailEntity::getName).orElse("");
-            item.setSkuName(skuName);
+            item.setProductName(skuName);
         }
         return resultList;
     }

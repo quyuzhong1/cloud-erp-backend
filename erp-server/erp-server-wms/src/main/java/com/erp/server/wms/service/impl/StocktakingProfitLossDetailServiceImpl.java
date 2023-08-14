@@ -52,10 +52,10 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
             String skuId = item.getSkuId();
             ProductDetailEntity sku=skuList.stream().filter(s->s.getId().equals(skuId)).findFirst().orElse(null);
             if(Objects.nonNull(sku)){
-                item.setSkuName(sku.getName());
+                item.setProductName(sku.getName());
                 item.setUnit(sku.getUnitName());
             }else{
-                item.setSkuName("");
+                item.setProductName("");
                 item.setUnit("");
             }
         }
