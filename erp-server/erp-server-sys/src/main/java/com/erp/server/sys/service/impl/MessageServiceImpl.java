@@ -84,6 +84,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
             MessageDTO.NotReadMessageNumDetail notReadMessageNumDetail = new MessageDTO.NotReadMessageNumDetail();
             notReadMessageNumDetail.setId(messageEntity.getId());
             notReadMessageNumDetail.setDataJson(messageEntity.getDataJson());
+            notReadMessageNumDetail.setCreateTime(messageEntity.getCreateTime());
             if (!messageIds.contains(messageEntity.getId())) {
                 notReadMessageNumDetail.setIsRead(Boolean.FALSE);
             } else {

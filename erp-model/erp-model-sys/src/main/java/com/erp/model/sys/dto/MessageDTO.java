@@ -11,6 +11,8 @@ import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import org.springframework.cglib.core.Local;
+
 import java.io.Serializable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -71,6 +73,10 @@ public class MessageDTO implements Serializable {
          * 是否已读
          */
         public Boolean isRead;
+        /**
+         * 创建数据
+         */
+        public LocalDateTime createTime;
         /**
          * 参数json
          */
