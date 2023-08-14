@@ -473,6 +473,7 @@ public enum ApiError implements Serializable {
     ERROR_97026(97026,"模块名称最大30字符"),
     ERROR_97027(97027,"模块说明最大200字符"),
     ERROR_KINGDEE_SAVE(97028,"调用金蝶保存接口失败"),
+    MABANG_SKU_NOT_EXIST(97029, "马帮财务编码：{}不存在"),
 
 
 
@@ -700,6 +701,7 @@ public enum ApiError implements Serializable {
     ERROR_99090(99090,"盘点任务明细为空"),
     NOT_EXIST_BILL(99091, "{}单据不存在"),
     STOCKTAKING_TASK_STARTED(99091, "盘点任务已开始, 无法反审核"),
+    ERROR_SUB_CHILD_LOCATION_BLANK(99088,"委外订单子SKU【{}】仓位不能为空"),
 
 
     /**
