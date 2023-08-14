@@ -168,13 +168,6 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         return this.saveBatch(list);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void removeByBusinessIds(List<String> businessIds) {
-        lambdaUpdate().in(OperateLogEntity::getBusinessId,businessIds).remove();
-    }
-
-
     /**
      * 设置布尔值
      */

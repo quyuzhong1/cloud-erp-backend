@@ -32,10 +32,7 @@ import com.erp.model.wms.dto.excel.ExportTransferOutExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
-import com.erp.model.wms.entity.TransferInDetailEntity;
-import com.erp.model.wms.entity.TransferInEntity;
-import com.erp.model.wms.entity.TransferOutDetailEntity;
-import com.erp.model.wms.entity.TransferOutEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
@@ -334,8 +331,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         });
         // 删除日志数据
         log.info("删除 开始删除分步式调出单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        operateLogService.removeByBusinessIds(ids);
-
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的分步式调出单", commonService.getUserInfo().getUserName(), list.stream().map(TransferOutEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "删除操作");
         // 删除明细数据
         log.info("删除 开始删除分步式调出单明细数据，id集合：【{}】", JSONObject.toJSONString(ids));
         transferOutDetailService.removeByMainIds(ids);

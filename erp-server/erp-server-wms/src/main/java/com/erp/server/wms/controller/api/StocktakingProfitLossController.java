@@ -85,8 +85,8 @@ public class StocktakingProfitLossController extends BaseController {
     @PostMapping("/view")
 //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingTask:view",
-//            serviceClass = StocktakingTaskService.class,
+//            menuCode = "wms:stocktakingProfitLoss:view",
+//            serviceClass = StocktakingProfitLossService.class,
 //            keyIdName = "id"
 //    )
     public ApiResult<StocktakingProfitLossDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
@@ -104,8 +104,8 @@ public class StocktakingProfitLossController extends BaseController {
     @PostMapping("/submit")
 //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingTask:submit",
-//            serviceClass = StocktakingTaskService.class,
+//            menuCode = "wms:stocktakingProfitLoss:submit",
+//            serviceClass = StocktakingProfitLossService.class,
 //            keyIdName = "ids"
 //    )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -117,6 +117,72 @@ public class StocktakingProfitLossController extends BaseController {
                 submit = stocktakingProfitLossService.submit(id);
             }catch (Exception e){
                 log.error("盘盈盘亏单 提交审核失败",e);
+                if(Objects.nonNull(submit)&& StringUtils.isNotBlank(submit.getCode())){
+                    submit = BatchResultDTO.fail(submit.getCode(), e.getMessage());
+                }else{
+                    submit = BatchResultDTO.fail(id, e.getMessage());
+                }
+                resultDTOS.add(submit);
+            }
+        }
+
+        return success(resultDTOS);
+    }
+
+
+
+    @PostMapping("/approve")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "wms:stocktakingProfitLoss:approve",
+//            serviceClass = StocktakingProfitLossService.class,
+//            keyIdName = "ids"
+//    )
+    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO submit = null;
+            try {
+                submit = stocktakingProfitLossService.approve(id,new  ApproveOneDTO(id, dto.getType(),dto.getComment()));
+            }catch (Exception e){
+                log.error("盘盈盘亏单 审核失败",e);
+                if(Objects.nonNull(submit)&& StringUtils.isNotBlank(submit.getCode())){
+                    submit = BatchResultDTO.fail(submit.getCode(), e.getMessage());
+                }else{
+                    submit = BatchResultDTO.fail(id, e.getMessage());
+                }
+                resultDTOS.add(submit);
+            }
+        }
+
+        return success(resultDTOS);
+    }
+
+
+
+    /**
+     * 撤销流程
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/cancelProcess")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "wms:stocktakingProfitLoss:cancelProcess",
+//            serviceClass = StocktakingProfitLossService.class,
+//            keyIdName = "ids"
+//    )
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO submit = null;
+            try {
+                submit = stocktakingProfitLossService.cancelProcess(id);
+            }catch (Exception e){
+                log.error("盘盈盘亏单 撤销流程失败",e);
                 if(Objects.nonNull(submit)&& StringUtils.isNotBlank(submit.getCode())){
                     submit = BatchResultDTO.fail(submit.getCode(), e.getMessage());
                 }else{

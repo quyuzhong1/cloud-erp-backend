@@ -80,4 +80,11 @@ public interface StocktakingTaskDetailService extends SuperService<StocktakingTa
      * @return void
      */
     void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 批量删除详情数据
+     * @param mainIds
+     * @return
+     */
+    Boolean removeByMainId(List<String> mainIds);
 }

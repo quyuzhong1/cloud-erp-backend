@@ -1,6 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.map.MapUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
@@ -37,6 +40,7 @@ import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
+import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -532,5 +536,27 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             log.error("盘点任务单 downloadTemplate  出错了 e==={}", e);
             throw new ServiceException(ApiError.ERROR_95131);
         }
+    }
+
+    @Override
+    public List<StocktakingTaskEntity> listBySourceId(String sourceId) {
+        return lambdaQuery()
+                .eq(StocktakingTaskEntity::getSourceId, sourceId)
+                .list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean removeBySourceId(String sourceId) {
+        List<StocktakingTaskEntity> taskEntityList = listBySourceId(sourceId);
+        if(CollUtil.isEmpty(taskEntityList)){
+            return Boolean.TRUE;
+        }
+        List<String> mainIds = taskEntityList.stream().map(StocktakingTaskEntity::getId).collect(Collectors.toList());
+        // 删除明细表数据
+        stocktakingTaskDetailService.removeByMainId(mainIds);
+        // 删除主表数据
+        this.removeByIds(mainIds);
+        return Boolean.TRUE;
     }
 }

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.enums.ApiError;
@@ -263,5 +264,15 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             log.error("盘点任务明细 downloadTemplate  出错了 e==={}", e);
             throw new ServiceException(ApiError.ERROR_95131);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean removeByMainId(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Boolean.TRUE;
+        }
+        remove(new LambdaQueryWrapper<StocktakingTaskDetailEntity>().in(StocktakingTaskDetailEntity::getMainId, mainIds));
+        return Boolean.TRUE;
     }
 }

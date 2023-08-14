@@ -106,4 +106,17 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
     void downloadTemplate(HttpServletResponse response);
 
 
+    /**
+     * 根据来源ID 获取到任务列表
+     * @param sourceId
+     * @return
+     */
+    List<StocktakingTaskEntity> listBySourceId(String sourceId);
+
+    /**
+     * 根据来源ID 删除任务
+     * @param id
+     * @return
+     */
+    Boolean removeBySourceId(String id);
 }

@@ -105,19 +105,19 @@ public interface StocktakingPlanService extends SuperService<StocktakingPlanEnti
     * 反审核
     * @author Cloud
     * @date: 2023-08-08
-    * @param ids
+    * @param id
     * @return
     */
-    void disApprove(List<String> ids);
+    BatchResultDTO disApprove(String id);
 
     /**
     * 删除
     * @author Cloud
     * @date: 2023-08-08
-    * @param ids
+    * @param id
     * @return
     */
-    void delete(List<String> ids);
+    BatchResultDTO delete(String id);
 
     /**
     * 撤销

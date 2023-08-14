@@ -4,21 +4,24 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ApproveType;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
@@ -29,6 +32,8 @@ import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
+import com.erp.server.wms.kingdee.SyncKingdeeStocktakingLossService;
+import com.erp.server.wms.kingdee.SyncKingdeeStocktakingProfitService;
 import com.erp.server.wms.mapper.StocktakingProfitLossMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
@@ -82,6 +87,12 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Autowired
     private OperateLogService operateLogService;
+
+    @Resource
+    private SyncKingdeeStocktakingProfitService syncKingdeeStocktakingProfitService;
+
+    @Resource
+    private SyncKingdeeStocktakingLossService syncKingdeeStocktakingLossService;
 
 
     /**
@@ -347,7 +358,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             throw new ServiceException(ApiError.ERROR_98010);
         }
         Boolean result = this.updateApproveStatus(entity.getId(), ApproveStatusEnum.APPROVE_ING);
-        if(!result){
+        if (!result) {
             throw new ServiceException("保存失败");
         }
         //启动流程
@@ -356,12 +367,167 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         // 操作日志
         List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
-        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, msg);
-        return null;
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "提交审核");
+        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.SUBMIT);
+
+    }
+
+    /**
+     * 盘盈盘亏单审核
+     *
+     * @param id
+     * @param dto
+     * @return com.common.business.dto.base.BatchResultDTO
+     * @author yl
+     * @date 2023-08-14 14:02
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO approve(String id, ApproveOneDTO dto) {
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+        if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StringUtils.isEmpty(dto.getComment())) {
+            // 审核不通过必须填写审核意见
+            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+        }
+        StocktakingProfitLossEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException("未找到盘盈盘亏单");
+        }
+        // 审核中的数据允许审核
+        if (!Objects.equals(ApproveStatusEnum.APPROVE_ING, entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        // 调用流程审核
+        approveProcess(entity, dto);
+        // 操作日志
+        List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getName());
+        operateLogService.batchAddModuleOperateLog(String.format(msg, approveType.getName()).concat("【%s】").concat(StringUtils.isNotEmpty(dto.getComment()) ? String.format("，意见：%s", dto.getComment()) : ""),
+                ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "审核操作");
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
+        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+    }
+
+
+    /**
+     * 取消流程
+     *
+     * @param id
+     * @return com.common.business.dto.base.BatchResultDTO
+     * @author yl
+     * @date 2023-08-14 14:46
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO cancelProcess(String id) {
+        StocktakingProfitLossEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException("未找到盘盈盘亏单");
+        }
+        ApproveStatusEnum ingStatus = ApproveStatusEnum.APPROVE_ING;
+        // 审核中的数据允许审核
+        if (!Objects.equals(ingStatus, entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        LoginUser user = commonService.getUserInfo();
+        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setBusinessId(entity.getId());
+        revokeDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode());
+        revokeDTO.setUserId(user.getUid());
+        ApiResult<ProcessManagementDTO.RevokeResultDTO> apiResult = workflowFeign.revokeProcess(revokeDTO);
+        if (apiResult.isSuccess()) {
+            ApproveStatusEnum waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT;
+            entity.setApproveStatus(waitSubmitStatus);
+            Boolean result = this.updateById(entity);
+            if (result) {
+                List<Pair<String, String>> pairList = Arrays.asList(entity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+                String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据 取消流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getName());
+                operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "取消流程操作");
+            }
+        }
+        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+    }
+
+    /**
+     * 调用审核流程
+     *
+     * @param entity
+     * @param dto
+     */
+    public void approveProcess(StocktakingProfitLossEntity entity, ApproveOneDTO dto) {
+        LoginUser userInfo = commonService.getUserInfo();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.PURCHASE_ORDER.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+        Integer code = approveResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+        if (Objects.isNull(data.getIsExistProcess()) || data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
+        }
+    }
+
+    /**
+     * 审核后的操作
+     *
+     * @param dto
+     * @param entity
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean approveEnd(ApproveOneDTO dto, StocktakingProfitLossEntity entity) {
+        if (Objects.isNull(entity)) {
+            return Boolean.FALSE;
+        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        updateForApprove(entity.getId(), approveStatus);
+        if (ApproveType.PASS.equals(dto.getType())) {
+            //盘盈单
+            BillTypeEnum profit = BillTypeEnum.PROFIT;
+            //盘盈单
+            BillTypeEnum loss = BillTypeEnum.LOSS;
+            //盘盈单同步金蝶
+            if (Objects.equals(profit, entity.getBillType())) {
+                syncKingdeeStocktakingProfitService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+            }
+            //盘亏单同步金蝶
+            if (Objects.equals(loss, entity.getBillType())) {
+                syncKingdeeStocktakingLossService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+            }
+
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 更改审核信息
+     *
+     * @param id
+     * @param approveStatus
+     */
+    public void updateForApprove(String id, ApproveStatusEnum approveStatus) {
+        //当前登录人
+        LoginUser userInfo = commonService.getUserInfo();
+        this.lambdaUpdate().eq(StocktakingProfitLossEntity::getId, id)
+                .set(StocktakingProfitLossEntity::getApproveUserId, userInfo.getUid())
+                .set(StocktakingProfitLossEntity::getApproveUserName, userInfo.getUserName())
+                .set(StocktakingProfitLossEntity::getApproveStatus, approveStatus)
+                .set(StocktakingProfitLossEntity::getApproveTime, LocalDateTime.now())
+                .update(new StocktakingProfitLossEntity());
     }
 
     /**
      * 启动流程
+     *
      * @param entity
      */
     public void startProcess(StocktakingProfitLossEntity entity) {

@@ -75,11 +75,4 @@ public interface OperateLogService extends SuperService<OperateLogEntity> {
       * @return Boolean
       */
      Boolean batchAddModuleOperateLog(String content, String moduleType, List<Pair<String, String>> pairList, String operation);
-    /**
-     * @description: 删除操作日志
-     * @author Will
-     * @date: 2023/4/3 17:19
-     * @param businessIds
-     */
-    void removeByBusinessIds(List<String> businessIds);
 }
