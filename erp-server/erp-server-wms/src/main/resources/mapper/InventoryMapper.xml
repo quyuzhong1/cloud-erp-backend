@@ -370,7 +370,7 @@
                 AND dict_inventory_status = #{status}
             </if>
             <if test="warehouseId != null and warehouseId != ''">
-                AND t.warehouse_id = #{warehouseId}
+                AND warehouse_id = #{warehouseId}
             </if>
             GROUP BY i.warehouse_id
         )t
@@ -386,7 +386,7 @@
                 AND dict_inventory_status = #{status}
             </if>
             <if test="warehouseId != null and warehouseId != ''">
-                AND t.warehouse_id = #{warehouseId}
+                AND warehouse_id = #{warehouseId}
             </if>
             AND dict_inventory_status = 'usable'
             GROUP BY warehouse_id
