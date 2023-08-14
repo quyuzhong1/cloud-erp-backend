@@ -27,6 +27,7 @@ import com.erp.server.wms.service.OperateLogService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -64,6 +65,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addModuleOperateLogByObj(Object oldObj, Object newObj, String moduleType, String businessId, String pid, String msg) {
 
         Map<Pair<String, String>, Pair<String, String>> operationLogMap = OperationLogUtil.getOperationLogMap(oldObj, newObj);
@@ -131,8 +133,13 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         }
         return this.saveBatch(list);
     }
-
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean addModuleOperateLogByObj(Object oldObj, Object newObj, String moduleType, String businessId, String msg) {
+        return addModuleOperateLogByObj(oldObj, newObj,moduleType, businessId, "", msg);
+    }
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addModuleOperateLog(String content, String moduleType, String businessId,String operation) {
         OperateLogEntity entity = new OperateLogEntity();
         entity.setModuleType(moduleType)
@@ -144,6 +151,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean batchAddModuleOperateLog(String content, String moduleType, List<Pair<String, String>> pairList, String operation) {
         if (CollectionUtils.isEmpty(pairList)) {
             return Boolean.TRUE;
@@ -161,6 +169,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void removeByBusinessIds(List<String> businessIds) {
         lambdaUpdate().in(OperateLogEntity::getBusinessId,businessIds).remove();
     }

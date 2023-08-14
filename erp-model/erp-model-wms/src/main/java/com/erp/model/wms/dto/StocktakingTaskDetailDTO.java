@@ -62,7 +62,7 @@ public class StocktakingTaskDetailDTO implements Serializable {
         /**
          * sku 名称
          */
-        private String skuName;
+        private String productName;
 
 
         /**
@@ -150,7 +150,7 @@ public class StocktakingTaskDetailDTO implements Serializable {
         /**
          * sku 名称
          */
-        private String skuName;
+        private String productName;
 
 
         /**

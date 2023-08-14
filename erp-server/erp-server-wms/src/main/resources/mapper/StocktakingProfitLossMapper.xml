@@ -4,19 +4,226 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.StocktakingProfitLossEntity">
-        <result column="id" property="id" />
-        <result column="create_user_id" property="createUserId" />
-        <result column="create_user_name" property="createUserName" />
-        <result column="create_time" property="createTime" />
-        <result column="update_user_id" property="updateUserId" />
-        <result column="update_user_name" property="updateUserName" />
-        <result column="update_time" property="updateTime" />
-        <result column="version" property="version" />
-        <result column="is_deleted" property="isDeleted" />
-        <result column="code" property="code" />
-        <result column="source_id" property="sourceId" />
-        <result column="source_code" property="sourceCode" />
-        <result column="bill_type" property="billType" />
+        <result column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="code" property="code"/>
+        <result column="source_id" property="sourceId"/>
+        <result column="source_code" property="sourceCode"/>
+        <result column="bill_type" property="billType"/>
     </resultMap>
+
+    <select id="tabList" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$TabDTO">
+        SELECT
+        bill_type AS tabFlag,
+        count(id) AS count
+        FROM stocktaking_profit_loss
+        WHERE is_deleted=FALSE
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        GROUP BY bill_type
+    </select>
+    <!--分页展示-->
+    <select id="paging" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$PagingViewDTO">
+        SELECT
+        id,
+        code,
+        source_id,
+        source_code,
+        bill_type,
+        create_time,
+        approve_time,
+        approve_status
+        FROM stocktaking_profit_loss spl
+        WHERE spl.is_deleted=FALSE
+        <if test="billType!=null and billType!=''">
+            AND spl.bill_type=#{billType}
+        </if>
+        <if test="sourceIdList!=null and sourceIdList.size>0">
+            AND spl.source_id IN
+            <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
+                #{sourceId}
+            </foreach>
+        </if>
+        <!--code-->
+        <if test="params.code!=null and params.code!=''">
+            AND spl.code ILIKE concat('%', #{params.code} ,'%')
+        </if>
+        <if test="params.sourceCode!=null and params.sourceCode!=''">
+            AND spl.source_code ILIKE concat('%', #{params.sourceCode} ,'%')
+        </if>
+        <if test="params.billTypeList!=null and params.billTypeList.size>0">
+            AND spl.bill_type IN
+            <foreach collection="params.billTypeList" item="billType" open="(" separator="," close=")">
+                #{billType}
+            </foreach>
+        </if>
+        <!--创建人 -->
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND spl.create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <!--创建时间 -->
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND spl.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > spl.create_time
+        </if>
+        <!--审核时间 -->
+        <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
+            AND spl.approve_time >= #{params.approveTimeList[0]} and (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL
+            '1
+            DAY' ) > spl.approve_time
+        </if>
+        <!--skuId -->
+        <if test="params.skuIdList!=null and params.skuIdList.size>0">
+            AND spl.id IN
+            (
+            SELECT main_id FROM stocktaking_profit_loss_detail
+            WHERE is_deleted=FALSE AND sku_id IN
+            <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+            )
+        </if>
+        <!--仓库 -->
+        <if test="params.warehouseId!=null and params.warehouseId!=''">
+            AND spl.id IN
+            (
+            SELECT main_id FROM stocktaking_profit_loss_detail
+            WHERE is_deleted=FALSE AND warehouse_id =#{params.warehouseId}
+            )
+        </if>
+        <!--仓位 -->
+        <if test="params.warehouseLocation!=null and params.warehouseLocation!=''">
+            AND spl.id IN
+            (
+            SELECT main_id FROM stocktaking_profit_loss_detail
+            WHERE is_deleted=FALSE AND warehouse_location ILIKE concat('%', #{params.warehouseLocation} ,'%')
+            )
+        </if>
+        <!--权限 -->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        spl.id DESC
+    </select>
+    <!--导出数据-->
+    <select id="listExport" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$PagingViewDTO">
+        SELECT
+            id,
+            code,
+            source_id,
+            source_code,
+            bill_type,
+            create_time,
+            approve_time,
+            approve_status
+        FROM stocktaking_profit_loss spl
+        WHERE spl.is_deleted=FALSE
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0">
+                AND spl.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="billType!=null and billType!=''">
+                    AND spl.bill_type=#{billType}
+                </if>
+                <if test="sourceIdList!=null and sourceIdList.size>0">
+                    AND spl.source_id IN
+                    <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
+                        #{sourceId}
+                    </foreach>
+                </if>
+                <!--code-->
+                <if test="params.code!=null and params.code!=''">
+                    AND spl.code ILIKE concat('%', #{params.code} ,'%')
+                </if>
+                <if test="params.sourceCode!=null and params.sourceCode!=''">
+                    AND spl.source_code ILIKE concat('%', #{params.sourceCode} ,'%')
+                </if>
+                <if test="params.billTypeList!=null and params.billTypeList.size>0">
+                    AND spl.bill_type IN
+                    <foreach collection="params.billTypeList" item="billType" open="(" separator="," close=")">
+                        #{billType}
+                    </foreach>
+                </if>
+                <!--创建人 -->
+                <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+                    AND spl.create_user_id IN
+                    <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                        #{createUserId}
+                    </foreach>
+                </if>
+                <!--创建时间 -->
+                <if test="params.createTimeList !=null and params.createTimeList.size>0">
+                    AND spl.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
+                    INTERVAL '1
+                    DAY' ) > spl.create_time
+                </if>
+                <!--审核时间 -->
+                <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
+                    AND spl.approve_time >= #{params.approveTimeList[0]} and (#{params.approveTimeList[1]}::TIMESTAMP +
+                    INTERVAL '1
+                    DAY' ) > spl.approve_time
+                </if>
+                <!--skuId -->
+                <if test="params.skuIdList!=null and params.skuIdList.size>0">
+                    AND spl.id IN
+                    (
+                    SELECT main_id FROM stocktaking_profit_loss_detail
+                    WHERE is_deleted=FALSE AND sku_id IN
+                    <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
+                        #{skuId}
+                    </foreach>
+                    )
+                </if>
+                <!--仓库 -->
+                <if test="params.warehouseId!=null and params.warehouseId!=''">
+                    AND spl.id IN
+                    (
+                    SELECT main_id FROM stocktaking_profit_loss_detail
+                    WHERE is_deleted=FALSE AND warehouse_id =#{params.warehouseId}
+                    )
+                </if>
+                <!--仓位 -->
+                <if test="params.warehouseLocation!=null and params.warehouseLocation!=''">
+                    AND spl.id IN
+                    (
+                    SELECT main_id FROM stocktaking_profit_loss_detail
+                    WHERE is_deleted=FALSE AND warehouse_location ILIKE concat('%', #{params.warehouseLocation} ,'%')
+                    )
+                </if>
+                <!--权限 -->
+                <if test="params.permissionSql!=null and params.permissionSql!=''">
+                    ${params.permissionSql}
+                </if>
+            </otherwise>
+        </choose>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        spl.id DESC
+    </select>
 
 </mapper>

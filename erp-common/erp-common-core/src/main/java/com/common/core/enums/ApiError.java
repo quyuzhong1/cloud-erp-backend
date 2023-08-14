@@ -81,6 +81,7 @@ public enum ApiError implements Serializable {
     ERROR_1042(1042,"单据提交失败"),
     TIME_NOT_NULL(1043,"{}不能为空"),
     SAVE_BILL_FAIL(1044, "保存{}单据失败"),
+    START_GE_END_ERROR(1045, "{}不能大于等于{}"),
 
 
 
@@ -346,6 +347,7 @@ public enum ApiError implements Serializable {
     ERROR_MSG_IS_NOT_NULL(95158, "消息模板不能为空"),
     ERROR_NOT_FOUND_SKU(95159,"SKU【{}】不存在"),
     ERROR_95160(95160,"文件不可超过{}m"),
+    REJECT_COMMENT_NOT_EMPTY(95161, "审核不通过必须填写审核意见"),
 
 
 
@@ -471,7 +473,6 @@ public enum ApiError implements Serializable {
     ERROR_97026(97026,"模块名称最大30字符"),
     ERROR_97027(97027,"模块说明最大200字符"),
     ERROR_KINGDEE_SAVE(97028,"调用金蝶保存接口失败"),
-    MABANG_SKU_NOT_EXIST(97029, "马帮sku编码：{}不存在"),
 
 
 
@@ -694,12 +695,10 @@ public enum ApiError implements Serializable {
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
     ERROR_PURCHASE_RETURN_REF_PO_APPROVE(99087,"采购退货单【{}】未审核完成，不支持下推采购订单"),
-    ERROR_SUB_CHILD_LOCATION_BLANK(99088,"委外订单子SKU【{}】仓位不能为空"),
-    ERROR_99089(99089,"已下推退货入库单不能反审核"),
-
     ERROR_BILL_NOT_EXIST(99088,"单据不存在"),
-    ERROR_99090(99090,"只有待提交的单据支持分配盘点人"),
-    ERROR_99091(99091,"盘点任务明细为空"),
+    ERROR_99089(99089,"只有待提交的单据支持分配盘点人"),
+    ERROR_99090(99090,"盘点任务明细为空"),
+    NOT_EXIST_BILL(99091, "{}单据不存在"),
 
 
     /**
@@ -768,7 +767,6 @@ public enum ApiError implements Serializable {
     ERROR_92058(92058,"店铺不存在"),
     ERROR_92059(92059,"要货日期必须大于单据日期"),
     ERROR_KINGDEE_CODE_NOT_EXIST(92059,"金蝶单号不存在"),
-    ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在采购单中未找到"),
 
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),

@@ -1,5 +1,7 @@
 package com.erp.model.wms.entity;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
@@ -158,11 +160,25 @@ public class StocktakingPlanEntity extends BaseEntity<StocktakingPlanEntity> {
     public StocktakingPlanEntity(StocktakingPlanDTO.AddDTO addDTO, String code) {
         this.code = code;
         this.name = addDTO.getName();
-//        this.startTime = addDTO.getStartTime();
-//        this.endTime = addDTO.getEndTime();
+        if (addDTO.getStartTime() != null && addDTO.getEndTime() != null){
+            this.startTime = addDTO.getStartTime();
+            this.endTime = addDTO.getEndTime();
+        }
         this.mode = addDTO.getMode();
         this.type = addDTO.getType();
         this.separateRule = addDTO.getSeparateRule();
+    }
+
+    public StocktakingPlanEntity(StocktakingPlanDTO.UpdateDTO updateDTO) {
+        super(updateDTO.getId());
+        this.name = updateDTO.getName();
+        if (updateDTO.getStartTime() != null && updateDTO.getEndTime() != null){
+            this.startTime = updateDTO.getStartTime();
+            this.endTime = updateDTO.getEndTime();
+        }
+        this.mode = updateDTO.getMode();
+        this.type = updateDTO.getType();
+        this.separateRule = updateDTO.getSeparateRule();
     }
 
     @Override

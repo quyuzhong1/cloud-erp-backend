@@ -18,10 +18,35 @@
         <result column="sku_no" property="skuNo" />
         <result column="warehouse_id" property="warehouseId" />
         <result column="warehouse_location" property="warehouseLocation" />
-        <result column="stocktaking_qty" property="stocktakingQty" />
+        <result column="qty" property="qty" />
         <result column="diff_qty" property="diffQty" />
         <result column="usable_qty" property="usableQty" />
         <result column="frozen_qty" property="frozenQty" />
     </resultMap>
+
+    <select id="listByMainIds" resultType="com.erp.model.wms.dto.StocktakingProfitLossDetailDTO$ViewDTO">
+        SELECT
+            spld.id,
+            spld.main_id,
+            spld.sku_id,
+            spld.sku_no,
+            spld.warehouse_id,
+            spld.warehouse_location,
+            spld.qty,
+            spld.diff_qty,
+            spld.usable_qty,
+            spld.frozen_qty,
+            w.name AS warehouseName
+        FROM stocktaking_profit_loss_detail spld
+        LEFT JOIN warehouse w
+        ON spld.warehouse_id=w.id AND w.is_deleted=FALSE
+        WHERE spld.is_deleted=FALSE
+        <if test="mainIdList!=null and mainIdList.size>0">
+         AND spld.main_id IN
+         <foreach collection="mainIdList" item="mainId" open="(" separator="," close=")">
+            #{mainId}
+         </foreach>
+        </if>
+    </select>
 
 </mapper>

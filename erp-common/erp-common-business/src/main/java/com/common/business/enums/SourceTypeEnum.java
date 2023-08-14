@@ -39,6 +39,8 @@ public enum SourceTypeEnum {
     MACHINE_INFO("machineInfo", "加工单","machine_info"),
     SO_OUTSTOCK("soOutstock", "销售出库单","so_outstock"),
     STOCKTAKING_TASK("stocktakingTask", "盘点任务单","stocktaking_task"),
+    STOCKTAKING_PLAN("stocktakingPlan", "盘点计划单","stocktaking_plan"),
+
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),

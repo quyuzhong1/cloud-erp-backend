@@ -1,11 +1,25 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.constant.ApproveType;
+import com.common.business.enums.*;
+import com.common.business.validator.ValidList;
+import com.common.core.controller.vo.ApiResult;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.StocktakingPlanMapper;
 import com.erp.server.wms.service.StocktakingPlanDetailService;
 import com.erp.server.wms.service.StocktakingPlanService;
@@ -14,6 +28,7 @@ import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.google.common.collect.Lists;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,8 +42,6 @@ import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.math3.util.Pair;
 import io.seata.spring.annotation.GlobalTransactional;
 
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
@@ -55,9 +68,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlanMapper, StocktakingPlanEntity> implements StocktakingPlanService {
-
-    @Autowired
-    private SysUserFeign sysUserFeign;
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
@@ -66,6 +76,8 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private StocktakingPlanDetailService stocktakingPlanDetailService;
+    @Resource
+    private WorkflowFeign workflowFeign;
 
     @Override
     public PagingVO<StocktakingPlanDTO.ListDTO> paging(PagingDTO<StocktakingPlanDTO.PagingParamDTO> pagingParamDTO) {
@@ -77,6 +89,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         // 数据处理
         fillList(pageData.getRecords());
+        // TODO 工作流审批人处理
         return new PagingVO(pageData);
     }
 
@@ -139,7 +152,8 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // 保存明细数据
         stocktakingPlanDetailService.saveList(addDTO.getDetailList(), stocktakingPlanEntity.getId());
         // 操作日志
-        operateLogService.addModuleOperateLog(String.format("新增盘点计划单【%s】", code), ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), stocktakingPlanEntity.getId(), "新增操作");
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "盘点计划" , stocktakingPlanEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), stocktakingPlanEntity.getId(), "新增单据");
         return stocktakingPlanEntity.getCode();
     }
 
@@ -150,58 +164,74 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     @Override
     public void update(StocktakingPlanDTO.UpdateDTO updateDTO) {
         StocktakingPlanEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException("未找到盘点计划单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "盘点计划单"));
         // 待提交和审核不通过允许修改
-        if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
+        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-
-        StocktakingPlanEntity stocktakingPlanEntity =  BeanMapperUtils.map(StocktakingPlanEntity.class, updateDTO);
-
         // 数据处理
-        //handleData(stocktakingPlanEntity);
-
+        handleData(updateDTO);
+        // 修改主数据
+        StocktakingPlanEntity stocktakingPlanEntity = new StocktakingPlanEntity(updateDTO);
         log.info("编辑 开始修改盘点计划单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(stocktakingPlanEntity);
         if(!save) {
            throw new ServiceException("盘点计划单保存失败");
         }
-
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
+        // 修改明细数据
+        stocktakingPlanDetailService.updateList(updateDTO.getDetailList(), stocktakingPlanEntity.getId());
         // 记录主单操作日志
         log.info("编辑 开始记录盘点计划单日志数据，单号：【{}】", stocktakingPlanEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, stocktakingPlanEntity, null, stocktakingPlanEntity.getId(), "", "");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), stocktakingPlanEntity.getCode(), "盘点计划");
+        operateLogService.addModuleOperateLogByObj(old, stocktakingPlanEntity, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), stocktakingPlanEntity.getId(), msg);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void submit(List<String> ids) {
-       if (CollUtil.isEmpty(ids)) {
-          throw new ServiceException(ApiError.ERROR_98004);
-       }
-       List<StocktakingPlanEntity> list = super.listByIds(ids);
-       if (CollUtil.isEmpty(list)) {
-          throw new ServiceException("未找到盘点计划单数据");
-       }
-       // 待提交或审核不通过并且未作废允许提交
-       long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus()))).count();
-       if (count > 0) {
-          throw new ServiceException(ApiError.ERROR_98010);
-       }
+    public BatchResultDTO submit(String id) {
+        StocktakingPlanEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到盘点计划单数据");
+        }
+        // 待提交或审核不通过并且未作废允许提交
+        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+        // 更新单据审核状态
+        log.info("提交 开始修改盘点计划单状态数据，id=：【{}】", JSONObject.toJSONString(entity.getId()));
+        this.updateApproveStatus(entity.getId(), ApproveStatusEnum.APPROVE_ING.getStatus());
+        // 启动流程
+        log.info("提交 开始启动盘点计划单流程，id=：【{}】", JSONObject.toJSONString(entity.getId()));
+        startProcess(entity);
+        // 记录操作日志
+        log.info("提交 开始记录盘点计划单日志数据，id集合：【{}】", JSONObject.toJSONString(entity));
+        // 操作日志
+        List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), pairList, msg);
+        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.SUBMIT);
+    }
 
-       // 更新单据审核状态
-       log.info("提交 开始修改盘点计划单状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
-       this.updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
+    /**
+     * 启动流程
+     *
+     * @param entity
+     * @return void
+     * @Date 2023/7/4 10:07
+     **/
 
-       // TODO 启动流程（如果需要的话）
-
-       // 记录操作日志
-       log.info("提交 开始记录盘点计划单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
-       List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-       // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-       operateLogService.batchAddModuleOperateLog("提交了一个盘点计划单【%s】", null, pairList, "提交操作");
+    public void startProcess(StocktakingPlanEntity entity) {
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
+        startDTO.setBusinessName(entity.getCode());
+        startDTO.setUserId(commonService.getUserInfo().getUid());
+        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
+        if (!result.isSuccess()) {
+            throw new ServiceException(result.getMsg());
+        }
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -211,7 +241,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // 新增
         String id = this.add(dto);
         // 提交
-        this.submit(Arrays.asList(id));
+        this.submit(id);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -221,42 +251,57 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // 修改
         this.update(dto);
         // 提交
-        this.submit(Arrays.asList(dto.getId()));
+        this.submit(dto.getId());
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void approve(BaseApproveParamDTO dto) {
-        List<String> ids = dto.getIds();
+    public BatchResultDTO approve(String id,ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-           throw new ServiceException("审核不通过请填写审核意见");
+            // 审核不通过必须填写审核意见
+           throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
         }
-        List<StocktakingPlanEntity> list = super.listByIds(ids);
-        if (CollUtil.isEmpty(list)) {
-            throw new ServiceException("未找到盘点计划单数据");
-        }
+        StocktakingPlanEntity entity = getById(id);
         // 审核中的数据允许审核
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
+        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-        // 新审核状态
-        ApproveStatusEnum approveStatus = Objects.equals(ApproveTypeEnum.PASS, approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT;
-        if(Objects.equals(ApproveTypeEnum.PASS, approveType)) {
-           // TODO 审核通过流程处理
-        } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) {
-           // TODO 终止审批流程
-        }
-
-        // 更新审核信息
-        updateForApprove(ids, approveStatus.getStatus());
-
+        // 调用流程审核
+        approveProcess(entity, dto);
         // 操作日志
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个盘点计划单", approveType.getName()).concat("【%s】").concat(StrUtils.isNotEmpty(dto.getComment()) ? String.format("，意见：%s", dto.getComment()) : ""),
-                            null, pairList, "审核操作");
+        List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
+        operateLogService.batchAddModuleOperateLog(String.format(msg, approveType.getName()).concat("【%s】").concat(StrUtils.isNotEmpty(dto.getComment()) ? String.format("，意见：%s", dto.getComment()) : ""),
+                ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), pairList, "审核操作");
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
+        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+    }
+
+    /**
+     * 审核流程处理
+     * @param entity
+     * @param dto
+     */
+    private void approveProcess(StocktakingPlanEntity entity, ApproveOneDTO dto) {
+        LoginUser userInfo = commonService.getUserInfo();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.PURCHASE_ORDER.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+        Integer code = approveResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+        if (ObjectUtils.isEmpty(data.getIsExistProcess()) || data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
+        }
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -338,13 +383,22 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // TODO 查询明细数据（如果有的话）
         return data;
     }
-
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean approveEnd(ApproveOneDTO dto, StocktakingPlanEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            return Boolean.TRUE;
+        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        updateForApprove(entity.getId(), approveStatus.getStatus());
+        return Boolean.TRUE;
+    }
     /**
     * 审核更新审核信息
     * @param ids
     * @param approveStatus
     */
-    public void updateForApprove(List<String> ids, String approveStatus) {
+    public void updateForSubmit(List<String> ids, String approveStatus) {
         //当前登录人
         LoginUser userInfo = commonService.getUserInfo();
         this.lambdaUpdate().in(StocktakingPlanEntity::getId, ids)
@@ -354,6 +408,21 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             .set(StocktakingPlanEntity::getApproveTime, LocalDateTime.now())
             .update();
      }
+    /**
+     * 审核更新审核信息
+     * @param id
+     * @param approveStatus
+     */
+    public void updateForApprove(String id, String approveStatus) {
+        //当前登录人
+        LoginUser userInfo = commonService.getUserInfo();
+        this.lambdaUpdate().eq(StocktakingPlanEntity::getId, id)
+                .set(StocktakingPlanEntity::getApproveUserId, userInfo.getUid())
+                .set(StocktakingPlanEntity::getApproveUserName, userInfo.getUserName())
+                .set(StocktakingPlanEntity::getApproveStatus, approveStatus)
+                .set(StocktakingPlanEntity::getApproveTime, LocalDateTime.now())
+                .update(new StocktakingPlanEntity());
+    }
 
     /**
     * 反审核更新审核信息
@@ -373,11 +442,24 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     /**
     * 更新审核状态
     */
-    @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(List<String> ids, String approveStatus) {
         lambdaUpdate().in(StocktakingPlanEntity::getId, ids)
         .set(StocktakingPlanEntity::getApproveStatus, approveStatus)
-        .update();
+        .set(StocktakingPlanEntity::getSubmitTime, LocalDateTime.now())
+        .set(StocktakingPlanEntity::getSubmitUserId, commonService.getUserInfo().getUid())
+        .set(StocktakingPlanEntity::getSubmitUserName, commonService.getUserInfo().getUserName())
+        .update(new StocktakingPlanEntity());
+    }
+    /**
+     * 更新审核状态
+     */
+    public void updateApproveStatus(String id, String approveStatus) {
+        lambdaUpdate().eq(StocktakingPlanEntity::getId, id)
+                .set(StocktakingPlanEntity::getApproveStatus, approveStatus)
+                .set(StocktakingPlanEntity::getSubmitTime, LocalDateTime.now())
+                .set(StocktakingPlanEntity::getSubmitUserId, commonService.getUserInfo().getUid())
+                .set(StocktakingPlanEntity::getSubmitUserName, commonService.getUserInfo().getUserName())
+                .update(new StocktakingPlanEntity());
     }
 
     /**
@@ -387,53 +469,30 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if(CollUtil.isEmpty(list)) {
            return;
         }
-
         // 属性赋值
         for(StocktakingPlanDTO.ListDTO data : list) {
             data.setApproveStatusName(data.getApproveStatus().getName());
             data.setModeName(data.getMode().getName());
             data.setTypeName(data.getMode().getName());
-        }
-    }
-
-    /**
-    * 分页查询同一主单多行明细只有第一行显示主单字段，其他行赋空
-    */
-    private void hideData(List<StocktakingPlanDTO.ListDTO> list) {
-        Set<String> mainIds = Sets.newHashSet();
-        // 同一个主单的其他行明细，只显示第一行的主单字段
-        for(StocktakingPlanDTO.ListDTO data : list) {
-            if (mainIds.contains(data.getId())) {
-                data.setCode(null);
-                data.setApproveStatus(null);
-                data.setApproveStatusName(null);
-                data.setApproveUserName(null);
-                data.setCreateUserName(null);
-                data.setCreateTime(null);
-                // TODO 其他需要赋空值字段
-                continue;
-            }
-            mainIds.add(data.getId());
+            data.setStatusName(data.getStatus().getName());
+            data.setSeparateRuleName(data.getSeparateRule().getName());
         }
     }
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(StocktakingPlanDTO.AddDTO dto) {
+    private void handleData(StocktakingPlanDTO.CommonDTO dto) {
         // 按照仓库盘点和仓位盘点需要验证动销时间必填
         StocktakingTypeEnum type = dto.getType();
         if (StocktakingTypeEnum.BY_SKU.equals(type)) {
            return;
         }
-        // activeSalesTimeList
-        List<LocalDateTime> activeSalesTimeList = dto.getActiveSalesTimeList();
-        if (activeSalesTimeList.size() > 1) {
-              throw new ServiceException(ApiError.TIME_NOT_NULL, "动销时间");
+        ValidatorUtil.isNotNull(dto.getStartTime(), ApiError.TIME_NOT_NULL, "动销开始时间");
+        ValidatorUtil.isNotNull(dto.getEndTime(), ApiError.TIME_NOT_NULL, "动销结束时间");
+        if (dto.getEndTime().compareTo(dto.getStartTime()) <= 0) {
+            throw new ServiceException(ApiError.START_GE_END_ERROR, "动销开始时间", "动销结束时间");
         }
-        ValidatorUtil.isNotNull(activeSalesTimeList, ApiError.TIME_NOT_NULL, "动销时间");
-        ValidatorUtil.isNotNull(activeSalesTimeList.get(0), ApiError.TIME_NOT_NULL, "动销开始时间");
-        ValidatorUtil.isNotNull(activeSalesTimeList.get(1), ApiError.TIME_NOT_NULL, "动销结束时间");
     }
 
 }

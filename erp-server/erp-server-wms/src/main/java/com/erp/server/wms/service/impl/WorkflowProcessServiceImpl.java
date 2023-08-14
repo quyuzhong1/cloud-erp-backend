@@ -1,9 +1,12 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.TransferApplicationEntity;
 import com.erp.model.workflow.dto.EndProcessDTO;
+import com.erp.server.wms.service.StocktakingPlanService;
 import com.erp.server.wms.service.TransferApplicationService;
 import com.erp.server.wms.service.WorkflowProcessService;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,8 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
 
     @Resource
     private TransferApplicationService transferApplicationService;
+    @Resource
+    private StocktakingPlanService stocktakingPlanService;
 
 
     @Override
@@ -32,6 +37,10 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
             case TRANSFER_APPLICATION:
                 //调拨申请
                 transferApplicationApproveEnd(dto);
+                break;
+            case STOCKTAKING_PLAN:
+                //调拨申请
+                StocktakingPlanApproveEnd(dto);
                 break;
             default:
                 break;
@@ -55,6 +64,22 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
         baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
         return transferApplicationService.approveEnd(baseApproveParamDTO,list);
+    }
+
+    /**
+     * @description: 直接调拨单
+     * @author Will
+     * @date: 2023/8/2 16:13
+     * @param dto
+     * @return Boolean
+     */
+    private Boolean StocktakingPlanApproveEnd(EndProcessDTO dto) {
+        //直接调拨单
+        StocktakingPlanEntity entity = stocktakingPlanService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOne = new ApproveOneDTO();
+        approveOne.setType(dto.getApproveStatus().getStatus());
+        approveOne.setId(dto.getBusinessId());
+        return stocktakingPlanService.approveEnd(approveOne,entity);
     }
 
 }

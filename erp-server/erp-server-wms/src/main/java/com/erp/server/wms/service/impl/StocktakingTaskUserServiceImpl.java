@@ -70,6 +70,23 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
         return this.saveBatch(addList);
     }
 
+
+    /**
+     * 根据用户获取多信息
+     *
+     * @param userIdList
+     * @return java.util.List<com.erp.model.wms.entity.StocktakingTaskUserEntity>
+     * @author yl
+     * @date 2023-08-11 9:29
+     */
+    @Override
+    public List<StocktakingTaskUserEntity> listByUserIds(List<String> userIdList) {
+        if (CollectionUtils.isNotEmpty(userIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(StocktakingTaskUserEntity::getUserId,userIdList).list();
+    }
+
     public void removeByTaskIds(List<String> taskIdList) {
         if (CollectionUtils.isNotEmpty(taskIdList)) {
             LambdaQueryWrapper<StocktakingTaskUserEntity> queryWrapper = new LambdaQueryWrapper<>();

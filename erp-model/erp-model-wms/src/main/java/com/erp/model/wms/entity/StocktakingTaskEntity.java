@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.wms.enums.StocktakingStatusEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -34,7 +35,7 @@ public class StocktakingTaskEntity extends BaseEntity<StocktakingTaskEntity> {
      * 盘点状态
      */
     @TableField("status")
-    private String status;
+    private StocktakingStatusEnum status;
 
     /**
      * 来源id 来源盘点计划

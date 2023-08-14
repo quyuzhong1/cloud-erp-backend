@@ -387,9 +387,14 @@ public class StocktakingPlanDTO implements Serializable {
         private StocktakingTypeEnum type;
 
         /**
-        * 动销时间范围
-        */
-        private List<LocalDateTime> activeSalesTimeList;
+         * 动销开始时间
+         */
+        private LocalDateTime startTime;
+
+        /**
+         * 动销结束时间
+         */
+        private LocalDateTime endTime;
 
         /**
          * 盘点计划明细
@@ -403,6 +408,7 @@ public class StocktakingPlanDTO implements Serializable {
 
     @Data
     public static class DetailDTO{
+        private String id;
 
         /**
          * 仓库id

@@ -11,6 +11,7 @@ import com.alibaba.excel.write.builder.ExcelWriterBuilder;
 import com.alibaba.excel.write.merge.OnceAbsoluteMergeStrategy;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.fill.FillConfig;
+import com.alibaba.excel.write.metadata.fill.FillWrapper;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
@@ -23,6 +24,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
@@ -622,6 +624,56 @@ public class ExcelPrintUtils {
 
 			//列表数据
 			excelWriter.fill(list, writeSheet);
+			excelWriter.finish();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.info("导出模板数据异常！");
+		} finally {
+			out.flush();
+			out.close();
+			bos.flush();
+		}
+	}
+
+
+	/**
+	 * 多组合填充
+	 * @author yl
+	 * @date 2023-08-11 14:28
+	 * @param map 数据集合
+	 * @return void
+	 */
+	public void compositeFillExport(Map<String,Object> map, HttpServletResponse response, String fileName, String excelPath) throws IOException {
+		OutputStream out = null;
+		BufferedOutputStream bos = null;
+		try {
+			//模板的路径
+			ClassPathResource classPathResource = new ClassPathResource(excelPath);
+			InputStream inputStream = classPathResource.getInputStream();
+			getOutputStream(fileName, response);
+			out = response.getOutputStream();
+			bos = new BufferedOutputStream(out);
+			ExcelWriter excelWriter = EasyExcel.write(bos).withTemplate(inputStream).build();
+			// LocalDate转化器，导入导出都可以使用
+			LocalDateTimeConverter converter = new LocalDateTimeConverter();
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey()), converter);
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey(), converter.supportExcelTypeKey()), converter);
+
+			// LocalDateTime转化器，导入导出都可以使用
+			EasyExcelLocalTimeConverter localDateTimeDateConverter = new EasyExcelLocalTimeConverter();
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey()), localDateTimeDateConverter);
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey(), localDateTimeDateConverter.supportExcelTypeKey()), localDateTimeDateConverter);
+			// LocalDate转化器，导入导出都可以使用
+			EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
+			WriteSheet writeSheet = EasyExcel.writerSheet().build();
+
+			for (Map.Entry<String, Object> item : map.entrySet()) {
+				//列表数据
+				excelWriter.fill(new FillWrapper(item.getKey(), (Collection) item.getValue()),writeSheet);
+			}
 			excelWriter.finish();
 
 		} catch (Exception e) {

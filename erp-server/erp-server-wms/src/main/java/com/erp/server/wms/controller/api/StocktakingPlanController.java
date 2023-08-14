@@ -1,5 +1,9 @@
 package com.erp.server.wms.controller.api;
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.core.exception.ServiceException;
+import com.erp.model.wms.entity.StocktakingPlanEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +20,9 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 盘点计划表
@@ -24,6 +30,7 @@ import java.util.List;
  * @author Cloud
  * @since 2023-08-08
  */
+@Slf4j
 @RestController
 @RequestMapping("/stocktakingPlan")
 public class StocktakingPlanController extends BaseController {
@@ -75,9 +82,8 @@ public class StocktakingPlanController extends BaseController {
            menuCode = "wms:stocktakingPlan:add",
            serviceClass = StocktakingPlanService.class,
            keyIdName = "id")
-   public ApiResult<Void> add(@RequestBody @Validated StocktakingPlanDTO.AddDTO dto) {
-      stocktakingPlanService.add(dto);
-      return success();
+   public ApiResult<String> add(@RequestBody @Validated StocktakingPlanDTO.AddDTO dto) {
+      return success(stocktakingPlanService.add(dto));
    }
 
     /**
@@ -93,7 +99,7 @@ public class StocktakingPlanController extends BaseController {
             menuCode = "wms:stocktakingPlan:update",
             serviceClass = StocktakingPlanService.class,
             keyIdName = "id")
-    public ApiResult<Void> update(@RequestBody @Validated StocktakingPlanDTO.UpdateDTO dto) {
+    public ApiResult update(@RequestBody @Validated StocktakingPlanDTO.UpdateDTO dto) {
         stocktakingPlanService.update(dto);
         return success();
     }
@@ -147,9 +153,25 @@ public class StocktakingPlanController extends BaseController {
             menuCode = "wms:stocktakingPlan:submit",
             serviceClass = StocktakingPlanService.class,
             keyIdName = "ids")
-    public ApiResult<Void> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        stocktakingPlanService.submit(dto.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO submit;
+            try {
+                submit = stocktakingPlanService.submit(id);
+            }catch (Exception e){
+                log.error("盘点计划 提交审核失败",e);
+                StocktakingPlanEntity entity = stocktakingPlanService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, "盘点计划不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return success(resultDTOS);
     }
 
     /**
@@ -166,7 +188,24 @@ public class StocktakingPlanController extends BaseController {
             serviceClass = StocktakingPlanService.class,
             keyIdName = "ids")
     public ApiResult<Void> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
-        stocktakingPlanService.approve(dto);
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : ids) {
+            StocktakingPlanEntity entity = stocktakingPlanService.getById(id);
+            BatchResultDTO approveResult;
+            try {
+                approveResult = stocktakingPlanService.approve(id, new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+            }catch (Exception e){
+                log.error("盘点计划审核失败",e);
+                if (ObjectUtil.isEmpty(entity)) {
+                    approveResult = BatchResultDTO.fail(entity.getCode(), "盘点计划不存在, 审核失败");
+                    resultDTOS.add(approveResult);
+                    continue;
+                }
+                approveResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(approveResult);
+        }
         return success();
     }
 

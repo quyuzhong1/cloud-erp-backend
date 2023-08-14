@@ -2,6 +2,7 @@ package com.common.business.dto.base;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -18,13 +19,14 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class BaseApproveParamDTO extends PermissionsDTO {
+@AllArgsConstructor
+public class ApproveOneDTO extends PermissionsDTO {
 
     /**
      * 主键id集合
      */
-    @NotEmpty(message = "请选择需要审核的数据")
-    private List<String> ids;
+    @NotEmpty(message = "审核id不能为空")
+    private String id;
 
     /**
      * 类型（pass、审核通过，reject、审核不通过）

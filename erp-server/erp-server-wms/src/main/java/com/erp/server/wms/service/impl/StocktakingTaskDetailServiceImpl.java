@@ -27,6 +27,7 @@ import com.common.business.service.SuperServiceImpl;
 import com.erp.server.wms.service.StocktakingTaskService;
 import com.erp.server.wms.service.StocktakingTaskUserService;
 import com.erp.server.wms.service.WarehouseService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -50,6 +51,7 @@ import java.util.stream.Collectors;
  * @author Lambda
  * @since 2023-07-31
  */
+@Slf4j
 @Service
 public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<StocktakingTaskDetailMapper, StocktakingTaskDetailEntity> implements StocktakingTaskDetailService {
 
@@ -76,13 +78,13 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
         List<String> skuIdList = exportList.stream().map(StocktakingTaskDetailDTO.ExportDTO::getSkuId).collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = productDetailService.ListProductDetailByIds(skuIdList);
+        List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
 
         for (StocktakingTaskDetailDTO.ExportDTO item : exportList) {
             item.setStocktakingUserName(stocktakingUserName);
             String skuName = skuList.stream().filter(s -> s.getId().equals(item.getSkuId())).findFirst().
                     map(ProductDetailEntity::getName).orElse("");
-            item.setSkuName(skuName);
+            item.setProductName(skuName);
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/StocktakingTaskDetail.xlsx";
@@ -155,7 +157,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         List<StocktakingTaskDetailEntity> updateTaskDetailList = new ArrayList<>(taskDetailList.size());
         for (StocktakingTaskDetailDTO.UpdateDTO item : list) {
             StocktakingTaskDetailEntity taskDetail = taskDetailList.stream().
-                    filter(t -> t.getIsDeleted().equals(item.getId())).
+                    filter(t -> t.getId().equals(item.getId())).
                     findFirst().orElse(null);
             if (Objects.isNull(taskDetail)) {
                 continue;
@@ -221,12 +223,12 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         List<StocktakingTaskDetailEntity> dbList = this.listBaseByMainIds(Arrays.asList(mainId));
         List<StocktakingTaskDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, StocktakingTaskDetailDTO.ViewDTO.class);
         List<String> skuIdList = resultList.stream().map(StocktakingTaskDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = productDetailService.ListProductDetailByIds(skuIdList);
+        List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
         for (StocktakingTaskDetailDTO.ViewDTO item : resultList) {
             String skuId = item.getSkuId();
             String skuName = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().
                     map(ProductDetailEntity::getName).orElse("");
-            item.setSkuName(skuName);
+            item.setProductName(skuName);
         }
         return resultList;
     }
