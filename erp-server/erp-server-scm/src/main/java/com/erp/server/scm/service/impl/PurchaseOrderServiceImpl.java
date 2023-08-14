@@ -2058,22 +2058,26 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         List<String> podIds = entityDetails.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<WarehouseReceiveDetailEntity> receiveDetailEntities = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
-
+        List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
         List<PurchaseOrderDetailDTO.UpdateDTO> details = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.UpdateDTO.class, entityDetails);
         for (PurchaseOrderDetailDTO.UpdateDTO detail : details) {
             detail.setTaxRate(MathUtil.multiply(detail.getTaxRate(), MathUtil.BigDecimal_100));
             Integer receiveQty = receiveDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(detail.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             detail.setReceiveQty(receiveQty);
+            Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detail.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            detail.setUnReceiveQty(detail.getPurchaseQty() + returnQty - receiveQty);
         }
         Map<String, PurchaseOrderDetailDTO.UpdateDTO> collect = details.stream().collect(Collectors.groupingBy(n -> n.getSkuNo(), Collectors.collectingAndThen(Collectors.toList(), m -> {
             int purchaseQty = m.stream().mapToInt(PurchaseOrderDetailDTO.UpdateDTO::getPurchaseQty).sum();
             int receiveQty = m.stream().mapToInt(PurchaseOrderDetailDTO.UpdateDTO::getReceiveQty).sum();
+            int unReceiveQty = m.stream().mapToInt(PurchaseOrderDetailDTO.UpdateDTO::getUnReceiveQty).sum();
             String podId = m.stream().max(Comparator.comparing(PurchaseOrderDetailDTO.UpdateDTO::getId)).map(PurchaseOrderDetailDTO.UpdateDTO::getId).get();
             PurchaseOrderDetailDTO.UpdateDTO updateDTO = new PurchaseOrderDetailDTO.UpdateDTO();
             BeanMapper.copy(m, updateDTO);
             updateDTO.setId(podId);
             updateDTO.setPurchaseQty(purchaseQty);
             updateDTO.setReceiveQty(receiveQty);
+            updateDTO.setUnReceiveQty(unReceiveQty);
             return updateDTO;
         })));
 

@@ -140,6 +140,16 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 采购申请id(无需传值，后端使用)
          */
         private String purchaseApplicationId;
+
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 未交货数量
+         */
+        private Integer unReceiveQty;
     }
 
     @Data

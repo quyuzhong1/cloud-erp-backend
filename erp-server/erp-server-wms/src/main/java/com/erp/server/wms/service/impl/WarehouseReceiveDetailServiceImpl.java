@@ -306,4 +306,20 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         return arrivalStatus;
     }
 
+    /**
+     * 根据主表id和skuId删除
+     *
+     * @param mainId mainId
+     * @param skuId skuId
+     * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
+     **/
+    @Override
+    public Boolean deleteBySkuId(String mainId, String skuId) {
+        return lambdaUpdate().set(WarehouseReceiveDetailEntity::getIsDeleted, Boolean.TRUE)
+                .eq(WarehouseReceiveDetailEntity::getMainId, mainId)
+                .eq(WarehouseReceiveDetailEntity::getSkuId, skuId)
+                .remove();
+    }
 }

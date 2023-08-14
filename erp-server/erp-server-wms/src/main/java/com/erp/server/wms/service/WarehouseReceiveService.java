@@ -220,11 +220,29 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
     List<WarehouseReceiveDTO.PdaPoReceiveCountDTO> pdaListCount(PermissionsDTO dto);
 
     /**
-     * 新增
+     * PDA:新增
      * @Author Luo_WG
      * @Date 2023/4/13 11:03
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
     String pdaAdd(WarehouseReceiveDTO.AddDTO dto);
+
+    /**
+     * PDA:修改
+     * @Author Luo_WG
+     * @Date 2023/8/14 14:29
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaUpdate(WarehouseReceiveDTO.UpdateDTO dto);
+
+    /**
+     * PDA:查询详情
+     * @Author Luo_WG
+     * @Date 2023/4/13 17:10
+     * @param id id
+     * @return com.erp.model.wms.dto.WarehouseReceiveDTO.ViewDTO
+     **/
+    WarehouseReceiveDTO.ViewDTO pdaView(String id);
 }
