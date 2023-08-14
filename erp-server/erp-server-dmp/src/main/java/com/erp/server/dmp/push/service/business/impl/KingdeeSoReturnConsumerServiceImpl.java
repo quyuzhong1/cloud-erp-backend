@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -87,6 +88,24 @@ public class KingdeeSoReturnConsumerServiceImpl implements KingdeeSoReturnConsum
 
 
     public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type, String code,String operate) {
+        //判断金蝶系统是否已存在该数据
+        JSONObject model;
+        try {
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
+        } catch (Exception e) {
+            //更新业务表中的金蝶id
+            kingdeeCommonService.updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode(), "");
+            return;
+        }
+        String documentStatus = (String)model.get("DocumentStatus");
+        String id = String.valueOf(model.get("Id")) ;
+        if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+            //反审核
+            Boolean unAudit = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, ApiModuleTypeEnum.PURCHASE_ORDER.getCode());
+            if (!unAudit) {
+                return;
+            }
+        }
         //作废
         kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
         return;
