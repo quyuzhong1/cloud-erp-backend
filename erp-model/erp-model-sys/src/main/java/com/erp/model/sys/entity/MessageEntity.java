@@ -27,19 +27,6 @@ import lombok.experimental.Accessors;
 @TableName(value = "message", autoResultMap = true)
 public class MessageEntity extends BaseEntity<MessageEntity> {
 
-
-    /**
-    * 单据编号
-    */
-    @TableField("code")
-    private String code;
-
-    /**
-    * 审核状态
-    */
-    @TableField("approve_status")
-    private String approveStatus;
-
     /**
     * 消息类型
     */
@@ -50,7 +37,7 @@ public class MessageEntity extends BaseEntity<MessageEntity> {
      * 数据集json
      */
     @TableField(value = "data_json", typeHandler= JacksonTypeHandler.class)
-    private LinkedList<LinkedHashMap<String, Object>> dataJson;
+    private LinkedHashMap<String, Object> dataJson;
 
     /**
     * 备注

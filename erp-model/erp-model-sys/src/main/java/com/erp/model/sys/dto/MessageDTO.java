@@ -74,7 +74,7 @@ public class MessageDTO implements Serializable {
         /**
          * 参数json
          */
-        private LinkedList<LinkedHashMap<String, Object>> dataJson;
+        private LinkedHashMap<String, Object> dataJson;
     }
 
     /**

@@ -136,7 +136,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     @Override
     public MessageDTO.IsMessageDTO isMessage() {
         MessageEntity messageEntity = lambdaQuery().orderByDesc(MessageEntity::getCreateTime).last("LIMIT 1").one();
-        String name = MessageTypeEnum.getName(messageEntity.getCode());
+        String name = MessageTypeEnum.getName(messageEntity.getType());
         MessageDTO.IsMessageDTO isMessageDTO = new MessageDTO.IsMessageDTO();
         MessageUserReadEntity messageUserReadEntitie = messageUserReadService.listByMessageId(messageEntity.getId());
         if (ObjectUtil.isNotEmpty(messageUserReadEntitie)) {
