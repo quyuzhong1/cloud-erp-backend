@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -80,15 +81,18 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         //获取所有消息通知
         List<MessageEntity> list = this.listByType(type);
         for (MessageEntity messageEntity : list) {
+            MessageDTO.NotReadMessageNumDetail notReadMessageNumDetail = new MessageDTO.NotReadMessageNumDetail();
+            notReadMessageNumDetail.setId(messageEntity.getId());
+            notReadMessageNumDetail.setDataJson(messageEntity.getDataJson());
             if (!messageIds.contains(messageEntity.getId())) {
-                MessageDTO.NotReadMessageNumDetail notReadMessageNumDetail = new MessageDTO.NotReadMessageNumDetail();
-                notReadMessageNumDetail.setId(messageEntity.getId());
-                notReadMessageNumDetail.setDataJson(messageEntity.getDataJson());
                 notReadMessageNumDetail.setIsRead(Boolean.FALSE);
-                notReadMessageNumDetailList.add(notReadMessageNumDetail);
+            } else {
+                notReadMessageNumDetail.setIsRead(Boolean.TRUE);
             }
+            notReadMessageNumDetailList.add(notReadMessageNumDetail);
         }
         readMessage(messageUserReadEntities, list);
+        notReadMessageNumDetailList.sort(Comparator.comparing(MessageDTO.NotReadMessageNumDetail::getIsRead).reversed());
         return notReadMessageNumDetailList;
     }
 
