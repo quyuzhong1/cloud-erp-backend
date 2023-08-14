@@ -450,6 +450,31 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
+
+
+
+    /**
+     * 更改金蝶同步状态
+     * @author yl
+     * @date 2023-08-14 17:47
+     * @param id
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @param syncOperate
+     * @return void
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+        return this.lambdaUpdate()
+                .eq(StocktakingProfitLossEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), StocktakingProfitLossEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), StocktakingProfitLossEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), StocktakingProfitLossEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), StocktakingProfitLossEntity::getSyncOperate, syncOperate)
+                .update();
+    }
+
     /**
      * 调用审核流程
      *

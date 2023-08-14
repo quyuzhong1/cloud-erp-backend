@@ -35,6 +35,8 @@ public enum KingdeePushModuleEnum {
     BD_COMMONCONTACT("BD_CommonContact","联系人"),
     SUB_SUBREQORDER("SUB_SUBREQORDER","委外订单"),
     SUB_REQCHANGE("SUB_ReqChange","委外变更单"),
+    STK_STOCKCOUNTGAIN("STK_StockCountGain","盘盈单"),
+    STK_STOCKCOUNTLOSS("STK_StockCountLoss","盘亏单"),
 
     ;
     private String code;

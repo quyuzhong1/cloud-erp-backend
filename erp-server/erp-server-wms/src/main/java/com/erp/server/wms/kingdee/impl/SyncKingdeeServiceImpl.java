@@ -51,6 +51,10 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private MachineInfoService machineInfoService;
 
+    @Resource
+    private StocktakingProfitLossService stocktakingProfitLossService;
+
+
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
@@ -104,6 +108,15 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //加工单
         if (ApiModuleTypeEnum.MACHINE_INFO.getCode().toString().equals(code)) {
             machineInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+        }
+
+        //盘盈单
+        if (ApiModuleTypeEnum.STOCKTAKING_PROFIT.getCode().toString().equals(code)) {
+            stocktakingProfitLossService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+        }
+        //盘亏单
+        if (ApiModuleTypeEnum.STOCKTAKING_LOSS.getCode().toString().equals(code)) {
+            stocktakingProfitLossService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
         }
     }
 }
