@@ -330,8 +330,7 @@
         wr.supplier_name,
         wr.delivery_warehouse_name,
         wr.subcontract_type as subcontractType
-        FROM po_receive_detail wrd
-        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        FROM po_receive wr
         WHERE wr.is_deleted = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and wr.approve_status in
