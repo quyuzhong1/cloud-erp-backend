@@ -57,11 +57,14 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         //获取已读的消息通知
         List<MessageUserReadEntity> messageUserReadEntities = messageUserReadService.listByUserId(uid);
         for (MessageTypeEnum typeEnum : MessageTypeEnum.values()) {
+            List<MessageEntity> messageEntityList = list.stream().filter(req -> req.getType().equals(typeEnum.getCode())).collect(Collectors.toList());
+            List<String> messageIds = messageEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+            List<MessageUserReadEntity> readEntities = messageUserReadEntities.stream().filter(req -> messageIds.contains(req.getMessageId())).collect(Collectors.toList());
             MessageDTO.NotReadMessageNum notReadMessageNum = new MessageDTO.NotReadMessageNum();
             notReadMessageNum.setType(typeEnum.getCode());
             notReadMessageNum.setTypeName(typeEnum.getName());
             notReadMessageNum.setTypeRemark(typeEnum.getRemark());
-            notReadMessageNum.setCount(list.size() - messageUserReadEntities.size());
+            notReadMessageNum.setCount(messageEntityList.size() - readEntities.size());
             List<MessageEntity> messageEntities = list.stream().filter(req -> req.getType().equals(typeEnum.getCode())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(messageEntities)) {
                 notReadMessageNum.setLatestTime(messageEntities.get(MathUtil.ZERO).getCreateTime());
@@ -93,7 +96,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
             notReadMessageNumDetailList.add(notReadMessageNumDetail);
         }
         readMessage(messageUserReadEntities, list);
-        notReadMessageNumDetailList.sort(Comparator.comparing(MessageDTO.NotReadMessageNumDetail::getIsRead).reversed());
+        notReadMessageNumDetailList.sort(Comparator.comparing(MessageDTO.NotReadMessageNumDetail::getCreateTime));
         return notReadMessageNumDetailList;
     }
 
