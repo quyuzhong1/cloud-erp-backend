@@ -166,9 +166,13 @@ public class KingdeeExchangeRateServiceImpl implements IReportSaveService<Kingde
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'B','C','D'"));
+        //组织默认查唯迹
         queryFilters.add(StrUtil.format("FCreateOrgId.FNumber = '100'"));
         queryFilters.add(StrUtil.format("FUseOrgId.FNumber = '100'"));
-        queryFilters.add(StrUtil.format(" (FAuditDate >= '{}' and FAuditDate < '{}')",sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime)));
+        //现在只查固定汇率
+        queryFilters.add(StrUtil.format("FRATETYPEID.FNumber = 'HLTX01_SYS'"));
+        queryFilters.add(StrUtil.format("((FForbidDate >= '{}' and FForbidDate < '{}') or (FAuditDate >= '{}' and FAuditDate < '{}') or FAuditDate is null)",sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime),sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime)));
+
         String filterStr = String.join(" and ",  queryFilters );
 
         String fieldKeys = "FRateID,FRATETYPEID.FNumber,FCyForID.FNumber,FCyToID.FNumber,FExchangeRate,FReverseExRate,FBegDate,FEndDate,FDocumentStatus,FAuditDate,FForbidDate";
