@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.common.message.constant.RocketMqTopic;
@@ -62,7 +63,7 @@ public class KingdeeExchangeRateServiceImpl implements IReportSaveService<Kingde
     private CfgSettingService cfgSettingService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoExchangeRateManager")
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
         List<KingdeeExchangeRateEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -165,12 +166,16 @@ public class KingdeeExchangeRateServiceImpl implements IReportSaveService<Kingde
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'B','C','D'"));
+        //组织默认查唯迹
         queryFilters.add(StrUtil.format("FCreateOrgId.FNumber = '100'"));
         queryFilters.add(StrUtil.format("FUseOrgId.FNumber = '100'"));
-        queryFilters.add(StrUtil.format(" (FApproveDate >= '{}' and FApproveDate < '{}')",sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime)));
+        //现在只查固定汇率
+        queryFilters.add(StrUtil.format("FRATETYPEID.FNumber = 'HLTX01_SYS'"));
+        queryFilters.add(StrUtil.format("((FForbidDate >= '{}' and FForbidDate < '{}') or (FAuditDate >= '{}' and FAuditDate < '{}') or FAuditDate is null)",sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime),sdf.format(lastTime.minusMinutes(2)),sdf.format(nextTime)));
+
         String filterStr = String.join(" and ",  queryFilters );
 
-        String fieldKeys = "FId,FRATETYPEID.FNumber,FCyForID.FNumber,FCyToID.FNumber,FExchangeRate,FBegDate,FEndDate";
+        String fieldKeys = "FRateID,FRATETYPEID.FNumber,FCyForID.FNumber,FCyToID.FNumber,FExchangeRate,FReverseExRate,FBegDate,FEndDate,FDocumentStatus,FAuditDate,FForbidDate";
 
         boolean dataSign = true;
         //当前页数
@@ -209,10 +214,15 @@ public class KingdeeExchangeRateServiceImpl implements IReportSaveService<Kingde
         resultEntity.setSourceCurrencyCode(entity.getFCyForIDFNumber());
         resultEntity.setTargetCurrencyCode(entity.getFCyToIDFNumber());
         resultEntity.setExchangeRate(entity.getFExchangeRate());
+        resultEntity.setIndirectExchangeRate(entity.getFReverseExRate());
         resultEntity.setSettlementDateBegin(entity.getFBegDate());
         resultEntity.setSettlementDateEnd(entity.getFEndDate());
         resultEntity.setSourceId(entity.getId());
         resultEntity.setPlatformSign(PlatformEnum.KINGDEE.getDesc());
+        resultEntity.setApproveStatus(entity.getFDocumentStatus());
+        resultEntity.setApproveDate(entity.getFAuditDate());
+        resultEntity.setDisabledDate(entity.getFForbidDate());
+        resultEntity.setDisabled(ObjectUtils.isEmpty(entity.getFForbidDate()) ? Boolean.FALSE : Boolean.TRUE);
         return resultEntity;
     }
 

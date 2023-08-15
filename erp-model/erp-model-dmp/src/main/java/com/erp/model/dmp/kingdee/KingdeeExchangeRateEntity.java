@@ -23,7 +23,7 @@ public class KingdeeExchangeRateEntity extends CleanBaseDTO {
     /**
      * 主键id
      */
-    @Alias("FId")
+    @Alias("FRateID")
     private String id;
 
     /**
@@ -51,6 +51,12 @@ public class KingdeeExchangeRateEntity extends CleanBaseDTO {
     private BigDecimal FExchangeRate;
 
     /**
+     * 间接汇率
+     */
+    @Alias("FReverseExRate")
+    private BigDecimal FReverseExRate;
+
+    /**
      * 生效日期
      */
     @Alias("FBegDate")
@@ -62,11 +68,23 @@ public class KingdeeExchangeRateEntity extends CleanBaseDTO {
     @Alias("FEndDate")
     private LocalDate FEndDate;
 
+    /**
+     * 审核状态
+     */
+    @Alias("FDocumentStatus")
+    private String FDocumentStatus;
 
+    /**
+     * 审核日期
+     */
+    @Alias("FAuditDate")
+    private LocalDate FAuditDate;
 
-
-
-
+    /**
+     * 禁用日期
+     */
+    @Alias("FForbidDate")
+    private LocalDate FForbidDate;
 
 
 }
