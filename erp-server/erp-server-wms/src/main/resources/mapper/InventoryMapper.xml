@@ -312,4 +312,43 @@
         group by inv.warehouse_id,inv.org_id,inv.sku_id,inv.warehouse_location,ind.instock_batch_date
         ) m group by warehouse_id,org_id,sku_id,warehouse_location order by real_inventory desc
     </select>
+    <select id="listByStocktakingType" resultType="com.erp.model.wms.entity.InventoryEntity">
+        SELECT
+            inv.org_id,
+            inv.warehouse_id,
+            inv.warehouse_location,
+            inv.sku_id,
+            inv.sku_no,
+            inv.dict_inventory_status,
+            inv.qty
+        FROM "inventory" inv
+        WHERE inv.is_deleted = false and inv.dict_inventory_status in ('usable','frozen')
+        AND EXISTS (
+            SELECT 1
+            FROM transaction_flow tf
+            WHERE tf.inventory_id = inv."id"
+            AND tf.is_deleted = false
+            AND tf.trade_time >= #{startTime}
+            AND tf.trade_time &lt; #{endTime}
+        )
+        <if test="type != null and type == 'byWarehouse' and null != params and params.size > 0">
+              and warehouse_id in
+            <foreach collection="params" item="item" open="(" close=")" separator=",">
+                #{item.warehouseId}
+            </foreach>
+        </if>
+        <if test="type != null and type == 'byLocation' and null != params and params.size > 0">
+            and (warehouse_id, warehouse_location)  in
+            <foreach collection="params" item="item" open="(" close=")" separator=",">
+                (#{item.warehouseId}, #{warehouseLocation})
+            </foreach>
+        </if>
+        <if test="type != null and type == 'bySku' and null != params and params.size > 0">
+            and (warehouse_id, warehouse_location, sku_id) in
+            <foreach collection="params" item="item" open="(" close=")" separator=",">
+                (#{item.warehouseId}, #{warehouseLocation}, #{skuId})
+            </foreach>
+        </if>
+        order by inv.warehouse_id, inv.warehouse_location, inv.sku_id, inv.dict_inventory_status
+    </select>
 </mapper>

@@ -1,13 +1,17 @@
 package com.erp.model.wms.entity;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -20,6 +24,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
+@NoArgsConstructor
 @TableName("stocktaking_task_detail")
 public class StocktakingTaskDetailEntity extends BaseEntity<StocktakingTaskDetailEntity> {
 
@@ -103,6 +108,23 @@ public class StocktakingTaskDetailEntity extends BaseEntity<StocktakingTaskDetai
     public static final String FROZEN_QTY = "frozen_qty";
 
     public static final String DIFF_QTY = "diff_qty";
+
+    public StocktakingTaskDetailEntity(List<InventoryEntity> inventoryEntities, String mainId, String warehouseName) {
+        this.mainId = mainId;
+        this.warehouseId = inventoryEntities.get(0).getWarehouseId();
+        this.warehouseName = warehouseName;
+        this.warehouseLocation = inventoryEntities.get(0).getWarehouseLocation();
+        this.skuId = inventoryEntities.get(0).getSkuId();
+        this.skuNo = inventoryEntities.get(0).getSkuNo();
+        inventoryEntities.stream().forEach(item -> {
+            if (ObjectUtil.equals(InventoryStatusEnum.USABLE.getCode(), item.getDictInventoryStatus())){
+                this.usableQty = item.getQty();
+            }
+            if (ObjectUtil.equals(InventoryStatusEnum.FROZEN.getCode(), item.getDictInventoryStatus())){
+                this.frozenQty = item.getQty();
+            }
+        });
+    }
 
     @Override
     public Serializable pkVal() {

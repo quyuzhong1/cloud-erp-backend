@@ -194,6 +194,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
+        validateSubmit(entity);
         // 更新单据审核状态
         log.info("提交 开始修改盘点计划单状态数据，id=：【{}】", JSONObject.toJSONString(entity.getId()));
         this.updateApproveStatus(entity.getId(), ApproveStatusEnum.APPROVE_ING.getStatus());
@@ -203,10 +204,40 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // 记录操作日志
         log.info("提交 开始记录盘点计划单日志数据，id集合：【{}】", JSONObject.toJSONString(entity));
         // 操作日志
-        List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), msg);
         return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.SUBMIT);
+    }
+
+    private void validateSubmit(StocktakingPlanEntity entity) {
+        // 检验头数据
+        // 动销时间校验
+        if (!Objects.equals(StocktakingTypeEnum.BY_SKU, entity.getType())) {
+           if (ObjectUtil.isEmpty(entity.getStartTime()) || ObjectUtil.isEmpty(entity.getEndTime())) {
+                throw new ServiceException("动销时间不能为空");
+            }
+        }
+        // 查询详情
+        List<StocktakingPlanDetailEntity> detailList = stocktakingPlanDetailService.listByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException("盘点计划单明细数据为空");
+        }
+        detailList.stream().forEach( item -> {
+            // 校验明细数据
+            // 按仓库盘点必须有仓库id
+            ValidatorUtil.isNotBlank(item.getWarehouseId(), ApiError.ERROR_99001);
+            // 按照仓位盘点必须有仓库id和仓位和库区
+            if (Objects.equals(StocktakingTypeEnum.BY_LOCATION, entity.getType())) {
+                ValidatorUtil.isNotNull(item.getWarehouseLocation(), ApiError.WAREHOUSE_LOCATION_IS_NULL);
+                ValidatorUtil.isNotNull(item.getWarehouseArea(), ApiError.WAREHOUSE_AREA_IS_NULL);
+            }
+            // 按照sku盘点必须有仓库id和sku
+            if (Objects.equals(StocktakingTypeEnum.BY_SKU, entity.getType())) {
+                ValidatorUtil.isNotBlank(item.getSkuId(), ApiError.ERROR_95198);
+                ValidatorUtil.isNotNull(item.getWarehouseLocation(), ApiError.WAREHOUSE_LOCATION_IS_NULL);
+                ValidatorUtil.isNotNull(item.getWarehouseArea(), ApiError.WAREHOUSE_AREA_IS_NULL);
+            }
+        });
     }
 
     /**
@@ -413,8 +444,10 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
+        // 明细
+        List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
         // 生成盘点任务
-        stocktakingTaskService.createTaskList(entity);
+        stocktakingTaskService.createTaskList(entity, detailEntityList);
         return Boolean.TRUE;
     }
     /**

@@ -3,12 +3,16 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.utils.RedisUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -18,14 +22,13 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.R;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
-import com.erp.model.wms.entity.StocktakingPlanEntity;
-import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
-import com.erp.model.wms.entity.StocktakingTaskEntity;
-import com.erp.model.wms.entity.StocktakingTaskUserEntity;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SeparateRuleEnum;
 import com.erp.model.wms.enums.StocktakingModeEnum;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
@@ -85,6 +88,18 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     @Resource
     private StocktakingProfitLossService stocktakingProfitLossService;
+
+    @Resource
+    private InventoryService inventoryService;
+
+    @Resource
+    private RedisUtil redisUtil;
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private WarehouseService warehouseService;
 
     /**
      * tab list
@@ -554,7 +569,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Transactional(rollbackFor = Exception.class)
     public Boolean removeBySourceId(String sourceId) {
         List<StocktakingTaskEntity> taskEntityList = listBySourceId(sourceId);
-        if (CollUtil.isEmpty(taskEntityList)) {
+        if(CollUtil.isEmpty(taskEntityList)){
             return Boolean.TRUE;
         }
         List<String> mainIds = taskEntityList.stream().map(StocktakingTaskEntity::getId).collect(Collectors.toList());
@@ -567,9 +582,62 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean createTaskList(StocktakingPlanEntity entity) {
-        //
+    public Boolean createTaskList(StocktakingPlanEntity entity,List<StocktakingPlanDetailEntity> detailEntityList) {
+        // 1. 查询所有需要盘点的库存记录
+        List<InventoryEntity> inventoryList = inventoryService.listByStocktakingType(entity, detailEntityList);
+        if (CollUtil.isEmpty(inventoryList)) {
+            log.error("盘点计划【{}】没有需要盘点的库存记录", entity.getId());
+            return Boolean.TRUE;
+        }
+        String planCode = entity.getCode();
+        // 2. 对需要盘点的 组织+仓库+仓位+skuId+库存状态 进行增加锁定库存操作
+        inventoryList.stream().forEach(item -> {
+            String redisKey = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getCode(), item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
+            redisUtil.set(redisKey, planCode);
+        });
+        // 3. 对库存记录进行分组，按照分单规则进行分组
+        SeparateRuleEnum separateRule = entity.getSeparateRule();
+        Map<String, String> locationAreaMap = new HashMap<>();
+        if(ObjectUtil.equals(separateRule, SeparateRuleEnum.WAREHOUSE_AREA)){
+            // 查询仓位对应的库区
+            locationAreaMap = warehouseLocationService.locationAreaMap();
+        }
+        String format = SeparateRuleEnum.getFormatStr(separateRule);;
+        Map<String, String> finalLocationAreaMap = locationAreaMap;
+        Map<String, List<InventoryEntity>> inventoryMap = inventoryList
+                .stream()
+                .collect(Collectors.groupingBy(item -> {
+                    // 按照仓库区域分单时，仓位需要转换为库区
+                    String groupKey = getGroupKey(separateRule, format, finalLocationAreaMap, item);
+                    return groupKey;
+        }));
+        // 4. 根据分组结果构建数据并保存盘点任务
+        inventoryMap.keySet().parallelStream().forEach(key -> {
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
+            StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity,code);
+            save(insertTask);
+            List<InventoryEntity> inventoryEntityList = inventoryMap.get(key);
+            // 根据组织+仓库+仓位+skuId 进行分组 获取不同库存状态的库存记录
+            Map<String, List<InventoryEntity>> inventoryStatusMap = inventoryEntityList.stream()
+                    .collect(Collectors.groupingBy(item -> StrUtil.format("{}_{}_{}_{}", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId())));
+            List<StocktakingTaskDetailEntity> insertDetailList = inventoryStatusMap.keySet().stream().map(item -> {
+                List<InventoryEntity> inventoryEntities = inventoryStatusMap.get(item);
+                WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(inventoryEntities.get(0).getWarehouseId());
+                String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() :"";
+                StocktakingTaskDetailEntity detailEntity = new StocktakingTaskDetailEntity(inventoryEntities, insertTask.getId(), warehouseName);
+                return detailEntity;
+            }).collect(Collectors.toList());
+            stocktakingTaskDetailService.saveBatch(insertDetailList, 500);
+        });
+        return Boolean.TRUE;
+    }
 
-        return null;
+    private static String getGroupKey(SeparateRuleEnum separateRule, String format, Map<String, String> finalLocationAreaMap, InventoryEntity item) {
+        String location = item.getWarehouseLocation();
+        if (ObjectUtil.equals(separateRule, SeparateRuleEnum.WAREHOUSE_AREA)) {
+            location = ObjectUtil.isNull(finalLocationAreaMap.get(item.getWarehouseLocation())) ? "" : finalLocationAreaMap.get(item.getWarehouseLocation());
+        }
+        String groupKey =  StrUtil.format(format, item.getWarehouseId(), location);
+        return groupKey;
     }
 }

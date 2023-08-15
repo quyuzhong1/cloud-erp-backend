@@ -1,7 +1,10 @@
 package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +41,8 @@ public class StocktakingPlanController extends BaseController {
 
     @Autowired
     private StocktakingPlanService stocktakingPlanService;
+    @Resource
+    private RedisUtil redisUtil;
 
     /**
     * 获取状态统计
@@ -229,6 +235,9 @@ public class StocktakingPlanController extends BaseController {
             BatchResultDTO disApproveResult;
             try {
                 disApproveResult = stocktakingPlanService.disApprove(id);
+                // 删除盘点锁定的库存
+                redisUtil.keys(StrUtil.format(RedisKeyConstant.INVENTORY_LOCK_CODE, entity.getCode()))
+                        .forEach(key -> redisUtil.del(key));
             }catch (Exception e){
                 log.error("盘点计划反审核失败",e);
                 if (ObjectUtil.isEmpty(entity)) {

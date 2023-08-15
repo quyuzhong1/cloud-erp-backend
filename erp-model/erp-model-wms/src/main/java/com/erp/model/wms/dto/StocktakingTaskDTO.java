@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -351,6 +352,82 @@ public class StocktakingTaskDTO implements Serializable {
         @NotNull(message ="分配用户不能为空")
         @Size(min = 1, message = "至少需要选择一个分配用户")
         private List<String> userIdList;
+    }
+    /**
+     * 盘点任务
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CreateDTO{
+        /**
+         * 单号
+         */
+        private String code;
+
+        /**
+         * 盘点状态
+         */
+        private StocktakingStatusEnum status;
+
+        /**
+         * 来源id 来源盘点计划
+         */
+        private String sourceId;
+
+        /**
+         * 来源code 来源盘点计划code
+         */
+        private String sourceCode;
+
+        /**
+         * 审核状态
+         */
+        private ApproveStatusEnum approveStatus;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CreateDetailDTO{
+
+        /**
+         * 主表id
+         */
+        private String mainId;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 库位编码
+         */
+        private String warehouseLocation;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+
+        /**
+         * 冻结数量
+         */
+        private Integer frozenQty;
     }
 
 }
