@@ -76,4 +76,14 @@ public interface SoReturnReceiveMapper extends BaseMapper<SoReturnReceiveEntity>
      * @return java.util.List<com.erp.model.wms.dto.QcInfoDTO.ReceiveToQcDTO>
      **/
     List<QcInfoDTO.SoReturnReceiveToQcDTO> getQcList(@Param("mainIds") List<String> mainIds);
+
+    /**
+     * PDA:列表查询
+     * @Author Luo_WG
+     * @Date 2023/8/15 11:39
+     * @param query
+     * @param params
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.SoReturnReceiveDTO.PdaPagingView>
+     **/
+    IPage<SoReturnReceiveDTO.PdaPagingView> pdaPaging(Page query, @Param("params") SoReturnReceiveDTO.PdaPagingParamDTO params);
 }

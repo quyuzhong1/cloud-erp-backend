@@ -633,4 +633,107 @@ public class SoReturnReceiveDTO {
          */
         private LocalDate instockDate;
     }
+
+    /**
+     * PDA:分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingView {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 单 据编号
+         */
+        private String code;
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+        /**
+         * 产品数量
+         */
+        private Integer detailCount;
+        /**
+         * 产品信息
+         */
+        private List<PdaItemDTO> itemList;
+    }
+
+    /**
+     * PDA:商品信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaItemDTO {
+        /**
+         * 明细id
+         */
+        private String id;
+        /**
+         * sku
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+    }
+
+    /**
+     * PDA:列表查询参数
+     * @Author Luo_WG
+     * @Date 2023/8/15 11:19
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingParamDTO extends SortDTO {
+        /**
+         * 审核状态：根据tab页传审核状态
+         */
+        private List<String> approveStatusList;
+    }
+
+    /**
+     * PDA:列表状态
+     * @Author Luo_WG
+     * @Date 2023/8/11 9:15
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class PdaPoReceiveCount {
+        /**
+         * 类型(waitSubmitAndReject 待提交/审核不通过，approveIng 审核中，approve 已审核)
+         */
+        private String tabFlag;
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
 }
