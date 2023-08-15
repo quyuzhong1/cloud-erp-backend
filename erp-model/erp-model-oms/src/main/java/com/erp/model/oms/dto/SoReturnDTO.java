@@ -525,7 +525,9 @@ public class SoReturnDTO {
     /**
      * PDA:销售退货单查询
      */
-    public class PdaSoReturn {
+    @Data
+    @NoArgsConstructor
+    public static class PdaSoReturn {
         /**
          * 退货单id
          */

@@ -781,30 +781,21 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     public List<SoReturnDTO.PdaSoReturn> listBySkuNo(String skuNo) {
-        /*List<String> poIds = soReturnDetailService.listBySkuNo(skuNo);
-        List<PurchaseOrderEntity> purchaseOrderEntities = this.listByIds(poIds);
-        List<PurchaseOrderEntity> purchaseOrderEntitieList = purchaseOrderEntities.stream().filter(req -> InvalidStatusEnum.NOT_VOIDED.equals(req.getInvalidStatus()) && ApproveStatusEnum.APPROVE.equals(req.getApproveStatus())).collect(Collectors.toList());
-        List<PurchaseOrderSupplierEntity> purchaseOrderSupplierEntities = purchaseOrderSupplierService.listByPurchaseOrderIds(poIds);
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listByPurchaseOrderIds(poIds);
-        //入库信息
-        List<String> podIds = purchaseOrderDetailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
-        List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
-        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
-        List<PurchaseOrderDTO.PdaPurchaseOrder> list = new ArrayList<>();
-        for (PurchaseOrderEntity entity : purchaseOrderEntitieList) {
-            PurchaseOrderDTO.PdaPurchaseOrder order = new PurchaseOrderDTO.PdaPurchaseOrder();
-            order.setId(entity.getId());
-            order.setCode(entity.getCode());
-            order.setWarehouseName(entity.getDeliveryWarehouseName());
-            PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierEntities.stream().filter(req -> req.getPurchaseOrderId().equals(entity.getId())).distinct().findFirst().orElse(new PurchaseOrderSupplierEntity());
-            order.setSupplierName(supplierEntity.getSupplierName());
-            List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailEntityList.stream().filter(req -> req.getPurchaseOrderId().equals(entity.getId())).collect(Collectors.toList());
-
-            order.setItemList(itemList);
-            list.add(order);
+        List<String> poIds = soReturnDetailService.listBySkuNo(skuNo);
+        List<SoReturnEntity> entityList = this.listByIds(poIds);
+        List<SoReturnEntity> soReturnEntityList = entityList.stream().filter(req -> InvalidStatusEnum.NOT_VOIDED.equals(req.getInvalidStatus()) && ApproveStatusEnum.APPROVE.equals(req.getApproveStatus())).collect(Collectors.toList());
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnDetailService.listByIds(poIds);
+        List<SoReturnDTO.PdaSoReturn> list = new ArrayList<>();
+        for (SoReturnEntity entity : soReturnEntityList) {
+            SoReturnDTO.PdaSoReturn soReturn = new SoReturnDTO.PdaSoReturn();
+            soReturn.setId(entity.getId());
+            soReturn.setSoReturnCode(entity.getCode());
+            soReturn.setWarehouseName(entity.getWarehouseName());
+            soReturn.setSoCode(entity.getSourceCode());
+            soReturn.setSellerName(entity.getSellerName());
+            list.add(soReturn);
         }
-        list.sort(Comparator.comparing(PurchaseOrderDTO.PdaPurchaseOrder::getCode).reversed());
-        return list;*/
-        return null;
+        list.sort(Comparator.comparing(SoReturnDTO.PdaSoReturn::getSoCode).reversed());
+        return list;
     }
 }
