@@ -1946,6 +1946,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     public List<PurchaseOrderDTO.PdaPurchaseOrder> listPoBySkuNo(String skuNo) {
         List<String> poIds = purchaseOrderDetailService.listPoIdBySkuNo(skuNo);
         List<PurchaseOrderEntity> purchaseOrderEntities = this.listByIds(poIds);
+        List<PurchaseOrderEntity> purchaseOrderEntitieList = purchaseOrderEntities.stream().filter(req -> InvalidStatusEnum.NOT_VOIDED.equals(req.getInvalidStatus()) && ApproveStatusEnum.APPROVE.equals(req.getApproveStatus())).collect(Collectors.toList());
         List<PurchaseOrderSupplierEntity> purchaseOrderSupplierEntities = purchaseOrderSupplierService.listByPurchaseOrderIds(poIds);
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listByPurchaseOrderIds(poIds);
         //入库信息
@@ -1953,7 +1954,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
         List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
         List<PurchaseOrderDTO.PdaPurchaseOrder> list = new ArrayList<>();
-        for (PurchaseOrderEntity entity : purchaseOrderEntities) {
+        for (PurchaseOrderEntity entity : purchaseOrderEntitieList) {
             PurchaseOrderDTO.PdaPurchaseOrder order = new PurchaseOrderDTO.PdaPurchaseOrder();
             order.setId(entity.getId());
             order.setCode(entity.getCode());

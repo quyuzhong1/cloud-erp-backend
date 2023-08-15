@@ -25,16 +25,18 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
-import com.erp.model.wms.entity.SoReturnNoticeEntity;
-import com.erp.model.wms.entity.SoReturnReceiveEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -775,5 +777,34 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 .eq(SoReturnEntity::getSourceType, SourceTypeEnum.SO_INFO)
                 .eq(SoReturnEntity::getSourceId, soId)
                 .update();
+    }
+
+    @Override
+    public List<SoReturnDTO.PdaSoReturn> listBySkuNo(String skuNo) {
+        /*List<String> poIds = soReturnDetailService.listBySkuNo(skuNo);
+        List<PurchaseOrderEntity> purchaseOrderEntities = this.listByIds(poIds);
+        List<PurchaseOrderEntity> purchaseOrderEntitieList = purchaseOrderEntities.stream().filter(req -> InvalidStatusEnum.NOT_VOIDED.equals(req.getInvalidStatus()) && ApproveStatusEnum.APPROVE.equals(req.getApproveStatus())).collect(Collectors.toList());
+        List<PurchaseOrderSupplierEntity> purchaseOrderSupplierEntities = purchaseOrderSupplierService.listByPurchaseOrderIds(poIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listByPurchaseOrderIds(poIds);
+        //入库信息
+        List<String> podIds = purchaseOrderDetailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+        List<PurchaseOrderDTO.PdaPurchaseOrder> list = new ArrayList<>();
+        for (PurchaseOrderEntity entity : purchaseOrderEntitieList) {
+            PurchaseOrderDTO.PdaPurchaseOrder order = new PurchaseOrderDTO.PdaPurchaseOrder();
+            order.setId(entity.getId());
+            order.setCode(entity.getCode());
+            order.setWarehouseName(entity.getDeliveryWarehouseName());
+            PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierEntities.stream().filter(req -> req.getPurchaseOrderId().equals(entity.getId())).distinct().findFirst().orElse(new PurchaseOrderSupplierEntity());
+            order.setSupplierName(supplierEntity.getSupplierName());
+            List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailEntityList.stream().filter(req -> req.getPurchaseOrderId().equals(entity.getId())).collect(Collectors.toList());
+
+            order.setItemList(itemList);
+            list.add(order);
+        }
+        list.sort(Comparator.comparing(PurchaseOrderDTO.PdaPurchaseOrder::getCode).reversed());
+        return list;*/
+        return null;
     }
 }

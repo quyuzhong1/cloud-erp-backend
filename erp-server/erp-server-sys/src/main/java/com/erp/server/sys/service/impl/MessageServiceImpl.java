@@ -147,7 +147,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         String name = MessageTypeEnum.getName(messageEntity.getType());
         MessageDTO.IsMessageDTO isMessageDTO = new MessageDTO.IsMessageDTO();
         MessageUserReadEntity messageUserReadEntitie = messageUserReadService.listByMessageId(messageEntity.getId());
-        if (ObjectUtil.isNotEmpty(messageUserReadEntitie)) {
+        if (ObjectUtil.isEmpty(messageUserReadEntitie)) {
             isMessageDTO.setRemark(StrUtil.format("有一条新的{}", name));
         }
         return isMessageDTO;
