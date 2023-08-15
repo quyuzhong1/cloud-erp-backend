@@ -108,7 +108,7 @@ public class PdaPoReceiveController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnInstock:view",
+            menuCode = "wms:pdaPoReceive:view",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
     public ApiResult<WarehouseReceiveDTO.ViewDTO> view(@RequestParam("id") String id) {
@@ -127,7 +127,7 @@ public class PdaPoReceiveController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:warehouseReceive:submit",
+            menuCode = "wms:pdaPoReceive:submit",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -145,7 +145,7 @@ public class PdaPoReceiveController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:warehouseReceive:add",
+            menuCode = "wms:pdaPoReceive:add",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.AddDTO dto) {
@@ -163,7 +163,7 @@ public class PdaPoReceiveController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:warehouseReceive:update",
+            menuCode = "wms:pdaPoReceive:update",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.UpdateDTO dto) {
@@ -181,7 +181,7 @@ public class PdaPoReceiveController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:warehouseReceive:approve",
+            menuCode = "wms:pdaPoReceive:approve",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
@@ -199,7 +199,7 @@ public class PdaPoReceiveController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:warehouseReceive:disApprove",
+            menuCode = "wms:pdaPoReceive:disApprove",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -217,7 +217,7 @@ public class PdaPoReceiveController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:warehouseReceive:cancelProcess",
+            menuCode = "wms:pdaPoReceive:cancelProcess",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -235,7 +235,7 @@ public class PdaPoReceiveController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:warehouseReceive:invalid",
+            menuCode = "wms:pdaPoReceive:invalid",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO remarkDTO) {
