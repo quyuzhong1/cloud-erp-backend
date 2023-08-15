@@ -90,4 +90,34 @@ public class BiSettlementExchangeRateEntity implements Serializable {
     @TableField(value = "target_currency_code")
     private String targetCurrencyCode;
 
+    /**
+     * 审核状态
+     */
+    @TableField(value = "approve_status")
+    private String approveStatus;
+
+    /**
+     * 禁用状态
+     */
+    @TableField(value = "disabled")
+    private Boolean disabled;
+
+    /**
+     * 汇率类型
+     */
+    @TableField(value = "type")
+    private String type;
+
+    /**
+     * 间接汇率
+     */
+    @TableField(value = "indirect_exchange_rate")
+    private BigDecimal indirectExchangeRate;
+
+
+    /**
+     * 金蝶id
+     */
+    @TableField(value = "kingdee_id")
+    private String kingdeeId;
 }

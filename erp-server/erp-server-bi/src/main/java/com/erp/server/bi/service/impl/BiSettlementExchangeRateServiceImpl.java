@@ -1,22 +1,29 @@
 package com.erp.server.bi.service.impl;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.bi.dto.BiSettlementExchangeRateDTO;
 import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.server.bi.mapper.BiSettlementExchangeRateMapper;
 import com.erp.server.bi.service.BiSettlementExchangeRateService;
-import com.erp.server.bi.service.DmpOrderInfoService;
-import com.erp.server.bi.service.DmpRefundInfoService;
-import com.erp.server.bi.service.DmpReturnOrderInfoService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,20 +42,25 @@ import java.util.stream.Collectors;
  * @date 2022/12/19 10:00
  */
 @Service
+@Slf4j
 public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlementExchangeRateMapper, BiSettlementExchangeRateEntity>
         implements BiSettlementExchangeRateService {
 
     @Resource
-    private DmpOrderInfoService  dmpOrderInfoService;
-
-    @Resource
-    private DmpRefundInfoService dmpRefundInfoService;
-
-    @Resource
-    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
-
-    @Resource
     private MQProducerService mQProducerService;
+
+    @Override
+    public PagingVO<BiSettlementExchangeRateDTO.ListDTO> paging(PagingDTO<BiSettlementExchangeRateDTO.SearchParamDTO> pagingDTO) {
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<BiSettlementExchangeRateDTO.ListDTO> pageData = baseMapper.paging(query, pagingDTO.getParams());
+        List<BiSettlementExchangeRateDTO.ListDTO> records = pageData.getRecords();
+        if (CollectionUtils.isNotEmpty(records)) {
+            for (BiSettlementExchangeRateDTO.ListDTO listDTO : records) {
+                listDTO.setApproveStatusName(ApproveStatusEnum.getName(listDTO.getApproveStatus()));
+            }
+        }
+        return new PagingVO(pageData);
+    }
 
 
     @Override
@@ -168,6 +181,125 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         }
         //重新新增数据
         return this.batchAddSettlementExchangeRate(list);
+    }
+
+    @Override
+    public BiSettlementExchangeRateEntity getByKingdeeId(String kingdeeId) {
+        return lambdaQuery().eq(BiSettlementExchangeRateEntity::getKingdeeId,kingdeeId).one();
+    }
+
+    @Override
+    public String add(BiSettlementExchangeRateDTO.AddDTO addDTO) {
+        return null;
+    }
+
+    @Override
+    public Boolean update(BiSettlementExchangeRateDTO.UpdateDTO updateDTO) {
+        return null;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean submit(List<String> ids) {
+        //根据ids查询
+        List<BiSettlementExchangeRateEntity> list = getList(ids);
+        //待提交或审核不通过并且未作废允许提交
+        long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus()))).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+        log.info("汇率提交，ids=【{}】", JSONUtil.toJsonStr(ids));
+
+        //更新审核状态
+        updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
+        List<String> ids = baseApproveParamDTO.getIds();
+        //根据ids查询
+        List<BiSettlementExchangeRateEntity> list = getList(ids);
+        //审核中允许审核
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+
+        String type = baseApproveParamDTO.getType();
+
+        log.info("汇率【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+
+        //审核通过
+        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
+            log.info("汇率【{}】审核通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+
+            //更新单据(后面有流程了调用监听可删)
+            updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
+
+        } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
+            log.info("汇率【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+
+            //更新单据状态
+            updateApproveStatusForApprove(ids, ApproveStatusEnum.REJECT.getStatus());
+        }
+
+        return Boolean.TRUE;
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean disApprove(List<String> ids) {
+        //根据ids查询
+        List<BiSettlementExchangeRateEntity> list = getList(ids);
+        //已审核允许反审核
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98014);
+        }
+
+        log.info("汇率反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
+
+        //更新单据为待提交
+        updateApproveStatusForApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 根据ids查询数据
+     */
+    private List<BiSettlementExchangeRateEntity> getList(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        List<BiSettlementExchangeRateEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_99052);
+        }
+        return list;
+    }
+
+    /**
+     * 更新审核状态
+     */
+    private void updateApproveStatus(List<String> ids, String approveStatus) {
+        //更新审核状态
+        lambdaUpdate().in(BiSettlementExchangeRateEntity::getId, ids)
+                .set(BiSettlementExchangeRateEntity::getApproveStatus, approveStatus)
+                .update();
+    }
+
+    /**
+     * 审核后更新审核状态、审核人、审核时间
+     */
+    private void updateApproveStatusForApprove(List<String> ids, String approveStatus) {
+        this.lambdaUpdate().in(BiSettlementExchangeRateEntity::getId, ids)
+                .set(BiSettlementExchangeRateEntity::getApproveStatus, approveStatus)
+                .set(BiSettlementExchangeRateEntity::getApproveTime,ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus) ? LocalDateTime.now() : null)
+                .update();
     }
 
     /**

@@ -1,9 +1,16 @@
 package com.erp.server.bi.controller.api;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.bi.dto.BiSettlementExchangeRateDTO;
 import com.erp.server.bi.service.BiSettlementExchangeRateService;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -23,6 +30,18 @@ public class BiSettlementExchangeRateController extends BaseController {
     @Resource
     private BiSettlementExchangeRateService biSettlementExchangeRateService;
 
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2023/8/15 10:27
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<BiSettlementExchangeRateDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<BiSettlementExchangeRateDTO.SearchParamDTO> dto) {
+        PagingVO<BiSettlementExchangeRateDTO.ListDTO> pagingVO = biSettlementExchangeRateService.paging(dto);
+        return success(pagingVO);
+    }
 
     /**
      * 数据源管理-结算汇率新增

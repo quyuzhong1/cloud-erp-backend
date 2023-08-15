@@ -52,6 +52,7 @@ public enum SourceTypeEnum {
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单",""),
     SAL_OUTSTOCK("SAL_OUTSTOCK", "金蝶销售出库单",""),
     STK_TRANSFERDIRECT("STK_TransferDirect", "金蝶直接调拨单",""),
+    BD_RATE("BD_Rate", "汇率列表",""),
 
 
     // PLM

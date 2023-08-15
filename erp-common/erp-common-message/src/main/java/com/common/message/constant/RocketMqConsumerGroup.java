@@ -186,4 +186,9 @@ public class RocketMqConsumerGroup {
      * ERP加工单单->DMP
      */
     public static final String SYNC_ERP_MACHINE_INFO_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_ermachine_info_to_dmp";
+
+    /**
+     * 金蝶汇率列表同步至ERP
+     */
+    public static final String SYNC_KINGDEE_EXCHANGE_RATE_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_exchange_rate_to_wms";
 }
