@@ -65,4 +65,24 @@ public class DmpExchangeRateDTO {
      * 平台
      */
     private String platformSign;
+
+    /**
+     * 审核日期
+     */
+    private LocalDate approveDate;
+
+    /**
+     * 审核状态
+     */
+    private String approveStatus;
+
+    /**
+     * 是否禁用
+     */
+    private Boolean disabled;
+
+    /**
+     * 禁用日期
+     */
+    private LocalDate disabledDate;
 }

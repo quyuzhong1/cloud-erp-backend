@@ -8,6 +8,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -103,20 +104,13 @@ public class BiSettlementExchangeRateDTO {
          * 源币种
          */
         @NotNull(message = "源币种不能为空")
-        private BigDecimal sourceCurrencyCode;
+        private String sourceCurrencyCode;
 
         /**
          * 目标币种
          */
         @NotNull(message = "目标币种不能为空")
-        private BigDecimal targetCurrencyCode;
-
-
-        /**
-         * 审核状态
-         */
-        @NotBlank(message = "审核状态不能为空")
-        private String approveStatus;
+        private String targetCurrencyCode;
 
         /**
          * 禁用状态
@@ -149,7 +143,10 @@ public class BiSettlementExchangeRateDTO {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO{
 
-
+        /**
+         * 审核日期
+         */
+        private LocalDateTime approveTime;
     }
 
     @Data

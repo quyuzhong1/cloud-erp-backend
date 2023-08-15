@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 数据源管理
+ * 汇率管理
  * @author Will
  * @version 1.0
 
@@ -31,7 +31,7 @@ public class BiSettlementExchangeRateController extends BaseController {
     private BiSettlementExchangeRateService biSettlementExchangeRateService;
 
     /**
-     * @description: 分页查询
+     *  汇率页查询
      * @author Will
      * @date: 2023/8/15 10:27
      * @param dto
