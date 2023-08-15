@@ -252,7 +252,8 @@
         sod.id AS sourceDetailId,
         sod.sku_id,sod.sku_no,
         sod.warehouse_location,
-        sod.actual_qty AS qty
+        sod.actual_qty AS qty,
+        so.bill_date
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod  ON sod.main_id=so.id
         AND  sod.is_deleted=FALSE

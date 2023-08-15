@@ -33,6 +33,7 @@ public enum InventorySourceTypeEnum {
     INSTOCK_FORCAST("instockForcast", "入库预报"),
     RECEIVE_MATERIAL("receiveMaterial", "领料"),
     RETURN_MATERIAL("returnMaterial", "退料"),
+    STOCKTAKING_PROFIT_LOSS("stocktakingProfitLoss", "盘盈盘亏"),
     ;
 
     /**

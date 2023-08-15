@@ -27,8 +27,13 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.BillTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -93,6 +98,10 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Resource
     private SyncKingdeeStocktakingLossService syncKingdeeStocktakingLossService;
+
+
+    @Resource
+    private InventoryTransCoreService inventoryTransCoreService;
 
 
     /**
@@ -514,23 +523,53 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             return Boolean.FALSE;
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateForApprove(entity.getId(), approveStatus);
-        if (ApproveType.PASS.equals(dto.getType())) {
-            //盘盈单
-            BillTypeEnum profit = BillTypeEnum.PROFIT;
-            //盘盈单
-            BillTypeEnum loss = BillTypeEnum.LOSS;
-            //盘盈单同步金蝶
-            if (Objects.equals(profit, entity.getBillType())) {
-                syncKingdeeStocktakingProfitService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
-            }
-            //盘亏单同步金蝶
-            if (Objects.equals(loss, entity.getBillType())) {
-                syncKingdeeStocktakingLossService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
-            }
+        Boolean result = updateForApprove(entity.getId(), approveStatus);
+        if (result) {
+            if (ApproveType.PASS.equals(dto.getType())) {
+                //盘盈单
+                BillTypeEnum profit = BillTypeEnum.PROFIT;
+                //盘盈单
+                BillTypeEnum loss = BillTypeEnum.LOSS;
+                //是否盘盈
+                Boolean isProfit = Objects.equals(profit, entity.getBillType());
+                //是否盘亏
+                Boolean isLoss = Objects.equals(loss, entity.getBillType());
 
+                InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+                if (isProfit) {
+                    inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.STOCKTAKING_PROFIT.getCode());
+                }
+                if (isLoss) {
+                    inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.STOCKTAKING_LOSS.getCode());
+                }
+                List<InOutStockDTO> members = baseMapper.listInventoryInOut(Arrays.asList(entity.getId()));
+                InventoryStatusEnum  inventoryStatus=InventoryStatusEnum.USABLE;
+                for (InOutStockDTO member : members) {
+                    member.setSourceType(InventorySourceTypeEnum.STOCKTAKING_PROFIT_LOSS);
+                    Integer qty = member.getQty();
+                    member.setQty(Math.abs(qty));
+                    member.setInventoryStatus(inventoryStatus);
+                }
+                if(CollectionUtils.isNotEmpty(members)){
+                    inventoryInOutStockDTO.setMembers(members);
+                    //扣减库存
+                    inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+                }
+
+
+                //盘盈单同步金蝶
+                if (isProfit) {
+                    syncKingdeeStocktakingProfitService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                }
+                //盘亏单同步金蝶
+                if (isLoss) {
+                    syncKingdeeStocktakingLossService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                }
+
+            }
         }
-        return Boolean.TRUE;
+
+        return result;
     }
 
     /**
@@ -539,10 +578,10 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      * @param id
      * @param approveStatus
      */
-    public void updateForApprove(String id, ApproveStatusEnum approveStatus) {
+    public Boolean updateForApprove(String id, ApproveStatusEnum approveStatus) {
         //当前登录人
         LoginUser userInfo = commonService.getUserInfo();
-        this.lambdaUpdate().eq(StocktakingProfitLossEntity::getId, id)
+        return this.lambdaUpdate().eq(StocktakingProfitLossEntity::getId, id)
                 .set(StocktakingProfitLossEntity::getApproveUserId, userInfo.getUid())
                 .set(StocktakingProfitLossEntity::getApproveUserName, userInfo.getUserName())
                 .set(StocktakingProfitLossEntity::getApproveStatus, approveStatus)

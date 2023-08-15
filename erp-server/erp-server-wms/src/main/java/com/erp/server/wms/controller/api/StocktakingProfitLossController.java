@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
+import com.erp.server.wms.service.InventoryTransCoreService;
 import com.erp.server.wms.service.StocktakingProfitLossService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +37,8 @@ public class StocktakingProfitLossController extends BaseController {
 
     @Resource
     private StocktakingProfitLossService stocktakingProfitLossService;
+
+
 
     /**
      * 获取 tab列表
