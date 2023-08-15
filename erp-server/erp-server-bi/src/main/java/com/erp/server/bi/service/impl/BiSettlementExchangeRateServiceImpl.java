@@ -15,6 +15,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -190,12 +191,24 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
 
     @Override
     public String add(BiSettlementExchangeRateDTO.AddDTO addDTO) {
-        return null;
+        BiSettlementExchangeRateEntity entity = new BiSettlementExchangeRateEntity();
+        BeanMapperUtils.copy(addDTO,entity);
+        boolean save = this.save(entity);
+        if (!save) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        return entity.getId();
     }
 
     @Override
     public Boolean update(BiSettlementExchangeRateDTO.UpdateDTO updateDTO) {
-        return null;
+        BiSettlementExchangeRateEntity entity = new BiSettlementExchangeRateEntity();
+        BeanMapperUtils.copy(updateDTO,entity);
+        boolean update = this.updateById(entity);
+        if (!update) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        return update;
     }
 
     @Override
