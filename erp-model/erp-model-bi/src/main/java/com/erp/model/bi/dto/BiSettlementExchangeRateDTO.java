@@ -44,9 +44,17 @@ public class BiSettlementExchangeRateDTO {
          */
         private String  sourceCurrencyCode;
         /**
+         * 原币别名称
+         */
+        private String  sourceCurrencyName;
+        /**
          * 目标币别
          */
         private String  targetCurrencyCode;
+        /**
+         * 目标币别名称
+         */
+        private String  targetCurrencyName;
         /**
          * 直接汇率
          */
