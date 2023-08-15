@@ -1226,9 +1226,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     @Override
     public List<WarehouseReceiveDTO.PdaPoReceiveCountDTO> pdaListCount(PermissionsDTO dto) {
-        PageListTypeEnum[] values = PageListTypeEnum.values();
+        PdaTabFlagEnum[] values = PdaTabFlagEnum.values();
         List<WarehouseReceiveDTO.PdaPoReceiveCountDTO> list = new ArrayList<>();
-        for (PageListTypeEnum item : values) {
+        for (PdaTabFlagEnum item : values) {
             WarehouseReceiveDTO.PagingParamDTO pagingParamDTO = new WarehouseReceiveDTO.PagingParamDTO();
             pagingParamDTO.setPermissionSql(dto.getPermissionSql());
             WarehouseReceiveDTO.PdaPoReceiveCountDTO resultDTO = new WarehouseReceiveDTO.PdaPoReceiveCountDTO();
