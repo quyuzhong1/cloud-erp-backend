@@ -115,9 +115,15 @@
                 #{item}
             </foreach>
         </if>
+
+        <if test="params.invalidStatus != null">
+            and wr.invalid_status = #{params.invalidStatus}
+        </if>
+
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
+
     </select>
 
     <select id="getReceiveQty" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$GetReceiveDTO">
@@ -332,6 +338,7 @@
         wr.subcontract_type as subcontractType
         FROM po_receive wr
         WHERE wr.is_deleted = FALSE
+        AND wr.invalid_status = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and wr.approve_status in
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">

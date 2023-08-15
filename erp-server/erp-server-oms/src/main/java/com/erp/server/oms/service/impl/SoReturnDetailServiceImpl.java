@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -15,6 +16,7 @@ import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
@@ -352,5 +354,15 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             availableQty = curInventoryQty;
         }
         return availableQty;
+    }
+
+    @Override
+    public List<String> listBySkuNo(String skuNo) {
+        LambdaQueryWrapper<SoReturnDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(SoReturnDetailEntity::getMainId);
+        queryWrapper.eq(SoReturnDetailEntity::getSkuNo, skuNo);
+        queryWrapper.eq(SoReturnDetailEntity::getIsDeleted, Boolean.FALSE);
+        queryWrapper.groupBy(SoReturnDetailEntity::getMainId);
+        return listObjs(queryWrapper, Object::toString);
     }
 }

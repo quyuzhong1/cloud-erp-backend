@@ -521,4 +521,33 @@ public class SoReturnDTO {
          */
         private String inventoryOrgName;
     }
+
+    /**
+     * PDA:销售退货单查询
+     */
+    public class PdaSoReturn {
+        /**
+         * 退货单id
+         */
+        private String id;
+
+        /**
+         * 退货单号
+         */
+        private String soReturnCode;
+
+        /**
+         * 销售订单号
+         */
+        private String soCode;
+
+        /**
+         * 销售员
+         */
+        private String sellerName;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+    }
 }
