@@ -10,7 +10,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiSettlementExchangeRateDTO;
 import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.model.dmp.dto.DmpExchangeRateDTO;
@@ -121,7 +120,6 @@ public class SyncExchangeRateServiceImpl implements SyncExchangeRateService {
         }
         newExchangeRate.setTargetCurrencyCode(targetCurrency);
         newExchangeRate.setKingdeeId(dto.getSourceId());
-        newExchangeRate.setApproveTime(LocalDateUtil.endLocalDateTime(dto.getApproveDate()));
         return newExchangeRate;
     }
 
