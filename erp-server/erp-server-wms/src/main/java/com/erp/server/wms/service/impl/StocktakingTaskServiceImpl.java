@@ -27,6 +27,7 @@ import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
+import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.model.wms.entity.StocktakingTaskUserEntity;
@@ -558,5 +559,13 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         // 删除主表数据
         this.removeByIds(mainIds);
         return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean createTaskList(StocktakingPlanEntity entity) {
+        //
+
+        return null;
     }
 }

@@ -413,10 +413,8 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // TODO 锁定库存变更
-
-        //TODO 生成盘点任务
-
+        // 生成盘点任务
+        stocktakingTaskService.createTaskList(entity);
         return Boolean.TRUE;
     }
     /**

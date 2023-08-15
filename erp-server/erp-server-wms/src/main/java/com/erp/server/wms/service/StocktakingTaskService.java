@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
+import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.common.business.service.SuperService;
 import org.springframework.web.multipart.MultipartFile;
@@ -119,4 +120,11 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
      * @return
      */
     Boolean removeBySourceId(String id);
+
+    /**
+     * 创建盘点任务
+     * @param entity
+     * @return
+     */
+    Boolean createTaskList(StocktakingPlanEntity entity);
 }

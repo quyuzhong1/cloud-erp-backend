@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 盘点计划表
+ * 盘点计划
  *
  * @author Cloud
  * @since 2023-08-08
@@ -329,23 +329,24 @@ public class StocktakingPlanController extends BaseController {
         return success(stocktakingPlanService.view(id));
     }
 
-    /**
-    * 导出Excel数据
-    * @author Cloud
-    * @date:  2023-08-08
-    * @param dto
-    * @param response
-    * @return
-    */
-    @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:stocktakingPlan:export",
-            tableAlias = ""
-    )
-    public void exportList(@RequestBody @Validated StocktakingPlanDTO.ExportDTO dto, HttpServletResponse response) {
-        stocktakingPlanService.exportList(dto, response);
-    }
+
+//    /**
+//    * 导出Excel数据
+//    * @author Cloud
+//    * @date:  2023-08-08
+//    * @param dto
+//    * @param response
+//    * @return
+//    */
+//    @PostMapping("/export")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "wms:stocktakingPlan:export",
+//            tableAlias = ""
+//    )
+//    public void exportList(@RequestBody @Validated StocktakingPlanDTO.ExportDTO dto, HttpServletResponse response) {
+//        stocktakingPlanService.exportList(dto, response);
+//    }
 
 
 }

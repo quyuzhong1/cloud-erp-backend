@@ -668,6 +668,60 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
     }
 
+    @Override
+    public PagingVO<WarehouseDTO.PagingNoPermissionDTO> pagingNoPermission(PagingDTO<WarehouseDTO.PagingDTO> dto) {
+        WarehouseDTO.PagingDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<WarehouseDTO.PagingNoPermissionDTO> pageData = baseMapper.pagingNoPermission(query, params);
+        List<WarehouseDTO.PagingNoPermissionDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO(pageData);
+        }
+        //获取到仓库类型
+        List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+        //获取用户信息
+        List<String> orgIdList = list.stream().map(WarehouseDTO.PagingNoPermissionDTO::getOrgId).collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+
+        for (WarehouseDTO.PagingNoPermissionDTO item : list) {
+            //类型id
+            String typeId = item.getTypeId();
+            String typeName = dictBasicList.stream().filter(d -> d.getId().equals(typeId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setTypeName(typeName);
+            //组织id
+            String orgId = item.getOrgId();
+            String orgName = orgList.stream().filter(o -> orgId.equals(o.getId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setOrgName(orgName);
+        }
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public PagingVO<WarehouseDTO.PagingProductViewDTO> pagingProduct(PagingDTO<WarehouseDTO.PagingProductDTO> dto) {
+        WarehouseDTO.PagingProductDTO params = dto.getParams();
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<WarehouseDTO.PagingProductViewDTO> pageData = baseMapper.pagingProduct(query, params);
+        List<WarehouseDTO.PagingProductViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO(pageData);
+        }
+        //获取组织信息
+        List<String> orgIdList = list.stream().map(WarehouseDTO.PagingProductViewDTO::getOrgId).collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+        list.stream().map(item -> {
+            //组织id
+            String orgId = item.getOrgId();
+            String orgName = orgList.stream().filter(o -> orgId.equals(o.getId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setOrgName(orgName);
+            return item;
+         }).collect(Collectors.toList());
+        return new PagingVO<>(pageData);
+    }
+
     /**
      * 更改状态
      *

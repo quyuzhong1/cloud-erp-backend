@@ -49,4 +49,49 @@
             </foreach>
         </if>
     </select>
+    <select id="pagingByParams" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$PagingViewDTO">
+        SELECT
+        wt.id as  warehouseId,
+        wt.name as warehouseName,
+        wt.disabled,
+        wt.org_id AS orgId,
+        wt.kingdee_warehouse_code AS warehouseCode,
+        wl.code as warehouseLocation,
+        wl."name" as  warehouseLocationName,
+        wa.code as warehouseArea,
+        wa."name" as warehouseAreaName
+        FROM  "warehouse_location" wl
+        LEFT JOIN warehouse wt on wl.warehouse_id = wt.id and wt.is_deleted = false
+        LEFT JOIN "warehouse_location" wa on wl.parent_id = wa.id
+        where wl.is_deleted = false  and wl."type" = 'location'
+        <if test="params.typeIdList !=null and params.typeIdList.size>0">
+            AND wt.type_id IN
+            <foreach collection="params.typeIdList" item="typeId" open="(" separator="," close=")">
+                #{typeId}
+            </foreach>
+        </if>
+        <if test="params.orgIds !=null and params.orgIds.size>0">
+            AND wt.org_id IN
+            <foreach collection="params.orgIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.warehouseIds !=null and params.warehouseIds.size>0">
+            AND wl.warehouse_id IN
+            <foreach collection="params.warehouseIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.warehouseAreas !=null and params.warehouseAreas.size>0">
+            AND wa.id IN
+            <foreach collection="params.warehouseAreas" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.warehouseLocation !=null and params.warehouseLocation != ''">
+            AND wl.code ilike concat('%', #{params.warehouseLocation} ,'%')
+        </if>
+        ORDER BY create_time desc
+
+    </select>
 </mapper>

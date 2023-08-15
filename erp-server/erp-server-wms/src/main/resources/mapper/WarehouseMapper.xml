@@ -133,4 +133,97 @@
 
 
     </select>
+    <select id="pagingNoPermission" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingNoPermissionDTO">
+        SELECT
+        id,
+        name,
+        type_id AS typeId ,
+        disabled,
+        org_id AS orgId,
+        kingdee_warehouse_code AS code,
+        FROM  warehouse  WHERE is_deleted=false
+        <if test="params.name !=null  and params.name!=''">
+            AND  name LIKE concat('%', #{params.name} ,'%')
+        </if>
+        <if test="params.typeIdList !=null and params.typeIdList.size>0">
+            AND type_id IN
+            <foreach collection="params.typeIdList" item="typeId" open="(" separator="," close=")">
+                #{typeId}
+            </foreach>
+        </if>
+        <if test="params.orgIds !=null and params.orgIds.size>0">
+            AND org_id IN
+            <foreach collection="params.orgIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        create_time desc
+    </select>
+    <select id="pagingProduct" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingProductViewDTO">
+        SELECT
+        pd.id as skuId,
+        pd.sku_no as skuNo,
+        pd.images_url as productImgUrl,
+        pd."name" as productName,
+        inv.warehouse_id as warehouseId,
+        wh."name" as warehouseName,
+        COALESCE(wl.code,'') as warehouseLocation,
+        COALESCE(wlt.code,'') as warehouseArea,
+        COALESCE(wlt."name",'') as warehouseAreaName,
+        inv.qty,
+        inv.dict_inventory_status,
+        inv.org_id,
+        max(tf.trade_time) latestSalesTime
+        FROM product_detail pd
+        LEFT JOIN product_info pi on pd.product_id = pi."id"  and pi.is_deleted = false
+        LEFT JOIN inventory inv on pd.id = inv.sku_id and inv.is_deleted = false
+        LEFT JOIN warehouse wh on inv.warehouse_id = wh.id and wh.is_deleted = false
+        LEFT JOIN warehouse_location wl on inv.warehouse_location = wl.code and wl.is_deleted = false
+        LEFT JOIN warehouse_location wlt on wl.parent_id = wlt.id and wlt.is_deleted = false
+        LEFT JOIN transaction_flow tf on inv.id = tf.inventory_id and tf.is_deleted = false
+        where pd.is_deleted = false
+        and pi.property not in ('服务','费用')
+        and pd.status =2
+        and inv.dict_inventory_status in ('usable','frozen')
+        <if test="params.warehouseIds !=null and params.warehouseIds.size>0">
+            AND inv.warehouse_id IN
+            <foreach collection="params.warehouseIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.spuNoList !=null and params.spuNoList.size>0">
+            AND pi.spu_no IN
+            <foreach collection="params.spuNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.categoryIds !=null and params.categoryIds.size>0">
+            AND pi.category_id IN
+            <foreach collection="params.categoryIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNoList !=null and params.skuNoList.size>0">
+            AND pi.sku_no IN
+            <foreach collection="params.skuNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.saleTimeList !=null and params.saleTimeList.size>0">
+            AND tf.trade_time >= #{params.saleTimeList[0]} and (#{params.saleTimeList[1]}) > tf.trade_time
+        </if>
+        GROUP BY  pd.id, pd.sku_no, pd.images_url,pd."name",warehouseId,warehouseName,warehouseLocation,warehouseArea,warehouseAreaName,inv.qty,inv.dict_inventory_status,inv.org_id
+        ORDER BY pd.sku_no
+    </select>
 </mapper>
