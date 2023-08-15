@@ -209,6 +209,9 @@ public class StocktakingPlanController extends BaseController {
                     continue;
                 }
                 approveResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                // 删除盘点锁定的库存
+                redisUtil.keys(StrUtil.format(RedisKeyConstant.INVENTORY_LOCK_CODE, entity.getCode()))
+                        .forEach(key -> redisUtil.del(key));
             }
             resultDTOS.add(approveResult);
         }
