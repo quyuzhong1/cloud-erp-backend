@@ -124,6 +124,11 @@ public interface MongoTableNameContant {
     String ORIGINAL_KINGDEE_DIRECT_TRANSFER = "original_kingdee_direct_transfer";
 
     /**
+     * 汇率
+     */
+    String ORIGINAL_KINGDEE_EXCHANGE_RATE = "original_kingdee_exchange_rate";
+
+    /**
      * 谷仓入库单
      */
     String ORIGINAL_GC_INBOUND_ORDER = "original_gc_inbound_order";

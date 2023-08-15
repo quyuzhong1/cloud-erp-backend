@@ -3,5 +3,26 @@
 <mapper namespace="com.erp.server.bi.mapper.BiSettlementExchangeRateMapper">
 
 
+    <select id="paging" resultType="com.erp.model.bi.dto.BiSettlementExchangeRateDTO$ListDTO">
+        select
+            bser.id,
+            bser.source_currency_code as sourceCurrencyCode,
+            bser.target_currency_code as targetCurrencyCode,
+            bser.exchange_rate as exchangeRate,
+            bser.indirect_exchange_rate as indirectExchangeRate,
+            bser.settlement_date_begin as settlementDateBegin,
+            bser.settlement_date_end as settlementDateEnd,
+            bser.disabled as disabled,
+            bser.approve_status as approveStatus
+        from bi_settlement_exchange_rate bser
+        <where>
+            <if test="params.currencyList != null and params.currencyList.size > 0">
+                bser.source_currency_code in
+                <foreach collection="params.currencyList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
 
 </mapper>

@@ -7,10 +7,7 @@ import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.dto.CleanBaseDTO;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
-import com.erp.model.dmp.dto.DmpTransferInfoDTO;
-import com.erp.model.dmp.dto.OrderMongoDTO;
+import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -18,8 +15,6 @@ import com.erp.model.dmp.gyy.*;
 import com.erp.model.dmp.kingdee.*;
 import com.erp.model.dmp.mabang.*;
 import com.erp.model.plm.dto.NewProductDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -77,6 +72,9 @@ public class MQConsumerService {
 
     @Autowired
     private DmpTransferInfoService dmpTransferInfoService;
+
+    @Autowired
+    private DmpExchangeRateService dmpExchangeRateService;
 
 
     // topic需要和生产者的topic一致，consumerGroup属性是必须指定的，内容可以随意
@@ -336,6 +334,25 @@ public class MQConsumerService {
 
             log.info("监听直接调拨单信息消息：entity={}", JSONUtil.toJsonStr(ext));
             dmpTransferInfoService.sendSyncTask(ext);
+
+            MapUtil mapUtil = getMapParam();
+            if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = new OrderMongoDTO(ext.getSourceId());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_DIRECT_TRANSFER, KingdeeTransferDirectEntity.class);
+            }
+        }
+    }
+
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
+            selectorExpression = "kingdee_exchange_rate_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-erp_exchange_rate_consumer")
+    public class ConsumerErpExchangeRateInfo implements RocketMQListener<DmpExchangeRateDTO> {
+        @Override
+        public void onMessage(DmpExchangeRateDTO ext) {
+
+            log.info("监听汇率信息消息：entity={}", JSONUtil.toJsonStr(ext));
+            dmpExchangeRateService.sendSyncTask(ext);
 
             MapUtil mapUtil = getMapParam();
             if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){

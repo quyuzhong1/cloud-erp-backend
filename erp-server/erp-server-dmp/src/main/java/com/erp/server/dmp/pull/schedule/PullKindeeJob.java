@@ -14,16 +14,15 @@ import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.server.dmp.pull.service.IReportSaveService;
+import com.erp.server.dmp.pull.thread.PullErpDateThread;
 import com.erp.server.dmp.service.DmpErrorLogService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
-import com.erp.server.dmp.pull.thread.PullErpDateThread;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
@@ -106,6 +105,42 @@ public class PullKindeeJob {
         XxlJobHelper.log("kingdeeDirectTransferDownload 任务执行结束！");
         return ReturnT.SUCCESS;
     }
+
+    /**
+     * 金蝶汇率下载
+     */
+    @XxlJob("kingdeeExchangeRateDownload")
+    public ReturnT<String> kingdeeExchangeRateDownload(){
+        XxlJobHelper.log("kingdeeExchangeRateDownload 任务开始执行！");
+        // 查询直接调拨订单上次执行时间
+        PlatformApiTaskEntity entity = platformApiTaskService.getByApiCode(PlatformApiEnum.BD_RATE.getTaskName());
+        if(ObjectUtil.isEmpty(entity)){
+            XxlJobHelper.log("{}任务task记录为空异常", PlatformApiEnum.BD_RATE.getTaskName());
+            return ReturnT.SUCCESS;
+        }
+        RequestDTO requestDTO = new RequestDTO(new JobTaskDTO(entity, TaskConstant.KINGDEE_PULL_DATA_TASK), PlatformApiEnum.BD_RATE);
+        try {
+            // 处理汇率
+            kingdeeTransferDirectService.pullDataSave(requestDTO);
+            // 修改订单执行更新时间
+            // 修改任务执行结果信息
+            Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO(), 3);
+            if (!aBoolean) {
+                throw new RuntimeException("修改金蝶直接调拨单任务下次执行时间失败！");
+            }
+        }catch (Exception e) {
+            XxlJobHelper.log(" 金蝶汇款挂你数据错误dto={} e= {}", JSONUtil.toJsonStr(requestDTO), e);
+            String message = e.getMessage();
+            DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(requestDTO.getJobTaskDTO().getId(), JSONUtil.toJsonStr(requestDTO),message, JSONUtil.toJsonStr(e.getStackTrace()));
+            dmpErrorLogService.save(dmpErrorLogEntity);
+            // 发送下载异常消息
+            sendErrorMsgToDark(e, dmpErrorLogEntity);
+        }
+
+        XxlJobHelper.log("kingdeeExchangeRateDownload 任务执行结束！");
+        return ReturnT.SUCCESS;
+    }
+
 
     private void sendErrorMsgToDark(Exception e, DmpErrorLogEntity dmpErrorLogEntity) {
         WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();

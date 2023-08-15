@@ -4,9 +4,11 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author Will
@@ -18,40 +20,147 @@ import java.time.LocalDate;
 @Data
 public class BiSettlementExchangeRateDTO {
 
-    /**
-     * 主键id
-     */
-    private String id;
+    @Data
+    @NoArgsConstructor
+    public static class SearchParamDTO {
 
-    /**
-     * 生效日期
-     */
-    @NotNull(message = "生效日期不能为空")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate settlementDateBegin;
+        /**
+         * 币别集合
+         */
+        private List<String> currencyList;
+    }
 
-    /**
-     * 失效日期
-     */
-    @NotNull(message = "失效日期不能为空")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate settlementDateEnd;
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
 
-    /**
-     * 汇率
-     */
-    @NotNull(message = "汇率不能为空")
-    private BigDecimal exchangeRate;
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 原币别
+         */
+        private String  sourceCurrencyCode;
+        /**
+         * 目标币别
+         */
+        private String  targetCurrencyCode;
+        /**
+         * 直接汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 间接汇率
+         */
+        private BigDecimal indirectExchangeRate;
+        /**
+         * 生效日期
+         */
+        private LocalDate settlementDateBegin;
+        /**
+         * 失效日期
+         */
+        private LocalDate settlementDateEnd;
+        /**
+         * 是否禁用（true是，false否）
+         */
+        private Boolean disabled;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+    }
 
-    /**
-     * 源币种
-     */
-    @NotNull(message = "源币种不能为空")
-    private BigDecimal sourceCurrencyCode;
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+        /**
+         * 生效日期
+         */
+        @NotNull(message = "生效日期不能为空")
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        private LocalDate settlementDateBegin;
 
-    /**
-     * 目标币种
-     */
-    @NotNull(message = "目标币种不能为空")
-    private BigDecimal targetCurrencyCode;
+        /**
+         * 失效日期
+         */
+        @NotNull(message = "失效日期不能为空")
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        private LocalDate settlementDateEnd;
+
+        /**
+         * 汇率
+         */
+        @NotNull(message = "汇率不能为空")
+        private BigDecimal exchangeRate;
+
+        /**
+         * 源币种
+         */
+        @NotNull(message = "源币种不能为空")
+        private BigDecimal sourceCurrencyCode;
+
+        /**
+         * 目标币种
+         */
+        @NotNull(message = "目标币种不能为空")
+        private BigDecimal targetCurrencyCode;
+
+
+        /**
+         * 审核状态
+         */
+        @NotBlank(message = "审核状态不能为空")
+        private String approveStatus;
+
+        /**
+         * 禁用状态
+         */
+        @NotNull(message = "禁用状态不能为空")
+        private Boolean disabled;
+
+
+        /**
+         * 汇率类型
+         */
+        @NotBlank(message = "汇率类型不能为空")
+        private String type;
+
+        /**
+         * 间接汇率
+         */
+        @NotNull(message = "间接汇率不能为空")
+        private BigDecimal indirectExchangeRate;
+
+        /**
+         * 金蝶id
+         */
+        @NotBlank(message = "金蝶id不能为空")
+        private String kingdeeId;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO{
+
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO{
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+    }
+
 }
