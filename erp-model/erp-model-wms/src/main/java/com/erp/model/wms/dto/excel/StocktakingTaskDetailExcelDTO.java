@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 /**
  * @author Lambda
  * @Classname StocktakingTaskDetailExcelDTO
- * @Description TODO
+ * @Description
  * @Date 2023-08-09 12:24
  * @Created by yl
  */

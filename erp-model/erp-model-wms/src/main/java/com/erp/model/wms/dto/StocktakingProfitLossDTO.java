@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname StocktakingProfitLossDTO
- * @Description TODO
+ * @Description
  * @Date 2023-08-03 18:07
  * @Created by yl
  */

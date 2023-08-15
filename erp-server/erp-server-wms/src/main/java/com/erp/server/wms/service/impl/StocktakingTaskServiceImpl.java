@@ -7,13 +7,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BillApproveStatusEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.dto.base.*;
+import com.common.business.enums.*;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -208,8 +203,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
-        List<StocktakingTaskEntity> taskList = this.listByIds(ids);
+    public BatchResultDTO submit(String id) {
+        List<StocktakingTaskEntity> taskList = this.listByIds(Arrays.asList(id));
+        String code = CollectionUtils.isNotEmpty(taskList) ? taskList.get(0).getCode() : "";
         //待审核
         ApproveStatusEnum waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT;
         //审核不通过
@@ -241,7 +237,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), rejectPairList, "状态变更");
         }
-        return result;
+        return BatchResultDTO.success(code, OperationTypeEnum.SUBMIT);
 
     }
 
@@ -324,10 +320,14 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         return view;
     }
 
+
     @Override
-    public Boolean approve(BaseApproveParamDTO dto) {
-        List<String> ids = dto.getIds();
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO approve(String id, ApproveOneDTO dto) {
+        List<String> ids = Arrays.asList(id);
         List<StocktakingTaskEntity> taskList = this.listByIds(ids);
+        String code = CollectionUtils.isNotEmpty(taskList) ? taskList.get(0).getCode() : "";
         ApproveStatusEnum ingStatus = ApproveStatusEnum.APPROVE_ING;
         long count = taskList.stream().filter(s -> !ingStatus.equals(s.getApproveStatus())).count();
         if (count > 0) {
@@ -341,8 +341,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         for (StocktakingTaskEntity taskEntity : taskList) {
             this.handleApproveProcess(taskEntity, comment, approveType, approveUserId);
         }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
 
-        return Boolean.TRUE;
+        return BatchResultDTO.success(code, OperationTypeEnum.approveStatus(approveStatus));
     }
 
     /**
@@ -388,9 +389,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         Boolean result = this.updateStatus(list, approveStatus, billStatus);
         if (result) {
             //当审核通过 自动生成盘盈盘亏单  检查所有该计划下的任务是否完成 完成就更盘点计划的状态
-             if(isPass){
-                 stocktakingProfitLossService.autoCreateBill(taskEntity);
-             }
+            if (isPass) {
+                stocktakingProfitLossService.autoCreateBill(taskEntity);
+            }
 
             //添加日志
             List<Pair<String, String>> pairList = list.stream().
@@ -403,24 +404,27 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     /**
      * 撤销流程
      *
-     * @param ids
+     * @param id
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-08-08 18:08
      */
     @Override
-    public Boolean cancelProcess(List<String> ids) {
-        List<StocktakingTaskEntity> taskList = this.listByIds(ids);
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO cancelProcess(String id) {
+        StocktakingTaskEntity taskEntity = this.getById(id);
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException("未找到盘点任务单");
+        }
         ApproveStatusEnum ingStatus = ApproveStatusEnum.APPROVE_ING;
-        long count = taskList.stream().filter(s -> !ingStatus.equals(s.getApproveStatus())).count();
-        if (count > 0) {
+        // 审核中的数据允许审核
+        if (!Objects.equals(ingStatus, taskEntity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         String userId = commonService.getUserInfo().getUid();
-        for (StocktakingTaskEntity taskEntity : taskList) {
-            handleCancelProcess(taskEntity, userId);
-        }
-        return Boolean.TRUE;
+        handleCancelProcess(taskEntity, userId);
+        return BatchResultDTO.success(taskEntity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
     /**
@@ -550,7 +554,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Transactional(rollbackFor = Exception.class)
     public Boolean removeBySourceId(String sourceId) {
         List<StocktakingTaskEntity> taskEntityList = listBySourceId(sourceId);
-        if(CollUtil.isEmpty(taskEntityList)){
+        if (CollUtil.isEmpty(taskEntityList)) {
             return Boolean.TRUE;
         }
         List<String> mainIds = taskEntityList.stream().map(StocktakingTaskEntity::getId).collect(Collectors.toList());

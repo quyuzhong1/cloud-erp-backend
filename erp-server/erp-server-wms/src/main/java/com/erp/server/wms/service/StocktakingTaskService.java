@@ -1,8 +1,6 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
@@ -41,10 +39,10 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
 
     /**
      * 提交审核
-     * @param ids
+     * @param id
      * @return
      */
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(String id);
 
     /**
      * 详情
@@ -57,17 +55,18 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
 
     /**
      * 审核
-     * @param dto
+     * @param id
+     * @param  approveOneDTO
      * @return
      */
-    Boolean approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(String id, ApproveOneDTO approveOneDTO);
 
     /**
      * 撤销流程
-     * @param ids
+     * @param id
      * @return
      */
-    Boolean cancelProcess(List<String> ids);
+    BatchResultDTO cancelProcess(String id);
 
     /**
      * 分配用户
