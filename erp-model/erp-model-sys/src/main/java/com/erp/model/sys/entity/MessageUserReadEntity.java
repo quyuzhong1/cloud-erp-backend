@@ -35,9 +35,6 @@ public class MessageUserReadEntity extends BaseEntity<MessageUserReadEntity> {
     @TableField("user_id")
     private String userId;
 
-
-    public static final String APPROVE_STATUS = "approve_status";
-
     public static final String MESSAGE_ID = "message_id";
 
     public static final String USER_ID = "user_id";
