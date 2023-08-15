@@ -921,11 +921,12 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Override
     public List<SoReturnReceiveDTO.PdaPoReceiveCount> pdaListCount(PermissionsDTO dto) {
-        PageListTypeEnum[] values = PageListTypeEnum.values();
+        PdaTabFlagEnum[] values = PdaTabFlagEnum.values();
         List<SoReturnReceiveDTO.PdaPoReceiveCount> list = new ArrayList<>();
-        for (PageListTypeEnum item : values) {
+        for (PdaTabFlagEnum item : values) {
             SoReturnReceiveDTO.PagingParam pagingParamDTO = new SoReturnReceiveDTO.PagingParam();
             pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            pagingParamDTO.setInvalidStatus(Boolean.FALSE);
             SoReturnReceiveDTO.PdaPoReceiveCount resultDTO = new SoReturnReceiveDTO.PdaPoReceiveCount();
             Integer count = MathUtil.ZERO;
             if (PdaTabFlagEnum.WAIT_SUBMIT_AND_REJECT.getCode().equals(item.getCode())) {

@@ -226,4 +226,13 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @param telNumber
      */
     void updateAddress(String soId, String receiveAddress, String receiverName, String telNumber);
+
+    /**
+     *
+     * @Author Luo_WG
+     * @Date 2023/8/15 16:50
+     * @param skuNo
+     * @return java.util.List<com.erp.model.oms.dto.SoReturnDTO.PdaSoReturn>
+     **/
+    List<SoReturnDTO.PdaSoReturn> listBySkuNo(String skuNo);
 }

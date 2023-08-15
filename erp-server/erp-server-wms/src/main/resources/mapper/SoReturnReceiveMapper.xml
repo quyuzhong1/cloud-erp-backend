@@ -119,6 +119,9 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.invalidStatus != null">
+            and srr.invalid_status = #{params.invalidStatus}
+        </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -326,9 +329,9 @@
         srr.seller_name,
         srr.warehouse_name,
         srr.approve_status
-        FROM so_return_receive_detail srrd
-        INNER JOIN so_return_receive srr ON srrd.main_id = srr.id AND srrd.is_deleted = FALSE
+        FROM so_return_receive srr
         WHERE srr.is_deleted = FALSE
+        AND srr.invalid_status = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and wr.approve_status in
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
@@ -338,7 +341,6 @@
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
