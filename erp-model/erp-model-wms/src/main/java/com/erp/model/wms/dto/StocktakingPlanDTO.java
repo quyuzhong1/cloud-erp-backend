@@ -264,27 +264,52 @@ public class StocktakingPlanDTO implements Serializable {
         /**
         * 单据审核状态
         */
-        private String approveStatus;
+        private ApproveStatusEnum approveStatus;
+
+        /**
+         * 单据审核状态名称
+         */
+        private String approveStatusName;
 
         /**
         * 盘点状态
         */
-        private String status;
+        private StocktakingStatusEnum status;
+
+        /**
+         * 盘点状态名称
+         */
+        private String statusName;
 
         /**
         * 盘点方式
         */
-        private String mode;
+        private StocktakingModeEnum mode;
+
+        /**
+         * 盘点方式名称
+         */
+        private String modeName;
 
         /**
         * 分单规则
         */
-        private String separateRule;
+        private SeparateRuleEnum separateRule;
+
+        /**
+         * 分单规则名称
+         */
+        private String separateRuleName;
 
         /**
         * 盘点类型
         */
-        private String type;
+        private StocktakingTypeEnum type;
+
+        /**
+         * 盘点类型名称
+         */
+        private String typeName;
 
         /**
         * 提交审核时间
@@ -326,6 +351,10 @@ public class StocktakingPlanDTO implements Serializable {
         */
         private LocalDateTime endTime;
 
+        /**
+         * 明细列表
+         */
+        private List<StocktakingPlanDetailDTO.ViewDTO> detailList;
 
     }
 

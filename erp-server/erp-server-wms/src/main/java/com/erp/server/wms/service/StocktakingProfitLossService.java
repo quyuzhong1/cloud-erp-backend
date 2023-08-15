@@ -93,4 +93,16 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @return com.common.business.dto.base.BatchResultDTO
      */
     BatchResultDTO cancelProcess(String id);
+
+    /**
+     * 更改金蝶同步状态
+     * @author yl
+     * @date 2023-08-14 17:47
+     * @param businessId
+     * @param status
+     * @param syncKingdeeId
+     * @param syncOperate
+     * @return void
+     */
+    Boolean updateSyncKingdeeStatus(String businessId, String status, String syncKingdeeId, String syncOperate);
 }

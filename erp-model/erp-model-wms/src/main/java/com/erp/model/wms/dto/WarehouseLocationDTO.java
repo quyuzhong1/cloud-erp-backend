@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 仓位请求响应实体
@@ -164,4 +165,72 @@ public class WarehouseLocationDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public class PagingViewDTO {
+
+        /**
+         * 仓位id
+         */
+        private String id;
+
+        /**
+         * 仓位编码
+         */
+        private String warehouseLocation;
+
+        /**
+         * 区域编码
+         */
+        private String warehouseArea;
+        /**
+         * 区域名称
+         */
+        private String warehouseAreaName;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 组织id
+         */
+        private String orgId;
+        /**
+         * 组织名称
+         */
+        private String orgName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public class PagingParamDTO {
+
+        /**
+         * 仓库类型
+         */
+        private List<String> typeIds;
+
+        /**
+         * 仓库组织
+         */
+        private List<String> orgIds;
+        /**
+         * 仓库id
+         */
+        private List<String> warehouseIds;
+
+        /**
+         * 仓库区域 id
+         */
+        private List<String> warehouseAreas;
+        /**
+         * 仓位编码
+         */
+        private String warehouseLocation;
+    }
 }

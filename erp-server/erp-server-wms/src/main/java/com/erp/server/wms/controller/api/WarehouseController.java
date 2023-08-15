@@ -279,4 +279,29 @@ public class WarehouseController extends BaseController {
         return success(list);
     }
 
+
+    /**
+     * 仓库分页列表-无权限
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/pageList")
+    public ApiResult<PagingVO<WarehouseDTO.PagingNoPermissionDTO>> pageList(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingDTO> dto) {
+        PagingVO<WarehouseDTO.PagingNoPermissionDTO> pagingVO = warehouseService.pagingNoPermission(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 盘点-产品添加分页列表
+     *
+     * @param
+     * @return
+     */
+
+    @PostMapping("/paging/product")
+    public ApiResult<PagingVO<WarehouseDTO.PagingProductViewDTO>> pagingProduct(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingProductDTO> dto) {
+        PagingVO<WarehouseDTO.PagingProductViewDTO> pagingVO = warehouseService.pagingProduct(dto);
+        return success(pagingVO);
+    }
 }

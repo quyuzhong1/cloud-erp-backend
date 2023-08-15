@@ -51,6 +51,18 @@ public class WarehouseLocationController extends BaseController {
     }
 
     /**
+     * 仓位分页列表
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<WarehouseLocationDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseLocationDTO.PagingParamDTO> dto) {
+        PagingVO<WarehouseLocationDTO.PagingViewDTO> pagingVO = warehouseLocationService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
      * 初始化部分仓位数据
      * @return
      */

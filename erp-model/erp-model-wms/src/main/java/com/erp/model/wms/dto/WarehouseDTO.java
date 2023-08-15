@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -354,5 +355,195 @@ public class WarehouseDTO implements Serializable {
         private List<String> ids;
     }
 
+    /**
+     * 仓库分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingNoPermissionDTO {
+        /**
+         * 表id
+         */
+        private String id;
+
+        /**
+         * 金蝶仓库编号
+         */
+        private String code;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 仓库类型 对应dict 表id
+         */
+        private String typeId;
+
+        /**
+         * 类型名称
+         */
+        private String typeName;
+        /**
+         * 状态
+         * false  开启
+         * true 关闭
+         */
+        private Boolean disabled;
+
+        /**
+         * 组织id 对应 核算公司表id
+         */
+        private String orgId;
+
+        /**
+         * 组织名称
+         */
+        private String orgName;
+    }
+
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingDTO extends SortDTO {
+
+        /**
+         * 仓库名
+         */
+        private String name;
+
+        /**
+         * 组织id
+         */
+        private List<String> orgIds;
+
+        /**
+         * 类型id 集合
+         */
+        private List<String> typeIdList;
+
+    }
+
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingProductDTO {
+
+        /**
+         * 仓库名
+         */
+        private List<String> warehouseIds;
+
+        /**
+         * spuNoList
+         */
+        private List<String> spuNoList;
+
+        /**
+         * skuNoList
+         */
+        private List<String> skuNoList;
+        /**
+         * 类型id 集合
+         */
+        private List<String> categoryIds;
+
+        /**
+         * 动销时间范围
+         */
+        private List<LocalDateTime> saleTimeList;
+
+    }
+
+    /**
+     * 产品分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingProductViewDTO {
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 产品图片
+         */
+        private String productImgUrl;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 区域
+         */
+        private String warehouseArea;
+        /**
+         * 仓库区域名称
+         */
+        private String warehouseAreaName;
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+        /**
+         * 冻结库存
+         */
+        private Integer frozenQty;
+
+        /**
+         * 组织id
+         */
+        private String orgId;
+
+        /**
+         * 组织名称
+         */
+        private String orgName;
+
+        /**
+         * 最近动销时间
+         */
+        private String latestSalesTime;
+
+        /**
+         * 可用库存
+         */
+        private Integer qty;
+
+        /**
+         * 库存状态
+         */
+        private InventoryStatusEnum dictInventoryStatus;
+    }
 
 }

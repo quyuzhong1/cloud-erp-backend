@@ -59,7 +59,7 @@ public enum ApproveStatusEnum {
         return Arrays.stream(ApproveStatusEnum.values()).map(ApproveStatusEnum::getStatus).collect(Collectors.toList());
     }
     public static Boolean allowUpdateStatus(ApproveStatusEnum approveStatus) {
-        return approveStatus.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || approveStatus.equals(ApproveStatusEnum.REJECT.getStatus());
+        return approveStatus.equals(ApproveStatusEnum.WAIT_SUBMIT) || approveStatus.equals(ApproveStatusEnum.REJECT);
     }
 
     public static ApproveStatusEnum transferApproveType(ApproveTypeEnum approveType) {

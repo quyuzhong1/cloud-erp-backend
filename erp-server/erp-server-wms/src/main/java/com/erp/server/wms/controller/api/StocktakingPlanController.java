@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 盘点计划表
+ * 盘点计划
  *
  * @author Cloud
  * @since 2023-08-08
@@ -260,7 +260,6 @@ public class StocktakingPlanController extends BaseController {
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
-
             BatchResultDTO deleteResult;
             try {
                 deleteResult = stocktakingPlanService.delete(id);
@@ -292,9 +291,25 @@ public class StocktakingPlanController extends BaseController {
             menuCode = "wms:stocktakingPlan:cancel",
             serviceClass = StocktakingPlanService.class,
             keyIdName = "ids")
-    public ApiResult<Void> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        stocktakingPlanService.cancelProcess(dto.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = stocktakingPlanService.cancelProcess(id);
+            }catch (Exception e){
+                log.error("盘点计划撤回流程失败",e);
+                StocktakingPlanEntity entity = stocktakingPlanService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(entity.getCode(), "盘点计划不存在, 撤回流程失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return success(resultDTOS);
     }
 
     /**
@@ -314,23 +329,24 @@ public class StocktakingPlanController extends BaseController {
         return success(stocktakingPlanService.view(id));
     }
 
-    /**
-    * 导出Excel数据
-    * @author Cloud
-    * @date:  2023-08-08
-    * @param dto
-    * @param response
-    * @return
-    */
-    @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:stocktakingPlan:export",
-            tableAlias = ""
-    )
-    public void exportList(@RequestBody @Validated StocktakingPlanDTO.ExportDTO dto, HttpServletResponse response) {
-        stocktakingPlanService.exportList(dto, response);
-    }
+
+//    /**
+//    * 导出Excel数据
+//    * @author Cloud
+//    * @date:  2023-08-08
+//    * @param dto
+//    * @param response
+//    * @return
+//    */
+//    @PostMapping("/export")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "wms:stocktakingPlan:export",
+//            tableAlias = ""
+//    )
+//    public void exportList(@RequestBody @Validated StocktakingPlanDTO.ExportDTO dto, HttpServletResponse response) {
+//        stocktakingPlanService.exportList(dto, response);
+//    }
 
 
 }

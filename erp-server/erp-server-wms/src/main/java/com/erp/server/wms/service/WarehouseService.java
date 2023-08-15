@@ -211,5 +211,17 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     List<WarehouseDTO.ListDTO> listWarehouseByParams(WarehouseDTO.ListParamDTO dto);
 
+    /**
+     * @description: 分页查询仓库列表(带参数) 不带权限控制的分页查询
+     * @param dto
+     * @return
+     */
+    PagingVO<WarehouseDTO.PagingNoPermissionDTO> pagingNoPermission(PagingDTO<WarehouseDTO.PagingDTO> dto);
 
+    /**
+     * 查询商品列表
+     * @param dto
+     * @return
+     */
+    PagingVO<WarehouseDTO.PagingProductViewDTO> pagingProduct(PagingDTO<WarehouseDTO.PagingProductDTO> dto);
 }

@@ -34,8 +34,8 @@ public enum InventoryBusinessTypeEnum {
     SO_OUTSTOCK("so_outstock", "11","销售出库"),
     SO_RETURN_INSTOCK("so_return_instock", "12","销售退货"),
 
-    INVENTORY_PROFIT("inventory_profit", "13","盘盈"),
-    INVENTORY_LOSS("inventory_loss", "14","盘亏"),
+    STOCKTAKING_PROFIT("stocktaking_profit_loss", "13","盘盈"),
+    STOCKTAKING_LOSS("stocktaking_profit_loss", "14","盘亏"),
 
     ASSEMBLE_PICK("assemble_pick", "15","领料"),
     ASSEMBLE_RETURN("assemble_return", "16","退料"),

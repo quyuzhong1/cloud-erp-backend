@@ -1,15 +1,17 @@
 package com.common.business.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Will
  * @version 1.0
-
  * @date 2023/3/20 9:30
  */
 public enum ApproveTypeEnum {
@@ -38,6 +40,7 @@ public enum ApproveTypeEnum {
         return status;
     }
 
+
     public String getName() {
         return name;
     }
@@ -59,4 +62,5 @@ public enum ApproveTypeEnum {
                 .findFirst()
                 .orElse(null);
     }
+
 }
