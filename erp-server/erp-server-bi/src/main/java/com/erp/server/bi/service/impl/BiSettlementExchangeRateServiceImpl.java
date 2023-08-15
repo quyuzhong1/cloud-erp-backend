@@ -22,6 +22,8 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.bi.dto.BiSettlementExchangeRateDTO;
 import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
+import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.mapper.BiSettlementExchangeRateMapper;
 import com.erp.server.bi.service.BiSettlementExchangeRateService;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +37,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Will
@@ -50,13 +53,28 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
     @Resource
     private MQProducerService mQProducerService;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
+
     @Override
     public PagingVO<BiSettlementExchangeRateDTO.ListDTO> paging(PagingDTO<BiSettlementExchangeRateDTO.SearchParamDTO> pagingDTO) {
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<BiSettlementExchangeRateDTO.ListDTO> pageData = baseMapper.paging(query, pagingDTO.getParams());
         List<BiSettlementExchangeRateDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(records)) {
+            //币别
+            List<String> currencyList = records.stream().flatMap(obj -> Stream.of(obj.getSourceCurrencyCode(), obj.getTargetCurrencyCode())).distinct().collect(Collectors.toList());
+            List<CurrencyDTO.ViewDTO> viewList = sysUserFeign.listByCurrency(currencyList);
+
             for (BiSettlementExchangeRateDTO.ListDTO listDTO : records) {
+                if (CollectionUtils.isNotEmpty(viewList)) {
+                    //原币名称
+                    String sourceCurrencyName = viewList.stream().filter(obj -> obj.getId().equals(listDTO.getSourceCurrencyCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                    listDTO.setSourceCurrencyName(sourceCurrencyName);
+                    //目标币名称
+                    String targetCurrencyName = viewList.stream().filter(obj -> obj.getId().equals(listDTO.getTargetCurrencyCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                    listDTO.setTargetCurrencyName(targetCurrencyName);
+                }
                 listDTO.setApproveStatusName(ApproveStatusEnum.getName(listDTO.getApproveStatus()));
             }
         }
