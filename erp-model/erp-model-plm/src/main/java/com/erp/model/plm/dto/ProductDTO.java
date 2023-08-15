@@ -94,6 +94,14 @@ public class ProductDTO implements Serializable {
 
 
     /**
+     * 产品品牌id
+     */
+    @NotBlank(message = "SPU不能为空")
+    @Size(max = 50, message = "SPU最大50字符")
+    private String spuNo;
+
+
+    /**
      * 产品类型 1 新产品 2 迭代产品
      */
     @NotNull(message = "产品类型不能为空")
