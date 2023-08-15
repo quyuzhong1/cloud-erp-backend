@@ -1,10 +1,13 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
+import com.erp.model.wms.entity.StocktakingPlanEntity;
+import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.server.wms.service.InventoryTransCoreService;
 import com.erp.server.wms.service.StocktakingProfitLossService;
 import lombok.extern.slf4j.Slf4j;
@@ -115,16 +118,18 @@ public class StocktakingProfitLossController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         for (String id : ids) {
-            BatchResultDTO submit = null;
+            BatchResultDTO submit;
             try {
                 submit = stocktakingProfitLossService.submit(id);
             }catch (Exception e){
-                log.error("盘盈盘亏单 提交审核失败",e);
-                if(Objects.nonNull(submit)&& StringUtils.isNotBlank(submit.getCode())){
-                    submit = BatchResultDTO.fail(submit.getCode(), e.getMessage());
-                }else{
-                    submit = BatchResultDTO.fail(id, e.getMessage());
+                log.error("盘盈盘亏单 提交审核失败>>>>{}",e);
+                StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, "盘盈盘亏单不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
                 }
+                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
                 resultDTOS.add(submit);
             }
         }
@@ -145,16 +150,18 @@ public class StocktakingProfitLossController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         for (String id : ids) {
-            BatchResultDTO submit = null;
+            BatchResultDTO submit;
             try {
                 submit = stocktakingProfitLossService.approve(id,new  ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
-                log.error("盘盈盘亏单 审核失败",e);
-                if(Objects.nonNull(submit)&& StringUtils.isNotBlank(submit.getCode())){
-                    submit = BatchResultDTO.fail(submit.getCode(), e.getMessage());
-                }else{
-                    submit = BatchResultDTO.fail(id, e.getMessage());
+                log.error("盘盈盘亏单 审核失败>>>>{}",e);
+                StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, "盘盈盘亏单不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
                 }
+                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
                 resultDTOS.add(submit);
             }
         }
@@ -181,16 +188,18 @@ public class StocktakingProfitLossController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         for (String id : ids) {
-            BatchResultDTO submit = null;
+            BatchResultDTO submit;
             try {
                 submit = stocktakingProfitLossService.cancelProcess(id);
             }catch (Exception e){
-                log.error("盘盈盘亏单 撤销流程失败",e);
-                if(Objects.nonNull(submit)&& StringUtils.isNotBlank(submit.getCode())){
-                    submit = BatchResultDTO.fail(submit.getCode(), e.getMessage());
-                }else{
-                    submit = BatchResultDTO.fail(id, e.getMessage());
+                log.error("盘盈盘亏单 撤销流程失败>>>>{}",e);
+                StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, "盘盈盘亏单不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
                 }
+                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
                 resultDTOS.add(submit);
             }
         }

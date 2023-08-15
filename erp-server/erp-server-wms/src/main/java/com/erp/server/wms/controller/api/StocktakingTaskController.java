@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -8,8 +9,11 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.TransferInDTO;
+import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.server.wms.service.StocktakingTaskService;
 import com.erp.server.wms.service.TransferInService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,16 +23,17 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
- *
  * 盘点管理-盘点任务
- *
  *
  * @author Lambda
  * @since 2023-07-31
  */
+@Slf4j
 @RestController
 @RequestMapping("/stocktakingTask")
 public class StocktakingTaskController extends BaseController {
@@ -79,8 +84,26 @@ public class StocktakingTaskController extends BaseController {
 //            keyIdName = "ids"
 //    )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = stocktakingTaskService.submit(dto.getIds());
-        return result ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO submit;
+            try {
+                submit = stocktakingTaskService.submit(id);
+            } catch (Exception e) {
+                log.error("盘点任务 提交审核失败", e);
+                StocktakingTaskEntity entity = stocktakingTaskService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, "盘点任务单不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                resultDTOS.add(submit);
+            }
+
+        }
+        return success(resultDTOS);
     }
 
     /**
@@ -115,8 +138,25 @@ public class StocktakingTaskController extends BaseController {
 //            keyIdName = "ids"
 //    )
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        Boolean result = stocktakingTaskService.approve(dto);
-        return result ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO submit;
+            try {
+                submit=stocktakingTaskService.approve(id,new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+            }catch (Exception e){
+                log.error("盘点任务 审核失败>>>>{}",e);
+                StocktakingTaskEntity entity = stocktakingTaskService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, "盘点任务单不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                resultDTOS.add(submit);
+            }
+        }
+        return success(resultDTOS);
     }
 
     /**
@@ -133,18 +173,36 @@ public class StocktakingTaskController extends BaseController {
 //            keyIdName = "ids"
 //    )
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = stocktakingTaskService.cancelProcess(dto.getIds());
-        return result ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO submit;
+            try {
+                submit=stocktakingTaskService.cancelProcess(id);
+            }catch (Exception e){
+                log.error("盘点任务 撤销流程失败>>>>{}",e);
+                StocktakingTaskEntity entity = stocktakingTaskService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, "盘点任务单不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                resultDTOS.add(submit);
+            }
+        }
+        return success(resultDTOS);
     }
 
 
     /**
      * 分配盘点人
+     *
      * @param dto
      * @return
      */
     @PostMapping("/assignUser")
-    public ApiResult assignStocktakingUser(@RequestBody @Validated StocktakingTaskDTO.AssignUserDTO dto){
+    public ApiResult assignStocktakingUser(@RequestBody @Validated StocktakingTaskDTO.AssignUserDTO dto) {
         Boolean result = stocktakingTaskService.assignUser(dto);
         return result ? success() : failure();
     }
