@@ -355,14 +355,15 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             throw new ServiceException("未找到盘盈盘亏单");
         }
         if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
+
+        //启动流程
+        startProcess(entity);
         Boolean result = this.updateApproveStatus(entity.getId(), ApproveStatusEnum.APPROVE_ING);
         if (!result) {
             throw new ServiceException("保存失败");
         }
-        //启动流程
-        startProcess(entity);
 
         // 操作日志
         List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
@@ -451,17 +452,16 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     }
 
 
-
-
     /**
      * 更改金蝶同步状态
-     * @author yl
-     * @date 2023-08-14 17:47
+     *
      * @param id
      * @param syncKingdeeStatus
      * @param syncKingdeeId
      * @param syncOperate
      * @return void
+     * @author yl
+     * @date 2023-08-14 17:47
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -496,7 +496,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             throw new ServiceException(ApiError.ERROR_94006);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
-        if (Objects.isNull(data.getIsExistProcess()) || data.getIsExistProcess()) {
+        if (Objects.isNull(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
         }
