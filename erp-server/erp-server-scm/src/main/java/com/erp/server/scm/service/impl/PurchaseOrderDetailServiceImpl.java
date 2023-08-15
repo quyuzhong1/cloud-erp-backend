@@ -585,6 +585,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         LambdaQueryWrapper<PurchaseOrderDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(PurchaseOrderDetailEntity::getPurchaseOrderId);
         queryWrapper.eq(PurchaseOrderDetailEntity::getSkuNo,skuNo);
+        queryWrapper.eq(PurchaseOrderDetailEntity::getArrivalStatus,skuNo);
         queryWrapper.groupBy(PurchaseOrderDetailEntity::getPurchaseOrderId);
         return listObjs(queryWrapper, Object::toString);
 
