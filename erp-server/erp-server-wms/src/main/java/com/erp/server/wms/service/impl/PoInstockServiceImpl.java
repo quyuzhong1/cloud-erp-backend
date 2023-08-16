@@ -1556,17 +1556,28 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     @Override
     public PagingVO<PoInstockDTO.PdaPagingView> PdaPaging(PagingDTO<PoInstockDTO.PdaSearchParamDTO> pagingParamDTO) {
-/*        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<PoInstockDTO.PdaPagingView> pageData = this.baseMapper.pdaPaging(query, pagingParamDTO.getParams());
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(new Page());
         }
         List<PoInstockDTO.PdaPagingView> records = pageData.getRecords();
+
         //主键id
         List<String> ids = records.stream().map(req -> req.getId()).collect(Collectors.toList());
         //查询详情
         List<PoInstockDetailEntity> poInstockDetailEntities = poInstockDetailService.listByMainIds(ids);
+
+        List<String> podIds = poInstockDetailEntities.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        //存在收货单,且收货单下面的质检单未质检完成则不允许提交
+        //收货信息
+        List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
+        List<String> receiveDetailIds = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getId).collect(Collectors.toList());
+        //质检信息
+        List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceDetailIds(receiveDetailIds);
+        List<QcInfoEntity> resultList = qcInfoList.stream().filter(obj -> QcBillStatusEnum.DRAFT.equals(obj.getQcStatus()) || QcBillStatusEnum.WAIT_QC.equals(obj.getQcStatus())).collect(Collectors.toList());
+
         for (PoInstockDTO.PdaPagingView record : records) {
             record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
             List<PoInstockDetailEntity> detailEntities = poInstockDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
@@ -1574,7 +1585,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             record.setDetailCount(itemDTOList.size());
             record.setItemList(itemDTOList);
         }
-        return new PagingVO(pageData);*/
-        return null;
+        return new PagingVO(pageData);
     }
 }
