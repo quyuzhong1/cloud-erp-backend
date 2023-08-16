@@ -380,13 +380,13 @@
         <if test="type != null and type == 'byLocation' and null != params and params.size > 0">
             and (warehouse_id, warehouse_location)  in
             <foreach collection="params" item="item" open="(" close=")" separator=",">
-                (#{item.warehouseId}, #{warehouseLocation})
+                (#{item.warehouseId}, #{item.warehouseLocation})
             </foreach>
         </if>
         <if test="type != null and type == 'bySku' and null != params and params.size > 0">
             and (warehouse_id, warehouse_location, sku_id) in
             <foreach collection="params" item="item" open="(" close=")" separator=",">
-                (#{item.warehouseId}, #{warehouseLocation}, #{skuId})
+                (#{item.warehouseId}, #{item.warehouseLocation}, #{item.skuId})
             </foreach>
         </if>
         order by inv.warehouse_id, inv.warehouse_location, inv.sku_id, inv.dict_inventory_status
