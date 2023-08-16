@@ -2,6 +2,18 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.BomInfoMapper">
 
+    <resultMap id= "listCombination" type="com.erp.model.plm.dto.BomCombinationDTO$ListDTO">
+        <id column="id" property="id"></id>
+        <result column="parentSkuNo" property="parentSkuNo"></result>
+        <result column="name" property="name"></result>
+        <result column="updateUserName" property="updateTime"></result>
+        <collection property="childList" ofType="com.erp.model.plm.dto.BomCombinationDTO$ChildDTO">
+            <result column="childSkuNo" property="childSkuNo"></result>
+            <result column="qty" property="qty"></result>
+            <result column="actualTaxCost" property="actualTaxCost"></result>
+            <result column="targetTaxCost" property="targetTaxCost"></result>
+        </collection>
+    </resultMap>
 
     <select id="paging" resultType="com.erp.model.plm.vo.BomPagingVO">
            SELECT
@@ -191,6 +203,42 @@
                 <foreach collection="bomIds" item="item" open="(" separator="," close=")">
                     #{item}
                 </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="combinationPaging" resultMap="listCombination">
+        select
+            pbi.id,
+            pbs.parent_sku_no as parentSkuNo,
+            pd.name,
+            pbs.quantity as qty,
+            cpd.sku_no as childSkuNo,
+            pc.actual_tax_cost as actualTaxCost,
+            pc.target_tax_cost as targetTaxCost,
+            pbi.update_user_name as updateUserName,
+            pbi.update_time as updateTime
+        from product_bom_info pbi
+        inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
+        left join product_detail pd on pbs.parent_sku_id = pd.id and pd.is_deleted = false
+        left join product_detail cpd on pbs.sku_id = cpd.id and cpd.is_deleted = false
+        left join product_cost pc on cpd.id = pc.sku_id and pc.is_deleted = false
+        <where>
+            pbi.is_deleted = false
+            <if test="params.skuNo != null and params.skuNo != ''">
+                and pbs.parent_sku_no ilike concat('%', #{params.skuNo},'%')
+            </if>
+            <if test="params.name != null and params.name != ''">
+                and pd.name ilike concat('%', #{name},'%')
+            </if>
+            <if test="params.updateUserIdList != null and params.updateUserIdList != ''">
+                and pbi.update_user_id in
+                <foreach collection="params.updateUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.updateTimeList != null and params.updateTimeList.size > 0">
+                and pbi.update_time >= #{params.updateTimeList[0]} and  (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pbi.update_time
             </if>
         </where>
     </select>

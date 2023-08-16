@@ -23,6 +23,7 @@
                 </foreach>
             </if>
         </where>
+        order by bser.settlement_date_begin desc
     </select>
 
 </mapper>
