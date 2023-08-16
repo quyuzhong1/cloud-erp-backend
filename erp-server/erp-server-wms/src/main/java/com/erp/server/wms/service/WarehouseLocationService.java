@@ -9,6 +9,7 @@ import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -95,4 +96,10 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @return
      */
     PagingVO<WarehouseLocationDTO.PagingViewDTO> paging(PagingDTO<WarehouseLocationDTO.PagingParamDTO> dto);
+
+    /**
+     * 库位库区对应关系
+     * @return
+     */
+    Map<String, String> locationAreaMap();
 }

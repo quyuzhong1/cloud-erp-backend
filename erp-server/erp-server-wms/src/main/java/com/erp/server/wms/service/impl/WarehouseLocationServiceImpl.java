@@ -208,4 +208,22 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         }
         return new PagingVO<>(pagResult);
     }
+
+    @Override
+    public Map<String, String> locationAreaMap() {
+        List<WarehouseLocationEntity> list = lambdaQuery()
+                .eq(WarehouseLocationEntity::getDisabled, Boolean.FALSE)
+                .list();
+        Map<String, List<WarehouseLocationEntity>> locationMap = list.stream()
+                .collect(Collectors.groupingBy(WarehouseLocationEntity::getType));
+        List<WarehouseLocationEntity> areaList = locationMap.get(WarehouseLocationTypeEnum.AREA.getCode());
+        Map<String, String> areaMap = areaList.stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, WarehouseLocationEntity::getCode));
+
+        List<WarehouseLocationEntity> locationEntityList = locationMap.get(WarehouseLocationTypeEnum.LOCATION.getCode());
+        Map<String, String> locationAreaMap = locationEntityList
+                .stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getCode, item -> areaMap.get(item.getParentId()), (e1, e2) -> e2));
+        return locationAreaMap;
+    }
 }

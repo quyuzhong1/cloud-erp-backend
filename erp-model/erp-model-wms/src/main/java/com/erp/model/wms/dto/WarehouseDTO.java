@@ -534,16 +534,6 @@ public class WarehouseDTO implements Serializable {
          * 最近动销时间
          */
         private String latestSalesTime;
-
-        /**
-         * 可用库存
-         */
-        private Integer qty;
-
-        /**
-         * 库存状态
-         */
-        private InventoryStatusEnum dictInventoryStatus;
     }
 
 }

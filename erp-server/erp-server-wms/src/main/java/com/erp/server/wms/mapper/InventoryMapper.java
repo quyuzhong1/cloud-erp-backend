@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
@@ -63,6 +64,16 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      */
     List<LinkedHashMap> exportInventoryPage(@Param("params") InventoryReportDTO.ExportInventoryAgeSearchParamDTO params);
 
+    /**
+     * 库存分页查询
+     * @param type
+     * @param startTime
+     * @param endTime
+     * @param detailEntityList
+     * @return
+     */
+    List<InventoryEntity> listByStocktakingType(@Param("type") String type,@Param("startTime")LocalDateTime startTime,
+                                                @Param("endTime")LocalDateTime endTime, @Param("params") List<StocktakingPlanDetailEntity> detailEntityList);
     /**
      * 根据仓库id查询库存信息
      * @Author Luo_WG

@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
+import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.common.business.service.SuperService;
@@ -123,7 +124,8 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
     /**
      * 创建盘点任务
      * @param entity
+     * @param detailEntityList
      * @return
      */
-    Boolean createTaskList(StocktakingPlanEntity entity);
+    Boolean createTaskList(StocktakingPlanEntity entity,List<StocktakingPlanDetailEntity> detailEntityList);
 }

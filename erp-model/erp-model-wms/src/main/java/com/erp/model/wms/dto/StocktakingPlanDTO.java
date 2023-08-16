@@ -447,22 +447,18 @@ public class StocktakingPlanDTO implements Serializable {
         /**
          * 库区
          */
-        @NotBlank(message = "库区不能为空")
         private String warehouseArea;
         /**
          * 仓位
          */
-        @NotNull(message = "仓位不能为空")
         private String warehouseLocation;
         /**
          * skuId
          */
-        @NotBlank(message = "skuId不能为空")
         private String skuId;
         /**
          * sku编码
          */
-        @NotBlank(message = "sku编码不能为空")
         private String skuNo;
     }
 

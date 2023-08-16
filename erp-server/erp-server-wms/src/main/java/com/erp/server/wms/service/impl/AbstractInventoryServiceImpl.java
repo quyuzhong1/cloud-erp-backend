@@ -6,9 +6,11 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.DistributedLockEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
@@ -24,6 +26,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +61,8 @@ public abstract class AbstractInventoryServiceImpl {
 
     @Autowired
     private WarehouseService warehouseService;
+    @Resource
+    private RedisUtil  redisUtil;
 
     /**
      *
@@ -141,7 +146,7 @@ public abstract class AbstractInventoryServiceImpl {
         txnFlows = txnFlows.stream().sorted(comparing).collect(Collectors.toList());
         txnFlows.stream().forEach(txnFlow->{
             // 检测是否允许库存交易
-            checkAllowTransaction(txnFlow.getSkuId(),txnFlow.getOrgId(),txnFlow.getWarehouseId(),txnFlow.getWarehouseLocation(),txnFlow.getDictInventoryStatus());
+            checkAllowTransaction(txnFlow.getOrgId(),txnFlow.getWarehouseId(),txnFlow.getWarehouseLocation(),txnFlow.getSkuId(),txnFlow.getDictInventoryStatus());
 
             // 获取单据业务类型
             InventoryBusinessTypeEnum businessTypeEnum = InventoryBusinessTypeEnum.getByCode(txnFlow.getDictBizType());// 取原交易流水的业务类型
@@ -222,8 +227,15 @@ public abstract class AbstractInventoryServiceImpl {
      * @param warehouseLocation 仓位
      * @param dictInventoryStatus   库存状态
      */
-    private void checkAllowTransaction(String skuId, String orgId, String warehouseId, String warehouseLocation, String dictInventoryStatus) {
-        //TODO 今后需要做 库存关账、盘点冻结 等检测
+    private void checkAllowTransaction(String orgId, String warehouseId, String warehouseLocation, String skuId, String dictInventoryStatus) {
+        //TODO 今后需要做 库存关账 等检测
+        // 盘点冻结
+        String redisKey = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, "*", orgId, warehouseId, warehouseLocation, skuId, dictInventoryStatus);
+        Collection<String> keys = redisUtil.keys(redisKey);
+        if (CollUtil.isEmpty(keys)) {
+            return;
+        }
+        throw new ServiceException(ApiError.STOCK_FREEZE_NOT_ALLOW);
     }
 
     private InventoryHisEntity getAvaliableInventoryHis(TransactionFlowEntity transactionFlow) {
@@ -297,6 +309,7 @@ public abstract class AbstractInventoryServiceImpl {
         if(Objects.isNull(warehouseInfo) || StrUtil.isEmpty(warehouseInfo.getId())) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
+        checkAllowTransaction(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), inventoryStatusEnum.getCode());
         log.warn("交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走入库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName());
 
         // 按照仓库+仓位+库存状态+SKU 进行锁定
@@ -349,7 +362,7 @@ public abstract class AbstractInventoryServiceImpl {
         if(Objects.isNull(warehouseInfo) || StrUtil.isEmpty(warehouseInfo.getId())) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
-
+        checkAllowTransaction(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), inventoryStatusEnum.getCode());
         // 待出库数量
         Integer waitOutQty = param.getQty();
         log.info("交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走出库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), inventoryStatusEnum.getName(), param.getSkuNo());

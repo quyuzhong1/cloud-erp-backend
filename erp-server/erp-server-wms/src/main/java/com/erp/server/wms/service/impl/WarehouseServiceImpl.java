@@ -706,7 +706,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         IPage<WarehouseDTO.PagingProductViewDTO> pageData = baseMapper.pagingProduct(query, params);
         List<WarehouseDTO.PagingProductViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
-            return new PagingVO(pageData);
+            return new PagingVO<>(pageData);
         }
         //获取组织信息
         List<String> orgIdList = list.stream().map(WarehouseDTO.PagingProductViewDTO::getOrgId).collect(Collectors.toList());

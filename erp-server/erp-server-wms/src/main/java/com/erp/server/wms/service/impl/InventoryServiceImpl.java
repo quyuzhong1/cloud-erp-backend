@@ -1,11 +1,14 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperServiceImpl;
@@ -29,7 +32,10 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.InventorySaveDTO;
 import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
+import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryAgeTitleEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -517,6 +523,19 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         // 导出Excel
         exportInventoryAgeExcel(resultList, response);
 
+    }
+
+    @Override
+    public List<InventoryEntity> listByStocktakingType(StocktakingPlanEntity entity, List<StocktakingPlanDetailEntity> detailEntityList) {
+        StocktakingTypeEnum stocktakingType = entity.getType();
+        LocalDateTime startTime = entity.getStartTime();
+        LocalDateTime endTime = entity.getEndTime();
+        if (!ObjectUtil.equals(stocktakingType, StocktakingTypeEnum.BY_SKU)) {
+            if (ObjectUtil.isEmpty(startTime) || ObjectUtil.isEmpty(endTime)) {
+                throw new ServiceException(StrUtil.format("盘点计划单 【{}】盘点时间不能为空", entity.getCode()));
+            }
+        }
+        return baseMapper.listByStocktakingType(stocktakingType.getCode(),startTime,endTime, detailEntityList);
     }
 
     private void exportInventoryAgeExcel(List<LinkedHashMap> resultList, HttpServletResponse response) {

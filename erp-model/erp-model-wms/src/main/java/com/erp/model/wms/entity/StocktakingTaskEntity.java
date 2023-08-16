@@ -6,10 +6,12 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -22,6 +24,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
+@NoArgsConstructor
 @TableName("stocktaking_task")
 public class StocktakingTaskEntity extends BaseEntity<StocktakingTaskEntity> {
 
@@ -56,6 +59,25 @@ public class StocktakingTaskEntity extends BaseEntity<StocktakingTaskEntity> {
     private ApproveStatusEnum approveStatus;
 
 
+    /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
+
+    /**
+     * 审核人id
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
+
+    /**
+     * 审核人名
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
+
+
     public static final String CODE = "code";
 
     public static final String STATUS = "status";
@@ -65,6 +87,14 @@ public class StocktakingTaskEntity extends BaseEntity<StocktakingTaskEntity> {
     public static final String SOURCE_CODE = "source_code";
 
     public static final String APPROVE_STATUS = "approve_status";
+
+    public StocktakingTaskEntity(StocktakingPlanEntity entity, String code) {
+        this.code = code;
+        this.status = StocktakingStatusEnum.NOT_STARTED;
+        this.sourceId = entity.getId();
+        this.sourceCode = entity.getCode();
+        this.approveStatus = ApproveStatusEnum.WAIT_SUBMIT;
+    }
 
     @Override
     public Serializable pkVal() {
