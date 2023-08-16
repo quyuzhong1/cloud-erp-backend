@@ -35,6 +35,11 @@ public class PurchaseReturnOrderDTO {
         private String purchaseOrderId;
 
         /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+
+        /**
          * 退货方式
          */
         @NotBlank(message = "退货方式不能为空")
@@ -123,6 +128,11 @@ public class PurchaseReturnOrderDTO {
          * 采购订单编号
          */
         private String purchaseOrderCode;
+
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
 
         /**
          * 退货来源
