@@ -21,7 +21,6 @@
          approve_status AS approveStatus,
          is_enable_location as isEnableLocation
       FROM  warehouse  WHERE is_deleted=false
-
         <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
             AND create_user_id IN
             <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
@@ -181,9 +180,7 @@
         COALESCE(wl.code,'') as warehouseLocation,
         COALESCE(wlt.code,'') as warehouseArea,
         COALESCE(wlt."name",'') as warehouseAreaName,
-        inv.qty,
-        inv.dict_inventory_status,
-        inv.org_id,
+        inv.org_id as orgId,
         max(tf.trade_time) latestSalesTime
         FROM product_detail pd
         LEFT JOIN product_info pi on pd.product_id = pi."id"  and pi.is_deleted = false
@@ -191,10 +188,15 @@
         LEFT JOIN warehouse wh on inv.warehouse_id = wh.id and wh.is_deleted = false
         LEFT JOIN warehouse_location wl on inv.warehouse_location = wl.code and wl.is_deleted = false
         LEFT JOIN warehouse_location wlt on wl.parent_id = wlt.id and wlt.is_deleted = false
-        LEFT JOIN transaction_flow tf on inv.id = tf.inventory_id and tf.is_deleted = false
+        LEFT JOIN (select inventory_id,max(trade_time) as trade_time from transaction_flow
+        where is_deleted=false
+        <if test="params.saleTimeList !=null and params.saleTimeList.size>0">
+            AND trade_time >= #{params.saleTimeList[0]} and (#{params.saleTimeList[1]}) > trade_time
+        </if>
+        group by inventory_id) as tf on inv.id = tf.inventory_id
         where pd.is_deleted = false
         and pi.property not in ('服务','费用')
-        and pd.status =2
+        and pd.status = 2
         and inv.dict_inventory_status in ('usable','frozen')
         <if test="params.warehouseIds !=null and params.warehouseIds.size>0">
             AND inv.warehouse_id IN
@@ -214,16 +216,13 @@
                 #{item}
             </foreach>
         </if>
-        <if test="params.skuNoList !=null and params.skuNoList.size>0">
+        <if test="params.skuNoList != null and params.skuNoList.size>0">
             AND pi.sku_no IN
             <foreach collection="params.skuNoList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
         </if>
-        <if test="params.saleTimeList !=null and params.saleTimeList.size>0">
-            AND tf.trade_time >= #{params.saleTimeList[0]} and (#{params.saleTimeList[1]}) > tf.trade_time
-        </if>
-        GROUP BY  pd.id, pd.sku_no, pd.images_url,pd."name",warehouseId,warehouseName,warehouseLocation,warehouseArea,warehouseAreaName,inv.qty,inv.dict_inventory_status,inv.org_id
+        GROUP BY skuId, skuNo, productImgUrl,productName,warehouseId,warehouseName,warehouseLocation,warehouseArea,warehouseAreaName,inv.org_id,latestSalesTime
         ORDER BY pd.sku_no
     </select>
 </mapper>
