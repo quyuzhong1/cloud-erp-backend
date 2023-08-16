@@ -1,7 +1,9 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
+import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.wms.enums.StocktakingTypeEnum;
 
 import java.util.List;
 
@@ -43,4 +45,12 @@ public interface StocktakingPlanDetailService extends SuperService<StocktakingPl
      * @return
      */
     Boolean removeByMainId(String mainId);
+
+    /**
+     * 根据主表id和盘点类型查询明细
+     * @param mainId
+     * @param type
+     * @return
+     */
+    List<StocktakingPlanDetailDTO.ViewDTO> listByMainIdAndType(String mainId, StocktakingTypeEnum type);
 }

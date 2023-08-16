@@ -51,6 +51,11 @@ public class StocktakingPlanDetailDTO implements Serializable {
         private String warehouseName;
 
         /**
+         * 仓库类型
+         */
+        private String warehouseTypeName;
+
+        /**
         * 仓库区域
         */
         private String warehouseArea;
@@ -71,6 +76,11 @@ public class StocktakingPlanDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
         * 组织id
         */
         private String orgId;
@@ -80,6 +90,15 @@ public class StocktakingPlanDetailDTO implements Serializable {
         */
         private String orgName;
 
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+
+        /**
+         * 冻结库存
+         */
+        private Integer frozenQty;
 
     }
 
