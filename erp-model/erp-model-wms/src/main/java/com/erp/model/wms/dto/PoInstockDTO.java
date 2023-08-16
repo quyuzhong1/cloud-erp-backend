@@ -750,4 +750,98 @@ public class PoInstockDTO implements Serializable {
         private Integer instockQty;
 
     }
+
+    /**
+     * PDA:列表查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingView {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 入库单号
+         */
+        private String code;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 质检状态名
+         */
+        private String qcStatusName;
+
+        /**
+         * 产品数量
+         */
+        private Integer detailCount;
+
+        /**
+         * 产品信息
+         */
+        private List<PdaItemDTO> itemList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaItemDTO {
+        /**
+         * 明细id
+         */
+        private String id;
+        /**
+         * sku
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 实收数量
+         */
+        private Integer actualQty;
+    }
+
+    /**
+     * PDA:列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaSearchParamDTO extends SortDTO {
+        /**
+         * 审核状态集合
+         */
+        private List<String> approveStatusList;
+    }
 }
