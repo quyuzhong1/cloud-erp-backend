@@ -220,4 +220,13 @@ public interface SoReturnReceiveService extends SuperService<SoReturnReceiveEnti
      * @return java.lang.String
      **/
     String pdaAdd(SoReturnReceiveDTO.Add dto);
+
+    /**
+     * PDA:修改
+     * @Author Luo_WG
+     * @Date 2023/8/16 10:41
+     * @param dto
+     * @return java.lang.String
+     **/
+    String pdaUpdate(SoReturnReceiveDTO.Update dto);
 }

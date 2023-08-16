@@ -91,7 +91,7 @@ public class PdaSoReturnReceiveController extends BaseController {
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnReceive:update",
+            menuCode = "wms:pdaSoReturnReceive:update",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "id")
     public ApiResult update(@RequestBody @Validated SoReturnReceiveDTO.Update dto) {
