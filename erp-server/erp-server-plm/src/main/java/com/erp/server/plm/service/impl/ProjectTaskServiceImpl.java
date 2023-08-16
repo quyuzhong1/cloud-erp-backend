@@ -1787,12 +1787,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 String groupFlag = params.getGroupFlag();
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
-                if(planTimeMap.get("startTime")!=null){
+                if (planTimeMap.get("startTime") != null) {
                     params.setStartTime(planTimeMap.get("startTime").toInstant()
                             .atZone(ZoneId.systemDefault())
                             .toLocalDateTime());
                 }
-                if(planTimeMap.get("endTime")!=null){
+                if (planTimeMap.get("endTime") != null) {
                     params.setEndTime(planTimeMap.get("endTime").toInstant()
                             .atZone(ZoneId.systemDefault())
                             .toLocalDateTime());
@@ -1945,12 +1945,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setSearchCategory(TaskSearchCategoryEnum.TOMEPLANENDTIMETASKLIST.getCode());
-                if(planTimeMap.get("startTime")!=null){
+                if (planTimeMap.get("startTime") != null) {
                     params.setStartTime(planTimeMap.get("startTime").toInstant()
                             .atZone(ZoneId.systemDefault())
                             .toLocalDateTime());
                 }
-                if(planTimeMap.get("endTime")!=null){
+                if (planTimeMap.get("endTime") != null) {
                     params.setEndTime(planTimeMap.get("endTime").toInstant()
                             .atZone(ZoneId.systemDefault())
                             .toLocalDateTime());
@@ -2112,12 +2112,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setSearchCategory(TaskSearchCategoryEnum.TOMEWAITAUDITPLANENDTIMETASKLIST.getCode());
-                if(planTimeMap.get("startTime")!=null){
+                if (planTimeMap.get("startTime") != null) {
                     params.setStartTime(planTimeMap.get("startTime").toInstant()
                             .atZone(ZoneId.systemDefault())
                             .toLocalDateTime());
                 }
-                if(planTimeMap.get("endTime")!=null){
+                if (planTimeMap.get("endTime") != null) {
                     params.setEndTime(planTimeMap.get("endTime").toInstant()
                             .atZone(ZoneId.systemDefault())
                             .toLocalDateTime());
@@ -2668,12 +2668,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setSearchCategory(TaskSearchCategoryEnum.MYCREATEPLANENDTIMETASKLIST.getCode());
-                if(planTimeMap.get("startTime")!=null){
+                if (planTimeMap.get("startTime") != null) {
                     params.setStartTime(planTimeMap.get("startTime").toInstant()
                             .atZone(ZoneId.systemDefault())
                             .toLocalDateTime());
                 }
-                if(planTimeMap.get("endTime")!=null){
+                if (planTimeMap.get("endTime") != null) {
                     params.setEndTime(planTimeMap.get("endTime").toInstant()
                             .atZone(ZoneId.systemDefault())
                             .toLocalDateTime());
@@ -4042,6 +4042,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (CollectionUtils.isEmpty(taskList)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
+        String userName = commonService.getUserInfo().getUserName();
         Integer waitConfirm = TaskStateEnum.WAIT_CONFIRM.getCode();
         Integer approvalIng = TaskStateEnum.APPROVAL_ING.getCode();
         List<Integer> statusList = new ArrayList<>(2);
@@ -4051,6 +4052,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95190);
         }
+        //操作日志
+        List<SysLogEntity> sysLogEntityList = new LinkedList<>();
         //流程id 集合
         List<String> processIdList = taskList.stream().map(ProjectTaskEntity::getProcessId).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(processIdList)) {
@@ -4064,6 +4067,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     for (ProjectTaskEntity changeDoc : changeDocTaskList) {
                         changeDoc.setStatus(finishStatus);
                         changeDoc.setProcessId("");
+                        sysLogEntityList.add(new SysLogEntity().setContent(String.format("[%s]撤销一个任务[%s]", userName, changeDoc.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(changeDoc.getId()));
+
                     }
                     this.updateBatchById(changeDocTaskList);
                 }
@@ -4078,10 +4083,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                             task.setStatus(TaskStateEnum.ING.getCode());
                         }
                         task.setProcessId("");
+                        sysLogEntityList.add(new SysLogEntity().setContent(String.format("[%s]撤销一个任务[%s]", userName, task.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(task.getId()));
                     }
                     this.updateBatchById(otherTaskList);
                 }
             }
+
+            sysLogService.addSysLogByBatchSave(sysLogEntityList);
+
             return result;
         }
 
