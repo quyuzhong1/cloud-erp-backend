@@ -47,9 +47,8 @@ public class PdaSoReturnController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.scm.dto.PurchaseOrderDTO.ViewDTO>
      **/
     @GetMapping("/view")
-    public ApiResult<PurchaseOrderDTO.ViewDTO> view(@Param("id") String id) {
-       /* PurchaseOrderDTO.ViewDTO dto = purchaseOrderService.pdaView(id);
-        return success(dto);*/
-        return null;
+    public ApiResult<SoReturnDTO.View> view(@Param("id") String id) {
+        SoReturnDTO.View dto = soReturnService.pdaView(id);
+        return success(dto);
     }
 }
