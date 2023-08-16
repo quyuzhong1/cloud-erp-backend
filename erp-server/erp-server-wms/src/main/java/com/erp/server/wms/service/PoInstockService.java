@@ -255,4 +255,13 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * @return
      */
     List<PoInstockDTO.SupplierInstockInfoDTO> getInstockInfoBySupplierIds(PoInstockDTO.SupplierInstockParamDTO dto);
+
+    /**
+     * 列表查询
+     * @Author Luo_WG
+     * @Date 2023/8/16 14:52
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.PoInstockDTO.PdaListDTO>
+     **/
+    PagingVO<PoInstockDTO.PdaPagingView> PdaPaging(PagingDTO<PoInstockDTO.PdaSearchParamDTO> dto);
 }
