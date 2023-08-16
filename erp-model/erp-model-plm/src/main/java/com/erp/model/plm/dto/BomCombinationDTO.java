@@ -81,11 +81,11 @@ public class BomCombinationDTO implements Serializable {
         /**
          * 实际成本
          */
-        private String actualTaxCost;
+        private BigDecimal actualTaxCost;
         /**
          * 目标成本
          */
-        private String targetTaxCost;
+        private BigDecimal targetTaxCost;
     }
 
 
@@ -136,7 +136,7 @@ public class BomCombinationDTO implements Serializable {
          */
         @NotEmpty(message = "产品信息不能为空")
         @Valid
-        private BomCombinationDetailDTO.AddDTO addDTO;
+        private List<BomCombinationDetailDTO.AddDTO> detailList;
     }
 
     @Data
@@ -153,7 +153,7 @@ public class BomCombinationDTO implements Serializable {
          */
         @NotEmpty(message = "产品信息不能为空")
         @Valid
-        private BomCombinationDetailDTO.UpdateDTO updateDTO;
+        private List<BomCombinationDetailDTO.UpdateDTO> detailList;
     }
 
 
@@ -169,6 +169,6 @@ public class BomCombinationDTO implements Serializable {
         /**
          * 明细
          */
-        private BomCombinationDetailDTO.ViewDTO viewDTO;
+        private List<BomCombinationDetailDTO.ViewDTO> detailList;
     }
 }
