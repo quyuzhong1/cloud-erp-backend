@@ -9,6 +9,7 @@ import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 
@@ -23,6 +24,7 @@ import lombok.experimental.Accessors;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
+@NoArgsConstructor
 @TableName("stocktaking_plan_detail")
 public class StocktakingPlanDetailEntity extends BaseEntity<StocktakingPlanDetailEntity> {
 

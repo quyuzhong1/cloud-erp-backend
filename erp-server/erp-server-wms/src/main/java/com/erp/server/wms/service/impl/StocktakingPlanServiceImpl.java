@@ -252,7 +252,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        startDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_PLAN.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(commonService.getUserInfo().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -292,7 +292,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         StocktakingPlanEntity entity = getById(id);
         // 审核中的数据允许审核
-        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 调用流程审核
@@ -314,7 +314,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         LoginUser userInfo = commonService.getUserInfo();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        approveDTO.setBusinessKey(SourceTypeEnum.PURCHASE_ORDER.getCode());
+        approveDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_PLAN.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -325,7 +325,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
             throw new ServiceException(ApiError.ERROR_94006);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
-        if (ObjectUtils.isEmpty(data.getIsExistProcess()) || data.getIsExistProcess()) {
+        if (ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
         }
