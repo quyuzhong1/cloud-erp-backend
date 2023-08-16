@@ -1341,6 +1341,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 throw new ServiceException(ApiError.ERROR_99015);
             }
 
+            addDTO.setBillDate(LocalDate.now());
             addDTO.setSourceType(qcBill);
             addDTO.setSourceId(sourceId);
             //退货详情
