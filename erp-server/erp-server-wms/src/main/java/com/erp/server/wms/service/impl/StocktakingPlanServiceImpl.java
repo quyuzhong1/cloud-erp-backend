@@ -26,17 +26,23 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
+import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.StocktakingPlanMapper;
+import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -51,6 +57,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.rtfparserkit.rtf.Command.list;
+
 /**
  * <p>
  * 盘点计划表 服务实现类
@@ -74,6 +83,12 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     private WorkflowFeign workflowFeign;
     @Resource
     private StocktakingTaskService stocktakingTaskService;
+    @Resource
+    private WarehouseService warehouseService;
+    @Resource
+    private DictBasicService dictBasicService;
+    @Resource
+    private ProductDetailService productDetailService;
 
 
     @Override
@@ -417,7 +432,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // 数据填充处理
         fillOne(data);
         // 查询明细数据
-        List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(id);
+        List<StocktakingPlanDetailDTO.ViewDTO> detailEntityList = stocktakingPlanDetailService.listByMainIdAndType(id,stocktakingPlanEntity.getType());
         if (CollUtil.isNotEmpty(detailEntityList)) {
             List<StocktakingPlanDetailDTO.ViewDTO> detailDTOList = BeanUtil.copyToList(detailEntityList, StocktakingPlanDetailDTO.ViewDTO.class);
             data.setDetailList(detailDTOList);

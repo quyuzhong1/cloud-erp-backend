@@ -1,8 +1,12 @@
 package com.erp.server.wms.mapper;
+import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import com.erp.model.wms.enums.StocktakingTypeEnum;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 
 /**
@@ -17,4 +21,11 @@ import org.apache.ibatis.annotations.Mapper;
 public interface StocktakingPlanDetailMapper extends BaseMapper<StocktakingPlanDetailEntity> {
 
 
+    /**
+     * 盘点计划明细
+     * @param mainId
+     * @param type
+     * @return
+     */
+    List<StocktakingPlanDetailDTO.ViewDTO> listByMainIdAndType(String mainId, StocktakingTypeEnum type);
 }

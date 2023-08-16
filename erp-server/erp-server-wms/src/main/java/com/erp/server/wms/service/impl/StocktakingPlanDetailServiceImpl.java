@@ -4,8 +4,10 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
+import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
+import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.StocktakingPlanDetailMapper;
 import com.erp.server.wms.service.StocktakingPlanDetailService;
@@ -100,5 +102,10 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
     public Boolean removeByMainId(String mainId) {
         lambdaUpdate().eq(StocktakingPlanDetailEntity::getMainId, mainId).remove();
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<StocktakingPlanDetailDTO.ViewDTO> listByMainIdAndType(String mainId, StocktakingTypeEnum type) {
+        return baseMapper.listByMainIdAndType(mainId, type);
     }
 }

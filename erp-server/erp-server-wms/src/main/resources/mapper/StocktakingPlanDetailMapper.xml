@@ -36,6 +36,30 @@
         is_deleted,
         main_id, warehouse_id, warehouse_name, warehouse_area, warehouse_location, sku_id, sku_no, org_id, org_name
     </sql>
+    <select id="listByMainIdAndType" resultType="com.erp.model.wms.dto.StocktakingPlanDetailDTO$ViewDTO">
+        SELECT
+            spd.id,
+            spd.main_id,
+            spd.warehouse_id,
+            spd.warehouse_name,
+            spd.warehouse_area,
+            spd.warehouse_location,
+            spd.sku_id,
+            spd.sku_no,
+            spd.org_id,
+            spd.org_name,
+            dbt."name" as warehouseTypeName,
+            pdt."name" as productName,
+            SUM(CASE WHEN inv.dict_inventory_status ='usable' THEN inv.qty ELSE 0 END) as usableQty,
+            SUM(CASE WHEN inv.dict_inventory_status ='frozen' THEN inv.qty ELSE 0 END) as frozenQty
+        from stocktaking_plan_detail as spd
+                 LEFT JOIN warehouse wt on wt.id = spd.warehouse_id and wt.is_deleted = false
+                 LEFT JOIN dict_basic dbt on wt.type_id = dbt.id and dbt.is_deleted =false
+                 LEFT JOIN product_detail pdt on pdt.id = spd.sku_id and pdt.is_deleted = false
+                 LEFT JOIN inventory inv on inv.org_id = spd.org_id and inv.warehouse_id = spd.warehouse_id and inv.warehouse_location = spd.warehouse_area and inv.sku_id = spd.sku_id
+        where spd.is_deleted = false
+        GROUP BY spd.id,spd.main_id,spd.warehouse_id,spd.warehouse_name,spd.warehouse_area,spd.warehouse_location,spd.sku_id,spd.sku_no,spd.org_id,spd.org_name,warehouseTypeName, productName
+    </select>
 
 
 </mapper>
