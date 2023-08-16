@@ -1,0 +1,174 @@
+package com.erp.model.plm.dto;
+
+import com.common.business.dto.base.SortDTO;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * @author Will
+ * @version 1.0
+ * @description: 组合产品DTO
+ * @date 2023/8/16 9:40
+ */
+@Data
+@NoArgsConstructor
+public class BomCombinationDTO implements Serializable {
+
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         * 主表id
+         */
+        private String id;
+        /**
+         * 组合产品编码
+         */
+        private String parentSkuNo;
+        /**
+         * 组合产品名称
+         */
+        private String name;
+        /**
+         * 数量
+         */
+        private Integer qty;
+        /**
+         * 产品信息（子sku合并展示）
+         */
+        private String childSkuNos;
+        /**
+         * 组合成本
+         */
+        private BigDecimal childSkuCost;
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
+        /**
+         * 子级SKu
+         */
+        private List<ChildDTO> childList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ChildDTO {
+        /**
+         * sku编号
+         */
+        private String childSkuNo;
+        /**
+         * 用量
+         */
+        private String qty;
+        /**
+         * 实际成本
+         */
+        private String actualTaxCost;
+        /**
+         * 目标成本
+         */
+        private String targetTaxCost;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SearchParamDTO extends SortDTO {
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 组合产品名称
+         */
+        private String name;
+        /**
+         * 更新人id集合
+         */
+        private List<String> updateUserIdList;
+        /**
+         * 更新时间集合
+         */
+        private List<LocalDate> updateTimeList;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+        /**
+         * 组合产品编码
+         */
+        @NotBlank(message = "组合产品编码不能为空")
+        private String skuNo;
+        /**
+         * 组合产品名称
+         */
+        @NotBlank(message = "组合产品名称不能为空")
+        private String name;
+
+    }
+
+        @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO{
+
+        /**
+         * 明细
+         */
+        @NotEmpty(message = "产品信息不能为空")
+        @Valid
+        private BomCombinationDetailDTO.AddDTO addDTO;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO{
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 明细
+         */
+        @NotEmpty(message = "产品信息不能为空")
+        @Valid
+        private BomCombinationDetailDTO.UpdateDTO updateDTO;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO extends CommonDTO{
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 明细
+         */
+        private BomCombinationDetailDTO.ViewDTO viewDTO;
+    }
+}
