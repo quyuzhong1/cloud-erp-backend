@@ -397,22 +397,19 @@ public class StocktakingPlanDTO implements Serializable {
         /**
         * 盘点方式
         */
-        @NotBlank(message = "盘点方式不能为空")
-        @Size(max = 50,message = "盘点方式最大长度不能超过50位")
+        @NotNull(message = "盘点方式不能为空")
         private StocktakingModeEnum mode;
 
         /**
         * 分单规则
         */
-        @NotBlank(message = "分单规则不能为空")
-        @Size(max = 50,message = "分单规则最大长度不能超过50位")
+        @NotNull(message = "分单规则不能为空")
         private SeparateRuleEnum separateRule;
 
         /**
         * 盘点类型
         */
-        @NotBlank(message = "盘点类型不能为空")
-        @Size(max = 50,message = "盘点类型最大长度不能超过50位")
+        @NotNull(message = "盘点类型不能为空")
         private StocktakingTypeEnum type;
 
         /**
