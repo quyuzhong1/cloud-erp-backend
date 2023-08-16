@@ -10,6 +10,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.server.wms.service.SoReturnReceiveService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -67,5 +68,34 @@ public class PdaSoReturnReceiveController extends BaseController {
         return success(pdaPoReceiveCount);
     }
 
+    /**
+     * 新增
+     * @Author Luo_WG
+     * @Date 2023/4/6 18:46
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/add")
+    public ApiResult add(@RequestBody @Validated SoReturnReceiveDTO.Add dto) {
+        String id = soReturnReceiveService.pdaAdd(dto);
+        return StringUtils.isNotBlank(id) == true ? success() : failure();
+    }
 
+    /**
+     * 修改
+     * @Author Luo_WG
+     * @Date 2023/4/6 18:46
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnReceive:update",
+            serviceClass = SoReturnReceiveService.class,
+            keyIdName = "id")
+    public ApiResult update(@RequestBody @Validated SoReturnReceiveDTO.Update dto) {
+        Boolean flag = soReturnReceiveService.update(dto);
+        return flag == true ? success() : failure();
+    }
 }

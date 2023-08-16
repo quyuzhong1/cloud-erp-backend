@@ -135,6 +135,7 @@ public enum ApiError implements Serializable {
     ERROR_9046(9046, "字段编号不正确"),
     SCHEME_NOT_EXIST(9047, "方案不存在"),
     SCHEME_NAME_EXIST(9048, "查询方案[{}]已存在"),
+    ERROR_CURRENCY_NOT_EXIST(9048, "币别[{}]不存在"),
     ERROR_SERIAL_NUMBER_EXCEED(9049, "流水号已经超出999"),
 
 
@@ -600,7 +601,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_WH_REQUIRED(98105,"采购订单【{}】交货仓库不能为空"),
     ERROR_PURCHASE_ORG_REQUIRED(98105,"采购订单【{}】收料组织不能为空"),
     ERROR_PURCHASE_DETAIL_DATE(98105,"采购订单【{}】SKU【{}】预计交货日期不能为空"),
-
+    ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST(98106,"sku在采购单中未找到"),
 
 
 
@@ -786,8 +787,8 @@ public enum ApiError implements Serializable {
     ERROR_92058(92058,"店铺不存在"),
     ERROR_92059(92059,"要货日期必须大于单据日期"),
     ERROR_KINGDEE_CODE_NOT_EXIST(92059,"金蝶单号不存在"),
-    ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在采购单中未找到"),
 
+    ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),

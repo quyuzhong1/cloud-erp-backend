@@ -15,6 +15,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
@@ -60,6 +61,7 @@ import org.springframework.util.ObjectUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -784,7 +786,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<String> poIds = soReturnDetailService.listBySkuNo(skuNo);
         List<SoReturnEntity> entityList = this.listByIds(poIds);
         List<SoReturnEntity> soReturnEntityList = entityList.stream().filter(req -> InvalidStatusEnum.NOT_VOIDED.equals(req.getInvalidStatus()) && ApproveStatusEnum.APPROVE.equals(req.getApproveStatus())).collect(Collectors.toList());
-        List<SoReturnDetailEntity> returnDetailEntityList = soReturnDetailService.listByIds(poIds);
         List<SoReturnDTO.PdaSoReturn> list = new ArrayList<>();
         for (SoReturnEntity entity : soReturnEntityList) {
             SoReturnDTO.PdaSoReturn soReturn = new SoReturnDTO.PdaSoReturn();
@@ -797,5 +798,78 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         }
         list.sort(Comparator.comparing(SoReturnDTO.PdaSoReturn::getSoCode).reversed());
         return list;
+    }
+
+    @Override
+    public SoReturnDTO.View pdaView(String id) {
+        SoReturnDTO.View viewDTO = new SoReturnDTO.View();
+        SoReturnEntity soReturnEntity = this.getById(id);
+        //创库保存详情表的集合
+        List<SoReturnDetailDTO.View> detailViewDTOS = new ArrayList<>();
+        List<SoReturnDetailEntity> detailEntityList = soReturnDetailService.listDetailByMainId(id);
+        if (CollectionUtils.isEmpty(detailEntityList)) {
+            throw new ServiceException(ApiError.ERROR_92023);
+        }
+        SoInfoEntity soInfoEntity = soInfoService.getById(soReturnEntity.getSourceId());
+        BeanMapperUtils.copy(soInfoEntity, viewDTO);
+        BeanMapperUtils.copy(soReturnEntity, viewDTO);
+        //获取sku的id集合
+        List<String> skuIdList = detailEntityList.stream().map(SoReturnDetailEntity::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);
+        //获取销售单详情表id集合
+        List<String> orderDetailIds = detailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        //获取销售单详情信息
+        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(orderDetailIds);
+        viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
+        viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
+        List<CustomerInfoEntity> customerInfoEntities = customerInfoService.list();
+        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+        soReturnEntity.setCustomerName(customerInfoEntity.getName());
+        List<String> soIds = soDetailEntities.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
+        CustomerAddressEntity customerAddressEntity = customerAddressService.getById(soInfoEntity.getReceiveAddressId());
+        if (ObjectUtil.isNotEmpty(customerAddressEntity)) {
+            viewDTO.setReceiveAddress(customerAddressEntity.getAddress());
+        }
+        for (SoReturnDetailEntity detailEntity : detailEntityList) {
+            SoReturnDetailDTO.View detailView = new SoReturnDetailDTO.View();
+            BeanMapperUtils.copy(detailEntity, detailView);
+            ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(detailEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            detailView.setProductName(productDetailEntity.getName());
+            detailView.setSalesQty(soDetailEntity.getQty());
+            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(soDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            detailView.setDeliveryQty(actualQty);
+            detailView.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);
+            detailView.setSalesAmount(soDetailEntity.getAmount());
+            detailView.setCurrency(soDetailEntity.getCurrency());
+            detailView.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
+            detailView.setReturnReasonDictName(ReturnReasonEnum.getName(detailEntity.getReturnReasonDict()));
+            detailViewDTOS.add(detailView);
+        }
+
+        Map<String, SoReturnDetailDTO.View> collect = detailViewDTOS.stream().collect(Collectors.groupingBy(n -> n.getSkuNo(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+            int salesQty = m.stream().mapToInt(SoReturnDetailDTO.View::getSalesQty).sum();
+            int returnQty = m.stream().mapToInt(SoReturnDetailDTO.View::getReturnQty).sum();
+            int deliveryQty = m.stream().mapToInt(SoReturnDetailDTO.View::getDeliveryQty).sum();
+            int unDeliveryQty = m.stream().mapToInt(SoReturnDetailDTO.View::getUnDeliveryQty).sum();
+            String sodId = m.stream().max(Comparator.comparing(SoReturnDetailDTO.View::getId)).map(SoReturnDetailDTO.View::getId).get();
+            SoReturnDetailDTO.View view = new SoReturnDetailDTO.View();
+            BeanMapper.copy(m.get(MathUtil.ZERO), view);
+            view.setId(sodId);
+            view.setSalesQty(salesQty);
+            view.setReturnQty(returnQty);
+            view.setDeliveryQty(deliveryQty);
+            view.setUnDeliveryQty(unDeliveryQty);
+            return view;
+        })));
+
+        List<SoReturnDetailDTO.View> viewList = new ArrayList<>();
+        for (Map.Entry<String, SoReturnDetailDTO.View> stringUpdateDTOEntry : collect.entrySet()) {
+            viewList.add(stringUpdateDTOEntry.getValue());
+        }
+        viewDTO.setDetailList(viewList);
+        return viewDTO;
     }
 }
