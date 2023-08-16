@@ -2,14 +2,21 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
+import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.dto.TransferInDTO;
+import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
+import com.erp.server.wms.service.StocktakingPlanService;
+import com.erp.server.wms.service.StocktakingTaskDetailService;
 import com.erp.server.wms.service.StocktakingTaskService;
 import com.erp.server.wms.service.TransferInService;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +47,12 @@ public class StocktakingTaskController extends BaseController {
 
     @Resource
     private StocktakingTaskService stocktakingTaskService;
+    @Resource
+    private RedisUtil redisUtil;
+    @Resource
+    private StocktakingTaskDetailService stocktakingTaskDetailService;
+    @Resource
+    private StocktakingPlanService stocktakingPlanService;
 
     /**
      * 获取 tab列表
@@ -141,12 +154,19 @@ public class StocktakingTaskController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         for (String id : ids) {
+            StocktakingTaskEntity entity = stocktakingTaskService.getById(id);
             BatchResultDTO submit;
             try {
                 submit=stocktakingTaskService.approve(id,new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                // 删除缓存
+                List<StocktakingTaskDetailDTO.ViewDTO> detailList = stocktakingTaskDetailService.listByMainId(id);
+                detailList.forEach(detail -> {
+                    String key = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getCode(), "*",
+                            detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*");
+                    redisUtil.del(key);
+                });
             }catch (Exception e){
                 log.error("盘点任务 审核失败>>>>{}",e);
-                StocktakingTaskEntity entity = stocktakingTaskService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, "盘点任务单不存在, 提交失败");
                     resultDTOS.add(submit);
