@@ -364,7 +364,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         }
 
         //赠品无需报价,默认人民币
-        if (ObjectUtils.isNotEmpty(subEntity.getIsGift()) && subEntity.getIsGift()) {
+        if (ObjectUtils.isNotEmpty(subEntity) && ObjectUtils.isNotEmpty(subEntity.getIsGift()) && subEntity.getIsGift()) {
             entity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             entity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
             entity.setPrice(BigDecimal.ZERO);
