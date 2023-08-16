@@ -1070,6 +1070,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             String orgId = entityList.stream().filter(r -> r.getPurchaseOrderId().equals(purchaseReturnOrderDTO.getPurchaseOrderId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getReceiveOrgId())).orElse("");
             addDTO.setReturnOrgId(orgId);
+            addDTO.setBillDate(LocalDate.now());
             addDTO.setSourceType(type);
             addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
             addDTO.setPurchaseOrderId(purchaseOrderEntity.getPurchaseOrderId());
