@@ -849,7 +849,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             detailViewDTOS.add(detailView);
         }
 
-        Map<String, SoReturnDetailDTO.View> collect = detailViewDTOS.stream().collect(Collectors.groupingBy(n -> n.getSkuNo(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+        /*Map<String, SoReturnDetailDTO.View> collect = detailViewDTOS.stream().collect(Collectors.groupingBy(n -> n.getSkuNo(), Collectors.collectingAndThen(Collectors.toList(), m -> {
             int salesQty = m.stream().mapToInt(SoReturnDetailDTO.View::getSalesQty).sum();
             int returnQty = m.stream().mapToInt(SoReturnDetailDTO.View::getReturnQty).sum();
             int deliveryQty = m.stream().mapToInt(SoReturnDetailDTO.View::getDeliveryQty).sum();
@@ -868,8 +868,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<SoReturnDetailDTO.View> viewList = new ArrayList<>();
         for (Map.Entry<String, SoReturnDetailDTO.View> stringUpdateDTOEntry : collect.entrySet()) {
             viewList.add(stringUpdateDTOEntry.getValue());
-        }
-        viewDTO.setDetailList(viewList);
+        }*/
+        viewDTO.setDetailList(detailViewDTOS);
         return viewDTO;
     }
 }

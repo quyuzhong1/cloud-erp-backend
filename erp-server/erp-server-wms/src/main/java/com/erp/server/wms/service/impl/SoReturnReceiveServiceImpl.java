@@ -957,9 +957,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         for (SoReturnReceiveDetailDTO.Add addDTO : warehouseReceiveDetailList) {
             SoReturnDetailEntity detailEntity = returnDetailEntityList.stream().filter(req -> req.getId().equals(addDTO.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST);
+                throw new ServiceException(ApiError.ERROR_SO_RETURN_DETAIL_SKU_NOT_EXIST);
             }
-            //如果收货数量大于采购数量，可能是重复sku合单
+            //如果收货数量大于退货数量，可能是重复sku合单
             if (addDTO.getReceiveQty() > detailEntity.getPurchaseQty()) {
                 List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailEntityList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
                 //校验sku是否有重复，重复需要拆单
@@ -990,5 +990,10 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             }
         }*/
         return this.add(dto);
+    }
+
+    @Override
+    public String pdaUpdate(SoReturnReceiveDTO.Update dto) {
+        return null;
     }
 }
