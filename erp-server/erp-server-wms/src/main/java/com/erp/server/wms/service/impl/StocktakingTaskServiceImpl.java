@@ -39,6 +39,7 @@ import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +58,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -340,81 +342,109 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(String id, ApproveOneDTO dto) {
-        List<String> ids = Arrays.asList(id);
-        List<StocktakingTaskEntity> taskList = this.listByIds(ids);
-        String code = CollectionUtils.isNotEmpty(taskList) ? taskList.get(0).getCode() : "";
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+        if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StringUtils.isEmpty(dto.getComment())) {
+            // 审核不通过必须填写审核意见
+            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
+        }
+        StocktakingTaskEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException("未找到盘点任务单");
+        }
         ApproveStatusEnum ingStatus = ApproveStatusEnum.APPROVE_ING;
-        long count = taskList.stream().filter(s -> !ingStatus.equals(s.getApproveStatus())).count();
-        if (count > 0) {
+        // 审核中的数据允许审核
+        if (!Objects.equals(ingStatus, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-        //意见
-        String comment = dto.getComment();
-        //审核类型
-        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
-        String approveUserId = commonService.getUserInfo().getUid();
-        for (StocktakingTaskEntity taskEntity : taskList) {
-            this.handleApproveProcess(taskEntity, comment, approveType, approveUserId);
-        }
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
 
-        return BatchResultDTO.success(code, OperationTypeEnum.approveStatus(approveStatus));
+        // 调用流程审核
+        approveProcess(entity, dto);
+
+        //添加日志
+        List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
+        String comment = dto.getComment();
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个盘点任务单", approveType.getName()).concat("【%s】").concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.STOCKTAKING_TASK.getCode(), pairList, "审核操作");
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
+        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
     /**
-     * 处理流程
+     * 调用审核流程
      *
-     * @param taskEntity
-     * @param comment
-     * @param approveType
-     * @param approveUserId
-     * @return void
-     * @author yl
-     * @date 2023-08-08 17:22
+     * @param entity
+     * @param dto
      */
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public void handleApproveProcess(StocktakingTaskEntity taskEntity, String comment, ApproveTypeEnum approveType, String approveUserId) {
-        ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
+    public void approveProcess(StocktakingTaskEntity entity, ApproveOneDTO dto) {
+        LoginUser userInfo = commonService.getUserInfo();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
-        approveDTO.setBusinessId(taskEntity.getId());
+        approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_TASK.getCode());
-        approveDTO.setApproveType(approveType);
-        approveDTO.setComment(comment);
-        approveDTO.setUserId(approveUserId);
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(taskEntity));
-        resultList.add(approveDTO);
-        ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
-        //审核通过
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
-        //是否通过
-        Boolean isPass = Boolean.TRUE;
-        //完成
-        StocktakingStatusEnum billStatus = StocktakingStatusEnum.COMPLETED;
-        if (listApiResult.isSuccess()) {
-            if (ApproveType.REJECT.equals(approveType.getStatus())) {
-                //变待提交 状态改为复盘中
-                approveStatus = ApproveStatusEnum.REJECT;
-                billStatus = StocktakingStatusEnum.RECOUNT;
-                isPass = Boolean.FALSE;
-            }
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+        Integer code = approveResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
         }
-        List<StocktakingTaskEntity> list = new ArrayList<>(1);
-        list.add(taskEntity);
-        Boolean result = this.updateStatus(list, approveStatus, billStatus);
-        if (result) {
-            //当审核通过 自动生成盘盈盘亏单  检查所有该计划下的任务是否完成 完成就更盘点计划的状态
-            if (isPass) {
-                stocktakingProfitLossService.autoCreateBill(taskEntity);
-            }
-
-            //添加日志
-            List<Pair<String, String>> pairList = list.stream().
-                    map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个盘点任务单", approveType.getName()).concat("【%s】").concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.STOCKTAKING_TASK.getCode(), pairList, "审核操作");
+        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+        if (Objects.isNull(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
         }
 
     }
+
+
+    /**
+     * 审核后的操作
+     *
+     * @param dto
+     * @param entity
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean approveEnd(ApproveOneDTO dto, StocktakingTaskEntity entity) {
+        if (Objects.isNull(entity)) {
+            return Boolean.FALSE;
+        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        //完成
+        StocktakingStatusEnum billStatus = StocktakingStatusEnum.COMPLETED;
+        Boolean isPass = Boolean.TRUE;
+        if (ApproveType.REJECT.equals(dto.getType())) {
+            //变待提交 状态改为复盘中
+            approveStatus = ApproveStatusEnum.REJECT;
+            billStatus = StocktakingStatusEnum.RECOUNT;
+            isPass = Boolean.FALSE;
+        }
+        Boolean result = updateForApprove(entity.getId(), approveStatus, billStatus);
+        if (result && isPass) {
+            stocktakingProfitLossService.autoCreateBill(entity);
+        }
+        return result;
+    }
+
+    /**
+     * 更改审核信息
+     *
+     * @param id
+     * @param approveStatus
+     * @return
+     */
+    public Boolean updateForApprove(String id, ApproveStatusEnum approveStatus, StocktakingStatusEnum billStatus) {
+        //当前登录人
+        LoginUser userInfo = commonService.getUserInfo();
+        return this.lambdaUpdate().eq(StocktakingTaskEntity::getId, id)
+                .set(StocktakingTaskEntity::getApproveUserId, userInfo.getUid())
+                .set(StocktakingTaskEntity::getApproveUserName, userInfo.getUserName())
+                .set(StocktakingTaskEntity::getApproveStatus, approveStatus)
+                .set(StocktakingTaskEntity::getStatus, billStatus)
+                .set(StocktakingTaskEntity::getApproveTime, LocalDateTime.now())
+                .update(new StocktakingTaskEntity());
+
+    }
+
 
     /**
      * 撤销流程
@@ -480,11 +510,6 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         if (CollectionUtils.isEmpty(taskList)) {
             throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
         }
-//        ApproveStatusEnum waitSubmit = ApproveStatusEnum.WAIT_SUBMIT;
-//        long count = taskList.stream().filter(t -> !waitSubmit.equals(t.getApproveStatus())).count();
-//        if (count > 0) {
-//            throw new ServiceException(ApiError.ERROR_99089);
-//        }
         Boolean result = stocktakingTaskUserService.assignUser(dto.getIds(), dto.getUserIdList());
         return result;
     }
@@ -569,7 +594,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Transactional(rollbackFor = Exception.class)
     public Boolean removeBySourceId(String sourceId) {
         List<StocktakingTaskEntity> taskEntityList = listBySourceId(sourceId);
-        if(CollUtil.isEmpty(taskEntityList)){
+        if (CollUtil.isEmpty(taskEntityList)) {
             return Boolean.TRUE;
         }
         List<String> mainIds = taskEntityList.stream().map(StocktakingTaskEntity::getId).collect(Collectors.toList());
@@ -582,7 +607,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean createTaskList(StocktakingPlanEntity entity,List<StocktakingPlanDetailEntity> detailEntityList) {
+    public Boolean createTaskList(StocktakingPlanEntity entity, List<StocktakingPlanDetailEntity> detailEntityList) {
         // 1. 查询所有需要盘点的库存记录
         List<InventoryEntity> inventoryList = inventoryService.listByStocktakingType(entity, detailEntityList);
         if (CollUtil.isEmpty(inventoryList)) {
@@ -598,11 +623,12 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         // 3. 对库存记录进行分组，按照分单规则进行分组
         SeparateRuleEnum separateRule = entity.getSeparateRule();
         Map<String, String> locationAreaMap = new HashMap<>();
-        if(ObjectUtil.equals(separateRule, SeparateRuleEnum.WAREHOUSE_AREA)){
+        if (ObjectUtil.equals(separateRule, SeparateRuleEnum.WAREHOUSE_AREA)) {
             // 查询仓位对应的库区
             locationAreaMap = warehouseLocationService.locationAreaMap();
         }
-        String format = SeparateRuleEnum.getFormatStr(separateRule);;
+        String format = SeparateRuleEnum.getFormatStr(separateRule);
+        ;
         Map<String, String> finalLocationAreaMap = locationAreaMap;
         Map<String, List<InventoryEntity>> inventoryMap = inventoryList
                 .stream()
@@ -610,11 +636,11 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                     // 按照仓库区域分单时，仓位需要转换为库区
                     String groupKey = getGroupKey(separateRule, format, finalLocationAreaMap, item);
                     return groupKey;
-        }));
+                }));
         // 4. 根据分组结果构建数据并保存盘点任务
         inventoryMap.keySet().parallelStream().forEach(key -> {
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
-            StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity,code);
+            StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code);
             save(insertTask);
             List<InventoryEntity> inventoryEntityList = inventoryMap.get(key);
             // 根据组织+仓库+仓位+skuId 进行分组 获取不同库存状态的库存记录
@@ -623,7 +649,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             List<StocktakingTaskDetailEntity> insertDetailList = inventoryStatusMap.keySet().stream().map(item -> {
                 List<InventoryEntity> inventoryEntities = inventoryStatusMap.get(item);
                 WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(inventoryEntities.get(0).getWarehouseId());
-                String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() :"";
+                String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : "";
                 StocktakingTaskDetailEntity detailEntity = new StocktakingTaskDetailEntity(inventoryEntities, insertTask.getId(), warehouseName);
                 return detailEntity;
             }).collect(Collectors.toList());
@@ -637,7 +663,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         if (ObjectUtil.equals(separateRule, SeparateRuleEnum.WAREHOUSE_AREA)) {
             location = ObjectUtil.isNull(finalLocationAreaMap.get(item.getWarehouseLocation())) ? "" : finalLocationAreaMap.get(item.getWarehouseLocation());
         }
-        String groupKey =  StrUtil.format(format, item.getWarehouseId(), location);
+        String groupKey = StrUtil.format(format, item.getWarehouseId(), location);
         return groupKey;
     }
 }

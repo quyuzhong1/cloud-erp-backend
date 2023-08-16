@@ -11,6 +11,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -56,6 +57,25 @@ public class StocktakingTaskEntity extends BaseEntity<StocktakingTaskEntity> {
      */
     @TableField("approve_status")
     private ApproveStatusEnum approveStatus;
+
+
+    /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
+
+    /**
+     * 审核人id
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
+
+    /**
+     * 审核人名
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
 
 
     public static final String CODE = "code";
