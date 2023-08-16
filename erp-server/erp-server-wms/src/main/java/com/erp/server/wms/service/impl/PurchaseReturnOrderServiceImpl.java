@@ -251,7 +251,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         }
         purchaseReturnOrderEntity.setReturnUserName(userDTO != null ? userDTO.getUserName() : "");
         purchaseReturnOrderEntity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
-        purchaseReturnOrderEntity.setBillDate(LocalDate.now());
+        purchaseReturnOrderEntity.setBillDate(dto.getBillDate());
         purchaseReturnOrderEntity.setReturnWarehouseName(warehouseEntity.getName());
 
         //保存主表信息
@@ -337,7 +337,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         }
         purchaseReturnOrderEntity.setReturnUserName(userDTO.getUserName());
         purchaseReturnOrderEntity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
-        purchaseReturnOrderEntity.setBillDate(LocalDate.now());
+        purchaseReturnOrderEntity.setBillDate(dto.getBillDate());
         purchaseReturnOrderEntity.setReturnWarehouseName(warehouseEntity.getName());
         //更新收货单主表信息
         this.updateById(purchaseReturnOrderEntity);
