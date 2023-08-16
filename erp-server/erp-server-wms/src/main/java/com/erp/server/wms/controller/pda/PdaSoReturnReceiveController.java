@@ -77,7 +77,7 @@ public class PdaSoReturnReceiveController extends BaseController {
      **/
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SoReturnReceiveDTO.Add dto) {
-        String id = soReturnReceiveService.pdaAdd(dto);
+        String id = soReturnReceiveService.add(dto);
         return StringUtils.isNotBlank(id) == true ? success() : failure();
     }
 
