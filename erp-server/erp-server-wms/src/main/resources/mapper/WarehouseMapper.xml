@@ -139,8 +139,8 @@
         type_id AS typeId ,
         disabled,
         org_id AS orgId,
-        kingdee_warehouse_code AS code,
-        FROM  warehouse  WHERE is_deleted=false
+        kingdee_warehouse_code AS code
+        FROM warehouse  WHERE is_deleted=false
         <if test="params.name !=null  and params.name!=''">
             AND  name LIKE concat('%', #{params.name} ,'%')
         </if>
@@ -180,8 +180,10 @@
         COALESCE(wl.code,'') as warehouseLocation,
         COALESCE(wlt.code,'') as warehouseArea,
         COALESCE(wlt."name",'') as warehouseAreaName,
+        SUM(CASE WHEN inv.dict_inventory_status ='usable' THEN inv.qty ELSE 0 END) as usableQty,
+        SUM(CASE WHEN inv.dict_inventory_status ='frozen' THEN inv.qty ELSE 0 END) as frozenQty,
         inv.org_id as orgId,
-        max(tf.trade_time) latestSalesTime
+        tf.trade_time as latestSalesTime
         FROM product_detail pd
         LEFT JOIN product_info pi on pd.product_id = pi."id"  and pi.is_deleted = false
         LEFT JOIN inventory inv on pd.id = inv.sku_id and inv.is_deleted = false

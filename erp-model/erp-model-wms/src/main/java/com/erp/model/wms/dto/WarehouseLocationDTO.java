@@ -167,7 +167,8 @@ public class WarehouseLocationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public class PagingViewDTO {
+    @AllArgsConstructor
+    public static class PagingViewDTO {
 
         /**
          * 仓位id
@@ -208,7 +209,7 @@ public class WarehouseLocationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public class PagingParamDTO {
+    public static class PagingParamDTO {
 
         /**
          * 仓库类型
