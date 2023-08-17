@@ -156,14 +156,6 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         return isMessageDTO;
     }
 
-    public static void main(String[] args) {
-        List<String> list = new ArrayList();
-        list.add("AAA");
-        list.add("BBB");
-        System.out.println(StringUtils.join(list,"/"));
-    }
-
-
     /**
      * 查询未读消息
      * @Author Luo_WG
