@@ -210,5 +210,5 @@ public interface SoReturnReceiveService extends SuperService<SoReturnReceiveEnti
      * @param dto
      * @return java.util.List<com.erp.model.wms.dto.SoReturnReceiveDTO.PdaPoReceiveCount>
      **/
-    List<SoReturnReceiveDTO.PdaPoReceiveCount> pdaListCount(PermissionsDTO dto);
+    List<SoReturnReceiveDTO.PdaSoReturnReceiveCount> pdaListCount(PermissionsDTO dto);
 }
