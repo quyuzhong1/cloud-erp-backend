@@ -63,13 +63,6 @@ public class PurchasePriceDetailDTO implements Serializable {
         private Integer maxQty;
 
         /**
-         * 币种
-         */
-        @NotBlank(message = "币种不能为空")
-        private String currency;
-
-
-        /**
          * 生效时间
          */
         @NotNull(message = "生效时间不能为空")

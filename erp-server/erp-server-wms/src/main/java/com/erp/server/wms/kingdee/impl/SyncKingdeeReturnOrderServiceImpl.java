@@ -16,13 +16,17 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeReturnOrderService;
@@ -68,6 +72,9 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
     @Resource
     private WarehouseService warehouseService;
 
+    @Resource
+    private KingdeeFeign kingdeeFeign;
+
     /**
      * 发送消息同步金蝶
      * @Author Luo_WG
@@ -81,6 +88,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         Map<String, Object> resultMap = new HashMap<>();
         if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
             resultMap.put("returnType", ReturnOrderSourceEnum.QC.getKingdeeCode());
+            return;
         } else {
             resultMap.put("returnType", ReturnOrderSourceEnum.OTHER.getKingdeeCode());
         }
@@ -121,12 +129,24 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
 
         //退货日期
         resultMap.put("billDate",entity.getBillDate());
-        // TODO 单据状态
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
+
+
         //采购员
-        resultMap.put("purchaseUserCode", findUserDTO.getCode());
-        //采购员
-        resultMap.put("purchaseUserName", findUserDTO.getUserName());
+        String purchaseUserId = entity.getPurchaseUserId();
+        if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
+            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+            findBusinessOperator.setOrgCode(returnOrgCode);
+            findBusinessOperator.setUserId(purchaseUserId);
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.CGY.getCode());
+            //获取员工业务信息
+            KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            //销售员
+            if (!Objects.isNull(kingSellerInfo)) {
+                resultMap.put("purchaseUserCode", kingSellerInfo.getKingdeePostCode());
+                resultMap.put("purchaseUserName", kingSellerInfo.getKingdeeUserName());
+            }
+        }
+
         //退货来源
         if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
             resultMap.put("sourceTypeName", ReturnOrderSourceEnum.QC.getCode());

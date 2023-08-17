@@ -240,9 +240,17 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public String saveOrUpdateProduct(ProductDTO dto) {
         //检查名字是否重复
         checkName(dto.getName(), dto.getId());
+
+        //检查spu是否存在
+        Boolean checkResult = productDetailService.checkSpuNo(dto.getSpuNo(), dto.getId());
+        //表示存在
+        if(checkResult){
+            throw new ServiceException("SPU已存在,不可重复创建");
+        }
         //根据id查询
         ProductInfoEntity oldEntity = this.getById(dto.getId());
         ProductInfoEntity entity = new ProductInfoEntity();
+        entity.setSpuNo(dto.getSpuNo());
         //负责人ids
         List<String> chargeIds = dto.getChargeIds();
         String chargeId = StringUtils.join(chargeIds, ",");
@@ -283,13 +291,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         entity.setChargeId(chargeId);
         entity.setChargeName(chargeName);
         entity.setIsFinishedProductDev(1);
-        //自动生成产品编号
-        if (ObjectUtils.isEmpty(entity.getId()) || (!entity.getCategoryId().equals(oldEntity.getCategoryId()))) {
-            String spuNo = sysCodeService.getSpuNo(categoryId);
-            entity.setSpuNo(spuNo);
-        }
         Boolean flag = this.saveOrUpdate(entity);
-
         //同步到SCM
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
         //同步到WMS
@@ -390,12 +392,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         dto.getProductIds().forEach(req -> {
             ProductInfoEntity productInfoEntity = this.getById(req);
-            //自动生成产品编号
-            if (!dto.getCategoryId().equals(productInfoEntity.getCategoryId())) {
-                String spuNo = sysCodeService.getSpuNo(category.getId());
-                productInfoEntity.setSpuNo(spuNo);
-            }
-
             productInfoEntity.setCategory(category.getName());
             productInfoEntity.setCategoryId(dto.getCategoryId());
             list.add(productInfoEntity);
@@ -1095,11 +1091,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public String updateSpec(ProductInfoDTO dto) {
         ProductInfoEntity productInfoEntity = new ProductInfoEntity();
         BeanMapper.copy(dto, productInfoEntity);
-        //自动生成产品编号
-        if (ObjectUtils.isEmpty(productInfoEntity.getId()) && StringUtils.isBlank(productInfoEntity.getSpuNo()) && !MathUtil.ONE.equals(dto.getIsNoSpecAdd())) {
-            String spuNo = sysCodeService.getSpuNo(productInfoEntity.getCategoryId());
-            productInfoEntity.setSpuNo(spuNo);
-        }
         this.saveOrUpdate(productInfoEntity);
         //同步到SCM
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
@@ -1626,11 +1617,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 productInfoEntity.setUpdateUserId(loginUser.getUid());
                 productInfoEntity.setUpdateUserName(loginUser.getUserName());
             }
-            //自动生成产品编号
-            if (ObjectUtils.isEmpty(productInfoEntity.getId()) && StringUtils.isBlank(productInfoEntity.getSpuNo())) {
-                String spuNo = sysCodeService.getSpuNo(productInfoEntity.getCategoryId());
-                productInfoEntity.setSpuNo(spuNo);
-            }
+
             this.saveOrUpdate(productInfoEntity);
             //同步到SCM
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
@@ -1815,7 +1802,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             sb.append("产品管理");
         } else {
             Integer flag = exportDatas.get(0);
-            if (IsConstant.NO == flag) {
+            if (IsConstant.NO.equals(flag)) {
                 sb.append("产品列表");
             } else {
                 sb.append("任务列表");

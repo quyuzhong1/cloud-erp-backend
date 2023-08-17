@@ -5,7 +5,9 @@ import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryWarehouseOptionEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -17,6 +19,8 @@ import java.io.Serializable;
  * @Author: zhangchunlin
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TransactionRuleDTO implements Serializable {
 
     private String id;
@@ -48,4 +52,9 @@ public class TransactionRuleDTO implements Serializable {
     @StateEnumValue(clazz = InventoryModeEnum.class,message = "库存交易方向有误")
     private InventoryModeEnum transactionMode;
 
+    public TransactionRuleDTO(InventoryWarehouseOptionEnum inventoryWarehouseOptionEnum, InventoryStatusEnum inventoryStatusEnum, InventoryModeEnum inventoryModeEnum) {
+        this.warehouseOption = inventoryWarehouseOptionEnum;
+        this.inventoryStatus = inventoryStatusEnum;
+        this.transactionMode = inventoryModeEnum;
+    }
 }

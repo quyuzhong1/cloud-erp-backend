@@ -73,7 +73,7 @@
     ) t
     <where>
         <if test="params.hideZeroInventory">
-            and  t.real_qty > 0
+            and  t.real_qty != 0
         </if>
     </where>
     order by t.sku_no, t.warehouse_id
@@ -147,7 +147,7 @@
         ) t
         <where>
             <if test="params.hideZeroInventory">
-                and  t.real_qty > 0
+                and  t.real_qty != 0
             </if>
         </where>
         order by t.sku_no, t.warehouse_id
@@ -188,7 +188,7 @@
             WHERE
             ind.is_deleted = false
             AND inv.dict_inventory_status in('usable','frozen')
-            AND ind.qty > 0
+            AND ind.qty != 0
             <!--
             如果分页列表展示的实时库存需要按区间来则需要增加该查询条件
             AND ind.instock_batch_date <![CDATA[<=]]> #{params.endDate}
@@ -265,7 +265,7 @@
         WHERE
         ind.is_deleted = false
         AND inv.dict_inventory_status in('usable','frozen')
-        AND ind.qty > 0
+        AND ind.qty != 0
         <!--
         如果分页列表展示的实时库存需要按区间来则需要增加该查询条件
         AND ind.instock_batch_date <![CDATA[<=]]> #{params.endDate}

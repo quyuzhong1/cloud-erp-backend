@@ -15,11 +15,16 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
@@ -38,6 +43,7 @@ import java.util.stream.Collectors;
 
 /**
  * 同步金蝶采购入库单单
+ *
  * @Author Luo_WG
  * @Date 2023/4/24 11:22
  **/
@@ -65,30 +71,44 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
     @Resource
     private WarehouseService warehouseService;
 
+    @Resource
+    private KingdeeFeign kingdeeFeign;
+
     /**
      * 发送消息同步金蝶
-     * @Author Luo_WG
-     * @Date 2023/4/24 11:27
+     *
      * @param entity
      * @param operate
      * @return void
+     * @Author Luo_WG
+     * @Date 2023/4/24 11:27
      **/
     @Override
     public void syncDataToKingdee(PoInstockEntity entity, String operate) {
 
         //更新同步状态为待同步
-        poInstockService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        poInstockService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), "", operate);
 
         //如果上游单据未发送成功则无需发送
         if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
             //采购订单
             PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
             if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(purchaseOrderEntity.getSyncKingdeeStatus()) && !SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode().equals(purchaseOrderEntity.getSyncKingdeeStatus())) {
-                log.error("采购订单未推送成功，不支持推送采购入库单，采购订单号【{}】",purchaseOrderEntity.getCode());
+                log.error("采购订单未推送成功，不支持推送采购入库单，采购订单号【{}】", purchaseOrderEntity.getCode());
                 return;
             }
         }
         PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
+
+        //组织机构编码
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getReceiveOrgId(), purchaseOrderEntity.getPurchaseOrgId()));
+        //收货组织
+        String receiveOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).distinct()
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
+
+        //采购组织
+        String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(purchaseOrderEntity.getPurchaseOrgId())).distinct()
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
 
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
@@ -111,12 +131,20 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         //入库日期
         resultMap.put("billDate", entity.getStockInDate());
 
+        //采购员
+        String purchaseUserId = entity.getPurchaseUserId();
         if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
-            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
-            //采购员
-            resultMap.put("purchaseUserCode", findUserDTO.getCode());
-            //采购员
-            resultMap.put("purchaseUserName", findUserDTO.getUserName());
+            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+            findBusinessOperator.setOrgCode(purchaseOrgCode);
+            findBusinessOperator.setUserId(purchaseUserId);
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.CGY.getCode());
+            //获取员工业务信息
+            KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            //销售员
+            if (!Objects.isNull(kingSellerInfo)) {
+                resultMap.put("purchaseUserCode", kingSellerInfo.getKingdeePostCode());
+                resultMap.put("purchaseUserName", kingSellerInfo.getKingdeeUserName());
+            }
         }
         //新品首批
         if (entity.getIsFirstMassProduct()) {
@@ -125,17 +153,8 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             resultMap.put("isFirstMassProduct", 2);
         }
 
-
-        //组织机构编码
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getReceiveOrgId(), purchaseOrderEntity.getPurchaseOrgId()));
-        //收货组织
-        String receiveOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).distinct()
-                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
         resultMap.put("receiveOrgCode", receiveOrgCode);
 
-        //采购组织
-        String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(purchaseOrderEntity.getPurchaseOrgId())).distinct()
-                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
         resultMap.put("purchaseOrgCode", purchaseOrgCode);
 
         //退货组织
@@ -217,8 +236,8 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             //销售单金蝶明细id
             jsonObject.set("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
 
-            List<Map<String,Object>> mapList = new ArrayList<>();
-            Map<String,Object> map = new HashMap<>();
+            List<Map<String, Object>> mapList = new ArrayList<>();
+            Map<String, Object> map = new HashMap<>();
             map.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());
             map.put("poSyncKingdeeId", purchaseOrderEntity.getSyncKingdeeId());
             mapList.add(map);

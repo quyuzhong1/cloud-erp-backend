@@ -4,4 +4,27 @@
 
 
 
+
+    <!--根据国家id 集合获取到区域信息-->
+    <select id="listByCountryIds" resultType="com.erp.model.sys.dto.DictGlobalAreaDTO$InfoDTO">
+          SELECT
+            dga.id,
+            dga.region_name,
+            dga.subregion_name,
+            dga.region_code,
+            dga.index,
+            dc.id AS countryId
+          FROM dict_global_area dga
+          INNER JOIN dict_country dc
+          ON dga.id=dc.region_code AND dc.is_deleted=FALSE
+          WHERE  dga.is_deleted=FALSE
+          <if test="countryIds!=null and countryIds.size>0">
+            AND dc.id IN
+            <foreach collection="countryIds" item="countryId"  open="(" separator="," close=")">
+                 #{countryId}
+            </foreach>
+
+          </if>
+
+    </select>
 </mapper>

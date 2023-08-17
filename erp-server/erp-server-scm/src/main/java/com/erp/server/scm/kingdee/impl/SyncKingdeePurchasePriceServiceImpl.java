@@ -2,7 +2,6 @@ package com.erp.server.scm.kingdee.impl;
 
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
-
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -16,6 +15,7 @@ import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
@@ -105,6 +105,10 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
             }
         }
 
+        //获取币别信息
+        List<CurrencyDTO.ViewDTO> currencyListt = sysUserFeign.listByCurrency(Arrays.asList(entity.getCurrency()));
+        CurrencyDTO.ViewDTO currencyDTO = currencyListt.stream().filter(req -> req.getId().equals(entity.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
+        resultMap.put("currencyCode", currencyDTO.getKingdeeCode());
 
         //价目明细
         List<PurchasePriceDetailDTO.ViewDTO> details = purchasePriceDetailService.getByPurchasePriceId(entity.getId());

@@ -137,7 +137,7 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @param supplierId
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
      */
-    List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId,List<String> detailIds);
+    List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId,List<String> detailIds,List<String> skuIdList);
 
     
     /**
@@ -183,4 +183,11 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return java.util.List<PurchasePriceDetailEntity>
      */
     List<PurchasePriceDetailEntity> getBySupplierIdAndStatus(String supplierId,List<String> statusList);
+
+    /**
+     * 更新信息
+     * @param purchasePriceDetailEntity
+     * @return
+     */
+    void updateDetail(PurchasePriceDetailEntity purchasePriceDetailEntity, PurchasePriceDetailEntity old);
 }

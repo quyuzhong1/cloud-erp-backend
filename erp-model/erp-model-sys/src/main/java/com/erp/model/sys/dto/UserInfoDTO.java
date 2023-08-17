@@ -35,6 +35,20 @@ public class UserInfoDTO implements Serializable {
         private String syncKingdeeId;
 
         /**
+         * 用户的状态
+         * 0 禁用
+         * 1 正常
+         */
+        private Integer userState;
+
+        /**
+         * 用户的删除状态
+         * 0 已删除
+         * 1 正常
+         */
+        private Integer deleteState;
+
+        /**
          * 用户名称
          */
         private String userName;

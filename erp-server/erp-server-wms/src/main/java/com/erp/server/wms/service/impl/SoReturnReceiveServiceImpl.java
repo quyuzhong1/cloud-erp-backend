@@ -115,6 +115,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Resource
     private QcRuleService qcRuleService;
 
+    @Resource
+    private SoReturnInstockService soReturnInstockService;
+
     @Override
     public PagingVO<SoReturnReceiveDTO.PagingView> paging(PagingDTO<SoReturnReceiveDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -283,8 +286,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnReceiveDTO.Update dto) {
-        //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THQS, BusinessNoTypeEnum.CODE_THQS.getCode()));
         //获取组织信息
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getSalesOrgId()));
         //获取用户信息
@@ -348,7 +349,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             entity.setWarehouseId(warehouseList.get(MathUtil.ZERO).getId());
             entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
-        entity.setCode(code);
         entity.setSourceId(dto.getSourceId());
         entity.setInventoryOrgId(dto.getInventoryOrgId());
         entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
@@ -559,7 +559,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
         for (QcInfoDTO.SoReturnReceiveToQcDTO newItem : qcList) {
             //为空所有的加，等级为空用销售方式，销售方式为空用等级
-            if ((StringUtils.isBlank(newProductGrade) && StringUtils.isBlank(newSaleMethod))) {
+            if ((StringUtils.isNotBlank(newProductGrade) && StringUtils.isNotBlank(newSaleMethod))) {
                 QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
                 BeanMapper.copy(newItem, newQc);
                 newQc.setQcType(returnQc);
@@ -619,6 +619,12 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceIds(ids);
         if (CollectionUtils.isNotEmpty(qcBySourceId)) {
             throw new ServiceException(ApiError.ERROR_99042);
+        }
+
+        //下推退货入库单不能反审核
+        List<SoReturnInstockEntity> soReturnInstockEntityList = soReturnInstockService.listBySourceIds(ids).stream().filter(req -> req.getInvalidStatus().equals(InvalidStatusEnum.NOT_VOIDED.getStatus())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(soReturnInstockEntityList)) {
+            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_PUSHED);
         }
 
         //修改状态为待提交

@@ -75,6 +75,12 @@ public class DmpBomEntity extends BaseEntity<DmpBomEntity> {
     @TableField("parent_sku_name")
     private String parentSkuName;
 
+    /**
+     * 马帮财务编码，对应父sku
+     */
+    @TableField("financial_code")
+    private String financialCode;
+
 
     public static final String SKU_NO = "sku_no";
 
@@ -91,6 +97,10 @@ public class DmpBomEntity extends BaseEntity<DmpBomEntity> {
     public static final String REMARK = "remark";
 
     public static final String STATUS = "status";
+
+    public static final String PARENT_SKU_NAME = "parent_sku_name";
+
+    public static final String FINANCIAL_CODE = "financial_code";
 
     @Override
     public Serializable pkVal() {

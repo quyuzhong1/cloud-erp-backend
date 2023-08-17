@@ -30,7 +30,7 @@ public class DictFeignController extends BaseController {
 
 
     /**
-     * 根据币种查询
+     * 根据国家id获取到地区信息
      */
     @PostMapping("/listGlobalAreaByCountryIds")
     public List<DictGlobalAreaDTO.InfoDTO> listGlobalAreaByCountryIds(@RequestBody List<String> countryIds) {

@@ -1,17 +1,21 @@
 package com.erp.server.dmp.utils;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.core.utils.StrUtils;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
-import com.erp.model.dmp.entity.DmpWarehouseMappingEntity;
+import com.erp.model.dmp.mabang.RedisMabngSkuEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.HashOperations;
 
 import java.util.List;
 import java.util.Map;
@@ -50,21 +54,28 @@ public class MabangUtil {
      */
     public static final String SEPARATOR = ",";
 
+    /**
+     * 马帮手工出入库明细最大条数
+     */
+    public static final int MAX_DETAIL_SIZE = 500;
+
 
     /**
      * 填充马帮出入库实体(直接调拨单)
+     *
      * @param warehouseCode
      * @param warehouseName
      * @param productDetailList
      * @param transferInfo
      * @param transferDetailList
      * @param inOutType
+     * @param hashOperations
      * @return
      */
-    public static MabangInOutStockDTO fillMabangInOutStock(String warehouseCode, String warehouseName,String employeeName,
+    public static MabangInOutStockDTO fillMabangInOutStock(String warehouseCode, String warehouseName, String employeeName,
                                                            List<ProductDetailEntity> productDetailList,
                                                            TransferInfoEntity transferInfo, List<TransferInfoDetailEntity> transferDetailList,
-                                                           String inOutType, String opType) {
+                                                           String inOutType, String opType, RedisUtil redisUtil) {
 
         List<MabangInOutStockDTO.SkuItem> data = Lists.newArrayList();
         MabangInOutStockDTO mabangInOutStockDTO = new MabangInOutStockDTO();
@@ -78,6 +89,7 @@ public class MabangUtil {
 
         Map<String, MabangInOutStockDTO.SkuItem> skuItemMap = Maps.newHashMap();
         transferDetailList.stream().forEach(transferSku->{
+            RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_FINANCIAL_SKU_LIST_KEY, transferSku.getSkuNo());
             String gridCode = "";
             // 审核
             if(Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), opType)) {
@@ -86,7 +98,7 @@ public class MabangUtil {
                 // 反审核
                 gridCode = StrUtils.null2EmptyWithTrim(Objects.equals(inOutType, InventoryInOutEnum.IN_STOCK.getCode() )? StrUtils.null2EmptyWithTrim(transferSku.getOutWarehouseLocation()) : StrUtils.null2EmptyWithTrim(transferSku.getInWarehouseLocation()));
             }
-            String skuNo = transferSku.getSkuNo();
+            String skuNo = ObjectUtil.isNotEmpty(mabangSkuInfo) ? mabangSkuInfo.getStockSku() : transferSku.getSkuNo();
             String skuWareLocation = skuNo + "-" + gridCode;
             MabangInOutStockDTO.SkuItem skuItem;
             if(skuItemMap.containsKey(skuWareLocation)) {

@@ -97,6 +97,7 @@ public class DmpBomServiceImpl extends SuperServiceImpl<DmpBomMapper, DmpBomEnti
         modelEntity.setParentSkuName(ext.getName());
         modelEntity.setPlatformSign(ext.getPlatformSign());
         modelEntity.setRelationType(ext.getRelationType());
+        modelEntity.setFinancialCode(ext.getFinancialCode());
         return ext.getComboProductDetail().stream().map(detail -> {
             DmpBomEntity entity = new DmpBomEntity();
             BeanUtil.copyProperties(modelEntity, entity);

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -14,6 +15,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -108,6 +110,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Autowired
     private SyncMabangMachineService syncMabangMachineService;
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
 
 
     @Override
@@ -184,7 +188,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         doOpHandleDataId(dto.getWarehouseId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
         log.info("加工单新增");
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.ZZCX, BusinessNoTypeEnum.CODE_ZZCX.getCode()));
+//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.ZZCX, BusinessNoTypeEnum.CODE_ZZCX.getCode()));
+        //生成单号
+        String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZZCX);
         entity.setCode(code);
         //新增主表数据
         boolean save = this.save(entity);

@@ -433,6 +433,10 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 if (ObjectUtils.isEmpty(childSkuVO)) {
                     throw new ServiceException(ApiError.ERROR_95084);
                 }
+                if (StringUtils.isBlank(childEntity.getWarehouseLocation())) {
+                    throw new ServiceException(ApiError.ERROR_SUB_CHILD_LOCATION_BLANK,childEntity.getSkuNo());
+                }
+
                 childEntity.setMainId(mainId);
                 childEntity.setParentId(detailEntity.getId());
                 childEntity.setVariantProperty(childSkuVO.getVariantProperty());

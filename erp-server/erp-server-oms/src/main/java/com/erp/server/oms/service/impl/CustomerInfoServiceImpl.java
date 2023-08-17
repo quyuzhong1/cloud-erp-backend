@@ -36,6 +36,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -116,8 +117,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Resource
     private SoInfoService soInfoService;
 
-    @Resource
-    private SyncKingdeeCustomerContactService syncKingdeeCustomerContactService;
+
     @Resource
     private WorkflowFeign workflowFeign;
 
@@ -173,8 +173,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         addEntity.setId(id);
         //国家id
         String countryId = dto.getCountryId();
-
-        addEntity.setAreaId(countryId);
+        List<DictGlobalAreaDTO.InfoDTO> globalAreaList = sysUserFeign.listGlobalAreaByCountryIds(Arrays.asList(countryId));
+        String areaId = globalAreaList.stream().filter(d -> d.getCountryId().equals(countryId)).findFirst().map(DictGlobalAreaDTO.InfoDTO::getId).orElse("");
+        addEntity.setAreaId(areaId);
         //分组id
         String groupId = dto.getGroupId();
         //付款方
@@ -443,10 +444,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String areaId = customer.getAreaId();
         String payCode = customer.getPayCode();
         view.setPayCodeList(StringUtils.isNotBlank(payCode) ? Arrays.asList(payCode.split(",")) : Collections.emptyList());
-        List<DictGlobalAreaDTO.InfoDTO> globalAreaList = sysUserFeign.listGlobalAreaByCountryIds(Arrays.asList(areaId));
-        String regionName = globalAreaList.stream().filter(d -> d.getId().equals(areaId)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getRegionName())).orElse("");
-        view.setAreaName(regionName);
+        String areaName = "";
+        if (StringUtils.isNotBlank(areaId)) {
+            DictGlobalAreaEntity globalArea = sysUserFeign.getGlobalAreaById(areaId);
+            if (Objects.nonNull(globalArea)) {
+                areaName = globalArea.getRegionName();
+            }
+        }
+        view.setAreaName(areaName);
         view.setApproveStatusName(customer.getApproveStatus().getName());
         List<OmsAttachmentDTO.UpdateDTO> attachmentList = omsAttachmentService.getByBusinessIds(Arrays.asList(id));
         List<String> attachmentUrlList = attachmentList.stream().
@@ -529,7 +534,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<String> payCodeList = dto.getPayCodeList();
         String payCode = CollectionUtils.isNotEmpty(payCodeList) ? payCodeList.stream().collect(Collectors.joining(",")) : "";
         customer.setPayCode(payCode);
-        customer.setAreaId(dto.getCountryId());
+        //国家id
+        String countryId = dto.getCountryId();
+        List<DictGlobalAreaDTO.InfoDTO> globalAreaList = sysUserFeign.listGlobalAreaByCountryIds(Arrays.asList(countryId));
+
+        String areaId = globalAreaList.stream().filter(d -> d.getCountryId().equals(countryId)).findFirst().map(DictGlobalAreaDTO.InfoDTO::getId).orElse("");
+        customer.setAreaId(areaId);
         customer.setCode(code);
         //获取客户分组信息
         List<CustomerGroupEntity> customerGroupList = customerGroupService.listById(groupId);
@@ -1192,8 +1202,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             if (countryNameMap.containsKey(countryName)) {
                 customerInfoEntity.setCountryId(countryNameMap.get(countryName).get(0).getId());
             }
+            String countryId = customerInfoEntity.getCountryId();
+            List<DictGlobalAreaDTO.InfoDTO> globalAreaList = sysUserFeign.listGlobalAreaByCountryIds(Arrays.asList(countryId));
+            String areaId = globalAreaList.stream().filter(d -> d.getCountryId().equals(countryId)).findFirst().map(DictGlobalAreaDTO.InfoDTO::getId).orElse("");
             // 区域id需根据国家id获取
-            customerInfoEntity.setAreaId(customerInfoEntity.getCountryId());
+            customerInfoEntity.setAreaId(areaId);
             // 省份
             String provinceName = ExcelUtil.convertCellValueToString(row.getCell(6));
             // 省份id需要根据名称获取

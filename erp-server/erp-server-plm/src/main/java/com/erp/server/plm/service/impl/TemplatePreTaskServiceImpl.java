@@ -34,18 +34,19 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
     @Autowired
     private PreTaskService preTaskService;
 
-    
+
     /**
      * 产品管理 另存为模板 保存前置任务
-     * @author yl
-     * @date 2023-03-09 10:01
+     *
      * @param templateId
      * @param productId
      * @param taskSourceList
      * @return void
+     * @author yl
+     * @date 2023-03-09 10:01
      */
     @Override
-    public void saveTemplatePreTask(String templateId, String productId,List<CopySourceDTO> taskSourceList) {
+    public void saveTemplatePreTask(String templateId, String productId, List<CopySourceDTO> taskSourceList) {
         List<PreTaskEntity> list = preTaskService.getPreTaskByProductId(productId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<TemplatePreTaskEntity> saveList = new ArrayList<>();
@@ -54,11 +55,11 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
                 BeanMapper.copy(item, entity);
                 entity.setId(IdWorker.getIdStr());
                 entity.setTemplateId(templateId);
-                String newTaskId=taskSourceList.stream().filter(t->t.getDataId().equals(item.getTaskId())).
-                        findFirst().flatMap(obj->Optional.ofNullable(obj.getNewCreateId())).orElse("");
+                String newTaskId = taskSourceList.stream().filter(t -> t.getDataId().equals(item.getTaskId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getNewCreateId())).orElse("");
 
-                String newPreTaskId=taskSourceList.stream().filter(t->t.getDataId().equals(item.getPreTaskId())).
-                        findFirst().flatMap(obj->Optional.ofNullable(obj.getNewCreateId())).orElse("");
+                String newPreTaskId = taskSourceList.stream().filter(t -> t.getDataId().equals(item.getPreTaskId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getNewCreateId())).orElse("");
                 entity.setTaskId(newTaskId);
                 entity.setPreTaskId(newPreTaskId);
                 saveList.add(entity);
@@ -124,7 +125,7 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
         Map<String, TemplatePreTaskEntity> oldTaskPreMap = new HashMap<>();
         if (CollectionUtil.isNotEmpty(oldTaskEntityList)) {
             //先删除前置任务
-            removeTemplatePreTask(taskId,templateId);
+            removeTemplatePreTask(taskId, templateId);
             oldTaskPreMap = oldTaskEntityList.stream()
                     .collect(Collectors.toMap(task -> StrUtil.format("{}_{}", task.getTaskId(), task.getPreTaskId()), e -> e));
         }
@@ -139,7 +140,7 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
     public List<PreTaskVO> getTemplatePreTaskIdList(String taskId, String templateId) {
         LambdaQueryWrapper<TemplatePreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplatePreTaskEntity::getTaskId, taskId);
-        queryWrapper.eq(TemplatePreTaskEntity::getTemplateId,templateId);
+        queryWrapper.eq(TemplatePreTaskEntity::getTemplateId, templateId);
         queryWrapper.select(TemplatePreTaskEntity::getPreTaskId, TemplatePreTaskEntity::getRelationship, TemplatePreTaskEntity::getIntervalWorkPeriod);
         List<TemplatePreTaskEntity> entityList = this.list(queryWrapper);
         if (CollectionUtil.isEmpty(entityList)) {
@@ -153,6 +154,25 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
         return baseMapper.getPreAndNameByTaskId(taskId);
     }
 
+
+    /**
+     * 删除对应是前置任务的
+     *
+     * @param taskIdList
+     * @return void
+     * @author yl
+     * @date 2023-08-09 11:44
+     */
+    @Override
+    public void removeByTaskIds(List<String> taskIdList) {
+        if (CollectionUtils.isNotEmpty(taskIdList)) {
+            LambdaQueryWrapper<TemplatePreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(TemplatePreTaskEntity::getPreTaskId, taskIdList);
+            this.remove(queryWrapper);
+        }
+
+    }
+
     public List<TemplatePreTaskEntity> getByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplatePreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplatePreTaskEntity::getTemplateId, templateId);
@@ -160,13 +180,13 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
     }
 
     /**
+     * @param taskId
+     * @param templateId
      * @description: 根据任务和模板删除
      * @author Will
      * @date: 2022/11/16 10:28
-     * @param taskId
-     * @param templateId
      */
-    private void removeTemplatePreTask(String taskId,String templateId) {
+    private void removeTemplatePreTask(String taskId, String templateId) {
         LambdaQueryWrapper<TemplatePreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplatePreTaskEntity::getTaskId, taskId);
         queryWrapper.eq(TemplatePreTaskEntity::getTemplateId, templateId);

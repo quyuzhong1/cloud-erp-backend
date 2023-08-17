@@ -473,6 +473,7 @@ public enum ApiError implements Serializable {
     ERROR_97026(97026,"模块名称最大30字符"),
     ERROR_97027(97027,"模块说明最大200字符"),
     ERROR_KINGDEE_SAVE(97028,"调用金蝶保存接口失败"),
+    MABANG_SKU_NOT_EXIST(97029, "马帮sku编码：{}不存在"),
 
 
 
@@ -705,6 +706,11 @@ public enum ApiError implements Serializable {
     WAREHOUSE_AREA_IS_NULL(99093, "库区不能为null"),
     // 库存冻结中无法操作
     STOCK_FREEZE_NOT_ALLOW(99094, "仓库【{}】库位【{}】 SKU【{}】 库存【{}】中, 无法操作"),
+    ERROR_SUB_CHILD_LOCATION_BLANK(99088,"委外订单子SKU【{}】仓位不能为空"),
+    // 已下推退货入库单不能反审核
+    ERROR_RETURN_ORDER_PUSHED(99089, "已下推退货入库单，不能反审核"),
+
+
 
 
     /**

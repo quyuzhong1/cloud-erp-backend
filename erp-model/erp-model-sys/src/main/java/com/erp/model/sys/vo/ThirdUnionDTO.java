@@ -20,5 +20,7 @@ public class ThirdUnionDTO implements Serializable {
 
     private String userId;
 
+    private String userName;
+
     private String thirdPartyType;
 }

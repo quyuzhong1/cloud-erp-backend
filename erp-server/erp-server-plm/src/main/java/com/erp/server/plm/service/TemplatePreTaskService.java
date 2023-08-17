@@ -55,4 +55,14 @@ public interface TemplatePreTaskService extends IService<TemplatePreTaskEntity> 
      * @return
      */
     List<PreTaskListVO> getTemplatePreAndNameById(String taskId);
+
+    
+    /**
+     * 删除对应是前置任务的
+     * @author yl
+     * @date 2023-08-09 11:44
+     * @param taskIdList
+     * @return void
+     */
+    void removeByTaskIds(List<String> taskIdList);
 }

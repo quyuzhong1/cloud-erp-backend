@@ -1057,11 +1057,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     /**
      * 添加海关编码日志
-     * @Author Luo_WG
-     * @Date 2023/6/28 17:58
+     *
      * @param productCustomsList
      * @param productId
      * @return void
+     * @Author Luo_WG
+     * @Date 2023/6/28 17:58
      **/
     private void addProductCustomsLog(List<ProductCustomsDTO> productCustomsList, String productId) {
         if (CollectionUtils.isEmpty(productCustomsList)) {
@@ -2262,7 +2263,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(skuNoList)) {
             return Collections.emptyList();
         }
-        return baseMapper.getSkuBySkuNos(skuNoList);
+        Integer skuStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+        return baseMapper.getSkuBySkuNos(skuNoList,skuStatus);
     }
 
     /**
@@ -2305,7 +2307,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //同步到WMS
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
     }
-
 
 
     public void checkRequiredField(List<String> ids) {

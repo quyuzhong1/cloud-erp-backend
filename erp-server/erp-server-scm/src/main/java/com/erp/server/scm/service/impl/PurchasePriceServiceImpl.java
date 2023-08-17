@@ -24,8 +24,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
@@ -132,11 +130,12 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
+        List<String> skuIdList=dto.getPurchasePriceDetailList().stream().map(PurchasePriceDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(supplierId, new ArrayList<>());
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(supplierId, new ArrayList<>(),skuIdList);
 
         //历史报价
-        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(supplierId);
+        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(supplierId,skuIdList);
 
         //检查sku 区间报价
         priceDetailService.checkSkuInterval(dto.getPurchasePriceDetailList(), supplierPriceDetailList, historyList);
@@ -258,6 +257,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         List<String> detailIds = detailList.stream().map(PurchasePriceDetailEntity::getId).collect(Collectors.toList());
         ApproveStatusEnum status = purchasePrice.getApproveStatus();
 
+
         PurchasePriceEntity old = new PurchasePriceEntity();
         BeanMapper.copy(purchasePrice, old);
         //待审核
@@ -270,11 +270,12 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (!statusList.contains(status.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98019);
         }
+        List<String> skuIdList=dto.getPurchasePriceDetailList().stream().map(PurchasePriceDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         BeanMapper.copy(dto, purchasePrice);
         //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId(), detailIds);
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId(), detailIds,skuIdList);
         //历史报价
-        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(purchasePrice.getSupplierId());
+        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(purchasePrice.getSupplierId(),skuIdList);
         //检查sku 区间报价
         List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList = BeanMapper.copyList(dto.getPurchasePriceDetailList(), PurchasePriceDetailDTO.AddDTO.class);
         priceDetailService.checkSkuInterval(purchasePriceDetailList, supplierPriceDetailList, historyList);
@@ -826,6 +827,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             purchasePriceEntity.setPricingUserName(item.getPricingUserName());
             purchasePriceEntity.setPurchaseOrgId(item.getPurchaseOrgId());
             purchasePriceEntity.setPurchaseOrgName(item.getPurchaseOrgName());
+            purchasePriceEntity.setCurrency(item.getCurrency());
             // 明细信息
             List<PurchasePriceDetailDTO.ImportSaveDTO> detailList = item.getDetailList();
             List<PurchasePriceDetailEntity> addItemList = Lists.newArrayList();
@@ -855,6 +857,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                     BeanMapper.copy(detailItem, savePurchasePriceDetailEntity);
                     savePurchasePriceDetailEntity.setExpireDate(expireDate);
                     savePurchasePriceDetailEntity.setTaxRate(taxRate);
+                    savePurchasePriceDetailEntity.setCurrency(item.getCurrency());
                     addItemList.add(savePurchasePriceDetailEntity);
                 }
             }
@@ -886,8 +889,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             priceDetailService.saveBatch(addDetailList);
         }
         if(CollUtil.isNotEmpty(updateDetailList)) {
+            List<String> detailIds = updateDetailList.stream().map(PurchasePriceDetailEntity::getId).distinct().collect(Collectors.toList());
+            List<PurchasePriceDetailEntity> detailList = priceDetailService.listByIds(detailIds);
             for(PurchasePriceDetailEntity updateDetail : updateDetailList) {
-                priceDetailService.updateById(updateDetail);
+                PurchasePriceDetailEntity old = detailList.stream().filter(r -> Objects.equals(r.getId(), updateDetail.getId())).findFirst().orElse(null);
+                priceDetailService.updateDetail(updateDetail, old);
             }
         }
     }

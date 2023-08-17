@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -566,7 +565,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids,Boolean isInterface) {
+    public Boolean disApprove(List<String> ids) {
         //根据ids查询
         List<PoInstockEntity> list = getList(ids);
         //已审核允许反审核
@@ -578,12 +577,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<PurchaseReturnOrderEntity> purchaseReturnOrderList = purchaseReturnOrderService.listBySourceIds(ids);
         if (CollectionUtils.isNotEmpty(purchaseReturnOrderList)) {
             throw new ServiceException(ApiError.ERROR_99014);
-        }
-        //委外子级SKU不支持反审核
-        List<PoInstockEntity> foundList = list.stream().filter(obj -> SubcontractTypeEnum.ENUM_CHILD.getCode().equals(obj.getSubcontractType())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(foundList) && isInterface) {
-            String codes = foundList.stream().map(PoInstockEntity::getCode).collect(Collectors.joining());
-            throw new ServiceException(new ApiResult(ApiError.ERROR_98078.code, StrUtil.format(ApiError.ERROR_98078.msg,codes)));
         }
 
         log.info("采购入库单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
@@ -732,6 +725,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 throw new ServiceException(ApiError.ERROR_98050);
             }
             BeanMapperUtils.copy(poInstockEntity, addDTO);
+            addDTO.setBillDate(LocalDate.now());
             addDTO.setSourceType(purchaseReturnOrderDTO.getSourceType());
             addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
             List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
@@ -1180,7 +1174,10 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             return;
         }
         List<String> ids = poInstockList.stream().filter(obj -> ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PoInstockEntity::getId).collect(Collectors.toList());
-        disApprove(ids,Boolean.FALSE);
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        disApprove(ids);
     }
 
     /**
@@ -1258,6 +1255,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 if (count > 0) {
                     return;
                 }
+
                 PoInstockDTO.AddDTO addDTO = new PoInstockDTO.AddDTO();
                 addDTO.setSourceId(purchaseOrderEntity.getId());
                 addDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
@@ -1269,17 +1267,22 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 List<PoInstockDetailDTO.AddDTO> detailList = new ArrayList<>();
                 for (PurchaseOrderDetailEntity detailEntity : detailEntityList) {
                     PoInstockDetailDTO.AddDTO addDetailDTO = new PoInstockDetailDTO.AddDTO();
-
+                    //剩余入库数量
                     BaseDTO.QtyDTO qtyDTO = baseQtyList.stream().filter(obj -> obj.getId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
-                    if (ObjectUtils.isEmpty(qtyDTO) || MathUtil.ZERO.equals(qtyDTO.getQty())) {
+                    if (ObjectUtils.isEmpty(qtyDTO) || MathUtil.compareTo(MathUtil.ZERO,qtyDTO.getQty()) == MathUtil.ZERO) {
+                        continue;
+                    }
+                    //已下推入库明细数量
+                    Integer hasInstockQty = childPoInstockList.stream().filter(obj -> detailEntity.getId().equals(obj.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (MathUtil.compareTo(detailEntity.getPurchaseQty(),hasInstockQty) == MathUtil.ZERO) {
                         continue;
                     }
                     //本次入库数量
                     Integer thisInstockQty ;
-                    if (detailEntity.getPurchaseQty().intValue() >= qtyDTO.getQty()) {
+                    if (detailEntity.getPurchaseQty().intValue() - hasInstockQty >= qtyDTO.getQty()) {
                         thisInstockQty = qtyDTO.getQty();
                     } else {
-                        thisInstockQty = detailEntity.getPurchaseQty();
+                        thisInstockQty = detailEntity.getPurchaseQty() - hasInstockQty;
                     }
                     addDetailDTO.setStockInQty(thisInstockQty);
                     addDetailDTO.setSourceDetailId(detailEntity.getId());

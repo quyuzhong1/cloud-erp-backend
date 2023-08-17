@@ -87,6 +87,8 @@ public class KingdeeReturnOrderConsumerServiceImpl implements KingdeeReturnOrder
      * 采购订单操作
      */
     public void operate (PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject model, JSONObject json, Integer type) {
+        //查找到数据后的审核状态
+        String documentStatus = (String)model.get("DocumentStatus");
         //操作项
         String operate = (String) map.get("operate");
         if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
@@ -94,8 +96,11 @@ public class KingdeeReturnOrderConsumerServiceImpl implements KingdeeReturnOrder
         }
         //反审核
         if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            //反审核
-            operateDisapprove(apiUtils, platformEntity, map, type);
+            //审核中或已审核则要先反审
+            if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+                //反审核
+                operateDisapprove(apiUtils, platformEntity, map, type);
+            }
         }
         //审核
         if (SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {

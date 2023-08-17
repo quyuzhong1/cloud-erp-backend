@@ -5,15 +5,18 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ErpServerModuleEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
 import com.erp.model.dmp.enums.FbaDeliveryStatusEnum;
+import com.erp.model.dmp.mabang.RedisMabngSkuEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
@@ -37,6 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -68,20 +72,29 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
     @Autowired
     private MachineDetailService machineDetailService;
 
+    @Resource
+    private RedisUtil redisUtil;
+
     /**
      * 马帮平台加工品JG-开头的对应ERP的加工组合品不是JG-开头的
      */
-    private static final String MACHINE_SKU_PREFIX = "JG-";
+//    private static final String MACHINE_SKU_PREFIX = "JG-";
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void syncFbaDelivery(DmpFbaDeliveryEntity entity, String sourceType,  String syncTaskId) {
         // 加工品处理（如果时JG-开头的需要去掉）
         entity.getItemList().stream().forEach(item->{
-            if(StrUtils.isNotEmpty(item.getSkuNo()) && item.getSkuNo().startsWith(MACHINE_SKU_PREFIX) ) {
-                log.warn("马帮FBA发货单【{}】的加工组合品SKU【{}】是以JG-开头的", entity.getDeliveryNo(), item.getSkuNo());
-                item.setSkuNo(StrUtil.removePrefix(item.getSkuNo(), MACHINE_SKU_PREFIX));
+            RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_STOCK_SKU_LIST_KEY, item.getSkuNo());
+            if(Objects.isNull(mabangSkuInfo)) {
+                log.warn("马帮FBA发货单【{}】的加工组合品SKU【{}】在马帮SKU列表中不存在", entity.getDeliveryNo(), item.getSkuNo());
+                throw new ServiceException(ApiError.MABANG_SKU_NOT_EXIST, item.getSkuNo());
             }
+            item.setSkuNo(mabangSkuInfo.getFinancial());
+//            if(StrUtils.isNotEmpty(item.getSkuNo()) && item.getSkuNo().startsWith(MACHINE_SKU_PREFIX) ) {
+//                log.warn("马帮FBA发货单【{}】的加工组合品SKU【{}】是以JG-开头的", entity.getDeliveryNo(), item.getSkuNo());
+//                item.setSkuNo(StrUtil.removePrefix(item.getSkuNo(), MACHINE_SKU_PREFIX));
+//            }
         });
         // 判断是否已经存在（一个FBA发货单不会生成多个加工单）
         log.warn("{}FBA发货单【{}】发货状态【{}】", entity.getPlatformSign(), entity.getDeliveryNo(), entity.getDeliveryStatus());
