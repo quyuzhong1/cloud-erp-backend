@@ -16,6 +16,7 @@ import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class BatchResultDTO implements Serializable {
 
     /**
@@ -27,33 +28,31 @@ public class BatchResultDTO implements Serializable {
      */
     private String msg;
 
-    public BatchResultDTO(String code, String msg) {
-        this.code = code;
-        this.msg = msg;
-    }
+    private Boolean success;
+
     public static BatchResultDTO success(String code, OperationTypeEnum operationType) {
         if (null == operationType) {
-            return new BatchResultDTO(code, "");
+            return new BatchResultDTO(code, "", Boolean.TRUE);
         }
         code = null == code ? "" : code;
-        return new BatchResultDTO(code, StrUtil.format("{}_{}",operationType.getName(),"成功"));
+        return new BatchResultDTO(code, StrUtil.format("{}_{}",operationType.getName(),"成功"), Boolean.TRUE);
     }
 
     public static BatchResultDTO success(String code, String msg) {
         code = null == code ? "" : code;
-        return new BatchResultDTO(code, msg);
+        return new BatchResultDTO(code, msg, Boolean.TRUE);
     }
 
     public static BatchResultDTO fail(String code, OperationTypeEnum operationType) {
         if (null == operationType) {
-            return new BatchResultDTO(code, "");
+            return new BatchResultDTO(code, "", Boolean.FALSE);
         }
         code = null == code ? "" : code;
-        return new BatchResultDTO(code, StrUtil.format("{}_{}",operationType.getName(),"失败"));
+        return new BatchResultDTO(code, StrUtil.format("{}_{}",operationType.getName(),"失败"), Boolean.FALSE);
     }
 
     public static BatchResultDTO fail(String code, String msg) {
         code = null == code ? "" : code;
-        return new BatchResultDTO(code, msg);
+        return new BatchResultDTO(code, msg,Boolean.FALSE);
     }
 }
