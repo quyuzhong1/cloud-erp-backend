@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
@@ -12,15 +13,22 @@ import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.mapper.SysUserThirdMapper;
+import com.erp.server.sys.service.SysUserInfoService;
 import com.erp.server.sys.service.SysUserThirdService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Service
 public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, SysUserThirdEntity> implements SysUserThirdService {
 
+    @Resource
+    private SysUserInfoService sysUserInfoService;
 
     /**
      * 绑定第三方
@@ -165,8 +173,16 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
         LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(SysUserThirdEntity::getThirdPartyType, platform);
         queryWrapper.in(SysUserThirdEntity::getUserId, userIds);
-        List<SysUserThirdEntity> sysUserThirdEntitys =  this.list(queryWrapper);
-        List<ThirdUnionDTO> thirdUnionDTOs = BeanMapperUtils.copyList(ThirdUnionDTO.class,sysUserThirdEntitys);
+        List<SysUserThirdEntity> sysUserThirdEntity =  this.list(queryWrapper);
+        List<ThirdUnionDTO> thirdUnionDTOs = BeanMapperUtils.copyList(ThirdUnionDTO.class,sysUserThirdEntity);
+        if(CollUtil.isEmpty(thirdUnionDTOs)){
+            return Collections.emptyList();
+        }
+        List<FindUserDTO> userList = sysUserInfoService.getUserListByUserIds(thirdUnionDTOs.stream().map(ThirdUnionDTO::getUserId).collect(Collectors.toList()));
+        Map<String, String> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName));
+        thirdUnionDTOs.forEach(thirdUnionDTO -> {
+            thirdUnionDTO.setUserName(userMap.get(thirdUnionDTO.getUserId()));
+        });
         return thirdUnionDTOs;
     }
 
