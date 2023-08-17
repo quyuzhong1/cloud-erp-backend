@@ -12,10 +12,14 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.enums.ReturnReasonEnum;
+import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoReturnService;
@@ -70,6 +74,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
     @Resource
     private CustomerSellerService customerSellerService;
 
+    @Resource
+    private KingdeeFeign kingdeeFeign;
+
     @Override
     public void syncDataToKingdee(SoReturnEntity entity, String operate) {
 
@@ -113,7 +120,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             //库存组织
             resultMap.put("inventoryOrgCode", inventoryOrgCode);
         }
-        //销售部门
+     /*   //销售部门
         List<SellerDTO.ViewDTO> sellerList = customerSellerService.listByMainId(entity.getId());
         if (CollectionUtils.isNotEmpty(sellerList)) {
             SellerDTO.ViewDTO viewDTO = sellerList.get(MathUtil.ZERO);
@@ -128,7 +135,36 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             if (CollectionUtils.isNotEmpty(userKingdeePostInfoDTOS)) {
                 resultMap.put("sellerUserCode",userKingdeePostInfoDTOS.get(MathUtil.ZERO).getKingdeePostCode());
             }
+        }*/
+
+        //销售员
+        String sellerId = entity.getSellerId();
+        String deptCode = "";
+        String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
+
+        //当为空的时候 就取岗位表的
+        KingdeePostDTO.FindUserKingdeePostInfoDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostInfoDTO();
+        findUserPostKingdee.setUserId(sellerId);
+        findUserPostKingdee.setOrgCode(salesOrgCode);
+        KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePost(findUserPostKingdee);
+        if (kingdeePost != null) {
+            deptCode = kingdeePost.getKingdeeDeptCode();
         }
+        resultMap.put("sellerDeptCode", deptCode);
+        //获取业务员信息
+        if (StringUtils.isNotBlank(sellerId)) {
+            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+            findBusinessOperator.setOrgCode(salesOrgCode);
+            findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.YSY.getCode());
+            //获取员工业务信息
+            KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            //销售员
+            if (!Objects.isNull(kingSellerInfo)) {
+                resultMap.put("sellerUserCode", kingSellerInfo.getKingdeePostCode());
+            }
+        }
+
         //客户
         if (CollectionUtils.isNotEmpty(customerInfoEntitieList)) {
             CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
@@ -143,7 +179,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         resultMap.put("currencyCode", viewDTO.getKingdeeCode());
         //结算组织
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
-            String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soReturnEntity.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soReturnEntity.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
             resultMap.put("salesOrgCode", salesOrgCode);
         }
         List<String> soKingdeeDetailIdList = soDetailEntitieList.stream().map(req -> req.getKingdeeDetailId()).collect(Collectors.toList());

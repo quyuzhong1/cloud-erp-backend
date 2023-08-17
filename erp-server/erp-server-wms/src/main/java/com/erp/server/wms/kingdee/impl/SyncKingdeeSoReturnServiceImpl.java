@@ -13,8 +13,11 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
@@ -22,6 +25,7 @@ import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
+import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.service.SoReturnInstockDetailService;
@@ -70,6 +74,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
 
     @Resource
     private MQProducerService mQProducerService;
+
+    @Resource
+    private KingdeeFeign kingdeeFeign;
 
     @Override
     public void syncDataToKingdee(SoReturnInstockEntity entity, String operate) {
@@ -120,20 +127,32 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             //库存组织
             resultMap.put("inventoryOrgCode", inventoryOrgCode);
         }
-        //销售部门
-        String salesDeptId = entity.getSalesDeptId();
-        //获取部门id
-        if (StringUtils.isNotBlank(salesDeptId)) {
-            SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(salesDeptId);
-            //销售部门
-            if (!Objects.isNull(departmentDTO)) {
-                resultMap.put("sellerDeptCode", departmentDTO.getCode());
-            }
-        }
+        //销售员
+        String sellerId = entity.getSellerId();
+        String deptCode = "";
+        String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
 
-        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoDTOS = sysUserFeign.listUserKingdeePostByUserIds(Collections.singletonList(entity.getSellerId()));
-        if (CollectionUtils.isNotEmpty(userKingdeePostInfoDTOS)) {
-            resultMap.put("sellerUserCode", userKingdeePostInfoDTOS.get(MathUtil.ZERO).getKingdeePostCode());
+        //当为空的时候 就取岗位表的
+        KingdeePostDTO.FindUserKingdeePostInfoDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostInfoDTO();
+        findUserPostKingdee.setUserId(sellerId);
+        findUserPostKingdee.setOrgCode(salesOrgCode);
+        KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePost(findUserPostKingdee);
+        if (kingdeePost != null) {
+            deptCode = kingdeePost.getKingdeeDeptCode();
+        }
+        resultMap.put("sellerDeptCode", deptCode);
+        //获取业务员信息
+        if (StringUtils.isNotBlank(sellerId)) {
+            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+            findBusinessOperator.setOrgCode(salesOrgCode);
+            findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.YSY.getCode());
+            //获取员工业务信息
+            KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            //销售员
+            if (!Objects.isNull(kingSellerInfo)) {
+                resultMap.put("sellerUserCode", kingSellerInfo.getKingdeePostCode());
+            }
         }
 
         if (StringUtils.isNotBlank(entity.getWarehouseKeeperId())) {

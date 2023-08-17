@@ -723,6 +723,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 throw new ServiceException(ApiError.ERROR_98050);
             }
             BeanMapperUtils.copy(poInstockEntity, addDTO);
+            addDTO.setBillDate(LocalDate.now());
             addDTO.setSourceType(purchaseReturnOrderDTO.getSourceType());
             addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
             List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
