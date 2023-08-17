@@ -62,8 +62,8 @@ public class PdaSoReturnReceiveController extends BaseController {
             menuCode = "wms:pdaSoReturnReceive:paging",
             tableAlias = "srr"
     )
-    public ApiResult<List<SoReturnReceiveDTO.PdaPoReceiveCount>> listCount(@RequestBody PermissionsDTO dto) {
-        List<SoReturnReceiveDTO.PdaPoReceiveCount> pdaPoReceiveCount = soReturnReceiveService.pdaListCount(dto);
+    public ApiResult<List<SoReturnReceiveDTO.PdaSoReturnReceiveCount>> listCount(@RequestBody PermissionsDTO dto) {
+        List<SoReturnReceiveDTO.PdaSoReturnReceiveCount> pdaPoReceiveCount = soReturnReceiveService.pdaListCount(dto);
         return success(pdaPoReceiveCount);
     }
 

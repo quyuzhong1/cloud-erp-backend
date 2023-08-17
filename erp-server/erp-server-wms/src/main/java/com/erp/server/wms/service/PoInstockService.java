@@ -257,11 +257,20 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
     List<PoInstockDTO.SupplierInstockInfoDTO> getInstockInfoBySupplierIds(PoInstockDTO.SupplierInstockParamDTO dto);
 
     /**
-     * 列表查询
+     * PDA:列表查询
      * @Author Luo_WG
      * @Date 2023/8/16 14:52
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.PoInstockDTO.PdaListDTO>
      **/
     PagingVO<PoInstockDTO.PdaPagingView> PdaPaging(PagingDTO<PoInstockDTO.PdaSearchParamDTO> dto);
+
+    /**
+     * PDA:列表数量
+     * @Author Luo_WG
+     * @Date 2023/8/16 17:51
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.PoInstockDTO.PdaPoInStockCountDTO>
+     **/
+    List<PoInstockDTO.PdaPoInStockCountDTO> pdaListCount(PermissionsDTO dto);
 }

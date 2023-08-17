@@ -109,13 +109,12 @@ public class PdaPoReceiveController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:pdaPoReceive:view",
-            serviceClass = SoReturnInstockService.class,
+            serviceClass = WarehouseReceiveService.class,
             keyIdName = "id")
     public ApiResult<WarehouseReceiveDTO.ViewDTO> view(@RequestParam("id") String id) {
         WarehouseReceiveDTO.ViewDTO dto = warehouseReceiveService.pdaView(id);
         return success(dto);
     }
-
 
     /**
      * 提交

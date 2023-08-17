@@ -42,6 +42,7 @@ import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.PdaQclStatusEnum;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -1553,7 +1554,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         }
     }
 
-
     @Override
     public PagingVO<PoInstockDTO.PdaPagingView> PdaPaging(PagingDTO<PoInstockDTO.PdaSearchParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -1583,8 +1583,45 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             List<PoInstockDetailEntity> detailEntities = poInstockDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
             List<PoInstockDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, PoInstockDTO.PdaItemDTO.class);
             record.setDetailCount(itemDTOList.size());
+            if (CollectionUtils.isEmpty(resultList)) {
+                record.setQcStatusName(PdaQclStatusEnum.WAIT_QC.getName());
+            } else if (resultList.size() != poInstockDetailEntities.size()) {
+                record.setQcStatusName(PdaQclStatusEnum.PARTIAL_QC.getName());
+            } else {
+                record.setQcStatusName(PdaQclStatusEnum.FINISH_QC.getName());
+            }
+
             record.setItemList(itemDTOList);
         }
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<PoInstockDTO.PdaPoInStockCountDTO> pdaListCount(PermissionsDTO dto) {
+        PdaTabFlagEnum[] values = PdaTabFlagEnum.values();
+        List<PoInstockDTO.PdaPoInStockCountDTO> list = new ArrayList<>();
+        for (PdaTabFlagEnum item : values) {
+            PoInstockDTO.SearchParamDTO pagingParamDTO = new PoInstockDTO.SearchParamDTO();
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            pagingParamDTO.setInvalidStatus(Boolean.FALSE);
+            PoInstockDTO.PdaPoInStockCountDTO resultDTO = new PoInstockDTO.PdaPoInStockCountDTO();
+            Integer count = MathUtil.ZERO;
+            if (PdaTabFlagEnum.WAIT_SUBMIT_AND_REJECT.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.REJECT.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            list.add(resultDTO);
+        }
+        return list;
     }
 }
