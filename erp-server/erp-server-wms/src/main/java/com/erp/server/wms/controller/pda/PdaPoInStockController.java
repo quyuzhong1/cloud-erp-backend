@@ -89,7 +89,7 @@ public class PdaPoInStockController extends BaseController {
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
-            menuCode = "wms:poInStock:update",
+            menuCode = "wms:pdaPoInStock:update",
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult update(@RequestBody @Validated PoInstockDTO.UpdateDTO dto) {
@@ -107,7 +107,7 @@ public class PdaPoInStockController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:poInStock:view",
+            menuCode = "wms:pdaPoInStock:view",
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult<PoInstockDTO.ViewDTO> view(@RequestParam("id") String id) {
@@ -125,7 +125,7 @@ public class PdaPoInStockController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
-            menuCode = "wms:poInStock:add",
+            menuCode = "wms:pdaPoInStock:add",
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PoInstockDTO.AddDTO dto) {
@@ -143,7 +143,7 @@ public class PdaPoInStockController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
-            menuCode = "wms:poInStock:update",
+            menuCode = "wms:pdaPoInStock:update",
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated PoInstockDTO.UpdateDTO dto) {
@@ -161,7 +161,7 @@ public class PdaPoInStockController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
-            menuCode = "wms:poInStock:submit",
+            menuCode = "wms:pdaPoInStock:submit",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
@@ -179,7 +179,7 @@ public class PdaPoInStockController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
-            menuCode = "wms:poInStock:delete",
+            menuCode = "wms:pdaPoInStock:delete",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
@@ -197,7 +197,7 @@ public class PdaPoInStockController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
-            menuCode = "wms:poInStock:invalid",
+            menuCode = "wms:pdaPoInStock:invalid",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
@@ -215,7 +215,7 @@ public class PdaPoInStockController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
-            menuCode = "wms:poInStock:approve",
+            menuCode = "wms:pdaPoInStock:approve",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
@@ -233,7 +233,7 @@ public class PdaPoInStockController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
-            menuCode = "wms:poInStock:disApprove",
+            menuCode = "wms:pdaPoInStock:disApprove",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -251,7 +251,7 @@ public class PdaPoInStockController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
-            menuCode = "wms:poInStock:cancelProcess",
+            menuCode = "wms:pdaPoInStock:cancelProcess",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
