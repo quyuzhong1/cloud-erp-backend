@@ -708,6 +708,10 @@ public enum ApiError implements Serializable {
     // 库存冻结中无法操作
     STOCK_FREEZE_NOT_ALLOW(99094, "仓库【{}】库位【{}】 SKU【{}】 库存【{}】中, 无法操作"),
     ERROR_SUB_CHILD_LOCATION_BLANK(99088,"委外订单子SKU【{}】仓位不能为空"),
+    // 已下推退货入库单不能反审核
+    ERROR_RETURN_ORDER_PUSHED(99089, "已下推退货入库单，不能反审核"),
+
+
 
 
     /**

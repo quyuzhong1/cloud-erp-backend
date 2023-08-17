@@ -623,7 +623,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //下推退货入库单不能反审核
         List<SoReturnInstockEntity> soReturnInstockEntityList = soReturnInstockService.listBySourceIds(ids).stream().filter(req -> req.getInvalidStatus().equals(InvalidStatusEnum.NOT_VOIDED.getStatus())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(soReturnInstockEntityList)) {
-            throw new ServiceException(ApiError.ERROR_99089);
+            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_PUSHED);
         }
 
         //修改状态为待提交

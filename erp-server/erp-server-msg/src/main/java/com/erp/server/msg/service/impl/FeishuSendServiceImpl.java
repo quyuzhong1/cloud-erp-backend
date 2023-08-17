@@ -152,20 +152,20 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         String userId = noticeMsgWrapInfoDTO.getReceiverUserIds().get(0);
         List<ThirdUnionDTO> thirdUnionDTOs = sysUserFeign.getThirdUnionIdsByUserIds(ThirdPlatformEnums.FS.code, CollUtil.newArrayList(userId));
         if(CollUtil.isEmpty(thirdUnionDTOs) || StrUtils.isEmpty(thirdUnionDTOs.get(0).getThirdUnionId())) {
-            log.warn("用户【{}】未找到绑定的飞书信息",userId);
+            log.warn("用户【{}】未找到绑定的飞书信息",thirdUnionDTOs.get(0).getUserName());
             msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.code);
             msgResult.setMsg(ApiError.ERROR_LARK_TOKEN_IS_NULL.msg);
             msgResult.setNeedReSend(false);
 
-            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
-            warnMsgInfoDTO.setTitle("消息通知发送失败");
-            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_MSG);
-            warnMsgInfoDTO.setBizName("飞书发送消息通知");
-            warnMsgInfoDTO.setTableName("");
-            warnMsgInfoDTO.setTableId("");
-            warnMsgInfoDTO.setKeyInfo(StrUtil.format("用户【{}】未绑定飞书信息", userId));
-            warnMsgInfoDTO.setHappenTime(LocalDateTime.now());
-            sendWebhookMessage(warnMsgInfoDTO);
+//            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+//            warnMsgInfoDTO.setTitle("消息通知发送失败");
+//            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_MSG);
+//            warnMsgInfoDTO.setBizName("飞书发送消息通知");
+//            warnMsgInfoDTO.setTableName("");
+//            warnMsgInfoDTO.setTableId("");
+//            warnMsgInfoDTO.setKeyInfo(StrUtil.format("用户【{}】未绑定飞书信息", thirdUnionDTOs.get(0).getUserName()));
+//            warnMsgInfoDTO.setHappenTime(LocalDateTime.now());
+//            sendWebhookMessage(warnMsgInfoDTO);
             return msgResult;
         }
         String unionId = thirdUnionDTOs.get(0).getThirdUnionId();
@@ -247,20 +247,20 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         NoticeMsgWrapInfoDTO noticeMsgWrapInfoDTO = noticeMsgInfo.getNoticeMsgWrapInfoDTO();
         List<ThirdUnionDTO> thirdUnionDTOs = sysUserFeign.getThirdUnionIdsByUserIds(ThirdPlatformEnums.FS.code, noticeMsgWrapInfoDTO.getReceiverUserIds());
         if(CollUtil.isEmpty(thirdUnionDTOs)) {
-            log.warn("批量发送消息未找到绑定的飞书账号信息");
+            log.warn("批量发送消息用户【{}】未绑定飞书信息", JSONObject.toJSONString(thirdUnionDTOs));
             msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.code);
             msgResult.setMsg(ApiError.ERROR_LARK_TOKEN_IS_NULL.msg);
             msgResult.setNeedReSend(false);
 
-            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
-            warnMsgInfoDTO.setTitle("消息通知发送失败");
-            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_MSG);
-            warnMsgInfoDTO.setBizName("飞书发送批量消息通知");
-            warnMsgInfoDTO.setTableName("");
-            warnMsgInfoDTO.setTableId("");
-            warnMsgInfoDTO.setKeyInfo(StrUtil.format("用户【{}】未绑定飞书信息", JSONObject.toJSONString(noticeMsgWrapInfoDTO.getReceiverUserIds())));
-            warnMsgInfoDTO.setHappenTime(LocalDateTime.now());
-            sendWebhookMessage(warnMsgInfoDTO);
+//            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+//            warnMsgInfoDTO.setTitle("消息通知发送失败");
+//            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_MSG);
+//            warnMsgInfoDTO.setBizName("飞书发送批量消息通知");
+//            warnMsgInfoDTO.setTableName("");
+//            warnMsgInfoDTO.setTableId("");
+//            warnMsgInfoDTO.setKeyInfo(StrUtil.format("用户【{}】未绑定飞书信息", JSONObject.toJSONString(noticeMsgWrapInfoDTO.getReceiverUserIds())));
+//            warnMsgInfoDTO.setHappenTime(LocalDateTime.now());
+//            sendWebhookMessage(warnMsgInfoDTO);
             return msgResult;
         }
         List<String> unionIds = thirdUnionDTOs.stream().map(ThirdUnionDTO::getThirdUnionId).collect(Collectors.toList());
