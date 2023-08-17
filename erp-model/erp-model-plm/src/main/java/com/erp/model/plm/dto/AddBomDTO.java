@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
@@ -46,5 +47,6 @@ public class AddBomDTO implements Serializable {
 
 
     @Valid
+    @NotEmpty(message = "BOM子级SKU不能为空")
     private List<BomSkuDTO> skuList;
 }

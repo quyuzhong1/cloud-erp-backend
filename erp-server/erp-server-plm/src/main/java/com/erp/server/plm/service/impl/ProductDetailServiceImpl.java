@@ -538,6 +538,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return this.baseMapper.getNoInventorySku();
     }
 
+    @Override
+    public void updateName(String id, String name) {
+        lambdaUpdate().eq(ProductDetailEntity::getId,id)
+                .set(ProductDetailEntity::getName,name)
+                .update(new ProductDetailEntity());
+    }
+
     /**
      * @param productId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductManyDetailDTO>
@@ -913,7 +920,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             isAdd = true;
         }
         String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
-
+        //给对象赋值
+        productSkuBaseInfoDTO.setId(skuId);
         //SKU新增操作日志
         if (isAdd) {
             sysLogService.addSysLogBySave("生成了一个SKU：[" + productSkuBaseInfoDTO.getSkuNo() + "]", SKUCLASSPATH, skuId, id);

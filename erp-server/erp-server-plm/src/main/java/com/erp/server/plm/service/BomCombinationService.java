@@ -43,5 +43,5 @@ public interface BomCombinationService {
      * @param dto
      * @return Boolean
      */
-    Boolean view(BaseIdDTO dto);
+    BomCombinationDTO.ViewDTO view(BaseIdDTO dto);
 }

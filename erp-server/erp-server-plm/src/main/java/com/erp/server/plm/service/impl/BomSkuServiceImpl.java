@@ -1,7 +1,10 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
@@ -44,8 +47,16 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     @Override
     public void saveBomSku(String bomId, List<BomSkuDTO> bomSkuList) {
         List<BomSkuEntity> saveBatchList = new LinkedList<>();
+
+
+
         for (BomSkuDTO item : bomSkuList) {
             List<BomChildrenSkuDTO> childrenList = item.getChildren();
+            //SKU重复验证
+            String childSkuNos = childrenList.stream().filter(obj -> obj.getSkuId().equals(item.getSkuId())).map(BomChildrenSkuDTO::getSkuNo).collect(Collectors.joining(","));
+            if (StringUtils.isNotBlank(childSkuNos)) {
+                throw new ServiceException(ApiError.ERROR_BOM_SKU_REPEAT,item.getSkuNo());
+            }
             for (BomChildrenSkuDTO children : childrenList) {
                 BomSkuEntity entity = new BomSkuEntity();
                 entity.setParentSkuId(item.getSkuId());

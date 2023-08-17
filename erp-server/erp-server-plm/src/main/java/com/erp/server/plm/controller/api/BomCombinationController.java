@@ -34,6 +34,7 @@ public class BomCombinationController extends BaseController {
      * @param dto
      * @return ApiResult<PagingVO<ListDTO>>
      */
+    @PostMapping("/paging")
     public ApiResult<PagingVO<BomCombinationDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<BomCombinationDTO.SearchParamDTO> dto) {
         PagingVO<BomCombinationDTO.ListDTO> pagingVO = bomCombinationService.paging(dto);
         return success(pagingVO);
@@ -73,9 +74,9 @@ public class BomCombinationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/view")
-    public ApiResult update(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean flag = this.bomCombinationService.view(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<BomCombinationDTO.ViewDTO> update(@RequestBody @Validated BaseIdDTO dto) {
+        BomCombinationDTO.ViewDTO viewDTO = this.bomCombinationService.view(dto);
+        return success(viewDTO);
     }
 
 }

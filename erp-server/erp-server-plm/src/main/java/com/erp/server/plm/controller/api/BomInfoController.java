@@ -98,8 +98,8 @@ public class BomInfoController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated AddBomDTO dto) {
-        Boolean flag = this.bomInfoService.insert(dto);
-        return flag == true ? success() : failure();
+        String String = this.bomInfoService.insert(dto);
+        return success();
     }
 
     /**
