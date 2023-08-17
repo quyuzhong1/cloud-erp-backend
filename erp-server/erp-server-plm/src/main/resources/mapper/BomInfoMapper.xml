@@ -3,11 +3,13 @@
 <mapper namespace="com.erp.server.plm.mapper.BomInfoMapper">
 
     <resultMap id= "listCombination" type="com.erp.model.plm.dto.BomCombinationDTO$ListDTO">
-        <id column="id" property="id"></id>
+        <id column="bomId" property="id"></id>
         <result column="parentSkuNo" property="parentSkuNo"></result>
         <result column="name" property="name"></result>
-        <result column="updateUserName" property="updateTime"></result>
+        <result column="updateUserName" property="updateUserName"></result>
+        <result column="updateTime" property="updateTime"></result>
         <collection property="childList" ofType="com.erp.model.plm.dto.BomCombinationDTO$ChildDTO">
+            <id column="detailId" property="id"></id>
             <result column="childSkuNo" property="childSkuNo"></result>
             <result column="qty" property="qty"></result>
             <result column="actualTaxCost" property="actualTaxCost"></result>
@@ -209,13 +211,14 @@
 
     <select id="combinationPaging" resultMap="listCombination">
         select
-            pbi.id,
+            pbi.id as bomId,
+            pbs.id as detailId,
             pbs.parent_sku_no as parentSkuNo,
             pd.name,
             pbs.quantity as qty,
             cpd.sku_no as childSkuNo,
-            pc.actual_tax_cost as actualTaxCost,
-            pc.target_tax_cost as targetTaxCost,
+            COALESCE(pc.actual_tax_cost,0) as actualTaxCost,
+            COALESCE(pc.target_tax_cost,0) as targetTaxCost,
             pbi.update_user_name as updateUserName,
             pbi.update_time as updateTime
         from product_bom_info pbi
@@ -224,12 +227,12 @@
         left join product_detail cpd on pbs.sku_id = cpd.id and cpd.is_deleted = false
         left join product_cost pc on cpd.id = pc.sku_id and pc.is_deleted = false
         <where>
-            pbi.is_deleted = false
+            pbi.is_deleted = false and pbi.source_type = 'productCombination'
             <if test="params.skuNo != null and params.skuNo != ''">
                 and pbs.parent_sku_no ilike concat('%', #{params.skuNo},'%')
             </if>
             <if test="params.name != null and params.name != ''">
-                and pd.name ilike concat('%', #{name},'%')
+                and pd.name ilike concat('%', #{params.name},'%')
             </if>
             <if test="params.updateUserIdList != null and params.updateUserIdList != ''">
                 and pbi.update_user_id in

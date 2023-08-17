@@ -40,10 +40,7 @@ public class BomCombinationDTO implements Serializable {
          * 组合产品名称
          */
         private String name;
-        /**
-         * 数量
-         */
-        private Integer qty;
+
         /**
          * 产品信息（子sku合并展示）
          */
@@ -70,6 +67,10 @@ public class BomCombinationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ChildDTO {
+        /**
+         * 主键id
+         */
+        private String id;
         /**
          * sku编号
          */

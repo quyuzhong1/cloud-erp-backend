@@ -60,6 +60,8 @@ public enum SourceTypeEnum {
 
     // PLM
     PRODUCT_BOM_INFO("productBomInfo", "BOM管理","product_bom_info"),
+    PRODUCT_COMBINATION("productCombination", "组合产品",""),
+
     PRODUCT_DETAIL("productDetail", "产品管理","product_detail"),
     PROJECT_TASK("projectTask", "任务列表","project_task"),
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),

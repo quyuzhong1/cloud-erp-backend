@@ -442,6 +442,7 @@ public enum ApiError implements Serializable {
     ERROR_BOM_SKU_REPEAT(95244,"父级sku【{}】和子级sku不能重复"),
     ERROR_BOM_PARENT_SKU_REPEAT(95245,"父级sku【{}】已生成BOM"),
     ERROR_BOM_COMBINATION_STATE(95246,"组合品状态有误"),
+    ERROR_BOM_COMBINATION_PARENT_SKU_NAME_DIFFERENT(95247,"组合产品SKU【{}】对应名称不一致"),
 
 
 

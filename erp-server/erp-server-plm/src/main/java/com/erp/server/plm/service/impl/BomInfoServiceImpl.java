@@ -132,6 +132,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         bom.setBomVersion(dto.getVersion());
         bom.setId(bomId);
         bom.setSerialNumber(serialNumber);
+        bom.setSourceType(dto.getSourceType());
         String submitAudit = BomConstant.SUBMIT_AUDIT;
         boolean isSubmitAudit = submitAudit.equals(dto.getSubmitType());
         if (isSubmitAudit) {

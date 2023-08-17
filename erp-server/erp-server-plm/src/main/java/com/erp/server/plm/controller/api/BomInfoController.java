@@ -98,7 +98,7 @@ public class BomInfoController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated AddBomDTO dto) {
-        String String = this.bomInfoService.insert(dto);
+        this.bomInfoService.insert(dto);
         return success();
     }
 

@@ -545,6 +545,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 .update(new ProductDetailEntity());
     }
 
+    @Override
+    public List<ProductDetailEntity> listBySkuNos(List<String> skuNos) {
+        if (CollectionUtils.isEmpty(skuNos)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(ProductDetailEntity::getSkuNo,skuNos).list();
+    }
+
     /**
      * @param productId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductManyDetailDTO>
@@ -2317,8 +2325,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
 
-    public void checkRequiredField(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
+    public void checkRequiredField(List<String> ids,Boolean isCheck) {
+        if (CollectionUtils.isEmpty(ids) || !isCheck) {
             return;
         }
         List<ProductDetailEntity> detailEntityList = this.listByIds(ids);
@@ -2455,7 +2463,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95238);
         }*/
         //校验必填项
-        checkRequiredField(Arrays.asList(id));
+        checkRequiredField(Arrays.asList(id),Boolean.TRUE);
         ProductDetailEntity productDetailEntity = this.getById(id);
         if (ObjectUtils.isEmpty(productDetailEntity)) {
             throw new ServiceException(ApiError.ERROR_95084);
@@ -3400,9 +3408,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
+    public Boolean submit(List<String> ids,Boolean isCheck) {
         //校验必填项
-        checkRequiredField(ids);
+        checkRequiredField(ids,isCheck);
         List<ProductDetailEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.ERROR_95084);
