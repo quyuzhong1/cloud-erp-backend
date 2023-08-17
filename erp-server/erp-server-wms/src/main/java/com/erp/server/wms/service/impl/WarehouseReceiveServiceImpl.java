@@ -1215,7 +1215,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
             List<WarehouseReceiveDetailEntity> detailEntities = detailEntityList.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
             List<WarehouseReceiveDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, WarehouseReceiveDTO.PdaItemDTO.class);
-            record.setDetailCount(itemDTOList.size());
+            List<String> skuList = itemDTOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+            record.setDetailCount(skuList.size());
             record.setItemList(itemDTOList);
         }
         return new PagingVO(pageData);
