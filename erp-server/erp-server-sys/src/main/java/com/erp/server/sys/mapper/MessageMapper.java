@@ -23,6 +23,13 @@ import java.util.List;
 @Mapper
 public interface MessageMapper extends BaseMapper<MessageEntity> {
 
-
+    /**
+     * 查询未读消息
+     * @Author Luo_WG
+     * @Date 2023/8/17 14:15
+     * @param userId
+     * @return java.util.List<com.erp.model.sys.entity.MessageEntity>
+     **/
+    List<MessageEntity> listByNotReadMessage(@Param("userId") String userId);
 
 }

@@ -15,4 +15,22 @@
         is_deleted,
         code, approve_status, type, data_json, remark
     </sql>
+
+    <select id="listByNotReadMessage" resultType="com.erp.model.sys.entity.MessageEntity">
+        SELECT
+            m.id,
+            m.create_user_id,
+            m.create_user_name,
+            m.create_time,
+            m.update_user_id,
+            m.update_user_name,
+            m.update_time,
+            m.version,
+            m.is_deleted,
+            m.type,
+            m.data_json,
+            m.remark
+        FROM message m
+        WHERE not EXISTS (SELECT * FROM message_user_read mur WHERE mur.message_id = m."id" AND mur.user_id = #{userId})
+    </select>
 </mapper>

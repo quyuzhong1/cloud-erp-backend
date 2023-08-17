@@ -143,13 +143,35 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
 
     @Override
     public MessageDTO.IsMessageDTO isMessage() {
-        MessageEntity messageEntity = lambdaQuery().orderByDesc(MessageEntity::getCreateTime).last("LIMIT 1").one();
-        String name = MessageTypeEnum.getName(messageEntity.getType());
+        LoginUser userInfo = commonService.getUserInfo();
+        String uid = userInfo.getUid();
+        List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(uid);
+
+        List<String> typeList = messageEntities.stream().map(req -> MessageTypeEnum.getName(req.getType())).distinct().collect(Collectors.toList());
+
         MessageDTO.IsMessageDTO isMessageDTO = new MessageDTO.IsMessageDTO();
-        MessageUserReadEntity messageUserReadEntitie = messageUserReadService.listByMessageId(messageEntity.getId());
-        if (ObjectUtil.isEmpty(messageUserReadEntitie)) {
-            isMessageDTO.setRemark(StrUtil.format("有一条新的{}", name));
+        if (CollectionUtils.isNotEmpty(messageEntities)) {
+            isMessageDTO.setRemark(StrUtil.format("有{}条新的{}",messageEntities.size(), StringUtils.join(typeList, "/")));
         }
         return isMessageDTO;
+    }
+
+    public static void main(String[] args) {
+        List<String> list = new ArrayList();
+        list.add("AAA");
+        list.add("BBB");
+        System.out.println(StringUtils.join(list,"/"));
+    }
+
+
+    /**
+     * 查询未读消息
+     * @Author Luo_WG
+     * @Date 2023/8/17 14:17
+     * @param userId
+     * @return java.util.List<com.erp.model.sys.entity.MessageEntity>
+     **/
+    private List<MessageEntity> listByNotReadMessage(String userId) {
+        return baseMapper.listByNotReadMessage(userId);
     }
 }
