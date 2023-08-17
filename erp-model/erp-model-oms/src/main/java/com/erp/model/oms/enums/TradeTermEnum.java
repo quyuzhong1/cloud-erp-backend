@@ -9,8 +9,9 @@ public enum TradeTermEnum implements EnumMessage {
     EXW("EXW", "EXW"),
     FOB("FOB", "FOB"),
     FCA("FCA", "FCA"),
-    DDP("DAP", "DDP"),
-    DAP("DDU", "DAP"),
+    DAP("DAP", "DAP"),
+    DDU("DDU", "DDU"),
+    DDP("DDP", "DDP"),
     ;
 
     /**
