@@ -3,8 +3,8 @@ package com.erp.server.oms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.SkuMapingDTO;
-import com.erp.model.oms.entity.SkuMapingEntity;
+import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.entity.SkuMappingEntity;
 import com.common.business.service.SuperService;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,7 +19,7 @@ import java.util.List;
  * @author Lambda
  * @since 2023-06-28
  */
-public interface SkuMapingService extends SuperService<SkuMapingEntity> {
+public interface SkuMappingService extends SuperService<SkuMappingEntity> {
 
     void downloadTemplate(HttpServletResponse response);
 
@@ -40,7 +40,7 @@ public interface SkuMapingService extends SuperService<SkuMapingEntity> {
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SkuMapingDTO.PagingViewDTO>
      */
-    PagingVO<SkuMapingDTO.PagingViewDTO> paging(PagingDTO<SkuMapingDTO.PagingParamDTO> dto);
+    PagingVO<SkuMappingDTO.PagingViewDTO> paging(PagingDTO<SkuMappingDTO.PagingParamDTO> dto);
 
     /**
      * 导出sku 对照表
@@ -50,7 +50,7 @@ public interface SkuMapingService extends SuperService<SkuMapingEntity> {
      * @param response
      * @return java.lang.Boolean
      */
-    Boolean exportSkuMaping(SkuMapingDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportSkuMaping(SkuMappingDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
      * 获取tab 列表
@@ -59,7 +59,7 @@ public interface SkuMapingService extends SuperService<SkuMapingEntity> {
      * @param dto
      * @return java.util.List<com.erp.model.oms.dto.SkuMapingDTO.TabListDTO>
      */
-    List<SkuMapingDTO.TabListDTO> tabList(PermissionsDTO dto);
+    List<SkuMappingDTO.TabListDTO> tabList(SkuMappingDTO.FindTabDTO dto);
 
     /**
      * 更改sku 对照表
@@ -68,7 +68,7 @@ public interface SkuMapingService extends SuperService<SkuMapingEntity> {
      * @param dto
      * @return java.lang.String
      */
-    String updateSkuMaping(SkuMapingDTO.UpdateDTO dto);
+    String updateSkuMaping(SkuMappingDTO.UpdateDTO dto);
 
     /**
      * 销售订单添加客户sku
@@ -77,5 +77,5 @@ public interface SkuMapingService extends SuperService<SkuMapingEntity> {
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SkuMapingDTO.ProductSkuInfoDTO>
      */
-    PagingVO<SkuMapingDTO.ProductSkuInfoDTO> listPaging(PagingDTO<SkuMapingDTO.ListParamDTO> dto);
+    PagingVO<SkuMappingDTO.ProductSkuInfoDTO> listPaging(PagingDTO<SkuMappingDTO.ListParamDTO> dto);
 }

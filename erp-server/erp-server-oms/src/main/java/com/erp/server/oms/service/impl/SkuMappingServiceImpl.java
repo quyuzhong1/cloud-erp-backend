@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -15,19 +14,22 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.SkuMapingDTO;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.excel.SkuMapingImportExcelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SkuMapingEntity;
+import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.oms.listener.SkuMapingExcelListener;
-import com.erp.server.oms.mapper.SkuMapingMapper;
+import com.erp.server.oms.constant.OmsConstant;
+import com.erp.server.oms.listener.SkuMappingExcelListener;
+import com.erp.server.oms.mapper.SkuMappingMapper;
 import com.erp.server.oms.service.DictBasicService;
+import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.ShopInfoService;
-import com.erp.server.oms.service.SkuMapingService;
+import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -57,7 +59,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuMapingEntity> implements SkuMapingService {
+public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, SkuMappingEntity> implements SkuMappingService {
 
 
     @Resource
@@ -68,6 +70,9 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
 
     @Resource
     private DictBasicService dictBasicService;
+
+    @Resource
+    private ListingInfoService listingInfoService;
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
@@ -107,11 +112,12 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
         List<ShopInfoEntity> shopInfoList = shopInfoService.list();
-        List<SkuMapingEntity> skuMapingList = this.listEffectiveList();
+        List<SkuMappingEntity> skuMappingList = this.listEffectiveList();
         String key = DictBasicEnum.PLATFORM.getType();
         List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
+        List<ListingInfoEntity> list = listingInfoService.list();
 
-        SkuMapingExcelListener excelListenerUtil = new SkuMapingExcelListener(this, skuList, shopInfoList, skuMapingList, dictBasicList);
+        SkuMappingExcelListener excelListenerUtil = new SkuMappingExcelListener(this, skuList, shopInfoList, skuMappingList, dictBasicList,list);
         try {
             EasyExcel.read(excelFile.getInputStream(), SkuMapingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
@@ -138,20 +144,21 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
      * @date 2023-06-29 18:07
      */
     @Override
-    public PagingVO<SkuMapingDTO.PagingViewDTO> paging(PagingDTO<SkuMapingDTO.PagingParamDTO> dto) {
-        SkuMapingDTO.PagingParamDTO params = dto.getParams();
+    public PagingVO<SkuMappingDTO.PagingViewDTO> paging(PagingDTO<SkuMappingDTO.PagingParamDTO> dto) {
+        SkuMappingDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        String searchType = params.getSearchType();
+        String tabFlag = params.getTabFlag();
         Boolean matchResult = null;
-        if ("already".equals(searchType)) {
+        if (OmsConstant.ALREADY.equals(tabFlag)) {
             matchResult = Boolean.TRUE;
         }
-        if ("not".equals(searchType)) {
+        if (OmsConstant.NOT.equals(tabFlag)) {
             matchResult = Boolean.FALSE;
         }
-        IPage pageData = baseMapper.paging(query, params, matchResult, LocalDateTime.now());
-        List<SkuMapingDTO.PagingViewDTO> list = pageData.getRecords();
+        IPage pageData = baseMapper.paging(query, params, matchResult);
+
+        List<SkuMappingDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
@@ -170,16 +177,16 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
      * @date 2023-06-30 9:35
      */
     @Override
-    public Boolean exportSkuMaping(SkuMapingDTO.ExportDTO dto, HttpServletResponse response) {
-        String searchType = dto.getSearchType();
+    public Boolean exportSkuMaping(SkuMappingDTO.ExportDTO dto, HttpServletResponse response) {
+        String tabFlag = dto.getTabFlag();
         Boolean matchResult = null;
-        if ("already".equals(searchType)) {
+        if (OmsConstant.ALREADY.equals(tabFlag)) {
             matchResult = Boolean.TRUE;
         }
-        if ("not".equals(searchType)) {
+        if (OmsConstant.NOT.equals(tabFlag)) {
             matchResult = Boolean.FALSE;
         }
-        List<SkuMapingDTO.PagingViewDTO> list = baseMapper.listExport(dto, matchResult);
+        List<SkuMappingDTO.PagingViewDTO> list = baseMapper.listExport(dto, matchResult);
         fillDb(list);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/skuMaping.xlsx";
@@ -205,31 +212,29 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
      * @date 2023-06-30 9:45
      */
     @Override
-    public List<SkuMapingDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        List<SkuMapingDTO.TabListDTO> resultList = new ArrayList<>(3);
-        List<SkuMapingDTO.MatchCountDTO> matchCountList = baseMapper.listMatchCount(dto.getPermissionSql());
+    public List<SkuMappingDTO.TabListDTO> tabList(SkuMappingDTO.FindTabDTO dto) {
+        List<SkuMappingDTO.TabListDTO> resultList = new ArrayList<>(3);
+        List<SkuMappingDTO.MatchCountDTO> matchCountList = baseMapper.listMatchCount(dto);
         //所有
-        SkuMapingDTO.TabListDTO all = new SkuMapingDTO.TabListDTO();
-        int allCount = matchCountList.stream().mapToInt(SkuMapingDTO.MatchCountDTO::getCount).sum();
+        SkuMappingDTO.TabListDTO all = new SkuMappingDTO.TabListDTO();
+        int allCount = matchCountList.stream().mapToInt(SkuMappingDTO.MatchCountDTO::getCount).sum();
         all.setCount(allCount);
-        all.setSearchType(SearchType.ALL);
+        all.setTabFlag(SearchType.ALL);
         resultList.add(all);
         //未匹配
-        SkuMapingDTO.TabListDTO not = new SkuMapingDTO.TabListDTO();
-        not.setSearchType("not");
+        SkuMappingDTO.TabListDTO not = new SkuMappingDTO.TabListDTO();
         int notCount = matchCountList.stream().filter(m -> !m.getMatchResult()).findFirst().
-                map(SkuMapingDTO.MatchCountDTO::getCount).orElse(0);
+                map(SkuMappingDTO.MatchCountDTO::getCount).orElse(0);
         not.setCount(notCount);
-        not.setSearchType("not");
+        not.setTabFlag(OmsConstant.NOT);
         resultList.add(not);
 
         //已匹配
-        SkuMapingDTO.TabListDTO already = new SkuMapingDTO.TabListDTO();
-        already.setSearchType("not");
+        SkuMappingDTO.TabListDTO already = new SkuMappingDTO.TabListDTO();
         int alreadyCount = matchCountList.stream().filter(m -> m.getMatchResult()).findFirst().
-                map(SkuMapingDTO.MatchCountDTO::getCount).orElse(0);
+                map(SkuMappingDTO.MatchCountDTO::getCount).orElse(0);
         already.setCount(alreadyCount);
-        already.setSearchType("already");
+        already.setTabFlag(OmsConstant.ALREADY);
         resultList.add(already);
         return resultList;
     }
@@ -244,9 +249,9 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String updateSkuMaping(SkuMapingDTO.UpdateDTO dto) {
+    public String updateSkuMaping(SkuMappingDTO.UpdateDTO dto) {
         String id = dto.getId();
-        SkuMapingEntity skuMaping = this.getById(id);
+        SkuMappingEntity skuMaping = this.getById(id);
         if (Objects.isNull(skuMaping)) {
             throw new ServiceException(ApiError.ERROR_92051);
         }
@@ -261,21 +266,17 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
             throw new ServiceException(ApiError.ERROR_92053);
 
         }
-        checkExist(id, dto.getPlatformDict(), dto.getPlatformSkuNo(),dto.getProductSkuId());
+        checkExist(id, dto.getPlatformDict(), dto.getPlatformSkuNo(), dto.getProductSkuId());
         LocalDateTime now = LocalDateTime.now();
         skuMaping.setExpireTime(now);
         skuMaping.setIsExpire(Boolean.TRUE);
         this.updateById(skuMaping);
-        SkuMapingEntity addSkuMaping = new SkuMapingEntity();
+        SkuMappingEntity addSkuMaping = new SkuMappingEntity();
         addSkuMaping.setShopId(dto.getShopId());
-        addSkuMaping.setPlatformSkuNo(dto.getPlatformSkuNo());
-        addSkuMaping.setPlatformSkuName(dto.getPlatformSkuName());
         addSkuMaping.setPlatformName(dictBasic.getName());
         addSkuMaping.setProductSkuNo(skuVOList.get(0).getSkuNo());
         addSkuMaping.setProductSkuId(productSkuId);
-        addSkuMaping.setPlatformDict(platformDict);
         addSkuMaping.setIsExpire(Boolean.FALSE);
-        addSkuMaping.setMatchResult(Boolean.TRUE);
         addSkuMaping.setEffectiveTime(now);
         addSkuMaping.setExpireTime(now.plusYears(100));
         this.save(addSkuMaping);
@@ -292,18 +293,18 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
      * @date 2023-07-01 9:19
      */
     @Override
-    public PagingVO<SkuMapingDTO.ProductSkuInfoDTO> listPaging(PagingDTO<SkuMapingDTO.ListParamDTO> dto) {
-        SkuMapingDTO.ListParamDTO params = dto.getParams();
+    public PagingVO<SkuMappingDTO.ProductSkuInfoDTO> listPaging(PagingDTO<SkuMappingDTO.ListParamDTO> dto) {
+        SkuMappingDTO.ListParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.listPaging(query, params);
-        List<SkuMapingDTO.ProductSkuInfoDTO> list = pageData.getRecords();
+        List<SkuMappingDTO.ProductSkuInfoDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
-        List<String> skuIdList = list.stream().map(SkuMapingDTO.ProductSkuInfoDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = list.stream().map(SkuMappingDTO.ProductSkuInfoDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-        for (SkuMapingDTO.ProductSkuInfoDTO item : list) {
+        for (SkuMappingDTO.ProductSkuInfoDTO item : list) {
             String skuId = item.getSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
@@ -312,13 +313,13 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
         return new PagingVO<>(pageData);
     }
 
-    private void checkExist(String id, String platformDict, String platformSkuNo,String skuId) {
-        LambdaQueryWrapper<SkuMapingEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SkuMapingEntity::getPlatformDict, platformDict);
-        queryWrapper.eq(SkuMapingEntity::getPlatformSkuNo, platformSkuNo);
-        queryWrapper.eq(SkuMapingEntity::getIsExpire, Boolean.FALSE);
+    private void checkExist(String id, String platformDict, String platformSkuNo, String skuId) {
+        LambdaQueryWrapper<SkuMappingEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SkuMappingEntity::getDictPlatform, platformDict);
+        queryWrapper.eq(SkuMappingEntity::getPlatformName, platformSkuNo);
+        queryWrapper.eq(SkuMappingEntity::getIsExpire, Boolean.FALSE);
         if (StringUtils.isNotBlank(id)) {
-            queryWrapper.ne(SkuMapingEntity::getId, id);
+            queryWrapper.ne(SkuMappingEntity::getId, id);
         }
         long count = this.count(queryWrapper);
         if (count > 0) {
@@ -336,15 +337,15 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
      * @author yl
      * @date 2023-06-29 19:15
      */
-    private void fillDb(List<SkuMapingDTO.PagingViewDTO> list) {
-        List<String> skuIdList = list.stream().map(SkuMapingDTO.PagingViewDTO::getProductSkuId).collect(Collectors.toList());
+    private void fillDb(List<SkuMappingDTO.PagingViewDTO> list) {
+        List<String> skuIdList = list.stream().map(SkuMappingDTO.PagingViewDTO::getProductSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-        for (SkuMapingDTO.PagingViewDTO item : list) {
+        for (SkuMappingDTO.PagingViewDTO item : list) {
             Boolean matchResult = item.getMatchResult();
             String skuId = item.getProductSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
-            item.setProductSkuName(skuName);
+            item.setProductName(skuName);
             item.setMatchResultStr(matchResult ? "已匹配" : "未匹配");
         }
     }
@@ -358,8 +359,8 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
      * @author yl
      * @date 2023-06-29 11:29
      */
-    private List<SkuMapingEntity> listEffectiveList() {
-        List<SkuMapingEntity> resultList = this.lambdaQuery().eq(SkuMapingEntity::getIsExpire, Boolean.FALSE).list();
+    private List<SkuMappingEntity> listEffectiveList() {
+        List<SkuMappingEntity> resultList = this.lambdaQuery().eq(SkuMappingEntity::getIsExpire, Boolean.FALSE).list();
         return resultList;
     }
 }

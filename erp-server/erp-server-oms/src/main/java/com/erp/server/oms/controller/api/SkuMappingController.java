@@ -6,8 +6,8 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.dto.SkuMapingDTO;
-import com.erp.server.oms.service.SkuMapingService;
+import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.server.oms.service.SkuMappingService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -26,11 +26,11 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/skuMaping")
-public class SkuMapingController extends BaseController {
+public class SkuMappingController extends BaseController {
 
 
     @Resource
-    private SkuMapingService skuMapingService;
+    private SkuMappingService skuMappingService;
 
 
     /**
@@ -39,8 +39,8 @@ public class SkuMapingController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
-    public ApiResult<List<SkuMapingDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        List<SkuMapingDTO.TabListDTO> list = skuMapingService.tabList(dto);
+    public ApiResult<List<SkuMappingDTO.TabListDTO>> tabList(@Validated @RequestBody SkuMappingDTO.FindTabDTO dto) {
+        List<SkuMappingDTO.TabListDTO> list = skuMappingService.tabList(dto);
         return success(list);
     }
 
@@ -52,8 +52,8 @@ public class SkuMapingController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<SkuMapingDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SkuMapingDTO.PagingParamDTO> dto) {
-        PagingVO<SkuMapingDTO.PagingViewDTO> pagingVO = skuMapingService.paging(dto);
+    public ApiResult<PagingVO<SkuMappingDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SkuMappingDTO.PagingParamDTO> dto) {
+        PagingVO<SkuMappingDTO.PagingViewDTO> pagingVO = skuMappingService.paging(dto);
         return success(pagingVO);
     }
 
@@ -65,7 +65,7 @@ public class SkuMapingController extends BaseController {
      */
     @PostMapping("/importFile")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = skuMapingService.importExcel(excelFile, response);
+        Boolean result = skuMappingService.importExcel(excelFile, response);
         return result ? success() : failure();
     }
 
@@ -77,7 +77,7 @@ public class SkuMapingController extends BaseController {
      */
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
-        skuMapingService.downloadTemplate(response);
+        skuMappingService.downloadTemplate(response);
         return success();
     }
 
@@ -87,8 +87,8 @@ public class SkuMapingController extends BaseController {
      * @return
      */
     @PostMapping("/export")
-    public ApiResult exportSkuMaping(@RequestBody @Valid SkuMapingDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = skuMapingService.exportSkuMaping(dto, response);
+    public ApiResult exportSkuMaping(@RequestBody @Valid SkuMappingDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result = skuMappingService.exportSkuMaping(dto, response);
         return result ? success() : failure();
     }
 
@@ -98,8 +98,8 @@ public class SkuMapingController extends BaseController {
      * @return
      */
     @PostMapping("/updateSkuMaping")
-    public ApiResult updateSkuMaping(@RequestBody @Valid SkuMapingDTO.UpdateDTO dto) {
-        String id = skuMapingService.updateSkuMaping(dto);
+    public ApiResult updateSkuMaping(@RequestBody @Valid SkuMappingDTO.UpdateDTO dto) {
+        String id = skuMappingService.updateSkuMaping(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
  
@@ -111,8 +111,8 @@ public class SkuMapingController extends BaseController {
     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.oms.dto.SkuMapingDTO.ProductSkuInfoDTO>>
     */
     @PostMapping("/list")
-    public ApiResult<PagingVO<SkuMapingDTO.ProductSkuInfoDTO>> list(@RequestBody @Validated PagingDTO<SkuMapingDTO.ListParamDTO> dto) {
-        PagingVO<SkuMapingDTO.ProductSkuInfoDTO> pagingVO = skuMapingService.listPaging(dto);
+    public ApiResult<PagingVO<SkuMappingDTO.ProductSkuInfoDTO>> list(@RequestBody @Validated PagingDTO<SkuMappingDTO.ListParamDTO> dto) {
+        PagingVO<SkuMappingDTO.ProductSkuInfoDTO> pagingVO = skuMappingService.listPaging(dto);
         return success(pagingVO);
     }
 

@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -21,7 +22,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class SkuMapingDTO implements Serializable {
+public class SkuMappingDTO implements Serializable {
 
 
     /**
@@ -31,9 +32,22 @@ public class SkuMapingDTO implements Serializable {
     @NoArgsConstructor
     public static class TabListDTO {
 
-        private String searchType;
+        private String tabFlag;
 
         private Integer count;
+
+    }
+
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FindTabDTO extends PermissionsDTO {
+
+        @StateEnumValue(strValues = {"platform","warehouse"}, message = "类型有误")
+        private String type;
+
 
     }
 
@@ -65,6 +79,8 @@ public class SkuMapingDTO implements Serializable {
          */
         private String searchKeyword;
 
+        @StateEnumValue(strValues = {"platform","warehouse"}, message = "类型有误")
+        private String type;
         /**
          * 店铺id集合
          */
@@ -83,7 +99,7 @@ public class SkuMapingDTO implements Serializable {
          */
         @StateEnumValue(strValues = {"all", "already", "not"}, message = "搜索类型有误")
         @NotBlank(message = "搜索类型不能为空")
-        private String searchType;
+        private String tabFlag;
 
 
         /**
@@ -176,7 +192,7 @@ public class SkuMapingDTO implements Serializable {
         /**
          * 平台
          */
-        private String platformDict;
+        private String dictPlatform;
 
         /**
          * 平台名称
@@ -194,6 +210,26 @@ public class SkuMapingDTO implements Serializable {
          */
         private String shopName;
 
+        /**
+         * listingId
+         */
+        private String listingId;
+
+        /**
+         * 产品图片url
+         */
+        private String productImageUrl;
+
+        /**
+         * 产品规格
+         */
+        private String productSpec;
+
+        /**
+         * 产品包装
+         */
+        private String productPacking;
+
 
         /**
          * 平台sku no
@@ -201,9 +237,36 @@ public class SkuMapingDTO implements Serializable {
         private String platformSkuNo;
 
         /**
-         * 平台sku 名称
+         * 平台产品名称
          */
-        private String platformSkuName;
+        private String platformProductName;
+
+
+        /**
+         * 产品skuId
+         */
+        private String productSkuId;
+
+
+        /**
+         * 产品sku no
+         */
+        private String productSkuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 卖家sku no  或者 库存sku no
+         */
+        private String thirdpartySkuNo;
+
+        /**
+         * 卖家sku 名称  或者 库存sku 名称
+         */
+        private String thirdpartyProductName;
 
         /**
          * 匹配结果
@@ -215,20 +278,6 @@ public class SkuMapingDTO implements Serializable {
          */
         private String matchResultStr;
 
-        /**
-         * 产品sku id
-         */
-        private String productSkuId;
-
-        /**
-         * 产品sku no
-         */
-        private String productSkuNo;
-
-        /**
-         * 产品sku名称
-         */
-        private String productSkuName;
 
 
         /**

@@ -1,13 +1,9 @@
 package com.erp.server.oms.controller.feign;
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.oms.entity.SkuMapingEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.server.oms.service.SoDetailService;
