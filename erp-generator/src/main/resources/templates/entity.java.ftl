@@ -11,6 +11,7 @@ import ${pkg};
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import com.common.business.enums.ApproveStatusEnum;
 </#if>
 
 
@@ -53,7 +54,6 @@ public class ${entity} implements Serializable {
     <#if field.keyFlag>
         <#assign keyPropertyName="${field.propertyName}"/>
     </#if>
-
     <#if field.comment!?length gt 0>
         <#if swagger2>
             @ApiModelProperty(value = "${field.comment}")
@@ -91,7 +91,11 @@ public class ${entity} implements Serializable {
     <#if (logicDeleteFieldName!"") == field.name>
         @TableLogic
     </#if>
-    private ${field.propertyType} ${field.propertyName};
+    <#if field.name == "approve_status">
+        private ApproveStatusEnum approveStatus;
+    <#else>
+        private ${field.propertyType} ${field.propertyName};
+    </#if>
 </#list>
 <#------------  END 字段循环遍历  ---------->
 

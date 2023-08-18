@@ -11,7 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import ${package.Dto}.${table.dtoName};
 
- import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 </#if>
 
@@ -72,7 +72,7 @@ public interface ${table.serviceName} extends ${superServiceClass}<${entity}> {
      * @param dto
      * @return
      */
-     void update(${table.dtoName}.UpdateDTO dto);
+    BatchResultDTO update(${table.dtoName}.UpdateDTO dto);
 
      /**
      * 新增并提交审核
@@ -96,10 +96,10 @@ public interface ${table.serviceName} extends ${superServiceClass}<${entity}> {
      * 提交审核
      * @author ${author}
      * @date: ${date}
-     * @param ids
+     * @param id
      * @return
      */
-     void submit(List<String> ids);
+    BatchResultDTO submit(String id);
 
     /**
     * 审核
@@ -108,45 +108,45 @@ public interface ${table.serviceName} extends ${superServiceClass}<${entity}> {
     * @param dto
     * @return
     */
-    void approve(BaseApproveParamDTO dto);
+    BatchResultDTO approve(ApproveOneDTO dto);
 
     /**
     * 反审核
     * @author ${author}
     * @date: ${date}
-    * @param ids
+    * @param id
     * @return
     */
-    void disApprove(List<String> ids);
+    BatchResultDTO disApprove(String id);
 
     /**
     * 删除
     * @author ${author}
     * @date: ${date}
-    * @param ids
+    * @param id
     * @return
     */
-    void delete(List<String> ids);
+    BatchResultDTO delete(String id);
     <#if fieldMap["invalidStatus"]?? && fieldMap["invalidRemark"]??>
     /**
     * 作废
     * @author ${author}
     * @date: ${date}
-    * @param ids
+    * @param id
     * @param remark
     * @return
     */
-    void invalid(List<String> ids, String remark);
+    BatchResultDTO invalid(String id, String remark);
     </#if>
 
     /**
     * 撤销
     * @author ${author}
     * @date: ${date}
-    * @param ids
+    * @param id
     * @return
     */
-    void cancelProcess(List<String> ids);
+    BatchResultDTO cancelProcess(String id);
 
     /**
     * 导出Excel
@@ -157,6 +157,14 @@ public interface ${table.serviceName} extends ${superServiceClass}<${entity}> {
     * @return
     */
     void exportList(${table.dtoName}.ExportDTO dto, HttpServletResponse response);
+
+    /**
+    * 审核通过回调方法
+    * @param dto
+    * @param entity
+    * @return
+    */
+    Boolean approveEnd(ApproveOneDTO dto, ${entity} entity);
     </#if>
 
 }

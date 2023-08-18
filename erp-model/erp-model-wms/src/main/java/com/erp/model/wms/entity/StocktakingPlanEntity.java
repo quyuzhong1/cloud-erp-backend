@@ -1,14 +1,9 @@
 package com.erp.model.wms.entity;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.enums.SeparateRuleEnum;
 import com.erp.model.wms.enums.StocktakingModeEnum;
@@ -18,6 +13,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**

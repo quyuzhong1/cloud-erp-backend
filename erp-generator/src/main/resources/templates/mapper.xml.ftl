@@ -50,6 +50,17 @@
     <select id="listExport" resultType="${package.Dto}.${table.dtoName}$ListDTO">
 
     </select>
+    <select id="tabList" resultType="${package.Dto}.${table.dtoName}$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  ${table.name}
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+<#--            ${permissionSql}-->
+        </if>
+        GROUP BY approve_status
+    </select>
     </#if>
 
 </#if>
