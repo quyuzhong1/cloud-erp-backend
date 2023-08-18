@@ -26,28 +26,20 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
-import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.StocktakingPlanMapper;
-import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.*;
-import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,10 +47,11 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static com.rtfparserkit.rtf.Command.list;
 
 /**
  * <p>
@@ -83,12 +76,6 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     private WorkflowFeign workflowFeign;
     @Resource
     private StocktakingTaskService stocktakingTaskService;
-    @Resource
-    private WarehouseService warehouseService;
-    @Resource
-    private DictBasicService dictBasicService;
-    @Resource
-    private ProductDetailService productDetailService;
 
 
     @Override
@@ -101,7 +88,6 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         }
         // 数据处理
         fillList(pageData.getRecords());
-        // TODO 工作流审批人处理
         return new PagingVO(pageData);
     }
 
@@ -220,7 +206,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         log.info("提交 开始记录盘点计划单日志数据，id集合：【{}】", JSONObject.toJSONString(entity));
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), msg);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -299,13 +285,13 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO approve(String id,ApproveOneDTO dto) {
+    public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
             // 审核不通过必须填写审核意见
            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
         }
-        StocktakingPlanEntity entity = getById(id);
+        StocktakingPlanEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
@@ -313,7 +299,6 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "盘点计划", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
@@ -395,6 +380,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // 删除明细数据
         stocktakingPlanDetailService.removeByMainId(id);
         // 删除主单数据
+        removeById(id);
         return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -419,7 +405,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        revokeDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_INFO.getCode());
+        revokeDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_PLAN.getCode());
         revokeDTO.setUserId(commonService.getUserInfo().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);

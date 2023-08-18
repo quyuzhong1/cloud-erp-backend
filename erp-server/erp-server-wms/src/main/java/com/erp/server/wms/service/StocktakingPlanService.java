@@ -96,10 +96,9 @@ public interface StocktakingPlanService extends SuperService<StocktakingPlanEnti
     * @author Cloud
     * @date: 2023-08-08
     * @param dto
-     * @param id
     * @return
     */
-    BatchResultDTO approve(String id,ApproveOneDTO dto);
+    BatchResultDTO approve(ApproveOneDTO dto);
 
     /**
     * 反审核
