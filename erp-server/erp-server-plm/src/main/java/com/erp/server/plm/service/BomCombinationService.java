@@ -4,6 +4,9 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.BomCombinationDTO;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Will
@@ -43,5 +46,22 @@ public interface BomCombinationService {
      * @param dto
      * @return Boolean
      */
-    Boolean view(BaseIdDTO dto);
+    BomCombinationDTO.ViewDTO view(BaseIdDTO dto);
+    /**
+     * @description: 导入
+     * @author Will
+     * @date: 2023/8/17 14:06
+     * @param excelFile
+     * @param response
+     * @return Boolean
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * @description: 下载模板
+     * @author Will
+     * @date: 2023/8/17 14:08
+     * @param response
+
+     */
+    void downloadTemplate(HttpServletResponse response);
 }

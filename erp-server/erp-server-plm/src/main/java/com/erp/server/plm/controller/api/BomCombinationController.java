@@ -8,12 +8,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.BomCombinationDTO;
 import com.erp.server.plm.service.BomCombinationService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * 组合产品
@@ -34,6 +33,7 @@ public class BomCombinationController extends BaseController {
      * @param dto
      * @return ApiResult<PagingVO<ListDTO>>
      */
+    @PostMapping("/paging")
     public ApiResult<PagingVO<BomCombinationDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<BomCombinationDTO.SearchParamDTO> dto) {
         PagingVO<BomCombinationDTO.ListDTO> pagingVO = bomCombinationService.paging(dto);
         return success(pagingVO);
@@ -73,9 +73,36 @@ public class BomCombinationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/view")
-    public ApiResult update(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean flag = this.bomCombinationService.view(dto);
+    public ApiResult<BomCombinationDTO.ViewDTO> update(@RequestBody @Validated BaseIdDTO dto) {
+        BomCombinationDTO.ViewDTO viewDTO = this.bomCombinationService.view(dto);
+        return success(viewDTO);
+    }
+
+    /**
+     * 导入
+     * @author Will
+     * @date: 2023/8/17 14:06
+     * @param excelFile
+     * @param response
+     * @return ApiResult
+     */
+    @PostMapping("/importFile")
+    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean flag = bomCombinationService.importFile(excelFile,response);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 下载导入模板
+     * @author Will
+     * @date: 2023/8/17 14:07
+     * @param response
+     * @return ApiResult
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        bomCombinationService.downloadTemplate(response);
+        return success();
     }
 
 }

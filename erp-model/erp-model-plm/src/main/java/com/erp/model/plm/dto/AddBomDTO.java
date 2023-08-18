@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
@@ -44,7 +45,13 @@ public class AddBomDTO implements Serializable {
     @StateEnumValue(strValues = {"submitAudit", "create"}, message = "提交类型有误")
     private String submitType;
 
+    /**
+     * 来源类型
+     */
+    private String sourceType;
+
 
     @Valid
+    @NotEmpty(message = "BOM子级SKU不能为空")
     private List<BomSkuDTO> skuList;
 }

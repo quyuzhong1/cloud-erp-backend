@@ -3,7 +3,6 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PagingDTO;
 import com.erp.model.plm.dto.BomCombinationDTO;
 import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.plm.dto.ChangeInfoDTO;
@@ -45,6 +44,6 @@ public interface BomInfoMapper  extends BaseMapper<BomInfoEntity> {
      * @param params
      * @return IPage<ListDTO>
      */
-    IPage<BomCombinationDTO.ListDTO> combinationPaging(Page query, @Param("params") PagingDTO<BomCombinationDTO.SearchParamDTO> params);
+    IPage<BomCombinationDTO.ListDTO> combinationPaging(Page query, @Param("params") BomCombinationDTO.SearchParamDTO params);
 }
 
