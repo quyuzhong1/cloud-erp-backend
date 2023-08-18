@@ -9,7 +9,7 @@ package ${package.Controller};
     <#assign docName = docName[0..<docName?length-1] + "单">
 </#if>
 
-import cn.hutool.core.util.ObjectUtil;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -28,14 +28,13 @@ import com.common.core.controller.vo.ApiResult;
 <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
+import cn.hutool.core.util.ObjectUtil;
+</#if>
 <#if dataPermission>
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 </#if>
 import ${package.Dto}.${table.dtoName};
-</#if>
-
 <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
@@ -66,6 +65,45 @@ public class ${table.controllerName} {
 
     @Autowired
     private ${table.serviceName} ${serviceBean};
+
+    /**
+    * 新增
+    * @author ${author}
+    * @date:  ${date}
+    * @param dto
+    * @return ApiResult<String>
+    */
+    @PostMapping("/add")
+    <#if dataPermission>
+        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+        tableField = "create_user_id",
+        menuCode = "${modelName}<#if package.ModuleName??>:${package.ModuleName}</#if>:<#if controllerMappingHyphenStyle??>${controllerMappingHyphen}<#else>${table.entityPath}</#if>:add",
+        serviceClass = ${table.serviceName}.class,
+        keyIdName = "id")
+    </#if>
+    public ApiResult<String> add(@RequestBody @Validated ${table.dtoName}.AddDTO dto) {
+        return success(${serviceBean}.add(dto));
+    }
+
+    /**
+    * 修改
+    * @author ${author}
+    * @date:  ${date}
+    * @param dto
+    * @return ApiResult
+    */
+    @PostMapping("/update")
+    <#if dataPermission>
+        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+        tableField = "create_user_id",
+        menuCode = "${modelName}<#if package.ModuleName??>:${package.ModuleName}</#if>:<#if controllerMappingHyphenStyle??>${controllerMappingHyphen}<#else>${table.entityPath}</#if>:update",
+        serviceClass = ${table.serviceName}.class,
+        keyIdName = "id")
+    </#if>
+    public ApiResult update(@RequestBody @Validated ${table.dtoName}.UpdateDTO dto) {
+        ${serviceBean}.update(dto);
+        return success();
+    }
 
    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
     /**
@@ -101,45 +139,6 @@ public class ${table.controllerName} {
     </#if>
     public ApiResult<PagingVO<${table.dtoName}.ListDTO>> paging(@RequestBody @Validated PagingDTO<${table.dtoName}.PagingParamDTO> dto) {
         return success(${serviceBean}.paging(dto));
-    }
-
-   /**
-   * 新增
-   * @author ${author}
-   * @date:  ${date}
-   * @param dto
-   * @return ApiResult<String>
-   */
-   @PostMapping("/add")
-   <#if dataPermission>
-   @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-           tableField = "create_user_id",
-           menuCode = "${modelName}<#if package.ModuleName??>:${package.ModuleName}</#if>:<#if controllerMappingHyphenStyle??>${controllerMappingHyphen}<#else>${table.entityPath}</#if>:add",
-           serviceClass = ${table.serviceName}.class,
-           keyIdName = "id")
-   </#if>
-   public ApiResult<String> add(@RequestBody @Validated ${table.dtoName}.AddDTO dto) {
-      return success(${serviceBean}.add(dto));
-   }
-
-    /**
-    * 修改
-    * @author ${author}
-    * @date:  ${date}
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    <#if dataPermission>
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "${modelName}<#if package.ModuleName??>:${package.ModuleName}</#if>:<#if controllerMappingHyphenStyle??>${controllerMappingHyphen}<#else>${table.entityPath}</#if>:update",
-            serviceClass = ${table.serviceName}.class,
-            keyIdName = "id")
-    </#if>
-    public ApiResult update(@RequestBody @Validated ${table.dtoName}.UpdateDTO dto) {
-        ${serviceBean}.update(dto);
-        return success();
     }
 
     /**

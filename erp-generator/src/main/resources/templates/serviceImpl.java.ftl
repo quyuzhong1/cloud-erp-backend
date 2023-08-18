@@ -10,37 +10,38 @@ package ${package.ServiceImpl};
 
 <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import cn.hutool.core.bean.BeanUtil;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.vo.LoginUser;
 </#if>
-import cn.hutool.core.util.ObjectUtil;
+
 import cn.hutool.core.util.StrUtil;
 import ${package.Entity}.${entity};
 import ${package.Mapper}.${table.mapperName};
 import ${package.Service}.${table.serviceName};
 import ${superServiceImplClassPackage};
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
-<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import ${package.Service}.OperateLogService;
 import ${package.Service}.CommonService;
 import com.common.core.exception.ServiceException;
+<#if fieldMap["code"]??>
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
+import cn.hutool.core.util.ObjectUtil;
 </#if>
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import ${package.Dto}.${table.dtoName};
+<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
-
-import lombok.extern.slf4j.Slf4j;
-<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.collect.Sets;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
-import io.seata.spring.annotation.GlobalTransactional;
 
 import com.common.business.enums.ApproveStatusEnum;
 <#if fieldMap["invalidStatus"]??>
@@ -50,9 +51,6 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import ${package.Dto}.${table.dtoName};
-import com.common.core.enums.ApiError;
-import com.common.core.utils.*;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
@@ -62,9 +60,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 </#if>
 import javax.annotation.Resource;
-import java.util.*;
 import java.util.stream.Collectors;
 </#if>
+import java.util.*;
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
 /**
  * <p>
  * ${table.comment!} 服务实现类
@@ -81,17 +81,95 @@ open class ${table.serviceImplName} : ${superServiceImplClass}<${table.mapperNam
 }
 <#else>
 public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.mapperName}, ${entity}> implements ${table.serviceName} {
-
-    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
-    @Autowired
-    private DocNoGenHelper docNoGenHelper;
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private WorkflowFeign workflowFeign;
-    @Autowired
     private CommonService commonService;
+    <#if fieldMap["code"]??>
+    @Autowired
+    private DocNoGenHelper docNoGenHelper;
     </#if>
+    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+    @Autowired
+    private WorkflowFeign workflowFeign;
+    </#if>
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public String add(${table.dtoName}.AddDTO addDTO) {
+        ${entity} ${entity?uncap_first} = new ${entity}();
+        BeanMapperUtils.copy(addDTO, ${entity?uncap_first});
+
+        // 数据处理
+        handleData(${entity?uncap_first});
+
+        log.info("开始新增${docName}");
+        <#if fieldMap["code"]??>
+        // 生成单号
+        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
+        String code = docNoGenHelper.generateCode(null);
+        ${entity?uncap_first}.setCode(code);
+        </#if>
+        boolean save = super.save(${entity?uncap_first});
+        if(!save) {
+            throw new ServiceException("${docName}保存失败");
+        }
+
+        // 操作日志
+        <#if fieldMap["code"]??>
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "${docName}" , ${entity?uncap_first}.getCode());
+        <#else >
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "${docName}" , ${entity?uncap_first}.getId());
+        </#if>
+        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLog(msg, null, ${entity?uncap_first}.getId(), "新增操作");
+        // TODO 新增明细（如果有明细的话）
+        return ${entity?uncap_first}.getId();
+    }
+
+    /**
+    * 修改
+    */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean update(${table.dtoName}.UpdateDTO updateDTO) {
+        ${entity} old = super.getById(updateDTO.getId());
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "${docName!}"));
+        <#if fieldMap["approveStatus"]??>
+        // 待提交和审核不通过允许修改
+        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_1029);
+        }
+        </#if>
+        ${entity} ${entity?uncap_first} =  BeanMapperUtils.map(${entity}.class, updateDTO);
+
+        // 数据处理
+        handleData(${entity?uncap_first});
+        <#if fieldMap["code"]??>
+        log.info("编辑 开始修改${docName}数据，单号：【{}】", old.getCode());
+        <#else >
+        log.info("编辑 开始修改${docName}数据，id：【{}】", old.getId());
+        </#if>
+        boolean save = super.updateById(${entity?uncap_first});
+        if(!save) {
+            throw new ServiceException("${docName}保存失败");
+        }
+        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+
+        // 记录主单操作日志
+        <#if fieldMap["code"]??>
+            log.info("编辑 开始记录${docName!}日志数据，单号：【{}】", ${entity?uncap_first}.getCode());
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ${entity?uncap_first}.getCode(), "${docName!}");
+        <#else >
+            log.info("编辑 开始记录${docName!}日志数据，id：【{}】", ${entity?uncap_first}.getId());
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ${entity?uncap_first}.getId(), "${docName!}");
+        </#if>
+        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        operateLogService.addModuleOperateLogByObj(old, ${entity?uncap_first}, null, ${entity?uncap_first}.getId(), msg);
+        return Boolean.TRUE;
+    }
+
 
     <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
     @Override
@@ -146,68 +224,6 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
-    }
-
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public String add(${table.dtoName}.AddDTO addDTO) {
-        ${entity} ${entity?uncap_first} = new ${entity}();
-        BeanMapperUtils.copy(addDTO, ${entity?uncap_first});
-
-        // 数据处理
-        handleData(${entity?uncap_first});
-
-        log.info("开始新增${docName}");
-        // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
-        ${entity?uncap_first}.setCode(code);
-        boolean save = super.save(${entity?uncap_first});
-        if(!save) {
-           throw new ServiceException("${docName}保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "${docName}" , ${entity?uncap_first}.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, ${entity?uncap_first}.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-        return ${entity?uncap_first}.getId();
-    }
-
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BatchResultDTO update(${table.dtoName}.UpdateDTO updateDTO) {
-        ${entity} old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "${docName!}"));
-        // 待提交和审核不通过允许修改
-        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
-        }
-
-        ${entity} ${entity?uncap_first} =  BeanMapperUtils.map(${entity}.class, updateDTO);
-
-        // 数据处理
-        handleData(${entity?uncap_first});
-
-        log.info("编辑 开始修改${docName}数据，单号：【{}】", old.getCode());
-        boolean save = super.updateById(${entity?uncap_first});
-        if(!save) {
-           throw new ServiceException("${docName}保存失败");
-        }
-
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-        log.info("编辑 开始记录${docName!}日志数据，单号：【{}】", ${entity?uncap_first}.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ${entity?uncap_first}.getCode(), "${docName!}");
-        operateLogService.addModuleOperateLogByObj(old, ${entity?uncap_first}, null, ${entity?uncap_first}.getId(), msg);
-        return BatchResultDTO.success(${entity?uncap_first}.getCode(), OperationTypeEnum.SUBMIT);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -543,13 +559,12 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         return;
     }
 
+    </#if>
     /**
     * 新增修改处理数据
     */
     private void handleData(${entity} ${entity?uncap_first}) {
-        // TODO 验证数据 & 数据赋值
+    // TODO 验证数据 & 数据赋值
     }
-    </#if>
-
 }
 </#if>
