@@ -241,4 +241,17 @@ public class PdaSoReturnReceiveController extends BaseController {
         Boolean flag = soReturnReceiveService.invalid(remarkDTO.getIds(), remarkDTO.getRemark());
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 条件查询销售退货签收单
+     * @Author Luo_WG
+     * @Date 2023/8/18 12:01
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoReturnReceiveDTO.PdaSoReceive>>
+     **/
+    @PostMapping("/pdaList")
+    public ApiResult<List<SoReturnReceiveDTO.PdaSoReceive>> pdaList(@RequestBody SoReturnReceiveDTO.PdaSoReceiveParam dto) {
+        List<SoReturnReceiveDTO.PdaSoReceive> list = soReturnReceiveService.pdaList(dto);
+        return success(list);
+    }
 }

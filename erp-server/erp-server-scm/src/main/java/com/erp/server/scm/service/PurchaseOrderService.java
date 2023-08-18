@@ -349,8 +349,17 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * 根据sku编号查询采购单
      * @Author Luo_WG
      * @Date 2023/8/11 10:23
-     * @param skuNo
+     * @param dto
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
-    List<PurchaseOrderDTO.PdaPurchaseOrder> listPoBySkuNo(String skuNo);
+    List<PurchaseOrderDTO.PdaPurchaseOrder> pdaList(PurchaseOrderDTO.PdaPurchaseOrderParam dto);
+
+    /**
+     * PDA:查询详情
+     * @Author Luo_WG
+     * @Date 2023/8/11 14:39
+     * @param id
+     * @return com.erp.model.scm.dto.PurchaseOrderDTO.ViewDTO
+     **/
+    PurchaseOrderDTO.ViewDTO pdaView(String id);
 }

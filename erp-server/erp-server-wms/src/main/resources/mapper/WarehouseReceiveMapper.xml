@@ -372,4 +372,24 @@
             ${params.permissionSql}
         </if>
     </select>
+
+    <select id="pdaList" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PdaPoReceive">
+        SELECT
+            DISTINCT
+            pr.id,
+            pr.code,
+            pr.supplier_name,
+            pr.delivery_warehouse_name AS warehouseName
+        FROM po_receive pr
+        LEFT JOIN po_receive_detail prd ON pr.id = prd.main_id AND prd.is_deleted = FALSE
+        WHERE pr.is_deleted = FALSE
+        AND pr.invalid_status = FALSE
+        AND pr.approve_status = 'approve'
+        <if test="skuNo != '' and skuNo != null ">
+            AND prd.sku_no = #{skuNo}
+        </if>
+        <if test="code != '' and code != null ">
+            AND pr.code ILIKE concat('%', #{code} ,'%')
+        </if>
+    </select>
 </mapper>

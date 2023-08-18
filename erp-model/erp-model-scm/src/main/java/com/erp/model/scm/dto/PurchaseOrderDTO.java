@@ -1320,4 +1320,21 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private List<PurchaseOrderDetailDTO.PdaPurchaseOrderDetail> itemList;
     }
+
+    /**
+     * PDA:采购单查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPurchaseOrderParam {
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 采购订单号
+         */
+        private String code;
+    }
 }

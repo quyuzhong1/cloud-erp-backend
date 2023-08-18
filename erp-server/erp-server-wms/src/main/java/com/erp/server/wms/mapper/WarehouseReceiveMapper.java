@@ -61,4 +61,13 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
      * @return java.lang.Integer
      **/
     Integer pdaListCount(@Param("params") WarehouseReceiveDTO.PagingParamDTO params);
+
+    /**
+     * PDA:条件查询收货单
+     * @Author Luo_WG
+     * @Date 2023/8/18 11:10
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.PdaPoReceive>
+     **/
+    List<WarehouseReceiveDTO.PdaPoReceive> pdaList(WarehouseReceiveDTO.PdaPoReceiveParam dto);
 }

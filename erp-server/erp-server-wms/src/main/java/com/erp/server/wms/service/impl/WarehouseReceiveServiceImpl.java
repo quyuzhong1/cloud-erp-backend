@@ -1425,4 +1425,32 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         viewDTO.setWarehouseReceiveDetailList(viewDTOS);
         return viewDTO;
     }
+
+    @Override
+    public List<WarehouseReceiveDTO.PdaPoReceive> pdaList(WarehouseReceiveDTO.PdaPoReceiveParam dto) {
+        List<WarehouseReceiveDTO.PdaPoReceive> list = baseMapper.pdaList(dto);
+        List<String> porIds = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<WarehouseReceiveDetailEntity> receiveDetailEntitieList = warehouseReceiveDetailService.listDetailByMainIds(porIds);
+
+        List<PoInstockDetailEntity> poInstockDetailEntities = poInstockDetailService.listDetailBySourceDetailIds(porIds);
+
+        //获取未全部入库的采购收货详情id
+        List<String> receiveDetailIds = new ArrayList<>();
+        poInstockDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getPurchaseOrderDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+            int stockInQty = m.stream().mapToInt(PoInstockDetailEntity::getStockInQty).sum();
+            WarehouseReceiveDetailEntity warehouseReceiveDetailEntity = receiveDetailEntitieList.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getPurchaseOrderDetailId())).findFirst().orElse(new WarehouseReceiveDetailEntity());
+            if (stockInQty < warehouseReceiveDetailEntity.getReceiveQty()) {
+                receiveDetailIds.add(m.get(MathUtil.ZERO).getSourceDetailId());
+            }
+            return m;
+        })));
+        //根据未入库采购收货单详情id获取未入库收货单id
+        List<WarehouseReceiveDetailEntity> receiveDetailEntities = warehouseReceiveDetailService.listByIds(receiveDetailIds);
+        List<String> notAllReceivePoReceiveId = receiveDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+
+        //获取到未入库采购收货单返回数据
+        List<WarehouseReceiveDTO.PdaPoReceive> poReceiveList = list.stream().filter(req -> notAllReceivePoReceiveId.contains(req.getId())).collect(Collectors.toList());
+        poReceiveList.sort(Comparator.comparing(WarehouseReceiveDTO.PdaPoReceive::getCode).reversed());
+        return poReceiveList;
+    }
 }

@@ -96,8 +96,8 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
      * 根据sku获取退货单id
      * @Author Luo_WG
      * @Date 2023/8/15 16:55
-     * @param skuNo
+     * @param dto
      * @return java.util.List<java.lang.String>
      **/
-    List<String> listBySkuNo(String skuNo);
+    List<String> listBySkuNo(SoReturnDTO.PdaSoReturnParam dto);
 }

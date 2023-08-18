@@ -232,4 +232,22 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return Boolean
      */
     Boolean generateMachineInfo(ValidList<SoReturnInstockDTO.GenerateMachineInfoDTO> list);
+
+    /**
+     * Pda:列表查询
+     * @Author Luo_WG
+     * @Date 2023/8/17 16:38
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoReturnInstockDTO.PdaPagingView>
+     **/
+    PagingVO<SoReturnInstockDTO.PdaPagingView> PdaPaging(PagingDTO<SoReturnInstockDTO.PdaPagingParam> dto);
+
+    /**
+     * 列表状态数量统计
+     * @Author Luo_WG
+     * @Date 2023/8/17 18:48
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.PdaSoReturnInstockCountDTO>
+     **/
+    List<SoReturnInstockDTO.PdaSoReturnInstockCountDTO> pdaListCount(PermissionsDTO dto);
 }

@@ -357,10 +357,10 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     }
 
     @Override
-    public List<String> listBySkuNo(String skuNo) {
+    public List<String> listBySkuNo(SoReturnDTO.PdaSoReturnParam dto) {
         LambdaQueryWrapper<SoReturnDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(SoReturnDetailEntity::getMainId);
-        queryWrapper.eq(SoReturnDetailEntity::getSkuNo, skuNo);
+        queryWrapper.eq(StringUtils.isNotBlank(dto.getSkuNo()), SoReturnDetailEntity::getSkuNo, dto.getSkuNo());
         queryWrapper.eq(SoReturnDetailEntity::getIsDeleted, Boolean.FALSE);
         queryWrapper.groupBy(SoReturnDetailEntity::getMainId);
         return listObjs(queryWrapper, Object::toString);

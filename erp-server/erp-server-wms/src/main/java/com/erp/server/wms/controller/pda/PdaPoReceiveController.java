@@ -9,6 +9,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.server.wms.service.SoReturnInstockService;
@@ -253,5 +254,18 @@ public class PdaPoReceiveController extends BaseController {
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
         Boolean flag = warehouseReceiveService.delete(idsDTO.getIds());
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 条件查询收货单
+     * @Author Luo_WG
+     * @Date 2023/8/18 11:07
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<WarehouseReceiveDTO.PdaPoReceive>>
+     **/
+    @PostMapping("/pdaList")
+    public ApiResult<List<WarehouseReceiveDTO.PdaPoReceive>> pdaList(@RequestBody WarehouseReceiveDTO.PdaPoReceiveParam dto) {
+        List<WarehouseReceiveDTO.PdaPoReceive> list = warehouseReceiveService.pdaList(dto);
+        return success(list);
     }
 }

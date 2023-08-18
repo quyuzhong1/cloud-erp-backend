@@ -107,4 +107,13 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return List<SubcontractOrderChildDTO>
      */
     List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildByParentPodIds(@Param("parentPodIds") List<String> parentPodIds);
+
+    /**
+     * PDA:根据查询条件获取采购单
+     * @Author Luo_WG
+     * @Date 2023/8/18 10:17
+     * @param dto
+     * @return java.util.List<com.erp.model.scm.dto.PurchaseOrderDTO.PdaPurchaseOrder>
+     **/
+    List<PurchaseOrderDTO.PdaPurchaseOrder> pdaList(PurchaseOrderDTO.PdaPurchaseOrderParam dto);
 }
