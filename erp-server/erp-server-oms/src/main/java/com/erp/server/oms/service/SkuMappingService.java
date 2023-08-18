@@ -21,61 +21,76 @@ import java.util.List;
  */
 public interface SkuMappingService extends SuperService<SkuMappingEntity> {
 
-    void downloadTemplate(HttpServletResponse response);
+    void downloadTemplate(String type, HttpServletResponse response);
 
     /**
      * 导入sku对照信息
-     * @author yl
-     * @date 2023-06-29 11:01
+     *
      * @param excelFile
      * @param response
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-06-29 11:01
      */
-    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importExcel(MultipartFile excelFile, String type, HttpServletResponse response);
 
     /**
      * 分页查询
-     * @author yl
-     * @date 2023-06-29 18:07
+     *
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SkuMapingDTO.PagingViewDTO>
+     * @author yl
+     * @date 2023-06-29 18:07
      */
     PagingVO<SkuMappingDTO.PagingViewDTO> paging(PagingDTO<SkuMappingDTO.PagingParamDTO> dto);
 
     /**
      * 导出sku 对照表
-     * @author yl
-     * @date 2023-06-30 9:35
+     *
      * @param dto
      * @param response
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-06-30 9:35
      */
     Boolean exportSkuMaping(SkuMappingDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
      * 获取tab 列表
-     * @author yl
-     * @date 2023-06-30 9:45
+     *
      * @param dto
      * @return java.util.List<com.erp.model.oms.dto.SkuMapingDTO.TabListDTO>
+     * @author yl
+     * @date 2023-06-30 9:45
      */
     List<SkuMappingDTO.TabListDTO> tabList(SkuMappingDTO.FindTabDTO dto);
 
     /**
      * 更改sku 对照表
-     * @author yl
-     * @date 2023-06-30 10:21
+     *
      * @param dto
      * @return java.lang.String
+     * @author yl
+     * @date 2023-06-30 10:21
      */
     String updateSkuMaping(SkuMappingDTO.UpdateDTO dto);
 
     /**
      * 销售订单添加客户sku
-     * @author yl
-     * @date 2023-07-01 9:19
+     *
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SkuMapingDTO.ProductSkuInfoDTO>
+     * @author yl
+     * @date 2023-07-01 9:19
      */
     PagingVO<SkuMappingDTO.ProductSkuInfoDTO> listPaging(PagingDTO<SkuMappingDTO.ListParamDTO> dto);
+
+    /**
+     * 添加库存sku 对照信息
+     * @author yl
+     * @date 2023-08-18 16:32
+     * @param dto
+     * @return java.lang.String
+     */
+    String addWarehouseSku(SkuMappingDTO.AddWarehouseSkuDTO dto);
 }

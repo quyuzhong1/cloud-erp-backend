@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-public class SkuMapingImportExcelDTO {
+public class SkuMappingImportExcelDTO {
 
 
     /**

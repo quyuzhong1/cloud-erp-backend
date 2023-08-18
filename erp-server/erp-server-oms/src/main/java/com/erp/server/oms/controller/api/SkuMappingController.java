@@ -6,9 +6,13 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.ListingInfoDTO;
+import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,6 +36,9 @@ public class SkuMappingController extends BaseController {
     @Resource
     private SkuMappingService skuMappingService;
 
+    @Resource
+    private ListingInfoService listingInfoService;
+
 
     /**
      * 获取 tab列表
@@ -42,6 +49,21 @@ public class SkuMappingController extends BaseController {
     public ApiResult<List<SkuMappingDTO.TabListDTO>> tabList(@Validated @RequestBody SkuMappingDTO.FindTabDTO dto) {
         List<SkuMappingDTO.TabListDTO> list = skuMappingService.tabList(dto);
         return success(list);
+    }
+
+    
+    
+    /**
+     * 添加库存对应sku
+     * @author yl
+     * @date 2023-08-18 16:31
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     */
+    @PostMapping("/addWarehouseSku")
+    public ApiResult add(@RequestBody @Validated SkuMappingDTO.AddWarehouseSkuDTO dto) {
+        String id = skuMappingService.addWarehouseSku(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
 
@@ -59,27 +81,29 @@ public class SkuMappingController extends BaseController {
 
 
     /**
-     * 导入sku 对照表
+     * 导入平台sku对照表
      *
      * @return
      */
     @PostMapping("/importFile")
-    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = skuMappingService.importExcel(excelFile, response);
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "type") String type,HttpServletResponse response) {
+        Boolean result = skuMappingService.importExcel(excelFile,type, response);
         return result ? success() : failure();
     }
 
 
     /**
-     * 下载模板
+     * 下载平台sku对照模板
      *
      * @return
      */
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
-        skuMappingService.downloadTemplate(response);
+    public ApiResult downloadTemplate(@RequestParam(value = "type") String type, HttpServletResponse response) {
+        skuMappingService.downloadTemplate(type,response);
         return success();
     }
+
+
 
     /**
      * 导出 sku 对照表

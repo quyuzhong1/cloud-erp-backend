@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -48,6 +49,25 @@ public class SkuMappingDTO implements Serializable {
         @StateEnumValue(strValues = {"platform","warehouse"}, message = "类型有误")
         private String type;
 
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class AddWarehouseSkuDTO{
+
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+
+        @NotBlank(message = "库存SKU不能为空")
+        private String warehouseSkuNo;
+
+        @NotBlank(message = "库存产品名称不能为空")
+        @Size(max=200,message = "库存产品名称最大200字符")
+        private String warehouseProductName;
+
+        @NotBlank(message = "产品sku不能为空")
+        private String productSkuId;
 
     }
 

@@ -75,6 +75,18 @@ public class SkuMappingEntity extends BaseEntity<SkuMappingEntity> {
 
 
     /**
+     * 仓库id
+     */
+    @TableField("warehouse_id")
+    private String warehouseId;
+    /**
+     * 仓库名
+     */
+    @TableField("warehouse_name")
+    private String warehouseName;
+
+
+    /**
      * 生效时间
      */
     @TableField("effective_time")

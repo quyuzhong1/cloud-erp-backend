@@ -12,19 +12,25 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.dto.excel.SkuMapingImportExcelDTO;
+import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
+import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicEnum;
+import com.erp.model.oms.enums.TypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.listener.SkuMappingExcelListener;
+import com.erp.server.oms.listener.SkuMappingWarehouseExcelListener;
 import com.erp.server.oms.mapper.SkuMappingMapper;
 import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.ListingInfoService;
@@ -45,6 +51,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -74,10 +81,25 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Resource
     private ListingInfoService listingInfoService;
 
-    @Override
-    public void downloadTemplate(HttpServletResponse response) {
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
 
-        String path = "classpath:excel/skuMapingTemplate.xlsx";
+    @Override
+    public void downloadTemplate(String type, HttpServletResponse response) {
+        if (StringUtils.isBlank(type)) {
+            throw new ServiceException("下载模板类型不能为空");
+        }
+        //平台
+        String platform = TypeEnum.PLATFORM.getCode();
+        //库存
+        String warehouse = TypeEnum.WAREHOUSE.getCode();
+        if (!platform.equals(type) || !warehouse.equals(type)) {
+            throw new ServiceException("下载模板类型有误");
+        }
+        String path = "classpath:excel/skuMappingTemplate.xlsx";
+        if (warehouse.equals(type)) {
+            path = "classpath:excel/skuMappingWarehouseTemplate.xlsx";
+        }
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -93,7 +115,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            log.error("SkuMaping downloadTemplate  出错了 e>>>>>>>", e);
+            log.error("SkuMaping downloadTemplate  出错了 e>>>>>>>{}", e);
             throw new ServiceException(ApiError.ERROR_95131);
         }
     }
@@ -109,27 +131,56 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
      * @date 2023-06-29 11:01
      */
     @Override
-    public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
+    public Boolean importExcel(MultipartFile excelFile, String type, HttpServletResponse response) {
+        if (StringUtils.isBlank(type)) {
+            throw new ServiceException("导入类型不能为空");
+        }
+        //平台
+        String platform = TypeEnum.PLATFORM.getCode();
+        //库存
+        String warehouse = TypeEnum.WAREHOUSE.getCode();
+        if (!platform.equals(type) || !warehouse.equals(type)) {
+            throw new ServiceException("导入类型有误");
+        }
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        List<ShopInfoEntity> shopInfoList = shopInfoService.list();
         List<SkuMappingEntity> skuMappingList = this.listEffectiveList();
-        String key = DictBasicEnum.PLATFORM.getType();
-        List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
         List<ListingInfoEntity> list = listingInfoService.list();
+        if (platform.equals(type)) {
+            String key = DictBasicEnum.PLATFORM.getType();
+            List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
+            List<ShopInfoEntity> shopInfoList = shopInfoService.list();
+            SkuMappingExcelListener excelListenerUtil = new SkuMappingExcelListener(this, skuList, shopInfoList, skuMappingList, dictBasicList, list);
+            try {
+                EasyExcel.read(excelFile.getInputStream(), SkuMappingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            } catch (Exception e) {
+                log.error("sku 对照表导入错误！>>>>{}", e);
+                return Boolean.FALSE;
+            }
+            List<SkuMappingImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+            if (errorList.size() > 0) {
+                String fileName = "sku对照错误信息";
+                ExcelUtil.export(fileName, "error", errorList, SkuMappingImportExcelDTO.class, response);
+                return Boolean.FALSE;
+            }
+        }
+        //仓库sku 对照
+        if (warehouse.equals(type)) {
+            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
+            SkuMappingWarehouseExcelListener excelListenerUtil = new SkuMappingWarehouseExcelListener(this, skuList, skuMappingList, warehouseList, list);
+            try {
+                EasyExcel.read(excelFile.getInputStream(), SkuMappingWarehouseImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            } catch (Exception e) {
+                log.error("sku 对照表导入错误！>>>>{}", e);
+                return Boolean.FALSE;
+            }
+            List<SkuMappingWarehouseImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+            if (errorList.size() > 0) {
+                String fileName = "sku对照错误信息";
+                ExcelUtil.export(fileName, "error", errorList, SkuMappingWarehouseImportExcelDTO.class, response);
+                return Boolean.FALSE;
+            }
+        }
 
-        SkuMappingExcelListener excelListenerUtil = new SkuMappingExcelListener(this, skuList, shopInfoList, skuMappingList, dictBasicList,list);
-        try {
-            EasyExcel.read(excelFile.getInputStream(), SkuMapingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (Exception e) {
-            log.error("sku 对照表导入错误！", e);
-            return Boolean.FALSE;
-        }
-        List<SkuMapingImportExcelDTO> errorList = excelListenerUtil.getErrorList();
-        if (errorList.size() > 0) {
-            String fileName = "sku对照错误信息";
-            ExcelUtil.export(fileName, "error", errorList, SkuMapingImportExcelDTO.class, response);
-            return Boolean.FALSE;
-        }
 
         return Boolean.TRUE;
 
@@ -311,6 +362,60 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             item.setSkuName(skuName);
         }
         return new PagingVO<>(pageData);
+    }
+
+
+    /**
+     * 添加库存sku 对照信息
+     *
+     * @param dto
+     * @return java.lang.String
+     * @author yl
+     * @date 2023-08-18 16:32
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String addWarehouseSku(SkuMappingDTO.AddWarehouseSkuDTO dto) {
+        String skuId = dto.getProductSkuId();
+        String warehouseSkuNo = dto.getWarehouseSkuNo();
+        String warehouseId = dto.getWarehouseId();
+        TypeEnum warehouseType = TypeEnum.WAREHOUSE;
+        ListingInfoEntity listingInfo = listingInfoService.getBySkuNo(warehouseSkuNo, warehouseType.getCode());
+        String listingId = "";
+        if (Objects.nonNull(listingInfo)) {
+            listingId = listingInfo.getId();
+        } else {
+            String warehouseProductName = dto.getWarehouseProductName();
+            listingId = listingInfoService.addWarehouseSku(warehouseSkuNo, warehouseProductName);
+        }
+        if (StringUtils.isBlank(listingId)) {
+            throw new ServiceException(warehouseSkuNo + "未找到");
+        }
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException("仓库不存在");
+        }
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(skuId));
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException("sku不存在");
+        }
+
+        SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
+        skuMappingEntity.setWarehouseId(warehouseId);
+        skuMappingEntity.setWarehouseName(warehouseList.get(0).getName());
+        skuMappingEntity.setType(TypeEnum.WAREHOUSE);
+        skuMappingEntity.setProductSkuId(skuId);
+        skuMappingEntity.setProductSkuNo(skuList.get(0).getSkuNo());
+        skuMappingEntity.setProductName(skuList.get(0).getSkuName());
+        skuMappingEntity.setListingId(listingId);
+        LocalDateTime now = LocalDateTime.now();
+        //生效时间
+        skuMappingEntity.setEffectiveTime(now);
+        skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
+        if (this.save(skuMappingEntity)) {
+            return skuMappingEntity.getId();
+        }
+        return "";
     }
 
     private void checkExist(String id, String platformDict, String platformSkuNo, String skuId) {
