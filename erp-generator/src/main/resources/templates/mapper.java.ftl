@@ -63,7 +63,7 @@ public interface ${table.mapperName} extends ${superMapperClass}<${entity}> {
     * @param searchParam
     * @return
     */
-    List<${table.dtoName}.TabListDTO> tabList(${table.dtoName}.PagingParamDTO searchParam);
+    List<${table.dtoName}.TabListDTO> tabList(@Param("params") ${table.dtoName}.PagingParamDTO searchParam);
     </#if>
 }
 </#if>

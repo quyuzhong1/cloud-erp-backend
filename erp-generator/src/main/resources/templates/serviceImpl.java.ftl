@@ -4,7 +4,7 @@ package ${package.ServiceImpl};
  <#assign fieldMap += {field.propertyName:field.propertyName} />
 </#list>
 <#assign docName = "${table.comment!}">
-<#if docName?ends_with("表")>
+<#if docName?ends_with("表") && !docName?ends_with("单表") >
     <#assign docName = docName[0..<docName?length-1] + "单">
 </#if>
 
@@ -183,7 +183,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     @Override
     public BatchResultDTO update(${table.dtoName}.UpdateDTO updateDTO) {
         ${entity} old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "${docName!}")));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "${docName!}"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
