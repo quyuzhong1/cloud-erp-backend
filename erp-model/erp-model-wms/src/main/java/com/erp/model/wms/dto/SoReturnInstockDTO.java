@@ -609,4 +609,125 @@ public class SoReturnInstockDTO {
          */
         private String qcStatus;
     }
+
+    /**
+     * PDA:分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingView {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 销售员
+         */
+        private String sellerName;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 产品数量
+         */
+        private Integer detailCount;
+
+        /**
+         * 产品信息
+         */
+        private List<PdaItemDTO> itemList;
+    }
+
+    /**
+     * PDA:商品信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaItemDTO {
+        /**
+         * 明细id
+         */
+        private String id;
+
+        /**
+         * sku
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 实退数量
+         */
+        private Integer realQty;
+    }
+
+    /**
+     * PDA:分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingParam extends SortDTO {
+        /**
+         * 主键id
+         */
+        private List<String> ids;
+        /**
+         * 创建时间
+         */
+        private List<LocalDate> createTimeList;
+        /**
+         * 审核状态
+         */
+        private List<String> approveStatusList;
+        /**
+         * 入库日期
+         */
+        private List<LocalDate> billDateList;
+    }
+
+    /**
+     * PDA:列表状态
+     * @Author Luo_WG
+     * @Date 2023/8/11 9:15
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class PdaSoReturnInstockCountDTO {
+        /**
+         * 类型(waitSubmitAndReject 待提交/审核不通过，approveIng 审核中，approve 已审核)
+         */
+        private String tabFlag;
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
 }

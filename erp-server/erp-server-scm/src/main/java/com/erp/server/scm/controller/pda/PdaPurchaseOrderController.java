@@ -29,12 +29,12 @@ public class PdaPurchaseOrderController extends BaseController {
      * 根据sku编号查询采购单信息
      * @Author Luo_WG
      * @Date 2023/8/11 14:18
-     * @param skuNo
+     * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.scm.dto.PurchaseOrderDTO.PdaPurchaseOrder>>
      **/
-    @GetMapping("/listPoBySkuNo")
-    public ApiResult<List<PurchaseOrderDTO.PdaPurchaseOrder>> listPoBySkuNo(@RequestParam("skuNo") String skuNo) {
-        List<PurchaseOrderDTO.PdaPurchaseOrder> list = purchaseOrderService.listPoBySkuNo(skuNo);
+    @GetMapping("/pdaList")
+    public ApiResult<List<PurchaseOrderDTO.PdaPurchaseOrder>> pdaList(@RequestBody PurchaseOrderDTO.PdaPurchaseOrderParam dto) {
+        List<PurchaseOrderDTO.PdaPurchaseOrder> list = purchaseOrderService.pdaList(dto);
         return success(list);
     }
 

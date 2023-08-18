@@ -966,4 +966,45 @@ public class WarehouseReceiveDTO {
          */
         private Integer count;
     }
+
+    /**
+     * PDA:收货单查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPoReceive {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 收货单号
+         */
+        private String code;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+    }
+
+    /**
+     * PDA:收货单参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPoReceiveParam {
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 采购收货单号
+         */
+        private String code;
+    }
 }

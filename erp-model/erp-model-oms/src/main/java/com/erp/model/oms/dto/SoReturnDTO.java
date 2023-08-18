@@ -523,7 +523,7 @@ public class SoReturnDTO {
     }
 
     /**
-     * PDA:销售退货单查询
+     * PDA:销售退货单查询列表
      */
     @Data
     @NoArgsConstructor
@@ -551,5 +551,22 @@ public class SoReturnDTO {
          * 仓库名称
          */
         private String warehouseName;
+    }
+
+    /**
+     * PDA:销售退货单查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaSoReturnParam {
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 销售退货单号
+         */
+        private String code;
     }
 }

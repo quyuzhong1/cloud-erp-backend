@@ -7,10 +7,7 @@ import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.server.oms.service.SoReturnService;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -27,15 +24,15 @@ public class PdaSoReturnController extends BaseController {
     private SoReturnService soReturnService;
 
     /**
-     * 根据sku查询销售退货单
+     * 根据条件查询销售退货单
      * @Author Luo_WG
-     * @Date 2023/8/15 16:48
-     * @param skuNo
+     * @Date 2023/8/18 9:44
+     * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.SoReturnDTO.PdaSoReturn>>
      **/
-    @GetMapping(value = "/listBySkuNo")
-    public ApiResult<List<SoReturnDTO.PdaSoReturn>> listBySkuNo(@RequestParam("skuNo") String skuNo) {
-        List<SoReturnDTO.PdaSoReturn> entityList = soReturnService.listBySkuNo(skuNo);
+    @GetMapping(value = "/pdaList")
+    public ApiResult<List<SoReturnDTO.PdaSoReturn>> pdaList(@RequestBody SoReturnDTO.PdaSoReturnParam dto) {
+        List<SoReturnDTO.PdaSoReturn> entityList = soReturnService.pdaList(dto);
         return success(entityList);
     }
 

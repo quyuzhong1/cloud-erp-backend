@@ -64,4 +64,16 @@ public interface SoReturnMapper extends BaseMapper<SoReturnEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoReturnDTO.PagingView>
      **/
     List<SoReturnDTO.PagingView> listSoReturnDetailBySourceId(@Param("sourceId") String sourceId);
+
+    /**
+     * PDA:查询退货单信息
+     * @Author Luo_WG
+     * @Date 2023/8/18 9:32
+     * @param dto
+     * @return java.util.List<com.erp.model.oms.dto.SoReturnDTO.PdaSoReturn>
+     **/
+    List<SoReturnDTO.PdaSoReturn> pdaList(SoReturnDTO.PdaSoReturnParam dto);
+
+
+
 }

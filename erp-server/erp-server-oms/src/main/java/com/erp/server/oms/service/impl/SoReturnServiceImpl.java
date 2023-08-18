@@ -782,20 +782,27 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
-    public List<SoReturnDTO.PdaSoReturn> listBySkuNo(String skuNo) {
-        List<String> poIds = soReturnDetailService.listBySkuNo(skuNo);
-        List<SoReturnEntity> entityList = this.listByIds(poIds);
-        List<SoReturnEntity> soReturnEntityList = entityList.stream().filter(req -> InvalidStatusEnum.NOT_VOIDED.equals(req.getInvalidStatus()) && ApproveStatusEnum.APPROVE.equals(req.getApproveStatus())).collect(Collectors.toList());
-        List<SoReturnDTO.PdaSoReturn> list = new ArrayList<>();
-        for (SoReturnEntity entity : soReturnEntityList) {
-            SoReturnDTO.PdaSoReturn soReturn = new SoReturnDTO.PdaSoReturn();
-            soReturn.setId(entity.getId());
-            soReturn.setSoReturnCode(entity.getCode());
-            soReturn.setWarehouseName(entity.getWarehouseName());
-            soReturn.setSoCode(entity.getSourceCode());
-            soReturn.setSellerName(entity.getSellerName());
-            list.add(soReturn);
-        }
+    public List<SoReturnDTO.PdaSoReturn> pdaList(SoReturnDTO.PdaSoReturnParam dto) {
+        List<SoReturnDTO.PdaSoReturn> pdaSoReturns = baseMapper.pdaList(dto);
+        List<String> soReturnIds = pdaSoReturns.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveFeign.listDetailBySourceIds(soReturnIds);
+
+        //获取未全部到货的退货单详情id
+        List<String> soReturnDetailIds = new ArrayList<>();
+        soReturnReceiveDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getSourceDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+            int returnQty = m.stream().mapToInt(SoReturnReceiveDetailEntity::getReturnQty).sum();
+            int receiveQty = m.stream().mapToInt(SoReturnReceiveDetailEntity::getReceiveQty).sum();
+            if (receiveQty < returnQty) {
+                soReturnDetailIds.add(m.get(MathUtil.ZERO).getSourceDetailId());
+            }
+            return m;
+        })));
+        //根据未到货的退货单详情id获取退货单id
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnDetailService.listByIds(soReturnDetailIds);
+        List<String> notAllReceiveSoReturnId = returnDetailEntityList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+
+        //获取到未到货的退货单返回数据
+        List<SoReturnDTO.PdaSoReturn> list = pdaSoReturns.stream().filter(req -> notAllReceiveSoReturnId.contains(req.getId())).collect(Collectors.toList());
         list.sort(Comparator.comparing(SoReturnDTO.PdaSoReturn::getSoCode).reversed());
         return list;
     }

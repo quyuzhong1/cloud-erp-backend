@@ -28,7 +28,9 @@ import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.CustomerSellerEntity;
+import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
@@ -46,6 +48,7 @@ import com.erp.model.wms.dto.inventory.InstockForcastDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryFinishDeliveryDetailDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
@@ -1943,27 +1946,39 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public List<PurchaseOrderDTO.PdaPurchaseOrder> listPoBySkuNo(String skuNo) {
-        List<String> poIds = purchaseOrderDetailService.listPoIdBySkuNo(skuNo);
-        List<PurchaseOrderEntity> purchaseOrderEntities = this.listByIds(poIds);
-        List<PurchaseOrderEntity> purchaseOrderEntitieList = purchaseOrderEntities.stream().filter(req -> InvalidStatusEnum.NOT_VOIDED.equals(req.getInvalidStatus()) && ApproveStatusEnum.APPROVE.equals(req.getApproveStatus())).collect(Collectors.toList());
-        List<PurchaseOrderSupplierEntity> purchaseOrderSupplierEntities = purchaseOrderSupplierService.listByPurchaseOrderIds(poIds);
+    public List<PurchaseOrderDTO.PdaPurchaseOrder> pdaList(PurchaseOrderDTO.PdaPurchaseOrderParam dto) {
+        List<PurchaseOrderDTO.PdaPurchaseOrder> list = baseMapper.pdaList(dto);
+        List<String> poIds = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailService.listByPurchaseOrderIds(poIds);
+
+        List<WarehouseReceiveDetailEntity> receiveDetailEntities = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(poIds);
+        //获取未全部到货的采购详情id
+        List<String> purchaseOrderDetailIds = new ArrayList<>();
+        receiveDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getPurchaseOrderDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+            int receiveQty = m.stream().mapToInt(WarehouseReceiveDetailEntity::getReceiveQty).sum();
+            PurchaseOrderDetailEntity detailEntity = detailEntityList.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
+            if (receiveQty < detailEntity.getPurchaseQty()) {
+                purchaseOrderDetailIds.add(m.get(MathUtil.ZERO).getPurchaseOrderDetailId());
+            }
+            return m;
+        })));
+        //根据未到货的采购单详情id获取采购单id
+        List<PurchaseOrderDetailEntity> detailEntityListList = purchaseOrderDetailService.listByIds(purchaseOrderDetailIds);
+        List<String> notAllReceivePoOrderId = detailEntityListList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
+
+        //获取到未到货的采购单返回数据
+        List<PurchaseOrderDTO.PdaPurchaseOrder> purchaseOrderEntitieList = list.stream().filter(req -> notAllReceivePoOrderId.contains(req.getId())).collect(Collectors.toList());
+
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listByPurchaseOrderIds(poIds);
         //入库信息
         List<String> podIds = purchaseOrderDetailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
         List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
-        List<PurchaseOrderDTO.PdaPurchaseOrder> list = new ArrayList<>();
-        for (PurchaseOrderEntity entity : purchaseOrderEntitieList) {
-            PurchaseOrderDTO.PdaPurchaseOrder order = new PurchaseOrderDTO.PdaPurchaseOrder();
-            order.setId(entity.getId());
-            order.setCode(entity.getCode());
-            order.setWarehouseName(entity.getDeliveryWarehouseName());
-            PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierEntities.stream().filter(req -> req.getPurchaseOrderId().equals(entity.getId())).distinct().findFirst().orElse(new PurchaseOrderSupplierEntity());
-            order.setSupplierName(supplierEntity.getSupplierName());
-            List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailEntityList.stream().filter(req -> req.getPurchaseOrderId().equals(entity.getId())).collect(Collectors.toList());
+        for (PurchaseOrderDTO.PdaPurchaseOrder entity : purchaseOrderEntitieList) {
+
+            List<PurchaseOrderDetailEntity> poDetailEntityList = purchaseOrderDetailEntityList.stream().filter(req -> req.getPurchaseOrderId().equals(entity.getId())).collect(Collectors.toList());
             List<PurchaseOrderDetailDTO.PdaPurchaseOrderDetail> itemList = new ArrayList<>();
-            for (PurchaseOrderDetailEntity detailEntity : detailEntityList) {
+            for (PurchaseOrderDetailEntity detailEntity : poDetailEntityList) {
                 PurchaseOrderDetailDTO.PdaPurchaseOrderDetail detail = new PurchaseOrderDetailDTO.PdaPurchaseOrderDetail();
                 detail.setId(detailEntity.getId());
                 detail.setSkuNo(detailEntity.getSkuNo());
@@ -1984,11 +1999,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 detail.setStockInQty(stockInQty);
                 itemList.add(detail);
             }
-            order.setItemList(itemList);
-            list.add(order);
+            entity.setItemList(itemList);
         }
-        list.sort(Comparator.comparing(PurchaseOrderDTO.PdaPurchaseOrder::getCode).reversed());
-        return list;
+        purchaseOrderEntitieList.sort(Comparator.comparing(PurchaseOrderDTO.PdaPurchaseOrder::getCode).reversed());
+        return purchaseOrderEntitieList;
     }
 
     @Override

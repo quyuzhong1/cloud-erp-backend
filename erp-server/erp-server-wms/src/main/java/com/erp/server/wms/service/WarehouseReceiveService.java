@@ -245,4 +245,13 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return com.erp.model.wms.dto.WarehouseReceiveDTO.ViewDTO
      **/
     WarehouseReceiveDTO.ViewDTO pdaView(String id);
+
+    /**
+     * PDA:条件查询收货单
+     * @Author Luo_WG
+     * @Date 2023/8/18 11:10
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.PdaPoReceive>
+     **/
+    List<WarehouseReceiveDTO.PdaPoReceive> pdaList(WarehouseReceiveDTO.PdaPoReceiveParam dto);
 }

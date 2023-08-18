@@ -948,4 +948,22 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         }
         return list;
     }
+
+    @Override
+    public List<SoReturnReceiveDTO.PdaSoReceive> pdaList(SoReturnReceiveDTO.PdaSoReceiveParam dto) {
+        List<SoReturnReceiveDTO.PdaSoReceive> list = baseMapper.pdaList(dto);
+/*        List<String> sorIds = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailByMainIds(sorIds);
+
+
+        //根据未入库采购收货单详情id获取未入库收货单id
+        List<WarehouseReceiveDetailEntity> receiveDetailEntities = warehouseReceiveDetailService.listByIds(receiveDetailIds);
+        List<String> notAllReceivePoReceiveId = receiveDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+
+        //获取到未入库采购收货单返回数据
+        List<WarehouseReceiveDTO.PdaPoReceive> poReceiveList = list.stream().filter(req -> notAllReceivePoReceiveId.contains(req.getId())).collect(Collectors.toList());
+        */
+        list.sort(Comparator.comparing(SoReturnReceiveDTO.PdaSoReceive::getCode).reversed());
+        return list;
+    }
 }

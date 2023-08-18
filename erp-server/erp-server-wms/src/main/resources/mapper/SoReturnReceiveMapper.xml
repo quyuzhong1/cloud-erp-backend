@@ -348,4 +348,26 @@
         </if>
         ORDER BY srr.create_time desc
     </select>
+
+    <select id="pdaList" resultType="com.erp.model.wms.dto.SoReturnReceiveDTO$PdaSoReceive">
+        SELECT
+            DISTINCT
+            srr.id,
+            srr.code,
+            srr.so_code,
+            srr.seller_name,
+            srr.warehouse_name,
+            srr.approve_status
+        FROM so_return_receive srr
+        LEFT JOIN so_return_receive_detail srrd ON srr.id = srrd.main_id AND srrd.is_deleted = FALSE
+        WHERE srr.is_deleted = FALSE
+        AND srr.invalid_status = FALSE
+        AND srr.approve_status = 'approve'
+        <if test="skuNo != '' and skuNo != null ">
+            AND srrd.sku_no = #{skuNo}
+        </if>
+        <if test="code != '' and code != null ">
+            AND srr.code ILIKE concat('%', #{code} ,'%')
+        </if>
+    </select>
 </mapper>

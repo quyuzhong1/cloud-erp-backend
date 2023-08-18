@@ -736,4 +736,61 @@ public class SoReturnReceiveDTO {
          */
         private Integer count;
     }
+
+    /**
+     * PDA:查询销售退货签收单
+     * @Author Luo_WG
+     * @Date 2023/8/18 11:57
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class PdaSoReceive {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 签收单号
+         */
+        private String code;
+        /**
+         * 销售单号
+         */
+        private String soCode;
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+    }
+
+    /**
+     * PDA:销售退货单查询参数
+     * @Author Luo_WG
+     * @Date 2023/8/18 12:00
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class PdaSoReceiveParam {
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 采购收货单号
+         */
+        private String code;
+    }
 }

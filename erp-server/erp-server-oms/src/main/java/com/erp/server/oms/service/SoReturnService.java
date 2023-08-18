@@ -232,10 +232,10 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * 根据sku编号查询销售退货单
      * @Author Luo_WG
      * @Date 2023/8/15 16:50
-     * @param skuNo
+     * @param dto
      * @return java.util.List<com.erp.model.oms.dto.SoReturnDTO.PdaSoReturn>
      **/
-    List<SoReturnDTO.PdaSoReturn> listBySkuNo(String skuNo);
+    List<SoReturnDTO.PdaSoReturn> pdaList(SoReturnDTO.PdaSoReturnParam dto);
 
     /**
      * PDA:根据id查询详情
