@@ -517,6 +517,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      * @param dto
      * @param entity
      */
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, StocktakingProfitLossEntity entity) {
         if (Objects.isNull(entity)) {

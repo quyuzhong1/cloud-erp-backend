@@ -403,6 +403,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
      * @param dto
      * @param entity
      */
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, StocktakingTaskEntity entity) {
         if (Objects.isNull(entity)) {

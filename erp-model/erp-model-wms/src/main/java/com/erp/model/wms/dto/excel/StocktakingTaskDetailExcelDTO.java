@@ -3,6 +3,7 @@ package com.erp.model.wms.dto.excel;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.core.anno.FieldValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -40,7 +41,7 @@ public class StocktakingTaskDetailExcelDTO {
 
     @ColumnWidth(30)
     @ExcelProperty(value = "盘点库存", index = 4)
-    @FieldValid(fieldName = "盘点库存",isNotBlank = true)
+    @FieldValid(fieldName = "盘点库存",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private Integer qty;
 
     /**

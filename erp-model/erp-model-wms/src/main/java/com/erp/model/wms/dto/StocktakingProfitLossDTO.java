@@ -93,6 +93,11 @@ public class StocktakingProfitLossDTO implements Serializable {
         private List<LocalDate> approveTimeList;
 
         /**
+         * 审核人
+         */
+        private List<String> approveUserIdList;
+
+        /**
          * 仓库
          */
         private String warehouseId;

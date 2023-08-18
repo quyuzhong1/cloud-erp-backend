@@ -128,4 +128,14 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
      * @return
      */
     Boolean createTaskList(StocktakingPlanEntity entity,List<StocktakingPlanDetailEntity> detailEntityList);
+
+    /**
+     * 流程监听结束
+     * @author yl
+     * @date 2023-08-18 9:02
+     * @param approveOne
+     * @param entity
+     * @return java.lang.Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO approveOne, StocktakingTaskEntity entity);
 }
