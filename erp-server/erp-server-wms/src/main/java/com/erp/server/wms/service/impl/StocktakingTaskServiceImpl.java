@@ -239,9 +239,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         }
 
         List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listBaseByMainIds(ids);
-        long zeroCount = taskDetailList.stream().filter(d -> d.getQty() <= 0).count();
+        long zeroCount = taskDetailList.stream().filter(d -> d.getQty() < 0).count();
         if(zeroCount>0){
-            throw new ServiceException("盘点数量必须大于0");
+            throw new ServiceException("盘点数量不能为负数");
         }
         //启动审核流程
         startProcess(taskList);
