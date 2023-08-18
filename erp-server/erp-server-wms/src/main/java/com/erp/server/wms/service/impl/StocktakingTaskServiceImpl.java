@@ -205,7 +205,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
             //仓库
             String warehouseName = taskDetailList.stream().filter(d -> id.equals(d.getMainId())).
-                    map(StocktakingTaskDetailEntity::getWarehouseName).collect(Collectors.joining(","));
+                    map(StocktakingTaskDetailEntity::getWarehouseName).distinct().collect(Collectors.joining(","));
             item.setWarehouseName(warehouseName);
 
             //sku 统计数
@@ -221,7 +221,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO submit(String id) {
-        List<StocktakingTaskEntity> taskList = this.listByIds(Arrays.asList(id));
+        List<String> ids = Arrays.asList(id);
+        List<StocktakingTaskEntity> taskList = this.listByIds(ids);
         String code = CollectionUtils.isNotEmpty(taskList) ? taskList.get(0).getCode() : "";
         //待审核
         ApproveStatusEnum waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT;
@@ -235,6 +236,12 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         long count = taskList.stream().filter(s -> !statusList.contains(s.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+        }
+
+        List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listBaseByMainIds(ids);
+        long zeroCount = taskDetailList.stream().filter(d -> d.getQty() <= 0).count();
+        if(zeroCount>0){
+            throw new ServiceException("盘点数量必须大于0");
         }
         //启动审核流程
         startProcess(taskList);
