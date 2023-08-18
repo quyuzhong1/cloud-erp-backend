@@ -44,7 +44,8 @@
           sp.mode AS stocktakingMode,
           sp.type AS stocktakingType,
           sp.separate_rule AS separateRule,
-          sp.status AS stocktakingStatus
+          st.status AS stocktakingStatus,
+          st.approve_user_name
           FROM stocktaking_task st
           LEFT JOIN stocktaking_plan sp
           ON st.source_id=sp.id AND sp.is_deleted=FALSE
@@ -116,7 +117,7 @@
 
         <!--审核时间 -->
         <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
-            AND st.create_time >= #{params.approveTimeList[0]} and (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1
+            AND st.approve_time >= #{params.approveTimeList[0]} and (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > st.approve_time
         </if>
         <!--审核人 -->
@@ -149,8 +150,9 @@
           st.create_user_name,
           sp.mode AS stocktakingMode,
           sp.type AS stocktakingType,
-          sp.status AS stocktakingStatus,
-          sp.separate_rule AS separateRule
+          st.status AS stocktakingStatus,
+          sp.separate_rule AS separateRule,
+          st.approve_user_name
         FROM stocktaking_task st
           LEFT JOIN stocktaking_plan sp
           ON st.source_id=sp.id AND sp.is_deleted=FALSE
@@ -229,7 +231,7 @@
                 </if>
                 <!--审核时间 -->
                 <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
-                    AND st.create_time >= #{params.approveTimeList[0]} and (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    AND st.approve_time >= #{params.approveTimeList[0]} and (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1
                     DAY' ) > st.approve_time
                 </if>
                 <!--审核人 -->
