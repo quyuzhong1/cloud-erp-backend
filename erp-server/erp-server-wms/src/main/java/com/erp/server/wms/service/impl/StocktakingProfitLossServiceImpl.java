@@ -366,7 +366,6 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
-
         //启动流程
         startProcess(entity);
         Boolean result = this.updateApproveStatus(entity.getId(), ApproveStatusEnum.APPROVE_ING);

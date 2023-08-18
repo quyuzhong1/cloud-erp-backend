@@ -2,31 +2,23 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.*;
 import com.common.business.utils.RedisUtil;
-import com.common.core.exception.ServiceException;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RedisKeyConstant;
+import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
+import com.erp.server.wms.service.StocktakingPlanService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.StocktakingPlanService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.wms.dto.StocktakingPlanDTO;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 盘点计划
@@ -200,7 +192,7 @@ public class StocktakingPlanController extends BaseController {
             StocktakingPlanEntity entity = stocktakingPlanService.getById(id);
             BatchResultDTO approveResult;
             try {
-                approveResult = stocktakingPlanService.approve(id, new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                approveResult = stocktakingPlanService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
                 log.error("盘点计划审核失败",e);
                 if (ObjectUtil.isEmpty(entity)) {
