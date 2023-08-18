@@ -99,6 +99,17 @@ public class StocktakingTaskDTO implements Serializable {
          */
         private List<String> createUserIdList;
 
+
+        /**
+         * 创建时间
+         */
+        private List<LocalDate> approveTimeList;
+
+        /**
+         * 审核人id
+         */
+        private List<String> approveUserIdList;
+
         /**
          * 仓库
          */

@@ -62,6 +62,11 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
+        //盘点数量
+        Integer qty = excelDTO.getQty();
+        if(qty<=0){
+            errorMsgList.add("盘点数量必须大于0");
+        }
         //任务盘点单号
         String taskCode = excelDTO.getCode();
         if (!code.equals(taskCode)) {
@@ -85,15 +90,14 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
                         d.getWarehouseLocation().equals(warehouseLocation)).
                 findFirst().orElse(null);
         if (Objects.isNull(taskDetail)) {
-            errorMsgList.add("任务明细不存在");
+            errorMsgList.add("未匹配到任务明细,请检查仓库,仓位,SKU");
         }
         if (errorMsgList.size() > 0) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;
         }
-        //盘点数量
-        Integer qty = excelDTO.getQty();
+
         //可用库存
         Integer usableQty = taskDetail.getUsableQty();
         //冻结数量

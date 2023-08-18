@@ -105,4 +105,12 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @return void
      */
     Boolean updateSyncKingdeeStatus(String businessId, String status, String syncKingdeeId, String syncOperate);
+
+    /**
+     * 流程监听后
+     * @param approveOne
+     * @param entity
+     * @return
+     */
+    Boolean approveEnd(ApproveOneDTO approveOne, StocktakingProfitLossEntity entity);
 }

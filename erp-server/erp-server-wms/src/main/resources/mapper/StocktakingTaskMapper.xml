@@ -113,6 +113,19 @@
                 #{createUserId}
             </foreach>
         </if>
+
+        <!--审核时间 -->
+        <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
+            AND st.create_time >= #{params.approveTimeList[0]} and (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > st.approve_time
+        </if>
+        <!--审核人 -->
+        <if test="params.approveUserIdList !=null and params.approveUserIdList.size>0">
+            AND st.approve_user_id IN
+            <foreach collection="params.approveUserIdList" item="approveUserId" open="(" separator="," close=")">
+                #{approveUserId}
+            </foreach>
+        </if>
         <!--权限 -->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -212,6 +225,18 @@
                     AND st.create_user_id IN
                     <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
                         #{createUserId}
+                    </foreach>
+                </if>
+                <!--审核时间 -->
+                <if test="params.approveTimeList !=null and params.approveTimeList.size>0">
+                    AND st.create_time >= #{params.approveTimeList[0]} and (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > st.approve_time
+                </if>
+                <!--审核人 -->
+                <if test="params.approveUserIdList !=null and params.approveUserIdList.size>0">
+                    AND st.approve_user_id IN
+                    <foreach collection="params.approveUserIdList" item="approveUserId" open="(" separator="," close=")">
+                        #{approveUserId}
                     </foreach>
                 </if>
                 <!--权限-->
