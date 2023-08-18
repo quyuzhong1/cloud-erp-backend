@@ -26,8 +26,8 @@ public class BomCombinationImportExcelDTO implements Serializable {
     /**
      * 组合产品名称
      */
-    @ExcelProperty(value = "组合产品名称", index = 1)
-    @FieldValid(fieldName = "*组合产品名称",isNotBlank = true)
+    @ExcelProperty(value = "*组合产品名称", index = 1)
+    @FieldValid(fieldName = "组合产品名称",isNotBlank = true)
     private String name;
 
     /**

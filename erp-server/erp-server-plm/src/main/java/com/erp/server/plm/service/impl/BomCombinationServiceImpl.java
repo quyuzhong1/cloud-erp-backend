@@ -23,7 +23,6 @@ import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
-import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.server.plm.listener.BomCombinationExcelListener;
 import com.erp.server.plm.mapper.BomInfoMapper;
 import com.erp.server.plm.service.*;
@@ -147,7 +146,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         BomCombinationExcelListener excelListenerUtil = new BomCombinationExcelListener();
 
         try {
-            EasyExcel.read(excelFile.getInputStream(), PurchaseOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), BomCombinationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
