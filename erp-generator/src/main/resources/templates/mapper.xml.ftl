@@ -57,7 +57,9 @@
         FROM  ${table.name}
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
-<#--            ${permissionSql}-->
+            <#noparse>
+            ${permissionSql}
+            </#noparse>
         </if>
         GROUP BY approve_status
     </select>
