@@ -56,7 +56,14 @@ public interface ${table.mapperName} extends ${superMapperClass}<${entity}> {
     * @return
     */
     List<${table.dtoName}.ListDTO> listExport(@Param("params") ${table.dtoName}.ExportDTO params);
-    </#if>
 
+
+    /**
+    * 获取状态统计
+    * @param searchParam
+    * @return
+    */
+    List<${table.dtoName}.TabListDTO> tabList(${table.dtoName}.PagingParamDTO searchParam);
+    </#if>
 }
 </#if>
