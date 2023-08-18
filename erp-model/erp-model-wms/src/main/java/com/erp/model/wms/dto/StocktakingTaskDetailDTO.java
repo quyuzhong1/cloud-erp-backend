@@ -102,7 +102,7 @@ public class StocktakingTaskDetailDTO implements Serializable {
         private String id;
 
         @NotNull(message = "盘点数量不能为空")
-        @DecimalMin(value = "1",message ="盘点数量最小为1" )
+        @DecimalMin(value = "0",message ="盘点数量最小为0" )
         private Integer qty;
     }
 
