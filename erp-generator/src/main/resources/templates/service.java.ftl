@@ -5,12 +5,10 @@ package ${package.Service};
 </#list>
 import ${package.Entity}.${entity};
 import ${superServiceClassPackage};
-
-<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
-import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import ${package.Dto}.${table.dtoName};
-
+<#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
+import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 </#if>
@@ -27,6 +25,24 @@ import java.util.List;
 interface ${table.serviceName} : ${superServiceClass}<${entity}>
 <#else>
 public interface ${table.serviceName} extends ${superServiceClass}<${entity}> {
+
+    /**
+    * 新增
+    * @author ${author}
+    * @date: ${date}
+    * @param dto
+    * @return
+    */
+    String add(${table.dtoName}.AddDTO dto);
+
+    /**
+    * 修改
+    * @author ${author}
+    * @date: ${date}
+    * @param dto
+    * @return
+    */
+    Boolean update(${table.dtoName}.UpdateDTO dto);
 
     <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
       /**
@@ -55,24 +71,6 @@ public interface ${table.serviceName} extends ${superServiceClass}<${entity}> {
      * @return
      */
      ${table.dtoName}.ViewDTO view(String id);
-
-     /**
-     * 新增
-     * @author ${author}
-     * @date: ${date}
-     * @param dto
-     * @return
-     */
-     String add(${table.dtoName}.AddDTO dto);
-
-     /**
-     * 修改
-     * @author ${author}
-     * @date: ${date}
-     * @param dto
-     * @return
-     */
-    BatchResultDTO update(${table.dtoName}.UpdateDTO dto);
 
      /**
      * 新增并提交审核
