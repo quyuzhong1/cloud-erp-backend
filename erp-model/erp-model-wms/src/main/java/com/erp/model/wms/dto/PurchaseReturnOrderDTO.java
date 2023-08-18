@@ -970,4 +970,88 @@ public class PurchaseReturnOrderDTO {
 
     }
 
+    /**
+     * PDA:列表查询
+     * @Author Luo_WG
+     * @Date 2023/8/18 16:21
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingViewDTO {
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 供应商
+         */
+        private String supplierName;
+
+        /**
+         * 退货仓库名称
+         */
+        private String returnWarehouseName;
+
+        /**
+         * 产品信息
+         */
+        private List<PdaItemDTO> itemList;
+    }
+
+
+    /**
+     * PDA:商品信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaItemDTO {
+        /**
+         * 明细id
+         */
+        private String id;
+        /**
+         * sku
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 实退数量
+         */
+        private Integer returnQty;
+    }
+
+    /**
+     * PDA:列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingParamDTO extends SortDTO {
+        /**
+         * 审核状态：根据tab页传审核状态
+         */
+        private List<String> approveStatusList;
+
+    }
 }
