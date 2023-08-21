@@ -807,6 +807,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //获取到未到货的退货单返回数据
         List<SoReturnDTO.PdaSoReturn> list = pdaSoReturns.stream().filter(req -> notAllReceiveSoReturnId.contains(req.getId())).collect(Collectors.toList());
         list.sort(Comparator.comparing(SoReturnDTO.PdaSoReturn::getSoCode).reversed());
+        list.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
         return list;
     }
 
