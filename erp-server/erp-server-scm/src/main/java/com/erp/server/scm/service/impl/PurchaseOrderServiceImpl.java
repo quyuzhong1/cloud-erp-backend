@@ -1950,8 +1950,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PurchaseOrderDTO.PdaPurchaseOrder> list = baseMapper.pdaList(dto);
         List<String> poIds = list.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailService.listByPurchaseOrderIds(poIds);
-
-        List<WarehouseReceiveDetailEntity> receiveDetailEntities = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(poIds);
+        List<String> podaIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<WarehouseReceiveDetailEntity> receiveDetailEntities = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podaIds);
         //获取未全部到货的采购详情id
         List<String> purchaseOrderDetailIds = new ArrayList<>();
         receiveDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getPurchaseOrderDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
