@@ -24,10 +24,7 @@ import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -1360,10 +1357,17 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setSupplierContactId(orderSupplierByOrderId.getSupplierContactId());
+
+        SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(orderSupplierByOrderId.getSupplierContactId());
+        viewDTO.setSupplierContactName(supplierContactById.getPerson());
+
         viewDTO.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
         viewDTO.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
+        viewDTO.setPurchaseUserName(purchaseOrderEntity.getPurchaseUserName());
         viewDTO.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
+        viewDTO.setReceiveOrgName(purchaseOrderEntity.getReceiveOrgName());
         viewDTO.setPurchaseDeptId(purchaseOrderEntity.getPurchaseDeptId());
+        viewDTO.setPurchaseDeptName(purchaseOrderEntity.getPurchaseDeptName());
 
         //创库保存详情表的集合
         List<WarehouseReceiveDetailDTO.ViewDTO> detailViewDTOS = new ArrayList<>();

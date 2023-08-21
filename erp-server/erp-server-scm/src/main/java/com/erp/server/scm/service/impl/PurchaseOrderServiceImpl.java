@@ -2060,7 +2060,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<WarehouseReceiveDetailEntity> receiveDetailEntities = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
         List<PurchaseOrderDetailDTO.PdaViewDTO> details = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.PdaViewDTO.class, entityDetails);
+
+        List<String> skuNos = entityDetails.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuNos);
         for (PurchaseOrderDetailDTO.PdaViewDTO detail : details) {
+            SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).findFirst().orElse(new SkuVO());
+            detail.setUnitName(skuVO.getUnitName());
             detail.setTaxRate(MathUtil.multiply(detail.getTaxRate(), MathUtil.BigDecimal_100));
             Integer receiveQty = receiveDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(detail.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             detail.setReceiveQty(receiveQty);
