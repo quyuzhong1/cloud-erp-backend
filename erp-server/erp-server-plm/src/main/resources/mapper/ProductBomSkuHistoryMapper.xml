@@ -4,7 +4,24 @@
 
 
     <select id="listHistoryBomChildBySkuIds" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
-
+        select
+        pbh.version as bomVersion,
+        pbs.parent_sku_id as parentSkuId,
+        pbs.sku_id as skuId,
+        pbs.sku_no as skuNo,
+        pbs.quantity as quantity,
+        pd.name as skuName,
+        pd.unit_name as unitName
+        from product_bom_history pbh
+        left join product_bom_sku_history pbs on pbh.id = pbs.bom_history_id and pbs.is_deleted = false
+        left join product_detail pd on pbs.sku_id = pd.id and pd.is_deleted = false
+        <where>
+            pbh.is_deleted = false
+            and pbs.parent_sku_id in
+            <foreach collection="parentSkuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
     </select>
 
 </mapper>
