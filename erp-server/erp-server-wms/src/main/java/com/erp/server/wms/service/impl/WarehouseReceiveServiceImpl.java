@@ -720,7 +720,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //下推入库单不能反审核
         warehouseReceiveList.forEach(req -> {
             List<PoInstockEntity> stockInBySourceId = poInstockService.getStockInBySourceId(req.getId());
-            if (CollectionUtils.isNotEmpty(stockInBySourceId)) {
+            List<PoInstockEntity> collect = stockInBySourceId.stream().filter(obj -> InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(collect)) {
                 throw new ServiceException(ApiError.ERROR_99011);
             }
             List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceId(req.getId());
@@ -1429,10 +1430,14 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Override
     public List<WarehouseReceiveDTO.PdaPoReceive> pdaList(WarehouseReceiveDTO.PdaPoReceiveParam dto) {
         List<WarehouseReceiveDTO.PdaPoReceive> list = baseMapper.pdaList(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
         List<String> porIds = list.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<WarehouseReceiveDetailEntity> receiveDetailEntitieList = warehouseReceiveDetailService.listDetailByMainIds(porIds);
+        List<String> pordIds = receiveDetailEntitieList.stream().map(req -> req.getId()).collect(Collectors.toList());
 
-        List<PoInstockDetailEntity> poInstockDetailEntities = poInstockDetailService.listDetailBySourceDetailIds(porIds);
+        List<PoInstockDetailEntity> poInstockDetailEntities = poInstockDetailService.listDetailBySourceDetailIds(pordIds);
 
         //获取未全部入库的采购收货详情id
         List<String> receiveDetailIds = new ArrayList<>();
@@ -1451,6 +1456,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取到未入库采购收货单返回数据
         List<WarehouseReceiveDTO.PdaPoReceive> poReceiveList = list.stream().filter(req -> notAllReceivePoReceiveId.contains(req.getId())).collect(Collectors.toList());
         poReceiveList.sort(Comparator.comparing(WarehouseReceiveDTO.PdaPoReceive::getCode).reversed());
+        list.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
         return poReceiveList;
     }
 }

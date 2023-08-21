@@ -273,7 +273,8 @@
             sr.code AS soReturnCode,
             sr.source_code AS soCode,
             sr.seller_name,
-            sr.warehouse_name
+            sr.warehouse_name,
+            sr.approve_status
         FROM so_return sr
         LEFT JOIN so_return_detail srd ON sr.id = srd.main_id AND sr.is_deleted = FALSE
         WHERE srd.is_deleted = FALSE

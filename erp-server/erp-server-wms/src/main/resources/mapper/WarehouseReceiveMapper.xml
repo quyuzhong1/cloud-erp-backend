@@ -380,6 +380,7 @@
             pr.id,
             pr.code,
             pr.supplier_name,
+            pr.approve_status,
             pr.delivery_warehouse_name AS warehouseName
         FROM po_receive pr
         LEFT JOIN po_receive_detail prd ON pr.id = prd.main_id AND prd.is_deleted = FALSE

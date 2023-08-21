@@ -5,8 +5,9 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
+import com.erp.model.wms.enums.StocktakingStatusEnum;
 
- import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -144,5 +145,12 @@ public interface StocktakingPlanService extends SuperService<StocktakingPlanEnti
      * @return
      */
     Boolean approveEnd(ApproveOneDTO dto, StocktakingPlanEntity entity);
+
+    /**
+     * 盘点状态更新
+     * @param sourceId
+     * @param stocktakingStatusEnum
+     */
+    void updateForStocktakingStatus(String sourceId, StocktakingStatusEnum stocktakingStatusEnum);
 
 }

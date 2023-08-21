@@ -470,6 +470,8 @@ public class WarehouseDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingProductViewDTO {
 
+        private String inventoryId;
+
         /**
          * sku id
          */

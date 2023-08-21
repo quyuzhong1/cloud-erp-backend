@@ -18,13 +18,13 @@ public class RedisKeyConstant {
 
     /**
      * 库存锁定无法操作
-     * 单号 + 组织 + 仓库 + 库位 + sku + 状态
+     * 计划单号 + 组织 + 仓库 + 库位 + sku + 状态
      */
     public static String INVENTORY_LOCK="INVENTORY_LOCK:{}_{}_{}_{}_{}_{}";
 
     /**
      * 库存锁定无法操作
-     * 单号
+     * 计划单号
      */
     public static String INVENTORY_LOCK_CODE="INVENTORY_LOCK:{}_*";
 

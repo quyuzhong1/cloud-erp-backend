@@ -84,7 +84,9 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
         }
         // 更新存在的明细数据
         if (CollUtil.isNotEmpty(updateList)){
-            updateBatchById(updateList);
+            if (!updateBatchById(updateList)) {
+                throw new RuntimeException("更新盘点计划明细失败");
+            }
         }
         // 新增不存在的明细数据
         if (CollUtil.isNotEmpty(insertList)){

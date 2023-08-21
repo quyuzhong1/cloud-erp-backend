@@ -964,6 +964,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<WarehouseReceiveDTO.PdaPoReceive> poReceiveList = list.stream().filter(req -> notAllReceivePoReceiveId.contains(req.getId())).collect(Collectors.toList());
         */
         list.sort(Comparator.comparing(SoReturnReceiveDTO.PdaSoReceive::getCode).reversed());
+        list.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
         return list;
     }
 }

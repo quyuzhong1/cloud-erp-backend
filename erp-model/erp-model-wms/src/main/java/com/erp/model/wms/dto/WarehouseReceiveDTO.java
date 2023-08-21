@@ -989,6 +989,14 @@ public class WarehouseReceiveDTO {
          * 仓库名称
          */
         private String warehouseName;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
     }
 
     /**
