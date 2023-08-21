@@ -136,6 +136,15 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return
      */
     List<SkuVO> getNoInventorySku();
+
+    /**
+     * PDA:条件查询sku
+     * @Author Luo_WG
+     * @Date 2023/8/21 12:09
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto);
 }
 
 

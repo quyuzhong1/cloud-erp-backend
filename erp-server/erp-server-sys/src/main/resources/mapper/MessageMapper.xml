@@ -31,6 +31,11 @@
             m.data_json,
             m.remark
         FROM message m
-        WHERE not EXISTS (SELECT * FROM message_user_read mur WHERE mur.message_id = m."id" AND mur.user_id = #{userId})
+        LEFT JOIN message_user_read mur on m.id = mur.message_id AND mur.is_deleted = FALSE
+        WHERE M.is_deleted = FALSE
+        AND (mur.is_read = FALSE OR mur.message_id IS NULL)
+        <if test="userId != null and userId != ''">
+            AND (mur.user_id = #{userId} OR mur.message_id IS NULL)
+        </if>
     </select>
 </mapper>

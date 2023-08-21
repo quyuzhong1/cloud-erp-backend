@@ -771,4 +771,37 @@
             #{id}
         </foreach>
     </update>
+
+    <!--PDA:条件查询sku-->
+    <select id="pdaSearchSku" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pd.id AS skuId,
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName,
+        pd.variant_property,
+        pp.box_qty as unitQty,
+        pl.declare_chinese_name as declareName,
+        pl.declare_model as declareModel,
+        pd.unit_name
+        FROM  product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        left join product_pack pp on pd.id = pp.sku_id AND pp.is_deleted = FALSE
+        left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
+        WHERE  pd.is_deleted = FALSE
+        <if test="searchKeyword != null and searchKeyword!=''">
+            AND
+            (
+            pd.sku_no ILIKE concat('%',#{searchKeyword},'%')
+            OR
+            pd.name ILIKE  concat('%',#{searchKeyword},'%')
+            )
+        </if>
+        <if test="skuNo != null and skuNo!=''">
+            AND pd.sku_no = #{skuNo}
+        </if>
+    </select>
 </mapper>

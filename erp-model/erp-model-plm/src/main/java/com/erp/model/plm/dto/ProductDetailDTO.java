@@ -178,4 +178,23 @@ public class ProductDetailDTO implements Serializable {
 
     }
 
+
+    /**
+     * 搜索sku
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaSearchDTO {
+
+        /**
+         * 搜索关键字
+         */
+        private String searchKeyword;
+
+        /**
+         * 精准sku查询
+         */
+        private String skuNo;
+
+    }
 }

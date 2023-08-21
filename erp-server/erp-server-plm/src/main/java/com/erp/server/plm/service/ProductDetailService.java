@@ -555,4 +555,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return List<ProductDetailEntity>
      */
     List<ProductDetailEntity> listBySkuNos(List<String> skuNos);
+
+    /**
+     * PDA:条件查询sku
+     * @Author Luo_WG
+     * @Date 2023/8/21 12:11
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto);
 }
