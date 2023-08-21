@@ -82,23 +82,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BatchResultDTO approve(ApproveOneDTO dto);
 
     /**
-    * 反审核
-    * @author Will
-    * @date: 2023-08-18
-    * @param id
-    * @return
-    */
-    BatchResultDTO disApprove(String id);
-
-    /**
-    * 删除
-    * @author Will
-    * @date: 2023-08-18
-    * @param id
-    * @return
-    */
-    BatchResultDTO delete(String id);
-    /**
     * 作废
     * @author Will
     * @date: 2023-08-18

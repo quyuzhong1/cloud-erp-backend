@@ -51,6 +51,8 @@ public enum BusinessNoTypeEnum {
     STOCKTAKING_TASK(41, "pdrw","盘点任务","PDRW"),
     STOCKTAKING_PROFIT(42, "pyd","盘盈单","PYD"),
     STOCKTAKING_LOSS(43, "pkd","盘盈单","PKD"),
+    CODE_SO_B2C(44, "xsd","b2c销售订单","XSD"),
+
     ;
 
 

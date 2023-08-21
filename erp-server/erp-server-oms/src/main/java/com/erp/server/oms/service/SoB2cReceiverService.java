@@ -1,6 +1,8 @@
 package com.erp.server.oms.service;
-import com.erp.model.oms.entity.SoB2cReceiverEntity;
+
 import com.common.business.service.SuperService;
+import com.erp.model.oms.dto.SoB2cReceiverDTO;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 
 
 /**
@@ -13,5 +15,22 @@ import com.common.business.service.SuperService;
  */
 public interface SoB2cReceiverService extends SuperService<SoB2cReceiverEntity> {
 
-
+    /**
+     * @description: 新增
+     * @author Will
+     * @date: 2023/8/21 17:13
+     * @param receiverDTO
+     * @param mainId
+     * @return Boolean
+     */
+    Boolean add(SoB2cReceiverDTO.AddDTO receiverDTO, String mainId);
+    /**
+     * @description: 修改
+     * @author Will
+     * @date: 2023/8/21 17:13
+     * @param receiverDTO
+     * @param mainId
+     * @return Boolean
+     */
+    Boolean update(SoB2cReceiverDTO.UpdateDTO receiverDTO, String mainId);
 }
