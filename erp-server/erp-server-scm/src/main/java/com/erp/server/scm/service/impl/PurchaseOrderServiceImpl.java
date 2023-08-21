@@ -2009,8 +2009,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public PurchaseOrderDTO.ViewDTO pdaView(String id) {
-        PurchaseOrderDTO.ViewDTO dto = new PurchaseOrderDTO.ViewDTO();
+    public PurchaseOrderDTO.PdaViewDTO pdaView(String id) {
+        PurchaseOrderDTO.PdaViewDTO dto = new PurchaseOrderDTO.PdaViewDTO();
 
         //主表信息
         PurchaseOrderEntity entity = this.getById(id);
@@ -2029,11 +2029,20 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         //供应商信息
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(id);
-        PurchaseOrderSupplierDTO.UpdateDTO supplierUpdateDTO = new PurchaseOrderSupplierDTO.UpdateDTO();
+        PurchaseOrderSupplierDTO.PdaView supplierUpdateDTO = new PurchaseOrderSupplierDTO.PdaView();
         if (ObjectUtils.isEmpty(supplierUpdateDTO)) {
             throw new ServiceException(ApiError.ERROR_98031);
         }
         BeanMapperUtils.copy(purchaseOrderSupplierEntity, supplierUpdateDTO);
+        //原供应商信息
+        SupplierEntity supplier = supplierService.getById(supplierUpdateDTO.getSupplierId());
+        if (ObjectUtils.isNotEmpty(supplier)) {
+            supplierUpdateDTO.setSupplierAddress(supplier.getCompanyAddress());
+        }
+        if (StringUtils.isNotBlank(supplierUpdateDTO.getSupplierContactId())) {
+            SupplierContactEntity supplierContactEntity = supplierContactService.getById(supplierUpdateDTO.getSupplierContactId());
+            supplierUpdateDTO.setSupplierContactName(supplierContactEntity.getPerson());
+        }
         dto.setPurchaseOrderSupplierDTO(supplierUpdateDTO);
 
         //单据类型
@@ -2049,20 +2058,20 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> podIds = entityDetails.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<WarehouseReceiveDetailEntity> receiveDetailEntities = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
-        List<PurchaseOrderDetailDTO.UpdateDTO> details = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.UpdateDTO.class, entityDetails);
-        for (PurchaseOrderDetailDTO.UpdateDTO detail : details) {
+        List<PurchaseOrderDetailDTO.PdaViewDTO> details = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.PdaViewDTO.class, entityDetails);
+        for (PurchaseOrderDetailDTO.PdaViewDTO detail : details) {
             detail.setTaxRate(MathUtil.multiply(detail.getTaxRate(), MathUtil.BigDecimal_100));
             Integer receiveQty = receiveDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(detail.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             detail.setReceiveQty(receiveQty);
             Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detail.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             detail.setUnReceiveQty(detail.getPurchaseQty() + returnQty - receiveQty);
         }
-        Map<String, PurchaseOrderDetailDTO.UpdateDTO> collect = details.stream().collect(Collectors.groupingBy(n -> n.getSkuNo(), Collectors.collectingAndThen(Collectors.toList(), m -> {
-            int purchaseQty = m.stream().mapToInt(PurchaseOrderDetailDTO.UpdateDTO::getPurchaseQty).sum();
-            int receiveQty = m.stream().mapToInt(PurchaseOrderDetailDTO.UpdateDTO::getReceiveQty).sum();
-            int unReceiveQty = m.stream().mapToInt(PurchaseOrderDetailDTO.UpdateDTO::getUnReceiveQty).sum();
-            String podId = m.stream().max(Comparator.comparing(PurchaseOrderDetailDTO.UpdateDTO::getId)).map(PurchaseOrderDetailDTO.UpdateDTO::getId).get();
-            PurchaseOrderDetailDTO.UpdateDTO updateDTO = new PurchaseOrderDetailDTO.UpdateDTO();
+        Map<String, PurchaseOrderDetailDTO.PdaViewDTO> collect = details.stream().collect(Collectors.groupingBy(n -> n.getSkuNo(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+            int purchaseQty = m.stream().mapToInt(PurchaseOrderDetailDTO.PdaViewDTO::getPurchaseQty).sum();
+            int receiveQty = m.stream().mapToInt(PurchaseOrderDetailDTO.PdaViewDTO::getReceiveQty).sum();
+            int unReceiveQty = m.stream().mapToInt(PurchaseOrderDetailDTO.PdaViewDTO::getUnReceiveQty).sum();
+            String podId = m.stream().max(Comparator.comparing(PurchaseOrderDetailDTO.PdaViewDTO::getId)).map(PurchaseOrderDetailDTO.PdaViewDTO::getId).get();
+            PurchaseOrderDetailDTO.PdaViewDTO updateDTO = new PurchaseOrderDetailDTO.PdaViewDTO();
             BeanMapper.copy(m.get(MathUtil.ZERO), updateDTO);
             updateDTO.setId(podId);
             updateDTO.setPurchaseQty(purchaseQty);
@@ -2071,8 +2080,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             return updateDTO;
         })));
 
-        List<PurchaseOrderDetailDTO.UpdateDTO> updateDTOS = new ArrayList<>();
-        for (Map.Entry<String, PurchaseOrderDetailDTO.UpdateDTO> stringUpdateDTOEntry : collect.entrySet()) {
+        List<PurchaseOrderDetailDTO.PdaViewDTO> updateDTOS = new ArrayList<>();
+        for (Map.Entry<String, PurchaseOrderDetailDTO.PdaViewDTO> stringUpdateDTOEntry : collect.entrySet()) {
             updateDTOS.add(stringUpdateDTOEntry.getValue());
         }
         dto.setDetails(updateDTOS);

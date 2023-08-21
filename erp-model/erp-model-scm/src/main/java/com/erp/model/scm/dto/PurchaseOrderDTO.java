@@ -1320,4 +1320,139 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private String code;
     }
+
+    /**
+     * PDA:详情
+     * @Author Luo_WG
+     * @Date 2023/8/21 16:33
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class PdaViewDTO extends CommonDTO {
+
+        /**
+         * 主表id
+         */
+        private String id;
+
+        /**
+         * 单据编码
+         */
+        private String code;
+
+        /**
+         * 单据类型
+         */
+        private String type;
+
+        /**
+         * 单据类型名称
+         */
+        private String typeName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 收料组织id
+         */
+        private String receiveOrgId;
+
+        /**
+         * 收料组织名称
+         */
+        private String receiveOrgName;
+
+        /**
+         * 采购日期
+         */
+        @NotNull(message = "采购日期不能为空")
+        private LocalDate purchaseDate;
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+        /**
+         * 采购部门id
+         */
+        private String purchaseDeptId;
+
+        /**
+         * 采购部门名称
+         */
+        private String purchaseDeptName;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 交货仓库名称
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private Boolean isFirstMassProduct;
+
+        /**
+         * 委外订单类型(child子级，parent父级)
+         */
+        private String subcontractType;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+
+        /**
+         * 供应商信息
+         */
+        @Valid
+        @NotNull(message = "供应商信息不能为空")
+        private PurchaseOrderSupplierDTO.PdaView purchaseOrderSupplierDTO;
+
+        /**
+         * 采购订单明细
+         */
+        @Valid
+        @NotEmpty(message = "采购订单明细信息不能为空")
+        private List<PurchaseOrderDetailDTO.PdaViewDTO> details;
+    }
 }

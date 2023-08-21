@@ -250,4 +250,13 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PdaPagingViewDTO>
      **/
     PagingVO<PurchaseReturnOrderDTO.PdaPagingViewDTO> pdaPaging(PagingDTO<PurchaseReturnOrderDTO.PdaPagingParamDTO> dto);
+
+    /**
+     * pda:列表状态数量统计
+     * @Author Luo_WG
+     * @Date 2023/8/21 16:14
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PdaReturnOrderCountDTO>
+     **/
+    List<PurchaseReturnOrderDTO.PdaReturnOrderCountDTO> pdaListCount(PermissionsDTO dto);
 }

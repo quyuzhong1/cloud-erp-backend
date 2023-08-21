@@ -400,4 +400,134 @@ public class PurchaseOrderDetailDTO implements Serializable {
          */
         private Integer stockInQty;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaViewDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 是否加急（false否，true是）
+         */
+        private Boolean isUrgent;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
+         * 报关型号
+         */
+        private String declareModel;
+
+        /**
+         * 报关名称
+         */
+        private String declareName;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 采购金额
+         */
+        private BigDecimal purchaseAmount;
+
+        /**
+         * 预计交货日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 采购交期（天）
+         */
+        private Integer deliveryDay;
+
+        /**
+         * 是否是赠品（false否，true是）
+         */
+        private Boolean isGift;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 委外子SKU下推可用
+         */
+        private String warehouseLocation;
+
+        /**
+         * 采购申请明细id(无需传值，后端使用)
+         */
+        private String purchaseApplicationDetailId;
+
+        /**
+         * 采购申请id(无需传值，后端使用)
+         */
+        private String purchaseApplicationId;
+
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 未交货数量
+         */
+        private Integer unReceiveQty;
+    }
 }
