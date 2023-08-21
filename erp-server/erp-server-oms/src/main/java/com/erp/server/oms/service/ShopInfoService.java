@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.common.business.service.SuperService;
@@ -22,7 +23,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param dto
      * @return java.lang.String
      */
-    String add(ShopDTO.AddDTO dto);
+    Boolean add(ShopDTO.AddDTO dto);
 
     /**
      * 修改店铺
@@ -42,4 +43,11 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean initialSync();
+
+    /**
+     * 店铺分页
+     * @param dto
+     * @return
+     */
+    PagingVO<ShopDTO.PagingViewDTO> paging(ShopDTO.PagingParamDTO dto);
 }

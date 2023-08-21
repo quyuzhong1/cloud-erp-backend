@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  *
@@ -24,28 +25,94 @@ import java.io.Serializable;
 public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
 
     /**
-     * 平台的dict值
-     */
-    @TableField("platform_dict")
-    private String platformDict;
-
-    /**
-     * 编号
-     */
-    @TableField("shop_code")
-    private String shopCode;
-
-    /**
      * 店铺名称
      */
     @TableField("name")
     private String name;
 
     /**
+     * 平台的值
+     */
+    @TableField("dict_platform")
+    private String dictPlatform;
+
+
+
+    /**
+     * 账号
+     */
+    @TableField("account")
+    private String account;
+
+    /**
+     * 销售组织id
+     */
+    @TableField("sales_org_id")
+    private String salesOrgId;
+
+    /**
+     * 销售组织名
+     */
+    @TableField("sales_org_name")
+    private String salesOrgName;
+
+    /**
+     * 区域id
+     */
+    @TableField("dict_area_id")
+    private String dictAreaId;
+
+
+    /**
+     * 国家id
+     */
+    @TableField("dict_country_id")
+    private String dictCountryId;
+
+
+    /**
+     * 负责人id
+     */
+    @TableField("charge_id")
+    private String chargeId;
+
+    /**
+     * 禁用状态
+     */
+    @TableField("disabled")
+    private Boolean disabled;
+
+
+    /**
+     * 授权状态
+     */
+    @TableField("auth_status")
+    private String authStatus;
+
+    /**
+     * 授权时间
+     */
+    @TableField("auth_time")
+    private LocalDateTime authTime;
+
+
+    /**
+     * 店铺域名
+     */
+    @TableField("domain")
+    private String domain;
+
+    /**
      * 客户的code
      */
     @TableField("customer_code")
     private String customerCode;
+
+    /**
+     * 客户的id
+     */
+    @TableField("customer_id")
+    private String customerId;
 
 
     public static final String PLATFORM_DICT = "platform_dict";

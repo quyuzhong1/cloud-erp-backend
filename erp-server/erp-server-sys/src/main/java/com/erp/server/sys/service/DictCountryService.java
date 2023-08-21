@@ -31,4 +31,12 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
      */
     void initRegionList(String country);
 
+    /**
+     * 根据国家ids 获取信息
+     * @author yl
+     * @date 2023-08-21 15:31
+     * @param ids
+     * @return java.util.List<com.erp.model.sys.entity.DictCountryEntity>
+     */
+    List<DictCountryEntity> listCountryByIds(List<String> ids);
 }

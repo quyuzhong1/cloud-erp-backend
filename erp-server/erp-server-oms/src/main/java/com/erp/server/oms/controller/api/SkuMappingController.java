@@ -23,7 +23,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 /**
- * sku对照
+ * SKU对照表管理
  *
  * @author Lambda
  * @since 2023-06-28

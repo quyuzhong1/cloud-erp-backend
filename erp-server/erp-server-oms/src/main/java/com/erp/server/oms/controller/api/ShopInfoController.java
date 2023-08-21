@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ShopDTO;
@@ -27,6 +28,19 @@ public class ShopInfoController extends BaseController {
     private ShopInfoService shopInfoService;
 
 
+
+    /**
+     *店铺 分页
+     *
+     * @return
+     */
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<ShopDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated ShopDTO.PagingParamDTO dto) {
+        PagingVO<ShopDTO.PagingViewDTO> pagingVO = shopInfoService.paging(dto);
+        return success(pagingVO);
+    }
+
+
     /**
      * 添加店铺
      *
@@ -34,8 +48,8 @@ public class ShopInfoController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated ShopDTO.AddDTO dto) {
-        String id = shopInfoService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        Boolean result = shopInfoService.add(dto);
+        return result?success():failure();
     }
 
 
