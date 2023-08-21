@@ -1,50 +1,42 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.server.oms.mapper.SoB2cMapper;
-import com.erp.server.oms.service.SoB2cService;
-import com.common.business.service.SuperServiceImpl;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-
-import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-import io.seata.spring.annotation.GlobalTransactional;
-
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.oms.dto.SoB2cDTO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.utils.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.oms.mapper.SoB2cMapper;
+import com.erp.server.oms.service.CommonService;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SoB2cService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.annotation.Resource;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -97,28 +89,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         list.add(new SoB2cDTO.TabListDTO("all", list.stream().mapToInt(SoB2cDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;
-    }
-
-    @Override
-    public void exportList(SoB2cDTO.ExportDTO param, HttpServletResponse response) {
-        List<SoB2cDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/soB2c.xlsx";
-        String name = "B2C销售订单表导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -204,26 +174,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.SUBMIT);
-    }
-
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public void addAndSubmit(SoB2cDTO.AddDTO dto) {
-        // 新增
-        String id = this.add(dto);
-        // 提交
-        this.submit(id);
-    }
-
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public void updateAndSubmit(SoB2cDTO.UpdateDTO dto) {
-        // 修改
-        this.update(dto);
-        // 提交
-        this.submit(dto.getId());
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -347,36 +297,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.INVALID);
      }
 
-    /**
-    * 撤销
-    */
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
-        SoB2cEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C销售订单表数据"));
-        // 只有审核中的单据允许撤销
-        if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
-        }
-        // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id：【{}】",id);
-
-        log.info("撤销 开始修改B2C销售订单表状态，id：【{}】", id);
-        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
-        //操作日志
-        log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
-        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
-        revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
-        revokeDTO.setUserId(commonService.getUserInfo().getUid());
-        workflowFeign.revokeProcess(revokeDTO);
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+    public BatchResultDTO unInvalid(String id) {
+        return null;
     }
 
     @Override
@@ -390,6 +313,76 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         // todo 明细数据处理 上下游数据处理
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public BatchResultDTO updateRemark(String id, String remark) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO updateCategory(String id, String type, List<String> categoryIdList) {
+        return null;
+    }
+
+    @Override
+    public List<SoB2cDTO.ViewSoB2cDistributionDTO> viewSoB2cDistribution(BaseIdsDTO.IdsDTO dto) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO saveSoB2cDistribution(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO getLogisticsCode(String id, Boolean isDelivery) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO submitDelivery(String id) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO deliveryIntercept(String id, String remark) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO cancelDeliveryIntercept(String id) {
+        return null;
+    }
+
+    @Override
+    public PagingVO<SoB2cDTO.MergeListDTO> mergePaging(PagingDTO<SoB2cDTO.MergePagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean mergeSave(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO cancelMerge(String id) {
+        return null;
+    }
+
+    @Override
+    public List<SoB2cDTO.ViewSplitDTO> viewSplit(String id) {
+        return null;
+    }
+
+    @Override
+    public Boolean splitSave(SoB2cDTO.SplitSaveDTO dto) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO cancelSplit(String id) {
+        return null;
     }
 
     @Override

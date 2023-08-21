@@ -1,12 +1,11 @@
 package com.erp.server.oms.service;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.common.business.service.SuperService;
 
-import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -65,24 +64,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BatchResultDTO update(SoB2cDTO.UpdateDTO dto);
 
      /**
-     * 新增并提交审核
-     * @author Will
-     * @date: 2023-08-18
-     * @param dto
-     * @return
-     */
-     void addAndSubmit(SoB2cDTO.AddDTO dto);
-
-     /**
-     * 修改并提交审核
-     * @author Will
-     * @date: 2023-08-18
-     * @param dto
-     * @return
-     */
-     void updateAndSubmit(SoB2cDTO.UpdateDTO dto);
-
-     /**
      * 提交审核
      * @author Will
      * @date: 2023-08-18
@@ -128,23 +109,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BatchResultDTO invalid(String id, String remark);
 
     /**
-    * 撤销
-    * @author Will
-    * @date: 2023-08-18
-    * @param id
-    * @return
-    */
-    BatchResultDTO cancelProcess(String id);
-
-    /**
-    * 导出Excel
-    * @author Will
-    * @date: 2023-08-18
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(SoB2cDTO.ExportDTO dto, HttpServletResponse response);
+     * @description: 反作废
+     * @author Will
+     * @date: 2023/8/18 15:33
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO unInvalid(String id);
 
     /**
     * 审核通过回调方法
@@ -153,5 +124,121 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     * @return
     */
     Boolean approveEnd(ApproveOneDTO dto, SoB2cEntity entity);
-
+    /**
+     * 修改订单备注
+     * @author Will
+     * @date: 2023/8/18 15:38
+     * @param id
+     * @param remark
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateRemark(String id, String remark);
+    /**
+     * 编辑分类
+     * @author Will
+     * @date: 2023/8/18 15:47
+     * @param id
+     * @param type
+     * @param categoryIdList
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateCategory(String id, String type, List<String> categoryIdList);
+    /**
+     * @description: 订单配货数据显示
+     * @author Will
+     * @date: 2023/8/18 16:35
+     * @param dto 
+     * @return List<ViewSoB2cDistributionDTO> 
+     */
+    List<SoB2cDTO.ViewSoB2cDistributionDTO> viewSoB2cDistribution(BaseIdsDTO.IdsDTO dto);
+    /**
+     * @description: 订单配货保存
+     * @author Will
+     * @date: 2023/8/18 16:42
+     * @param id
+     * @param dto
+     * @return BatchResultDTO
+     */
+    BatchResultDTO saveSoB2cDistribution(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
+    /**
+     * @description: 获取物流单号
+     * @author Will
+     * @date: 2023/8/18 16:47
+     * @param id
+     * @param isDelivery
+     * @return BatchResultDTO
+     */
+    BatchResultDTO getLogisticsCode(String id, Boolean isDelivery);
+    /**
+     * @description: 提交发货
+     * @author Will
+     * @date: 2023/8/18 16:49
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO submitDelivery(String id);
+    /**
+     * @description: 发货拦截
+     * @author Will
+     * @date: 2023/8/18 16:52
+     * @param id
+     * @param remark
+     * @return BatchResultDTO
+     */
+    BatchResultDTO deliveryIntercept(String id, String remark);
+    /**
+     * @description: 取消发货拦截
+     * @author Will
+     * @date: 2023/8/18 16:53
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO cancelDeliveryIntercept(String id);
+    /**
+     * @description: 合并列表
+     * @author Will
+     * @date: 2023/8/18 18:32
+     * @param dto
+     * @return PagingVO<MergeListDTO>
+     */
+    PagingVO<SoB2cDTO.MergeListDTO> mergePaging(PagingDTO<SoB2cDTO.MergePagingParamDTO> dto);
+    /**
+     * @description:合并保存
+     * @author Will
+     * @date: 2023/8/21 9:02
+     * @param ids
+     */
+    Boolean mergeSave(List<String> ids);
+    /**
+     * @description: 取消合并
+     * @author Will
+     * @date: 2023/8/21 9:09
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO cancelMerge(String id);
+    /**
+     * @description: 拆分显示
+     * @author Will
+     * @date: 2023/8/21 9:18
+     * @param id
+     * @return List<ViewSplitDTO>
+     */
+    List<SoB2cDTO.ViewSplitDTO> viewSplit(String id);
+    /**
+     * @description: 拆分保存
+     * @author Will
+     * @date: 2023/8/21 9:23
+     * @param dto
+     * @return Boolean
+     */
+    Boolean splitSave(SoB2cDTO.SplitSaveDTO dto);
+    /**
+     * @description: 取消合并
+     * @author Will
+     * @date: 2023/8/21 9:24
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO cancelSplit(String id);
 }

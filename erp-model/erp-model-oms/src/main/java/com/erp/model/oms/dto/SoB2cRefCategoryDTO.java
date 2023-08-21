@@ -25,29 +25,12 @@ public class SoB2cRefCategoryDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ViewDTO extends CommonDTO{
 
         /**
         * 主键id
         */
         private String  id;
-
-        /**
-        * b2c销售订单id
-        */
-        private String soB2cId;
-
-        /**
-        * 分类id
-        */
-        private String categoryId;
-
-        /**
-        * 分类名称
-        */
-        private String categoryName;
-
-
     }
 
     /**
@@ -99,9 +82,6 @@ public class SoB2cRefCategoryDTO implements Serializable {
         @NotBlank(message = "分类名称不能为空")
         @Size(max = 100,message = "分类名称最大长度不能超过100位")
         private String categoryName;
-
-
     }
-
 
 }

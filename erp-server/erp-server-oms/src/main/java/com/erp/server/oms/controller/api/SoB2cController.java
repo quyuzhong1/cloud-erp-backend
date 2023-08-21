@@ -1,25 +1,22 @@
 package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.oms.service.SoB2cService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.oms.dto.SoB2cDTO;
-
-import javax.servlet.http.HttpServletResponse;
-import java.util.*;
-import com.erp.model.oms.entity.SoB2cEntity;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * B2C销售订单表
@@ -102,42 +99,6 @@ public class SoB2cController extends BaseController {
     }
 
     /**
-    * 新增并提交审核
-    * @author Will
-    * @date:  2023-08-18
-    * @param dto
-    * @return ApiResult<Void>
-    */
-    @PostMapping("/addAndSubmit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:addAndSubmit",
-            serviceClass = SoB2cService.class,
-            keyIdName = "id")
-    public ApiResult<Void> addAndSubmit(@RequestBody @Validated SoB2cDTO.AddDTO dto) {
-        soB2cService.addAndSubmit(dto);
-        return success();
-    }
-
-    /**
-    * 修改并提交审核
-    * @author Will
-    * @date:  2023-08-18
-    * @param dto
-    * @return ApiResult<Void>
-    */
-    @PostMapping("/updateAndSubmit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:updateAndSubmit",
-            serviceClass = SoB2cService.class,
-            keyIdName = "id")
-    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SoB2cDTO.UpdateDTO dto) {
-        soB2cService.updateAndSubmit(dto);
-        return success();
-    }
-
-    /**
     * 提交审核
     * @author Will
     * @date:  2023-08-18
@@ -156,11 +117,11 @@ public class SoB2cController extends BaseController {
             BatchResultDTO submit;
             try {
                 submit = soB2cService.submit(id);
-            }catch (Exception e){
-                log.error("B2C销售订单单 提交审核失败",e);
+            } catch (Exception e){
+                log.error("B2C销售订单 提交审核失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, "B2C销售订单单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, "B2C销售订单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
@@ -191,11 +152,11 @@ public class SoB2cController extends BaseController {
             BatchResultDTO approveResult;
             try {
                 approveResult = soB2cService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
-            }catch (Exception e){
-                log.error("B2C销售订单单审核失败",e);
+            } catch (Exception e){
+                log.error("B2C销售订单审核失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(entity.getCode(), "B2C销售订单单不存在, 审核失败");
+                    approveResult = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 审核失败");
                     resultDTOS.add(approveResult);
                     continue;
                 }
@@ -206,74 +167,6 @@ public class SoB2cController extends BaseController {
         return success(resultDTOS);
     }
 
-    /**
-    * 反审核
-    * @author Will
-    * @date:  2023-08-18
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
-    @PostMapping("/disApprove")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:disApprove",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO disApproveResult;
-            try {
-                disApproveResult = soB2cService.disApprove(id);
-            }catch (Exception e){
-                log.error("B2C销售订单单反审核失败",e);
-                SoB2cEntity entity = soB2cService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(entity.getCode(), "B2C销售订单单不存在, 反审核失败");
-                    resultDTOS.add(disApproveResult);
-                    continue;
-                }
-                disApproveResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(disApproveResult);
-        }
-        return success(resultDTOS);
-    }
-
-
-    /**
-    * 删除
-    * @author Will
-    * @date:  2023-08-18
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
-    @PostMapping("/delete")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soB2c:delete",
-            serviceClass = SoB2cService.class,
-            keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = soB2cService.delete(id);
-            }catch (Exception e){
-                log.error("B2C销售订单单删除失败",e);
-                SoB2cEntity entity = soB2cService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(entity.getCode(), "B2C销售订单单不存在, 删除失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
-                }
-                deleteResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(deleteResult);
-        }
-        return success(resultDTOS);
-    }
     /**
     * 作废
     * @author Will
@@ -293,11 +186,11 @@ public class SoB2cController extends BaseController {
             BatchResultDTO invalidResult;
             try {
                 invalidResult = soB2cService.invalid(id,dto.getRemark());
-            }catch (Exception e){
-                log.error("B2C销售订单单作废失败",e);
+            } catch (Exception e){
+                log.error("B2C销售订单作废失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    invalidResult = BatchResultDTO.fail(entity.getCode(), "B2C销售订单单不存在, 作废失败");
+                    invalidResult = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 作废失败");
                     resultDTOS.add(invalidResult);
                     continue;
                 }
@@ -309,38 +202,40 @@ public class SoB2cController extends BaseController {
     }
 
     /**
-    * 撤销
-    * @author Will
-    * @date:  2023-08-18
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
-    @PostMapping("/cancelProcess")
+     * 取消作废
+     * @author Will
+     * @date: 2023/8/18 15:32
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/unInvalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:soB2c:cancel",
+            menuCode = "oms:soB2c:unInvalid",
             serviceClass = SoB2cService.class,
             keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> unInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
-            BatchResultDTO cancelResult;
+            BatchResultDTO unInvalidResult;
             try {
-                cancelResult = soB2cService.cancelProcess(id);
-            }catch (Exception e){
-                log.error("B2C销售订单单撤回流程失败",e);
+                unInvalidResult = soB2cService.unInvalid(id);
+            } catch (Exception e){
+                log.error("B2C销售订单取消作废失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    cancelResult = BatchResultDTO.fail(entity.getCode(), "B2C销售订单单不存在, 撤回流程失败");
-                    resultDTOS.add(cancelResult);
+                    unInvalidResult = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 取消作废失败");
+                    resultDTOS.add(unInvalidResult);
                     continue;
                 }
-                cancelResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                unInvalidResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
             }
-            resultDTOS.add(cancelResult);
+            resultDTOS.add(unInvalidResult);
         }
         return success(resultDTOS);
     }
+
+
 
     /**
     * 详情
@@ -360,22 +255,396 @@ public class SoB2cController extends BaseController {
     }
 
     /**
-    * 导出Excel数据
-    * @author Will
-    * @date:  2023-08-18
-    * @param dto
-    * @param response
-    * @return
-    */
-    @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
+     * 修改订单备注
+     * @author Will
+     * @date: 2023/8/18 15:37
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/updateRemark")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:soB2c:export",
-            tableAlias = ""
-    )
-    public void exportList(@RequestBody @Validated SoB2cDTO.ExportDTO dto, HttpServletResponse response) {
-        soB2cService.exportList(dto, response);
+            menuCode = "oms:soB2c:updateRemark",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO updateRemarkResult;
+            try {
+                updateRemarkResult = soB2cService.updateRemark(id,dto.getRemark());
+            } catch (Exception e){
+                log.error("B2C销售订单修改订单备注失败",e);
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    updateRemarkResult = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 修改订单备注失败");
+                    resultDTOS.add(updateRemarkResult);
+                    continue;
+                }
+                updateRemarkResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(updateRemarkResult);
+        }
+        return success(resultDTOS);
     }
 
+    /**
+     * 编辑分类
+     * @author Will
+     * @date: 2023/8/18 15:46
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/updateCategory")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:updateCategory",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> updateCategory(@RequestBody @Validated SoB2cDTO.SoB2cAddCategoryDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO updateRemarkResult;
+            try {
+                updateRemarkResult = soB2cService.updateCategory(id,dto.getType(),dto.getCategoryIdList());
+            } catch (Exception e){
+                log.error("B2C销售订单修改分类失败",e);
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    updateRemarkResult = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 修改分类失败");
+                    resultDTOS.add(updateRemarkResult);
+                    continue;
+                }
+                updateRemarkResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(updateRemarkResult);
+        }
+        return success(resultDTOS);
+    }
 
+    /**
+     * 订单配货数据显示
+     * @author Will
+     * @date: 2023/8/18 16:36
+     * @param dto 
+     * @return ApiResult<List<ViewSoB2cDistributionDTO>> 
+     */
+    @PostMapping("/viewSoB2cDistribution")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:viewSoB2cDistribution",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
+    public ApiResult<List<SoB2cDTO.ViewSoB2cDistributionDTO>> viewSoB2cDistribution(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+       List<SoB2cDTO.ViewSoB2cDistributionDTO> list = soB2cService.viewSoB2cDistribution(dto);
+        return success(list);
+    }
+
+    /**
+     * 订单配货保存
+     * @author Will
+     * @date: 2023/8/18 16:43
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/saveSoB2cDistribution")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:saveSoB2cDistribution",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> saveSoB2cDistribution(@RequestBody @Validated SoB2cDTO.SaveSoB2cDistributionDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cService.saveSoB2cDistribution(id,dto);
+            } catch (Exception e){
+                log.error("B2C销售订单配货失败",e);
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 配货失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return success(resultDTOS);
+    }
+
+    /**
+     * 获取物流单号
+     * @author Will
+     * @date: 2023/8/18 16:47
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/getLogisticsCode")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:getLogisticsCode",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> getLogisticsCode(@RequestBody @Validated SoB2cDTO.GetLogisticsCode dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cService.getLogisticsCode(id,dto.getIsDelivery());
+            } catch (Exception e){
+                log.error("B2C销售订单获取物流单号失败",e);
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 获取物流单号失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return success(resultDTOS);
+    }
+
+    /**
+     * 提交发货
+     * @author Will
+     * @date: 2023/8/18 16:49
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/submitDelivery")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:submitDelivery",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cService.submitDelivery(id);
+            } catch (Exception e){
+                log.error("B2C销售订单提交发货失败",e);
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 提交发货失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return success(resultDTOS);
+    }
+
+    /**
+     * 发货拦截
+     * @author Will
+     * @date: 2023/8/18 16:51
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/deliveryIntercept")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:deliveryIntercept",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> deliveryIntercept(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cService.deliveryIntercept(id,dto.getRemark());
+            } catch (Exception e){
+                log.error("B2C销售订单发货拦截失败",e);
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 发货拦截失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return success(resultDTOS);
+    }
+
+    /**
+     * 取消发货拦截
+     * @author Will
+     * @date: 2023/8/18 16:53
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/cancelDeliveryIntercept")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:cancelDeliveryIntercept",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> cancelDeliveryIntercept(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cService.cancelDeliveryIntercept(id);
+            } catch (Exception e){
+                log.error("B2C销售订单取消发货拦截失败",e);
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 取消发货拦截失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return success(resultDTOS);
+    }
+
+    /**
+     * 合并列表
+     * @author Will
+     * @date: 2023/8/18 18:31
+     * @param dto
+     * @return ApiResult<PagingVO<MergeListDTO>>
+     */
+    @PostMapping("/mergePaging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:mergePaging",
+            tableAlias = ""
+    )
+    public ApiResult<PagingVO<SoB2cDTO.MergeListDTO>> mergePaging(@RequestBody @Validated PagingDTO<SoB2cDTO.MergePagingParamDTO> dto) {
+        return success(soB2cService.mergePaging(dto));
+    }
+
+    /**
+     * 合并保存
+     * @author Will
+     * @date: 2023/8/18 18:35
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/mergeSave")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:mergeSave",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> mergeSave(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = soB2cService.mergeSave(dto.getIds());
+        return flag.equals(Boolean.TRUE) ? success() : failure();
+    }
+
+    /**
+     * 取消合并
+     * @author Will
+     * @date: 2023/8/21 9:07
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/cancelMerge")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:cancelMerge",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> cancelMerge(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cService.cancelMerge(id);
+            } catch (Exception e){
+                log.error("B2C销售订单取消合并失败",e);
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 取消合并失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return success(resultDTOS);
+    }
+
+    /**
+     * 拆分数据显示
+     * @author Will
+     * @date: 2023/8/21 9:19
+     * @param dto
+     * @return ApiResult<List<ViewSplitDTO>>
+     */
+    @PostMapping("/viewSplit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:viewSplit",
+            serviceClass = SoB2cService.class,
+            keyIdName = "id")
+    public ApiResult<List<SoB2cDTO.ViewSplitDTO>> viewSplit(@RequestBody @Validated BaseIdDTO dto) {
+        return success(soB2cService.viewSplit(dto.getId()));
+    }
+
+    /**
+     * 拆分保存
+     * @author Will
+     * @date: 2023/8/21 9:20
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/splitSave")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:splitSave",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> splitSave(@RequestBody @Validated SoB2cDTO.SplitSaveDTO dto) {
+        Boolean flag = soB2cService.splitSave(dto);
+        return flag.equals(Boolean.TRUE) ? success() : failure();
+    }
+
+    /**
+     * @description: 取消拆分
+     * @author Will
+     * @date: 2023/8/21 9:24
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/cancelSplit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:cancelSplit",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> cancelSplit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cService.cancelSplit(id);
+            } catch (Exception e){
+                log.error("B2C销售订单取消拆分失败",e);
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 取消拆分失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return success(resultDTOS);
+    }
 }

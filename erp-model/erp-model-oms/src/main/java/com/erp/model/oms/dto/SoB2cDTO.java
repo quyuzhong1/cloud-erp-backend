@@ -6,10 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -67,7 +64,7 @@ public class SoB2cDTO implements Serializable {
           */
          private String platformCode;
          /**
-          * 平台集合
+          * 平台集合（platform字典类型）
           */
          private List<String> platformList;
          /**
@@ -75,9 +72,9 @@ public class SoB2cDTO implements Serializable {
           */
          private List<String> shopIdList;
          /**
-          * 国家集合
+          * 国家id集合
           */
-         private List<String> countryList;
+         private List<String> countryIdList;
          /**
           * 平台sku
           */
@@ -473,5 +470,416 @@ public class SoB2cDTO implements Serializable {
         private List<String> categoryIdList;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class SoB2cAddCategoryDTO {
+        /**
+         * 主键ids
+         */
+        @NotEmpty(message = "选择数据不能为空")
+        private List<String> ids;
+
+        /**
+         * 编辑分类类型
+         */
+        @NotBlank(message = "类型不能为空")
+        private String type;
+
+        /**
+         * 分类id集合
+         */
+        private List<String> categoryIdList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewSoB2cDistributionDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 原币金额
+         */
+        private BigDecimal sourceAmount;
+        /**
+         * 原币别
+         */
+        private String sourceCurrency;
+        /**
+         * 本位金额
+         */
+        private BigDecimal amount;
+        /**
+         * 本位币别
+         */
+        private String currency;
+        /**
+         * 重量
+         */
+        private BigDecimal  weight;
+        /**
+         * 仓库（逗号分隔）
+         */
+        private String warehouseNames;
+        /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+        /**
+         * 物流单号
+         */
+        private String logisticsCode;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SaveSoB2cDistributionDTO {
+
+        /**
+         * 主表id集合
+         */
+        @NotEmpty(message = "选择数据不能为空")
+        private List<String> ids;
+
+        /**
+         * 是否覆盖已选择物流和仓库
+         */
+        private Boolean isCover;
+
+        /**
+         * 物流方式
+         */
+        @NotBlank(message = "物流方式不能为空")
+        private String dictLogisticsMethod;
+
+        /**
+         * 仓库
+         */
+        @NotBlank(message = "仓库不能为空")
+        private String warehouseId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class GetLogisticsCode {
+
+        /**
+         * 主表id集合
+         */
+        @NotEmpty(message = "选择数据不能为空")
+        private List<String> ids;
+
+        /**
+         * 是否提交发货
+         */
+        private Boolean isDelivery;
+
+    }
+
+    /**
+     * 合并分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MergePagingParamDTO extends SortDTO {
+
+        /**
+         * 销售单号
+         */
+        private String code;
+
+        /**
+         * 买家名称
+         */
+        private String buyerName;
+
+        /**
+         * 收货人
+         */
+        private String receiverName;
+
+        /**
+         * 收货地址
+         */
+        private String firstAddress;
+
+        /**
+         * 平台集合
+         */
+        private List<String> platformList;
+        /**
+         * 店铺id集合
+         */
+        private List<String> shopIdList;
+
+        /**
+         * 国家集合
+         */
+        private List<String> countryList;
+
+    }
+
+    /**
+     * 合并列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MergeListDTO {
+       /**
+        * 平台名称
+        */
+       private String platformName;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 买家名称
+         */
+        private String buyerName;
+        /**
+         * 国家名称
+         */
+        private String countyName;
+        /**
+         * 包装重量
+         */
+        private BigDecimal weight;
+        /**
+         * 原币金额
+         */
+        private BigDecimal sourceAmount;
+        /**
+         * 原币别
+         */
+        private String sourceCurrency;
+        /**
+         * 本位金额
+         */
+        private BigDecimal amount;
+        /**
+         * 本位币别
+         */
+        private String currency;
+        /**
+         * 主表信息
+         */
+        private List<MergeMainDTO> mainList;
+    }
+
+    /**
+     * 合并主表信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MergeMainDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 销售单号
+         */
+        private String code;
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
+        /**
+         * 收货人名称
+         */
+        private String receiverName;
+        /**
+         * 地址
+         */
+        private String address;
+        /**
+         * 合并明细信息
+         */
+        private List<MergeDetailDTO> detailList;
+    }
+
+    /**
+     * 合并明细信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MergeDetailDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 图片Url
+         */
+        private String imageUrl;
+        /**
+         * 产品skuId
+         */
+        private String  skuId;
+        /**
+         * 产品sku编号
+         */
+        private String skuNo;
+        /**
+         * 平台sku
+         */
+        private String  platformSkuNo;
+        /**
+         * 卖家sku
+         */
+        private String sellerSkuNo;
+        /**
+         * 产品名称
+         */
+        private String  productName;
+        /**
+         * 包装重量
+         */
+        private String  weight;
+        /**
+         * 含税成本
+         */
+        private BigDecimal taxCost;
+        /**
+         * 订单原币金额
+         */
+        private BigDecimal sourceAmount;
+        /**
+         * 原币别
+         */
+        private String sourceCurrency;
+        /**
+         * 数量
+         */
+        private Integer qty;
+        /**
+         * 订单本位币金额
+         */
+        private BigDecimal amount;
+        /**
+         * 本位币别（默认人民币）
+         */
+        private String currency;
+        /**
+         * 出货仓库
+         */
+        private String warehouseId;
+        /**
+         * 出货仓库
+         */
+        private String warehouseName;
+    }
+
+
+    /**
+     * 拆分显示
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewSplitDTO {
+        /**
+         * 主表id
+         */
+        private String id;
+        /**
+         * 明细信息
+         */
+        private List<ViewSplitDetailDTO> detailList;
+    }
+
+    /**
+     * 拆分明细显示
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewSplitDetailDTO {
+        /**
+         * 明细id
+         */
+        private String id;
+        /**
+         * 图片Url
+         */
+        private String imageUrl;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 数量
+         */
+        private Integer qty;
+        /**
+         * 原币金额
+         */
+        private BigDecimal sourceAmount;
+        /**
+         * 原币别
+         */
+        private String sourceCurrency;
+        /**
+         * 本位金额
+         */
+        private BigDecimal amount;
+        /**
+         * 本位币别
+         */
+        private String currency;
+        /**
+         * 包装重量
+         */
+        private BigDecimal weight;
+    }
+
+
+    /**
+     * 拆分保存
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SplitSaveDTO {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+        /**
+         * 明细信息
+         */
+        @NotEmpty(message = "拆分后数据不能为空")
+        @Valid
+        private List<SplitDetailSaveDTO> detailList;
+    }
+
+    /**
+     * 拆分明细保存
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SplitDetailSaveDTO {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String id;
+        /**
+         * 拆分数量
+         */
+        @NotNull(message = "拆分数量不能为空")
+        @Min(value = 0, message = "拆分数量最小值为1")
+        @Max(value = 999999999, message = "拆分数量最大值为999999999")
+        private Integer qty;
+    }
 
 }
