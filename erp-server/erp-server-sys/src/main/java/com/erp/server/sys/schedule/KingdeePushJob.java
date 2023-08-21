@@ -77,8 +77,8 @@ public class KingdeePushJob {
             try {
                 syncKingdeeSysUserInfoService.syncDataToKingdee(obj, obj.getSyncOperate());
             } catch (Exception e) {
-                XxlJobHelper.log("用户【{}】推送金蝶失败",obj.getCode());
-                log.error("用户【{}】推送金蝶失败",obj.getCode());
+                XxlJobHelper.log("用户【{}】推送金蝶失败,error = {}",obj.getCode(),e);
+                log.error("用户【{}】推送金蝶失败",obj.getCode(),e);
             }
         });
     }

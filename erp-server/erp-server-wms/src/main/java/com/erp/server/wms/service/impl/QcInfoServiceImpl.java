@@ -1168,8 +1168,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         all.setTypeName("全部");
         resultList.add(all);
         QcInfoDTO.TabListDTO waitQc = new QcInfoDTO.TabListDTO();
+        String draft = QcBillStatusEnum.DRAFT.getCode();
         String waitQcType = QcBillStatusEnum.WAIT_QC.getCode();
-        waitQc.setCount((int) list.stream().filter(l -> waitQcType.equals(l.getQcStatus().getCode())).count());
+        waitQc.setCount((int) list.stream().filter(l -> draft.equals(l.getQcStatus().getCode()) || waitQcType.equals(l.getQcStatus().getCode())).count());
         waitQc.setSearchType(waitQcType);
         waitQc.setTypeName(QcBillStatusEnum.WAIT_QC.getName());
         resultList.add(waitQc);
