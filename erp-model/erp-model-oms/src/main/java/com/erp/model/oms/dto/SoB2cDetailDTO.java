@@ -74,6 +74,10 @@ public class SoB2cDetailDTO implements Serializable {
          */
        private Integer qty;
         /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
          * 订单本位币金额
          */
        private BigDecimal amount;

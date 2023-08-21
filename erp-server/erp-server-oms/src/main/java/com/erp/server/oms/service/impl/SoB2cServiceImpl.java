@@ -17,17 +17,24 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.PayStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cTabEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.CommonService;
@@ -40,10 +47,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * <p>
  * B2C销售订单表 服务实现类
@@ -58,12 +66,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+
     @Autowired
     private OperateLogService operateLogService;
+
     @Autowired
     private WorkflowFeign workflowFeign;
+
     @Autowired
     private CommonService commonService;
+
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
+
+    @Autowired
+    private InventoryFeign inventoryFeign;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -473,12 +490,67 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(CollUtil.isEmpty(list)) {
            return;
         }
+        //店铺 TODO
+
+        //国家
+        List<String> countryIds = list.stream().map(SoB2cDTO.ListDTO::getCountryId).collect(Collectors.toList());
+
+        //产品信息
+        List<String> skuIdList = list.stream().flatMap(obj -> Stream.of(obj.getDetailList().stream().map(SoB2cDetailDTO.ListDTO::getSkuId).toArray(String[]::new))).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        //可用库存
+        List<String> warehouseIdList = list.stream().flatMap(obj -> Stream.of(obj.getDetailList().stream().map(SoB2cDetailDTO.ListDTO::getWarehouseId).toArray(String[]::new))).distinct().collect(Collectors.toList());
+
+
+        InventoryQtyDTO.SkuInventoryStatusParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+        skuInventoryDTO.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
+        skuInventoryDTO.setWarehouseIdList(warehouseIdList);
+        skuInventoryDTO.setSkuIdList(skuIdList);
+        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
 
         // 属性赋值
         for(SoB2cDTO.ListDTO data : list) {
-            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            //物流方式 TODO
+
+            //明细信息
+            List<SoB2cDetailDTO.ListDTO> detailList = data.getDetailList();
+            for (SoB2cDetailDTO.ListDTO detailDTO : detailList) {
+                //SKU信息
+                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(skuVO)) {
+                    throw new ServiceException(ApiError.ERROR_95084);
+                }
+                detailDTO.setVariantProperty(skuVO.getVariantProperty());
+                detailDTO.setProductName(skuVO.getSkuName());
+                //订单本位币金额
+                BigDecimal amount = MathUtil.multiply(detailDTO.getSourceAmount(), detailDTO.getExchangeRate());
+                detailDTO.setAmount(amount);
+                detailDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+
+                if (CollectionUtils.isNotEmpty(inventoryList)) {
+                    //可用库存
+                    Integer useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
+                                    && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
+                                    && obj.getWarehouseLocationId().equals(detailDTO.getWarehouseLocation())
+                                    && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
+                            .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
+                            .orElse(MathUtil.ZERO);
+                    detailDTO.setUseableQty(useableQty);
+                    //冻结库存
+                    Integer freezeQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
+                                    && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
+                                    && obj.getWarehouseLocationId().equals(detailDTO.getWarehouseLocation())
+                                    && InventoryStatusEnum.FROZEN.getCode().equals(obj.getInventoryStatus()))
+                            .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
+                            .orElse(MathUtil.ZERO);
+                    detailDTO.setFreezeQty(freezeQty);
+                }
+
+
+            }
         }
     }
     /**

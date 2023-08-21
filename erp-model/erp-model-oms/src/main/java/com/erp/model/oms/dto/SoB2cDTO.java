@@ -145,26 +145,25 @@ public class SoB2cDTO implements Serializable {
          */
         private String shopName;
 
-
         /**
         * 审核状态
         */
         private String approveStatus;
 
         /**
-         * 审核状态名称
+         * 付款状态
          */
-        private String approveStatusName;
+        private String payStatus;
+
+        /**
+         * 单据状态
+         */
+        private String billStatus;
 
         /**
         * 作废状态（false未作废，true已作废）
         */
         private Boolean invalidStatus;
-
-        /**
-         * 作废状态名称
-         */
-        private String invalidStatusName;
 
         /**
          * 国家id

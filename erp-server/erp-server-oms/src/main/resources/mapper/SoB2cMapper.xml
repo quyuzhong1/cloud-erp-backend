@@ -2,101 +2,86 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.oms.mapper.SoB2cMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.SoB2cEntity">
-       <result column="id" property="id" />
-       <result column="create_user_id" property="createUserId" />
-       <result column="create_user_name" property="createUserName" />
-       <result column="create_time" property="createTime" />
-       <result column="update_user_id" property="updateUserId" />
-       <result column="update_user_name" property="updateUserName" />
-       <result column="update_time" property="updateTime" />
-       <result column="version" property="version" />
-       <result column="is_deleted" property="isDeleted" />
-       <result column="code" property="code" />
-       <result column="approve_status" property="approveStatus" />
-       <result column="platform_code" property="platformCode" />
-       <result column="dict_platform" property="dictPlatform" />
-       <result column="shop_id" property="shopId" />
-       <result column="invalid_status" property="invalidStatus" />
-       <result column="invalid_remark" property="invalidRemark" />
-       <result column="bill_status" property="billStatus" />
-       <result column="pay_status" property="payStatus" />
-       <result column="amount" property="amount" />
-       <result column="currency" property="currency" />
-       <result column="exchange_rate" property="exchangeRate" />
-       <result column="shipping_fee" property="shippingFee" />
-       <result column="pay_time" property="payTime" />
-       <result column="pay_amount" property="payAmount" />
-       <result column="dict_pay_method" property="dictPayMethod" />
-       <result column="buyer_remark" property="buyerRemark" />
-       <result column="remark" property="remark" />
-       <result column="org_id" property="orgId" />
-       <result column="org_name" property="orgName" />
-       <result column="is_intercept" property="isIntercept" />
-       <result column="intercept_remark" property="interceptRemark" />
-       <result column="source_type" property="sourceType" />
-       <result column="source_id" property="sourceId" />
-       <result column="source_code" property="sourceCode" />
-       <result column="label_json" property="labelJson" />
-       <result column="abnormal_type" property="abnormalType" />
-       <result column="sync_kingdee_status" property="syncKingdeeStatus" />
-       <result column="sync_kingdee_time" property="syncKingdeeTime" />
-       <result column="sync_kingdee_id" property="syncKingdeeId" />
-       <result column="sync_operate" property="syncOperate" />
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.dto.SoB2cDTO$ListDTO">
+        <id column="id" property="id" />
+        <result column="code" property="code" />
+        <result column="dictPlatform" property="dictPlatform" />
+        <result column="platformCode" property="platformCode" />
+        <result column="shopId" property="shopId" />
+        <result column="approveStatus" property="approveStatus" />
+        <result column="payStatus" property="payStatus" />
+        <result column="billStatus" property="billStatus" />
+        <result column="invalidStatus" property="invalidStatus" />
+        <result column="amount" property="amount" />
+        <result column="currency" property="currency" />
+        <result column="payTime" property="payTime" />
+        <result column="buyerRemark" property="buyerRemark" />
+        <result column="remark" property="remark" />
+        <result column="abnormalType" property="abnormalType" />
+        <result column="dictLogisticsMethod" property="dictLogisticsMethod" />
+        <result column="shippingCost" property="shippingCost" />
+        <result column="shippingCostCurrency" property="shippingCostCurrency" />
+        <result column="logisticsCode" property="logisticsCode" />
+        <result column="buyerName" property="buyerName" />
+        <result column="countryId" property="countryId" />
+        <collection property="detailList" ofType="com.erp.model.oms.dto.SoB2cDetailDTO$ListDTO">
+            <id column="detailId" property="id" />
+            <result column="imageUrl" property="imageUrl" />
+            <result column="platformSkuNo" property="platformSkuNo" />
+            <result column="sellerSkuNo" property="sellerSkuNo" />
+            <result column="skuId" property="skuId" />
+            <result column="skuNo" property="skuNo" />
+            <result column="taxCost" property="taxCost" />
+            <result column="sourceAmount" property="sourceAmount" />
+            <result column="sourceCurrency" property="sourceCurrency" />
+            <result column="qty" property="qty" />
+            <result column="warehouseId" property="warehouseId" />
+            <result column="warehouseName" property="warehouseName" />
+        </collection>
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        code, approve_status, platform_code, dict_platform, shop_id, invalid_status, invalid_remark, bill_status, pay_status, amount, currency, exchange_rate, shipping_fee, pay_time, pay_amount, dict_pay_method, buyer_remark, remark, org_id, org_name, is_intercept, intercept_remark, source_type, source_id, source_code, label_json, abnormal_type, sync_kingdee_status, sync_kingdee_time, sync_kingdee_id, sync_operate
+        sb2c.id,
+        sb2c.code,
+        sb2c.dict_platform as dictPlatform,
+        sb2c.platform_code as platformCode,
+        sb2c.shop_id as shopId,
+        sb2c.approve_status as approveStatus,
+        sb2c.pay_status as payStatus,
+        sb2c.bill_status as billStatus,
+        sb2c.invalid_status as invalidStatus,
+        sb2c.amount as amount,
+        sb2c.currency as currency,
+        sb2c.pay_time as payTime,
+        sb2c.buyer_remark as buyerRemark,
+        sb2c.remark as remark,
+        sb2c.abnormal_type as abnormalType,
+        sb2cl.dict_logistics_method as dictLogisticsMethod,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
+             else sb2cl.actual_shipping_cost end as shippingCost,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency
+             else sb2cl.actual_shipping_currency end as shippingCostCurrency,
+        sb2cl.code as logisticsCode,
+        sb2cr.name as buyerName,
+        sb2cr.country_id as countryId,
+        sb2cd.id as detailId,
+        sb2cd.image_url as imageUrl,
+        sb2cd.platform_sku_no as platformSkuNo,
+        sb2cd.seller_sku_no as sellerSkuNo,
+        sb2cd.sku_id as skuId,
+        sb2cd.sku_no as skuNo,
+        sb2cd.tax_cost as taxCost,
+        sb2cd.amount as sourceAmount,
+        sb2cd.currency as sourceCurrency,
+        sb2cd.qty as qty,
+        sb2cd.warehouse_id as warehouseId,
+        sb2cd.warehouse_name as warehouseName
     </sql>
 
-    <select id="paging" resultType="com.erp.model.oms.dto.SoB2cDTO$ListDTO">
+    <select id="paging" resultMap="BaseResultMap">
         select
-            sb2c.id,
-            sb2c.code,
-            sb2c.dict_platform as dictPlatform,
-            sb2c.platform_code as platformCode,
-            sb2c.shop_id as shopId,
-            sb2c.approve_status as approveStatus,
-            sb2c.pay_status as payStatus,
-            sb2c.bill_status as billStatus,
-            sb2c.invalid_status as invalidStatus,
-            sb2c.amount as amount,
-            sb2c.currency as currency,
-            sb2c.pay_time as payTime,
-            sb2c.buyer_remark as buyerRemark,
-            sb2c.remark as remark,
-            sb2c.abnormal_type as abnormalType,
-            sb2cl.dict_logistics_method as dictLogisticsMethod,
-            case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
-                 else sb2cl.actual_shipping_cost end as shippingCost,
-            case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency
-                 else sb2cl.actual_shipping_currency end as shippingCostCurrency,
-            sb2cl.code as logisticsCode,
-            sb2cr.name as buyerName,
-            sb2cr.country_id as countryId,
-            sb2cd.id as detailId,
-            sb2cd.image_url as imageUrl,
-            sb2cd.platform_sku_no as platformSkuNo,
-            sb2cd.seller_sku_no as sellerSkuNo,
-            sb2cd.sku_id as skuId,
-            sb2cd.sku_no as skuNo,
-            sb2cd.tax_cost as taxCost,
-            sb2cd.source_amount as sourceAmount,
-            sb2cd.source_currency as sourceCurrency,
-            sb2cd.qty as qty,
-            sb2cd.currency as currency,
-            sb2cd.warehouse_id as warehouseId,
-            sb2cd.warehouse_name as warehouseName
+            <include refid="Base_Column_List"></include>
         from so_b2c sb2c
         inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
