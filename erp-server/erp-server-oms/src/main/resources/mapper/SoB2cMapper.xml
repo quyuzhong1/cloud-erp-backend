@@ -60,26 +60,139 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.oms.dto.SoB2cDTO$ListDTO">
+        select
+            sb2c.id,
+            sb2c.code,
+            sb2c.dict_platform as dictPlatform,
+            sb2c.platform_code as platformCode,
+            sb2c.shop_id as shopId,
+            sb2c.approve_status as approveStatus,
+            sb2c.pay_status as payStatus,
+            sb2c.bill_status as billStatus,
+            sb2c.invalid_status as invalidStatus,
+            sb2c.amount as amount,
+            sb2c.currency as currency,
+            sb2c.pay_time as payTime,
+            sb2c.buyer_remark as buyerRemark,
+            sb2c.remark as remark,
+            sb2c.abnormal_type as abnormalType,
+            sb2cl.dict_logistics_method as dictLogisticsMethod,
+            case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
+                 else sb2cl.actual_shipping_cost end as shippingCost,
+            case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency
+                 else sb2cl.actual_shipping_currency end as shippingCostCurrency,
+            sb2cl.code as logisticsCode,
+            sb2cr.name as buyerName,
+            sb2cr.country_id as countryId,
+            sb2cd.id as detailId,
+            sb2cd.image_url as imageUrl,
+            sb2cd.platform_sku_no as platformSkuNo,
+            sb2cd.seller_sku_no as sellerSkuNo,
+            sb2cd.sku_id as skuId,
+            sb2cd.sku_no as skuNo,
+            sb2cd.tax_cost as taxCost,
+            sb2cd.source_amount as sourceAmount,
+            sb2cd.source_currency as sourceCurrency,
+            sb2cd.qty as qty,
+            sb2cd.currency as currency,
+            sb2cd.warehouse_id as warehouseId,
+            sb2cd.warehouse_name as warehouseName
+        from so_b2c sb2c
+        inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted
+        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        <where>
+            sb2c.is_deleted = false
+            <if test="params.code != null and params.code != '' ">
+                and sb2c.code ilike concat('%',#{params.code},'%')
+            </if>
+            <if test="params.platformCode != null and params.platformCode != '' ">
+                and sb2c.platform_code ilike concat('%',#{params.platformCode},'%')
+            </if>
+            <if test="params.invalidStatus != null ">
+                and sb2c.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.platformSkuNo != null and params.platformSkuNo != '' ">
+                and sb2c.platform_sku_no ilike concat('%',#{params.platformSkuNo},'%')
+            </if>
+            <if test="params.sellerSkuNo != null and params.sellerSkuNo != '' ">
+                and sb2c.seller_sku_no ilike concat('%',#{params.sellerSkuNo},'%')
+            </if>
+            <if test="params.platformList != null and params.platformList.size > 0">
+                and sb2c.dict_platform in
+                <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.shopIdList != null and params.shopIdList.size > 0">
+                and sb2c.shop_id in
+                <foreach collection="params.shopIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.countryIdList != null and params.countryIdList.size > 0">
+                and sb2c.country_id in
+                <foreach collection="params.countryIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and sb2c.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.billStatusList != null and params.billStatusList.size > 0">
+                and sb2c.bill_status in
+                <foreach collection="params.billStatusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.payStatusList != null and params.payStatusList.size > 0">
+                and sb2c.pay_status in
+                <foreach collection="params.payStatusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
 
     </select>
 
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from so_b2c where is_deleted = false group by approve_status
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+        count(distinct sb2c.id)
+        from so_b2c sb2c
+        <where>
+            sb2c.is_deleted = false
+            <if test="params.invalidStatus != null ">
+                and sb2c.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and sb2c.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.billStatusList != null and params.billStatusList.size > 0">
+                and sb2c.bill_status in
+                <foreach collection="params.billStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.payStatusList != null and params.payStatusList.size > 0">
+                and sb2c.pay_status in
+                <foreach collection="params.payStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
     </select>
 
     <select id="listExport" resultType="com.erp.model.oms.dto.SoB2cDTO$ListDTO">
 
-    </select>
-    <select id="tabList" resultType="com.erp.model.oms.dto.SoB2cDTO$TabListDTO">
-        SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  so_b2c
-        WHERE is_deleted=FALSE
-        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
-            ${permissionSql}
-        </if>
-        GROUP BY approve_status
     </select>
 
 </mapper>

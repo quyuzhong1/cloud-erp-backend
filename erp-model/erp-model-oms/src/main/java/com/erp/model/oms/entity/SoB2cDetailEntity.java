@@ -1,14 +1,14 @@
 package com.erp.model.oms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -101,10 +101,10 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("advice_price")
         private BigDecimal advicePrice;
     /**
-    * 成本（本位币）
+    * 含税成本（本位币）
     */
-    @TableField("cost")
-        private BigDecimal cost;
+    @TableField("tax_cost")
+        private BigDecimal taxCost;
     /**
     * 来源明细id
     */

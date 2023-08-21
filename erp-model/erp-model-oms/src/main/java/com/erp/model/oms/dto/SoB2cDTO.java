@@ -64,6 +64,10 @@ public class SoB2cDTO implements Serializable {
           */
          private String platformCode;
          /**
+          * 作废状态
+          */
+         private Boolean invalidStatus;
+         /**
           * 平台集合（platform字典类型）
           */
          private List<String> platformList;
@@ -83,6 +87,10 @@ public class SoB2cDTO implements Serializable {
           * 卖家sku
           */
          private String sellerSkuNo;
+         /**
+          * 审核状态
+          */
+         private List<String> approveStatusList;
          /**
           * 订单状态
           */

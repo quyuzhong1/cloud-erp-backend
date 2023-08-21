@@ -1,14 +1,12 @@
 package com.erp.server.oms.mapper;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
-import org.apache.ibatis.annotations.Mapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.apache.ibatis.annotations.Param;
-
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.common.business.dto.base.ApproveStatusQtyDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -36,7 +34,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
     * @param params
     * @return
     */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") SoB2cDTO.PagingParamDTO params);
+    Integer listCount(@Param("params") SoB2cDTO.PagingParamDTO params);
 
     /**
     * 导出Excel查询
@@ -45,11 +43,4 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
     */
     List<SoB2cDTO.ListDTO> listExport(@Param("params") SoB2cDTO.ExportDTO params);
 
-
-    /**
-    * 获取状态统计
-    * @param searchParam
-    * @return
-    */
-    List<SoB2cDTO.TabListDTO> tabList(@Param("params") SoB2cDTO.PagingParamDTO searchParam);
 }

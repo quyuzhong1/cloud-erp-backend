@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
@@ -18,9 +19,13 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.PayStatusEnum;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cTabEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -30,14 +35,15 @@ import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 /**
  * <p>
  * B2C销售订单表 服务实现类
@@ -74,22 +80,27 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public List<SoB2cDTO.TabListDTO> tabList(PermissionsDTO param) {
-        SoB2cDTO.PagingParamDTO searchParam = new SoB2cDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
-        List<SoB2cDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        List<String> statusList = ApproveStatusEnum.getStatusList();
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(SoB2cDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new SoB2cDTO.TabListDTO(status, 0));
+        SoB2cTabEnum[] values = SoB2cTabEnum.values();
+        List<SoB2cDTO.TabListDTO> list = new ArrayList<>();
+        for (SoB2cTabEnum item : values) {
+            SoB2cDTO.PagingParamDTO searchParamDTO = new SoB2cDTO.PagingParamDTO();
+            searchParamDTO.setPermissionSql(param.getPermissionSql());
+            SoB2cDTO.TabListDTO resultDTO = new SoB2cDTO.TabListDTO();
+            //搜索类型
+            searchParamDTO.setTabFlag(item.getCode());
+            //列表Tab查询状态处理
+            Boolean isFlag = handleTableParam(searchParamDTO);
+            Integer count = MathUtil.ZERO;
+            if (isFlag) {
+                count = this.baseMapper.listCount(searchParamDTO);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            list.add(resultDTO);
         }
-        });
-        list.add(new SoB2cDTO.TabListDTO("all", list.stream().mapToInt(SoB2cDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
         return list;
     }
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -487,5 +498,74 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private void handleData(SoB2cEntity soB2cEntity) {
         // TODO 验证数据 & 数据赋值
     }
+
+    /**
+     * @description: 列表查询数量状态处理
+     * @author Will
+     * @date: 2023/8/21 12:16
+     * @param params
+     * @return Boolean
+     */
+    private Boolean handleTableParam (SoB2cDTO.PagingParamDTO params) {
+        //审核状态
+        List<String> approveStatusList = new ArrayList<>(1);
+        //付款状态
+        List<String> payStatusList = new ArrayList<>(1);
+        //单据状态
+        List<String> billStatusList = new ArrayList<>(1);
+
+        // 待付款
+        if (SoB2cTabEnum.ENUM_PAYMENT.getCode().equals(params.getTabFlag())) {
+            payStatusList.add(PayStatusEnum.ENUM_PAYMENT.getCode());
+        }
+        //待处理
+        if (SoB2cTabEnum.ENUM_PENDING.getCode().equals(params.getTabFlag())) {
+            approveStatusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+            approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
+        }
+        //审核中
+        if (SoB2cTabEnum.ENUM_APPROVE_ING.getCode().equals(params.getTabFlag())) {
+            approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+        }
+        //待配货
+        if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(params.getTabFlag())) {
+            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
+            billStatusList.add(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+        }
+        //配货中
+        if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(params.getTabFlag())) {
+            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
+            billStatusList.add(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+        }
+        //待发货
+        if (SoB2cTabEnum.ENUM_WAIT_SHIPPED.getCode().equals(params.getTabFlag())) {
+            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
+            billStatusList.add(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+        }
+        //已发货
+        if (SoB2cTabEnum.ENUM_SHIPPED.getCode().equals(params.getTabFlag())) {
+            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
+            billStatusList.add(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+        }
+        //冻结中
+        if (SoB2cTabEnum.ENUM_FROZEN.getCode().equals(params.getTabFlag())) {
+            billStatusList.add(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
+        }
+        //已作废
+        if (SoB2cTabEnum.ENUM_INVALID.getCode().equals(params.getTabFlag())) {
+            params.setInvalidStatus(Boolean.TRUE);
+        }
+        if (CollectionUtils.isNotEmpty(approveStatusList)) {
+            params.setApproveStatusList(approveStatusList);
+        }
+        if (CollectionUtils.isNotEmpty(billStatusList)) {
+            params.setBillStatusList(billStatusList);
+        }
+        if (CollectionUtils.isNotEmpty(payStatusList)) {
+            params.setPayStatusList(payStatusList);
+        }
+        return Boolean.TRUE;
+    }
+
 
 }
