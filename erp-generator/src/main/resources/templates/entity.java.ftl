@@ -4,8 +4,8 @@ package ${package.Entity};
 import ${pkg};
 </#list>
 <#if swagger2>
-    import io.swagger.annotations.ApiModel;
-    import io.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 </#if>
 <#if entityLombokModel>
 import lombok.Data;
@@ -89,12 +89,12 @@ public class ${entity} implements Serializable {
     </#if>
 <#-- 逻辑删除注解 -->
     <#if (logicDeleteFieldName!"") == field.name>
-        @TableLogic
+    @TableLogic
     </#if>
     <#if field.name == "approve_status">
-        private ApproveStatusEnum approveStatus;
+    private ApproveStatusEnum approveStatus;
     <#else>
-        private ${field.propertyType} ${field.propertyName};
+    private ${field.propertyType} ${field.propertyName};
     </#if>
 </#list>
 <#------------  END 字段循环遍历  ---------->
