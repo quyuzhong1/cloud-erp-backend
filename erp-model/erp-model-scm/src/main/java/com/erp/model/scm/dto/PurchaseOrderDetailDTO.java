@@ -435,6 +435,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 单位名称
+         */
+        private String unitName;
+
+        /**
          * 是否加急（false否，true是）
          */
         private Boolean isUrgent;

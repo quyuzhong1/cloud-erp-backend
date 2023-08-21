@@ -209,6 +209,11 @@ public class WarehouseReceiveDTO {
         private String supplierContactId;
 
         /**
+         * 供应商联系人名称
+         */
+        private String supplierContactName;
+
+        /**
          * 供应商地址
          */
         private String supplierAddress;
@@ -279,9 +284,19 @@ public class WarehouseReceiveDTO {
         private String purchaseUserId;
 
         /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+        /**
          * 采购部门id
          */
         private String purchaseDeptId;
+
+        /**
+         * 采购部门名称
+         */
+        private String purchaseDeptName;
 
         /**
          * 报价明细
