@@ -76,5 +76,10 @@ public class ProductBomSkuHistoryServiceImpl extends ServiceImpl<ProductBomSkuHi
         this.remove(queryWrapper);
     }
 
+    @Override
+    public List<BomChildrenSkuDTO> listHistoryBomChildBySkuIds(List<String> skuIds) {
+        return baseMapper.listHistoryBomChildBySkuIds(skuIds);
+    }
+
 
 }
