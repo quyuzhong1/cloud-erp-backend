@@ -47,6 +47,13 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
     @TableField("platform_product_name")
     private String platformProductName;
 
+
+    /**
+     * 平台
+     */
+    @TableField("platform")
+    private String platform;
+
     /**
      * 类型 platform 平台  warehouse 仓库
      */

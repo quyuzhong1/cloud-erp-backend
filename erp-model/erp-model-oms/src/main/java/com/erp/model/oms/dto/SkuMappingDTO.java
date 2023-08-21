@@ -203,11 +203,11 @@ public class SkuMappingDTO implements Serializable {
 
 
     /**
-     * 导出仓库
+     * 更改sku
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO {
+    public static class UpdatePlatformDTO {
 
         /**
          * id
@@ -220,7 +220,7 @@ public class SkuMappingDTO implements Serializable {
          * 平台
          */
         @NotBlank(message = "平台不能为空")
-        private String platformDict;
+        private String dictPlatform;
 
         /**
          * 店铺
@@ -242,8 +242,50 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 平台sku 名
          */
-        private String platformSkuName;
+        private String platformProductName;
 
+
+
+    }
+
+    /**
+     * 更改库存SKU
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateWarehouseSkuDTO {
+
+        /**
+         * id
+         */
+        @NotBlank(message = "sku对照不存在")
+        private String id;
+
+
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库不能为空")
+        private String warehouseId;
+
+        /**
+         * 库存sku no
+         */
+        @NotBlank(message = "库存sku不能为空")
+        private String warehouseSkuNo;
+
+        /**
+         * 库存产品名称
+         */
+        private String warehouseProductName;
+
+
+        /**
+         * 产品sku
+         */
+        @NotBlank(message = "产品sku不能为空")
+        private String productSkuId;
 
 
     }

@@ -73,7 +73,7 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @author yl
      * @date 2023-06-30 10:21
      */
-    String updateSkuMaping(SkuMappingDTO.UpdateDTO dto);
+    String updatePlatformSku(SkuMappingDTO.UpdatePlatformDTO dto);
 
     /**
      * 销售订单添加客户sku
@@ -112,4 +112,13 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @return java.lang.Boolean
      */
     Boolean exportWarehouseSku(SkuMappingDTO.ExportWarehouseSkuDTO dto, HttpServletResponse response);
+
+    /**
+     * 更改库存sku 对照
+     * @author yl
+     * @date 2023-08-21 11:40
+     * @param dto
+     * @return java.lang.String
+     */
+    String updateWarehouseSku(SkuMappingDTO.UpdateWarehouseSkuDTO dto);
 }

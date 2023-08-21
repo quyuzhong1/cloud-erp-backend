@@ -139,13 +139,24 @@ public class SkuMappingController extends BaseController {
     }
 
     /**
-     * 更改sku 对照表
+     * 更改库存sku 对照表
      *
      * @return
      */
-    @PostMapping("/updateSkuMaping")
-    public ApiResult updateSkuMaping(@RequestBody @Valid SkuMappingDTO.UpdateDTO dto) {
-        String id = skuMappingService.updateSkuMaping(dto);
+    @PostMapping("/updateWarehouseSku")
+    public ApiResult updateWarehouseSku(@RequestBody @Valid SkuMappingDTO.UpdateWarehouseSkuDTO dto) {
+        String id = skuMappingService.updateWarehouseSku(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
+    }
+
+    /**
+     * 更改平台 对照表
+     *
+     * @return
+     */
+    @PostMapping("/updatePlatformSku")
+    public ApiResult updatePlatformSku(@RequestBody @Valid SkuMappingDTO.UpdatePlatformDTO dto) {
+        String id = skuMappingService.updatePlatformSku(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
  

@@ -60,4 +60,21 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             return "";
         }
     }
+
+
+    /**
+     * 根据平台sku ，平台 获取到对应的list
+     * @author yl
+     * @date 2023-08-21 11:57
+     * @param platformSkuNo
+     * @param platform
+     * @return com.erp.model.oms.entity.ListingInfoEntity
+     */
+    @Override
+    public ListingInfoEntity getByPlatformSkuNo(String platform, String platformSkuNo) {
+        return lambdaQuery().eq(ListingInfoEntity::getPlatformSkuNo, platformSkuNo).
+                eq(ListingInfoEntity::getPlatform, platform).
+                last("LIMIT 1").
+                one();
+    }
 }
