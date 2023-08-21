@@ -50,7 +50,7 @@ public class DictCountryFeignController {
      * @param
      * @return
      */
-    @GetMapping("/listCountryByIds")
+    @PostMapping("/listCountryByIds")
     public List<DictCountryEntity> listCountryByIds(@RequestBody List<String> ids) {
         List<DictCountryEntity>list = dictCountryService.listCountryByIds(ids);
         return list;

@@ -350,9 +350,6 @@ public interface SysUserFeign {
 
 
 
-
-    List<DictCountryEntity> listCountryByIds();
-
     /**
      * 根据id查询区域
      */

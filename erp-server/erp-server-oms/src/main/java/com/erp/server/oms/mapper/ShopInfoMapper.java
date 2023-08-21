@@ -1,8 +1,12 @@
 package com.erp.server.oms.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -14,5 +18,13 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface ShopInfoMapper extends BaseMapper<ShopInfoEntity> {
-
+     /**
+      * 店铺分页列表
+      * @author yl
+      * @date 2023-08-21 16:35
+      * @param query
+      * @param params
+      * @return com.baomidou.mybatisplus.core.metadata.IPage
+      */
+    IPage<ShopDTO.PagingViewDTO> paging(Page query, @Param("params")ShopDTO.PagingParamDTO params);
 }
