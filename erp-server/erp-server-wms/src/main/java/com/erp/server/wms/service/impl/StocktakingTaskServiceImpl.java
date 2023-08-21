@@ -2,10 +2,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -20,10 +18,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.R;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RedisKeyConstant;
-import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
@@ -40,13 +36,11 @@ import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -102,6 +96,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private WarehouseService warehouseService;
+    @Resource
+    private StocktakingPlanService stocktakingPlanService;
 
     /**
      * tab list
@@ -253,6 +249,14 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         //改状态
         Boolean result = this.updateStatus(taskList, ingStatus, StocktakingStatusEnum.IN_PROGRESS);
+        // 查询盘点计划下其他单据是否全部审核完成
+        StocktakingTaskEntity entity = taskList.get(0);
+        List<StocktakingTaskEntity> stocktakingTaskEntities = listBySourceId(entity.getSourceId());
+        // 全部审核完成 修改盘点计划单据状态
+        StocktakingStatusEnum stocktakingStatus = isAllMatchStocktakingStatus(stocktakingTaskEntities);
+        if (ObjectUtil.isNotEmpty(stocktakingStatus)) {
+            stocktakingPlanService.updateForStocktakingStatus(entity.getSourceId(), stocktakingStatus);
+        }
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", BillApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
@@ -372,7 +376,33 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         String comment = dto.getComment();
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个盘点任务单", approveType.getName()).concat("【%s】").concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.STOCKTAKING_TASK.getCode(), pairList, "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
+        // 查询盘点计划下其他单据是否全部审核完成
+        List<StocktakingTaskEntity> stocktakingTaskEntities = listBySourceId(entity.getSourceId());
+        // 全部审核完成 修改盘点计划单据状态
+        if (stocktakingTaskEntities.stream().allMatch(task -> Objects.equals(task.getStatus(), StocktakingStatusEnum.COMPLETED))) {
+            stocktakingPlanService.updateForStocktakingStatus(entity.getSourceId(), StocktakingStatusEnum.COMPLETED);
+        }
+        if (Objects.equals(approveType, ApproveTypeEnum.PASS)){
+            // 盘点任务审核完成 删除库存锁定缓存
+            stocktakingTaskDetailService.listByMainId(entity.getId()).forEach(detail -> {
+                // 移除库存锁定缓存
+                redisUtil.keys(StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getSourceCode(), "*", detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*")).forEach(redisUtil::del);
+            });
+        }
         return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+    }
+
+    private static StocktakingStatusEnum isAllMatchStocktakingStatus(List<StocktakingTaskEntity> stocktakingTaskEntities) {
+        if (CollectionUtils.isEmpty(stocktakingTaskEntities)) {
+            return null;
+        }
+        if(stocktakingTaskEntities.stream().anyMatch(task -> Objects.equals(task.getStatus(), StocktakingStatusEnum.IN_PROGRESS) || Objects.equals(task.getStatus(), StocktakingStatusEnum.RECOUNT))){
+            return StocktakingStatusEnum.IN_PROGRESS;
+        }
+        if(stocktakingTaskEntities.stream().allMatch(task -> Objects.equals(task.getStatus(), StocktakingStatusEnum.NOT_STARTED) || Objects.equals(task.getStatus(), StocktakingStatusEnum.RECOUNT))){
+            return StocktakingStatusEnum.NOT_STARTED;
+        }
+        return null;
     }
 
     /**
@@ -477,6 +507,12 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         }
         String userId = commonService.getUserInfo().getUid();
         handleCancelProcess(taskEntity, userId);
+        List<StocktakingTaskEntity> stocktakingTaskEntities = listBySourceId(taskEntity.getSourceId());
+        // 全部审核完成 修改盘点计划单据状态
+        StocktakingStatusEnum stocktakingStatus = isAllMatchStocktakingStatus(stocktakingTaskEntities);
+        if (ObjectUtil.isNotEmpty(stocktakingStatus)) {
+            stocktakingPlanService.updateForStocktakingStatus(taskEntity.getSourceId(), stocktakingStatus);
+        }
         return BatchResultDTO.success(taskEntity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 

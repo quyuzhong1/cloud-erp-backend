@@ -152,7 +152,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "盘点计划" , stocktakingPlanEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), stocktakingPlanEntity.getId(), "新增单据");
-        return stocktakingPlanEntity.getCode();
+        return stocktakingPlanEntity.getId();
     }
 
     /**
@@ -451,6 +451,20 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         stocktakingTaskService.createTaskList(entity, detailEntityList);
         return Boolean.TRUE;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateForStocktakingStatus(String sourceId, StocktakingStatusEnum stocktakingStatus) {
+        StocktakingPlanEntity entity = lambdaQuery().eq(StocktakingPlanEntity::getId, sourceId)
+                .one();
+        if (ObjectUtil.isEmpty(entity) || Objects.equals(entity.getStatus(), stocktakingStatus)){
+            return;
+        }
+        this.lambdaUpdate().eq(StocktakingPlanEntity::getId, sourceId)
+                .set(StocktakingPlanEntity::getStatus, stocktakingStatus)
+                .update(new StocktakingPlanEntity());
+    }
+
     /**
      * 审核更新审核信息
      * @param id
