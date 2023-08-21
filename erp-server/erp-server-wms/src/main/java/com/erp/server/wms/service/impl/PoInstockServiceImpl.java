@@ -1160,7 +1160,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         //查询bom信息
         List<String> skuIds = poInstockDetailList.stream().map(PoInstockDetailEntity::getSkuId).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<BomChildrenSkuDTO> bomList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
 
         //回退领料出库库存
         autoOutStockInventory(childList,poInstockDetailList,bomList,Boolean.FALSE);
