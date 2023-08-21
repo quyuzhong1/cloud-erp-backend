@@ -348,7 +348,15 @@ public interface SysUserFeign {
     @PostMapping("feign/dict/listGlobalAreaByCountryIds")
     List<DictGlobalAreaDTO.InfoDTO> listGlobalAreaByCountryIds(@RequestBody List<String> countryIds);
 
-
+    /**
+     * 根据id获取国家信息
+     * @Author Luo_WG
+     * @Date 2023/5/26 10:45
+     * @param id
+     * @return java.util.List<com.erp.model.sys.entity.DictCountryEntity>
+     **/
+    @PostMapping("feign/dictCountry/getCountryById")
+    DictCountryEntity getCountryById(@RequestBody String id);
 
     /**
      * 根据id查询区域
