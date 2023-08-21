@@ -1094,4 +1094,22 @@ public class PurchaseReturnOrderDTO {
         private List<String> approveStatusList;
 
     }
+
+    /**
+     * PDA:列表状态
+     * @Author Luo_WG
+     * @Date 2023/8/11 9:15
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class PdaReturnOrderCountDTO {
+        /**
+         * 类型(waitSubmitAndReject 待提交/审核不通过，approveIng 审核中，approve 已审核)
+         */
+        private String tabFlag;
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
 }

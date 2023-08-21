@@ -1,10 +1,13 @@
 package com.erp.server.scm.controller.pda;
 
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.*;
 import com.erp.server.scm.service.PurchaseOrderService;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -35,4 +38,16 @@ public class PdaPurchaseOrderController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 查询采购单详情
+     * @Author Luo_WG
+     * @Date 2023/8/11 14:39
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.scm.dto.PurchaseOrderDTO.ViewDTO>
+     **/
+    @GetMapping("/view")
+    public ApiResult<PurchaseOrderDTO.PdaViewDTO> view(@Param("id") String id) {
+        PurchaseOrderDTO.PdaViewDTO dto = purchaseOrderService.pdaView(id);
+        return success(dto);
+    }
 }

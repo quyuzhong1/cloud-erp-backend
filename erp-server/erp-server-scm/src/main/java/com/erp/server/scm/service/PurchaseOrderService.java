@@ -361,5 +361,5 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param id
      * @return com.erp.model.scm.dto.PurchaseOrderDTO.ViewDTO
      **/
-    PurchaseOrderDTO.ViewDTO pdaView(String id);
+    PurchaseOrderDTO.PdaViewDTO pdaView(String id);
 }
