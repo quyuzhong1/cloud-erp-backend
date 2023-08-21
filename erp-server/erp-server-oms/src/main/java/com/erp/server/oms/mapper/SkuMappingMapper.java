@@ -24,6 +24,9 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
 
     IPage<SkuMappingDTO.PagingViewDTO> paging(Page query, @Param("params") SkuMappingDTO.PagingParamDTO params, @Param("matchResult") Boolean matchResult);
 
+    /*仓库的对照表*/
+    IPage<SkuMappingDTO.WarehousePagingViewDTO> warehousePaging(Page query, @Param("params") SkuMappingDTO.WarehousePagingParamDTO params,@Param("matchResult") Boolean matchResult);
+
     List<SkuMappingDTO.PagingViewDTO> listExport(@Param("params") SkuMappingDTO.ExportDTO params, @Param("matchResult")Boolean matchResult);
     /**
      * 获取到tab 统计数据
@@ -35,4 +38,14 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
     List<SkuMappingDTO.MatchCountDTO> listMatchCount(@Param("params") SkuMappingDTO.FindTabDTO dto);
 
     IPage<SkuMappingDTO.ProductSkuInfoDTO> listPaging(Page query, @Param("params") SkuMappingDTO.ListParamDTO params);
+
+    /**
+     * 库存 SKU 导出
+     * @author yl
+     * @date 2023-08-21 9:48
+     * @param dto
+     * @param matchResult
+     * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.PagingViewDTO>
+     */
+    List<SkuMappingDTO.WarehousePagingViewDTO> listWarehouseExport(@Param("params")SkuMappingDTO.ExportWarehouseSkuDTO dto,@Param("matchResult") Boolean matchResult);
 }

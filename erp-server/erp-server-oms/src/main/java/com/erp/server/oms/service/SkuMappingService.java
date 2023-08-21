@@ -53,7 +53,7 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @author yl
      * @date 2023-06-30 9:35
      */
-    Boolean exportSkuMaping(SkuMappingDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportPlatformSku(SkuMappingDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
      * 获取tab 列表
@@ -93,4 +93,23 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @return java.lang.String
      */
     String addWarehouseSku(SkuMappingDTO.AddWarehouseSkuDTO dto);
+
+    /**
+     * 库存sku 对照表分页
+     * @author yl
+     * @date 2023-08-21 9:56
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SkuMappingDTO.WarehousePagingViewDTO>
+     */
+    PagingVO<SkuMappingDTO.WarehousePagingViewDTO> warehousePaging(PagingDTO<SkuMappingDTO.WarehousePagingParamDTO> dto);
+
+    /**
+     * 导出库存sku 对照表
+     * @author yl
+     * @date 2023-08-21 10:22
+     * @param dto
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean exportWarehouseSku(SkuMappingDTO.ExportWarehouseSkuDTO dto, HttpServletResponse response);
 }

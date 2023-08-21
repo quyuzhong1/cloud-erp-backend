@@ -15,8 +15,8 @@
         sm.product_sku_no,
         li.platform_sku_no,
         li.platform_product_name,
-        li.sku_no AS thirdpartySkuNo,
-        li.product_name AS thirdpartyProductName,
+        li.sku_no AS sellerSkuNo,
+        li.product_name AS sellerProductName,
         li.match_result,
         li.product_image_url,
         li.product_spec,
@@ -71,19 +71,27 @@
         SELECT
         sm.id,
         sm.shop_id,
+        li.id AS listingId,
         si.name AS shopName,
-        sm.platform_dict,
+        sm.dict_platform,
         sm.platform_name,
         sm.product_sku_id,
         sm.product_sku_no,
-        sm.platform_sku_no,
-        sm.platform_sku_name,
-        sm.match_result,
+        li.platform_sku_no,
+        li.platform_product_name,
+        li.sku_no AS sellerSkuNo,
+        li.product_name AS sellerProductName,
+        li.match_result,
+        li.product_image_url,
+        li.product_spec,
+        li.product_packing,
         sm.create_user_name,
         sm.create_time
         FROM sku_mapping sm
         INNER JOIN shop_info si
         ON sm.shop_id=si.id AND si.is_deleted=FALSE
+        INNER JOIN listing_info li
+        ON sm.listing_id=li.id AND li.is_deleted=FALSE
         WHERE sm.is_deleted=FALSE
         AND sm.is_expire = FALSE
         <choose>
@@ -96,6 +104,9 @@
             <otherwise>
                 <if test="matchResult!=null">
                     AND sm.match_result=#{matchResult}
+                </if>
+                <if test="params.type !=null and params.type!=''">
+                    AND sm.type =#{params.type}
                 </if>
                 <if test="params.shopIdList !=null and params.shopIdList.size>0">
                     AND sm.shop_id IN
@@ -141,7 +152,7 @@
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         WHERE sm.is_deleted=FALSE AND sm.is_expire = FALSE
         <if test="params.type!=null and params.type!=''">
-           AND sm.type=#{type}
+           AND sm.type=#{params.type}
         </if>
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${permissionSql}
@@ -178,6 +189,124 @@
             </foreach>
             )
         </if>
+    </select>
+    <!--库存SKU 对照表分页-->
+    <select id="warehousePaging" resultType="com.erp.model.oms.dto.SkuMappingDTO$WarehousePagingViewDTO">
+        SELECT
+        sm.id,
+        li.id AS listingId,
+        sm.product_sku_id,
+        sm.product_sku_no,
+        li.sku_no AS warehouseSkuNo,
+        li.product_name AS warehouseProductName,
+        li.match_result,
+        sm.warehouse_id,
+        sm.warehouse_name,
+        sm.create_user_name,
+        sm.create_time
+        FROM sku_mapping sm
+        INNER JOIN listing_info li
+        ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        WHERE sm.is_deleted=FALSE
+        AND sm.is_expire = FALSE
+        <if test="matchResult!=null">
+            AND li.match_result=#{matchResult}
+        </if>
+        <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
+            AND sm.warehouse_id IN
+            <foreach collection="params.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
+                #{warehouseId}
+            </foreach>
+        </if>
+        <if test="params.type !=null and params.type!=''">
+            AND sm.type =#{params.type}
+        </if>
+        <if test="params.warehouseProductName !=null and params.warehouseProductName!=''">
+            AND li.product_name ILIKE concat('%', #{params.warehouseProductName} ,'%')
+        </if>
+        <if test="params.warehouseSkuNoList !=null and params.warehouseSkuNoList.size>0">
+            AND li.sku_no IN
+            <foreach collection="params.warehouseSkuNoList" item="warehouseSkuNo" open="(" separator="," close=")">
+                #{warehouseSkuNo}
+            </foreach>
+        </if>
+        <if test="params.skuIdList !=null and params.skuIdList.size>0">
+            AND sm.product_sku_id IN
+            <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND sm.create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND sm.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > sm.create_time
+        </if>
+        ORDER BY sm.id,sm.create_time DESC
+
+    </select>
+
+    <!--导出库存SKU-->
+    <select id="listWarehouseExport" resultType="com.erp.model.oms.dto.SkuMappingDTO$WarehousePagingViewDTO">
+        SELECT
+        sm.id,
+        li.id AS listingId,
+        sm.product_sku_id,
+        sm.product_sku_no,
+        li.sku_no AS warehouseSkuNo,
+        li.product_name AS warehouseProductName,
+        li.match_result,
+        sm.warehouse_id,
+        sm.warehouse_name,
+        sm.create_user_name,
+        sm.create_time
+        FROM sku_mapping sm
+        INNER JOIN listing_info li
+        ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        WHERE sm.is_deleted=FALSE
+        AND sm.is_expire = FALSE
+        <if test="matchResult!=null">
+            AND li.match_result=#{matchResult}
+        </if>
+        <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
+            AND sm.warehouse_id IN
+            <foreach collection="params.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
+                #{warehouseId}
+            </foreach>
+        </if>
+        <if test="params.type !=null and params.type!=''">
+            AND sm.type =#{params.type}
+        </if>
+        <if test="params.warehouseProductName !=null and params.warehouseProductName!=''">
+            AND li.product_name ILIKE concat('%', #{params.warehouseProductName} ,'%')
+        </if>
+        <if test="params.warehouseSkuNoList !=null and params.warehouseSkuNoList.size>0">
+            AND li.sku_no IN
+            <foreach collection="params.warehouseSkuNoList" item="warehouseSkuNo" open="(" separator="," close=")">
+                #{warehouseSkuNo}
+            </foreach>
+        </if>
+        <if test="params.skuIdList !=null and params.skuIdList.size>0">
+            AND sm.product_sku_id IN
+            <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND sm.create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND sm.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > sm.create_time
+        </if>
+        ORDER BY sm.id,sm.create_time DESC
     </select>
 
 </mapper>

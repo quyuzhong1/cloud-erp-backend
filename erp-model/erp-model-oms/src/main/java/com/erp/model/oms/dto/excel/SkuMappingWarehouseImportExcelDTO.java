@@ -23,7 +23,7 @@ public class SkuMappingWarehouseImportExcelDTO {
     @ColumnWidth(30)
     @ExcelProperty(value = "库存SKU", index = 0)
     @FieldValid(fieldName = "库存SKU", isNotBlank = true)
-    private String WarehouseSkuNo;
+    private String warehouseSkuNo;
 
     /**
      * 库存产品名称

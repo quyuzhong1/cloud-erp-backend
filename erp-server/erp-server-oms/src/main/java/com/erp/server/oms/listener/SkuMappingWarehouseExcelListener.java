@@ -2,6 +2,7 @@ package com.erp.server.oms.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -13,6 +14,7 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.TypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,7 +54,16 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
      */
     private List<ListingInfoEntity> listingInfoEntityList;
 
+    /**
+     * listing
+     */
+    private ListingInfoService listingInfoService;
+
     private SkuMappingService skuMappingService;
+    /**
+     * listing 信息
+     */
+    private List<ListingInfoEntity> addListingInfoEntityList = new ArrayList<>(10);
 
     private List<SkuMappingEntity> addSkuMappingList = new ArrayList<>(10);
 
@@ -64,13 +75,13 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
 
     public SkuMappingWarehouseExcelListener(SkuMappingService skuMappingService, List<SkuVO> skuList,
                                             List<SkuMappingEntity> skuMappingList,
-                                            List<WarehouseDTO.UpdateDTO> warehouseList, List<ListingInfoEntity> listingInfoEntityList) {
+                                            List<WarehouseDTO.UpdateDTO> warehouseList, List<ListingInfoEntity> listingInfoEntityList, ListingInfoService listingInfoService) {
         this.skuMappingService = skuMappingService;
         this.skuList = skuList;
-
         this.skuMappingList = skuMappingList;
         this.warehouseList = warehouseList;
         this.listingInfoEntityList = listingInfoEntityList;
+        this.listingInfoService = listingInfoService;
     }
 
     /**
@@ -105,27 +116,25 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         }
         //仓库id
         String warehouseId = warehouse.getId();
-        //库存sku
-        String warehouseSkuNo = importExcelDTO.getWarehouseSkuNo();
-        ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream().filter(l -> l.getSkuNo().
-                equals(warehouseSkuNo)).findFirst().orElse(null);
-        if (Objects.isNull(listingInfoEntity)) {
-            errorMsgList.add("库存sku不存在");
-        }
-
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(importExcelDTO);
             return;
         }
-
-        String listingId = listingInfoEntity.getId();
-
+        //库存sku
+        String warehouseSkuNo = importExcelDTO.getWarehouseSkuNo();
+        ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream().filter(l -> l.getSkuNo().
+                equals(warehouseSkuNo)).findFirst().orElse(null);
+        String listingId = "";
+        if (Objects.nonNull(listingInfoEntity)) {
+            listingId = listingInfoEntity.getId();
+        }
 
         TypeEnum warehouseType = TypeEnum.WAREHOUSE;
         //已对应的平台sku
-        List<SkuMappingEntity> excelList = skuMappingList.stream().filter(s -> s.getListingId().equals(listingId)
+        String finalListingId = listingId;
+        List<SkuMappingEntity> excelList = skuMappingList.stream().filter(s -> s.getListingId().equals(finalListingId)
                 && warehouseId.equals(s.getWarehouseId())
                 && warehouseType.equals(s.getType())
         ).collect(Collectors.toList());
@@ -133,7 +142,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         if (CollectionUtils.isNotEmpty(excelList)) {
             errorMsgList.add("同仓库库存SKU只能对应一个产品SKU");
         }
-        long count = addSkuMappingList.stream().filter(a -> a.getListingId().equals(listingId) &&
+        long count = addSkuMappingList.stream().filter(a -> a.getListingId().equals(finalListingId) &&
                 warehouseId.equals(a.getWarehouseId())).count();
         if (count > 0) {
             errorMsgList.add("同仓库库存SKU只能对应一个产品SKU");
@@ -143,6 +152,17 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(importExcelDTO);
             return;
+        }
+
+        if (Objects.isNull(listingInfoEntity)) {
+            listingId = IdWorker.getIdStr();
+            ListingInfoEntity addListingInfoEntity = new ListingInfoEntity();
+            addListingInfoEntity.setId(listingId);
+            addListingInfoEntity.setType(TypeEnum.WAREHOUSE.getCode());
+            addListingInfoEntity.setSkuNo(warehouseSkuNo);
+            addListingInfoEntity.setProductName(importExcelDTO.getWarehouseProductName());
+            addListingInfoEntity.setMatchResult(Boolean.TRUE);
+            addListingInfoEntityList.add(addListingInfoEntity);
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -165,6 +185,10 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (CollectionUtils.isNotEmpty(addSkuMappingList)) {
             skuMappingService.saveBatch(addSkuMappingList);
+        }
+
+        if (CollectionUtils.isNotEmpty(addListingInfoEntityList)) {
+            listingInfoService.saveBatch(addListingInfoEntityList);
         }
     }
 

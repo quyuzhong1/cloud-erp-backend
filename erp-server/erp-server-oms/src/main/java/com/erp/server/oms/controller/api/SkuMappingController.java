@@ -36,8 +36,7 @@ public class SkuMappingController extends BaseController {
     @Resource
     private SkuMappingService skuMappingService;
 
-    @Resource
-    private ListingInfoService listingInfoService;
+
 
 
     /**
@@ -68,14 +67,26 @@ public class SkuMappingController extends BaseController {
 
 
     /**
-     * 分页列表
+     * 平台分页列表
      *
      * @param dto
      * @return
      */
-    @PostMapping("/paging")
+    @PostMapping("/platformPaging")
     public ApiResult<PagingVO<SkuMappingDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SkuMappingDTO.PagingParamDTO> dto) {
         PagingVO<SkuMappingDTO.PagingViewDTO> pagingVO = skuMappingService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 库存SKU 分页
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/warehousePaging")
+    public ApiResult<PagingVO<SkuMappingDTO.WarehousePagingViewDTO>> queryWarehouseByPage(@RequestBody @Validated PagingDTO<SkuMappingDTO.WarehousePagingParamDTO> dto) {
+        PagingVO<SkuMappingDTO.WarehousePagingViewDTO> pagingVO = skuMappingService.warehousePaging(dto);
         return success(pagingVO);
     }
 
@@ -106,13 +117,24 @@ public class SkuMappingController extends BaseController {
 
 
     /**
-     * 导出 sku 对照表
+     * 导出平台sku 对照表
      *
      * @return
      */
-    @PostMapping("/export")
-    public ApiResult exportSkuMaping(@RequestBody @Valid SkuMappingDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = skuMappingService.exportSkuMaping(dto, response);
+    @PostMapping("/exportPlatformSku")
+    public ApiResult exportPlatformSku(@RequestBody @Valid SkuMappingDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result = skuMappingService.exportPlatformSku(dto, response);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 导出库存sku 对照表
+     *
+     * @return
+     */
+    @PostMapping("/exportWarehouseSku")
+    public ApiResult exportWarehouseSku(@RequestBody @Valid SkuMappingDTO.ExportWarehouseSkuDTO dto, HttpServletResponse response) {
+        Boolean result = skuMappingService.exportWarehouseSku(dto, response);
         return result ? success() : failure();
     }
 

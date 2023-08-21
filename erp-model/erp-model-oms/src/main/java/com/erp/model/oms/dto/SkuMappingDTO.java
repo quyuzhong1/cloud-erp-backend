@@ -99,8 +99,9 @@ public class SkuMappingDTO implements Serializable {
          */
         private String searchKeyword;
 
-        @StateEnumValue(strValues = {"platform","warehouse"}, message = "类型有误")
         private String type;
+
+
         /**
          * 店铺id集合
          */
@@ -126,6 +127,65 @@ public class SkuMappingDTO implements Serializable {
          * 平台code 集合
          */
         private List<String> platformList;
+
+
+        /**
+         * 创建人 id 集合
+         */
+        private List<String> createUserIdList;
+
+        /**
+         * 创建时间
+         */
+        private List<LocalDate> createTimeList;
+
+
+    }
+
+
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WarehousePagingParamDTO extends SortDTO {
+
+        private String type;
+
+        /**
+         * 库存产品名称
+         */
+        private String warehouseProductName;
+
+        /**
+         * 仓库id 集合
+         */
+        private List<String> warehouseIdList;
+
+
+        /**
+         * 库存sku no 集合
+         */
+        private List<String> warehouseSkuNoList;
+
+
+        /**
+         * 产品skuId集合
+         */
+        private List<String> skuIdList;
+
+        /**
+         * 搜索类型
+         * alL 全部
+         * already 已匹配
+         * not 未匹配
+         */
+        @StateEnumValue(strValues = {"all", "already", "not"}, message = "搜索类型有误")
+        @NotBlank(message = "搜索类型不能为空")
+        private String tabFlag;
+
+
+
 
 
         /**
@@ -194,6 +254,15 @@ public class SkuMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
+        private List<String> ids;
+    }
+
+    /**
+     * 导出sku 对照表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportWarehouseSkuDTO extends WarehousePagingParamDTO {
         private List<String> ids;
     }
 
@@ -279,14 +348,14 @@ public class SkuMappingDTO implements Serializable {
         private String productName;
 
         /**
-         * 卖家sku no  或者 库存sku no
+         * 卖家sku no
          */
-        private String thirdpartySkuNo;
+        private String sellerSkuNo;
 
         /**
          * 卖家sku 名称  或者 库存sku 名称
          */
-        private String thirdpartyProductName;
+        private String sellerProductName;
 
         /**
          * 匹配结果
@@ -314,6 +383,90 @@ public class SkuMappingDTO implements Serializable {
 
     }
 
+
+    /**
+     * 分页数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WarehousePagingViewDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+
+
+
+        /**
+         * listingId
+         */
+        private String listingId;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+
+        /**
+         * 产品skuId
+         */
+        private String productSkuId;
+
+
+        /**
+         * 产品sku no
+         */
+        private String productSkuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 库存sku
+         */
+        private String warehouseSkuNo;
+
+        /**
+         * 库存产品名称
+         */
+        private String warehouseProductName;
+
+        /**
+         * 匹配结果
+         */
+        private Boolean matchResult;
+
+        /**
+         * 匹配结果
+         */
+        private String matchResultStr;
+
+
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createTime;
+
+
+    }
 
     @Data
     @NoArgsConstructor
