@@ -2,7 +2,9 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
@@ -49,6 +51,11 @@ public class StocktakingProfitLossController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingProfitLoss:paging",
+            tableAlias = "spl"
+    )
     public ApiResult<List<StocktakingProfitLossDTO.TabDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<StocktakingProfitLossDTO.TabDTO> tabList = stocktakingProfitLossService.tabList(dto);
         return success(tabList);
@@ -61,11 +68,11 @@ public class StocktakingProfitLossController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingProfitLoss:paging",
-//            tableAlias = "ti"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingProfitLoss:paging",
+            tableAlias = "spl"
+    )
     public ApiResult<PagingVO<StocktakingProfitLossDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<StocktakingProfitLossDTO.PagingParamDTO> dto) {
         PagingVO<StocktakingProfitLossDTO.PagingViewDTO> pagingVO = stocktakingProfitLossService.paging(dto);
         return success(pagingVO);
@@ -89,12 +96,12 @@ public class StocktakingProfitLossController extends BaseController {
      * @return
      */
     @PostMapping("/view")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingProfitLoss:view",
-//            serviceClass = StocktakingProfitLossService.class,
-//            keyIdName = "id"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingProfitLoss:view",
+            serviceClass = StocktakingProfitLossService.class,
+            keyIdName = "id"
+    )
     public ApiResult<StocktakingProfitLossDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         StocktakingProfitLossDTO.ViewDTO result = stocktakingProfitLossService.view(dto.getId());
         return success(result);

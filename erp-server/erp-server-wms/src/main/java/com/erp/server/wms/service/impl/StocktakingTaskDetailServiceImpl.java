@@ -13,21 +13,21 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.excel.KingdeeBusinessOperatorImportExcelDTO;
+import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.model.wms.entity.StocktakingTaskUserEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.server.wms.listener.StocktakingTaskDetailExcelListener;
 import com.erp.server.wms.mapper.StocktakingTaskDetailMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
-import com.erp.server.wms.service.StocktakingTaskDetailService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
-import com.erp.server.wms.service.StocktakingTaskService;
-import com.erp.server.wms.service.StocktakingTaskUserService;
-import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -66,6 +66,9 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Resource
     private WarehouseService warehouseService;
+
+    @Resource
+    private OperateLogService operateLogService;
 
     @Override
     public Boolean exportExcel(BaseIdDTO dto, HttpServletResponse response) {
@@ -117,9 +120,16 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         if (Objects.isNull(task)) {
             throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
         }
+        //状态
+        StocktakingStatusEnum status = task.getStatus();
+        List<StocktakingStatusEnum> statusList = Arrays.asList(StocktakingStatusEnum.NOT_STARTED, StocktakingStatusEnum.RECOUNT);
+        if(!statusList.contains(status)){
+            throw new ServiceException("只有复盘中,未开始的盘点任务才能修改盘点库存");
+        }
+
         List<StocktakingTaskDetailEntity> taskDetailList = this.listBaseByMainIds(Arrays.asList(mainId));
         List<WarehouseEntity> warehouseList = warehouseService.list();
-        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(this, task.getCode(), taskDetailList, warehouseList);
+        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(this, task.getCode(), taskDetailList, warehouseList, operateLogService);
         try {
             EasyExcel.read(excelFile.getInputStream(), StocktakingTaskDetailExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
@@ -128,7 +138,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         }
         List<StocktakingTaskDetailExcelDTO> errorList = excelListener.getErrorList();
         if (errorList.size() > 0) {
-            String fileName = "金蝶业务员错误信息";
+            String fileName = "盘点任务明细错误信息";
             ExcelUtil.export(fileName, "error", errorList, StocktakingTaskDetailExcelDTO.class, response);
             return Boolean.FALSE;
         }
@@ -156,6 +166,9 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         }
         List<StocktakingTaskDetailEntity> taskDetailList = this.listByIds(idList);
         List<StocktakingTaskDetailEntity> updateTaskDetailList = new ArrayList<>(taskDetailList.size());
+        List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
+        String moduleType = ModuleTypeEnum.STOCKTAKING_TASK.getCode();
+
         for (StocktakingTaskDetailDTO.UpdateDTO item : list) {
             StocktakingTaskDetailEntity taskDetail = taskDetailList.stream().
                     filter(t -> t.getId().equals(item.getId())).
@@ -163,7 +176,20 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             if (Objects.isNull(taskDetail)) {
                 continue;
             }
+            OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
+            addModuleOperateLogDTO.setOperation("修改操作");
+            addModuleOperateLogDTO.setBusinessId(taskDetail.getMainId());
+            addModuleOperateLogDTO.setModuleType(moduleType);
+            StringBuffer sb = new StringBuffer("盘点任务单");
+            sb.append(" 修改");
+            sb.append(taskDetail.getSkuNo());
+            sb.append("盘点库存由原来的:");
+            sb.append(taskDetail.getQty());
             Integer qty = item.getQty();
+            sb.append("修改为:").append(qty);
+            addModuleOperateLogDTO.setContent(sb.toString());
+            operateLogList.add(addModuleOperateLogDTO);
+
             taskDetail.setQty(qty);
             //可用库存
             Integer usableQty = taskDetail.getUsableQty();
@@ -175,7 +201,9 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             updateTaskDetailList.add(taskDetail);
         }
         if (CollectionUtils.isNotEmpty(updateTaskDetailList)) {
+            operateLogService.batchAddModuleOperateLog(operateLogList);
             return this.updateBatchById(updateTaskDetailList);
+
         }
         return Boolean.TRUE;
     }
@@ -274,5 +302,27 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         }
         remove(new LambdaQueryWrapper<StocktakingTaskDetailEntity>().in(StocktakingTaskDetailEntity::getMainId, mainIds));
         return Boolean.TRUE;
+    }
+
+
+    /**
+     * 根据一些信息 获取到明细信息
+     *
+     * @param mainId
+     * @param skuNo
+     * @param warehouseId
+     * @param warehouseLocation
+     * @return com.erp.model.wms.entity.StocktakingTaskDetailEntity
+     * @author yl
+     * @date 2023-08-21 17:51
+     */
+    @Override
+    public StocktakingTaskDetailEntity getTaskDetail(String mainId, String skuNo, String warehouseId, String warehouseLocation) {
+        return this.lambdaQuery().eq(StocktakingTaskDetailEntity::getMainId, mainId).
+                eq(StocktakingTaskDetailEntity::getSkuNo, skuNo).
+                eq(StocktakingTaskDetailEntity::getWarehouseId, warehouseId).
+                eq(StocktakingTaskDetailEntity::getWarehouseLocation, warehouseLocation).
+                last("LIMIT 1").
+                one();
     }
 }

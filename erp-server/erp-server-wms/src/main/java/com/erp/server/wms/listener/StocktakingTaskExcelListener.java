@@ -4,20 +4,24 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.excel.KingdeeBusinessOperatorImportExcelDTO;
 import com.erp.model.wms.dto.OperateLogDTO;
-import com.erp.model.wms.dto.excel.QcReportDetailImportExcelDTO;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
+import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.StocktakingTaskDetailService;
+import com.erp.server.wms.service.StocktakingTaskService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author Lambda
@@ -26,14 +30,12 @@ import java.util.Objects;
  * @Date 2023-08-09 17:55
  * @Created by yl
  */
-public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<StocktakingTaskDetailExcelDTO> {
+public class StocktakingTaskExcelListener extends AnalysisEventListener<StocktakingTaskDetailExcelDTO> {
 
 
     private StocktakingTaskDetailService stocktakingTaskDetailService;
 
-    private String code;
-
-    private List<StocktakingTaskDetailEntity> taskDetailList;
+    private StocktakingTaskService stocktakingTaskService;
 
     private List<WarehouseEntity> warehouseList;
 
@@ -45,14 +47,13 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
 
     List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
 
-    public StocktakingTaskDetailExcelListener(StocktakingTaskDetailService stocktakingTaskDetailService,
-                                              String code,
-                                              List<StocktakingTaskDetailEntity> taskDetailList,
-                                              List<WarehouseEntity> warehouseList,
-                                              OperateLogService operateLogService) {
+
+    public StocktakingTaskExcelListener(StocktakingTaskService stocktakingTaskService,
+                                        StocktakingTaskDetailService stocktakingTaskDetailService,
+                                        List<WarehouseEntity> warehouseList,
+                                        OperateLogService operateLogService) {
         this.stocktakingTaskDetailService = stocktakingTaskDetailService;
-        this.code = code;
-        this.taskDetailList = taskDetailList;
+        this.stocktakingTaskService = stocktakingTaskService;
         this.warehouseList = warehouseList;
         this.operateLogService = operateLogService;
     }
@@ -81,9 +82,11 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
         }
         //任务盘点单号
         String taskCode = excelDTO.getCode();
-        if (!code.equals(taskCode)) {
-            errorMsgList.add("盘点任务单号有误");
+        StocktakingTaskEntity taskEntity = stocktakingTaskService.getByCode(taskCode);
+        if (Objects.isNull(taskEntity)) {
+            errorMsgList.add("盘点任务不存在");
         }
+
         //仓库名称
         String warehouseName = excelDTO.getWarehouseName();
         //仓库id
@@ -92,15 +95,12 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
         if (StringUtils.isBlank(warehouseId)) {
             errorMsgList.add("仓库不存在");
         }
+        String mainId = Objects.nonNull(taskEntity) ? taskEntity.getId() : "";
         //仓位
         String warehouseLocation = Objects.isNull(excelDTO.getWarehouseLocation()) ? "" : excelDTO.getWarehouseLocation();
         //sku
         String skuNo = excelDTO.getSkuNo();
-        StocktakingTaskDetailEntity taskDetail = taskDetailList.stream().
-                filter(d -> d.getSkuNo().equals(skuNo) &&
-                        d.getWarehouseId().equals(warehouseId) &&
-                        d.getWarehouseLocation().equals(warehouseLocation)).
-                findFirst().orElse(null);
+        StocktakingTaskDetailEntity taskDetail = stocktakingTaskDetailService.getTaskDetail(mainId, skuNo, warehouseId, warehouseLocation);
         if (Objects.isNull(taskDetail)) {
             errorMsgList.add("未匹配到任务明细,请检查仓库,仓位,SKU");
         }
@@ -109,8 +109,15 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
             errorList.add(excelDTO);
             return;
         }
+        //旧盘点数量
         Integer oldQty = taskDetail.getQty();
-        String mainId = taskDetail.getMainId();
+        //状态
+        StocktakingStatusEnum status = taskEntity.getStatus();
+        List<StocktakingStatusEnum> statusList = Arrays.asList(StocktakingStatusEnum.NOT_STARTED, StocktakingStatusEnum.RECOUNT);
+        if(!statusList.contains(status)){
+            errorMsgList.add("只有复盘中,未开始的盘点任务才能修改盘点库存");
+        }
+
         OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLog = new OperateLogDTO.AddModuleOperateLogDTO();
         StringBuffer sb = new StringBuffer("盘点任务单");
         sb.append(taskCode).append(" 修改");
@@ -122,7 +129,6 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
         addModuleOperateLog.setModuleType(ModuleTypeEnum.STOCKTAKING_TASK.getCode());
         addModuleOperateLog.setOperation("修改操作");
         operateLogList.add(addModuleOperateLog);
-
         //可用库存
         Integer usableQty = taskDetail.getUsableQty();
         //冻结数量
@@ -132,6 +138,7 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
         taskDetail.setDiffQty(diffQty);
         taskDetail.setQty(qty);
         updateList.add(taskDetail);
+
 
     }
 

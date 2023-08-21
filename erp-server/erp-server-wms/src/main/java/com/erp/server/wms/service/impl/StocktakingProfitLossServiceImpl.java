@@ -180,6 +180,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             stocktakingProfitLossDetailService.saveBatch(addDetailList);
         }
 
+        //同步消息并
+
     }
 
 
@@ -543,14 +545,14 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                     inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.STOCKTAKING_LOSS.getCode());
                 }
                 List<InOutStockDTO> members = baseMapper.listInventoryInOut(Arrays.asList(entity.getId()));
-                InventoryStatusEnum  inventoryStatus=InventoryStatusEnum.USABLE;
+                InventoryStatusEnum inventoryStatus = InventoryStatusEnum.USABLE;
                 for (InOutStockDTO member : members) {
                     member.setSourceType(InventorySourceTypeEnum.STOCKTAKING_PROFIT_LOSS);
                     Integer qty = member.getQty();
                     member.setQty(Math.abs(qty));
                     member.setInventoryStatus(inventoryStatus);
                 }
-                if(CollectionUtils.isNotEmpty(members)){
+                if (CollectionUtils.isNotEmpty(members)) {
                     inventoryInOutStockDTO.setMembers(members);
                     //扣减库存
                     inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
@@ -683,6 +685,11 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
         String code = docNoGenHelper.generateCode(businessNoType);
         profitEntity.setCode(code);
+        LoginUser loginUser = commonService.getUserInfo();
+        profitEntity.setApproveUserId(loginUser.getUid());
+        profitEntity.setApproveUserName(loginUser.getUserName());
+        profitEntity.setApproveTime(LocalDateTime.now());
+        profitEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
         for (StocktakingTaskDetailEntity detail : detailList) {
             //明细
             StocktakingProfitLossDetailEntity profitDetail = new StocktakingProfitLossDetailEntity();
@@ -702,7 +709,6 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         Map<String, Object> map = new HashMap<>(2);
         map.put("stocktakingProfitLoss", profitEntity);
         map.put("detailEntityList", detailEntityList);
-
         return map;
     }
 }

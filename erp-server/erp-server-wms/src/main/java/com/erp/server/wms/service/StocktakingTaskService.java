@@ -138,4 +138,11 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
      * @return java.lang.Boolean
      */
     Boolean approveEnd(ApproveOneDTO approveOne, StocktakingTaskEntity entity);
+
+    /**
+     * 根据code 获取任务信息
+     * @param taskCode
+     * @return
+     */
+    StocktakingTaskEntity getByCode(String taskCode);
 }

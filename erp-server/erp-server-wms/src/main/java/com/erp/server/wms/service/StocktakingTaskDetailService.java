@@ -87,4 +87,16 @@ public interface StocktakingTaskDetailService extends SuperService<StocktakingTa
      * @return
      */
     Boolean removeByMainId(List<String> mainIds);
+
+    /**
+     * 根据一些信息 获取到明细信息
+     * @author yl
+     * @date 2023-08-21 17:51
+     * @param mainId
+     * @param skuNo
+     * @param warehouseId
+     * @param warehouseLocation
+     * @return com.erp.model.wms.entity.StocktakingTaskDetailEntity
+     */
+    StocktakingTaskDetailEntity getTaskDetail(String mainId, String skuNo, String warehouseId, String warehouseLocation);
 }

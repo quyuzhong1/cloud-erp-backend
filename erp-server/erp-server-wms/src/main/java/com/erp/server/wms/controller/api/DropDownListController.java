@@ -7,10 +7,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.entity.QcRuleEntity;
-import com.erp.model.wms.enums.QcBillStatusEnum;
-import com.erp.model.wms.enums.QcResultEnum;
-import com.erp.model.wms.enums.QcTypeEnum;
-import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.server.wms.pull.service.ProductInfoService;
 import com.erp.server.wms.service.QcRuleService;
 import com.erp.server.wms.service.WarehouseLocationService;
@@ -120,6 +117,20 @@ public class DropDownListController extends BaseController {
     @GetMapping("/product/spuNo/list")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> listSpuNoDropDown() {
         return success(productInfoService.getNotEmptySpuNos());
+    }
+
+    /**
+     * 单据类型下拉
+     *
+     * @return
+     */
+    @GetMapping("/billType/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listBillTypeDropDown(@RequestParam(value = "type",required = true)String type) {
+        List<BillTypeEnum> billTypeList=BillTypeEnum.listByType(type);
+        List<BaseDropDownDTO.CommonDTO> result = billTypeList.stream()
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getCode(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
     }
 
     @GetMapping("/warehouseArea/list")

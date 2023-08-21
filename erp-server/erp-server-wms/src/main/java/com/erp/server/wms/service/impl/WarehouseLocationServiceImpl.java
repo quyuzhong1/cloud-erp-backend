@@ -180,6 +180,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         if (CollUtil.isEmpty(warehouseLocationList)) {
             return Lists.newArrayList();
         }
+
         return warehouseLocationList.stream().map(warehouseLocation->{
             BaseDropDownDTO.CommonDTO data = new BaseDropDownDTO.CommonDTO();
             data.setCode(warehouseLocation.getId());

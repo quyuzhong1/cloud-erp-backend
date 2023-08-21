@@ -3,7 +3,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.OperateLogDTO;
+import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.entity.OperateLogEntity;
 import org.apache.commons.math3.util.Pair;
 
@@ -75,4 +75,13 @@ public interface OperateLogService extends SuperService<OperateLogEntity> {
       * @return Boolean
       */
      Boolean batchAddModuleOperateLog(String content, String moduleType, List<Pair<String, String>> pairList, String operation);
+
+     /**
+      * 批量添加日志
+      * @author yl
+      * @date 2023-08-21 18:26
+      * @param operateLogList
+      * @return void
+      */
+    void batchAddModuleOperateLog(List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList);
 }

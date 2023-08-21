@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -18,12 +19,14 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SeparateRuleEnum;
 import com.erp.model.wms.enums.StocktakingModeEnum;
@@ -32,6 +35,8 @@ import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
+import com.erp.server.wms.listener.StocktakingTaskDetailExcelListener;
+import com.erp.server.wms.listener.StocktakingTaskExcelListener;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
@@ -236,7 +241,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
         List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listBaseByMainIds(ids);
         long zeroCount = taskDetailList.stream().filter(d -> d.getQty() < 0).count();
-        if(zeroCount>0){
+        if (zeroCount > 0) {
             throw new ServiceException("盘点数量不能为负数");
         }
         //启动审核流程
@@ -382,7 +387,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         if (stocktakingTaskEntities.stream().allMatch(task -> Objects.equals(task.getStatus(), StocktakingStatusEnum.COMPLETED))) {
             stocktakingPlanService.updateForStocktakingStatus(entity.getSourceId(), StocktakingStatusEnum.COMPLETED);
         }
-        if (Objects.equals(approveType, ApproveTypeEnum.PASS)){
+        if (Objects.equals(approveType, ApproveTypeEnum.PASS)) {
             // 盘点任务审核完成 删除库存锁定缓存
             stocktakingTaskDetailService.listByMainId(entity.getId()).forEach(detail -> {
                 // 移除库存锁定缓存
@@ -396,10 +401,10 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         if (CollectionUtils.isEmpty(stocktakingTaskEntities)) {
             return null;
         }
-        if(stocktakingTaskEntities.stream().anyMatch(task -> Objects.equals(task.getStatus(), StocktakingStatusEnum.IN_PROGRESS) || Objects.equals(task.getStatus(), StocktakingStatusEnum.RECOUNT))){
+        if (stocktakingTaskEntities.stream().anyMatch(task -> Objects.equals(task.getStatus(), StocktakingStatusEnum.IN_PROGRESS) || Objects.equals(task.getStatus(), StocktakingStatusEnum.RECOUNT))) {
             return StocktakingStatusEnum.IN_PROGRESS;
         }
-        if(stocktakingTaskEntities.stream().allMatch(task -> Objects.equals(task.getStatus(), StocktakingStatusEnum.NOT_STARTED) || Objects.equals(task.getStatus(), StocktakingStatusEnum.RECOUNT))){
+        if (stocktakingTaskEntities.stream().allMatch(task -> Objects.equals(task.getStatus(), StocktakingStatusEnum.NOT_STARTED) || Objects.equals(task.getStatus(), StocktakingStatusEnum.RECOUNT))) {
             return StocktakingStatusEnum.NOT_STARTED;
         }
         return null;
@@ -461,6 +466,20 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             stocktakingProfitLossService.autoCreateBill(entity);
         }
         return result;
+    }
+
+    /**
+     * 根据code 获取任务信息
+     * @param taskCode
+     * @return
+     */
+    @Override
+    public StocktakingTaskEntity getByCode(String taskCode) {
+        if(StringUtils.isBlank(taskCode)){
+          return null;
+        }
+        return this.lambdaQuery().eq(StocktakingTaskEntity::getCode,taskCode).
+                last("LIMIT 1").one();
     }
 
     /**
@@ -554,7 +573,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         if (CollectionUtils.isEmpty(taskList)) {
             throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
         }
-        Boolean result = stocktakingTaskUserService.assignUser(dto.getIds(), dto.getUserIdList());
+        Boolean result = stocktakingTaskUserService.assignUser(taskList, dto.getUserIdList());
         return result;
     }
 
@@ -600,8 +619,23 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        return null;
+        List<WarehouseEntity> warehouseList = warehouseService.list();
+        StocktakingTaskExcelListener excelListener = new StocktakingTaskExcelListener(this,stocktakingTaskDetailService,warehouseList,operateLogService);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), StocktakingTaskDetailExcelDTO.class, excelListener).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("盘点任务明细导入错误！>>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        List<StocktakingTaskDetailExcelDTO> errorList = excelListener.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "盘点任务明细错误信息";
+            ExcelUtil.export(fileName, "error", errorList, StocktakingTaskDetailExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
     }
 
     @Override

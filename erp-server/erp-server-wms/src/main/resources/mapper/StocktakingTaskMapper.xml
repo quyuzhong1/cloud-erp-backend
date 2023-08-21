@@ -76,7 +76,7 @@
           </if>
           <!--盘点状态 -->
           <if test="params.stocktakingStatusList !=null and params.stocktakingStatusList.size>0">
-            AND sp.status IN
+            AND st.status IN
             <foreach collection="params.stocktakingStatusList" item="status" open="(" separator="," close=")">
                 #{status}
             </foreach>
@@ -191,7 +191,7 @@
                 </if>
                 <!--盘点状态 -->
                 <if test="params.stocktakingStatusList !=null and params.stocktakingStatusList.size>0">
-                    AND sp.status IN
+                    AND st.status IN
                     <foreach collection="params.stocktakingStatusList" item="status" open="(" separator="," close=")">
                         #{status}
                     </foreach>
