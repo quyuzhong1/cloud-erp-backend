@@ -720,7 +720,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //下推入库单不能反审核
         warehouseReceiveList.forEach(req -> {
             List<PoInstockEntity> stockInBySourceId = poInstockService.getStockInBySourceId(req.getId());
-            if (CollectionUtils.isNotEmpty(stockInBySourceId)) {
+            List<PoInstockEntity> collect = stockInBySourceId.stream().filter(obj -> InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(collect)) {
                 throw new ServiceException(ApiError.ERROR_99011);
             }
             List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceId(req.getId());
@@ -1455,6 +1456,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取到未入库采购收货单返回数据
         List<WarehouseReceiveDTO.PdaPoReceive> poReceiveList = list.stream().filter(req -> notAllReceivePoReceiveId.contains(req.getId())).collect(Collectors.toList());
         poReceiveList.sort(Comparator.comparing(WarehouseReceiveDTO.PdaPoReceive::getCode).reversed());
+        list.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
         return poReceiveList;
     }
 }
