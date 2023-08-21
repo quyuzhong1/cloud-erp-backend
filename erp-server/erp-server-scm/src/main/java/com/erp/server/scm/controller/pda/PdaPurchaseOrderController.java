@@ -29,7 +29,7 @@ public class PdaPurchaseOrderController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.scm.dto.PurchaseOrderDTO.PdaPurchaseOrder>>
      **/
-    @GetMapping("/pdaList")
+    @PostMapping("/pdaList")
     public ApiResult<List<PurchaseOrderDTO.PdaPurchaseOrder>> pdaList(@RequestBody PurchaseOrderDTO.PdaPurchaseOrderParam dto) {
         List<PurchaseOrderDTO.PdaPurchaseOrder> list = purchaseOrderService.pdaList(dto);
         return success(list);

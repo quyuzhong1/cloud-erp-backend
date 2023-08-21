@@ -1010,6 +1010,11 @@ public class PurchaseReturnOrderDTO {
     public static class PdaPagingViewDTO {
 
         /**
+         * 主键id
+         */
+        private String id;
+
+        /**
          * 单据编号
          */
         private String code;
@@ -1033,6 +1038,11 @@ public class PurchaseReturnOrderDTO {
          * 退货仓库名称
          */
         private String returnWarehouseName;
+
+        /**
+         * 产品数量
+         */
+        private Integer detailCount;
 
         /**
          * 产品信息

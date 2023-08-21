@@ -241,4 +241,13 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @return Boolean
      */
     Boolean autoGeneratePurchaseOrder(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * PDA:列表查询
+     * @Author Luo_WG
+     * @Date 2023/8/21 12:25
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PdaPagingViewDTO>
+     **/
+    PagingVO<PurchaseReturnOrderDTO.PdaPagingViewDTO> pdaPaging(PagingDTO<PurchaseReturnOrderDTO.PdaPagingParamDTO> dto);
 }

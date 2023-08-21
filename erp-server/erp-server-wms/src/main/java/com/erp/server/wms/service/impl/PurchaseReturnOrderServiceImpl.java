@@ -14,10 +14,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
@@ -1639,4 +1636,26 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         }
     }
 
+    @Override
+    public PagingVO<PurchaseReturnOrderDTO.PdaPagingViewDTO> pdaPaging(PagingDTO<PurchaseReturnOrderDTO.PdaPagingParamDTO> pagingParamDTO) {
+        /*pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<PurchaseReturnOrderDTO.PdaPagingViewDTO> pageData = this.baseMapper.pdaPaging(query, pagingParamDTO.getParams());
+        if (CollectionUtils.isEmpty(pageData.getRecords())) {
+            return new PagingVO(new Page());
+        }
+        List<PurchaseReturnOrderDTO.PdaPagingViewDTO> records = pageData.getRecords();
+        //主键id
+        List<String> ids = records.stream().map(req -> req.getId()).collect(Collectors.toList());
+        //查询详情
+        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = purchaseReturnOrderDetailService.listByMainIds(ids);
+        for (PurchaseReturnOrderDTO.PdaPagingViewDTO record : records) {
+            record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
+            List<PurchaseReturnOrderDetailEntity> detailEntities = purchaseReturnOrderDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
+            List<PurchaseReturnOrderDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, PurchaseReturnOrderDTO.PdaItemDTO.class);
+            record.setDetailCount(itemDTOList.size());
+            record.setItemList(itemDTOList);
+        }*/
+        return new PagingVO(null);
+    }
 }

@@ -19,7 +19,7 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * 采购退货单
+ * PDA:采购退货单
  * @author LUO_WG
  * @since 2023-04-07
  */
@@ -43,9 +43,8 @@ public class PdaPoReturnController extends BaseController {
             tableAlias = "pro"
     )
     public ApiResult<PagingVO<PurchaseReturnOrderDTO.PdaPagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.PdaPagingParamDTO> dto) {
-   /*     PagingVO<PurchaseReturnOrderDTO.PdaPagingViewDTO> pagingVO = purchaseReturnOrderService.paging(dto);
-        return success(pagingVO);*/
-        return null;
+        PagingVO<PurchaseReturnOrderDTO.PdaPagingViewDTO> pagingVO = purchaseReturnOrderService.pdaPaging(dto);
+        return success(pagingVO);
     }
 
     /**
