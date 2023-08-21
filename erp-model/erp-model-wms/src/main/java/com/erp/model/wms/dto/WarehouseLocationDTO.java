@@ -205,6 +205,15 @@ public class WarehouseLocationDTO implements Serializable {
          * 组织名称
          */
         private String orgName;
+
+        /**
+         * 仓库类型
+         */
+        private String warehouseType;
+        /**
+         * 仓库id
+         */
+        private String typeId;
     }
 
     @Data

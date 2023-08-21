@@ -57,12 +57,15 @@
         wt.disabled,
         wt.org_id AS orgId,
         wt.kingdee_warehouse_code AS warehouseCode,
+        wt.type_id AS typeId,
+        db."name" AS warehouseType,
         wl.code as warehouseLocation,
         wa.code as warehouseArea,
         wa."name" as warehouseAreaName
         FROM  "warehouse_location" wl
         LEFT JOIN warehouse wt on wl.warehouse_id = wt.id and wt.is_deleted = false
         LEFT JOIN "warehouse_location" wa on wl.parent_id = wa.id
+        LEFT JOIN "dict_basic" db on db.id = wt.type_id and is_deleted = false and type = 'warehouseType'
         where wl.is_deleted = false  and wl."type" = 'location'
         <if test="params.typeIds !=null and params.typeIds.size>0">
             AND wt.type_id IN
