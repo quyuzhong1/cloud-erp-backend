@@ -1326,7 +1326,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 商品信息
          */
-        private List<PurchaseOrderDetailDTO.PdaPurchaseOrderDetail> itemList;
+//        private List<PurchaseOrderDetailDTO.PdaPurchaseOrderDetail> itemList;
     }
 
     /**
