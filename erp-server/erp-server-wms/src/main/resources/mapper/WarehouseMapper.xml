@@ -175,6 +175,8 @@
     <select id="pagingProduct" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingProductViewDTO">
         SELECT
         MAX(inv.id) as inventoryId,
+        pi.spu_no as spuNo,
+        pi.category as category,
         pd.id as skuId,
         pd.sku_no as skuNo,
         pd.images_url as productImgUrl,
@@ -187,14 +189,14 @@
         SUM(CASE WHEN inv.dict_inventory_status ='usable' THEN inv.qty ELSE 0 END) as usableQty,
         SUM(CASE WHEN inv.dict_inventory_status ='frozen' THEN inv.qty ELSE 0 END) as frozenQty,
         inv.org_id as orgId,
-        tf.trade_time as latestSalesTime
+        MAX(tf.trade_time) as latestSalesTime
         FROM product_detail pd
         LEFT JOIN product_info pi on pd.product_id = pi."id"  and pi.is_deleted = false
         LEFT JOIN inventory inv on pd.id = inv.sku_id and inv.is_deleted = false
         LEFT JOIN warehouse wh on inv.warehouse_id = wh.id and wh.is_deleted = false
         LEFT JOIN warehouse_location wl on inv.warehouse_location = wl.code and wl.is_deleted = false AND wl.warehouse_id = inv.warehouse_id
         LEFT JOIN warehouse_location wlt on wl.parent_id = wlt.id and wlt.is_deleted = false
-        LEFT JOIN (select inventory_id,max(trade_time) as trade_time from transaction_flow
+        LEFT JOIN (select inventory_id, max(trade_time) as trade_time from transaction_flow
         where is_deleted=false
         <if test="params.saleTimeList !=null and params.saleTimeList.size>0">
             AND trade_time >= #{params.saleTimeList[0]} and (#{params.saleTimeList[1]}) > trade_time
@@ -228,7 +230,7 @@
                 #{item}
             </foreach>
         </if>
-        GROUP BY skuId, skuNo, productImgUrl,productName,warehouseId,warehouseName,warehouseLocation,warehouseArea,warehouseAreaName,inv.org_id,latestSalesTime
+        GROUP BY spuNo,category,skuId, skuNo, productImgUrl,productName,warehouseId,warehouseName,warehouseLocation,warehouseArea,warehouseAreaName,inv.org_id
         ORDER BY pd.sku_no
     </select>
 </mapper>
