@@ -35,6 +35,12 @@ public class MessageUserReadEntity extends BaseEntity<MessageUserReadEntity> {
     @TableField("user_id")
     private String userId;
 
+    /**
+    * 是否已读
+    */
+    @TableField("is_read")
+    private Boolean isRead;
+
     public static final String MESSAGE_ID = "message_id";
 
     public static final String USER_ID = "user_id";

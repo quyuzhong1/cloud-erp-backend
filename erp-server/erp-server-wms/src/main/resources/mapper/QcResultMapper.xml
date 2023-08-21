@@ -44,12 +44,15 @@
 
       SELECT
       qi.id,
+      qi.source_code,
       qi.purchase_order_code,
       qi.purchase_order_id,
       qi.qc_user_name,qr.qc_type,
       to_char(qi.qc_finish_time,'yyyy-MM-dd HH24:MI:ss') AS qcFinishTime,
       qr.handle_mode_dict,
-      qp.sku_id,qp.sku_no
+      qp.sku_id,
+      qp.sku_no,
+      qr.qc_qty
       FROM  qc_info qi INNER JOIN
       qc_result qr ON qr.main_id=qi.id AND qr.is_deleted=FALSE
       INNER JOIN qc_product qp ON qp.main_id=qi.id AND qp.is_deleted=FALSE

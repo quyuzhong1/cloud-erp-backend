@@ -26,7 +26,10 @@ public class MessageUserReadServiceImpl extends SuperServiceImpl<MessageUserRead
 
     @Override
     public List<MessageUserReadEntity> listByUserId(String userId) {
-        return lambdaQuery().eq(MessageUserReadEntity::getUserId, userId).list();
+        return lambdaQuery()
+                .eq(MessageUserReadEntity::getUserId, userId)
+                .eq(MessageUserReadEntity::getIsRead, Boolean.TRUE)
+                .list();
     }
 
     @Override
@@ -38,5 +41,13 @@ public class MessageUserReadServiceImpl extends SuperServiceImpl<MessageUserRead
     @Override
     public MessageUserReadEntity listByMessageId(String messageId) {
         return lambdaQuery().eq(MessageUserReadEntity::getMessageId, messageId).last("LIMIT 1").one();
+    }
+
+    @Override
+    public Boolean readByMessageId(String messageId) {
+        return lambdaUpdate()
+                .set(MessageUserReadEntity::getIsRead, Boolean.TRUE)
+                .eq(MessageUserReadEntity::getMessageId, messageId)
+                .update();
     }
 }

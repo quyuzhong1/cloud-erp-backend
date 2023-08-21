@@ -42,4 +42,13 @@ public interface MessageUserReadService extends SuperService<MessageUserReadEnti
      * @return java.util.List<com.erp.model.sys.entity.MessageUserReadEntity>
      **/
     MessageUserReadEntity listByMessageId(String messageId);
+
+    /**
+     * 根据消息id读取消息
+     * @Author Luo_WG
+     * @Date 2023/8/21 11:41
+     * @param messageId
+     * @return java.lang.Boolean
+     **/
+    Boolean readByMessageId(String messageId);
 }

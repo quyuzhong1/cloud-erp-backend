@@ -415,6 +415,10 @@ public class QcResultDTO {
 
         private String id;
 
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
 
         /**
          * 是否新品首批
@@ -448,6 +452,11 @@ public class QcResultDTO {
          * sku名称
          */
         private String skuName;
+
+        /**
+         * 质检数量
+         */
+        private String qcQty;
 
         /**
          * 质检人员

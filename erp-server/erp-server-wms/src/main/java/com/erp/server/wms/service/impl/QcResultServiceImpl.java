@@ -19,6 +19,9 @@ import com.erp.model.plm.dto.ProductInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.sys.dto.NoticeReceiverDTO;
+import com.erp.model.sys.entity.MessageEntity;
+import com.erp.model.sys.entity.MessageUserReadEntity;
+import com.erp.model.sys.enums.MessageTypeEnum;
 import com.erp.model.sys.enums.NoticeItemRoleEnum;
 import com.erp.model.sys.enums.NoticeNodeEnum;
 import com.erp.model.sys.enums.NoticeReceiverEnum;
@@ -26,11 +29,10 @@ import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.QcResultEntity;
-import com.erp.model.wms.enums.DictBasicEnum;
-import com.erp.model.wms.enums.QcReCheckResultEnum;
-import com.erp.model.wms.enums.QcResultEnum;
-import com.erp.model.wms.enums.QcTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.MessageFeign;
+import com.erp.rpc.sys.feign.MessageUserReadFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -89,7 +91,11 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     @Autowired
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
 
+    @Resource
+    private MessageFeign messageFeign;
 
+    @Resource
+    private MessageUserReadFeign messageUserReadFeign;
     /**
      * 质检信息 暂存
      *
@@ -386,6 +392,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             Boolean isFirstMassProduct = entry.getKey();
             List<QcResultDTO.QcNoticeDTO> value = entry.getValue();
             sendMsg(isFirstMassProduct, value);
+
         }
 
     }
@@ -477,9 +484,31 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
             }
-
+            //发送PDA消息
+            addPdaMessage(userIdList, item);
         }
     }
 
 
+    private void addPdaMessage(List<String> userIdList, QcResultDTO.QcNoticeDTO item) {
+        MessageEntity messageEntity = new MessageEntity();
+        messageEntity.setType(MessageTypeEnum.qc.getCode());
+        LinkedHashMap<String, Object> map = new LinkedHashMap();
+        map.put("code", item.getSourceCode());
+        map.put("status", QcBillStatusEnum.FINISH_QC.getCode());
+        map.put("statusName", QcBillStatusEnum.FINISH_QC.getName());
+        map.put("skuId", item.getSkuId());
+        map.put("skuNo", item.getSkuNo());
+        map.put("qty", item.getQcQty());
+        messageEntity.setDataJson(map);
+        String messageId = messageFeign.save(messageEntity);
+        List<MessageUserReadEntity> userReadEntityList = new ArrayList<>();
+        for (String userId : userIdList) {
+            MessageUserReadEntity userReadEntity = new MessageUserReadEntity();
+            userReadEntity.setUserId(userId);
+            userReadEntity.setMessageId(messageId);
+            userReadEntityList.add(userReadEntity);
+        }
+        messageUserReadFeign.saveBatch(userReadEntityList);
+    }
 }

@@ -248,6 +248,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 bill.setPurchaseOrderCode(purchaseOrder.getCode());
             }
         }
+        bill.setSourceCode(bill.getSourceCode());
+        if (StringUtils.isBlank(dto.getSourceCode()) && StringUtils.isNotBlank(bill.getPurchaseOrderCode())) {
+            bill.setSourceCode(bill.getPurchaseOrderCode());
+        }
         String sourceDetailId = dto.getSourceDetailId();
         bill.setSourceDetailId(sourceDetailId);
         Boolean result = this.saveOrUpdate(bill);
@@ -1457,6 +1461,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcInfo.setQcUserName(qcUserName);
             qcInfo.setSourceId(item.getSourceId());
             qcInfo.setSourceType(item.getSourceType());
+            qcInfo.setSourceCode(item.getSourceCode());
             addQcList.add(qcInfo);
             //质检结果
             QcResultEntity qcResult = new QcResultEntity();
@@ -1551,6 +1556,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcInfo.setQcUserName(qcUserName);
             qcInfo.setSourceId(item.getSourceId());
             qcInfo.setSourceType(item.getSourceType());
+            qcInfo.setSourceCode(item.getSourceCode());
             qcInfo.setSourceDetailId(item.getSourceDetailId());
             addQcList.add(qcInfo);
             //质检结果
@@ -1643,6 +1649,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcInfo.setQcUserId(qcUserId);
             qcInfo.setQcUserName(qcUserName);
             qcInfo.setSourceId(item.getMainId());
+            qcInfo.setSourceCode(item.getCode());
             qcInfo.setSourceDetailId(item.getId());
             qcInfo.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
             addQcList.add(qcInfo);

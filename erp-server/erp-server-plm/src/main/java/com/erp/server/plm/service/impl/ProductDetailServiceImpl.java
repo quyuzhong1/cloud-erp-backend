@@ -3731,4 +3731,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 .update();
     }
 
+    @Override
+    public List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto) {
+        return baseMapper.pdaSearchSku(dto);
+    }
 }

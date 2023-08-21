@@ -131,13 +131,19 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         LoginUser userInfo = commonService.getUserInfo();
         List<String> messageIds = messageUserReadEntities.stream().map(req -> req.getMessageId()).collect(Collectors.toList());
         for (MessageEntity messageEntity : messageEntityList) {
-            //把未读消息放到读取表中
-            if (!messageIds.contains(messageEntity.getId())) {
+            if (MessageTypeEnum.sys.getCode().equals(messageEntity.getType())) {
                 MessageUserReadEntity messageUserReadEntity = new MessageUserReadEntity();
                 messageUserReadEntity.setMessageId(messageEntity.getId());
                 messageUserReadEntity.setUserId(userInfo.getUid());
+                messageUserReadEntity.setIsRead(Boolean.TRUE);
                 messageUserReadService.save(messageUserReadEntity);
+            } else {
+                //读取未读消息
+                if (!messageIds.contains(messageEntity.getId())) {
+                    messageUserReadService.readByMessageId(messageEntity.getId());
+                }
             }
+
         }
     }
 

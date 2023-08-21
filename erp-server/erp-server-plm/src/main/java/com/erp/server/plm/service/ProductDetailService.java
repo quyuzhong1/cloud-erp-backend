@@ -464,7 +464,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param ids
      * @return java.lang.Boolean
      **/
-    Boolean submit(List<String> ids);
+    Boolean submit(List<String> ids,Boolean isCheck);
 
     /**
      * 批量审核
@@ -545,5 +545,25 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return
      */
     List<SkuVO> getNoInventorySku();
+    /**
+     * 更新名称
+     */
+    void updateName(String id, String name);
+    /**
+     * @description: 根据skuNo集合查询
+     * @author Will
+     * @date: 2023/8/17 15:19
+     * @param skuNos
+     * @return List<ProductDetailEntity>
+     */
+    List<ProductDetailEntity> listBySkuNos(List<String> skuNos);
 
+    /**
+     * PDA:条件查询sku
+     * @Author Luo_WG
+     * @Date 2023/8/21 12:11
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto);
 }
