@@ -784,6 +784,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     public List<SoReturnDTO.PdaSoReturn> pdaList(SoReturnDTO.PdaSoReturnParam dto) {
         List<SoReturnDTO.PdaSoReturn> pdaSoReturns = baseMapper.pdaList(dto);
+        if (CollectionUtils.isEmpty(pdaSoReturns)) {
+            return new ArrayList<>();
+        }
         List<String> soReturnIds = pdaSoReturns.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveFeign.listDetailBySourceIds(soReturnIds);
 

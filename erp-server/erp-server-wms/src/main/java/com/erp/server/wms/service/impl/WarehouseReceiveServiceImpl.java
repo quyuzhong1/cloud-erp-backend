@@ -1429,10 +1429,14 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Override
     public List<WarehouseReceiveDTO.PdaPoReceive> pdaList(WarehouseReceiveDTO.PdaPoReceiveParam dto) {
         List<WarehouseReceiveDTO.PdaPoReceive> list = baseMapper.pdaList(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
         List<String> porIds = list.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<WarehouseReceiveDetailEntity> receiveDetailEntitieList = warehouseReceiveDetailService.listDetailByMainIds(porIds);
+        List<String> pordIds = receiveDetailEntitieList.stream().map(req -> req.getId()).collect(Collectors.toList());
 
-        List<PoInstockDetailEntity> poInstockDetailEntities = poInstockDetailService.listDetailBySourceDetailIds(porIds);
+        List<PoInstockDetailEntity> poInstockDetailEntities = poInstockDetailService.listDetailBySourceDetailIds(pordIds);
 
         //获取未全部入库的采购收货详情id
         List<String> receiveDetailIds = new ArrayList<>();

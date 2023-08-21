@@ -41,4 +41,14 @@ public interface PurchaseReturnOrderMapper extends BaseMapper<PurchaseReturnOrde
      * @return
      */
     List<PurchaseReturnOrderDTO.SupplierReturnDTO> getReturnInfo(@Param("params") PurchaseReturnOrderDTO.SupplierReturnParamDTO params);
+
+    /**
+     * PDA:分页查询
+     * @Author Luo_WG
+     * @Date 2023/8/21 15:17
+     * @param query
+     * @param params
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PdaPagingViewDTO>
+     **/
+    IPage<PurchaseReturnOrderDTO.PdaPagingViewDTO> pdaPaging(Page query, PurchaseReturnOrderDTO.PdaPagingParamDTO params);
 }
