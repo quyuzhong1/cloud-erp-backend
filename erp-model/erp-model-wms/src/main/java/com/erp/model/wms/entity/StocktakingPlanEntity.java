@@ -101,13 +101,13 @@ public class StocktakingPlanEntity extends BaseEntity<StocktakingPlanEntity> {
     private String approveUserId;
 
     /**
-    * 最后审核人名称
+    * 最新审核人名称
     */
     @TableField("approve_user_name")
     private String approveUserName;
 
     /**
-    * 最后审核时间
+    * 最新审核时间
     */
     @TableField("approve_time")
     private LocalDateTime approveTime;

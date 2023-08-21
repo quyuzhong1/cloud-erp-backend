@@ -3,16 +3,21 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdDTO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.StocktakingPlanDetailMapper;
+import com.erp.server.wms.service.CommonService;
+import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.StocktakingPlanDetailService;
 import com.common.business.service.SuperServiceImpl;
 import com.erp.server.wms.service.WarehouseService;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +45,10 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
     private WarehouseService warehouseService;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private OperateLogService operateLogService;
+    @Resource
+    private CommonService commonService;
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveList(List<StocktakingPlanDTO.DetailDTO> detailList, String mainId) {
@@ -77,20 +86,36 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
         List<StocktakingPlanDetailEntity> updateList = newDetailList.stream().filter(item -> StrUtil.isNotBlank(item.getId())).collect(Collectors.toList());
         List<StocktakingPlanDetailEntity> insertList = newDetailList.stream().filter(item -> StrUtil.isBlank(item.getId())).collect(Collectors.toList());
         List<String> updateIds = updateList.stream().map(StocktakingPlanDetailEntity::getId).collect(Collectors.toList());
-        List<String> removeIds = oldDetailList.stream().filter(item -> !updateIds.contains(item.getId())).map(StocktakingPlanDetailEntity::getId).collect(Collectors.toList());
+        List<StocktakingPlanDetailEntity> removeList = oldDetailList.stream().filter(item -> !updateIds.contains(item.getId())).collect(Collectors.toList());
+
         // 删除移除的明细数据
-        if (CollUtil.isNotEmpty(removeIds)){
+        if (CollUtil.isNotEmpty(removeList)){
+            List<String> removeIds = removeList.stream().map(StocktakingPlanDetailEntity::getId).collect(Collectors.toList());
             removeByIds(removeIds);
+            List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(mainId, StrUtil.format("仓库名称：{}，库区：{}，仓位：{}，SKU：{}",
+                    obj.getWarehouseName(), obj.getWarehouseArea(), obj.getWarehouseLocation(), obj.getSkuNo()))).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除明细数据【%s】", ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), removePairList, "编辑操作");
         }
         // 更新存在的明细数据
         if (CollUtil.isNotEmpty(updateList)){
             if (!updateBatchById(updateList)) {
                 throw new RuntimeException("更新盘点计划明细失败");
             }
+            for (StocktakingPlanDetailEntity update : updateList) {
+                String id = update.getId();
+                StocktakingPlanDetailEntity old = updateList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
+                if (old != null) {
+                    String msg = StrUtil.format("用户【{}】编辑主表id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), mainId, "盘点计划明细");
+                    operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), mainId, msg);
+                }
+            }
         }
         // 新增不存在的明细数据
         if (CollUtil.isNotEmpty(insertList)){
             saveBatch(insertList);
+            List<Pair<String, String>> addPairList = insertList.stream().map(obj -> new Pair<>(mainId,StrUtil.format("仓库名称：{}，库区：{}，仓位：{}，SKU：{}",
+                    obj.getWarehouseName(), obj.getWarehouseArea(), obj.getWarehouseLocation(), obj.getSkuNo()))).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加明细数据【%s】", ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), addPairList, "编辑操作");
         }
     }
 
