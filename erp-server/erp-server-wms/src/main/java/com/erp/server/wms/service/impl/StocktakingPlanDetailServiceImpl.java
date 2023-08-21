@@ -105,7 +105,7 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
     }
 
     @Override
-    public List<StocktakingPlanDetailDTO.ViewDTO> listByMainIdAndType(String mainId, StocktakingTypeEnum type) {
-        return baseMapper.listByMainIdAndType(mainId, type);
+    public List<StocktakingPlanDetailDTO.ViewDTO> listByMainIdAndType(String mainId) {
+        return baseMapper.listByMainIdAndType(mainId);
     }
 }

@@ -662,6 +662,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                 return detailEntity;
             }).collect(Collectors.toList());
             stocktakingTaskDetailService.saveBatch(insertDetailList, 500);
+            String msg = StrUtil.format("由盘点计划【{}】自动生成盘点任务单号为【{}】单据", planCode, code);
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), insertTask.getId(), "新增单据");
         });
         return Boolean.TRUE;
     }

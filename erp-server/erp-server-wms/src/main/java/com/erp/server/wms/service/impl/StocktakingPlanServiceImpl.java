@@ -418,7 +418,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         // 数据填充处理
         fillOne(data);
         // 查询明细数据
-        List<StocktakingPlanDetailDTO.ViewDTO> detailEntityList = stocktakingPlanDetailService.listByMainIdAndType(id,stocktakingPlanEntity.getType());
+        List<StocktakingPlanDetailDTO.ViewDTO> detailEntityList = stocktakingPlanDetailService.listByMainIdAndType(id);
         if (CollUtil.isNotEmpty(detailEntityList)) {
             List<StocktakingPlanDetailDTO.ViewDTO> detailDTOList = BeanUtil.copyToList(detailEntityList, StocktakingPlanDetailDTO.ViewDTO.class);
             data.setDetailList(detailDTOList);

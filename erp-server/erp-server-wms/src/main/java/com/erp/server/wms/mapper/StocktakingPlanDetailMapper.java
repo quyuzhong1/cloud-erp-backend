@@ -24,8 +24,7 @@ public interface StocktakingPlanDetailMapper extends BaseMapper<StocktakingPlanD
     /**
      * 盘点计划明细
      * @param mainId
-     * @param type
      * @return
      */
-    List<StocktakingPlanDetailDTO.ViewDTO> listByMainIdAndType(String mainId, StocktakingTypeEnum type);
+    List<StocktakingPlanDetailDTO.ViewDTO> listByMainIdAndType(String mainId);
 }

@@ -414,7 +414,10 @@ public class WarehouseDTO implements Serializable {
          * 仓库名
          */
         private String name;
-
+        /**
+         * 仓库名
+         */
+        private String code;
         /**
          * 组织id
          */

@@ -323,13 +323,20 @@
             inv.qty
         FROM "inventory" inv
         WHERE inv.is_deleted = false and inv.dict_inventory_status in ('usable','frozen')
-        AND EXISTS (
-            SELECT 1
-            FROM transaction_flow tf
-            WHERE tf.inventory_id = inv."id"
-            AND tf.is_deleted = false
-            AND tf.trade_time >= #{startTime}
-            AND tf.trade_time &lt; #{endTime}
+        AND (
+            inv.qty > 0
+            OR (
+                inv.qty = 0
+                AND EXISTS (
+                    SELECT 1
+                    FROM transaction_flow tf
+                    WHERE
+                    tf.inventory_id = inv."id"
+                    AND tf.is_deleted = FALSE
+                    AND tf.trade_time >= #{startTime}
+                    AND tf.trade_time &lt; #{endTime}
+                )
+            )
         )
         <if test="type != null and type == 'byWarehouse' and null != params and params.size > 0">
               and warehouse_id in
