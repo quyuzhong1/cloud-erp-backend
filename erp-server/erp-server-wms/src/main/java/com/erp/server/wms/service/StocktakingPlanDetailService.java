@@ -49,8 +49,7 @@ public interface StocktakingPlanDetailService extends SuperService<StocktakingPl
     /**
      * 根据主表id和盘点类型查询明细
      * @param mainId
-     * @param type
      * @return
      */
-    List<StocktakingPlanDetailDTO.ViewDTO> listByMainIdAndType(String mainId, StocktakingTypeEnum type);
+    List<StocktakingPlanDetailDTO.ViewDTO> listByMainIdAndType(String mainId);
 }
