@@ -1374,9 +1374,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //根据收货单主表id获取详情信息
         List<WarehouseReceiveDetailEntity> detail = warehouseReceiveDetailService.getDetailByMainId(id);
         //获取sku的id集合
-        List<String> skuIdList = detail.stream().map(WarehouseReceiveDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuNoList = detail.stream().map(WarehouseReceiveDetailEntity::getSkuNo).collect(Collectors.toList());
         //根据ids查询sku信息
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         //获取采购单详情的id集合
         List<String> detailId = detail.stream().map(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         //获取收货数量
@@ -1393,17 +1393,14 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
             Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 
-
             Integer receive = detailEntitieList.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderDetailId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             detailView.setUnReceiveQty(purchaseOrderDetailEntity.getPurchaseQty() + returnQty - receive);
             //获取sku信息
-            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailView.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95107);
-            }
+            SkuVO skuVO = skuList.stream().filter(entityClass -> entityClass.getSkuId().equals(detailView.getSkuId())).findFirst().orElse(new SkuVO());
+            detailView.setVariantProperty(skuVO.getVariantProperty());
             detailView.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
             detailView.setPlanDeliveryDate(purchaseOrderDetailEntity.getPlanDeliveryDate());
-            detailView.setProductName(productDetailEntity.getName());
+            detailView.setProductName(skuVO.getSkuName());
             detailViewDTOS.add(detailView);
         }
 
