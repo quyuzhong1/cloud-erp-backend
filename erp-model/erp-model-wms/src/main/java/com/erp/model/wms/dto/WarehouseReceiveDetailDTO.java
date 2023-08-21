@@ -122,6 +122,11 @@ public class WarehouseReceiveDetailDTO {
         private String productName;
 
         /**
+         * 变体属性
+         */
+        private String variantProperty;
+
+        /**
          * 计划交货时间
          */
         private LocalDate planDeliveryDate;
