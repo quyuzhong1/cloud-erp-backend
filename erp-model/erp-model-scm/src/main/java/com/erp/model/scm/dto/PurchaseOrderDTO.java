@@ -1316,6 +1316,14 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private String warehouseName;
         /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+        /**
          * 商品信息
          */
         private List<PurchaseOrderDetailDTO.PdaPurchaseOrderDetail> itemList;

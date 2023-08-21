@@ -1638,7 +1638,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     @Override
     public PagingVO<PurchaseReturnOrderDTO.PdaPagingViewDTO> pdaPaging(PagingDTO<PurchaseReturnOrderDTO.PdaPagingParamDTO> pagingParamDTO) {
-        /*pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<PurchaseReturnOrderDTO.PdaPagingViewDTO> pageData = this.baseMapper.pdaPaging(query, pagingParamDTO.getParams());
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
@@ -1655,7 +1655,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             List<PurchaseReturnOrderDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, PurchaseReturnOrderDTO.PdaItemDTO.class);
             record.setDetailCount(itemDTOList.size());
             record.setItemList(itemDTOList);
-        }*/
-        return new PagingVO(null);
+        }
+        return new PagingVO(pageData);
     }
 }

@@ -1974,6 +1974,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Override
     public List<PurchaseOrderDTO.PdaPurchaseOrder> pdaList(PurchaseOrderDTO.PdaPurchaseOrderParam dto) {
         List<PurchaseOrderDTO.PdaPurchaseOrder> list = baseMapper.pdaList(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
         List<String> poIds = list.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailService.listByPurchaseOrderIds(poIds);
         List<String> podaIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
@@ -2001,7 +2004,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
         List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
         for (PurchaseOrderDTO.PdaPurchaseOrder entity : purchaseOrderEntitieList) {
-
+            entity.setApproveStatusName(ApproveStatusEnum.getName(entity.getApproveStatus()));
             List<PurchaseOrderDetailEntity> poDetailEntityList = purchaseOrderDetailEntityList.stream().filter(req -> req.getPurchaseOrderId().equals(entity.getId())).collect(Collectors.toList());
             List<PurchaseOrderDetailDTO.PdaPurchaseOrderDetail> itemList = new ArrayList<>();
             for (PurchaseOrderDetailEntity detailEntity : poDetailEntityList) {

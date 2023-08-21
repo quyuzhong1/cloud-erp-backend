@@ -605,6 +605,7 @@
         SELECT
             po.id,
             po.code,
+            po.approve_status,
             pos.supplier_name,
             po.delivery_warehouse_name AS warehouseName
         FROM purchase_order po
