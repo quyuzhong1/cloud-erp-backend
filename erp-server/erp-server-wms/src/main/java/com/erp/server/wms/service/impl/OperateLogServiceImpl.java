@@ -14,7 +14,7 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.EnumsUtil;
-import com.erp.model.scm.dto.OperateLogDTO;
+import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.entity.CfgOperateLogFieldEntity;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.OperateLogEntity;
@@ -97,7 +97,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             }
             //枚举
             if (ModuleOperateLogFieldTypeEnum.TYPE_ENUM.getCode().equals(type)) {
-                valuePair = setEnumValue(fieldEntity,valuePair);
+                valuePair = setEnumValue(fieldEntity, valuePair);
             }
             //字典
             if (ModuleOperateLogFieldTypeEnum.TYPE_DIST.getCode().equals(type)) {
@@ -133,14 +133,16 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         }
         return this.saveBatch(list);
     }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean addModuleOperateLogByObj(Object oldObj, Object newObj, String moduleType, String businessId, String msg) {
-        return addModuleOperateLogByObj(oldObj, newObj,moduleType, businessId, "", msg);
+        return addModuleOperateLogByObj(oldObj, newObj, moduleType, businessId, "", msg);
     }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean addModuleOperateLog(String content, String moduleType, String businessId,String operation) {
+    public Boolean addModuleOperateLog(String content, String moduleType, String businessId, String operation) {
         OperateLogEntity entity = new OperateLogEntity();
         entity.setModuleType(moduleType)
                 .setBusinessId(businessId)
@@ -161,17 +163,35 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             OperateLogEntity entity = new OperateLogEntity();
             entity.setModuleType(moduleType)
                     .setBusinessId(pair.getKey())
-                    .setContent(String.format(content,pair.getValue()))
+                    .setContent(String.format(content, pair.getValue()))
                     .setOperation(operation);
             list.add(entity);
         }
         return this.saveBatch(list);
     }
 
+    @Override
+    public void batchAddModuleOperateLog(List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList) {
+        if (CollectionUtils.isNotEmpty(operateLogList)) {
+            List<OperateLogEntity> addList = new ArrayList<>(operateLogList.size());
+            for (OperateLogDTO.AddModuleOperateLogDTO item : operateLogList) {
+                OperateLogEntity entity = new OperateLogEntity();
+                entity.setModuleType(item.getModuleType())
+                        .setBusinessId(item.getBusinessId())
+                        .setContent(item.getContent())
+                        .setOperation(item.getOperation());
+                addList.add(entity);
+            }
+            this.saveBatch(addList);
+
+        }
+
+    }
+
     /**
      * 设置布尔值
      */
-    private Pair<String,String> setBooleanValue (CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
+    private Pair<String, String> setBooleanValue(CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
         String trueValue = "是";
         String falseValue = "否";
         String booleanValue = fieldEntity.getBooleanValue();
@@ -181,17 +201,18 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             falseValue = booleanValues[1];
         }
         //是或否
-       String oldValue = Boolean.TRUE.toString().equals(valuePair.getKey()) ? trueValue : falseValue;
-       String newValue = Boolean.TRUE.toString().equals(valuePair.getValue()) ? trueValue : falseValue;
+        String oldValue = Boolean.TRUE.toString().equals(valuePair.getKey()) ? trueValue : falseValue;
+        String newValue = Boolean.TRUE.toString().equals(valuePair.getValue()) ? trueValue : falseValue;
 
-        return new Pair<>(oldValue,newValue);
+        return new Pair<>(oldValue, newValue);
     }
+
     /**
      * 设置字典值
      */
-    private Pair<String,String> setDistValue (Pair<String, String> valuePair) {
-        String  oldValue = "";
-        String  newValue = "";
+    private Pair<String, String> setDistValue(Pair<String, String> valuePair) {
+        String oldValue = "";
+        String newValue = "";
         List<DictBasicEntity> oldList = dictBasicService.listByIds(Arrays.asList(valuePair.getKey().split(",")));
         if (CollectionUtils.isNotEmpty(oldList)) {
             oldValue = oldList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
@@ -200,15 +221,15 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         if (CollectionUtils.isNotEmpty(newList)) {
             newValue = newList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
         }
-        return new Pair<>(oldValue,newValue);
+        return new Pair<>(oldValue, newValue);
     }
 
     /**
      * 设置人员值
      */
-    private Pair<String,String> setUserValue (Pair<String, String> valuePair) {
-        String  oldValue = "";
-        String  newValue = "";
+    private Pair<String, String> setUserValue(Pair<String, String> valuePair) {
+        String oldValue = "";
+        String newValue = "";
         List<FindUserDTO> oldList = sysUserFeign.getUserListByUserIds(Arrays.asList(valuePair.getKey().split(",")));
         if (CollectionUtils.isNotEmpty(oldList)) {
             oldValue = oldList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));
@@ -217,18 +238,19 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         if (CollectionUtils.isNotEmpty(newList)) {
             newValue = newList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));
         }
-        return new Pair<>(oldValue,newValue);
+        return new Pair<>(oldValue, newValue);
     }
+
     /**
      * 设置枚举值
      */
-    private Pair<String,String> setEnumValue (CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
+    private Pair<String, String> setEnumValue(CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
         if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
             throw new ServiceException(ApiError.ERROR_9028);
         }
-        String  oldValue = "";
-        String  newValue = "";
-        Class<?> aClass ;
+        String oldValue = "";
+        String newValue = "";
+        Class<?> aClass;
         try {
             aClass = Class.forName(fieldEntity.getEnumClass());
         } catch (ClassNotFoundException e) {
@@ -254,6 +276,6 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
                 newValue = "";
             }
         }
-        return new Pair<>(oldValue,newValue);
+        return new Pair<>(oldValue, newValue);
     }
 }

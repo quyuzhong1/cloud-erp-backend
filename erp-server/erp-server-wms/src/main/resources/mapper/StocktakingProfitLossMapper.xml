@@ -23,7 +23,7 @@
         SELECT
         bill_type AS tabFlag,
         count(id) AS count
-        FROM stocktaking_profit_loss
+        FROM stocktaking_profit_loss spl
         WHERE is_deleted=FALSE
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
@@ -92,13 +92,13 @@
             DAY' ) > spl.approve_time
         </if>
         <!--skuId -->
-        <if test="params.skuIdList!=null and params.skuIdList.size>0">
+        <if test="params.skuNoList!=null and params.skuNoList.size>0">
             AND spl.id IN
             (
             SELECT main_id FROM stocktaking_profit_loss_detail
-            WHERE is_deleted=FALSE AND sku_id IN
-            <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
-                #{skuId}
+            WHERE is_deleted=FALSE AND sku_No IN
+            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
             </foreach>
             )
         </if>
@@ -193,13 +193,13 @@
                     DAY' ) > spl.approve_time
                 </if>
                 <!--skuId -->
-                <if test="params.skuIdList!=null and params.skuIdList.size>0">
+                <if test="params.skuNoList!=null and params.skuNoList.size>0">
                     AND spl.id IN
                     (
                     SELECT main_id FROM stocktaking_profit_loss_detail
-                    WHERE is_deleted=FALSE AND sku_id IN
-                    <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
-                        #{skuId}
+                    WHERE is_deleted=FALSE AND sku_no IN
+                    <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                        #{skuNo}
                     </foreach>
                     )
                 </if>

@@ -63,7 +63,7 @@ public class StocktakingProfitLossDTO implements Serializable {
         /**
          * skuId
          */
-        private List<String> skuIdList;
+        private List<String> skuNoList;
 
 
         /**

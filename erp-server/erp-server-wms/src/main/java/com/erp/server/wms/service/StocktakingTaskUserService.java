@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.model.wms.entity.StocktakingTaskUserEntity;
 import com.common.business.service.SuperService;
 
@@ -22,10 +23,10 @@ public interface StocktakingTaskUserService extends SuperService<StocktakingTask
     List<StocktakingTaskUserEntity> listBaseByTaskIds(List<String> taskIdList);
     /**
      * 分配任务盘点人
-     * @param taskIdList
+     * @param taskEntityList
      * @return
      */
-    Boolean assignUser(List<String> taskIdList, List<String> userIdList);
+    Boolean assignUser(List<StocktakingTaskEntity> taskEntityList, List<String> userIdList);
 
     /**
      * 根据用户获取多信息

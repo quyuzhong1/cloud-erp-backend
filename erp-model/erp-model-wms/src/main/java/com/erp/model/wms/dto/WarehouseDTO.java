@@ -483,6 +483,16 @@ public class WarehouseDTO implements Serializable {
         private String skuNo;
 
         /**
+         * spu no
+         */
+        private String spuNo;
+
+        /**
+         * 产品分类
+         */
+        private String category;
+
+        /**
          * 产品名称
          */
         private String productName;

@@ -3,9 +3,13 @@ package com.erp.server.wms.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.FindUserDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.OperateLogDTO;
+import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.model.wms.entity.StocktakingTaskUserEntity;
 import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.server.wms.mapper.StocktakingTaskUserMapper;
+import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.StocktakingTaskUserService;
 import com.common.business.service.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
@@ -16,6 +20,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -31,6 +36,8 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
 
     @Resource
     private UserInfoFeign userInfoFeign;
+    @Resource
+    private OperateLogService operateLogService;
 
     /**
      * 获取盘点人信息
@@ -50,12 +57,19 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean assignUser(List<String> taskIdList, List<String> userIdList) {
+    public Boolean assignUser(List<StocktakingTaskEntity> taskEntityList, List<String> userIdList) {
+        List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>(taskEntityList.size());
+
         List<FindUserDTO> userList = userInfoFeign.listByUserIds(userIdList);
+        List<String> taskIdList = taskEntityList.stream().map(StocktakingTaskEntity::getId).collect(Collectors.toList());
+        String moduleType = ModuleTypeEnum.STOCKTAKING_TASK.getCode();
         //第一步先删除
         this.removeByTaskIds(taskIdList);
         List<StocktakingTaskUserEntity> addList = new ArrayList<>(10);
-        for (String taskId : taskIdList) {
+        for (StocktakingTaskEntity task : taskEntityList) {
+            String taskId = task.getId();
+            String code = task.getCode();
+            List<String> userNameList = new ArrayList<>();
             for (String userId : userIdList) {
                 StocktakingTaskUserEntity taskUserEntity = new StocktakingTaskUserEntity();
                 taskUserEntity.setStocktakingTaskId(taskId);
@@ -64,10 +78,22 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
                         map(FindUserDTO::getUserName).findFirst().orElse("");
                 taskUserEntity.setUserName(userName);
                 addList.add(taskUserEntity);
+                userNameList.add(userName);
             }
 
+            OperateLogDTO.AddModuleOperateLogDTO operateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
+            operateLogDTO.setOperation("分配盘点人");
+            operateLogDTO.setBusinessId(taskId);
+            operateLogDTO.setModuleType(moduleType);
+            operateLogDTO.setBusinessId(taskId);
+            StringBuffer sb = new StringBuffer("盘点任务");
+            sb.append(code).append("  分配给").append(userNameList.stream().collect(Collectors.joining(",")));
+            operateLogDTO.setContent(sb.toString());
+            operateLogList.add(operateLogDTO);
         }
-        return this.saveBatch(addList);
+        Boolean result = this.saveBatch(addList);
+        operateLogService.batchAddModuleOperateLog(operateLogList);
+        return result;
     }
 
 
@@ -84,7 +110,7 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
         if (CollectionUtils.isNotEmpty(userIdList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(StocktakingTaskUserEntity::getUserId,userIdList).list();
+        return this.lambdaQuery().in(StocktakingTaskUserEntity::getUserId, userIdList).list();
     }
 
     public void removeByTaskIds(List<String> taskIdList) {
