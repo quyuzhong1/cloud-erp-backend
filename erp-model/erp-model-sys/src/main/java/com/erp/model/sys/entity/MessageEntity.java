@@ -45,13 +45,6 @@ public class MessageEntity extends BaseEntity<MessageEntity> {
     @TableField("remark")
     private String remark;
 
-    /**
-    * 是否已读
-    */
-    @TableField(exist = false)
-    private Boolean IsRead;
-
-
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
