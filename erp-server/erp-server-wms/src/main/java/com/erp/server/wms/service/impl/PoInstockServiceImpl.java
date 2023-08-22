@@ -1092,12 +1092,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             throw new ServiceException(ApiError.ERROR_98051);
         }
 
-        /**
-         * 委外关联子SKU订单逻辑
-         * 1.委外订单有下推【父+子】采购订单，且子采购订单未入库：则自动生成【子SKU】入库单，且生成【子SKU委外领料单】----父SKU入库成功
-         * 2.委外订单有未下推【子】采购订单，且子SKU有库存，则自动生成【子SKU委外领料单】----父SKU入库成功
-         * 3.委外订单有下推【父+子】采购订单，且子采购订单已入库【无论是否入库完成】，仅自动生成【子SKU委外领料单】---若库存充足则父SKU入库成功；子SKU库存不充足否则提示【子SKU领料失败，入库单未入库】，父SKU入库失败
-         */
         //委外订单明细父级SKU信息ids
         List<String> parentPodIds = poInstockDetailList.stream().filter(obj -> poInIds.contains(obj.getMainId())).map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
 
@@ -1111,18 +1105,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //查询bom信息
         List<String> skuIds = poInstockDetailList.stream().map(PoInstockDetailEntity::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
-
-        //自动审核采购订单
-        List<String> childPoIds = childList.stream().map(PurchaseOrderDTO.SubcontractOrderChildDTO::getChildPoId).distinct().collect(Collectors.toList());
-        //无子级采购订单无需自动入库
-        if (CollectionUtils.isNotEmpty(childPoIds)) {
-
-            scmTaskFeign.autoApprovePurchaseOrder(childPoIds);
-
-            log.info("生成入库单，childPoIds = {}",childPoIds);
-            //生成入库单
-            autoGeneratePoInstock(childList,poInstockDetailList,bomList,resultList);
-        }
 
         //生成领料出库单，需要按比例出库（父级SKU入库数量/父级SKU采购数量）（现没有领料出库单据，则直接调用领料库存变化逻辑）
         autoOutStockInventory(childList,poInstockDetailList,bomList,Boolean.TRUE);
@@ -1141,7 +1123,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         }
         /**
          * 1、回退领料出库库存
-         * 2、子级SKU入库单自动反审核
          */
 
         List<String> poInIds = resultList.stream().map(PoInstockEntity::getId).collect(Collectors.toList());
@@ -1164,18 +1145,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         //回退领料出库库存
         autoOutStockInventory(childList,poInstockDetailList,bomList,Boolean.FALSE);
-
-        //反审核子级SKU入库
-        List<String> childPoIds = childList.stream().filter(obj -> StringUtils.isNotBlank(obj.getChildPoId())).map(PurchaseOrderDTO.SubcontractOrderChildDTO::getChildPoId).distinct().collect(Collectors.toList());
-        List<PoInstockEntity> poInstockList = this.listByPoIds(childPoIds);
-        if (CollectionUtils.isEmpty(poInstockList)) {
-            return;
-        }
-        List<String> ids = poInstockList.stream().filter(obj -> ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PoInstockEntity::getId).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(ids)) {
-            return;
-        }
-        disApprove(ids);
     }
 
     /**
