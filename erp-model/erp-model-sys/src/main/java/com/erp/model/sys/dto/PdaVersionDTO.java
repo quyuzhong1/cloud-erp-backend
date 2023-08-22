@@ -21,8 +21,6 @@ import javax.validation.constraints.Size;
 public class PdaVersionDTO implements Serializable {
 
 
-
-
     /**
     * 详情
     */

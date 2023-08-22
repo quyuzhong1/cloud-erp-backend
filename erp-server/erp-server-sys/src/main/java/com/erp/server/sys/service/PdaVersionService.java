@@ -1,4 +1,5 @@
 package com.erp.server.sys.service;
+import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.entity.PdaVersionEntity;
 import com.common.business.service.SuperService;
 
@@ -20,4 +21,13 @@ public interface PdaVersionService extends SuperService<PdaVersionEntity> {
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.sys.entity.PdaVersionEntity>
      **/
     PdaVersionEntity getPdaVersion();
+
+    /**
+     * 发版
+     * @Author Luo_WG
+     * @Date 2023/8/22 16:46
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean release(PdaVersionDTO.AddDTO dto);
 }

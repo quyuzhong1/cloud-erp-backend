@@ -23,7 +23,6 @@ import lombok.experimental.Accessors;
 @TableName("pda_version")
 public class PdaVersionEntity extends BaseEntity<PdaVersionEntity> {
 
-
     /**
     * pda版本
     */
