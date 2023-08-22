@@ -74,13 +74,6 @@ public class ${table.controllerName} {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-    <#if dataPermission>
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "${modelName}<#if package.ModuleName??>:${package.ModuleName}</#if>:<#if controllerMappingHyphenStyle??>${controllerMappingHyphen}<#else>${table.entityPath}</#if>:add",
-        serviceClass = ${table.serviceName}.class,
-        keyIdName = "id")
-    </#if>
     public ApiResult<String> add(@RequestBody @Validated ${table.dtoName}.AddDTO dto) {
         return success(${serviceBean}.add(dto));
     }
@@ -149,13 +142,6 @@ public class ${table.controllerName} {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
-    <#if dataPermission>
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "${modelName}<#if package.ModuleName??>:${package.ModuleName}</#if>:<#if controllerMappingHyphenStyle??>${controllerMappingHyphen}<#else>${table.entityPath}</#if>:addAndSubmit",
-            serviceClass = ${table.serviceName}.class,
-            keyIdName = "id")
-    </#if>
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated ${table.dtoName}.AddDTO dto) {
         ${serviceBean}.addAndSubmit(dto);
         return success();

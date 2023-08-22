@@ -13,6 +13,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -425,8 +426,8 @@ public class StocktakingPlanDTO implements Serializable {
         /**
          * 盘点计划明细
          */
-        @NotNull(message = "盘点计划明细不能为空")
-        @Size(min = 1,message = "盘点计划明细不能为空")
+        @Valid
+        @NotEmpty(message = "盘点计划明细不能为空")
         private List<DetailDTO> detailList;
 
 
