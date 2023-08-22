@@ -1346,6 +1346,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     public WarehouseReceiveDTO.ViewDTO pdaView(String id) {
         WarehouseReceiveDTO.ViewDTO viewDTO = new WarehouseReceiveDTO.ViewDTO();
         WarehouseReceiveEntity warehouseReceiveEntity = this.getById(id);
+        if (ObjectUtils.isEmpty(warehouseReceiveEntity)) {
+            throw new ServiceException(ApiError.ERROR_99009);
+        }
         BeanMapperUtils.copy(warehouseReceiveEntity, viewDTO);
         //获取采购订单主表信息
         PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(warehouseReceiveEntity.getPurchaseOrderId());
@@ -1359,8 +1362,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         viewDTO.setSupplierContactId(orderSupplierByOrderId.getSupplierContactId());
 
         SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(orderSupplierByOrderId.getSupplierContactId());
-        viewDTO.setSupplierContactName(supplierContactById.getPerson());
-
+        if (ObjectUtils.isNotEmpty(supplierContactById)) {
+            viewDTO.setSupplierContactName(supplierContactById.getPerson());
+        }
         viewDTO.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
         viewDTO.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
         viewDTO.setPurchaseUserName(purchaseOrderEntity.getPurchaseUserName());
