@@ -49,8 +49,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
-    @Resource
-    private DictBasicService dictBasicService;
+
 
     @Resource
     private CustomerInfoService customerInfoService;
@@ -81,6 +80,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             Boolean result = handleAmazonShop(dto);
             return result;
         }
+        checkName("",dto.getName());
         if (shopify.getCode().equals(dictPlatform)) {
             if (StringUtils.isBlank(dto.getDomain())) {
                 throw new ServiceException("域名不能为空");
@@ -114,6 +114,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         List<ShopInfoEntity> addList = new ArrayList<>(countryIdList.size());
         //店铺名称
         String name = dto.getName();
+        checkName("", name);
         for (String countryId : countryIdList) {
             String countryName = countryList.stream().filter(c -> c.getId().equals(countryId)).findFirst().
                     map(DictCountryEntity::getNameCn).orElse("");
@@ -135,6 +136,20 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     /**
+     * 检查店铺名称是否存在
+     *
+     * @param id
+     * @param name
+     */
+    private void checkName(String id, String name) {
+        long count = this.lambdaQuery().eq(StringUtils.isNotBlank(id), ShopInfoEntity::getId, id).
+                eq(ShopInfoEntity::getName, name).last("LIMIT 1").count();
+        if (count > 0) {
+            throw new ServiceException(name + "店铺名已存在");
+        }
+    }
+
+    /**
      * 修改店铺
      *
      * @param dto
@@ -148,10 +163,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
-//        shopInfo.setCustomerCode(dto.getCustomerCode());
-//        shopInfo.setShopCode(dto.getShopCode());
-//        shopInfo.setPlatformDict(dto.getPlatformDict());
-//        shopInfo.setName(dto.getName());
+        shopInfo.setName(dto.getName());
+        shopInfo.setSalesOrgId(dto.getSalesOrgId());
+        shopInfo.setChargeId(dto.getChargeId());
         Boolean result = this.updateById(shopInfo);
         if (result) {
             return shopInfo.getId();
@@ -193,6 +207,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     /**
      * 店铺分页
+     *
      * @param dto
      * @return
      */

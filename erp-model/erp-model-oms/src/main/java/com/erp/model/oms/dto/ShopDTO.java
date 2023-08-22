@@ -154,7 +154,7 @@ public class ShopDTO implements Serializable {
         private String chargeId;
 
         /**
-         * 店铺负责人
+         * 销售组织
          */
         @NotBlank(message = "销售组织不能为空")
         private String salesOrgId;
@@ -298,10 +298,26 @@ public class ShopDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends AddDTO {
+    public static class UpdateDTO  {
 
         @NotBlank(message = "店铺表不能为空")
         private String id;
+
+        @NotBlank(message = "店铺名称不能为空")
+        @Size(max = 100, message = "店铺名称最大100字符")
+        private String name;
+
+        /**
+         * 店铺负责人
+         */
+        @NotBlank(message = "负责人不能为空")
+        private String chargeId;
+
+        /**
+         * 销售组织
+         */
+        @NotBlank(message = "销售组织不能为空")
+        private String salesOrgId;
 
     }
 }
