@@ -23,6 +23,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -305,7 +306,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
      * @return billStatus 单据状态
      */
     public Boolean updateStatus(StocktakingTaskEntity task, ApproveStatusEnum approveStatus, StocktakingStatusEnum billStatus) {
-        if (Objects.isNull(task)) {
+        if (Objects.nonNull(task)) {
             task.setApproveStatus(approveStatus);
             if (Objects.nonNull(billStatus)) {
                 task.setStatus(billStatus);
@@ -482,6 +483,49 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     }
 
     /**
+     * 获取到盘点任务 盘点数量为0 的
+     *
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.StocktakingTaskDTO.CheckResultDTO>
+     * @author yl
+     * @date 2023-08-22 10:36
+     */
+    @Override
+    public List<StocktakingTaskDTO.CheckResultDTO> checkQty(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Lists.newArrayList();
+        }
+        List<StocktakingTaskDTO.CheckResultDTO> resultList = baseMapper.listQtyZero(ids);
+        String userName = commonService.getUserInfo().getUserName();
+        String moduleType = ModuleTypeEnum.STOCKTAKING_TASK.getCode();
+        List<OperateLogDTO.AddModuleOperateLogDTO> addList = new ArrayList<>(10);
+        //以任务id分组
+        Map<String, List<StocktakingTaskDTO.CheckResultDTO>> map = resultList.stream().collect(Collectors.groupingBy(StocktakingTaskDTO.CheckResultDTO::getId));
+        for (Map.Entry<String, List<StocktakingTaskDTO.CheckResultDTO>> item : map.entrySet()) {
+            String taskId = item.getKey();
+            OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLog = new OperateLogDTO.AddModuleOperateLogDTO();
+            addModuleOperateLog.setBusinessId(taskId);
+            addModuleOperateLog.setOperation("确认操作");
+            StringBuffer sb = new StringBuffer();
+            sb.append(userName).append("确认了").append("盘点任务单");
+            List<StocktakingTaskDTO.CheckResultDTO> list = item.getValue();
+            String code = list.get(0).getCode();
+            sb.append(code);
+            for (StocktakingTaskDTO.CheckResultDTO detail : list) {
+                sb.append(detail.getSkuNo());
+                sb.append("盘点库存为0");
+            }
+            addModuleOperateLog.setContent(sb.toString());
+            addModuleOperateLog.setModuleType(moduleType);
+            addList.add(addModuleOperateLog);
+        }
+        if (CollectionUtils.isNotEmpty(addList)) {
+            operateLogService.batchAddModuleOperateLog(addList);
+        }
+        return resultList;
+    }
+
+    /**
      * 更改审核信息
      *
      * @param id
@@ -554,6 +598,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         if (apiResult.isSuccess()) {
             ApproveStatusEnum waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT;
             taskEntity.setApproveStatus(waitSubmitStatus);
+            taskEntity.setStatus(StocktakingStatusEnum.NOT_STARTED);
             Boolean result = this.updateById(taskEntity);
             if (result) {
                 List<Pair<String, String>> pairList = Arrays.asList(taskEntity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());

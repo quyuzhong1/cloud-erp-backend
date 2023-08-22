@@ -118,6 +118,19 @@ public class StocktakingTaskController extends BaseController {
         return success(resultDTOS);
     }
 
+
+    /**
+     * 检查 单号是否有SKU 盘点数量为0
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/checkQty")
+    public ApiResult<List<StocktakingTaskDTO.CheckResultDTO>> checkQty(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<StocktakingTaskDTO.CheckResultDTO> resultList=stocktakingTaskService.checkQty(dto.getIds());
+        return success(resultList);
+    }
+
     /**
      * 详情
      *

@@ -49,4 +49,12 @@ public interface StocktakingTaskMapper extends BaseMapper<StocktakingTaskEntity>
      * @return com.erp.model.wms.dto.StocktakingTaskDTO.ViewDTO
      */
     StocktakingTaskDTO.ViewDTO getViewById(@Param("id") String id);
+    /**
+     * 获取到盘点数量为0 的信息
+     * @author yl
+     * @date 2023-08-22 10:40
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.StocktakingTaskDTO.CheckResultDTO>
+     */
+    List<StocktakingTaskDTO.CheckResultDTO> listQtyZero(@Param("ids") List<String> ids);
 }

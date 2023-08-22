@@ -51,6 +51,35 @@ public class StocktakingTaskDTO implements Serializable {
 
     }
 
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CheckResultDTO {
+
+        /**
+         * 任务id
+         */
+        private String id;
+        /**
+         * 任务单号
+         */
+        private String code;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+    }
+
+
 
     /**
      * 分页参数
