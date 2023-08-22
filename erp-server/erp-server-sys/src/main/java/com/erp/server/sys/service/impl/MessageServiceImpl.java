@@ -60,7 +60,10 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         LoginUser userInfo = commonService.getUserInfo();
         String uid = userInfo.getUid();
         //获取所有消息通知
-        List<MessageEntity> list = lambdaQuery().orderByDesc(MessageEntity::getCreateTime).list();
+        MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
+        paramDTO.setUserId(userInfo.getUid());
+        List<MessageEntity> list = baseMapper.list(paramDTO);
+
         //获取已读的消息通知
         List<MessageUserReadEntity> messageUserReadEntities = messageUserReadService.listByUserId(uid);
         for (MessageTypeEnum typeEnum : MessageTypeEnum.values()) {
@@ -89,7 +92,10 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         List<MessageUserReadEntity> messageUserReadEntities = messageUserReadService.listByUserId(userInfo.getUid());
         List<String> messageIds = messageUserReadEntities.stream().map(req -> req.getMessageId()).collect(Collectors.toList());
         //获取所有消息通知
-        List<MessageEntity> list = this.listByType(type);
+        MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
+        paramDTO.setType(type);
+        paramDTO.setUserId(userInfo.getUid());
+        List<MessageEntity> list = baseMapper.list(paramDTO);
         for (MessageEntity messageEntity : list) {
             MessageDTO.NotReadMessageNumDetail notReadMessageNumDetail = new MessageDTO.NotReadMessageNumDetail();
             notReadMessageNumDetail.setId(messageEntity.getId());
@@ -113,7 +119,9 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         //获取已读的消息通知
         List<MessageUserReadEntity> messageUserReadEntities = messageUserReadService.listByUserId(userInfo.getUid());
         //获取所有消息通知
-        List<MessageEntity> list = this.list();
+        MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
+        paramDTO.setUserId(userInfo.getUid());
+        List<MessageEntity> list = baseMapper.list(paramDTO);
         readMessage(messageUserReadEntities, list);
         return Boolean.TRUE;
     }
@@ -138,17 +146,9 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         LoginUser userInfo = commonService.getUserInfo();
         List<String> messageIds = messageUserReadEntities.stream().map(req -> req.getMessageId()).collect(Collectors.toList());
         for (MessageEntity messageEntity : messageEntityList) {
-            if (MessageTypeEnum.sys.getCode().equals(messageEntity.getType())) {
-                MessageUserReadEntity messageUserReadEntity = new MessageUserReadEntity();
-                messageUserReadEntity.setMessageId(messageEntity.getId());
-                messageUserReadEntity.setUserId(userInfo.getUid());
-                messageUserReadEntity.setIsRead(Boolean.TRUE);
-                messageUserReadService.save(messageUserReadEntity);
-            } else {
-                //读取未读消息
-                if (!messageIds.contains(messageEntity.getId())) {
-                    messageUserReadService.readByMessageId(messageEntity.getId());
-                }
+            //读取未读消息
+            if (!messageIds.contains(messageEntity.getId())) {
+                messageUserReadService.readByMessageId(messageEntity.getId());
             }
         }
         redisService.deleteObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()));

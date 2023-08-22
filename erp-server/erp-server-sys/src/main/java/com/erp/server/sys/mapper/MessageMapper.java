@@ -32,4 +32,13 @@ public interface MessageMapper extends BaseMapper<MessageEntity> {
      **/
     List<MessageEntity> listByNotReadMessage(@Param("userId") String userId);
 
+    /**
+     * 条件查询消息信息
+     * @Author Luo_WG
+     * @Date 2023/8/22 16:27
+     * @param param
+     * @return java.util.List<com.erp.model.sys.entity.MessageEntity>
+     **/
+    List<MessageEntity> list(@Param("param") MessageDTO.PdaParamDTO param);
+
 }
