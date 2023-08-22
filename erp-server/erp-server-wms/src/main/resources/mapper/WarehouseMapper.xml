@@ -205,6 +205,9 @@
         where pd.is_deleted = false
         and pi.property not in ('服务','费用')
         and pd.status = 2
+        <if test="params.saleTimeList !=null and params.saleTimeList.size>0">
+            and tf.trade_time is not null
+        </if>
         <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
             AND inv.warehouse_id IN
             <foreach collection="params.warehouseIdList" item="item" open="(" separator="," close=")">

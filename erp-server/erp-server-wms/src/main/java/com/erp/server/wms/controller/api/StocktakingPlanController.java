@@ -2,7 +2,9 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -41,11 +43,11 @@ public class StocktakingPlanController extends BaseController {
     * @return
     */
     @PostMapping("/tabList")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingPlan:paging",
-//            tableAlias = ""
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingPlan:paging",
+            tableAlias = ""
+    )
     public ApiResult<List<StocktakingPlanDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(stocktakingPlanService.tabList(dto));
     }
@@ -58,11 +60,11 @@ public class StocktakingPlanController extends BaseController {
     * @return ApiResult<PagingVO<StocktakingPlanDTO.ListDTO>>
     */
     @PostMapping("/paging")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingPlan:paging",
-//            tableAlias = ""
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingPlan:paging",
+            tableAlias = ""
+    )
     public ApiResult<PagingVO<StocktakingPlanDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<StocktakingPlanDTO.PagingParamDTO> dto) {
         return success(stocktakingPlanService.paging(dto));
     }
@@ -78,8 +80,7 @@ public class StocktakingPlanController extends BaseController {
 //   @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //           tableField = "create_user_id",
 //           menuCode = "wms:stocktakingPlan:add",
-//           serviceClass = StocktakingPlanService.class,
-//           keyIdName = "id")
+//           serviceClass = StocktakingPlanService.class)
    public ApiResult<String> add(@RequestBody @Validated StocktakingPlanDTO.AddDTO dto) {
       return success(stocktakingPlanService.add(dto));
    }
@@ -92,11 +93,11 @@ public class StocktakingPlanController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/update")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingPlan:update",
-//            serviceClass = StocktakingPlanService.class,
-//            keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingPlan:update",
+            serviceClass = StocktakingPlanService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated StocktakingPlanDTO.UpdateDTO dto) {
         stocktakingPlanService.update(dto);
         return success();
@@ -128,11 +129,11 @@ public class StocktakingPlanController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/updateAndSubmit")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingPlan:updateAndSubmit",
-//            serviceClass = StocktakingPlanService.class,
-//            keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingPlan:updateAndSubmit",
+            serviceClass = StocktakingPlanService.class,
+            keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated StocktakingPlanDTO.UpdateDTO dto) {
         stocktakingPlanService.updateAndSubmit(dto);
         return success();
@@ -146,11 +147,11 @@ public class StocktakingPlanController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/submit")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingPlan:submit",
-//            serviceClass = StocktakingPlanService.class,
-//            keyIdName = "ids")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingPlan:submit",
+            serviceClass = StocktakingPlanService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -180,11 +181,11 @@ public class StocktakingPlanController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/approve")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingPlan:approve",
-//            serviceClass = StocktakingPlanService.class,
-//            keyIdName = "ids")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingPlan:approve",
+            serviceClass = StocktakingPlanService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -218,11 +219,11 @@ public class StocktakingPlanController extends BaseController {
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/disApprove")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingPlan:disApprove",
-//            serviceClass = StocktakingPlanService.class,
-//            keyIdName = "ids")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingPlan:disApprove",
+            serviceClass = StocktakingPlanService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -256,11 +257,11 @@ public class StocktakingPlanController extends BaseController {
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/delete")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingPlan:delete",
-//            serviceClass = StocktakingPlanService.class,
-//            keyIdName = "ids")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingPlan:delete",
+            serviceClass = StocktakingPlanService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -290,11 +291,11 @@ public class StocktakingPlanController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/cancelProcess")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingPlan:cancel",
-//            serviceClass = StocktakingPlanService.class,
-//            keyIdName = "ids")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingPlan:cancel",
+            serviceClass = StocktakingPlanService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -324,11 +325,11 @@ public class StocktakingPlanController extends BaseController {
     * @return ApiResult<StocktakingPlanDTO.ViewDTO>>
     */
     @GetMapping("/view")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingPlan:view",
-//            serviceClass = StocktakingPlanService.class,
-//            keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingPlan:view",
+            serviceClass = StocktakingPlanService.class,
+            keyIdName = "id")
     public ApiResult<StocktakingPlanDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(stocktakingPlanService.view(id));
     }
