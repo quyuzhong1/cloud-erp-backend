@@ -762,9 +762,13 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                     return groupKey;
                 }));
         // 4. 根据分组结果构建数据并保存盘点任务
-        inventoryMap.keySet().forEach(key -> {
+        // 避免多线程时，只有主线程才能获取到用户信息
+        LoginUser userInfo = commonService.getUserInfo();
+        String uid = userInfo.getUid();
+        String username = userInfo.getUserName();
+        inventoryMap.keySet().parallelStream().forEach(key -> {
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
-            StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code);
+            StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code,uid, username);
             this.save(insertTask);
             List<InventoryEntity> inventoryEntityList = inventoryMap.get(key);
             // 根据组织+仓库+仓位+skuId 进行分组 获取不同库存状态的库存记录
@@ -774,12 +778,12 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                 List<InventoryEntity> inventoryEntities = inventoryStatusMap.get(item);
                 WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(inventoryEntities.get(0).getWarehouseId());
                 String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : "";
-                StocktakingTaskDetailEntity detailEntity = new StocktakingTaskDetailEntity(inventoryEntities, insertTask.getId(), warehouseName);
+                StocktakingTaskDetailEntity detailEntity = new StocktakingTaskDetailEntity(inventoryEntities, insertTask.getId(), warehouseName, uid, username);
                 return detailEntity;
             }).collect(Collectors.toList());
             stocktakingTaskDetailService.saveBatch(insertDetailList, 500);
             String msg = StrUtil.format("由盘点计划【{}】自动生成盘点任务单号为【{}】单据", planCode, code);
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), insertTask.getId(), "新增单据");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), insertTask.getId(), "新增单据", uid, username);
         });
         return Boolean.TRUE;
     }

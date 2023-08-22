@@ -126,6 +126,14 @@ public class StocktakingTaskDetailEntity extends BaseEntity<StocktakingTaskDetai
         });
     }
 
+    public StocktakingTaskDetailEntity(List<InventoryEntity> inventoryEntities, String id, String warehouseName, String uid, String username) {
+        this(inventoryEntities, id, warehouseName);
+        super.setCreateUserId(uid);
+        super.setCreateUserName(username);
+        super.setUpdateUserId(uid);
+        super.setUpdateUserName(username);
+    }
+
     @Override
     public Serializable pkVal() {
         return null;

@@ -189,6 +189,20 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
 
     }
 
+    @Override
+    public Boolean addModuleOperateLog(String content, String moduleType, String businessId, String operation, String uid, String username) {
+        OperateLogEntity entity = new OperateLogEntity();
+        entity.setModuleType(moduleType)
+                .setBusinessId(businessId)
+                .setContent(content)
+                .setOperation(operation)
+                .setCreateUserId(uid)
+                .setCreateUserName(username)
+                .setUpdateUserId(uid)
+                .setUpdateUserName(username);
+        return this.save(entity);
+    }
+
     /**
      * 设置布尔值
      */

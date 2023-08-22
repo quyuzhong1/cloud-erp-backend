@@ -84,4 +84,15 @@ public interface OperateLogService extends SuperService<OperateLogEntity> {
       * @return void
       */
     void batchAddModuleOperateLog(List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList);
+
+    /**
+     * @description: 新增日志(带用户信息的日志记录) 用于记录用户操作日志
+     * @param content
+     * @param moduleType
+     * @param businessId
+     * @param operation
+     * @param uid
+     * @param username
+     */
+    Boolean addModuleOperateLog(String content, String moduleType, String businessId,String operation, String uid, String username);
 }
