@@ -2,6 +2,8 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.constant.RedisCacheConstants;
+import com.common.business.service.RedisService;
 import com.common.business.vo.LoginUser;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ObjectUtils;
@@ -9,6 +11,7 @@ import com.erp.model.sys.dto.MessageDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
 import com.erp.model.sys.enums.MessageTypeEnum;
+import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.server.sys.mapper.MessageMapper;
 import com.erp.server.sys.service.CommonService;
 import com.erp.server.sys.service.MessageService;
@@ -26,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +50,9 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private RedisService redisService;
 
     @Override
     public List<MessageDTO.NotReadMessageNum> listNotReadMessageNum() {
@@ -156,20 +163,27 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         List<String> typeList = messageEntities.stream().map(req -> MessageTypeEnum.getName(req.getType())).distinct().collect(Collectors.toList());
 
         MessageDTO.IsMessageDTO isMessageDTO = new MessageDTO.IsMessageDTO();
+
         if (CollectionUtils.isNotEmpty(messageEntities)) {
+            Integer cacheObject = redisService.getCacheObject(RedisKeyUtil.getCloseMessageNoticeKey(uid));
+            //表示有叉掉过消息通知
+            if (cacheObject != null) {
+                if (cacheObject  >= messageEntities.size()) {
+                    return isMessageDTO;
+                }
+            }
             isMessageDTO.setRemark(StrUtil.format("有{}条新的{}",messageEntities.size(), StringUtils.join(typeList, "/")));
         }
         return isMessageDTO;
     }
 
-    /**
-     * 查询未读消息
-     * @Author Luo_WG
-     * @Date 2023/8/17 14:17
-     * @param userId
-     * @return java.util.List<com.erp.model.sys.entity.MessageEntity>
-     **/
-    private List<MessageEntity> listByNotReadMessage(String userId) {
-        return baseMapper.listByNotReadMessage(userId);
+    @Override
+    public Boolean closeMessageNotice() {
+        LoginUser userInfo = commonService.getUserInfo();
+        String uid = userInfo.getUid();
+        List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(uid);
+        redisService.setCacheObject(RedisKeyUtil.getCloseMessageNoticeKey(uid), messageEntities.size(), RedisCacheConstants.EXPIRATION, TimeUnit.DAYS);
+        return Boolean.TRUE;
     }
+
 }

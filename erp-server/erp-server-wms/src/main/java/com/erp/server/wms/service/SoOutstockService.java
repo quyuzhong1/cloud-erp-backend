@@ -270,4 +270,12 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      */
     void handleKingdeeToErp(SoOutstockEntity soOutstock, List<SoOutstockDetailEntity> detailList, String flagId);
 
+    /**
+     * PDA:分页列表
+     * @Author Luo_WG
+     * @Date 2023/8/22 11:32
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoOutstockDTO.PdaPagingViewDTO>
+     **/
+    PagingVO<SoOutstockDTO.PdaPagingViewDTO> pdaPaging(PagingDTO<SoOutstockDTO.PdaPagingParamDTO> dto);
 }
