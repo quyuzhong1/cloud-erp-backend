@@ -12,6 +12,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FilterUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
@@ -180,6 +181,9 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         if (CollUtil.isEmpty(warehouseLocationList)) {
             return Lists.newArrayList();
         }
+        warehouseLocationList=warehouseLocationList.stream().distinct().
+                filter(FilterUtil.distinctByKey(WarehouseLocationEntity::getCode)).
+                collect(Collectors.toList());
 
         return warehouseLocationList.stream().map(warehouseLocation->{
             BaseDropDownDTO.CommonDTO data = new BaseDropDownDTO.CommonDTO();

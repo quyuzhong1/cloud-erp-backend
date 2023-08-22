@@ -222,9 +222,12 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO submit(String id) {
-        List<String> ids = Arrays.asList(id);
-        List<StocktakingTaskEntity> taskList = this.listByIds(ids);
-        String code = CollectionUtils.isNotEmpty(taskList) ? taskList.get(0).getCode() : "";
+        StocktakingTaskEntity task = this.getById(id);
+        if (Objects.isNull(task)) {
+            throw new ServiceException("盘点任务不存在");
+        }
+        String code = task.getCode();
+        ApproveStatusEnum approveStatus = task.getApproveStatus();
         //待审核
         ApproveStatusEnum waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT;
         //审核不通过
@@ -234,33 +237,31 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         List<ApproveStatusEnum> statusList = new ArrayList<>(2);
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
-        long count = taskList.stream().filter(s -> !statusList.contains(s.getApproveStatus())).count();
-        if (count > 0) {
+        if (!statusList.contains(approveStatus)) {
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
 
-        List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listBaseByMainIds(ids);
+        List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listBaseByMainIds(Arrays.asList(id));
         long zeroCount = taskDetailList.stream().filter(d -> d.getQty() < 0).count();
         if (zeroCount > 0) {
             throw new ServiceException("盘点数量不能为负数");
         }
         //启动审核流程
-        startProcess(taskList);
+        startProcess(task);
         //待提交的
-        List<Pair<String, String>> pairList = taskList.stream().filter(t -> waitSubmitStatus.equals(t.getApproveStatus())).
+        List<Pair<String, String>> pairList = Lists.newArrayList(task).stream().filter(t -> waitSubmitStatus.equals(t.getApproveStatus())).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
-        List<Pair<String, String>> rejectPairList = taskList.stream().filter(t -> rejectStatus.equals(t.getApproveStatus())).
+        List<Pair<String, String>> rejectPairList = Lists.newArrayList(task).stream().filter(t -> rejectStatus.equals(t.getApproveStatus())).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         //改状态
-        Boolean result = this.updateStatus(taskList, ingStatus, StocktakingStatusEnum.IN_PROGRESS);
+        Boolean result = this.updateStatus(task, ingStatus, StocktakingStatusEnum.IN_PROGRESS);
         // 查询盘点计划下其他单据是否全部审核完成
-        StocktakingTaskEntity entity = taskList.get(0);
-        List<StocktakingTaskEntity> stocktakingTaskEntities = listBySourceId(entity.getSourceId());
+        List<StocktakingTaskEntity> stocktakingTaskEntities = listBySourceId(task.getSourceId());
         // 全部审核完成 修改盘点计划单据状态
         StocktakingStatusEnum stocktakingStatus = isAllMatchStocktakingStatus(stocktakingTaskEntities);
         if (ObjectUtil.isNotEmpty(stocktakingStatus)) {
-            stocktakingPlanService.updateForStocktakingStatus(entity.getSourceId(), stocktakingStatus);
+            stocktakingPlanService.updateForStocktakingStatus(task.getSourceId(), stocktakingStatus);
         }
         if (result) {
             //添加日志
@@ -277,21 +278,19 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     /**
      * 启动流程
      *
-     * @param taskList
+     * @param task
      */
-    public void startProcess(List<StocktakingTaskEntity> taskList) {
+    public void startProcess(StocktakingTaskEntity task) {
         ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
         String userId = commonService.getUserInfo().getUid();
-        taskList.forEach(obj -> {
-            ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
-            startDTO.setBusinessId(obj.getId());
-            startDTO.setBusinessCode(obj.getCode());
-            startDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_TASK.getCode());
-            startDTO.setBusinessName(obj.getCode());
-            startDTO.setUserId(userId);
-            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
-            resultList.add(startDTO);
-        });
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(task.getId());
+        startDTO.setBusinessCode(task.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_TASK.getCode());
+        startDTO.setBusinessName(task.getCode());
+        startDTO.setUserId(userId);
+        startDTO.setVariablesMap(BeanUtil.beanToMap(task));
+        resultList.add(startDTO);
         ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
         if (!listApiResult.isSuccess()) {
             throw new ServiceException(listApiResult.getMsg());
@@ -301,19 +300,18 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     /**
      * 更改状态
      *
-     * @param taskList
+     * @param task
      * @param approveStatus 审核状态
      * @return billStatus 单据状态
      */
-    public Boolean updateStatus(List<StocktakingTaskEntity> taskList, ApproveStatusEnum approveStatus, StocktakingStatusEnum billStatus) {
-        if (CollectionUtils.isNotEmpty(taskList)) {
-            for (StocktakingTaskEntity item : taskList) {
-                item.setApproveStatus(approveStatus);
-                if (Objects.nonNull(billStatus)) {
-                    item.setStatus(billStatus);
-                }
+    public Boolean updateStatus(StocktakingTaskEntity task, ApproveStatusEnum approveStatus, StocktakingStatusEnum billStatus) {
+        if (Objects.isNull(task)) {
+            task.setApproveStatus(approveStatus);
+            if (Objects.nonNull(billStatus)) {
+                task.setStatus(billStatus);
             }
-            return this.updateBatchById(taskList);
+
+            return this.updateById(task);
         }
         return Boolean.TRUE;
     }
@@ -470,15 +468,16 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     /**
      * 根据code 获取任务信息
+     *
      * @param taskCode
      * @return
      */
     @Override
     public StocktakingTaskEntity getByCode(String taskCode) {
-        if(StringUtils.isBlank(taskCode)){
-          return null;
+        if (StringUtils.isBlank(taskCode)) {
+            return null;
         }
-        return this.lambdaQuery().eq(StocktakingTaskEntity::getCode,taskCode).
+        return this.lambdaQuery().eq(StocktakingTaskEntity::getCode, taskCode).
                 last("LIMIT 1").one();
     }
 
@@ -622,7 +621,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Transactional(rollbackFor = Exception.class)
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         List<WarehouseEntity> warehouseList = warehouseService.list();
-        StocktakingTaskExcelListener excelListener = new StocktakingTaskExcelListener(this,stocktakingTaskDetailService,warehouseList,operateLogService);
+        StocktakingTaskExcelListener excelListener = new StocktakingTaskExcelListener(this, stocktakingTaskDetailService, warehouseList, operateLogService);
         try {
             EasyExcel.read(excelFile.getInputStream(), StocktakingTaskDetailExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {

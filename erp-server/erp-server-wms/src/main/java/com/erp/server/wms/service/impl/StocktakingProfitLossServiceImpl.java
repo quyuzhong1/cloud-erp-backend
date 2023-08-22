@@ -181,6 +181,57 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         }
 
         //同步消息并
+        syncKingdee(addList);
+
+    }
+
+    /**
+     * 同步发生金蝶信息
+     *
+     * @param list
+     */
+    public void syncKingdee(List<StocktakingProfitLossEntity> list) {
+        for (StocktakingProfitLossEntity entity : list) {
+            //盘盈单
+            BillTypeEnum profit = BillTypeEnum.PROFIT;
+            //盘盈单
+            BillTypeEnum loss = BillTypeEnum.LOSS;
+            //是否盘盈
+            Boolean isProfit = Objects.equals(profit, entity.getBillType());
+            //是否盘亏
+            Boolean isLoss = Objects.equals(loss, entity.getBillType());
+
+            InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+            if (isProfit) {
+                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.STOCKTAKING_PROFIT.getCode());
+            }
+            if (isLoss) {
+                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.STOCKTAKING_LOSS.getCode());
+            }
+            List<InOutStockDTO> members = baseMapper.listInventoryInOut(Arrays.asList(entity.getId()));
+            InventoryStatusEnum inventoryStatus = InventoryStatusEnum.USABLE;
+            for (InOutStockDTO member : members) {
+                member.setSourceType(InventorySourceTypeEnum.STOCKTAKING_PROFIT_LOSS);
+                Integer qty = member.getQty();
+                member.setQty(Math.abs(qty));
+                member.setInventoryStatus(inventoryStatus);
+            }
+            if (CollectionUtils.isNotEmpty(members)) {
+                inventoryInOutStockDTO.setMembers(members);
+                //扣减库存
+                inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+            }
+
+
+            //盘盈单同步金蝶
+            if (isProfit) {
+                syncKingdeeStocktakingProfitService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+            }
+            //盘亏单同步金蝶
+            if (isLoss) {
+                syncKingdeeStocktakingLossService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+            }
+        }
 
     }
 
