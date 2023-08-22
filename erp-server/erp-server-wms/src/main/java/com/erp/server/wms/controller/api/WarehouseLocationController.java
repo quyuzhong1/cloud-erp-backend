@@ -90,61 +90,61 @@ public class WarehouseLocationController extends BaseController {
         warehouseLocationEntity.setParentId(areaId);
         warehouseLocationService.save(warehouseLocationEntity);
 
-        // 新增分区
-        warehouseLocationEntity = new WarehouseLocationEntity();
-        warehouseLocationEntity.setWarehouseId(warehouseId);
-        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.AREA.getCode());
-        warehouseLocationEntity.setCode(WarehouseLocationAreaTypeEnum.PICK.getCode());
-        warehouseLocationEntity.setName("暂存区");
-        warehouseLocationEntity.setStatus("");
-        warehouseLocationService.save(warehouseLocationEntity);
-
-
-        // 新增仓位
-        warehouseLocationEntity = new WarehouseLocationEntity();
-        warehouseLocationEntity.setWarehouseId(warehouseId);
-        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-        warehouseLocationEntity.setCode(StrUtil.format("{}000001", prefix));
-        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
-        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
-        warehouseLocationEntity.setParentId(areaId);
-        warehouseLocationService.save(warehouseLocationEntity);
-
-        warehouseLocationEntity = new WarehouseLocationEntity();
-        warehouseLocationEntity.setWarehouseId(warehouseId);
-        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-        warehouseLocationEntity.setCode(StrUtil.format("{}000002", prefix));
-        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
-        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
-        warehouseLocationEntity.setParentId(areaId);
-        warehouseLocationService.save(warehouseLocationEntity);
-
-        warehouseLocationEntity = new WarehouseLocationEntity();
-        warehouseLocationEntity.setWarehouseId(warehouseId);
-        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-        warehouseLocationEntity.setCode(StrUtil.format("{}000003", prefix));
-        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
-        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
-        warehouseLocationEntity.setParentId(areaId);
-        warehouseLocationService.save(warehouseLocationEntity);
-
-        warehouseLocationEntity = new WarehouseLocationEntity();
-        warehouseLocationEntity.setWarehouseId(warehouseId);
-        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-        warehouseLocationEntity.setCode(StrUtil.format("{}000004", prefix));
-        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
-        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
-        warehouseLocationEntity.setParentId(areaId);
-        warehouseLocationService.save(warehouseLocationEntity);
-
-        warehouseLocationEntity = new WarehouseLocationEntity();
-        warehouseLocationEntity.setWarehouseId(warehouseId);
-        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-        warehouseLocationEntity.setCode(StrUtil.format("{}000005", prefix));
-        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
-        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
-        warehouseLocationEntity.setParentId(areaId);
-        warehouseLocationService.save(warehouseLocationEntity);
+//        // 新增分区
+//        warehouseLocationEntity = new WarehouseLocationEntity();
+//        warehouseLocationEntity.setWarehouseId(warehouseId);
+//        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.AREA.getCode());
+//        warehouseLocationEntity.setCode(WarehouseLocationAreaTypeEnum.PICK.getCode());
+//        warehouseLocationEntity.setName("暂存区");
+//        warehouseLocationEntity.setStatus("");
+//        warehouseLocationService.save(warehouseLocationEntity);
+//
+//
+//        // 新增仓位
+//        warehouseLocationEntity = new WarehouseLocationEntity();
+//        warehouseLocationEntity.setWarehouseId(warehouseId);
+//        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
+//        warehouseLocationEntity.setCode(StrUtil.format("{}000001", prefix));
+//        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
+//        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
+//        warehouseLocationEntity.setParentId(areaId);
+//        warehouseLocationService.save(warehouseLocationEntity);
+//
+//        warehouseLocationEntity = new WarehouseLocationEntity();
+//        warehouseLocationEntity.setWarehouseId(warehouseId);
+//        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
+//        warehouseLocationEntity.setCode(StrUtil.format("{}000002", prefix));
+//        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
+//        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
+//        warehouseLocationEntity.setParentId(areaId);
+//        warehouseLocationService.save(warehouseLocationEntity);
+//
+//        warehouseLocationEntity = new WarehouseLocationEntity();
+//        warehouseLocationEntity.setWarehouseId(warehouseId);
+//        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
+//        warehouseLocationEntity.setCode(StrUtil.format("{}000003", prefix));
+//        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
+//        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
+//        warehouseLocationEntity.setParentId(areaId);
+//        warehouseLocationService.save(warehouseLocationEntity);
+//
+//        warehouseLocationEntity = new WarehouseLocationEntity();
+//        warehouseLocationEntity.setWarehouseId(warehouseId);
+//        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
+//        warehouseLocationEntity.setCode(StrUtil.format("{}000004", prefix));
+//        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
+//        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
+//        warehouseLocationEntity.setParentId(areaId);
+//        warehouseLocationService.save(warehouseLocationEntity);
+//
+//        warehouseLocationEntity = new WarehouseLocationEntity();
+//        warehouseLocationEntity.setWarehouseId(warehouseId);
+//        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
+//        warehouseLocationEntity.setCode(StrUtil.format("{}000005", prefix));
+//        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
+//        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
+//        warehouseLocationEntity.setParentId(areaId);
+//        warehouseLocationService.save(warehouseLocationEntity);
         return success();
     }
 

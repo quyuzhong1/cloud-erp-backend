@@ -34,6 +34,7 @@ public class EnumsUtil {
         EnumMessage inter[] = (EnumMessage[]) method.invoke(null, null);
         for (EnumMessage enumMessage : inter) {
             SINGLE_ENUM_MAP.put(enumMessage.getCode(), enumMessage);
+            SINGLE_ENUM_MAP.put(enumMessage.toString(), enumMessage);
         }
     }
 

@@ -60,6 +60,7 @@
         wt.type_id AS typeId,
         db."name" AS warehouseType,
         wl.code as warehouseLocation,
+        wl."name" as warehouseLocationName,
         wa.code as warehouseArea,
         wa."name" as warehouseAreaName
         FROM  "warehouse_location" wl
