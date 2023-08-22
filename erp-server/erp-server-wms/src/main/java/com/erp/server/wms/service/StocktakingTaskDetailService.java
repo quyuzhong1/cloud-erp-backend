@@ -99,4 +99,14 @@ public interface StocktakingTaskDetailService extends SuperService<StocktakingTa
      * @return com.erp.model.wms.entity.StocktakingTaskDetailEntity
      */
     StocktakingTaskDetailEntity getTaskDetail(String mainId, String skuNo, String warehouseId, String warehouseLocation);
+
+    /**
+     * 更改差异数量
+     * @author yl
+     * @date 2023-08-22 11:57
+     * @param taskDetailList
+     * @return void
+     */
+    
+    void updateQty(List<StocktakingTaskDetailEntity> taskDetailList);
 }

@@ -271,6 +271,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             //审核不通过
             String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), rejectPairList, "状态变更");
+
+            stocktakingTaskDetailService.updateQty(taskDetailList);
         }
         return BatchResultDTO.success(code, OperationTypeEnum.SUBMIT);
 
