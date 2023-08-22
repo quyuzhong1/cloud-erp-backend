@@ -224,10 +224,19 @@
         <if test="params.warehouseProductName !=null and params.warehouseProductName!=''">
             AND li.product_name ILIKE concat('%', #{params.warehouseProductName} ,'%')
         </if>
+        <if test="params.productName !=null and params.productName!=''">
+            AND sm.product_name ILIKE concat('%', #{params.productName} ,'%')
+        </if>
         <if test="params.warehouseSkuNoList !=null and params.warehouseSkuNoList.size>0">
             AND li.sku_no IN
             <foreach collection="params.warehouseSkuNoList" item="warehouseSkuNo" open="(" separator="," close=")">
                 #{warehouseSkuNo}
+            </foreach>
+        </if>
+        <if test="params.productSkuNoList !=null and params.productSkuNoList.size>0">
+            AND sm.product_sku_no IN
+            <foreach collection="params.productSkuNoList" item="productSkuNo" open="(" separator="," close=")">
+                #{productSkuNo}
             </foreach>
         </if>
         <if test="params.skuIdList !=null and params.skuIdList.size>0">
@@ -284,10 +293,19 @@
         <if test="params.warehouseProductName !=null and params.warehouseProductName!=''">
             AND li.product_name ILIKE concat('%', #{params.warehouseProductName} ,'%')
         </if>
+        <if test="params.productName !=null and params.productName!=''">
+            AND sm.product_name ILIKE concat('%', #{params.productName} ,'%')
+        </if>
         <if test="params.warehouseSkuNoList !=null and params.warehouseSkuNoList.size>0">
             AND li.sku_no IN
             <foreach collection="params.warehouseSkuNoList" item="warehouseSkuNo" open="(" separator="," close=")">
                 #{warehouseSkuNo}
+            </foreach>
+        </if>
+        <if test="params.productSkuNoList !=null and params.productSkuNoList.size>0">
+            AND sm.product_sku_no IN
+            <foreach collection="params.productSkuNoList" item="productSkuNo" open="(" separator="," close=")">
+                #{productSkuNo}
             </foreach>
         </if>
         <if test="params.skuIdList !=null and params.skuIdList.size>0">

@@ -24,7 +24,15 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
 
     IPage<SkuMappingDTO.PagingViewDTO> paging(Page query, @Param("params") SkuMappingDTO.PagingParamDTO params, @Param("matchResult") Boolean matchResult);
 
-    /*仓库的对照表*/
+     /**
+      * 库存SKU 分页
+      * @author yl
+      * @date 2023-08-22 12:25
+      * @param query
+      * @param params
+      * @param matchResult
+      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.oms.dto.SkuMappingDTO.WarehousePagingViewDTO>
+      */
     IPage<SkuMappingDTO.WarehousePagingViewDTO> warehousePaging(Page query, @Param("params") SkuMappingDTO.WarehousePagingParamDTO params,@Param("matchResult") Boolean matchResult);
 
     List<SkuMappingDTO.PagingViewDTO> listExport(@Param("params") SkuMappingDTO.ExportDTO params, @Param("matchResult")Boolean matchResult);
