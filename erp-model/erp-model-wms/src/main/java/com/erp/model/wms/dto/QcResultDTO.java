@@ -416,6 +416,11 @@ public class QcResultDTO {
         private String id;
 
         /**
+         * 质检单号
+         */
+        private String code;
+
+        /**
          * 来源单号
          */
         private String sourceCode;

@@ -278,4 +278,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoOutstockDTO.PdaPagingViewDTO>
      **/
     PagingVO<SoOutstockDTO.PdaPagingViewDTO> pdaPaging(PagingDTO<SoOutstockDTO.PdaPagingParamDTO> dto);
+
+    /**
+     * pda:列表状态数量统计
+     * @Author Luo_WG
+     * @Date 2023/8/22 14:53
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.PdaPoReceiveCountDTO>
+     **/
+    List<SoOutstockDTO.PdaCountDTO> pdaListCount(PermissionsDTO dto);
 }

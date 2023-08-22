@@ -308,4 +308,53 @@
           left join so_return_instock so on trr.code = so.code and so.is_deleted = false
         where so.approve_status = 'approve' limit 1000
     </select>
+
+    <select id="pdaPaging" resultType="com.erp.model.wms.dto.SoOutstockDTO$PdaPagingViewDTO">
+        SELECT
+        so.id,
+        so.code,
+        so.seller_name,
+        so.warehouse_name,
+        so.approve_status
+        FROM so_outstock so
+        WHERE so.is_deleted = false
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and so.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ORDER BY so.create_time desc
+    </select>
+
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+        count(distinct so.id)
+        FROM so_outstock_detail sod
+        INNER JOIN so_outstock so ON sod.main_id = so.id AND sod.is_deleted = FALSE
+        WHERE so.is_deleted = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and so.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.invalidStatus != null">
+            and so.invalid_status = #{params.invalidStatus}
+        </if>
+
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+
+    </select>
 </mapper>
