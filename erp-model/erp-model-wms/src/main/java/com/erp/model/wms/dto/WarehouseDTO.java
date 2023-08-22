@@ -364,7 +364,7 @@ public class WarehouseDTO implements Serializable {
         /**
          * 表id
          */
-        private String id;
+        private String warehouseId;
 
         /**
          * 金蝶仓库编号

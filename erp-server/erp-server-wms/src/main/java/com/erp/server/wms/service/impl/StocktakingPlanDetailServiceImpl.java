@@ -61,7 +61,7 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
         List<StocktakingPlanDetailEntity> insertList = detailList.stream().map(item -> {
             WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
             String orgName = orgMap.get(updateDTO.getOrgId());
-            return new StocktakingPlanDetailEntity(item, mainId,updateDTO, orgName);
+            return new StocktakingPlanDetailEntity(item, mainId, updateDTO, orgName);
         }).collect(Collectors.toList());
         // 批量插入
         this.saveBatch(insertList);
