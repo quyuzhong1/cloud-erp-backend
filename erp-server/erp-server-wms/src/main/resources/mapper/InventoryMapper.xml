@@ -328,19 +328,19 @@
         WHERE inv.is_deleted = false and inv.dict_inventory_status in ('usable','frozen')
         AND ( inv.qty > 0 OR (inv.qty = 0 AND tf.inventory_id IS NOT NULL) )
         <if test="type != null and type == 'byWarehouse' and null != params and params.size > 0">
-              and warehouse_id in
+              and inv.warehouse_id in
             <foreach collection="params" item="item" open="(" close=")" separator=",">
                 #{item.warehouseId}
             </foreach>
         </if>
         <if test="type != null and type == 'byLocation' and null != params and params.size > 0">
-            and (warehouse_id, warehouse_location)  in
+            and (inv.warehouse_id, inv.warehouse_location)  in
             <foreach collection="params" item="item" open="(" close=")" separator=",">
                 (#{item.warehouseId}, #{item.warehouseLocation})
             </foreach>
         </if>
         <if test="type != null and type == 'bySku' and null != params and params.size > 0">
-            and (warehouse_id, warehouse_location, sku_id) in
+            and (inv.warehouse_id, inv.warehouse_location, inv.sku_id) in
             <foreach collection="params" item="item" open="(" close=")" separator=",">
                 (#{item.warehouseId}, #{item.warehouseLocation}, #{item.skuId})
             </foreach>
