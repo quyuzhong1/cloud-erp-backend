@@ -61,13 +61,17 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         List<SoB2cDetailEntity> list = BeanMapperUtils.copyList(SoB2cDetailEntity.class, detailList);
         //处理明细中的数据id
         handleDetailList(list,mainId,Boolean.TRUE);
-
-
-        return null;
+        //批量新增
+        boolean flag = this.saveBatch(list);
+        return flag;
     }
 
     @Override
     public Boolean update(List<SoB2cDetailDTO.UpdateDTO> detailList, String mainId) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_1040, SourceTypeEnum.SO_B2C.getName());
+        }
+
         return null;
     }
 
