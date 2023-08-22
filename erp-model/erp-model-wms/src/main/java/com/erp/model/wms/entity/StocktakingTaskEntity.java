@@ -96,6 +96,14 @@ public class StocktakingTaskEntity extends BaseEntity<StocktakingTaskEntity> {
         this.approveStatus = ApproveStatusEnum.WAIT_SUBMIT;
     }
 
+    public StocktakingTaskEntity(StocktakingPlanEntity entity, String code, String uid, String username) {
+        this(entity, code);
+        super.setCreateUserId(uid);
+        super.setCreateUserName(username);
+        super.setUpdateUserId(uid);
+        super.setUpdateUserName(username);
+    }
+
     @Override
     public Serializable pkVal() {
         return null;
