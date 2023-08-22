@@ -1,6 +1,7 @@
 package com.erp.server.sys.controller.pda;
 
 import com.erp.model.sys.dto.MessageDTO;
+import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.entity.PdaVersionEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -15,8 +16,7 @@ import java.util.List;
 
 
 /**
- * 
- *
+ * 系统版本控制
  * @author Luo_WG
  * @since 2023-08-14
  */
@@ -37,5 +37,17 @@ public class PdaVersionController extends BaseController {
     public ApiResult<PdaVersionEntity> getPdaVersion() {
         PdaVersionEntity version = pdaVersionService.getPdaVersion();
         return success(version);
+    }
+
+    /**
+     * 发版
+     * @Author Luo_WG
+     * @Date 2023/8/14 16:27
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.sys.entity.PdaVersionEntity>
+     **/
+    @PostMapping(value = "/release")
+    public ApiResult release(@RequestBody PdaVersionDTO.AddDTO dto) {
+        Boolean flag = pdaVersionService.release(dto);
+        return flag == true ? success() : failure();
     }
 }
