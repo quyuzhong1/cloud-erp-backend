@@ -1143,4 +1143,54 @@ public class SoOutstockDTO implements Serializable {
          */
         private Integer qty;
     }
+
+    /**
+     * PDA:分页查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingViewDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名
+         */
+        private String approveStatusName;
+
+        /**
+         * 销售员
+         */
+        private String sellerName;
+
+        /**
+         * 仓库名
+         */
+        private String warehouseName;
+    }
+
+    /**
+     * PDA:列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingParamDTO extends SortDTO {
+        /**
+         * 审核状态：根据tab页传审核状态
+         */
+        private List<String> approveStatusList;
+
+    }
 }

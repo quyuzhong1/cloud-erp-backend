@@ -71,4 +71,16 @@ public class PdaMessageController extends BaseController {
         MessageDTO.IsMessageDTO isMessageDTO = messageService.isMessage();
         return success(isMessageDTO);
     }
+
+    /**
+     * 关闭消息通知
+     * @Author Luo_WG
+     * @Date 2023/8/22 12:18
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping(value = "/closeMessageNotice")
+    public ApiResult closeMessageNotice() {
+        Boolean flag = messageService.closeMessageNotice();
+        return flag == true ? success() : failure();
+    }
 }

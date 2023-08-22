@@ -59,4 +59,12 @@ public interface MessageService extends SuperService<MessageEntity> {
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.sys.dto.MessageDTO.IsMessageDTO>
      **/
     MessageDTO.IsMessageDTO isMessage();
+
+    /**
+     * 关闭消息通知
+     * @Author Luo_WG
+     * @Date 2023/8/22 12:18
+     * @return java.lang.Boolean
+     **/
+    Boolean closeMessageNotice();
 }

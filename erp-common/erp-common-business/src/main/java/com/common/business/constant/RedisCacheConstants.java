@@ -35,5 +35,8 @@ public interface RedisCacheConstants {
      */
     String WMS_DICT_KEY = "wms_dict";
 
-
+    /**
+     * pda用户叉掉消息通知的 key
+     */
+    String CLOSE_MESSAGE_NOTICE_KEY = "close_message_notice:";
 }
