@@ -89,6 +89,24 @@ public class MessageDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class IsMessageDTO {
-        private String remark;
+        public String remark;
+    }
+
+    /**
+     * 条件查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaParamDTO {
+        /**
+         * 用户id
+         */
+        public String userId;
+
+        /**
+         * 类型
+         */
+        public String type;
+
     }
 }

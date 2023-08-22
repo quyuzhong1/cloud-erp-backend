@@ -2,10 +2,7 @@ package com.erp.server.wms.controller.pda;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -23,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -156,4 +154,114 @@ public class PdaSoOutstockController extends BaseController {
         return result ? success() : failure();
     }
 
+    /**
+     * 修改并提交
+     * @Author Luo_WG
+     * @Date 2023/8/22 15:47
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaSoOutstock:update",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "id"
+    )
+    public ApiResult updateAndSubmit(@RequestBody @Validated SoOutstockDTO.UpdateDTO dto) {
+        Boolean result = soOutstockService.updateAndSubmit(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 审核
+     * @Author Luo_WG
+     * @Date 2023/8/22 15:47
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaSoOutstock:approve",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        Boolean result = soOutstockService.approve(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 反审核
+     * @Author Luo_WG
+     * @Date 2023/8/22 15:47
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaSoOutstock:disApprove",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean result = soOutstockService.disApprove(dto, Boolean.TRUE);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 撤销流程
+     * @Author Luo_WG
+     * @Date 2023/8/22 15:48
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaSoOutstock:cancelProcess",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "ids")
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = soOutstockService.cancelProcess(dto.getIds());
+        return result ? success() : failure();
+    }
+
+    /**
+     * 删除
+     * @Author Luo_WG
+     * @Date 2023/8/22 15:48
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaSoOutstock:delete",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "ids")
+    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean result = soOutstockService.delete(dto.getIds());
+        return result ? success() : failure();
+    }
+
+    /**
+     * 作废
+     * @Author Luo_WG
+     * @Date 2023/8/22 15:48
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaSoOutstock:invalid",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "ids")
+    public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        Boolean result = soOutstockService.invalid(dto.getIds(), dto.getRemark());
+        return result ? success() : failure();
+    }
 }

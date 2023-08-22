@@ -33,9 +33,34 @@
         FROM message m
         LEFT JOIN message_user_read mur on m.id = mur.message_id AND mur.is_deleted = FALSE
         WHERE M.is_deleted = FALSE
-        AND (mur.is_read = FALSE OR mur.message_id IS NULL)
+        AND mur.is_read = FALSE
         <if test="userId != null and userId != ''">
-            AND (mur.user_id = #{userId} OR mur.message_id IS NULL)
+            AND mur.user_id = #{userId}
+        </if>
+    </select>
+
+    <select id="list" resultType="com.erp.model.sys.entity.MessageEntity">
+        SELECT
+            m.id,
+            m.create_user_id,
+            m.create_user_name,
+            m.create_time,
+            m.update_user_id,
+            m.update_user_name,
+            m.update_time,
+            m.version,
+            m.is_deleted,
+            m.type,
+            m.data_json,
+            m.remark
+        FROM message m
+        LEFT JOIN message_user_read mur on m.id = mur.message_id AND mur.is_deleted = FALSE
+        WHERE m.is_deleted = FALSE
+        <if test="param.userId != null and param.userId != ''">
+            AND mur.user_id = #{param.userId}
+        </if>
+        <if test="param.type != null and param.type != ''">
+            AND m.type = #{param.type}
         </if>
     </select>
 </mapper>
