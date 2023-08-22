@@ -116,6 +116,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private SoOutstockService soOutstockService;
 
     @Resource
+    private SoOutstockDetailService soOutstockDetailService;
+
+    @Resource
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Resource
@@ -936,5 +939,35 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return deliveryNoticeList.stream().collect(Collectors.groupingBy(SoDeliveryNoticeEntity::getSourceId, Collectors.counting()));
     }
 
+    @Override
+    public List<SoDeliveryNoticeDTO.PdaSoDeliveryNotice> pdaList(SoDeliveryNoticeDTO.PdaSoDeliveryNoticeParam dto) {
+        List<SoDeliveryNoticeDTO.PdaSoDeliveryNotice> list = baseMapper.pdaList(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        List<String> dnIds = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailByMainIds(dnIds);
+        List<String> dndIds = noticeDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
 
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySourceDetailId(dndIds);
+        //获取未全部入库的采购收货详情id
+        List<String> receiveDetailIds = new ArrayList<>();
+        soOutstockDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getSourceDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+            int stockInQty = m.stream().mapToInt(SoOutstockDetailEntity::getActualQty).sum();
+            SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = noticeDetailEntities.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getSourceDetailId())).findFirst().orElse(new SoDeliveryNoticeDetailEntity());
+            if (stockInQty < soDeliveryNoticeDetailEntity.getDeliveryQty()) {
+                receiveDetailIds.add(m.get(MathUtil.ZERO).getSourceDetailId());
+            }
+            return m;
+        })));
+        //根据未发货的发货通知单详情id获取未入库收货单id
+        List<SoOutstockDetailEntity> soOutstockDetailEntitieList = soOutstockDetailService.listByIds(receiveDetailIds);
+        List<String> notAllsoOutstockDetailIds = soOutstockDetailEntitieList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+
+        //获取到未发货的发货通知单返回数据
+        List<SoDeliveryNoticeDTO.PdaSoDeliveryNotice> soDeliveryNoticeList = list.stream().filter(req -> notAllsoOutstockDetailIds.contains(req.getId())).collect(Collectors.toList());
+        soDeliveryNoticeList.sort(Comparator.comparing(SoDeliveryNoticeDTO.PdaSoDeliveryNotice::getCode).reversed());
+        list.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
+        return list;
+    }
 }
