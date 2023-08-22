@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.server.oms.mapper.SoB2cReceiverMapper;
@@ -22,11 +23,22 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
 
     @Override
     public Boolean add(SoB2cReceiverDTO.AddDTO receiverDTO, String mainId) {
-        return null;
+        SoB2cReceiverEntity entity = new SoB2cReceiverEntity();
+        BeanMapperUtils.copy(receiverDTO,entity);
+        entity.setMainId(mainId);
+        return this.save(entity);
     }
 
     @Override
     public Boolean update(SoB2cReceiverDTO.UpdateDTO receiverDTO, String mainId) {
-        return null;
+        SoB2cReceiverEntity entity = new SoB2cReceiverEntity();
+        BeanMapperUtils.copy(receiverDTO,entity);
+        entity.setMainId(mainId);
+        return this.updateById(entity);
+    }
+
+    @Override
+    public SoB2cReceiverEntity getByMainId(String mainId) {
+        return lambdaQuery().eq(SoB2cReceiverEntity::getId,mainId).one();
     }
 }

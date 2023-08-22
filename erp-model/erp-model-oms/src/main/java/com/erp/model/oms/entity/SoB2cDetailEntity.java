@@ -29,107 +29,113 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     * 主表id
     */
     @TableField("main_id")
-        private String mainId;
+     private String mainId;
     /**
     * 图片URL
     */
     @TableField("image_url")
-        private String imageUrl;
+    private String imageUrl;
     /**
     * skuId
     */
     @TableField("sku_id")
-        private String skuId;
+     private String skuId;
     /**
     * 产品sku编号
     */
     @TableField("sku_no")
-        private String skuNo;
+    private String skuNo;
     /**
     * 卖家sku编号
     */
     @TableField("seller_sku_no")
-        private String sellerSkuNo;
+     private String sellerSkuNo;
     /**
     * 平台sku编号
     */
     @TableField("platform_sku_no")
-        private String platformSkuNo;
+     private String platformSkuNo;
     /**
     * 库存sku编号
     */
     @TableField("stock_sku_no")
-        private String stockSkuNo;
+     private String stockSkuNo;
     /**
     * 数量
     */
     @TableField("qty")
-        private Integer qty;
+     private Integer qty;
     /**
     * 仓库id
     */
     @TableField("warehouse_id")
-        private String warehouseId;
+     private String warehouseId;
     /**
     * 仓库名称
     */
     @TableField("warehouse_name")
-        private String warehouseName;
+     private String warehouseName;
     /**
     * 单价
     */
     @TableField("price")
-        private BigDecimal price;
+    private BigDecimal price;
     /**
     * 金额
     */
     @TableField("amount")
-        private BigDecimal amount;
+    private BigDecimal amount;
     /**
     * 币别（原币）
     */
     @TableField("currency")
-        private String currency;
+     private String currency;
     /**
     * 汇率
     */
     @TableField("exchange_rate")
-        private BigDecimal exchangeRate;
+    private BigDecimal exchangeRate;
     /**
     * 建议售价（本位币）
     */
     @TableField("advice_price")
-        private BigDecimal advicePrice;
+    private BigDecimal advicePrice;
     /**
     * 含税成本（本位币）
     */
     @TableField("tax_cost")
-        private BigDecimal taxCost;
+     private BigDecimal taxCost;
     /**
     * 来源明细id
     */
     @TableField("source_detail_id")
-        private String sourceDetailId;
+    private String sourceDetailId;
     /**
     * 标签json
     */
     @TableField("label_json")
-        private String labelJson;
+    private String labelJson;
     /**
     * 对应金蝶详情id
     */
     @TableField("kingdee_detail_id")
-        private String kingdeeDetailId;
+     private String kingdeeDetailId;
     /**
     * 库存组织id
     */
     @TableField("warehouse_org_id")
-        private String warehouseOrgId;
+    private String warehouseOrgId;
     /**
     * 库存组织名称
     */
     @TableField("warehouse_org_name")
-        private String warehouseOrgName;
+    private String warehouseOrgName;
+
+    /**
+     * 库位
+     */
+    @TableField("warehouse_location")
+    private String warehouseLocation;
 
 
     public static final String MAIN_ID = "main_id";

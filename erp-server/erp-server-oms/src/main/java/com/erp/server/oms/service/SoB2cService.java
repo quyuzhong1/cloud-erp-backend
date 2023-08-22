@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.B2cSoCategoryTypeEnum;
 
 import java.util.List;
 
@@ -121,11 +122,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @author Will
      * @date: 2023/8/18 15:47
      * @param id
-     * @param type
+     * @param typeEnum
      * @param categoryIdList
      * @return BatchResultDTO
      */
-    BatchResultDTO updateCategory(String id, String type, List<String> categoryIdList);
+    BatchResultDTO updateCategory(String id, B2cSoCategoryTypeEnum typeEnum, List<String> categoryIdList);
     /**
      * @description: 订单配货数据显示
      * @author Will

@@ -306,7 +306,7 @@ public class SoB2cController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO updateRemarkResult;
             try {
-                updateRemarkResult = soB2cService.updateCategory(id,dto.getType(),dto.getCategoryIdList());
+                updateRemarkResult = soB2cService.updateCategory(id,dto.getTypeEnum(),dto.getCategoryIdList());
             } catch (Exception e){
                 log.error("B2C销售订单修改分类失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);

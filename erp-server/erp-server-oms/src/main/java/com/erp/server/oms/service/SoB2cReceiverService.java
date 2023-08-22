@@ -33,4 +33,12 @@ public interface SoB2cReceiverService extends SuperService<SoB2cReceiverEntity> 
      * @return Boolean
      */
     Boolean update(SoB2cReceiverDTO.UpdateDTO receiverDTO, String mainId);
+    /**
+     * @description: 根据主表id查询
+     * @author Will
+     * @date: 2023/8/22 11:16
+     * @param mainId
+     * @return SoB2cReceiverEntity
+     */
+    SoB2cReceiverEntity getByMainId(String mainId);
 }

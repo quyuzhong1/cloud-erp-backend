@@ -715,6 +715,7 @@ public enum ApiError implements Serializable {
     ERROR_SUB_CHILD_LOCATION_BLANK(99088,"委外订单子SKU【{}】仓位不能为空"),
     // 已下推退货入库单不能反审核
     ERROR_RETURN_ORDER_PUSHED(99089, "已下推退货入库单，不能反审核"),
+    ERROR_WAREHOUSE_NOT_EXIST_ORG(99090, "仓库【{}】下未发现库存组织"),
 
 
     /**
@@ -784,9 +785,34 @@ public enum ApiError implements Serializable {
     ERROR_92059(92059,"要货日期必须大于单据日期"),
     ERROR_KINGDEE_CODE_NOT_EXIST(92059,"金蝶单号不存在"),
     ERROR_SO_RETURN_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
+    ERROR_SO_B2C_NOT_EXIST(92061,"未找到B2C销售订单"),
+    ERROR_SO_B2C_LOGISTICS_NOT_EXIST(92062,"未找到B2C销售订单物流信息"),
+    ERROR_SO_B2C_HAND_DISTRIBUTION(92063,"只有待配货和配货中数据允许手动配货"),
+    ERROR_SO_B2C_LOGISTICS_CODE(92064,"B2C销售订单【{}】不支持获取物流单号"),
+    ERROR_SO_B2C_DETAIL_NOT_EXIST(92065,"未找到B2C销售订单明细信息"),
+    ERROR_SO_B2C_WAREHOUSE_COMPLEX(92066,"B2C销售订单【{}】存在多个发货仓库不支持提交发货"),
+    ERROR_SO_B2C_NOT_INVENTORY(92067,"B2C销售订单【{}】未找到可用库存"),
+    ERROR_SO_B2C_SKU_NOT_INVENTORY(92068,"B2C销售订单【{}】SKU【{}】仓库【{}】未找到可用库存"),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),
+
+
+
     ;
 
     public Integer code;

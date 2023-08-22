@@ -8,8 +8,6 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import java.util.List;
-
 /**
  * <p>
  * B2C销售订单表 Mapper 接口
@@ -35,12 +33,13 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
     * @return
     */
     Integer listCount(@Param("params") SoB2cDTO.PagingParamDTO params);
-
     /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<SoB2cDTO.ListDTO> listExport(@Param("params") SoB2cDTO.ExportDTO params);
-
+     * @description: 合并分页查询
+     * @author Will
+     * @date: 2023/8/22 16:10
+     * @param query
+     * @param params
+     * @return IPage<MergeListDTO>
+     */
+    IPage<SoB2cDTO.MergeListDTO> mergePaging(Page query, @Param("params")SoB2cDTO.MergePagingParamDTO params);
 }

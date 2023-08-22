@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.oms.enums.B2cSoCategoryTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -490,7 +491,7 @@ public class SoB2cDTO implements Serializable {
          * 编辑分类类型
          */
         @NotBlank(message = "类型不能为空")
-        private String type;
+        private B2cSoCategoryTypeEnum typeEnum;
 
         /**
          * 分类id集合
@@ -614,9 +615,9 @@ public class SoB2cDTO implements Serializable {
         private String receiverName;
 
         /**
-         * 收货地址
+         * 收货地址(收货地址1+收货地址2+收货地址3)
          */
-        private String firstAddress;
+        private String address;
 
         /**
          * 平台集合
@@ -628,9 +629,9 @@ public class SoB2cDTO implements Serializable {
         private List<String> shopIdList;
 
         /**
-         * 国家集合
+         * 国家id集合
          */
-        private List<String> countryList;
+        private List<String> countryIdList;
 
     }
 
@@ -640,10 +641,14 @@ public class SoB2cDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class MergeListDTO {
-       /**
-        * 平台名称
-        */
-       private String platformName;
+        /**
+         * 平台编码
+         */
+       private String dictPlatform;
+        /**
+         * 店铺id
+         */
+        private String shopId;
         /**
          * 店铺名称
          */
@@ -786,6 +791,11 @@ public class SoB2cDTO implements Serializable {
          * 出货仓库
          */
         private String warehouseName;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
     }
 
 

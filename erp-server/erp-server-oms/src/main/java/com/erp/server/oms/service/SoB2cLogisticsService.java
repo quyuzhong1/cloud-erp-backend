@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -33,4 +35,20 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @return Boolean
      */
     Boolean update(SoB2cLogisticsDTO.UpdateDTO logisticsDTO, String mainId);
+    /**
+     * @description: 根据主表id查询
+     * @author Will
+     * @date: 2023/8/22 11:13
+     * @param mainId
+     * @return SoB2cLogisticsEntity
+     */
+    SoB2cLogisticsEntity getByMainId(String mainId);
+    /**
+     * @description: 根据主表ids查询
+     * @author Will
+     * @date: 2023/8/22 14:44
+     * @param ids
+     * @return List<SoB2cLogisticsEntity>
+     */
+    List<SoB2cLogisticsEntity> listByMainIds(List<String> ids);
 }

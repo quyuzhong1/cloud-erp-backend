@@ -35,4 +35,31 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @return Boolean
      */
     Boolean update(List<SoB2cDetailDTO.UpdateDTO> detailList, String mainId);
+
+    /**
+     * @description: 根据主表id查询
+     * @author Will
+     * @date: 2023/8/22 11:04
+     * @param mainId
+     * @return List<SoB2cDetailEntity>
+     */
+    List<SoB2cDetailEntity> listByMainId(String mainId);
+
+    /**
+     * @description: 根据主表ids查询
+     * @author Will
+     * @date: 2023/8/22 11:04
+     * @param mainIds
+     * @return List<SoB2cDetailEntity>
+     */
+    List<SoB2cDetailEntity> listByMainIds(List<String> mainIds);
+    /**
+     * @description: 根据明细id更新仓库id
+     * @author Will
+     * @date: 2023/8/22 15:40
+     * @param mainId
+     * @param warehouseId
+     * @return Boolean
+     */
+    Boolean updateWarehouseIdByMainId(String mainId, String warehouseId);
 }
