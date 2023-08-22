@@ -117,6 +117,11 @@ public class StocktakingTaskExcelListener extends AnalysisEventListener<Stocktak
         if(!statusList.contains(status)){
             errorMsgList.add("只有复盘中,未开始的盘点任务才能修改盘点库存");
         }
+        if (errorMsgList.size() > 0) {
+            excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(excelDTO);
+            return;
+        }
 
         OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLog = new OperateLogDTO.AddModuleOperateLogDTO();
         StringBuffer sb = new StringBuffer("盘点任务单");

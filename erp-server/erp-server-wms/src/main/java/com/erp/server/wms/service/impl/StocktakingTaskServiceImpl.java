@@ -388,13 +388,6 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         if (stocktakingTaskEntities.stream().allMatch(task -> Objects.equals(task.getStatus(), StocktakingStatusEnum.COMPLETED))) {
             stocktakingPlanService.updateForStocktakingStatus(entity.getSourceId(), StocktakingStatusEnum.COMPLETED);
         }
-        if (Objects.equals(approveType, ApproveTypeEnum.PASS)) {
-            // 盘点任务审核完成 删除库存锁定缓存
-            stocktakingTaskDetailService.listByMainId(entity.getId()).forEach(detail -> {
-                // 移除库存锁定缓存
-                redisUtil.keys(StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getSourceCode(), "*", detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*")).forEach(redisUtil::del);
-            });
-        }
         return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
@@ -464,6 +457,11 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         }
         Boolean result = updateForApprove(entity.getId(), approveStatus, billStatus);
         if (result && isPass) {
+            // 盘点任务审核完成 删除库存锁定缓存
+            stocktakingTaskDetailService.listByMainId(entity.getId()).forEach(detail -> {
+                // 移除库存锁定缓存
+                redisUtil.keys(StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getSourceCode(), "*", detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*")).forEach(redisUtil::del);
+            });
             stocktakingProfitLossService.autoCreateBill(entity);
         }
         return result;

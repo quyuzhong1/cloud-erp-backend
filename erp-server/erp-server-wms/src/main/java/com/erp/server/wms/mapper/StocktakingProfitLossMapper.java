@@ -49,7 +49,7 @@ public interface StocktakingProfitLossMapper extends BaseMapper<StocktakingProfi
      * @param taskIdList
      * @return java.util.List<com.erp.model.wms.dto.StocktakingProfitLossDTO.PagingViewDTO>
      */
-    List<StocktakingProfitLossDTO.PagingViewDTO> listExport(@Param("params") StocktakingProfitLossDTO.ExportDTO params,@Param("billType") String billType, @Param("sourceIdList")List<String> taskIdList);
+    List<StocktakingProfitLossDTO.ExportViewDTO> listExport(@Param("params") StocktakingProfitLossDTO.ExportDTO params,@Param("billType") String billType, @Param("sourceIdList")List<String> taskIdList);
     /**
      * 获取到扣减库存所需的参数
      * @author yl

@@ -74,12 +74,14 @@ public class StocktakingTaskController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:stocktakingTask:paging",
-            tableAlias = "ti"
+            tableAlias = "st"
     )
     public ApiResult<PagingVO<StocktakingTaskDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<StocktakingTaskDTO.PagingParamDTO> dto) {
         PagingVO<StocktakingTaskDTO.PagingViewDTO> pagingVO = stocktakingTaskService.paging(dto);
         return success(pagingVO);
     }
+
+
 
 
     /**
@@ -111,9 +113,8 @@ public class StocktakingTaskController extends BaseController {
                     continue;
                 }
                 submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
-                resultDTOS.add(submit);
             }
-
+            resultDTOS.add(submit);
         }
         return success(resultDTOS);
     }
@@ -170,13 +171,6 @@ public class StocktakingTaskController extends BaseController {
             BatchResultDTO submit;
             try {
                 submit=stocktakingTaskService.approve(id,new ApproveOneDTO(id, dto.getType(),dto.getComment()));
-                // 删除缓存
-                List<StocktakingTaskDetailDTO.ViewDTO> detailList = stocktakingTaskDetailService.listByMainId(id);
-                detailList.forEach(detail -> {
-                    String key = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getCode(), "*",
-                            detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*");
-                    redisUtil.del(key);
-                });
             }catch (Exception e){
                 log.error("盘点任务 审核失败>>>>{}",e);
                 if (ObjectUtil.isEmpty(entity)) {
@@ -185,8 +179,8 @@ public class StocktakingTaskController extends BaseController {
                     continue;
                 }
                 submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
-                resultDTOS.add(submit);
             }
+            resultDTOS.add(submit);
         }
         return success(resultDTOS);
     }
@@ -220,8 +214,8 @@ public class StocktakingTaskController extends BaseController {
                     continue;
                 }
                 submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
-                resultDTOS.add(submit);
             }
+            resultDTOS.add(submit);
         }
         return success(resultDTOS);
     }
