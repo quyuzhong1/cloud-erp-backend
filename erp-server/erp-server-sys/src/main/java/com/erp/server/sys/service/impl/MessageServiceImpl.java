@@ -150,8 +150,8 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
                     messageUserReadService.readByMessageId(messageEntity.getId());
                 }
             }
-
         }
+        redisService.deleteObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()));
     }
 
     @Override
