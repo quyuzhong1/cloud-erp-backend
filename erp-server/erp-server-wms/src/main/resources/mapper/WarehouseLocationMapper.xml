@@ -51,7 +51,7 @@
     </select>
     <select id="pagingByParams" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$PagingViewDTO">
         SELECT
-        wl.id,
+        wl.id as warehouseLocationId,
         wt.id as warehouseId,
         wt.name as warehouseName,
         wt.disabled,

@@ -134,7 +134,7 @@
     </select>
     <select id="pagingNoPermission" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingNoPermissionDTO">
         SELECT
-        id,
+        id AS warehouseId,
         name,
         type_id AS typeId ,
         disabled,

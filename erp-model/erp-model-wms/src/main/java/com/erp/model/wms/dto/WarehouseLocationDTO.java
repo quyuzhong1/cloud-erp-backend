@@ -173,7 +173,7 @@ public class WarehouseLocationDTO implements Serializable {
         /**
          * 仓位id
          */
-        private String id;
+        private String warehouseLocationId;
 
         /**
          * 仓位编码

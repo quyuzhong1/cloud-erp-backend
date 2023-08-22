@@ -51,7 +51,9 @@
             dbt."name" as warehouseTypeName,
             pdt."name" as productName,
             SUM(CASE WHEN inv.dict_inventory_status ='usable' THEN inv.qty ELSE 0 END) as usableQty,
-            SUM(CASE WHEN inv.dict_inventory_status ='frozen' THEN inv.qty ELSE 0 END) as frozenQty
+            SUM(CASE WHEN inv.dict_inventory_status ='frozen' THEN inv.qty ELSE 0 END) as frozenQty,
+            spd.warehouse_location_id as warehouseLocationId,
+            spd.inventory_id as inventoryId
     FROM stocktaking_plan_detail as spd
     LEFT JOIN warehouse wt on wt.id = spd.warehouse_id and wt.is_deleted = false
     LEFT JOIN dict_basic dbt on wt.type_id = dbt.id and dbt.is_deleted =false
@@ -59,7 +61,8 @@
     LEFT JOIN inventory inv on inv.org_id = spd.org_id and inv.warehouse_id = spd.warehouse_id and inv.warehouse_location = spd.warehouse_area and inv.sku_id = spd.sku_id
     where spd.is_deleted = false
     AND spd.main_id = #{mainId}
-    GROUP BY spd.id,spd.main_id,spd.warehouse_id,spd.warehouse_name,spd.warehouse_area,spd.warehouse_location,spd.sku_id,spd.sku_no,spd.org_id,spd.org_name,warehouseTypeName, productName
+    GROUP BY spd.id,spd.main_id,spd.warehouse_id,spd.warehouse_name,spd.warehouse_area,spd.warehouse_location,spd.sku_id,spd.sku_no,spd.org_id,spd.org_name,
+             warehouseTypeName, productName, warehouseLocationId, inventoryId
     </select>
 
 
