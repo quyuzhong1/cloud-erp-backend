@@ -762,10 +762,10 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                     return groupKey;
                 }));
         // 4. 根据分组结果构建数据并保存盘点任务
-        inventoryMap.keySet().parallelStream().forEach(key -> {
+        inventoryMap.keySet().forEach(key -> {
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
             StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code);
-            save(insertTask);
+            this.save(insertTask);
             List<InventoryEntity> inventoryEntityList = inventoryMap.get(key);
             // 根据组织+仓库+仓位+skuId 进行分组 获取不同库存状态的库存记录
             Map<String, List<InventoryEntity>> inventoryStatusMap = inventoryEntityList.stream()

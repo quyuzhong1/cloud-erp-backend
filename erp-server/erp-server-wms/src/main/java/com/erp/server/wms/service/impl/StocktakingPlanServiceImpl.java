@@ -327,7 +327,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
-            approveEnd(dto, entity);
+            this.approveEnd(dto, entity);
         }
     }
 
