@@ -83,6 +83,18 @@ public class StocktakingPlanDetailEntity extends BaseEntity<StocktakingPlanDetai
     @TableField("org_name")
     private String orgName;
 
+    /**
+     * 仓位id
+     */
+    @TableField("warehouse_location_id")
+    private String warehouseLocationId;
+
+    /**
+     * 库存id
+     */
+    @TableField("inventory_id")
+    private String inventoryId;
+
 
     public static final String MAIN_ID = "main_id";
 
@@ -102,6 +114,10 @@ public class StocktakingPlanDetailEntity extends BaseEntity<StocktakingPlanDetai
 
     public static final String ORG_NAME = "org_name";
 
+    public static final String WAREHOUSE_LOCATION_ID = "warehouse_location_id";
+
+    public static final String INVENTORY_ID = "inventory_id";
+
     public StocktakingPlanDetailEntity(StocktakingPlanDTO.DetailDTO item, String mainId, WarehouseDTO.UpdateDTO warehouse, String orgName) {
         super(item.getId());
         this.mainId = mainId;
@@ -113,6 +129,8 @@ public class StocktakingPlanDetailEntity extends BaseEntity<StocktakingPlanDetai
         this.skuNo = item.getSkuNo();
         this.orgId = warehouse.getOrgId();
         this.orgName = orgName;
+        this.warehouseLocationId = item.getWarehouseLocationId();
+        this.inventoryId = item.getInventoryId();
     }
 
     @Override

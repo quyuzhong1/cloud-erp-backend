@@ -457,6 +457,16 @@ public class StocktakingPlanDTO implements Serializable {
          * sku编码
          */
         private String skuNo;
+
+        /**
+         * 仓位id
+         */
+        private String warehouseLocationId;
+
+        /**
+         * 库存id
+         */
+        private String inventoryId;
     }
 
 

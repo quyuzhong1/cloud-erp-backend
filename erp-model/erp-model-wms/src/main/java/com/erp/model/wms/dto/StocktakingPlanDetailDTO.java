@@ -100,6 +100,16 @@ public class StocktakingPlanDetailDTO implements Serializable {
          */
         private Integer frozenQty;
 
+        /**
+         * 库位id
+         */
+        private String warehouseLocationId;
+
+        /**
+         * 库存id
+         */
+        private String inventoryId;
+
     }
 
     /**
