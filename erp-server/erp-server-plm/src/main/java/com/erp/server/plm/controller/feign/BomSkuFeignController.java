@@ -3,6 +3,7 @@ package com.erp.server.plm.controller.feign;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.server.plm.service.BomSkuService;
+import com.erp.server.plm.service.ProductBomSkuHistoryService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +27,10 @@ public class BomSkuFeignController {
     @Resource
     private BomSkuService bomSkuService;
 
+    @Resource
+    private ProductBomSkuHistoryService productBomSkuHistoryService;
+
+
     /**
      * @description: 根据父级skuIds查询子集sku
      * @author Will
@@ -39,6 +44,21 @@ public class BomSkuFeignController {
             return new ArrayList<>();
         }
         return bomSkuService.listBomChildBySkuIds(skuIds);
+    }
+
+    /**
+     * @description: 根据父级skuIds查询历史bom子集sku
+     * @author Will
+     * @date: 2023/8/21 10:38
+     * @param skuIds
+     * @return List<BomChildrenSkuDTO>
+     */
+    @PostMapping("/listHistoryBomChildBySkuIds")
+    public List<BomChildrenSkuDTO> listHistoryBomChildBySkuIds(@RequestBody List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return new ArrayList<>();
+        }
+        return productBomSkuHistoryService.listHistoryBomChildBySkuIds(skuIds);
     }
     
     /**
