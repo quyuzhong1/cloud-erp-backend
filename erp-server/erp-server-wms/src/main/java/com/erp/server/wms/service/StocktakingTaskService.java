@@ -145,4 +145,13 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
      * @return
      */
     StocktakingTaskEntity getByCode(String taskCode);
+
+    /**
+     * 获取到盘点任务 盘点数量为0 的
+     * @author yl
+     * @date 2023-08-22 10:36
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.StocktakingTaskDTO.CheckResultDTO>
+     */
+    List<StocktakingTaskDTO.CheckResultDTO> checkQty(List<String> ids);
 }
