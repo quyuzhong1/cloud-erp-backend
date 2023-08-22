@@ -192,7 +192,7 @@
         MAX(tf.trade_time) as latestSalesTime
         FROM product_detail pd
         LEFT JOIN product_info pi on pd.product_id = pi."id"  and pi.is_deleted = false
-        LEFT JOIN inventory inv on pd.id = inv.sku_id and inv.is_deleted = false
+        LEFT JOIN inventory inv on pd.id = inv.sku_id and inv.is_deleted = false AND inv.dict_inventory_status IN ( 'usable', 'frozen' )
         LEFT JOIN warehouse wh on inv.warehouse_id = wh.id and wh.is_deleted = false
         LEFT JOIN warehouse_location wl on inv.warehouse_location = wl.code and wl.is_deleted = false AND wl.warehouse_id = inv.warehouse_id
         LEFT JOIN warehouse_location wlt on wl.parent_id = wlt.id and wlt.is_deleted = false
@@ -205,10 +205,9 @@
         where pd.is_deleted = false
         and pi.property not in ('服务','费用')
         and pd.status = 2
-        and inv.dict_inventory_status in ('usable','frozen')
-        <if test="params.warehouseIds !=null and params.warehouseIds.size>0">
+        <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
             AND inv.warehouse_id IN
-            <foreach collection="params.warehouseIds" item="item" open="(" separator="," close=")">
+            <foreach collection="params.warehouseIdList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
         </if>
@@ -230,6 +229,11 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.skuStr !=null  and params.skuStr!=''">
+            AND (pd.name ILIKE concat('%', #{params.skuStr} ,'%')
+            or  pd.sku_no ILIKE concat('%', #{params.skuStr} ,'%'))
+        </if>
+
         GROUP BY spuNo,category,skuId, skuNo, productImgUrl,productName,warehouseId,warehouseName,warehouseLocation,warehouseArea,warehouseAreaName,inv.org_id
         ORDER BY pd.sku_no
     </select>

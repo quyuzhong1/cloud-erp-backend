@@ -440,7 +440,7 @@ public class WarehouseDTO implements Serializable {
         /**
          * 仓库名
          */
-        private List<String> warehouseIds;
+        private List<String> warehouseIdList;
 
         /**
          * spuNoList
@@ -460,6 +460,11 @@ public class WarehouseDTO implements Serializable {
          * 动销时间范围
          */
         private List<LocalDateTime> saleTimeList;
+
+        /**
+         * 模糊查询skuNo和产品名称
+         */
+        private String skuStr;
 
     }
 
