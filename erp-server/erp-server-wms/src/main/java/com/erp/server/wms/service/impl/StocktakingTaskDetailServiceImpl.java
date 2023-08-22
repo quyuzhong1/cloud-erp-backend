@@ -123,7 +123,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         //状态
         StocktakingStatusEnum status = task.getStatus();
         List<StocktakingStatusEnum> statusList = Arrays.asList(StocktakingStatusEnum.NOT_STARTED, StocktakingStatusEnum.RECOUNT);
-        if(!statusList.contains(status)){
+        if (!statusList.contains(status)) {
             throw new ServiceException("只有复盘中,未开始的盘点任务才能修改盘点库存");
         }
 
@@ -324,5 +324,31 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
                 eq(StocktakingTaskDetailEntity::getWarehouseLocation, warehouseLocation).
                 last("LIMIT 1").
                 one();
+    }
+
+    /**
+     * 更改差异数量
+     *
+     * @param taskDetailList
+     * @return void
+     * @author yl
+     * @date 2023-08-22 11:57
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateQty(List<StocktakingTaskDetailEntity> taskDetailList) {
+        if (CollectionUtils.isNotEmpty(taskDetailList)) {
+            for (StocktakingTaskDetailEntity item : taskDetailList) {
+                //可用库存
+                Integer usableQty = item.getUsableQty();
+                //冻结数量
+                Integer frozenQty = item.getFrozenQty();
+                Integer qty = item.getQty();
+                //差异数量 等于盘点库存-可用库存-冻结库存
+                Integer diffQty = qty - usableQty - frozenQty;
+                item.setDiffQty(diffQty);
+            }
+            this.updateBatchById(taskDetailList);
+        }
     }
 }
