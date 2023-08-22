@@ -1,0 +1,214 @@
+package com.erp.server.oms.service.impl;
+
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.server.oms.mapper.SoB2cDetailMapper;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SoB2cDetailService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+/**
+ * <p>
+ * B2C销售订单明细表 服务实现类
+ * </p>
+ *
+ * @author Will
+ * @since 2023-08-18
+ */
+@Slf4j
+@Service
+public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, SoB2cDetailEntity> implements SoB2cDetailService {
+
+    @Resource
+    private OperateLogService operateLogService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Override
+    public Boolean add(List<SoB2cDetailDTO.AddDTO> detailList, String mainId) {
+        if (CollectionUtils.isEmpty(detailList)) {
+           throw new ServiceException(ApiError.ERROR_1040, SourceTypeEnum.SO_B2C.getName());
+        }
+        List<SoB2cDetailEntity> list = BeanMapperUtils.copyList(SoB2cDetailEntity.class, detailList);
+        //处理明细中的数据id
+        handleDetailList(list,mainId,Boolean.TRUE);
+        //批量新增
+        boolean flag = this.saveBatch(list);
+        return flag;
+    }
+
+    @Override
+    public Boolean update(List<SoB2cDetailDTO.UpdateDTO> detailList, String mainId) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_1040, SourceTypeEnum.SO_B2C.getName());
+        }
+        //原明细数据
+        List<SoB2cDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<String> deleteIds = getDeleteIds(detailList, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<SoB2cDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"编辑操作");
+            this.removeByIds(deleteIds);
+        }
+
+        List<SoB2cDetailEntity> list = BeanMapperUtils.copyList(SoB2cDetailEntity.class, detailList);
+        //处理明细中的数据id
+        handleDetailList(list,mainId,Boolean.FALSE);
+        return this.saveOrUpdateBatch(list);
+    }
+
+    @Override
+    public List<SoB2cDetailEntity> listByMainId(String mainId) {
+        return lambdaQuery().eq(SoB2cDetailEntity::getId,mainId).list();
+    }
+
+    @Override
+    public List<SoB2cDetailEntity> listByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(SoB2cDetailEntity::getId,mainIds).list();
+    }
+
+    @Override
+    public Boolean updateWarehouseIdByMainId(String mainId, String warehouseId) {
+        //仓库信息
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        WarehouseDTO.UpdateDTO updateDTO = warehouseList.get(0);
+        //组织信息
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(updateDTO.getOrgId()));
+        if (CollectionUtils.isEmpty(accountingCompanyList)) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOT_EXIST_ORG,updateDTO.getName());
+        }
+        BaseIdDTO.CodeDTO codeDTO = accountingCompanyList.get(0);
+        return lambdaUpdate()
+                .eq(SoB2cDetailEntity::getMainId,mainId)
+                .set(SoB2cDetailEntity::getWarehouseId,warehouseId)
+                .set(SoB2cDetailEntity::getWarehouseName,updateDTO.getName())
+                .set(SoB2cDetailEntity::getWarehouseOrgId,updateDTO.getOrgId())
+                .set(SoB2cDetailEntity::getWarehouseOrgName,codeDTO.getName())
+                .update(new SoB2cDetailEntity())
+                ;
+    }
+
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<SoB2cDetailDTO.UpdateDTO> newList, List<SoB2cDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(SoB2cDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(SoB2cDetailEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+    /**
+     * @description: 明细处理
+     * @author Will
+     * @date: 2023/8/22 11:06
+     * @param list
+     * @param mainId
+     * @param isAdd
+     */
+    private void handleDetailList (List<SoB2cDetailEntity> list,String mainId,Boolean isAdd) {
+
+        //产品信息
+        List<String> skuIds = list.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        if (CollectionUtils.isNotEmpty(skuList)) {
+            log.error("未找到SKU，warehouseIds = {}",skuList);
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+
+        //仓库信息
+        List<String> warehouseIdList = list.stream().map(SoB2cDetailEntity::getWarehouseId).collect(Collectors.toList());
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            log.error("未找到仓库，warehouseIdList = {}",warehouseIdList);
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        List<String> orgIdList = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
+        if (CollectionUtils.isEmpty(accountingCompanyList)) {
+            log.error("未找到核算公司，orgIdList = {}",orgIdList);
+            throw new ServiceException(ApiError.ERROR_9014);
+        }
+
+
+        //SKU对照表信息 TODO
+
+        for (SoB2cDetailEntity detailEntity :list) {
+
+            //产品信息
+            String skuNo = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getSkuNo()))
+                    .orElse("");
+            detailEntity.setSkuNo(skuNo);
+
+            //仓库名称
+            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream()
+                    .filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(updateDTO)) {
+                log.error("未找到仓库，warehouseId = {}",detailEntity.getWarehouseId());
+                throw new ServiceException(ApiError.ERROR_99002);
+            }
+            detailEntity.setWarehouseName(updateDTO.getName());
+
+            //库存组织
+            BaseIdDTO.CodeDTO companyDTO = accountingCompanyList.stream()
+                    .filter(obj -> obj.getId().equals(updateDTO.getOrgId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(companyDTO)) {
+                log.error("未找到核算公司，orgId = {}",updateDTO.getOrgId());
+                throw new ServiceException(ApiError.ERROR_9014);
+            }
+            detailEntity.setWarehouseOrgId(updateDTO.getOrgId());
+            detailEntity.setWarehouseOrgName(companyDTO.getName());
+        }
+
+
+
+        //添加操作日志
+        List<SoB2cDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        //新增不需要添加新增SKU的日志
+        if (CollectionUtils.isNotEmpty(addList) && !isAdd) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.SO_B2C.getCode(), addPairList, "编辑操作");
+        }
+    }
+}

@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.SoB2cMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.dto.SoB2cDTO$ListDTO">
+        <id column="id" property="id" />
+        <result column="code" property="code" />
+        <result column="dictPlatform" property="dictPlatform" />
+        <result column="platformCode" property="platformCode" />
+        <result column="shopId" property="shopId" />
+        <result column="approveStatus" property="approveStatus" />
+        <result column="payStatus" property="payStatus" />
+        <result column="billStatus" property="billStatus" />
+        <result column="invalidStatus" property="invalidStatus" />
+        <result column="amount" property="amount" />
+        <result column="currency" property="currency" />
+        <result column="payTime" property="payTime" />
+        <result column="buyerRemark" property="buyerRemark" />
+        <result column="remark" property="remark" />
+        <result column="abnormalType" property="abnormalType" />
+        <result column="dictLogisticsMethod" property="dictLogisticsMethod" />
+        <result column="shippingCost" property="shippingCost" />
+        <result column="shippingCostCurrency" property="shippingCostCurrency" />
+        <result column="logisticsCode" property="logisticsCode" />
+        <result column="buyerName" property="buyerName" />
+        <result column="countryId" property="countryId" />
+        <collection property="detailList" ofType="com.erp.model.oms.dto.SoB2cDetailDTO$ListDTO">
+            <id column="detailId" property="id" />
+            <result column="imageUrl" property="imageUrl" />
+            <result column="platformSkuNo" property="platformSkuNo" />
+            <result column="sellerSkuNo" property="sellerSkuNo" />
+            <result column="skuId" property="skuId" />
+            <result column="skuNo" property="skuNo" />
+            <result column="taxCost" property="taxCost" />
+            <result column="sourceAmount" property="sourceAmount" />
+            <result column="sourceCurrency" property="sourceCurrency" />
+            <result column="qty" property="qty" />
+            <result column="warehouseId" property="warehouseId" />
+            <result column="warehouseName" property="warehouseName" />
+            <result column="warehouseLocation" property="warehouseLocation" />
+        </collection>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        sb2c.id,
+        sb2c.code,
+        sb2c.dict_platform as dictPlatform,
+        sb2c.platform_code as platformCode,
+        sb2c.shop_id as shopId,
+        sb2c.approve_status as approveStatus,
+        sb2c.pay_status as payStatus,
+        sb2c.bill_status as billStatus,
+        sb2c.invalid_status as invalidStatus,
+        sb2c.amount as amount,
+        sb2c.currency as currency,
+        sb2c.pay_time as payTime,
+        sb2c.buyer_remark as buyerRemark,
+        sb2c.remark as remark,
+        sb2c.abnormal_type as abnormalType,
+        sb2cl.dict_logistics_method as dictLogisticsMethod,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
+             else sb2cl.actual_shipping_cost end as shippingCost,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency
+             else sb2cl.actual_shipping_currency end as shippingCostCurrency,
+        sb2cl.code as logisticsCode,
+        sb2cr.name as buyerName,
+        sb2cr.country_id as countryId,
+        sb2cd.id as detailId,
+        sb2cd.image_url as imageUrl,
+        sb2cd.platform_sku_no as platformSkuNo,
+        sb2cd.seller_sku_no as sellerSkuNo,
+        sb2cd.sku_id as skuId,
+        sb2cd.sku_no as skuNo,
+        sb2cd.tax_cost as taxCost,
+        sb2cd.amount as sourceAmount,
+        sb2cd.currency as sourceCurrency,
+        sb2cd.qty as qty,
+        sb2cd.warehouse_id as warehouseId,
+        sb2cd.warehouse_name as warehouseName
+        sb2cd.warehouse_location as warehouseLocation
+    </sql>
+
+    <select id="paging" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"></include>
+        from so_b2c sb2c
+        inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
+        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        <where>
+            sb2c.is_deleted = false
+            <if test="params.code != null and params.code != '' ">
+                and sb2c.code ilike concat('%',#{params.code},'%')
+            </if>
+            <if test="params.platformCode != null and params.platformCode != '' ">
+                and sb2c.platform_code ilike concat('%',#{params.platformCode},'%')
+            </if>
+            <if test="params.invalidStatus != null ">
+                and sb2c.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.platformSkuNo != null and params.platformSkuNo != '' ">
+                and sb2c.platform_sku_no ilike concat('%',#{params.platformSkuNo},'%')
+            </if>
+            <if test="params.sellerSkuNo != null and params.sellerSkuNo != '' ">
+                and sb2c.seller_sku_no ilike concat('%',#{params.sellerSkuNo},'%')
+            </if>
+            <if test="params.platformList != null and params.platformList.size > 0">
+                and sb2c.dict_platform in
+                <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.shopIdList != null and params.shopIdList.size > 0">
+                and sb2c.shop_id in
+                <foreach collection="params.shopIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.countryIdList != null and params.countryIdList.size > 0">
+                and sb2c.country_id in
+                <foreach collection="params.countryIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and sb2c.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.billStatusList != null and params.billStatusList.size > 0">
+                and sb2c.bill_status in
+                <foreach collection="params.billStatusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.payStatusList != null and params.payStatusList.size > 0">
+                and sb2c.pay_status in
+                <foreach collection="params.payStatusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+
+    </select>
+
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+        count(distinct sb2c.id)
+        from so_b2c sb2c
+        <where>
+            sb2c.is_deleted = false
+            <if test="params.invalidStatus != null ">
+                and sb2c.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and sb2c.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.billStatusList != null and params.billStatusList.size > 0">
+                and sb2c.bill_status in
+                <foreach collection="params.billStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.payStatusList != null and params.payStatusList.size > 0">
+                and sb2c.pay_status in
+                <foreach collection="params.payStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
+
+    <select id="mergePaging" resultType="com.erp.model.oms.dto.SoB2cDTO$MergeListDTO">
+        select
+           sb2c.dict_platform as dictPlatform,
+           sb2c.shop_id as shopId,
+           sb2cr.name as buyerName,
+           sb2c.currency,
+           sb2cr.receiver_name,
+           sb2cr.first_address,
+           sb2cd.warehouse_id,
+           sb2cl.dict_logistics_method
+        from so_b2c sb2c
+        inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
+        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        <where>
+            sb2c.is_deleted = false and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
+            and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
+            and not exists (select * from so_b2c_ref sbr where sbr.is_deleted = false and (sbr.source_id = sb2c.id or sbr.target_id = sb2c.id))
+            <if test="params.code != null and params.code != '' ">
+                and sb2c.code ilike concat('%',#{params.code},'%')
+            </if>
+            <if test="params.buyerName != null and params.buyerName != '' ">
+                and sb2cr.name ilike concat('%',#{params.buyerName},'%')
+            </if>
+            <if test="params.receiverName != null and params.receiverName != '' ">
+                and sb2cr.receiver_name ilike concat('%',#{params.receiverName},'%')
+            </if>
+            <if test="params.address != null and params.address != '' ">
+                and (sb2cr.first_address ilike concat('%',#{params.address},'%') or sb2cr.second_address ilike concat('%',#{params.address},'%') or sb2cr.full_address ilike concat('%',#{params.address},'%'))
+            </if>
+            <if test="params.platformList != null and params.platformList.size > 0">
+                and sb2c.dict_platform in
+                <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.shopIdList != null and params.shopIdList.size > 0">
+                and sb2c.shop_id in
+                <foreach collection="params.shopIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.countryIdList != null and params.countryIdList.size > 0">
+                and sb2c.country_id in
+                <foreach collection="params.countryIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by sb2c.dict_platform,sb2c.shop_id,sb2cr.name,sb2c.currency,sb2cr.receiver_name,sb2cr.first_address,sb2cd.warehouse_id,sb2cl.dict_logistics_method
+    </select>
+
+</mapper>

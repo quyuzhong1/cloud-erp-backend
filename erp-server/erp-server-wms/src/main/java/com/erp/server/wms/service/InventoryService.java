@@ -3,15 +3,14 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.InventorySaveDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
-import com.erp.model.wms.enums.StocktakingTypeEnum;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
@@ -125,6 +124,16 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(InventoryQtyDTO.SkuInventoryParamDTO dto);
 
     /**
+     * @description: 根据skuIds、仓库 、组织、仓位、库存状态 批量获取到 sku即时库存（库位没传，则查询空库位）
+     * @author Will
+     * @date: 2023/8/21 16:13
+     * @param dto
+     * @return List<SkuInventoryStatusTotalDTO>
+     */
+    List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> listSkuInventory(InventoryQtyDTO.SkuInventoryStatusParamDTO dto);
+
+
+    /**
      * 根据组织、仓库、库位、状态、SKU获取库存数量；如果库位为空，则不判断库位
      * @param orgId
      * @param warehouseId
@@ -196,4 +205,5 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return
      */
     List<InventoryEntity> listByStocktakingType(StocktakingPlanEntity entity, List<StocktakingPlanDetailEntity> detailEntityList);
+
 }
