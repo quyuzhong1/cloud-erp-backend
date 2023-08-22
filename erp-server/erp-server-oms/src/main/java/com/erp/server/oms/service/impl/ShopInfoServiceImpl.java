@@ -2,7 +2,13 @@ package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -14,7 +20,9 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.PlatformDictEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -22,6 +30,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.ShopInfoMapper;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.DictBasicService;
+import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.ShopInfoService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -30,9 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,14 +55,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
 
     @Resource
-    private DmpTaskFeign dmpTaskFeign;
-
-
-    @Resource
-    private CustomerInfoService customerInfoService;
-
-    @Resource
     private SysDictFeign sysDictFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
 
     /**
@@ -80,7 +83,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             Boolean result = handleAmazonShop(dto);
             return result;
         }
-        checkName("",dto.getName());
+        checkName("", dto.getName());
         if (shopify.getCode().equals(dictPlatform)) {
             if (StringUtils.isBlank(dto.getDomain())) {
                 throw new ServiceException("域名不能为空");
@@ -88,6 +91,21 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
 
         BeanMapper.copy(dto, shop);
+        String salesOrgId = dto.getSalesOrgId();
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
+        String orgName = CollectionUtils.isNotEmpty(orgList) ? orgList.get(0).getName() : "";
+        shop.setSalesOrgName(orgName);
+        //负责人
+        String chargeId = dto.getChargeId();
+        String chargeName = "";
+        if (StringUtils.isNotBlank(chargeId)) {
+            FindUserDTO user = sysUserFeign.getUserByUserId(chargeId);
+            if (Objects.nonNull(user)) {
+                chargeName = user.getUserName();
+            }
+        }
+        shop.setChargeName(chargeName);
+
         Boolean result = this.save(shop);
         return result;
 
@@ -114,7 +132,19 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         List<ShopInfoEntity> addList = new ArrayList<>(countryIdList.size());
         //店铺名称
         String name = dto.getName();
+        String salesOrgId = dto.getSalesOrgId();
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
+        String orgName = CollectionUtils.isNotEmpty(orgList) ? orgList.get(0).getName() : "";
         checkName("", name);
+        //负责人
+        String chargeId = dto.getChargeId();
+        String chargeName = "";
+        if (StringUtils.isNotBlank(chargeId)) {
+            FindUserDTO user = sysUserFeign.getUserByUserId(chargeId);
+            if (Objects.nonNull(user)) {
+                chargeName = user.getUserName();
+            }
+        }
         for (String countryId : countryIdList) {
             String countryName = countryList.stream().filter(c -> c.getId().equals(countryId)).findFirst().
                     map(DictCountryEntity::getNameCn).orElse("");
@@ -123,6 +153,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 BeanMapper.copy(dto, shop);
                 shop.setDictCountryId(countryId);
                 shop.setName(name + countryName);
+                shop.setSalesOrgName(orgName);
+                shop.setChargeName(chargeName);
                 addList.add(shop);
             }
 
@@ -163,8 +195,23 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        checkName(dto.getId(), dto.getName());
         shopInfo.setName(dto.getName());
+        String salesOrgId = dto.getSalesOrgId();
+        //负责人
+        String chargeId = dto.getChargeId();
+        String chargeName = "";
+        if (StringUtils.isNotBlank(chargeId)) {
+            FindUserDTO user = sysUserFeign.getUserByUserId(chargeId);
+            if (Objects.nonNull(user)) {
+                chargeName = user.getUserName();
+            }
+        }
+        shopInfo.setChargeName(chargeName);
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
+        String orgName = CollectionUtils.isNotEmpty(orgList) ? orgList.get(0).getName() : "";
         shopInfo.setSalesOrgId(dto.getSalesOrgId());
+        shopInfo.setSalesOrgName(orgName);
         shopInfo.setChargeId(dto.getChargeId());
         Boolean result = this.updateById(shopInfo);
         if (result) {
@@ -173,37 +220,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return "";
     }
 
-
-    /**
-     * 初始同步店铺信息
-     *
-     * @param
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-07-06 12:23
-     */
-    @Override
-    public Boolean initialSync() {
-        //获取到dmp 店铺
-        List<DmpShopInfoEntity> dmpShopList = dmpTaskFeign.listShop();
-        List<String> kingdeeCustomerIds = dmpShopList.stream().map(DmpShopInfoEntity::getCustomerId).collect(Collectors.toList());
-        List<CustomerInfoEntity> customerInfoList = customerInfoService.listByKingdeeIdList(kingdeeCustomerIds);
-        List<ShopInfoEntity> shopInfoList = this.list();
-        for (ShopInfoEntity item : shopInfoList) {
-            // String shopCode = item.getShopCode();
-            DmpShopInfoEntity dmpShop = dmpShopList.stream().filter(d -> d.getPlatformShopNo().equals("")).
-                    findFirst().orElse(null);
-            //表示是没有
-            if (Objects.isNull(dmpShop)) {
-                continue;
-            }
-            String customerInfoCode = customerInfoList.stream().filter(c -> StringUtils.isNotBlank(dmpShop.getCustomerId()) && c.getSyncKingdeeId().equals(dmpShop.getCustomerId())).
-                    findFirst().map(CustomerInfoEntity::getCode).orElse("");
-            item.setCustomerCode(customerInfoCode);
-
-        }
-        return this.updateBatchById(shopInfoList);
-    }
 
     /**
      * 店铺分页
@@ -217,9 +233,121 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
-
-
-        return null;
+        List<ShopDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        //填充数据
+        fillDb(list);
+        return new PagingVO<>(pageData);
     }
+
+    /**
+     * 填充数据
+     *
+     * @param list
+     */
+    private void fillDb(List<ShopDTO.PagingViewDTO> list) {
+        List<String> accountList = list.stream().map(ShopDTO.PagingViewDTO::getAccount).collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = this.listByAccountList(accountList);
+        //区域的id
+        List<String> areaIdList = shopInfoList.stream().map(ShopInfoEntity::getDictAreaId).collect(Collectors.toList());
+        //国家id
+        List<String> countryIdList = shopInfoList.stream().map(ShopInfoEntity::getDictCountryId).collect(Collectors.toList());
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
+        List<DictGlobalAreaEntity> areaList = sysDictFeign.listGlobalAreaByIds(areaIdList);
+        for (ShopDTO.PagingViewDTO item : list) {
+            String account = item.getAccount();
+            List<ShopInfoEntity> shopList = shopInfoList.stream().filter(s -> s.getAccount().equals(account)).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(shopList)) {
+                continue;
+            }
+            //平台
+            String dictPlatform = shopList.get(0).getDictPlatform();
+            item.setDictPlatform(dictPlatform);
+
+            List<ShopDTO.ViewDTO> detailList = BeanMapper.copyList(shopList, ShopDTO.ViewDTO.class);
+            for (ShopDTO.ViewDTO detail : detailList) {
+                String areaId = detail.getDictAreaId();
+                String areaName = areaList.stream().filter(a -> a.getId().equals(areaId)).
+                        map(DictGlobalAreaEntity::getRegionName).findFirst().orElse("");
+                detail.setAreaName(areaName);
+
+                String countryId = detail.getDictCountryId();
+                String countryName = countryList.stream().filter(a -> a.getId().equals(countryId)).
+                        map(DictCountryEntity::getNameCn).findFirst().orElse("");
+                detail.setCountryName(countryName);
+            }
+            item.setDictAreaId(detailList.get(0).getDictAreaId());
+            item.setAreaName(detailList.get(0).getAreaName());
+            item.setDetailList(detailList);
+        }
+
+    }
+
+    private List<ShopInfoEntity> listByAccountList(List<String> accountList) {
+        if (CollectionUtils.isEmpty(accountList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(ShopInfoEntity::getAccount, accountList).orderByDesc(ShopInfoEntity::getId).list();
+    }
+
+
+    /**
+     * 启用或者禁用店铺
+     *
+     * @param shop     店铺信息
+     * @param disabled 禁用状态
+     * @return
+     */
+    @Override
+    public BatchResultDTO updateStatus(ShopInfoEntity shop, Boolean disabled) {
+        if (Objects.nonNull(shop)) {
+            //数据库的禁用状态
+            Boolean dbDisabled = shop.getDisabled();
+            if (dbDisabled.equals(disabled)) {
+                throw new ServiceException("存在相同的状态");
+            }
+            shop.setDisabled(disabled);
+            this.updateById(shop);
+            return BatchResultDTO.success(shop.getName(), OperationTypeEnum.DISABLED);
+
+        }
+        return BatchResultDTO.fail(shop.getName(), "店铺不存在");
+
+    }
+
+
+    /**
+     * 获取详情
+     *
+     * @param id
+     * @return com.erp.model.oms.dto.ShopDTO.ViewDTO
+     * @author yl
+     * @date 2023-08-22 16:13
+     */
+    @Override
+    public ShopDTO.ViewDTO view(String id) {
+        ShopInfoEntity shop = this.getById(id);
+        if (Objects.isNull(shop)) {
+            throw new ServiceException("店铺不存在");
+        }
+        ShopDTO.ViewDTO view = new ShopDTO.ViewDTO();
+        BeanMapper.copy(shop, view);
+        String areaId = StringUtils.isNotBlank(view.getDictAreaId()) ? view.getDictAreaId() : "";
+        String countryId = StringUtils.isNotBlank(view.getDictCountryId()) ? view.getDictCountryId() : "";
+
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Arrays.asList(countryId));
+        List<DictGlobalAreaEntity> areaList = sysDictFeign.listGlobalAreaByIds(Arrays.asList(areaId));
+
+        String areaName = areaList.stream().filter(a -> a.getId().equals(areaId)).
+                map(DictGlobalAreaEntity::getRegionName).findFirst().orElse("");
+        view.setAreaName(areaName);
+        String countryName = countryList.stream().filter(a -> a.getId().equals(countryId)).
+                map(DictCountryEntity::getNameCn).findFirst().orElse("");
+        view.setCountryName(countryName);
+        return view;
+    }
+
 
 }

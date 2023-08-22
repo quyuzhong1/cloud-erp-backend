@@ -109,7 +109,7 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(@RequestParam(value = "type") String type, HttpServletResponse response) {
+    public ApiResult downloadTemplate(@RequestParam(value = "importType") String type, HttpServletResponse response) {
         skuMappingService.downloadTemplate(type,response);
         return success();
     }

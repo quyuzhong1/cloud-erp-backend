@@ -2,6 +2,7 @@ package com.erp.rpc.sys.feign;
 
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,5 +36,14 @@ public interface SysDictFeign {
      */
     @PostMapping("feign/dictCountry/listCountryByIds")
     List<DictCountryEntity> listCountryByIds(@RequestBody List<String> ids);
+
+
+    /**
+     * 根据地区id 集合 获取到地区列表
+     * @param ids
+     * @return
+     */
+    @PostMapping("feign/globalArea/listGlobalAreaByIds")
+    List<DictGlobalAreaEntity> listGlobalAreaByIds(@RequestBody List<String> ids);
 
 }

@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.fasterxml.jackson.annotation.JacksonInject;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

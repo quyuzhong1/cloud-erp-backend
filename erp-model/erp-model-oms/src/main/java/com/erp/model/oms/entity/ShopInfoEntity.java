@@ -76,6 +76,13 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     @TableField("charge_id")
     private String chargeId;
 
+
+    /**
+     * 负责人id
+     */
+    @TableField("charge_name")
+    private String chargeName;
+
     /**
      * 禁用状态
      */

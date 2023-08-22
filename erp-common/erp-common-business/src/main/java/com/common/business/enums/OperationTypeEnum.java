@@ -23,6 +23,7 @@ public enum OperationTypeEnum {
 
     INVALID("invalid", "作废操作"),
 
+    DISABLED("disabled", "启用禁用"),
     DELETE("delete", "删除操作"),
     ;
     @JsonValue
