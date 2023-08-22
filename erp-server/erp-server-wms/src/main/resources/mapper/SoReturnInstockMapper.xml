@@ -266,5 +266,6 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
+        ORDER BY sri.create_time desc
     </select>
 </mapper>

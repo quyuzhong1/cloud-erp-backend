@@ -23,6 +23,6 @@ public interface MessageUserReadFeign {
      * @return java.util.List<com.erp.model.sys.entity.MessageUserReadEntity>
      **/
     @PostMapping("/feign/messageUserRead/saveBatch")
-    List<MessageUserReadEntity> saveBatch(@RequestBody List<MessageUserReadEntity> entityList);
+    Boolean saveBatch(@RequestBody List<MessageUserReadEntity> entityList);
 
 }
