@@ -1580,10 +1580,13 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             List<PoInstockDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, PoInstockDTO.PdaItemDTO.class);
             record.setDetailCount(itemDTOList.size());
             if (CollectionUtils.isEmpty(resultList)) {
+                record.setQcStatus(PdaQclStatusEnum.WAIT_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.WAIT_QC.getName());
             } else if (resultList.size() != poInstockDetailEntities.size()) {
+                record.setQcStatus(PdaQclStatusEnum.PARTIAL_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.PARTIAL_QC.getName());
             } else {
+                record.setQcStatus(PdaQclStatusEnum.FINISH_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.FINISH_QC.getName());
             }
 

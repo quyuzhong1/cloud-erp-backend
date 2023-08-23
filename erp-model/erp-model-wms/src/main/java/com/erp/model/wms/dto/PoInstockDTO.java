@@ -789,6 +789,11 @@ public class PoInstockDTO implements Serializable {
         private String approveStatusName;
 
         /**
+         * 质检状态
+         */
+        private String qcStatus;
+
+        /**
          * 质检状态名
          */
         private String qcStatusName;
