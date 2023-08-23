@@ -41,6 +41,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoChangeService;
+import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.mapper.SoChangeMapper;
 import com.erp.server.oms.service.*;
 import com.erp.server.oms.utils.SoUtils;
@@ -108,6 +109,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
     @Autowired
     private CustomerAddressService customerAddressService;
+
+    @Resource
+    private SyncKingdeeSoService syncKingdeeSoService;
 
     /**
      * 添加销售订单
@@ -265,6 +269,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
     /**
      * 验证销售变更单
+     *
      * @param soId
      * @param receiveAddressId
      * @param addressType
@@ -274,16 +279,16 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     private void checkChangeCustomerInfo(String soId, String receiveAddressId, String addressType, String receiverName, String telNumber) {
         // 判断是否可以修改地址和联系人信息
         Boolean isPushed = soInfoService.checkSoPushDeliveryNotice(soId);
-        if(Objects.equals(isPushed, Boolean.TRUE)) {
+        if (Objects.equals(isPushed, Boolean.TRUE)) {
             // 已下推发货通知单不允许修改收货地址和联系人信息
             SoInfoEntity soInfoEntity = soInfoService.getById(soId);
-            ValidatorUtil.isTrue(Objects.nonNull(soInfoEntity),()->new ServiceException(ApiError.ERROR_92016));
+            ValidatorUtil.isTrue(Objects.nonNull(soInfoEntity), () -> new ServiceException(ApiError.ERROR_92016));
             Boolean isChange = !Objects.equals(soInfoEntity.getReceiveAddressId(), receiveAddressId)
                     || !Objects.equals(StrUtils.null2EmptyWithTrim(soInfoEntity.getAddressType()), StrUtils.null2EmptyWithTrim(addressType))
                     || !Objects.equals(StrUtils.null2EmptyWithTrim(soInfoEntity.getReceiverName()), StrUtils.null2EmptyWithTrim(receiverName))
-                    || !Objects.equals(StrUtils.null2EmptyWithTrim(soInfoEntity.getTelNumber()), StrUtils.null2EmptyWithTrim(telNumber)) ;
+                    || !Objects.equals(StrUtils.null2EmptyWithTrim(soInfoEntity.getTelNumber()), StrUtils.null2EmptyWithTrim(telNumber));
 
-            ValidatorUtil.isTrue(Objects.equals(isChange, Boolean.FALSE),()->new ServiceException("销售订单已下推发货通知单，不允许修改地址"));
+            ValidatorUtil.isTrue(Objects.equals(isChange, Boolean.FALSE), () -> new ServiceException("销售订单已下推发货通知单，不允许修改地址"));
         }
     }
 
@@ -609,7 +614,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         view.setOrderTypeName(soInfo.getOrderTypeName());
         view.setOrderType(soInfo.getOrderType());
         view.setReceiveAddressId(soChange.getReceiveAddressId());
-        if(StrUtils.isNotEmpty(view.getReceiveAddressId())) {
+        if (StrUtils.isNotEmpty(view.getReceiveAddressId())) {
             CustomerAddressEntity addressEntity = customerAddressService.getById(view.getReceiveAddressId());
             if (Objects.nonNull(addressEntity)) {
                 view.setReceiveAddress(addressEntity.getAddress());
@@ -622,7 +627,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         view.setSoId(soInfo.getId());
         view.setTelNumber(soChange.getTelNumber());
         view.setAddressType(soChange.getAddressType());
-        if(StrUtils.isNotEmpty(view.getAddressType())) {
+        if (StrUtils.isNotEmpty(view.getAddressType())) {
             view.setAddressTypeName(CustomerAddressTypeEnum.getName(view.getAddressType()));
         }
         view.setSalesOrgName(soInfo.getSalesOrgName());
@@ -810,6 +815,24 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
         if (StringUtils.isEmpty(id)) {
             return Boolean.TRUE;
+        }
+        SoChangeEntity soChange = this.getById(id);
+        if (Objects.nonNull(soChange)) {
+            //同步成功的
+            String successSyncStatus = SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode();
+            //表示同步成功
+            if (successSyncStatus.equals(syncKingdeeStatus)) {
+                Boolean existAdd = soChangeDetailService.existAdd(id);
+                //如果有添加新的sku 销售订单需要重新推送
+                if (existAdd) {
+                    String soId = soChange.getSoId();
+                    SoInfoEntity soInfo = soInfoService.getById(soId);
+                    if (Objects.nonNull(soInfo)) {
+                        syncKingdeeSoService.syncDataToKingdee(soInfo, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                    }
+                }
+            }
+
         }
         return this.lambdaUpdate()
                 .eq(SoChangeEntity::getId, id)
@@ -1016,7 +1039,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         list.forEach(obj -> {
             String sellerId = soInfoList.stream().filter(s -> s.getId().equals(obj.getSoId())).
                     map(SoInfoEntity::getSellerId).findFirst().orElse("");
-            if(StringUtils.isNotBlank(sellerId)){
+            if (StringUtils.isNotBlank(sellerId)) {
                 ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
                 startDTO.setBusinessId(obj.getId());
                 startDTO.setBusinessCode(obj.getCode());
@@ -1028,7 +1051,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             }
 
         });
-        if(CollectionUtils.isNotEmpty(resultList)){
+        if (CollectionUtils.isNotEmpty(resultList)) {
             ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
             if (!listApiResult.isSuccess()) {
                 throw new ServiceException(listApiResult.getMsg());

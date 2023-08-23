@@ -5,6 +5,7 @@ import com.erp.model.oms.enums.SoChangeTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -61,7 +62,7 @@ public class SoChangeDetailDTO implements Serializable {
          * 单价
          */
         @NotNull(message = "销售单价不能为空")
-        @PositiveOrZero(message = "销售单价不能为负数")
+        @DecimalMin(value="0.1",message = "单价不能小于0")
         private BigDecimal price;
 
 
