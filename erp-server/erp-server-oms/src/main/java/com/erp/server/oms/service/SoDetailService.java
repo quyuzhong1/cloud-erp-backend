@@ -266,4 +266,15 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      */
     List<SoDetailDTO.SkuDTO> listSkuInfoBySkuNo(SoDetailDTO.ListSkuParamDTO dto);
 
+
+    /**
+     * 销售变更单成功后
+     * 更改销售订单详情的金蝶id
+     * @author yl
+     * @date 2023-08-23 14:00
+     * @param soId
+     * @return void
+     */
+    void updateDetailKingdeeId(String soId);
+
 }

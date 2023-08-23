@@ -110,8 +110,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Autowired
     private CustomerAddressService customerAddressService;
 
-    @Resource
-    private SyncKingdeeSoService syncKingdeeSoService;
+
 
     /**
      * 添加销售订单
@@ -826,10 +825,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 //如果有添加新的sku 销售订单需要重新推送
                 if (existAdd) {
                     String soId = soChange.getSoId();
-                    SoInfoEntity soInfo = soInfoService.getById(soId);
-                    if (Objects.nonNull(soInfo)) {
-                        syncKingdeeSoService.syncDataToKingdee(soInfo, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
-                    }
+                    soDetailService.updateDetailKingdeeId(soId);
                 }
             }
 
