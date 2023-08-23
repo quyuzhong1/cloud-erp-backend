@@ -108,4 +108,12 @@ public interface SoChangeDetailService extends SuperService<SoChangeDetailEntity
      * @return
      */
     List<SoChangeDetailEntity> listDetailDbByMainId(String mainId);
+    /**
+     * 查询变更是否存在 添加的
+     * @author yl
+     * @date 2023-08-23 10:01
+     * @param mainId
+     * @return java.lang.Boolean
+     */
+    Boolean existAdd(String mainId);
 }

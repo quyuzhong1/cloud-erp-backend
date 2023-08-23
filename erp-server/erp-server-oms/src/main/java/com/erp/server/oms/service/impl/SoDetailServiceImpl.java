@@ -443,21 +443,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
-        // List<SoDetailEntity> saveOrUpdateList = new ArrayList<>(detailList.size());
         //这是修改的
         List<SoDetailDTO.UpdateDTO> updateList = detailList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
-        //这是要添加的
-        List<SoDetailDTO.UpdateDTO> addList = detailList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
-        //这个是要修改的实体
-        List<SoDetailEntity> updateEntityList = BeanMapper.copyList(updateList, SoDetailEntity.class);
-        //这个是要添加的
-        List<SoDetailEntity> addEntityList = BeanMapper.copyList(addList, SoDetailEntity.class);
-        /**
-         saveOrUpdateList.addAll(updateEntityList);
-         saveOrUpdateList.addAll(addEntityList);
-         */
         List<SoDetailEntity> saveOrUpdateList = BeanMapper.copyList(detailList, SoDetailEntity.class);
-
         List<SoDetailEntity> dbList = this.listBaseByMainId(mainId);
 
         List<Pair<String, String>> pairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
@@ -504,7 +492,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<Pair<String, String>> addPairList = saveOrUpdateList.stream().filter(s -> StringUtils.isBlank(s.getId())).map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("添加了一个销售产品【%s】", ModuleTypeEnum.SO.getCode(), addPairList, "编辑操作");
         //修改的
-        updateEntityList = saveOrUpdateList.stream().filter(s -> StringUtils.isNotBlank(s.getId())).collect(Collectors.toList());
+        //这个是要修改的实体
+        List<SoDetailEntity> updateEntityList = saveOrUpdateList.stream().filter(s -> StringUtils.isNotBlank(s.getId())).collect(Collectors.toList());
         for (SoDetailEntity update : updateEntityList) {
             String id = update.getId();
             SoDetailEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
@@ -1404,5 +1393,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         return resultList;
     }
+
+
 
 }
