@@ -414,4 +414,82 @@ public class OtherOutstockDTO implements Serializable {
          */
         private List<OtherOutstockDetailDTO.ViewDTO> detailList;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaListDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 编号
+         */
+        public String code;
+
+        /**
+         * 收货仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 产品数量
+         */
+        private Integer detailCount;
+
+        /**
+         * 产品信息
+         */
+        private List<PdaItemDTO> itemList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaItemDTO {
+        /**
+         * 明细id
+         */
+        private String id;
+        /**
+         * sku
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 实收数量
+         */
+        private Integer actualQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaSearchParamDTO extends SortDTO {
+        /**
+         * 审核状态集合
+         */
+        private List<String> approveStatusList;
+    }
+
+
 }

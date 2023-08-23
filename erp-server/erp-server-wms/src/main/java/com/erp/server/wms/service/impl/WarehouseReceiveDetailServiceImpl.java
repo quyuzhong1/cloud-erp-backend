@@ -100,7 +100,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             //采购数量
             Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
-            if (receiveQty > purchaseQty + returnQty) {
+            if (receiveQty + addDTO.getReceiveQty() > purchaseQty + returnQty) {
                 throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
             }
 
@@ -160,7 +160,6 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         List<WarehouseReceiveDetailDTO.UpdateDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
         List<WarehouseReceiveDetailEntity> detailEntityList = listWarehouseReceiveByPodIds(orderDetailIds);
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(orderDetailIds);
-        List<WarehouseReceiveDetailEntity> receiveDetailEntities = this.listWarehouseReceiveByPodIds(orderDetailIds);
 
         //原明细数据
         List<WarehouseReceiveDetailEntity> oldList = this.listDetailByMainIds(Arrays.asList(dto.getId()));
@@ -187,7 +186,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
 
             if (StringUtils.isNotBlank(updateDTO.getId())) {
-                Integer receive = receiveDetailEntities.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderDetailId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId()) && !obj.getId().equals(updateDTO.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer receive = detailEntityList.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && !obj.getId().equals(updateDTO.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (receive + updateDTO.getReceiveQty() > purchaseQty + returnQty) {
                     throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
                 }

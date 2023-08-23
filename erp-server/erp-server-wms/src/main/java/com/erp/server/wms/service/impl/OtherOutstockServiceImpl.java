@@ -19,6 +19,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
@@ -29,6 +30,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDetailDTO;
@@ -659,5 +661,28 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 .set(OtherOutstockEntity::getApproveUserName, "")
                 .set(OtherOutstockEntity::getApproveTime, null)
                 .update();
+    }
+
+    @Override
+    public PagingVO<OtherOutstockDTO.PdaListDTO> PdaPaging(PagingDTO<OtherOutstockDTO.PdaSearchParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<OtherOutstockDTO.PdaListDTO> pageData = this.baseMapper.pdaPaging(query, pagingParamDTO.getParams());
+        if (CollectionUtils.isEmpty(pageData.getRecords())) {
+            return new PagingVO(new Page());
+        }
+        List<OtherOutstockDTO.PdaListDTO> records = pageData.getRecords();
+        //主键id
+        List<String> ids = records.stream().map(req -> req.getId()).collect(Collectors.toList());
+        //查询详情
+        List<OtherOutstockDetailEntity> otherOutstockDetailEntities = otherOutstockDetailService.listByMainIds(ids);
+        for (OtherOutstockDTO.PdaListDTO record : records) {
+            record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
+            List<OtherOutstockDetailEntity> detailEntities = otherOutstockDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
+            List<OtherOutstockDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, OtherOutstockDTO.PdaItemDTO.class);
+            record.setDetailCount(itemDTOList.size());
+            record.setItemList(itemDTOList);
+        }
+        return new PagingVO(pageData);
     }
 }

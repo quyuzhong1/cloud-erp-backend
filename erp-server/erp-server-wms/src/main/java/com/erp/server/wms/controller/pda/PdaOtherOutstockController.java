@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.pda;
 
+
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -9,79 +10,82 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.OtherInstockDTO;
-import com.erp.server.wms.service.OtherInstockService;
+import com.erp.model.wms.dto.OtherOutstockDTO;
+import com.erp.server.wms.service.OtherOutstockService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
 
+
 /**
- * PDA:其他入库单
+ * PDA:其他出库单
  * @Author Luo_WG
- * @Date 2023/8/10 10:08
+ * @Date 2023/8/23 9:46
  **/
 @RestController
-@RequestMapping(value = "/pdaOtherInstock")
-public class PdaOtherInstockController extends BaseController {
+@RequestMapping("/pdaOtherOutstock")
+public class PdaOtherOutstockController extends BaseController {
+
 
     @Resource
-    private OtherInstockService otherInstockService;
-
+    private OtherOutstockService otherOutstockService;
+    
     /**
      * 列表查询
-     * @Author Luo_WG
-     * @Date 2023/8/23 9:57
+     * @author Luo_WG
+     * @date: 2023/5/10 19:56
      * @param dto
-     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.wms.dto.OtherInstockDTO.PdaListDTO>>
-     **/
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:pdaOtherInstock:paging",
-            tableAlias = "oi"
+            menuCode = "wms:otherOutstock:paging",
+            tableAlias = "oo"
     )
-    public ApiResult<PagingVO<OtherInstockDTO.PdaListDTO>> paging(@RequestBody @Validated PagingDTO<OtherInstockDTO.PdaSearchParamDTO> dto) {
-        PagingVO<OtherInstockDTO.PdaListDTO> pagingVO = otherInstockService.PdaPaging(dto);
+    public ApiResult<PagingVO<OtherOutstockDTO.PdaListDTO>> paging(@RequestBody @Validated PagingDTO<OtherOutstockDTO.PdaSearchParamDTO> dto) {
+        PagingVO<OtherOutstockDTO.PdaListDTO> pagingVO = otherOutstockService.PdaPaging(dto);
         return success(pagingVO);
     }
 
     /**
      * 列表数量
-     * @Author Luo_WG
-     * @Date 2023/8/23 10:43
+     * @author Luo_WG
+     * @date: 2023/5/10 20:08
      * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.OtherInstockDTO.PdaListStatusCountDTO>> 
-     **/
+     * @return ApiResult<List<ListStatusCountDTO>>
+     */
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:pdaOtherInstock:paging",
-            tableAlias = "oi"
+            menuCode = "wms:otherOutstock:paging",
+            tableAlias = "oo"
     )
-    public ApiResult<List<OtherInstockDTO.PdaListStatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
-        List<OtherInstockDTO.PdaListStatusCountDTO> list = otherInstockService.pdaListCount(dto);
+    public ApiResult<List<OtherOutstockDTO.ListStatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
+        List<OtherOutstockDTO.ListStatusCountDTO> list = otherOutstockService.listCount(dto);
         return success(list);
     }
 
     /**
      * 新增
-     * @Author Luo_WG
-     * @Date 2023/8/23 10:43
+     * @author Luo_WG
+     * @date: 2023/5/10 19:58
      * @param dto
-     * @return com.common.core.controller.vo.ApiResult 
-     **/
+     * @return ApiResult
+     */
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:pdaOtherInstock:add",
-            serviceClass = OtherInstockService.class,
+            menuCode = "wms:otherOutstock:add",
+            serviceClass = OtherOutstockService.class,
             keyIdName = "id")
-    public ApiResult add(@RequestBody @Validated OtherInstockDTO.AddDTO dto) {
-        String id = otherInstockService.add(dto);
+    public ApiResult add(@RequestBody @Validated OtherOutstockDTO.AddDTO dto) {
+        String id = otherOutstockService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
@@ -95,11 +99,11 @@ public class PdaOtherInstockController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:pdaOtherInstock:add",
-            serviceClass = OtherInstockService.class,
+            menuCode = "wms:otherOutstock:add",
+            serviceClass = OtherOutstockService.class,
             keyIdName = "id")
-    public ApiResult addAndSubmit(@RequestBody @Validated OtherInstockDTO.AddDTO dto) {
-        String id = otherInstockService.addAndSubmit(dto);
+    public ApiResult addAndSubmit(@RequestBody @Validated OtherOutstockDTO.AddDTO dto) {
+        String id = otherOutstockService.addAndSubmit(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
@@ -113,11 +117,11 @@ public class PdaOtherInstockController extends BaseController {
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:pdaOtherInstock:update",
-            serviceClass = OtherInstockService.class,
+            menuCode = "wms:otherOutstock:update",
+            serviceClass = OtherOutstockService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated OtherInstockDTO.UpdateDTO dto) {
-        Boolean flag = otherInstockService.update(dto);
+    public ApiResult update(@RequestBody @Validated OtherOutstockDTO.UpdateDTO dto) {
+        Boolean flag = otherOutstockService.update(dto);
         return flag == true ? success() : failure();
     }
 
@@ -131,11 +135,11 @@ public class PdaOtherInstockController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:pdaOtherInstock:update",
-            serviceClass = OtherInstockService.class,
+            menuCode = "wms:otherOutstock:update",
+            serviceClass = OtherOutstockService.class,
             keyIdName = "id")
-    public ApiResult updateAndSubmit(@RequestBody @Validated OtherInstockDTO.UpdateDTO dto) {
-        Boolean flag = otherInstockService.updateAndSubmit(dto);
+    public ApiResult updateAndSubmit(@RequestBody @Validated OtherOutstockDTO.UpdateDTO dto) {
+        Boolean flag = otherOutstockService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
@@ -149,11 +153,11 @@ public class PdaOtherInstockController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:pdaOtherInstock:submit",
-            serviceClass = OtherInstockService.class,
+            menuCode = "wms:otherOutstock:submit",
+            serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = otherInstockService.submit(dto.getIds());
+        Boolean flag = otherOutstockService.submit(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -167,11 +171,11 @@ public class PdaOtherInstockController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:pdaOtherInstock:view",
-            serviceClass = OtherInstockService.class,
+            menuCode = "wms:otherOutstock:view",
+            serviceClass = OtherOutstockService.class,
             keyIdName = "id")
-    public ApiResult<OtherInstockDTO.ViewDTO> view(@RequestParam("id") String id) {
-        OtherInstockDTO.ViewDTO dto = otherInstockService.view(id);
+    public ApiResult<OtherOutstockDTO.ViewDTO> view(@RequestParam("id") String id) {
+        OtherOutstockDTO.ViewDTO dto = otherOutstockService.view(id);
         return success(dto);
     }
 
@@ -186,11 +190,11 @@ public class PdaOtherInstockController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:pdaOtherInstock:delete",
-            serviceClass = OtherInstockService.class,
+            menuCode = "wms:otherOutstock:delete",
+            serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = otherInstockService.delete(dto.getIds());
+        Boolean flag = otherOutstockService.delete(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -204,11 +208,11 @@ public class PdaOtherInstockController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:pdaOtherInstock:invalid",
-            serviceClass = OtherInstockService.class,
+            menuCode = "wms:otherOutstock:invalid",
+            serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean flag = otherInstockService.invalid(dto.getIds(),dto.getRemark());
+        Boolean flag = otherOutstockService.invalid(dto.getIds(),dto.getRemark());
         return flag == true ? success() : failure();
     }
 
@@ -222,11 +226,11 @@ public class PdaOtherInstockController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:pdaOtherInstock:approve",
-            serviceClass = OtherInstockService.class,
+            menuCode = "wms:otherOutstock:approve",
+            serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        otherInstockService.approve(baseApproveParamDTO);
+        otherOutstockService.approve(baseApproveParamDTO);
         return success();
     }
 
@@ -240,11 +244,11 @@ public class PdaOtherInstockController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:pdaOtherInstock:disApprove",
-            serviceClass = OtherInstockService.class,
+            menuCode = "wms:otherOutstock:disApprove",
+            serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = otherInstockService.disApprove(dto.getIds());
+        Boolean flag = otherOutstockService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -258,11 +262,30 @@ public class PdaOtherInstockController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:pdaOtherInstock:cancelProcess",
-            serviceClass = OtherInstockService.class,
+            menuCode = "wms:otherOutstock:cancelProcess",
+            serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = otherInstockService.cancelProcess(dto.getIds());
+        Boolean result = otherOutstockService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
+    }
+
+    /**
+     * 导出
+     * @author Luo_WG
+     * @date: 2023/5/10 20:25
+     * @param dto
+     * @param response
+     * @return ApiResult
+     */
+    @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:otherOutstock:paging",
+            tableAlias = "oo"
+    )
+    public ApiResult exportExcel(@RequestBody OtherOutstockDTO.SearchParamDTO dto, HttpServletResponse response) {
+        Boolean flag = otherOutstockService.exportExcel(dto, response);
+        return flag == true ? success() : failure();
     }
 }

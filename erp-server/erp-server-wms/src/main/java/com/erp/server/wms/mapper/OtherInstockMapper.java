@@ -45,4 +45,14 @@ public interface OtherInstockMapper extends BaseMapper<OtherInstockEntity> {
      * @return List<ListDTO> 
      */
     List<OtherInstockDTO.ListDTO> listExportExcel(@Param("params") OtherInstockDTO.SearchParamDTO param);
+
+    /**
+     *
+     * @Author Luo_WG
+     * @Date 2023/8/23 10:13
+     * @param query
+     * @param params
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.OtherInstockDTO.PdaListDTO>
+     **/
+    IPage<OtherInstockDTO.PdaListDTO> pdaPaging(Page query, @Param("params") OtherInstockDTO.PdaSearchParamDTO params);
 }

@@ -1991,6 +1991,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             return m;
         })));
+        if (CollectionUtils.isEmpty(purchaseOrderDetailIds)) {
+            return new ArrayList<>();
+        }
         //根据未到货的采购单详情id获取采购单id
         List<PurchaseOrderDetailEntity> detailEntityListList = purchaseOrderDetailService.listByIds(purchaseOrderDetailIds);
         List<String> notAllReceivePoOrderId = detailEntityListList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());

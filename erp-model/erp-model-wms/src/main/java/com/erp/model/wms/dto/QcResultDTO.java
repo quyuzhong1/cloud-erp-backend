@@ -426,6 +426,11 @@ public class QcResultDTO {
         private String sourceCode;
 
         /**
+         * 质检状态
+         */
+        private String qcStatus;
+
+        /**
          * 是否新品首批
          * true 是
          */
