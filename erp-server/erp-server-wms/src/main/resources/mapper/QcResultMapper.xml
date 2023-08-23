@@ -46,6 +46,7 @@
       qi.id,
       qi.code,
       qi.source_code,
+      qi.qc_status,
       qi.purchase_order_code,
       qi.purchase_order_id,
       qi.qc_user_name,qr.qc_type,

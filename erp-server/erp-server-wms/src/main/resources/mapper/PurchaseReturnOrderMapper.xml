@@ -27,7 +27,7 @@
         prod.warehouse_location,
         pro.source_type
         FROM po_return_detail prod
-        LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
+        INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
         <if test="params.code != null and params.code != ''">
             and pro.code = #{params.code}
@@ -316,5 +316,33 @@
             pr.bill_date >= #{params.dateList[0]} AND (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pr.bill_date
         </if>
         group by pr.supplier_id
+    </select>
+
+    <select id="pdaPaging" resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$PdaPagingViewDTO">
+        SELECT
+            pro.id,
+            pro.code,
+            pro.approve_status,
+            pro.supplier_name,
+            pro.return_warehouse_name
+        FROM po_return_detail prod
+        INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
+        WHERE pro.is_deleted = FALSE
+        AND pro.invalid_status = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and pro.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ORDER BY pro.create_time desc
     </select>
 </mapper>

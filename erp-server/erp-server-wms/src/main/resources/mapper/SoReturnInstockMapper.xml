@@ -245,6 +245,7 @@
             sri.approve_status,
             sri.seller_name
         FROM so_return_instock sri
+        INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND srid.is_deleted = FALSE
         WHERE sri.is_deleted = FALSE
         AND sri.source_type NOT IN ('SAL_RETURNSTOCK')
         AND sri.invalid_status = FALSE

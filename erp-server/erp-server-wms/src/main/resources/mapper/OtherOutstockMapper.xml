@@ -217,4 +217,32 @@
         oo.id desc,ood.id desc
     </select>
 
+    <select id="pdaPaging" resultType="com.erp.model.wms.dto.OtherOutstockDTO$PdaListDTO">
+        SELECT
+        oo.id,
+        oo.code,
+        oo.approve_status,
+        oo.warehouse_name
+        from other_outstock oo
+        inner join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
+        inner join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false
+        WHERE oo.is_deleted = FALSE
+        AND oo.invalid_status = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and oo.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ORDER BY oo.create_time desc
+    </select>
+
 </mapper>

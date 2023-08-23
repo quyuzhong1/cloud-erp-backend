@@ -317,6 +317,7 @@
         so.warehouse_name,
         so.approve_status
         FROM so_outstock so
+        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND sod.is_deleted=FALSE
         WHERE so.is_deleted = false
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and so.approve_status in

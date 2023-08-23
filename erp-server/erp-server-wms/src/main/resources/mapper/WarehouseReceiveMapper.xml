@@ -331,17 +331,18 @@
 
     <select id="pdaPaging" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PdaPagingViewDTO">
         SELECT
-        wr.id,
-        wr.code,
-        wr.approve_status,
-        wr.supplier_name,
-        wr.delivery_warehouse_name,
-        wr.subcontract_type as subcontractType
-        FROM po_receive wr
-        WHERE wr.is_deleted = FALSE
-        AND wr.invalid_status = FALSE
+        pr.id,
+        pr.code,
+        pr.approve_status,
+        pr.supplier_name,
+        pr.delivery_warehouse_name,
+        pr.subcontract_type as subcontractType
+        FROM po_receive pr
+        INNER JOIN po_receive_detail prd ON prd.main_id = pr.id AND prd.is_deleted = FALSE
+        WHERE pr.is_deleted = FALSE
+        AND pr.invalid_status = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-            and wr.approve_status in
+            and pr.approve_status in
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
@@ -354,7 +355,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        ORDER BY wr.create_time desc
+        ORDER BY pr.create_time desc
     </select>
 
     <select id="pdaListCount" resultType="java.lang.Integer">

@@ -495,8 +495,8 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         messageEntity.setType(MessageTypeEnum.qc.getCode());
         LinkedHashMap<String, Object> map = new LinkedHashMap();
         map.put("code", item.getCode());
-        map.put("status", QcBillStatusEnum.FINISH_QC.getCode());
-        map.put("statusName", QcBillStatusEnum.FINISH_QC.getName());
+        map.put("status", item.getQcStatus());
+        map.put("statusName", QcBillStatusEnum.getByCode(item.getQcStatus()).getName());
         map.put("skuId", item.getSkuId());
         map.put("skuNo", item.getSkuNo());
         map.put("qty", item.getQcQty());
