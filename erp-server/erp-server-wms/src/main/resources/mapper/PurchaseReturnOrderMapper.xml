@@ -320,11 +320,13 @@
 
     <select id="pdaPaging" resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$PdaPagingViewDTO">
         SELECT
+            DISTINCT
             pro.id,
             pro.code,
             pro.approve_status,
             pro.supplier_name,
-            pro.return_warehouse_name
+            pro.return_warehouse_name,
+            pro.create_time
         FROM po_return_detail prod
         INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE

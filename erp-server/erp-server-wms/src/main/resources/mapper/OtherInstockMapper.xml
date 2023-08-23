@@ -212,12 +212,14 @@
 
     <select id="pdaPaging" resultType="com.erp.model.wms.dto.OtherInstockDTO$PdaListDTO">
         SELECT
+        DISTINCT
         oi.id,
         oi.code,
         oi.approve_status,
-        oi.warehouse_name
-        from other_instock oi
-        inner join other_instock_detail oid on oi.id = oid.main_id and oid.is_deleted = false
+        oi.warehouse_name,
+        oi.create_time
+        FROM other_instock oi
+        INNER JOIN other_instock_detail oid on oi.id = oid.main_id AND oid.is_deleted = FALSE
         WHERE oi.is_deleted = FALSE
         AND oi.invalid_status = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">

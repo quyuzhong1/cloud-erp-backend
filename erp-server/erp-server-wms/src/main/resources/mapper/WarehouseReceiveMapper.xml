@@ -331,12 +331,14 @@
 
     <select id="pdaPaging" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PdaPagingViewDTO">
         SELECT
+        DISTINCT
         pr.id,
         pr.code,
         pr.approve_status,
         pr.supplier_name,
         pr.delivery_warehouse_name,
-        pr.subcontract_type as subcontractType
+        pr.subcontract_type as subcontractType,
+        pr.create_time
         FROM po_receive pr
         INNER JOIN po_receive_detail prd ON prd.main_id = pr.id AND prd.is_deleted = FALSE
         WHERE pr.is_deleted = FALSE

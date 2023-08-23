@@ -3749,6 +3749,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto) {
-        return baseMapper.pdaSearchSku(dto);
+        List<SkuVO> skuVOS = baseMapper.pdaSearchSku(dto);
+        if (CollectionUtils.isEmpty(skuVOS)) {
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+        return skuVOS;
     }
 }

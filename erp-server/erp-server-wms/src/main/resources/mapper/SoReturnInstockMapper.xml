@@ -240,10 +240,12 @@
 
     <select id="pdaPaging" resultType="com.erp.model.wms.dto.SoReturnInstockDTO$PdaPagingView">
         SELECT
+            DISTINCT
             sri.id,
             sri.code,
             sri.approve_status,
-            sri.seller_name
+            sri.seller_name,
+            sri.create_time
         FROM so_return_instock sri
         INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND srid.is_deleted = FALSE
         WHERE sri.is_deleted = FALSE
