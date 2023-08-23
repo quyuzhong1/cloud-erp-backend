@@ -216,12 +216,6 @@
                 <version>2.2.7</version>
             </dependency>
 
-            <dependency>
-                <groupId>javax.mail</groupId>
-                <artifactId>mail</artifactId>
-                <version>1.4.5</version>
-            </dependency>
-
             <!--分布式锁-->
             <dependency>
                 <groupId>org.redisson</groupId>
@@ -233,13 +227,6 @@
 
     </dependencyManagement>
 
-<!--    <repositories>-->
-<!--        <repository>-->
-<!--            <id>nexus</id>-->
-<!--            <name>Internal Maven Server</name>-->
-<!--            <url>http://172.16.100.11:8089/repository/maven-public/</url>-->
-<!--        </repository>-->
-<!--    </repositories>-->
     <profiles>
         <profile>
             <id>dev</id>
