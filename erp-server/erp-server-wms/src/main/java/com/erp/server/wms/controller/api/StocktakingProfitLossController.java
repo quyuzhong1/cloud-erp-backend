@@ -7,6 +7,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
@@ -60,6 +61,16 @@ public class StocktakingProfitLossController extends BaseController {
         List<StocktakingProfitLossDTO.TabDTO> tabList = stocktakingProfitLossService.tabList(dto);
         return success(tabList);
     }
+
+    /**
+     * 创建
+     */
+    @PostMapping("/add")
+    public ApiResult add(@RequestBody StocktakingProfitLossDTO.AddDTO dto){
+        String id = stocktakingProfitLossService.add(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
+    }
+
 
     /**
      * 分页列表

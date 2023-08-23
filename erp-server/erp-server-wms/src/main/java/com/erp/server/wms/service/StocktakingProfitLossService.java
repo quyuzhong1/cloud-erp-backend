@@ -113,4 +113,11 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @return
      */
     Boolean approveEnd(ApproveOneDTO approveOne, StocktakingProfitLossEntity entity);
+
+    /**
+     * 添加
+     * @param dto
+     * @return
+     */
+    String add(StocktakingProfitLossDTO.AddDTO dto);
 }

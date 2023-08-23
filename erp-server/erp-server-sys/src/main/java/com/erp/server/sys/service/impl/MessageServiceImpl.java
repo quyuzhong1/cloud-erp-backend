@@ -75,9 +75,8 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
             notReadMessageNum.setTypeName(typeEnum.getName());
             notReadMessageNum.setTypeRemark(typeEnum.getRemark());
             notReadMessageNum.setCount(messageEntityList.size() - readEntities.size());
-            List<MessageEntity> messageEntities = list.stream().filter(req -> req.getType().equals(typeEnum.getCode())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(messageEntities)) {
-                notReadMessageNum.setLatestTime(messageEntities.get(MathUtil.ZERO).getCreateTime());
+            if (CollectionUtils.isNotEmpty(messageEntityList)) {
+                notReadMessageNum.setLatestTime(messageEntityList.get(MathUtil.ZERO).getCreateTime());
             }
             notReadMessageNumList.add(notReadMessageNum);
         }

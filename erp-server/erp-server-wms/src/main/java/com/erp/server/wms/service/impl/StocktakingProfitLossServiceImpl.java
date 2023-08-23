@@ -23,6 +23,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
@@ -40,6 +41,7 @@ import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.kingdee.SyncKingdeeStocktakingLossService;
 import com.erp.server.wms.kingdee.SyncKingdeeStocktakingProfitService;
 import com.erp.server.wms.mapper.StocktakingProfitLossMapper;
+import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -82,6 +84,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private ProductDetailService productDetailService;
 
 
     @Autowired
@@ -367,31 +371,42 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             taskIdList = taskUserList.stream().map(StocktakingTaskUserEntity::getStocktakingTaskId).collect(Collectors.toList());
         }
         //获取导出数据
-        List<StocktakingProfitLossDTO.PagingViewDTO> list = baseMapper.listExport(params, billType, taskIdList);
+        List<StocktakingProfitLossDTO.ExportViewDTO> list = baseMapper.listExport(params, billType, taskIdList);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
+        List<String> sourceIdList = list.stream().map(StocktakingProfitLossDTO.ExportViewDTO::getSourceId).collect(Collectors.toList());
+        //盘点人信息
+        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseByTaskIds(sourceIdList);
+        List<String> skuIdList = list.stream().map(StocktakingProfitLossDTO.ExportViewDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
         //填充数据
-        fillDb(list);
+        for (StocktakingProfitLossDTO.ExportViewDTO item : list) {
+            BillTypeEnum type = item.getBillType();
+            item.setBillTypeName(type.getName());
+            //盘点人
+            String stocktakingUserName = taskUserList.stream().filter(t -> item.getSourceId().equals(t.getStocktakingTaskId())).
+                    map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
+            item.setStocktakingUserName(stocktakingUserName);
+            String skuId = item.getSkuId();
+            ProductDetailEntity sku = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().orElse(null);
+            if (Objects.nonNull(sku)) {
+                item.setProductName(sku.getName());
+                item.setUnit(sku.getUnitName());
+            } else {
+                item.setProductName("");
+                item.setUnit("");
+            }
+        }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/StocktakingProfitLoss.xlsx";
         String name = "盘盈盘亏单";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
         sb.append(name);
-        List<String> dataFlagList = new ArrayList<>(2);
-        dataFlagList.add("data1");
-        dataFlagList.add("data2");
-        try {
-            Map<String, Object> map = new HashMap<>();
-            map.put("data1", list);
-            List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = new ArrayList<>(list.size() + 10);
-            for (StocktakingProfitLossDTO.PagingViewDTO item : list) {
-                detailList.addAll(item.getDetailList());
-            }
-            map.put("data2", detailList);
 
-            new ExcelPrintUtils().compositeFillExport(map, response, sb.toString(), excelPath);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
             log.error("盘盈盘亏单导出 出错 >>>>{}", e);
             return Boolean.FALSE;
@@ -623,6 +638,34 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         }
 
         return result;
+    }
+
+    /**
+     * 添加
+     *
+     * @param dto
+     * @return java.lang.String
+     * @author yl
+     * @date 2023-08-22 18:56
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String add(StocktakingProfitLossDTO.AddDTO dto) {
+        StocktakingProfitLossEntity entity = new StocktakingProfitLossEntity();
+        BeanMapper.copy(dto, entity);
+        String id = IdWorker.getIdStr();
+        entity.setId(id);
+        BillTypeEnum billType = dto.getBillType();
+        BusinessNoTypeEnum businessNoType = BusinessNoTypeEnum.STOCKTAKING_PROFIT;
+        //盘亏单
+        if (BillTypeEnum.LOSS.equals(billType)) {
+            businessNoType = BusinessNoTypeEnum.STOCKTAKING_LOSS;
+        }
+        String code = docNoGenHelper.generateCode(businessNoType);
+        entity.setCode(code);
+        List<StocktakingProfitLossDetailEntity> detailList = new ArrayList<>(dto.getDetailList().size());
+
+        return null;
     }
 
     /**
