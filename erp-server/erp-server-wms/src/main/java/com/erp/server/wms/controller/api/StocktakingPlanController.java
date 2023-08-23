@@ -46,7 +46,7 @@ public class StocktakingPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:stocktakingPlan:paging",
-            tableAlias = ""
+            tableAlias = "stocktaking_plan"
     )
     public ApiResult<List<StocktakingPlanDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(stocktakingPlanService.tabList(dto));
@@ -63,7 +63,7 @@ public class StocktakingPlanController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:stocktakingPlan:paging",
-            tableAlias = ""
+            tableAlias = "stocktaking_plan"
     )
     public ApiResult<PagingVO<StocktakingPlanDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<StocktakingPlanDTO.PagingParamDTO> dto) {
         return success(stocktakingPlanService.paging(dto));
