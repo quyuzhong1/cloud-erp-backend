@@ -170,7 +170,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        create_time desc
+        "name" ASC
     </select>
     <select id="pagingProduct" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingProductViewDTO">
         SELECT
@@ -239,6 +239,6 @@
         </if>
 
         GROUP BY spuNo,category,skuId, skuNo, productImgUrl,productName,warehouseId,warehouseName,warehouseLocation,warehouseArea,warehouseAreaName,inv.org_id
-        ORDER BY pd.sku_no
+        ORDER BY skuNo ASC,warehouseName ASC, inventoryId ASC
     </select>
 </mapper>
