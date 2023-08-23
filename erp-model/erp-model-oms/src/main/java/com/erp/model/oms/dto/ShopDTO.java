@@ -1,13 +1,17 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JacksonInject;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -319,6 +323,48 @@ public class ShopDTO implements Serializable {
          */
         @NotBlank(message = "销售组织不能为空")
         private String salesOrgId;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SetCostDTO  {
+
+        @NotNull(message = "店铺不能为空")
+        private List<String> ids;
+
+
+        @DecimalMin( value = "0",message = "平台费率必须大于0")
+        @NotNull(message = "平台费率不能为空")
+        private BigDecimal platformRate;
+
+        /**
+         * 平台的选项
+         */
+        @NotBlank(message = "平台选项不能为空")
+        private String dictPlatformOption;
+
+        @DecimalMin( value = "0",message = "vat费率必须大于0")
+        @NotNull(message = "vat费率不能为空")
+        private BigDecimal vatRate;
+
+        /**
+         * 平台的选项
+         */
+        @NotBlank(message = "vat选项不能为空")
+        private String dictVatOption;
+
+
+        @DecimalMin( value = "0",message = "转账费率必须大于0")
+        @NotNull(message = "转账费率不能为空")
+        private BigDecimal transferRate;
+
+        /**
+         * 平台的选项
+         */
+        @NotBlank(message = "转帐的选项不能为空")
+        private String dictTransferOption;
+
 
     }
 }

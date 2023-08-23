@@ -10,6 +10,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -34,6 +35,9 @@ public class ShopInfoController extends BaseController {
 
     @Resource
     private ShopInfoService shopInfoService;
+
+    @Resource
+    private ShopCostService shopCostService;
 
 
     /**
@@ -133,9 +137,27 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/setCost")
-    public ApiResult<ShopDTO.ViewDTO> setCost(@RequestBody @Validated BaseIdDTO dto) {
-        ShopDTO.ViewDTO view = shopInfoService.view(dto.getId());
-        return success(view);
+    public ApiResult setCost(@RequestBody @Validated ShopDTO.SetCostDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO submit;
+            String flagCode = id;
+            try {
+                ShopInfoEntity shop = shopInfoService.getById(id);
+                if (Objects.isNull(shop)) {
+                    submit = BatchResultDTO.fail(id, "店铺不存在");
+                } else {
+                    submit = shopCostService.setCost(id, dto);
+                    flagCode = shop.getName();
+                }
+            } catch (Exception e) {
+                log.error("店铺设置费率失败>>>>{}", e);
+                submit = BatchResultDTO.fail(flagCode, e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return success(resultDTOS);
     }
 
 
