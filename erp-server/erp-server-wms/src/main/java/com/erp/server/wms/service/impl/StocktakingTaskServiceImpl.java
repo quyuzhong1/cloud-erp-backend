@@ -23,16 +23,10 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.OperateLogDTO;
-import com.erp.model.wms.dto.StocktakingTaskDTO;
-import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.SeparateRuleEnum;
-import com.erp.model.wms.enums.StocktakingModeEnum;
-import com.erp.model.wms.enums.StocktakingStatusEnum;
-import com.erp.model.wms.enums.StocktakingTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -58,6 +52,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -457,14 +452,105 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         }
         Boolean result = updateForApprove(entity.getId(), approveStatus, billStatus);
         if (result && isPass) {
-            // 盘点任务审核完成 删除库存锁定缓存
-            stocktakingTaskDetailService.listByMainId(entity.getId()).forEach(detail -> {
-                // 移除库存锁定缓存
-                redisUtil.keys(StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getSourceCode(), "*", detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*")).forEach(redisUtil::del);
-            });
-            stocktakingProfitLossService.autoCreateBill(entity);
+            // 组装盘盈盘亏单所需要的数据
+            List<StocktakingProfitLossDTO.AddDTO> list = this.packageProfitLoss(entity);
+            // 批量提审
+            List<StocktakingProfitLossEntity> profitLossList = stocktakingProfitLossService.batchSave(list);
+            try {
+                // 批量审核
+                for (StocktakingProfitLossEntity profitLoss : profitLossList) {
+                    ApproveOneDTO approveOne = new ApproveOneDTO();
+                    approveOne.setType(ApproveTypeEnum.PASS.getStatus());
+                    approveOne.setId(profitLoss.getId());
+                    stocktakingProfitLossService.approveEnd(approveOne, profitLoss);
+                }
+            } catch (Exception e) {
+                log.error("盘盈盘亏审核失败>>>>{}", e);
+            }
+
         }
         return result;
+    }
+
+    /**
+     * 组装盘盈盘亏单保存数据
+     *
+     * @param
+     * @return java.util.List<com.erp.model.wms.dto.StocktakingProfitLossDTO.AddDTO>
+     * @author yl
+     * @date 2023-08-23 11:28
+     */
+    public List<StocktakingProfitLossDTO.AddDTO> packageProfitLoss(StocktakingTaskEntity taskEntity) {
+        //任务code
+        String taskCode = taskEntity.getCode();
+        //任务id
+        String taskId = taskEntity.getId();
+        List<StocktakingTaskDetailEntity> stocktakingTaskDetailList = stocktakingTaskDetailService.listBaseByMainIds(Arrays.asList(taskId));
+        //以仓库分组
+        Map<String, List<StocktakingTaskDetailEntity>> warehouseMap = stocktakingTaskDetailList.stream().collect(Collectors.groupingBy(StocktakingTaskDetailEntity::getWarehouseId));
+        //盘盈盘亏单 添加实体
+        List<StocktakingProfitLossDTO.AddDTO> addList = new ArrayList<>(stocktakingTaskDetailList.size());
+        //单据日期
+        LocalDate billDate = LocalDate.now();
+        //盘盈
+        BillTypeEnum profit = BillTypeEnum.PROFIT;
+        //盘亏
+        BillTypeEnum loss = BillTypeEnum.LOSS;
+
+        for (Map.Entry<String, List<StocktakingTaskDetailEntity>> item : warehouseMap.entrySet()) {
+            List<StocktakingTaskDetailEntity> taskDetailList = item.getValue();
+            //盘盈的任务明细
+            List<StocktakingTaskDetailEntity> profitDetailList = taskDetailList.stream().filter(d -> d.getDiffQty() > 0).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(profitDetailList)) {
+                //处理盘盈数据
+                StocktakingProfitLossDTO.AddDTO profitAddDTO = disposeDb(taskId, taskCode, profitDetailList, billDate, profit);
+                addList.add(profitAddDTO);
+            }
+            //盘亏的任务明细
+            List<StocktakingTaskDetailEntity> lossDetailList = taskDetailList.stream().filter(d -> d.getDiffQty() < 0).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(lossDetailList)) {
+                //处理盘亏数据
+                StocktakingProfitLossDTO.AddDTO lossAddDTO = disposeDb(taskId, taskCode, lossDetailList, billDate, loss);
+                addList.add(lossAddDTO);
+            }
+        }
+        return addList;
+    }
+
+
+    /**
+     * 处理数据
+     *
+     * @param sourceId
+     * @param sourceCode
+     * @param detailList
+     * @return void
+     * @author yl
+     * @date 2023-08-10 15:05
+     */
+    private StocktakingProfitLossDTO.AddDTO disposeDb(String sourceId, String sourceCode, List<StocktakingTaskDetailEntity> detailList, LocalDate billDate, BillTypeEnum billType) {
+        List<StocktakingProfitLossDetailDTO.AddDTO> addDetailList = new ArrayList<>(detailList.size());
+        StocktakingProfitLossDTO.AddDTO addDTO = new StocktakingProfitLossDTO.AddDTO();
+        addDTO.setBillDate(billDate);
+        addDTO.setBillType(billType);
+        addDTO.setSourceId(sourceId);
+        addDTO.setSourceCode(sourceCode);
+        for (StocktakingTaskDetailEntity detail : detailList) {
+            //明细
+            StocktakingProfitLossDetailDTO.AddDTO addDetail = new StocktakingProfitLossDetailDTO.AddDTO();
+            addDetail.setDiffQty(detail.getDiffQty());
+            addDetail.setFrozenQty(detail.getFrozenQty());
+            addDetail.setQty(detail.getQty());
+            addDetail.setSkuId(detail.getSkuId());
+            addDetail.setSkuNo(detail.getSkuNo());
+            addDetail.setUsableQty(detail.getUsableQty());
+            addDetail.setWarehouseId(detail.getWarehouseId());
+            addDetail.setWarehouseLocation(detail.getWarehouseLocation());
+            addDetail.setSourceDetailId(detail.getId());
+            addDetailList.add(addDetail);
+        }
+        addDTO.setDetailList(addDetailList);
+        return addDTO;
     }
 
     /**
@@ -766,7 +852,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         String username = userInfo.getUserName();
         inventoryMap.keySet().parallelStream().forEach(key -> {
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
-            StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code,uid, username);
+            StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code, uid, username);
             this.save(insertTask);
             List<InventoryEntity> inventoryEntityList = inventoryMap.get(key);
             // 根据组织+仓库+仓位+skuId 进行分组 获取不同库存状态的库存记录

@@ -110,80 +110,6 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
 
     /**
-     * 盘点任务单审核通过生成盘盈盘亏单
-     *
-     * @param taskEntity
-     * @return void
-     * 如果当前存在事务就加入 如果不存在就创建一个新的
-     * @author yl
-     * @date 2023-08-10 11:52
-     */
-
-    @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
-    public void autoCreateBill(StocktakingTaskEntity taskEntity) {
-        if (Objects.isNull(taskEntity)) {
-            return;
-        }
-        //任务code
-        String taskCode = taskEntity.getCode();
-        //任务id
-        String taskId = taskEntity.getId();
-        List<StocktakingTaskDetailEntity> stocktakingTaskDetailList = stocktakingTaskDetailService.listBaseByMainIds(Arrays.asList(taskId));
-        //以仓库分组
-        Map<String, List<StocktakingTaskDetailEntity>> warehouseMap = stocktakingTaskDetailList.stream().collect(Collectors.groupingBy(StocktakingTaskDetailEntity::getWarehouseId));
-        //盘盈盘亏单 添加实体
-        List<StocktakingProfitLossDTO.AddDTO> addList = new ArrayList<>(stocktakingTaskDetailList.size());
-
-        //单据日期
-        LocalDate billDate = LocalDate.now();
-        //盘盈
-        BillTypeEnum profit = BillTypeEnum.PROFIT;
-        //盘亏
-        BillTypeEnum loss = BillTypeEnum.LOSS;
-
-        for (Map.Entry<String, List<StocktakingTaskDetailEntity>> item : warehouseMap.entrySet()) {
-            //仓库id
-            String warehouseId = item.getKey();
-
-            List<StocktakingTaskDetailEntity> taskDetailList = item.getValue();
-            //盘盈的任务明细
-            List<StocktakingTaskDetailEntity> profitDetailList = taskDetailList.stream().filter(d -> d.getDiffQty() > 0).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(profitDetailList)) {
-                //处理盘盈数据
-                StocktakingProfitLossDTO.AddDTO profitAddDTO = disposeDb(taskId, taskCode, profitDetailList, billDate, profit);
-                addList.add(profitAddDTO);
-            }
-            //盘亏的任务明细
-            List<StocktakingTaskDetailEntity> lossDetailList = taskDetailList.stream().filter(d -> d.getDiffQty() < 0).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(lossDetailList)) {
-                //处理盘亏数据
-                StocktakingProfitLossDTO.AddDTO lossAddDTO = disposeDb(taskId, taskCode, lossDetailList, billDate, loss);
-                addList.add(lossAddDTO);
-            }
-        }
-
-        try {
-            for (StocktakingProfitLossDTO.AddDTO item : addList) {
-                String id = this.addAndSubmit(item);
-                if (StringUtils.isNotBlank(id)) {
-                    ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-                    approveOneDTO.setId(id);
-                    approveOneDTO.setComment("");
-                    approveOneDTO.setType("pass");
-                    this.approve(id, approveOneDTO);
-                }
-            }
-
-        } catch (Exception e) {
-            log.error("生成盘盈盘亏出错了 >>>>>>>{}", e);
-        }
-
-
-    }
-
-
-    /**
      * tab list
      *
      * @param dto
@@ -651,6 +577,59 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     }
 
     /**
+     * 批量保存提交
+     *
+     * @param list
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-08-23 11:37
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<StocktakingProfitLossEntity> batchSave(List<StocktakingProfitLossDTO.AddDTO> list) {
+        List<StocktakingProfitLossEntity> addList = new ArrayList<>(list.size());
+        List<StocktakingProfitLossDetailEntity> addDetailList = new ArrayList<>(list.size());
+        for (StocktakingProfitLossDTO.AddDTO dto : list) {
+            StocktakingProfitLossEntity entity = new StocktakingProfitLossEntity();
+            BeanMapper.copy(dto, entity);
+            String id = IdWorker.getIdStr();
+            entity.setId(id);
+            BillTypeEnum billType = dto.getBillType();
+            BusinessNoTypeEnum businessNoType = BusinessNoTypeEnum.STOCKTAKING_PROFIT;
+            //盘亏单
+            if (BillTypeEnum.LOSS.equals(billType)) {
+                businessNoType = BusinessNoTypeEnum.STOCKTAKING_LOSS;
+            }
+            String code = docNoGenHelper.generateCode(businessNoType);
+            entity.setCode(code);
+            entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
+            addList.add(entity);
+            for (StocktakingProfitLossDetailDTO.AddDTO item : dto.getDetailList()) {
+                StocktakingProfitLossDetailEntity detail = new StocktakingProfitLossDetailEntity();
+                detail.setMainId(id);
+                detail.setDiffQty(item.getDiffQty());
+                detail.setFrozenQty(item.getFrozenQty());
+                detail.setQty(item.getQty());
+                detail.setSkuId(item.getSkuId());
+                detail.setSkuNo(item.getSkuNo());
+                detail.setUsableQty(item.getUsableQty());
+                detail.setWarehouseId(item.getWarehouseId());
+                detail.setWarehouseLocation(item.getWarehouseLocation());
+                detail.setSourceDetailId(item.getSourceDetailId());
+                addDetailList.add(detail);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(addList)) {
+            this.saveBatch(addList);
+        }
+        if (CollectionUtils.isNotEmpty(addDetailList)) {
+            stocktakingProfitLossDetailService.saveBatch(addDetailList);
+        }
+
+        return addList;
+    }
+
+    /**
      * 更改审核信息
      *
      * @param id
@@ -734,38 +713,5 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
     }
 
-    /**
-     * 处理数据
-     *
-     * @param sourceId
-     * @param sourceCode
-     * @param detailList
-     * @return void
-     * @author yl
-     * @date 2023-08-10 15:05
-     */
-    private StocktakingProfitLossDTO.AddDTO disposeDb(String sourceId, String sourceCode, List<StocktakingTaskDetailEntity> detailList, LocalDate billDate, BillTypeEnum billType) {
-        List<StocktakingProfitLossDetailDTO.AddDTO> addDetailList = new ArrayList<>(detailList.size());
-        StocktakingProfitLossDTO.AddDTO addDTO = new StocktakingProfitLossDTO.AddDTO();
-        addDTO.setBillDate(billDate);
-        addDTO.setBillType(billType);
-        addDTO.setSourceId(sourceId);
-        addDTO.setSourceCode(sourceCode);
-        for (StocktakingTaskDetailEntity detail : detailList) {
-            //明细
-            StocktakingProfitLossDetailDTO.AddDTO addDetail = new StocktakingProfitLossDetailDTO.AddDTO();
-            addDetail.setDiffQty(detail.getDiffQty());
-            addDetail.setFrozenQty(detail.getFrozenQty());
-            addDetail.setQty(detail.getQty());
-            addDetail.setSkuId(detail.getSkuId());
-            addDetail.setSkuNo(detail.getSkuNo());
-            addDetail.setUsableQty(detail.getUsableQty());
-            addDetail.setWarehouseId(detail.getWarehouseId());
-            addDetail.setWarehouseLocation(detail.getWarehouseLocation());
-            addDetail.setSourceDetailId(detail.getId());
-            addDetailList.add(addDetail);
-        }
-        addDTO.setDetailList(addDetailList);
-        return addDTO;
-    }
+
 }
