@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -57,29 +58,27 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean assignUser(List<StocktakingTaskEntity> taskEntityList, List<String> userIdList) {
-        List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>(taskEntityList.size());
-
+    public Boolean assignUser(StocktakingTaskEntity taskEntity, List<String> userIdList) {
+        List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>(1);
         List<FindUserDTO> userList = userInfoFeign.listByUserIds(userIdList);
-        List<String> taskIdList = taskEntityList.stream().map(StocktakingTaskEntity::getId).collect(Collectors.toList());
+        List<String> taskIdList = Arrays.asList(taskEntity.getId());
         String moduleType = ModuleTypeEnum.STOCKTAKING_TASK.getCode();
         //第一步先删除
         this.removeByTaskIds(taskIdList);
         List<StocktakingTaskUserEntity> addList = new ArrayList<>(10);
-        for (StocktakingTaskEntity task : taskEntityList) {
-            String taskId = task.getId();
-            String code = task.getCode();
-            List<String> userNameList = new ArrayList<>();
-            for (String userId : userIdList) {
-                StocktakingTaskUserEntity taskUserEntity = new StocktakingTaskUserEntity();
-                taskUserEntity.setStocktakingTaskId(taskId);
-                taskUserEntity.setUserId(userId);
-                String userName = userList.stream().filter(u -> u.getUserId().equals(userId)).
-                        map(FindUserDTO::getUserName).findFirst().orElse("");
-                taskUserEntity.setUserName(userName);
-                addList.add(taskUserEntity);
-                userNameList.add(userName);
-            }
+        String taskId = taskEntity.getId();
+        String code = taskEntity.getCode();
+        List<String> userNameList = new ArrayList<>();
+        for (String userId : userIdList) {
+            StocktakingTaskUserEntity taskUserEntity = new StocktakingTaskUserEntity();
+            taskUserEntity.setStocktakingTaskId(taskId);
+            taskUserEntity.setUserId(userId);
+            String userName = userList.stream().filter(u -> u.getUserId().equals(userId)).
+                    map(FindUserDTO::getUserName).findFirst().orElse("");
+            taskUserEntity.setUserName(userName);
+            addList.add(taskUserEntity);
+            userNameList.add(userName);
+
 
             OperateLogDTO.AddModuleOperateLogDTO operateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
             operateLogDTO.setOperation("分配盘点人");

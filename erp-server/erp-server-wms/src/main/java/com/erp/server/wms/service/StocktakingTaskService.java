@@ -73,10 +73,10 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
      * 分配用户
      * @author yl
      * @date 2023-08-03 17:36
-     * @param dto
+     * @param
      * @return java.lang.Boolean
      */
-    Boolean assignUser(StocktakingTaskDTO.AssignUserDTO dto);
+    BatchResultDTO assignUser(String id,  List<String> userIdList);
 
     /**
      * 导出excel

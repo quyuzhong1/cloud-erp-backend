@@ -23,10 +23,10 @@ public interface StocktakingTaskUserService extends SuperService<StocktakingTask
     List<StocktakingTaskUserEntity> listBaseByTaskIds(List<String> taskIdList);
     /**
      * 分配任务盘点人
-     * @param taskEntityList
+     * @param taskEntity
      * @return
      */
-    Boolean assignUser(List<StocktakingTaskEntity> taskEntityList, List<String> userIdList);
+    Boolean assignUser(StocktakingTaskEntity taskEntity, List<String> userIdList);
 
     /**
      * 根据用户获取多信息
