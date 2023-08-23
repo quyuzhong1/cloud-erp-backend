@@ -378,4 +378,5 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      */
     void updateAddress(String soId, String receiveAddressId, String addressType, String receiverName, String telNumber);
 
+
 }
