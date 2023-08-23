@@ -43,6 +43,38 @@ public class StocktakingProfitLossDTO implements Serializable {
 
     }
 
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO {
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+
+        /**
+         * 来源code
+         */
+        private String sourceCode;
+
+        /**
+         * 单据类型
+         */
+        private BillTypeEnum billType;
+
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+
+        private List<StocktakingProfitLossDetailDTO.AddDTO> detailList;
+
+    }
+
 
     /**
      * 分页参数
@@ -192,6 +224,127 @@ public class StocktakingProfitLossDTO implements Serializable {
         List<StocktakingProfitLossDetailDTO.ViewDTO> detailList;
 
     }
+
+
+
+    /**
+     * 导出数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportViewDTO {
+
+
+        private String id;
+        /**
+         * 单号
+         */
+        private String code;
+
+        /**
+         * 来源单号 盘点任务单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源id 盘点任务id
+         */
+        private String sourceId;
+
+        /**
+         * 单据类型
+         */
+        private BillTypeEnum billType;
+
+        /**
+         * 单据类型名
+         */
+        private String billTypeName;
+
+        /**
+         * 单据状态
+         */
+        private ApproveStatusEnum approveStatus;
+
+
+        /**
+         * 盘点人
+         */
+        private String stocktakingUserName;
+        /**
+         * 创建时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createTime;
+
+        /**
+         * 最新审核人
+         */
+        private String approveUserName;
+
+        /**
+         * 审核时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime approveTime;
+
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        private String skuId;
+
+        /**
+         * skuName
+         */
+        private String productName;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
+
+        /**
+         * 盘点数量
+         */
+        private Integer qty;
+
+        /**
+         * 可用数量
+         */
+        private Integer usableQty;
+
+        /**
+         * 冻结数量
+         */
+        private Integer frozenQty;
+
+
+        /**
+         * 差异数量
+         */
+        private Integer diffQty;
+
+    }
+
 
 
     /**

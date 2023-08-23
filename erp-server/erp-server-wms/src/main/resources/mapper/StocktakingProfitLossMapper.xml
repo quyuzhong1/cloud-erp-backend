@@ -131,17 +131,31 @@
         spl.id DESC
     </select>
     <!--导出数据-->
-    <select id="listExport" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$PagingViewDTO">
+    <select id="listExport" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$ExportViewDTO">
         SELECT
-            id,
-            code,
-            source_id,
-            source_code,
-            bill_type,
-            create_time,
-            approve_time,
-            approve_status
+        spl.id,
+        spl.code,
+        spl.source_id,
+        spl.source_code,
+        spl.bill_type,
+        spl.create_time,
+        spl.approve_time,
+        spl.approve_status,
+        spl.approve_user_name,
+        spld.sku_no,
+        spld.sku_id,
+        spld.warehouse_id,
+        spld.warehouse_location,
+        spld.qty,
+        spld.usable_qty,
+        spld.frozen_qty,
+        spld.diff_qty,
+        w.name AS warehouseName
         FROM stocktaking_profit_loss spl
+        INNER JOIN stocktaking_profit_loss_detail spld
+        ON spl.id=spld.main_id AND spld.is_deleted=FALSE
+        LEFT JOIN warehouse w
+        ON spld.warehouse_id=w.id AND w.is_deleted=FALSE
         WHERE spl.is_deleted=FALSE
         <choose>
             <when test="params.ids!=null and params.ids.size>0">
@@ -194,30 +208,18 @@
                 </if>
                 <!--skuId -->
                 <if test="params.skuNoList!=null and params.skuNoList.size>0">
-                    AND spl.id IN
-                    (
-                    SELECT main_id FROM stocktaking_profit_loss_detail
-                    WHERE is_deleted=FALSE AND sku_no IN
+                    AND spld.sku_no IN
                     <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
                         #{skuNo}
                     </foreach>
-                    )
                 </if>
                 <!--仓库 -->
                 <if test="params.warehouseId!=null and params.warehouseId!=''">
-                    AND spl.id IN
-                    (
-                    SELECT main_id FROM stocktaking_profit_loss_detail
-                    WHERE is_deleted=FALSE AND warehouse_id =#{params.warehouseId}
-                    )
+                    AND spld.warehouse_id =#{params.warehouseId}
                 </if>
                 <!--仓位 -->
                 <if test="params.warehouseLocation!=null and params.warehouseLocation!=''">
-                    AND spl.id IN
-                    (
-                    SELECT main_id FROM stocktaking_profit_loss_detail
-                    WHERE is_deleted=FALSE AND warehouse_location ILIKE concat('%', #{params.warehouseLocation} ,'%')
-                    )
+                    AND spld.warehouse_location =#{params.warehouseLocation}
                 </if>
                 <!--权限 -->
                 <if test="params.permissionSql!=null and params.permissionSql!=''">
@@ -235,26 +237,26 @@
     </select>
     <!--  获取到扣减库存所需的参数-->
     <select id="listInventoryInOut" resultType="com.erp.model.wms.dto.inventory.InOutStockDTO">
-          SELECT
-            spl.id AS sourceId,
-            spl.code AS sourceCode,
-            spl.bill_date AS billDate,
-            spld.id AS sourceDetailId,
-            spld.diff_qty AS qty,
-            spld.sku_id,
-            spld.sku_no,
-            spld.warehouse_id,
-            spld.warehouse_location
-          FROM stocktaking_profit_loss_detail spld
-          LEFT JOIN stocktaking_profit_loss spl
-          ON spld.main_id=spl.id AND spl.is_deleted=FALSE
-          WHERE spld.is_deleted=FALSE
-          <if test="idList!=null and idList.size>0" >
-              AND spl.id IN
-              <foreach collection="idList" item="id" open="(" separator="," close=")">
-                  #{id}
-              </foreach>
-          </if>
+        SELECT
+        spl.id AS sourceId,
+        spl.code AS sourceCode,
+        spl.bill_date AS billDate,
+        spld.id AS sourceDetailId,
+        spld.diff_qty AS qty,
+        spld.sku_id,
+        spld.sku_no,
+        spld.warehouse_id,
+        spld.warehouse_location
+        FROM stocktaking_profit_loss_detail spld
+        LEFT JOIN stocktaking_profit_loss spl
+        ON spld.main_id=spl.id AND spl.is_deleted=FALSE
+        WHERE spld.is_deleted=FALSE
+        <if test="idList!=null and idList.size>0">
+            AND spl.id IN
+            <foreach collection="idList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
 
     </select>
 

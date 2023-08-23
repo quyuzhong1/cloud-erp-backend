@@ -107,7 +107,7 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
      */
     @Override
     public List<StocktakingTaskUserEntity> listByUserIds(List<String> userIdList) {
-        if (CollectionUtils.isNotEmpty(userIdList)) {
+        if (CollectionUtils.isEmpty(userIdList)) {
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(StocktakingTaskUserEntity::getUserId, userIdList).list();
