@@ -835,7 +835,7 @@ public class PoInstockDTO implements Serializable {
         /**
          * 实收数量
          */
-        private Integer actualQty;
+        private Integer stockInQty;
     }
 
     /**
