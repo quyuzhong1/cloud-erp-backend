@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.EnumUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -111,10 +112,12 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             String oldValue = String.valueOf(valuePair.getKey());
             String newValue = String.valueOf(valuePair.getValue());
 
-            if (oldValue.equals(newValue)) {
+            if (oldValue.equals(newValue) || null == newValue) {
                 continue;
             }
             String content;
+            newValue = StrUtil.isBlank(newValue) ? "空值" : newValue;
+            oldValue = StrUtil.isBlank(oldValue) ? "空值" : oldValue;
             String concat = (StringUtils.isBlank(msg) ? "" : msg).concat("编辑了[").concat(fieldName).concat("]");
             if (StringUtils.isBlank(valuePair.getKey())) {
                 content = concat.concat("由空值变更为[").concat(newValue).concat("]");
