@@ -5,6 +5,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.common.business.service.SuperService;
@@ -120,4 +121,13 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @return
      */
     String add(StocktakingProfitLossDTO.AddDTO dto);
+
+    /**
+     * 新增 并提交
+     * @author yl
+     * @date 2023-08-23 10:25
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    String addAndSubmit(StocktakingProfitLossDTO.AddDTO dto);
 }

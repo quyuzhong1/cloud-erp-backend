@@ -52,6 +52,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -119,7 +120,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      */
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     public void autoCreateBill(StocktakingTaskEntity taskEntity) {
         if (Objects.isNull(taskEntity)) {
             return;
@@ -131,10 +132,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         List<StocktakingTaskDetailEntity> stocktakingTaskDetailList = stocktakingTaskDetailService.listBaseByMainIds(Arrays.asList(taskId));
         //以仓库分组
         Map<String, List<StocktakingTaskDetailEntity>> warehouseMap = stocktakingTaskDetailList.stream().collect(Collectors.groupingBy(StocktakingTaskDetailEntity::getWarehouseId));
-        //盘盈盘亏单
-        List<StocktakingProfitLossEntity> addList = new ArrayList<>(stocktakingTaskDetailList.size());
-        //盘盈盘亏单 明细
-        List<StocktakingProfitLossDetailEntity> addDetailList = new ArrayList<>(10);
+        //盘盈盘亏单 添加实体
+        List<StocktakingProfitLossDTO.AddDTO> addList = new ArrayList<>(stocktakingTaskDetailList.size());
+
         //单据日期
         LocalDate billDate = LocalDate.now();
         //盘盈
@@ -150,92 +150,35 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             //盘盈的任务明细
             List<StocktakingTaskDetailEntity> profitDetailList = taskDetailList.stream().filter(d -> d.getDiffQty() > 0).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(profitDetailList)) {
-                //处理数据
-                Map<String, Object> profitMap = disposeDb(taskId, taskCode, profitDetailList, billDate, profit);
-                StocktakingProfitLossEntity profitEntity = (StocktakingProfitLossEntity) profitMap.get("stocktakingProfitLoss");
-                List<StocktakingProfitLossDetailEntity> profitDetailEntityList = (List<StocktakingProfitLossDetailEntity>) profitMap.get("detailEntityList");
-                if (Objects.nonNull(profitEntity)) {
-                    addList.add(profitEntity);
-                }
-                if (CollectionUtils.isNotEmpty(profitDetailEntityList)) {
-                    addDetailList.addAll(profitDetailEntityList);
-                }
+                //处理盘盈数据
+                StocktakingProfitLossDTO.AddDTO profitAddDTO = disposeDb(taskId, taskCode, profitDetailList, billDate, profit);
+                addList.add(profitAddDTO);
             }
             //盘亏的任务明细
             List<StocktakingTaskDetailEntity> lossDetailList = taskDetailList.stream().filter(d -> d.getDiffQty() < 0).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(lossDetailList)) {
-                Map<String, Object> lossMap = disposeDb(taskId, taskCode, lossDetailList, billDate, loss);
-                StocktakingProfitLossEntity lossEntity = (StocktakingProfitLossEntity) lossMap.get("stocktakingProfitLoss");
-                List<StocktakingProfitLossDetailEntity> lossDetailEntityList = (List<StocktakingProfitLossDetailEntity>) lossMap.get("detailEntityList");
-                if (Objects.nonNull(lossEntity)) {
-                    addList.add(lossEntity);
+                //处理盘亏数据
+                StocktakingProfitLossDTO.AddDTO lossAddDTO = disposeDb(taskId, taskCode, lossDetailList, billDate, loss);
+                addList.add(lossAddDTO);
+            }
+        }
+
+        try {
+            for (StocktakingProfitLossDTO.AddDTO item : addList) {
+                String id = this.addAndSubmit(item);
+                if (StringUtils.isNotBlank(id)) {
+                    ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                    approveOneDTO.setId(id);
+                    approveOneDTO.setComment("");
+                    approveOneDTO.setType("pass");
+                    this.approve(id, approveOneDTO);
                 }
-                if (CollectionUtils.isNotEmpty(lossDetailEntityList)) {
-                    addDetailList.addAll(lossDetailEntityList);
-                }
             }
+
+        } catch (Exception e) {
+            log.error("生成盘盈盘亏出错了 >>>>>>>{}", e);
         }
 
-        if (CollectionUtils.isNotEmpty(addList)) {
-            this.saveBatch(addList);
-        }
-
-        if (CollectionUtils.isNotEmpty(addDetailList)) {
-            stocktakingProfitLossDetailService.saveBatch(addDetailList);
-        }
-
-        //同步消息并
-        syncKingdee(addList);
-
-    }
-
-    /**
-     * 同步发生金蝶信息
-     *
-     * @param list
-     */
-    public void syncKingdee(List<StocktakingProfitLossEntity> list) {
-        for (StocktakingProfitLossEntity entity : list) {
-            //盘盈单
-            BillTypeEnum profit = BillTypeEnum.PROFIT;
-            //盘盈单
-            BillTypeEnum loss = BillTypeEnum.LOSS;
-            //是否盘盈
-            Boolean isProfit = Objects.equals(profit, entity.getBillType());
-            //是否盘亏
-            Boolean isLoss = Objects.equals(loss, entity.getBillType());
-
-            InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-            if (isProfit) {
-                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.STOCKTAKING_PROFIT.getCode());
-            }
-            if (isLoss) {
-                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.STOCKTAKING_LOSS.getCode());
-            }
-            List<InOutStockDTO> members = baseMapper.listInventoryInOut(Arrays.asList(entity.getId()));
-            InventoryStatusEnum inventoryStatus = InventoryStatusEnum.USABLE;
-            for (InOutStockDTO member : members) {
-                member.setSourceType(InventorySourceTypeEnum.STOCKTAKING_PROFIT_LOSS);
-                Integer qty = member.getQty();
-                member.setQty(Math.abs(qty));
-                member.setInventoryStatus(inventoryStatus);
-            }
-            if (CollectionUtils.isNotEmpty(members)) {
-                inventoryInOutStockDTO.setMembers(members);
-                //扣减库存
-                inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
-            }
-
-
-            //盘盈单同步金蝶
-            if (isProfit) {
-                syncKingdeeStocktakingProfitService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
-            }
-            //盘亏单同步金蝶
-            if (isLoss) {
-                syncKingdeeStocktakingLossService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
-            }
-        }
 
     }
 
@@ -663,9 +606,48 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         }
         String code = docNoGenHelper.generateCode(businessNoType);
         entity.setCode(code);
-        List<StocktakingProfitLossDetailEntity> detailList = new ArrayList<>(dto.getDetailList().size());
+        List<StocktakingProfitLossDetailDTO.AddDTO> detailList = dto.getDetailList();
+        List<StocktakingProfitLossDetailEntity> addDetailList = new ArrayList<>(detailList.size());
+        for (StocktakingProfitLossDetailDTO.AddDTO item : detailList) {
+            StocktakingProfitLossDetailEntity detail = new StocktakingProfitLossDetailEntity();
+            detail.setMainId(id);
+            detail.setDiffQty(item.getDiffQty());
+            detail.setFrozenQty(item.getFrozenQty());
+            detail.setQty(item.getQty());
+            detail.setSkuId(item.getSkuId());
+            detail.setSkuNo(item.getSkuNo());
+            detail.setUsableQty(item.getUsableQty());
+            detail.setWarehouseId(item.getWarehouseId());
+            detail.setWarehouseLocation(item.getWarehouseLocation());
+            detail.setSourceDetailId(item.getSourceDetailId());
+            addDetailList.add(detail);
+        }
+        if (this.save(entity) && stocktakingProfitLossDetailService.saveBatch(addDetailList)) {
+            return id;
+        }
+        return "";
+    }
 
-        return null;
+    /**
+     * 新增 并提交
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-08-23 10:25
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String addAndSubmit(StocktakingProfitLossDTO.AddDTO dto) {
+        String id = this.add(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        BatchResultDTO result = this.submit(id);
+        if (result.getSuccess()) {
+            return id;
+        }
+        return "";
     }
 
     /**
@@ -762,47 +744,28 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      * @author yl
      * @date 2023-08-10 15:05
      */
-    private Map<String, Object> disposeDb(String sourceId, String sourceCode, List<StocktakingTaskDetailEntity> detailList, LocalDate billDate, BillTypeEnum billType) {
-        List<StocktakingProfitLossDetailEntity> detailEntityList = new ArrayList<>(detailList.size());
-        StocktakingProfitLossEntity profitEntity = new StocktakingProfitLossEntity();
-        profitEntity.setBillDate(billDate);
-        profitEntity.setBillType(billType);
-        profitEntity.setSourceId(sourceId);
-        profitEntity.setSourceCode(sourceCode);
-        String id = IdWorker.getIdStr();
-        profitEntity.setId(id);
-        BusinessNoTypeEnum businessNoType = BusinessNoTypeEnum.STOCKTAKING_PROFIT;
-        //盘亏单
-        if (BillTypeEnum.LOSS.equals(billType)) {
-            businessNoType = BusinessNoTypeEnum.STOCKTAKING_LOSS;
-        }
-
-        String code = docNoGenHelper.generateCode(businessNoType);
-        profitEntity.setCode(code);
-        LoginUser loginUser = commonService.getUserInfo();
-        profitEntity.setApproveUserId(loginUser.getUid());
-        profitEntity.setApproveUserName(loginUser.getUserName());
-        profitEntity.setApproveTime(LocalDateTime.now());
-        profitEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
+    private StocktakingProfitLossDTO.AddDTO disposeDb(String sourceId, String sourceCode, List<StocktakingTaskDetailEntity> detailList, LocalDate billDate, BillTypeEnum billType) {
+        List<StocktakingProfitLossDetailDTO.AddDTO> addDetailList = new ArrayList<>(detailList.size());
+        StocktakingProfitLossDTO.AddDTO addDTO = new StocktakingProfitLossDTO.AddDTO();
+        addDTO.setBillDate(billDate);
+        addDTO.setBillType(billType);
+        addDTO.setSourceId(sourceId);
+        addDTO.setSourceCode(sourceCode);
         for (StocktakingTaskDetailEntity detail : detailList) {
             //明细
-            StocktakingProfitLossDetailEntity profitDetail = new StocktakingProfitLossDetailEntity();
-            profitDetail.setMainId(id);
-            profitDetail.setDiffQty(detail.getDiffQty());
-            profitDetail.setFrozenQty(detail.getFrozenQty());
-            profitDetail.setQty(detail.getQty());
-            profitDetail.setSkuId(detail.getSkuId());
-            profitDetail.setSkuNo(detail.getSkuNo());
-            profitDetail.setUsableQty(detail.getUsableQty());
-            profitDetail.setWarehouseId(detail.getWarehouseId());
-            profitDetail.setWarehouseLocation(detail.getWarehouseLocation());
-            profitDetail.setSourceDetailId(detail.getId());
-            detailEntityList.add(profitDetail);
+            StocktakingProfitLossDetailDTO.AddDTO addDetail = new StocktakingProfitLossDetailDTO.AddDTO();
+            addDetail.setDiffQty(detail.getDiffQty());
+            addDetail.setFrozenQty(detail.getFrozenQty());
+            addDetail.setQty(detail.getQty());
+            addDetail.setSkuId(detail.getSkuId());
+            addDetail.setSkuNo(detail.getSkuNo());
+            addDetail.setUsableQty(detail.getUsableQty());
+            addDetail.setWarehouseId(detail.getWarehouseId());
+            addDetail.setWarehouseLocation(detail.getWarehouseLocation());
+            addDetail.setSourceDetailId(detail.getId());
+            addDetailList.add(addDetail);
         }
-
-        Map<String, Object> map = new HashMap<>(2);
-        map.put("stocktakingProfitLoss", profitEntity);
-        map.put("detailEntityList", detailEntityList);
-        return map;
+        addDTO.setDetailList(addDetailList);
+        return addDTO;
     }
 }
