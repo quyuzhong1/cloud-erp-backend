@@ -293,7 +293,7 @@ public class StocktakingPlanController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:stocktakingPlan:cancel",
+            menuCode = "wms:stocktakingPlan:cancelProcess",
             serviceClass = StocktakingPlanService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
