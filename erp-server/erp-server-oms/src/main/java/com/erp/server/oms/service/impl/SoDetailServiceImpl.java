@@ -817,7 +817,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().orElse(null);
             result.setDeclareModel("");
-            result.setAmount(MathUtil.multiply(taxPrice, qty));
+            result.setAmount(item.getTaxAmount());
             result.setTaxAmount(item.getTaxAmount());
             if (skuVO != null) {
                 result.setProductName(skuVO.getSkuName());
