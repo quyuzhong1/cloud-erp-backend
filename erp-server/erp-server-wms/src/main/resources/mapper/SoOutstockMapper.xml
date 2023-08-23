@@ -311,11 +311,13 @@
 
     <select id="pdaPaging" resultType="com.erp.model.wms.dto.SoOutstockDTO$PdaPagingViewDTO">
         SELECT
+        DISTINCT
         so.id,
         so.code,
         so.seller_name,
         so.warehouse_name,
-        so.approve_status
+        so.approve_status,
+        so.create_time
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND sod.is_deleted=FALSE
         WHERE so.is_deleted = false

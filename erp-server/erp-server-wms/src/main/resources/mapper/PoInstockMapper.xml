@@ -318,11 +318,13 @@
 
     <select id="pdaPaging" resultType="com.erp.model.wms.dto.PoInstockDTO$PdaPagingView">
         SELECT
+            DISTINCT
             psi.id,
             psi.code,
             psi.supplier_name,
             psi.delivery_warehouse_name,
-            psi.approve_status
+            psi.approve_status,
+            psi.create_time
         FROM po_instock psi
         inner join po_instock_detail psid on psi.id = psid.main_id and psid.is_deleted = false
         WHERE psi.is_deleted = false
