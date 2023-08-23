@@ -112,6 +112,9 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.invalidStatus != null">
+                and psi.invalid_status = #{params.invalidStatus}
+            </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
