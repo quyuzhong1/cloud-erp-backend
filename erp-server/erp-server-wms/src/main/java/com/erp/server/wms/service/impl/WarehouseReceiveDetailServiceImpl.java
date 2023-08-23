@@ -319,6 +319,6 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         return lambdaUpdate().set(WarehouseReceiveDetailEntity::getIsDeleted, Boolean.TRUE)
                 .eq(WarehouseReceiveDetailEntity::getMainId, mainId)
                 .eq(WarehouseReceiveDetailEntity::getSkuId, skuId)
-                .remove();
+                .update();
     }
 }
