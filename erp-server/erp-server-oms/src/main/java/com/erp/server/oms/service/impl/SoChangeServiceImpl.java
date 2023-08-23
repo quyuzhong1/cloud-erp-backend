@@ -23,6 +23,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
@@ -32,6 +33,7 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.CustomerAddressTypeEnum;
+import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -111,7 +113,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     private CustomerAddressService customerAddressService;
 
 
-
     /**
      * 添加销售订单
      *
@@ -156,6 +157,8 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         checkChangeCustomerInfo(soId, dto.getReceiveAddressId(), dto.getAddressType(), dto.getReceiverName(), dto.getTelNumber());
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSBG, BusinessNoTypeEnum.CODE_XSBG.getCode()));
         soChange.setCode(code);
+        //检查能否变更 根据折扣金额来
+        checkByDiscountAmount(dto.getDetailList());
         Boolean addResult = this.save(soChange);
         if (addResult) {
             //添加日志
@@ -165,6 +168,82 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             return id;
         }
         return "";
+    }
+
+    /**
+     * 检查能否变更根据折扣金额
+     *
+     * @param
+     * @param detailList
+     * @return void
+     * @author yl
+     * @date 2023-08-23 15:50
+     */
+    private void checkByDiscountAmount(List<SoChangeDetailDTO.AddDTO> detailList) {
+        StringBuffer sb = new StringBuffer("");
+        SoChangeTypeEnum deleteType = SoChangeTypeEnum.DELETE;
+        SoChangeTypeEnum updateType = SoChangeTypeEnum.UPDATE;
+        List<String> soDetailIdList = detailList.stream().map(SoChangeDetailDTO.AddDTO::getSoDetailId).collect(Collectors.toList());
+        //销售订单详情
+        List<SoDetailEntity> soDetailEntityList = CollectionUtils.isNotEmpty(soDetailIdList) ? soDetailService.listByIds(soDetailIdList) : Collections.emptyList();
+
+        List<SoChangeDetailDTO.AddDTO> deleteList = detailList.stream().filter(d -> deleteType.equals(d.getChangeType()) && StringUtils.isNotBlank(d.getSoDetailId())).collect(Collectors.toList());
+        //修改的
+        List<SoChangeDetailDTO.AddDTO> updateList = detailList.stream().filter(d -> updateType.equals(d.getChangeType()) && StringUtils.isNotBlank(d.getSoDetailId())).collect(Collectors.toList());
+
+
+        //这个是删除的销售订单详情id 集合
+        List<String> deleteSoDetailIds = deleteList.stream().filter(d -> StringUtils.isNotBlank(d.getSoDetailId())).map(SoChangeDetailDTO.AddDTO::getSoDetailId).collect(Collectors.toList());
+
+
+        //这个是删除的销售订单 且 有折扣额的
+        List<SoDetailEntity> deleteSoDetailList = soDetailEntityList.stream().filter(s -> deleteSoDetailIds.contains(s.getId()) && s.getDiscountAmount().compareTo(BigDecimal.ZERO) == 1).collect(Collectors.toList());
+        for (SoDetailEntity deleteSoDetail : deleteSoDetailList) {
+            sb.append("SKU:").append(deleteSoDetail.getSkuNo()).append("有折扣金额,因此无法删除");
+        }
+        List<String> skuIdList = updateList.stream().map(SoChangeDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        //这个是修改的
+        for (SoChangeDetailDTO.AddDTO updateItem : updateList) {
+            String soDetailId = updateItem.getSoDetailId();
+            //折扣额
+            BigDecimal discountAmount = soDetailEntityList.stream().filter(s -> s.getId().equals(soDetailId)).
+                    map(SoDetailEntity::getDiscountAmount).findFirst().orElse(BigDecimal.ZERO);
+
+            BigDecimal price = updateItem.getPrice();
+            Integer qty = updateItem.getQty();
+
+            //是否赠品
+            Boolean isGift = updateItem.getIsGift();
+            //当是赠品的时候  单价为0
+            if (Objects.nonNull(isGift) && isGift) {
+                price = BigDecimal.ZERO;
+            }
+            //税率
+            BigDecimal taxRate = updateItem.getTaxRate();
+            if (Objects.isNull(taxRate)) {
+                taxRate = BigDecimal.ZERO;
+            }
+
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+            //含税单价=销售单价*（税率+1）
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
+            //含税单价
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            //价税合计（折前）
+            BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
+            if (discountAmount.compareTo(taxAmount) == 1) {
+                String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(updateItem.getSkuId())).
+                        map(SkuVO::getSkuNo).findFirst().orElse("");
+                sb.append("SKU:").append(skuNo).append("的折扣金额").append(discountAmount);
+                sb.append(" 大于").append("价税合计").append(taxAmount);
+            }
+        }
+
+        String checkResult = sb.toString();
+        if(StringUtils.isNotBlank(checkResult)){
+            throw new ServiceException(checkResult);
+        }
     }
 
 
@@ -185,6 +264,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             throw new ServiceException(ApiError.ERROR_92034);
         }
         List<SoChangeDetailDTO.UpdateDTO> detailList = dto.getDetailList();
+        checkByDiscountAmount(BeanMapper.copyList(dto.getDetailList(),SoChangeDetailDTO.AddDTO.class));
         //检查对应详情的变更类型
         soChangeDetailService.checkChange(BeanMapper.copyList(detailList, SoChangeDetailDTO.AddDTO.class));
         String code = soChange.getCode();
