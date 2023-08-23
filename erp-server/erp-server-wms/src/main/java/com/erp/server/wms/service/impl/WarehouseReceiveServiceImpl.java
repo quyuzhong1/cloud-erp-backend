@@ -1255,9 +1255,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String pdaAdd(WarehouseReceiveDTO.AddDTO dto) {
+        List<WarehouseReceiveDetailDTO.AddDTO> addDTOList = new ArrayList<>();
         List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
         List<String> poReceiveDetailIds = warehouseReceiveDetailList.stream().map(WarehouseReceiveDetailDTO.AddDTO::getPurchaseOrderDetailId).distinct().collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.listPurchaseOrderDetailById(poReceiveDetailIds);
+        List<PurchaseOrderDetailEntity> detailEntityListByPoId = scmTaskFeign.listByPurchaseOrderIds(Arrays.asList(dto.getPurchaseOrderId()));
         for (WarehouseReceiveDetailDTO.AddDTO addDTO : warehouseReceiveDetailList) {
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailEntityList.stream().filter(req -> req.getId().equals(addDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
@@ -1265,43 +1267,41 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
             //如果收货数量大于采购数量，可能是重复sku合单
             if (addDTO.getReceiveQty() > detailEntity.getPurchaseQty()) {
-                List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailEntityList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
+                List<PurchaseOrderDetailEntity> detailEntityList = detailEntityListByPoId.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
                 //校验sku是否有重复，重复需要拆单
                 if (detailEntityList.size() > MathUtil.ONE){
                     Integer receiveQty = addDTO.getReceiveQty();
-
                     for (PurchaseOrderDetailEntity entity : detailEntityList) {
-                        if (entity.getId().equals(detailEntity.getId())) {
-                            addDTO.setReceiveQty(detailEntity.getPurchaseQty());
-                        } else {
-                            WarehouseReceiveDetailDTO.AddDTO addSkuDTO = new WarehouseReceiveDetailDTO.AddDTO();
-                            addSkuDTO.setPurchaseOrderDetailId(entity.getId());
-                            if (receiveQty > detailEntity.getPurchaseQty()) {
-                                receiveQty = receiveQty - detailEntity.getPurchaseQty();
-                                addSkuDTO.setReceiveQty(receiveQty);
-                            }
-                            if (receiveQty <= detailEntity.getPurchaseQty()) {
-                                addSkuDTO.setReceiveQty(receiveQty);
-                                break;
-                            }
-                            addSkuDTO.setReceiveQty(receiveQty);
-                            addSkuDTO.setExceedQty(MathUtil.ZERO);
-                            addSkuDTO.setRemark(addDTO.getRemark());
-                            dto.getWarehouseReceiveDetailList().add(addSkuDTO);
+                        WarehouseReceiveDetailDTO.AddDTO addSkuDTO = new WarehouseReceiveDetailDTO.AddDTO();
+                        addSkuDTO.setPurchaseOrderDetailId(entity.getId());
+                        if (receiveQty > entity.getPurchaseQty()) {
+                            receiveQty = receiveQty - entity.getPurchaseQty();
+                            addSkuDTO.setReceiveQty(entity.getPurchaseQty());
                         }
+                        if (receiveQty <= entity.getPurchaseQty()) {
+                            addSkuDTO.setReceiveQty(receiveQty);
+                            break;
+                        }
+                        addSkuDTO.setExceedQty(MathUtil.ZERO);
+                        addSkuDTO.setRemark(addDTO.getRemark());
+                        addSkuDTO.setPurchaseOrderDetailId(entity.getId());
+                        addDTOList.add(addSkuDTO);
                     }
                 }
             }
         }
+        dto.setWarehouseReceiveDetailList(addDTOList);
         return this.add(dto);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean pdaUpdate(WarehouseReceiveDTO.UpdateDTO dto) {
+        List<WarehouseReceiveDetailDTO.UpdateDTO> updateDTOList = new ArrayList<>();
         List<WarehouseReceiveDetailDTO.UpdateDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
         List<String> poReceiveDetailIds = warehouseReceiveDetailList.stream().map(WarehouseReceiveDetailDTO.UpdateDTO::getPurchaseOrderDetailId).distinct().collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.listPurchaseOrderDetailById(poReceiveDetailIds);
+        List<PurchaseOrderDetailEntity> detailEntityListByPoId = scmTaskFeign.listByPurchaseOrderIds(Arrays.asList(dto.getPurchaseOrderId()));
         for (WarehouseReceiveDetailDTO.UpdateDTO updateDTO : warehouseReceiveDetailList) {
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailEntityList.stream().filter(req -> req.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
@@ -1310,40 +1310,31 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             //如果收货数量大于采购数量，可能是重复sku合单
             if (updateDTO.getReceiveQty() > detailEntity.getPurchaseQty()) {
                 //如果收货数量大于采购数量，可能是重复sku合单
-                List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailEntityList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
+                List<PurchaseOrderDetailEntity> detailEntityList = detailEntityListByPoId.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
                 //校验sku是否有重复，重复需要拆单
                 if (detailEntityList.size() > MathUtil.ONE) {
                     warehouseReceiveDetailService.deleteBySkuId(dto.getId(), detailEntity.getSkuId());
                     Integer receiveQty = updateDTO.getReceiveQty();
                     for (PurchaseOrderDetailEntity entity : detailEntityList) {
-                        if (entity.getId().equals(detailEntity.getId())) {
-                            updateDTO.setId("");
-                            if (receiveQty > detailEntity.getPurchaseQty()) {
-                                updateDTO.setReceiveQty(detailEntity.getPurchaseQty());
-                            } else {
-                                updateDTO.setReceiveQty(receiveQty);
-                                break;
-                            }
-                        } else {
-                            WarehouseReceiveDetailDTO.UpdateDTO updateSkuDTO = new WarehouseReceiveDetailDTO.UpdateDTO();
-                            updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
-                            if (receiveQty > detailEntity.getPurchaseQty()) {
-                                receiveQty = receiveQty - detailEntity.getPurchaseQty();
-                                updateSkuDTO.setReceiveQty(receiveQty);
-                            }
-                            if (receiveQty <= detailEntity.getPurchaseQty()) {
-                                updateSkuDTO.setReceiveQty(receiveQty);
-                                break;
-                            }
-                            updateSkuDTO.setReceiveQty(receiveQty);
-                            updateSkuDTO.setExceedQty(MathUtil.ZERO);
-                            updateSkuDTO.setRemark(updateDTO.getRemark());
-                            dto.getWarehouseReceiveDetailList().add(updateSkuDTO);
+                        WarehouseReceiveDetailDTO.UpdateDTO updateSkuDTO = new WarehouseReceiveDetailDTO.UpdateDTO();
+                        updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
+                        if (receiveQty > entity.getPurchaseQty()) {
+                            receiveQty = receiveQty - entity.getPurchaseQty();
+                            updateSkuDTO.setReceiveQty(entity.getPurchaseQty());
                         }
+                        if (receiveQty <= entity.getPurchaseQty()) {
+                            updateSkuDTO.setReceiveQty(receiveQty);
+                            break;
+                        }
+                        updateSkuDTO.setExceedQty(MathUtil.ZERO);
+                        updateSkuDTO.setRemark(updateDTO.getRemark());
+                        updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
+                        updateDTOList.add(updateSkuDTO);
                     }
                 }
             }
         }
+        dto.setWarehouseReceiveDetailList(updateDTOList);
         return this.update(dto);
     }
 

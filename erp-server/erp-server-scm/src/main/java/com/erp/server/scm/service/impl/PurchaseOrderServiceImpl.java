@@ -1979,8 +1979,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         List<String> poIds = list.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailService.listByPurchaseOrderIds(poIds);
-        List<String> podaIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
-        List<WarehouseReceiveDetailEntity> receiveDetailEntities = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podaIds);
+        List<String> podIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<WarehouseReceiveDetailEntity> receiveDetailEntities = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
         //获取未全部到货的采购详情id
         List<String> purchaseOrderDetailIds = new ArrayList<>();
         receiveDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getPurchaseOrderDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
@@ -1991,6 +1991,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             return m;
         })));
+        List<String> collect = receiveDetailEntities.stream().map(req -> req.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+        List<String> ids = podIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
+        purchaseOrderDetailIds.addAll(ids);
+
         if (CollectionUtils.isEmpty(purchaseOrderDetailIds)) {
             return new ArrayList<>();
         }
