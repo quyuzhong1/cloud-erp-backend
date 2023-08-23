@@ -205,6 +205,7 @@
         where pd.is_deleted = false
         and pi.property not in ('服务','费用')
         and pd.status = 2
+        AND inv.org_id is not null
         <if test="params.saleTimeList !=null and params.saleTimeList.size>0">
             and tf.trade_time is not null
         </if>
