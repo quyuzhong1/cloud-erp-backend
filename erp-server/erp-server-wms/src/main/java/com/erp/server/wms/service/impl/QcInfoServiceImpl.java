@@ -1825,6 +1825,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Override
     public List<QcInfoEntity> listQCBySourceDetailIds(List<String> sourceDetailIds) {
+        if (CollectionUtils.isEmpty(sourceDetailIds)) {
+            return new ArrayList<>();
+        }
         return lambdaQuery().in(QcInfoEntity::getSourceDetailId, sourceDetailIds).list();
     }
 
