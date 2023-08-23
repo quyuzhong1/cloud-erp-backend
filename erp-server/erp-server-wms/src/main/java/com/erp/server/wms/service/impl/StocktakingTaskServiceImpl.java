@@ -414,16 +414,22 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
         approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
-        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
-        Integer code = approveResult.getCode();
-        if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
+        try {
+            ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+            Integer code = approveResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(ApiError.ERROR_94006);
+            }
+            ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+            if (Objects.isNull(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+                // 无需走流程的数据则直接更新状态
+                approveEnd(dto, entity);
+            }
+        } catch (Exception e) {
+            log.error("调用审核出错>>>>>>{}", e);
+            throw new ServiceException(e.getMessage());
         }
-        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
-        if (Objects.isNull(data.getIsExistProcess()) || !data.getIsExistProcess()) {
-            // 无需走流程的数据则直接更新状态
-            approveEnd(dto, entity);
-        }
+
 
     }
 
@@ -456,18 +462,13 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             List<StocktakingProfitLossDTO.AddDTO> list = this.packageProfitLoss(entity);
             // 批量提审
             List<StocktakingProfitLossEntity> profitLossList = stocktakingProfitLossService.batchSave(list);
-            try {
-                // 批量审核
-                for (StocktakingProfitLossEntity profitLoss : profitLossList) {
-                    ApproveOneDTO approveOne = new ApproveOneDTO();
-                    approveOne.setType(ApproveTypeEnum.PASS.getStatus());
-                    approveOne.setId(profitLoss.getId());
-                    stocktakingProfitLossService.approveEnd(approveOne, profitLoss);
-                }
-            } catch (Exception e) {
-                log.error("盘盈盘亏审核失败>>>>{}", e);
+            // 批量审核
+            for (StocktakingProfitLossEntity profitLoss : profitLossList) {
+                ApproveOneDTO approveOne = new ApproveOneDTO();
+                approveOne.setType(ApproveTypeEnum.PASS.getStatus());
+                approveOne.setId(profitLoss.getId());
+                stocktakingProfitLossService.approveEnd(approveOne, profitLoss);
             }
-
         }
         return result;
     }
