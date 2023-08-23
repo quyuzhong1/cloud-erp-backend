@@ -962,6 +962,11 @@ public class WarehouseReceiveDTO {
          * 审核状态：根据tab页传审核状态
          */
         private List<String> approveStatusList;
+
+        /**
+         * 收货日期
+         */
+        private List<LocalDate> billDate;
     }
 
     /**

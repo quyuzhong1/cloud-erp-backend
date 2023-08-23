@@ -717,6 +717,11 @@ public class SoReturnReceiveDTO {
          * 审核状态：根据tab页传审核状态
          */
         private List<String> approveStatusList;
+
+        /**
+         * 签收日期
+         */
+        private List<LocalDate> billDateList;
     }
 
     /**

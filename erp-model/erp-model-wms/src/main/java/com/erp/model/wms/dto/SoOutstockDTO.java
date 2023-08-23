@@ -1234,6 +1234,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private List<String> approveStatusList;
 
+        /**
+         * 出库日期
+         */
+        private List<LocalDate> actualDeliveryDateList;
     }
 
     /**
