@@ -678,7 +678,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     public void handleCancelProcess(StocktakingTaskEntity taskEntity, String userId) {
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(taskEntity.getId());
-        revokeDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
+        revokeDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_TASK.getCode());
         revokeDTO.setUserId(userId);
         ApiResult<ProcessManagementDTO.RevokeResultDTO> apiResult = workflowFeign.revokeProcess(revokeDTO);
         if (apiResult.isSuccess()) {
@@ -697,14 +697,15 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean assignUser(StocktakingTaskDTO.AssignUserDTO dto) {
-        List<String> idList = dto.getIds();
-        List<StocktakingTaskEntity> taskList = this.listByIds(idList);
-        if (CollectionUtils.isEmpty(taskList)) {
+    public BatchResultDTO assignUser(String id, List<String> userIdList) {
+        StocktakingTaskEntity task = this.getById(id);
+        if (Objects.isNull(task)) {
             throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
         }
-        Boolean result = stocktakingTaskUserService.assignUser(taskList, dto.getUserIdList());
-        return result;
+        Boolean result = stocktakingTaskUserService.assignUser(task, userIdList);
+
+        return BatchResultDTO.success(task.getCode(), "分配成功");
+
     }
 
     @Override

@@ -229,8 +229,25 @@ public class StocktakingTaskController extends BaseController {
      */
     @PostMapping("/assignUser")
     public ApiResult assignStocktakingUser(@RequestBody @Validated StocktakingTaskDTO.AssignUserDTO dto) {
-        Boolean result = stocktakingTaskService.assignUser(dto);
-        return result ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO submit;
+            try {
+                submit=stocktakingTaskService.assignUser(id,dto.getUserIdList());
+            }catch (Exception e){
+                log.error("盘点任务 撤销流程失败>>>>{}",e);
+                StocktakingTaskEntity entity = stocktakingTaskService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, "盘点任务单不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return success(resultDTOS);
     }
 
     /**
