@@ -105,8 +105,7 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
                 String id = update.getId();
                 StocktakingPlanDetailEntity old = updateList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
                 if (old != null) {
-                    String msg = StrUtil.format("用户【{}】编辑主表id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), mainId, "盘点计划明细");
-                    operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), mainId, msg);
+                    operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), mainId,"编辑操作");
                 }
             }
         }

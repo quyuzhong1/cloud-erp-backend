@@ -5,6 +5,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.common.business.service.SuperService;
@@ -24,14 +25,6 @@ import java.util.List;
 public interface StocktakingProfitLossService extends SuperService<StocktakingProfitLossEntity> {
 
     
-    /**
-     * 盘点任务单审核通过生成盘盈盘亏单
-     * @author yl
-     * @date 2023-08-10 11:52
-     * @param taskEntity
-     * @return void
-     */
-    void autoCreateBill(StocktakingTaskEntity taskEntity);
 
     /**
      * tab list
@@ -120,4 +113,22 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @return
      */
     String add(StocktakingProfitLossDTO.AddDTO dto);
+
+    /**
+     * 新增 并提交
+     * @author yl
+     * @date 2023-08-23 10:25
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    String addAndSubmit(StocktakingProfitLossDTO.AddDTO dto);
+
+    /**
+     * 批量保存提交
+     * @author yl
+     * @date 2023-08-23 11:37
+     * @param list
+     * @return java.util.List<java.lang.String>
+     */
+    List<StocktakingProfitLossEntity> batchSave(List<StocktakingProfitLossDTO.AddDTO> list);
 }

@@ -150,6 +150,11 @@ public class StocktakingProfitLossDetailDTO implements Serializable {
          */
         private Integer diffQty;
 
+        /**
+         * 来源详情id
+         */
+        private String sourceDetailId;
+
 
     }
 }
