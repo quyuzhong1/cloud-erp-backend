@@ -455,26 +455,26 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         List<String> soIds = list.stream().map(SoChangeEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoInfoEntity> soInfoList = soInfoService.listByIds(soIds);
         Map<String, SoInfoEntity> soInfoMap = Maps.newHashMap();
-        if(CollUtil.isNotEmpty(soInfoList)) {
+        if (CollUtil.isNotEmpty(soInfoList)) {
             soInfoMap = soInfoList.stream().collect(Collectors.toMap(SoInfoEntity::getId, Function.identity()));
-            List<String> receiveAddressIds = list.stream().filter(r->StrUtils.isNotEmpty(r.getReceiveAddressId())).map(SoChangeEntity::getReceiveAddressId).distinct().collect(Collectors.toList());
+            List<String> receiveAddressIds = list.stream().filter(r -> StrUtils.isNotEmpty(r.getReceiveAddressId())).map(SoChangeEntity::getReceiveAddressId).distinct().collect(Collectors.toList());
             Map<String, CustomerAddressEntity> customerAddressMap = Maps.newHashMap();
-            if(CollUtil.isNotEmpty(receiveAddressIds)) {
-              List<CustomerAddressEntity> customerAddressList =  customerAddressService.listByIds(receiveAddressIds);
+            if (CollUtil.isNotEmpty(receiveAddressIds)) {
+                List<CustomerAddressEntity> customerAddressList = customerAddressService.listByIds(receiveAddressIds);
                 customerAddressMap = customerAddressList.stream().collect(Collectors.toMap(CustomerAddressEntity::getId, Function.identity()));
             }
 
-            for(SoChangeEntity soChangeEntity : list) {
+            for (SoChangeEntity soChangeEntity : list) {
                 SoInfoEntity soInfoEntity = soInfoMap.get(soChangeEntity.getSoId());
-                if(!Objects.equals(soInfoEntity.getReceiveAddressId(), soChangeEntity.getReceiveAddressId())
+                if (!Objects.equals(soInfoEntity.getReceiveAddressId(), soChangeEntity.getReceiveAddressId())
                         || !Objects.equals(soInfoEntity.getAddressType(), soChangeEntity.getAddressType())
                         || !Objects.equals(soInfoEntity.getReceiverName(), soChangeEntity.getReceiverName())
-                        || !Objects.equals(soInfoEntity.getTelNumber(), soChangeEntity.getTelNumber()) ) {
+                        || !Objects.equals(soInfoEntity.getTelNumber(), soChangeEntity.getTelNumber())) {
                     log.warn("销售订单【{}】销售变更单【{}】地址信息发生变化，同步更新销售订单和销售退货订单的地址信息", soInfoEntity.getCode(), soChangeEntity.getCode());
                     soInfoService.updateAddress(soInfoEntity.getId(), soChangeEntity.getReceiveAddressId(), soChangeEntity.getAddressType(),
                             soChangeEntity.getReceiverName(), soChangeEntity.getTelNumber());
 
-                    String receiveAddress = customerAddressMap.getOrDefault(soChangeEntity.getReceiveAddressId(),new CustomerAddressEntity()).getAddress();
+                    String receiveAddress = customerAddressMap.getOrDefault(soChangeEntity.getReceiveAddressId(), new CustomerAddressEntity()).getAddress();
                     soReturnService.updateAddress(soInfoEntity.getId(), receiveAddress, soChangeEntity.getReceiverName(), soChangeEntity.getTelNumber());
                 }
             }
@@ -494,6 +494,8 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             String terminate = SoChangeTypeEnum.TERMINATE.getCode();
             Boolean close = Boolean.TRUE;
             List<String> terminateSoDetailIds = new ArrayList<>(10);
+            //获取 数据库到所有的销售订单详情
+            List<SoDetailEntity> dbSoDetailList = soDetailService.listSoDetailByMainIds(soIds);
             for (SoChangeDetailEntity item : otherList) {
                 //变更类型
                 String changeType = item.getChangeType().getCode();
@@ -503,6 +505,8 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 if (StringUtils.isEmpty(soId)) {
                     continue;
                 }
+                //可能为空 表示添加
+                String soDetailId = item.getSoDetailId();
                 SoDetailEntity soDetail = new SoDetailEntity();
                 soDetail.setPrice(item.getPrice());
                 soDetail.setCurrency(item.getCurrency());
@@ -515,34 +519,39 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 soDetail.setIsGift(item.getIsGift());
                 soDetail.setIsReissue(item.getIsReissue());
                 soDetail.setRemark(item.getRemark());
-                String soDetailId = item.getSoDetailId();
                 soDetail.setId(soDetailId);
                 soDetail.setMainId(soId);
                 if (changeType.equals(terminate)) {
                     soDetail.setIsClose(close);
                     terminateSoDetailIds.add(soDetailId);
                 } else {
-                    soDetail.setIsClose(false);
+                    soDetail.setIsClose(Boolean.FALSE);
 
                 }
                 saveOrUpdateList.add(soDetail);
             }
-            if(CollUtil.isNotEmpty(saveOrUpdateList)) {
+            //这个是添加或者修改的销售订单详情id
+            List<String> saveOrUpdateDetailIdList = saveOrUpdateList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+            //这个是不存在的 但是也要家进去 从新分摊折扣
+            List<SoDetailEntity> notExistentList = dbSoDetailList.stream().
+                    filter(d -> !saveOrUpdateDetailIdList.contains(d.getId())).collect(Collectors.toList());
+            saveOrUpdateList.addAll(notExistentList);
+            if (CollUtil.isNotEmpty(saveOrUpdateList)) {
                 List<String> skuIdList = saveOrUpdateList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
                 List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
                 // 供应商id集合
-                List<String> supplierIds = skuList.stream().filter(r-> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
+                List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
                 List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
-                if(CollUtil.isNotEmpty(supplierIds)) {
+                if (CollUtil.isNotEmpty(supplierIds)) {
                     purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
                 }
                 Map<String, List<SoDetailEntity>> soDetailSaveMap = saveOrUpdateList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
-                for(Map.Entry<String, List<SoDetailEntity>> soEntry : soDetailSaveMap.entrySet()) {
+                for (Map.Entry<String, List<SoDetailEntity>> soEntry : soDetailSaveMap.entrySet()) {
                     // 金额信息加上折扣额计算
                     String soId = soEntry.getKey();
                     SoInfoEntity soInfoEntity = soInfoMap.get(soId);
                     SoUtils.handleDetailAmount(soInfoEntity.getDiscountAmount(), saveOrUpdateList);
-                    for(SoDetailEntity item : saveOrUpdateList) {
+                    for (SoDetailEntity item : saveOrUpdateList) {
                         // 计算毛利成本
                         soDetailService.calCost(purchasePriceList, skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);
                     }
@@ -603,21 +612,21 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 for (SoChangeDetailDTO.AddDTO item : updateDetailList) {
                     Integer qty = item.getQty();
                     Integer deliveryQty = soDeliveryNoticeDetailList.stream().filter(s -> s.getSourceDetailId().
-                            equals(item.getSoDetailId())&&!s.getInvalidStatus()).
+                            equals(item.getSoDetailId()) && !s.getInvalidStatus()).
                             mapToInt(SoDeliveryNoticeDetailEntity::getDeliveryQty).sum();
-                    if(qty<deliveryQty){
+                    if (qty < deliveryQty) {
                         throw new ServiceException(ApiError.ERROR_92049);
                     }
                 }
                 //这个是发货通知单的
-                List<SoOutstockDetailDTO.DeliveryQtyDTO>  deliveryQtyList= soOutstockFeign.listDetailBySoDetailIds(soDetailIdList);
+                List<SoOutstockDetailDTO.DeliveryQtyDTO> deliveryQtyList = soOutstockFeign.listDetailBySoDetailIds(soDetailIdList);
 
                 for (SoChangeDetailDTO.AddDTO item : updateDetailList) {
                     Integer qty = item.getQty();
                     Integer deliveryQty = deliveryQtyList.stream().filter(s -> s.getSoDetailId().
                             equals(item.getSoDetailId())).
                             mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
-                    if(qty<deliveryQty){
+                    if (qty < deliveryQty) {
                         throw new ServiceException(ApiError.ERROR_92050);
                     }
                 }
@@ -774,5 +783,20 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
     @Override
     public List<SoChangeDetailEntity> listDetailDbByMainId(String mainId) {
         return this.lambdaQuery().eq(SoChangeDetailEntity::getMainId, mainId).orderByAsc(SoChangeDetailEntity::getId).list();
+    }
+
+    /**
+     * 查询变更是否存在 添加的
+     *
+     * @param mainId
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-08-23 10:01
+     */
+    @Override
+    public Boolean existAdd(String mainId) {
+        long count = this.lambdaQuery().eq(SoChangeDetailEntity::getMainId, mainId).
+                eq(SoChangeDetailEntity::getChangeType, SoChangeTypeEnum.ADD).count();
+        return count > 0;
     }
 }
