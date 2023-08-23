@@ -45,7 +45,7 @@ public class PdaOtherOutstockController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherOutstock:paging",
+            menuCode = "wms:pdaOtherOutstock:paging",
             tableAlias = "oo"
     )
     public ApiResult<PagingVO<OtherOutstockDTO.PdaListDTO>> paging(@RequestBody @Validated PagingDTO<OtherOutstockDTO.PdaSearchParamDTO> dto) {
@@ -63,11 +63,11 @@ public class PdaOtherOutstockController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherOutstock:paging",
+            menuCode = "wms:pdaOtherOutstock:paging",
             tableAlias = "oo"
     )
-    public ApiResult<List<OtherOutstockDTO.ListStatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
-        List<OtherOutstockDTO.ListStatusCountDTO> list = otherOutstockService.listCount(dto);
+    public ApiResult<List<OtherOutstockDTO.PdaListStatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
+        List<OtherOutstockDTO.PdaListStatusCountDTO> list = otherOutstockService.PdaListCount(dto);
         return success(list);
     }
 
@@ -81,7 +81,7 @@ public class PdaOtherOutstockController extends BaseController {
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherOutstock:add",
+            menuCode = "wms:pdaOtherOutstock:add",
             serviceClass = OtherOutstockService.class,
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated OtherOutstockDTO.AddDTO dto) {
@@ -99,7 +99,7 @@ public class PdaOtherOutstockController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherOutstock:add",
+            menuCode = "wms:pdaOtherOutstock:add",
             serviceClass = OtherOutstockService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated OtherOutstockDTO.AddDTO dto) {
@@ -117,7 +117,7 @@ public class PdaOtherOutstockController extends BaseController {
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherOutstock:update",
+            menuCode = "wms:pdaOtherOutstock:update",
             serviceClass = OtherOutstockService.class,
             keyIdName = "id")
     public ApiResult update(@RequestBody @Validated OtherOutstockDTO.UpdateDTO dto) {
@@ -135,7 +135,7 @@ public class PdaOtherOutstockController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherOutstock:update",
+            menuCode = "wms:pdaOtherOutstock:update",
             serviceClass = OtherOutstockService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated OtherOutstockDTO.UpdateDTO dto) {
@@ -153,7 +153,7 @@ public class PdaOtherOutstockController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherOutstock:submit",
+            menuCode = "wms:pdaOtherOutstock:submit",
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
@@ -171,7 +171,7 @@ public class PdaOtherOutstockController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherOutstock:view",
+            menuCode = "wms:pdaOtherOutstock:view",
             serviceClass = OtherOutstockService.class,
             keyIdName = "id")
     public ApiResult<OtherOutstockDTO.ViewDTO> view(@RequestParam("id") String id) {
@@ -190,7 +190,7 @@ public class PdaOtherOutstockController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherOutstock:delete",
+            menuCode = "wms:pdaOtherOutstock:delete",
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
@@ -208,7 +208,7 @@ public class PdaOtherOutstockController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherOutstock:invalid",
+            menuCode = "wms:pdaOtherOutstock:invalid",
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
@@ -226,7 +226,7 @@ public class PdaOtherOutstockController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherOutstock:approve",
+            menuCode = "wms:pdaOtherOutstock:approve",
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
@@ -244,7 +244,7 @@ public class PdaOtherOutstockController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherOutstock:disApprove",
+            menuCode = "wms:pdaOtherOutstock:disApprove",
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -262,7 +262,7 @@ public class PdaOtherOutstockController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherOutstock:cancelProcess",
+            menuCode = "wms:pdaOtherOutstock:cancelProcess",
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -281,7 +281,7 @@ public class PdaOtherOutstockController extends BaseController {
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:otherOutstock:paging",
+            menuCode = "wms:pdaOtherOutstock:paging",
             tableAlias = "oo"
     )
     public ApiResult exportExcel(@RequestBody OtherOutstockDTO.SearchParamDTO dto, HttpServletResponse response) {

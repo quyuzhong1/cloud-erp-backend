@@ -51,6 +51,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -1272,32 +1273,34 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 if (detailEntityList.size() > MathUtil.ONE){
                     Integer receiveQty = addDTO.getReceiveQty();
                     for (PurchaseOrderDetailEntity entity : detailEntityList) {
-                        WarehouseReceiveDetailDTO.AddDTO addSkuDTO = new WarehouseReceiveDetailDTO.AddDTO();
-                        addSkuDTO.setPurchaseOrderDetailId(entity.getId());
-                        if (receiveQty > entity.getPurchaseQty()) {
-                            receiveQty = receiveQty - entity.getPurchaseQty();
-                            addSkuDTO.setReceiveQty(entity.getPurchaseQty());
+                        if (entity.getId().equals(detailEntity.getId())) {
+                            addDTO.setReceiveQty(detailEntity.getPurchaseQty());
+                        } else {
+                            WarehouseReceiveDetailDTO.AddDTO addSkuDTO = new WarehouseReceiveDetailDTO.AddDTO();
+                            addSkuDTO.setPurchaseOrderDetailId(entity.getId());
+                            if (receiveQty > entity.getPurchaseQty()) {
+                                receiveQty = receiveQty - entity.getPurchaseQty();
+                                addSkuDTO.setReceiveQty(entity.getPurchaseQty());
+                            }
+                            if (receiveQty <= entity.getPurchaseQty()) {
+                                addSkuDTO.setReceiveQty(receiveQty);
+                                break;
+                            }
+                            addSkuDTO.setExceedQty(MathUtil.ZERO);
+                            addSkuDTO.setRemark(addDTO.getRemark());
+                            addSkuDTO.setPurchaseOrderDetailId(entity.getId());
+                            dto.getWarehouseReceiveDetailList().add(addSkuDTO);
                         }
-                        if (receiveQty <= entity.getPurchaseQty()) {
-                            addSkuDTO.setReceiveQty(receiveQty);
-                            break;
-                        }
-                        addSkuDTO.setExceedQty(MathUtil.ZERO);
-                        addSkuDTO.setRemark(addDTO.getRemark());
-                        addSkuDTO.setPurchaseOrderDetailId(entity.getId());
-                        addDTOList.add(addSkuDTO);
                     }
                 }
             }
         }
-        dto.setWarehouseReceiveDetailList(addDTOList);
         return this.add(dto);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean pdaUpdate(WarehouseReceiveDTO.UpdateDTO dto) {
-        List<WarehouseReceiveDetailDTO.UpdateDTO> updateDTOList = new ArrayList<>();
         List<WarehouseReceiveDetailDTO.UpdateDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
         List<String> poReceiveDetailIds = warehouseReceiveDetailList.stream().map(WarehouseReceiveDetailDTO.UpdateDTO::getPurchaseOrderDetailId).distinct().collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.listPurchaseOrderDetailById(poReceiveDetailIds);
@@ -1316,25 +1319,35 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     warehouseReceiveDetailService.deleteBySkuId(dto.getId(), detailEntity.getSkuId());
                     Integer receiveQty = updateDTO.getReceiveQty();
                     for (PurchaseOrderDetailEntity entity : detailEntityList) {
-                        WarehouseReceiveDetailDTO.UpdateDTO updateSkuDTO = new WarehouseReceiveDetailDTO.UpdateDTO();
-                        updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
-                        if (receiveQty > entity.getPurchaseQty()) {
-                            receiveQty = receiveQty - entity.getPurchaseQty();
-                            updateSkuDTO.setReceiveQty(entity.getPurchaseQty());
+                        if (entity.getId().equals(detailEntity.getId())) {
+                            updateDTO.setId("");
+                            if (receiveQty > entity.getPurchaseQty()) {
+                                updateDTO.setReceiveQty(entity.getPurchaseQty());
+                            } else {
+                                updateDTO.setReceiveQty(receiveQty);
+                                break;
+                            }
+                        } else {
+                            WarehouseReceiveDetailDTO.UpdateDTO updateSkuDTO = new WarehouseReceiveDetailDTO.UpdateDTO();
+                            updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
+                            if (receiveQty > entity.getPurchaseQty()) {
+                                receiveQty = receiveQty - entity.getPurchaseQty();
+                                updateSkuDTO.setReceiveQty(entity.getPurchaseQty());
+                            }
+                            if (receiveQty <= entity.getPurchaseQty()) {
+                                updateSkuDTO.setReceiveQty(receiveQty);
+                                break;
+                            }
+                            updateSkuDTO.setMainId(updateDTO.getMainId());
+                            updateSkuDTO.setExceedQty(MathUtil.ZERO);
+                            updateSkuDTO.setRemark(updateDTO.getRemark());
+                            updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
+                            dto.getWarehouseReceiveDetailList().add(updateSkuDTO);
                         }
-                        if (receiveQty <= entity.getPurchaseQty()) {
-                            updateSkuDTO.setReceiveQty(receiveQty);
-                            break;
-                        }
-                        updateSkuDTO.setExceedQty(MathUtil.ZERO);
-                        updateSkuDTO.setRemark(updateDTO.getRemark());
-                        updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
-                        updateDTOList.add(updateSkuDTO);
                     }
                 }
             }
         }
-        dto.setWarehouseReceiveDetailList(updateDTOList);
         return this.update(dto);
     }
 

@@ -173,7 +173,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         }
         for (WarehouseReceiveDetailDTO.UpdateDTO updateDTO : warehouseReceiveDetailList) {
             WarehouseReceiveDetailEntity warehouseReceiveDetailEntity = new WarehouseReceiveDetailEntity();
-            warehouseReceiveDetailEntity.setMainId(updateDTO.getMain_id());
+            warehouseReceiveDetailEntity.setMainId(updateDTO.getMainId());
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
             warehouseReceiveDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
             warehouseReceiveDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
@@ -202,10 +202,10 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             warehouseReceiveDetailEntity.setPurchaseOrderDetailId(updateDTO.getPurchaseOrderDetailId());
             listDetail.add(warehouseReceiveDetailEntity);
             //修改操作日志
-            if (StringUtils.isNotBlank(warehouseReceiveDetailEntity.getId())) {
+/*            if (StringUtils.isNotBlank(warehouseReceiveDetailEntity.getId())) {
                 WarehouseReceiveDetailEntity old = this.getById(warehouseReceiveDetailEntity.getId());
                 operateLogService.addModuleOperateLogByObj(old,warehouseReceiveDetailEntity, ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(),dto.getId(),"",String.format("【%s】",old.getSkuNo()));
-            }
+            }*/
         }
         boolean flag = this.saveOrUpdateBatch(listDetail);
         //添加操作日志

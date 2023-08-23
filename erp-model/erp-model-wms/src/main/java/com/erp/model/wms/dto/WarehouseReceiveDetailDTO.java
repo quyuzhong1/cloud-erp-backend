@@ -64,7 +64,7 @@ public class WarehouseReceiveDetailDTO {
         /**
          * 收货单主表id
          */
-        private String main_id;
+        private String mainId;
 
         /**
          * 采购单详情表id

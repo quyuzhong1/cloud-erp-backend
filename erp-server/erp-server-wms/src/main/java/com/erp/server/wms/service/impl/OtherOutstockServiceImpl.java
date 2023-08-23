@@ -685,4 +685,33 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         }
         return new PagingVO(pageData);
     }
+
+    @Override
+    public List<OtherOutstockDTO.PdaListStatusCountDTO> PdaListCount(PermissionsDTO dto) {
+        PdaTabFlagEnum[] values = PdaTabFlagEnum.values();
+        List<OtherOutstockDTO.PdaListStatusCountDTO> list = new ArrayList<>();
+        for (PdaTabFlagEnum item : values) {
+            OtherOutstockDTO.SearchParamDTO pagingParamDTO = new OtherOutstockDTO.SearchParamDTO();
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            pagingParamDTO.setInvalidStatus(Boolean.FALSE);
+            OtherOutstockDTO.PdaListStatusCountDTO resultDTO = new OtherOutstockDTO.PdaListStatusCountDTO();
+            Integer count = MathUtil.ZERO;
+            if (PdaTabFlagEnum.WAIT_SUBMIT_AND_REJECT.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.REJECT.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            list.add(resultDTO);
+        }
+        return list;
+    }
 }

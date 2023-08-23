@@ -478,5 +478,16 @@ public class OtherOutstockDTO implements Serializable {
         private List<String> approveStatusList;
     }
 
-
+    @Data
+    @NoArgsConstructor
+    public static class PdaListStatusCountDTO {
+        /**
+         * 类型(waitSubmitAndReject 待提交/审核不通过，approveIng 审核中，approve 已审核)
+         */
+        private String tabFlag;
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
 }
