@@ -349,6 +349,9 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.billDate != null and params.billDate.size > 0">
+            and pr.bill_date >= #{params.billDate[0]} and  (#{params.billDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pr.bill_date
+        </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

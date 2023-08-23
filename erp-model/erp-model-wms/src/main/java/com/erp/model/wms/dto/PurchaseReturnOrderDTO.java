@@ -1063,6 +1063,10 @@ public class PurchaseReturnOrderDTO {
          */
         private List<String> approveStatusList;
 
+        /**
+         * 退货日期
+         */
+        private List<LocalDate> billDateList;
     }
 
     /**

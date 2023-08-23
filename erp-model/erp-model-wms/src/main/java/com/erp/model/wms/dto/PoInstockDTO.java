@@ -848,6 +848,11 @@ public class PoInstockDTO implements Serializable {
          * 审核状态集合
          */
         private List<String> approveStatusList;
+
+        /**
+         * 入库日期集合
+         */
+        private List<LocalDate> stockInDateList;
     }
 
     /**
