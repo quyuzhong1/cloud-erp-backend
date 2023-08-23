@@ -127,5 +127,16 @@ public class ShopInfoController extends BaseController {
         return success(resultDTOS);
     }
 
+    /**
+     * 店铺费用设置
+     *
+     * @return
+     */
+    @PostMapping("/setCost")
+    public ApiResult<ShopDTO.ViewDTO> setCost(@RequestBody @Validated BaseIdDTO dto) {
+        ShopDTO.ViewDTO view = shopInfoService.view(dto.getId());
+        return success(view);
+    }
+
 
 }
