@@ -239,6 +239,6 @@
         </if>
 
         GROUP BY spuNo,category,skuId, skuNo, productImgUrl,productName,warehouseId,warehouseName,warehouseLocation,warehouseArea,warehouseAreaName,inv.org_id
-        ORDER BY pd.sku_no
+        ORDER BY skuNo ASC,warehouseName ASC, inventoryId ASC
     </select>
 </mapper>
