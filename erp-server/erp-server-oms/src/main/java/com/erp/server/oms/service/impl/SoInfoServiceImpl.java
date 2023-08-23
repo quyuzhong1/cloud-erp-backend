@@ -2387,7 +2387,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         result.setTotalAmount(totalAmount);
         result.setTotalTaxAmount(totalTaxAmount);
         result.setDetails(details);
-        String chineseAmount = Convert.digitToChinese(totalAmount);
+        String chineseAmount = Convert.digitToChinese(totalTaxAmount);
         result.setChineseAmount(chineseAmount);
         int i = 1;
         for (SoDetailDTO.ExportPdfDTO item : details) {
