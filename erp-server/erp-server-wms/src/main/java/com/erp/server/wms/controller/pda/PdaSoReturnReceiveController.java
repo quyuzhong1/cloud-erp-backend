@@ -126,7 +126,7 @@ public class PdaSoReturnReceiveController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnReceive:submit",
+            menuCode = "wms:pdaSoReturnReceive:submit",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -144,7 +144,7 @@ public class PdaSoReturnReceiveController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnReceive:add",
+            menuCode = "wms:pdaSoReturnReceive:add",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated SoReturnReceiveDTO.Add dto) {
@@ -162,7 +162,7 @@ public class PdaSoReturnReceiveController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnReceive:update",
+            menuCode = "wms:pdaSoReturnReceive:update",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated SoReturnReceiveDTO.Update dto) {
@@ -180,7 +180,7 @@ public class PdaSoReturnReceiveController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnReceive:approve",
+            menuCode = "wms:pdaSoReturnReceive:approve",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
@@ -198,7 +198,7 @@ public class PdaSoReturnReceiveController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnReceive:disApprove",
+            menuCode = "wms:pdaSoReturnReceive:disApprove",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -216,7 +216,7 @@ public class PdaSoReturnReceiveController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnReceive:cancelProcess",
+            menuCode = "wms:pdaSoReturnReceive:cancelProcess",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -234,11 +234,29 @@ public class PdaSoReturnReceiveController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnReceive:invalid",
+            menuCode = "wms:pdaSoReturnReceive:invalid",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO remarkDTO) {
         Boolean flag = soReturnReceiveService.invalid(remarkDTO.getIds(), remarkDTO.getRemark());
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 批量删除
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
+     * @param idsDTO idsDTO
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaSoReturnReceive:delete",
+            serviceClass = SoReturnReceiveService.class,
+            keyIdName = "ids")
+    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        Boolean flag = soReturnReceiveService.delete(idsDTO.getIds());
         return flag == true ? success() : failure();
     }
 

@@ -337,7 +337,7 @@
         WHERE srr.is_deleted = FALSE
         AND srr.invalid_status = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-            and wr.approve_status in
+            and srr.approve_status in
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
