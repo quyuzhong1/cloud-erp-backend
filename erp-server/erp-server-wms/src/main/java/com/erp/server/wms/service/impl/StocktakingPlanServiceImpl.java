@@ -180,7 +180,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         stocktakingPlanDetailService.updateList(updateDTO.getDetailList(), stocktakingPlanEntity.getId());
         // 记录主单操作日志
         log.info("编辑 开始记录盘点计划单日志数据，单号：【{}】", stocktakingPlanEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), stocktakingPlanEntity.getCode(), "盘点计划");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), old.getCode(), "盘点计划");
         operateLogService.addModuleOperateLogByObj(old, stocktakingPlanEntity, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), stocktakingPlanEntity.getId(), msg);
     }
 
