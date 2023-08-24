@@ -1,7 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.common.business.dto.base.SortDTO;
-import com.erp.model.oms.enums.B2cSoCategoryTypeEnum;
+import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,6 +10,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -359,6 +360,23 @@ public class SoB2cDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+        /**
+         * 来源订单id
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源订单编码
+         */
+        private String sourceCode;
+
+        /**
          * 物流信息
          */
         private SoB2cLogisticsDTO.AddDTO logisticsDTO;
@@ -491,7 +509,7 @@ public class SoB2cDTO implements Serializable {
          * 编辑分类类型
          */
         @NotBlank(message = "类型不能为空")
-        private B2cSoCategoryTypeEnum typeEnum;
+        private SoB2cCategoryTypeEnum typeEnum;
 
         /**
          * 分类id集合
@@ -658,6 +676,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String buyerName;
         /**
+         * 收货人名称
+         */
+        private String receiverName;
+        /**
          * 国家名称
          */
         private String countyName;
@@ -682,9 +704,65 @@ public class SoB2cDTO implements Serializable {
          */
         private String currency;
         /**
+         * 物流方式
+         */
+        private String dictLogisticsMethod;
+        /**
          * 主表信息
          */
         private List<MergeMainDTO> mainList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class MergeParamDTO extends SortDTO {
+
+        /**
+         * 平台集合
+         */
+        private List<String> platformList;
+        /**
+         * 店铺id集合
+         */
+        private List<String> shopIdList;
+
+        /**
+         * 币别集合
+         */
+        private List<String> currencyList;
+
+        /**
+         * 买家名称
+         */
+        private List<String> buyerNameList;
+
+        /**
+         * 收货人
+         */
+        private List<String> receiverNameList;
+
+        /**
+         * 收货地址1
+         */
+        private List<String> firstAddressList;
+        /**
+         * 收货地址1
+         */
+        private List<String> secondAddressList;
+        /**
+         * 收货地址1
+         */
+        private List<String> fullAddressList;
+
+        /**
+         * 仓库id集合
+         */
+        private List<String> warehouseIdList;
+
+        /**
+         * 物流方式集合
+         */
+        private List<String> dictLogisticsMethodList;
     }
 
     /**
@@ -711,9 +789,17 @@ public class SoB2cDTO implements Serializable {
          */
         private String receiverName;
         /**
-         * 地址
+         * 地址1
          */
-        private String address;
+        private String firstAddress;
+        /**
+         * 地址2
+         */
+        private String secondAddress;
+        /**
+         * 详细地址
+         */
+        private String fullAddress;
         /**
          * 合并明细信息
          */
@@ -758,7 +844,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 包装重量
          */
-        private String  weight;
+        private BigDecimal  weight;
         /**
          * 含税成本
          */
@@ -775,6 +861,10 @@ public class SoB2cDTO implements Serializable {
          * 数量
          */
         private Integer qty;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
         /**
          * 订单本位币金额
          */
@@ -859,7 +949,33 @@ public class SoB2cDTO implements Serializable {
         private BigDecimal weight;
     }
 
-
+    /**
+     * 取消拆分验证
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CheckCancelSplitDTO {
+        /**
+         * 拆分前订单
+         */
+        private String  parentB2cSoCode;
+        /**
+         * 取消拆分明细
+         */
+        List<CheckCancelSplitDetailDTO> detailList;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class CheckCancelSplitDetailDTO {
+        /**
+         * 拆分后订单
+         */
+        private String childB2cSoCode;
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+    }
     /**
      * 拆分保存
      */
@@ -874,10 +990,21 @@ public class SoB2cDTO implements Serializable {
         /**
          * 明细信息
          */
-        @NotEmpty(message = "拆分后数据不能为空")
+        @NotEmpty(message = "拆分后订单数据不能为空")
+        @Valid
+        private List<GroupSplitSaveDTO> groupList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class GroupSplitSaveDTO {
+
+
+        @NotEmpty(message = "拆分后明细数据不能为空")
         @Valid
         private List<SplitDetailSaveDTO> detailList;
     }
+
 
     /**
      * 拆分明细保存
@@ -897,6 +1024,12 @@ public class SoB2cDTO implements Serializable {
         @Min(value = 0, message = "拆分数量最小值为1")
         @Max(value = 999999999, message = "拆分数量最大值为999999999")
         private Integer qty;
+
+        /**
+         * 分组信息不能为空
+         */
+        @NotBlank(message = "分组信息不能为空")
+        private String group;
     }
 
 }

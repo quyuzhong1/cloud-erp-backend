@@ -8,6 +8,9 @@ import com.erp.server.oms.mapper.SoB2cReceiverMapper;
 import com.erp.server.oms.service.SoB2cReceiverService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+
 /**
  * <p>
  * B2C销售订单买家信息表 服务实现类
@@ -40,5 +43,15 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     @Override
     public SoB2cReceiverEntity getByMainId(String mainId) {
         return lambdaQuery().eq(SoB2cReceiverEntity::getId,mainId).one();
+    }
+
+    @Override
+    public List<SoB2cReceiverEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery().in(SoB2cReceiverEntity::getId,mainIds).list();
+    }
+
+    @Override
+    public Boolean deleteByMainIds(List<String> mainIds) {
+        return lambdaUpdate().in(SoB2cReceiverEntity::getMainId,mainIds).remove();
     }
 }

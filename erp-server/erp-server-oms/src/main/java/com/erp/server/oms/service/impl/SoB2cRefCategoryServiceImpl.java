@@ -33,7 +33,7 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
     }
 
     @Override
-    public Boolean deleteByMainId(String mainId) {
-        return lambdaUpdate().eq(SoB2cRefCategoryEntity::getSoB2cId,mainId).remove();
+    public Boolean deleteByMainIds(List<String> mainIds) {
+        return lambdaUpdate().in(SoB2cRefCategoryEntity::getSoB2cId,mainIds).remove();
     }
 }

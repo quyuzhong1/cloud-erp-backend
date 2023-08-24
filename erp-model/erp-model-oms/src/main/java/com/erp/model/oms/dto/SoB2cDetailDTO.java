@@ -185,7 +185,10 @@ public class SoB2cDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
 
     }
 

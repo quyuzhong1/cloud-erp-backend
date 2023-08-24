@@ -1,15 +1,15 @@
 package com.erp.model.oms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 
 /**
@@ -30,77 +30,77 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
     * 主表id
     */
     @TableField("main_id")
-        private String mainId;
+    private String mainId;
     /**
     * 物流单号
     */
     @TableField("code")
-        private String code;
+    private String code;
     /**
     * 买家自选物流名称
     */
     @TableField("name")
-        private String name;
+    private String name;
     /**
     * 物流方式
     */
     @TableField("dict_logistics_method")
-        private String dictLogisticsMethod;
+    private String dictLogisticsMethod;
     /**
     * 发货时间
     */
     @TableField("delivery_time")
-        private LocalDateTime deliveryTime;
+    private LocalDateTime deliveryTime;
     /**
     * 预估运费
     */
     @TableField("estimated_shipping_cost")
-        private BigDecimal estimatedShippingCost;
+    private BigDecimal estimatedShippingCost;
     /**
     * 预估运费币别
     */
     @TableField("estimated_shipping_currency")
-        private String estimatedShippingCurrency;
+    private String estimatedShippingCurrency;
     /**
     * 实际运费
     */
     @TableField("actual_shipping_cost")
-        private BigDecimal actualShippingCost;
+    private BigDecimal actualShippingCost;
     /**
     * 实际运费币别
     */
     @TableField("actual_shipping_currency")
-        private String actualShippingCurrency;
+    private String actualShippingCurrency;
     /**
     * 包装重量
     */
     @TableField("weight")
-        private BigDecimal weight;
+    private BigDecimal weight;
     /**
     * 包装辅料skuId
     */
     @TableField("accessories_sku_id")
-        private String accessoriesSkuId;
+    private String accessoriesSkuId;
     /**
     * 包装辅料sku编码
     */
     @TableField("accessories_sku_no")
-        private String accessoriesSkuNo;
+    private String accessoriesSkuNo;
     /**
     * 包装辅料数量
     */
     @TableField("accessories_qty")
-        private Integer accessoriesQty;
+    private Integer accessoriesQty;
     /**
     * 包装辅料净重
     */
     @TableField("accessories_nw")
-        private BigDecimal accessoriesNw;
+    private BigDecimal accessoriesNw;
     /**
     * 包装辅料费
     */
     @TableField("accessories_cost")
-        private BigDecimal accessoriesCost;
+    private BigDecimal accessoriesCost;
     /**
     * 包装辅料费币别
     */
@@ -110,17 +110,17 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
     * 长
     */
     @TableField("length")
-        private BigDecimal length;
+    private BigDecimal length;
     /**
     * 宽
     */
     @TableField("width")
-        private BigDecimal width;
+    private BigDecimal width;
     /**
     * 高
     */
     @TableField("height")
-        private BigDecimal height;
+    private BigDecimal height;
 
 
     public static final String MAIN_ID = "main_id";

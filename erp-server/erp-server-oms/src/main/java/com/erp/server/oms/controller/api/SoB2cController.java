@@ -9,6 +9,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,7 +117,7 @@ public class SoB2cController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = soB2cService.submit(id);
+                submit = soB2cService.submit(id,Boolean.TRUE);
             } catch (Exception e){
                 log.error("B2C销售订单 提交审核失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
@@ -185,7 +186,7 @@ public class SoB2cController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO invalidResult;
             try {
-                invalidResult = soB2cService.invalid(id,dto.getRemark());
+                invalidResult = soB2cService.invalid(id,dto.getRemark(), SoB2cInvalidTypeEnum.ENUM_MANUAL);
             } catch (Exception e){
                 log.error("B2C销售订单作废失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
@@ -219,7 +220,7 @@ public class SoB2cController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO unInvalidResult;
             try {
-                unInvalidResult = soB2cService.unInvalid(id);
+                unInvalidResult = soB2cService.unInvalid(id, SoB2cInvalidTypeEnum.ENUM_MANUAL);
             } catch (Exception e){
                 log.error("B2C销售订单取消作废失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
@@ -592,7 +593,7 @@ public class SoB2cController extends BaseController {
             menuCode = "oms:soB2c:viewSplit",
             serviceClass = SoB2cService.class,
             keyIdName = "id")
-    public ApiResult<List<SoB2cDTO.ViewSplitDTO>> viewSplit(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<SoB2cDTO.ViewSplitDTO> viewSplit(@RequestBody @Validated BaseIdDTO dto) {
         return success(soB2cService.viewSplit(dto.getId()));
     }
 
@@ -612,6 +613,23 @@ public class SoB2cController extends BaseController {
     public ApiResult<List<BatchResultDTO>> splitSave(@RequestBody @Validated SoB2cDTO.SplitSaveDTO dto) {
         Boolean flag = soB2cService.splitSave(dto);
         return flag.equals(Boolean.TRUE) ? success() : failure();
+    }
+
+    /**
+     * 取消拆分前数据显示
+     * @author Will
+     * @date: 2023/8/24 11:50
+     * @param dto
+     * @return ApiResult<List<CheckCancelSplitDTO>>
+     */
+    @PostMapping("/checkCancelSplit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:checkCancelSplit",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
+    public ApiResult<List<SoB2cDTO.CheckCancelSplitDTO>> checkCancelSplit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(soB2cService.checkCancelSplit(dto.getIds()));
     }
 
     /**

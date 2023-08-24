@@ -28,8 +28,8 @@ public interface SoB2cRefCategoryService extends SuperService<SoB2cRefCategoryEn
      * @description: 根据主表id删除
      * @author Will
      * @date: 2023/8/22 14:32
-     * @param mainId
+     * @param mainIds
      * @return Boolean
      */
-    Boolean deleteByMainId(String mainId);
+    Boolean deleteByMainIds(List<String> mainIds);
 }
