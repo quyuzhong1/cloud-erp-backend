@@ -362,6 +362,11 @@ public class SoB2cDTO implements Serializable {
         private String billStatusName;
 
         /**
+         * 销售汇率 http://172.16.100.11:3002/project/74/interface/api/18151
+         */
+        private BigDecimal exchangeRate;
+
+        /**
          * 物流信息
          */
         private SoB2cLogisticsDTO.ViewDTO logisticsDTO;

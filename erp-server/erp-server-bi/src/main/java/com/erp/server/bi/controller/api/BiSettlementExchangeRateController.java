@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -80,6 +81,18 @@ public class BiSettlementExchangeRateController extends BaseController {
     public ApiResult<List<Map<String, Object>>> listSettlementExchangeRate() {
         List<Map<String, Object>> list=  biSettlementExchangeRateService.listSettlementExchangeRate();
         return  success(list);
+    }
+
+    /**
+     * 获取汇率
+     * @author Will
+     * @date: 2023/8/24 17:47
+     * @return ApiResult<BigDecimal>
+     */
+    @PostMapping("/findByCurrencyAndDate")
+    public ApiResult<BigDecimal> findByCurrencyAndDate(@RequestBody @Validated BiSettlementExchangeRateDTO.CurrencyParamDTO dto) {
+        BigDecimal exchangeRate =  biSettlementExchangeRateService.findByCurrencyAndDate(dto.getDate(),dto.getCurrency());
+        return  success(exchangeRate);
     }
 
 }

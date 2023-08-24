@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -14,6 +15,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -297,6 +299,20 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         updateApproveStatusForApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public BigDecimal findByCurrencyAndDate(LocalDate parseDate, String sourceCurrencyCode) {
+        if (CurrencyEnum.CNY.getCurrencyCode().equals(sourceCurrencyCode)) {
+            return BigDecimal.ONE;
+        }
+        List<BiSettlementExchangeRateEntity> biSettlementExchangeRateEntityList = this.baseMapper.findByCurrencyAndDate(parseDate, sourceCurrencyCode);
+        if(CollUtil.isEmpty(biSettlementExchangeRateEntityList)) {
+            return null;
+        }
+        biSettlementExchangeRateEntityList.sort(Comparator.comparing(BiSettlementExchangeRateEntity::getUpdateTime, Comparator.reverseOrder()));
+        BiSettlementExchangeRateEntity biSettlementExchangeRateEntity = biSettlementExchangeRateEntityList.get(0);
+        return biSettlementExchangeRateEntity.getExchangeRate();
     }
 
     /**

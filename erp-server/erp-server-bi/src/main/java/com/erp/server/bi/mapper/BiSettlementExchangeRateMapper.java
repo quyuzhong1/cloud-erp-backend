@@ -8,6 +8,9 @@ import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
+import java.util.List;
+
 /**
  * @author Will
  * @version 1.0
@@ -25,4 +28,13 @@ public interface BiSettlementExchangeRateMapper extends BaseMapper<BiSettlementE
      * @return IPage<ListDTO>
      */
     IPage<BiSettlementExchangeRateDTO.ListDTO> paging(Page query,@Param("params") BiSettlementExchangeRateDTO.SearchParamDTO params);
+    /**
+     * @description: 根据币制和日期查询汇率信息
+     * @author Will
+     * @date: 2023/8/24 17:44
+     * @param date
+     * @param sourceCurrencyCode
+     * @return List<BiSettlementExchangeRateEntity>
+     */
+    List<BiSettlementExchangeRateEntity> findByCurrencyAndDate(@Param(value = "date") LocalDate date, @Param(value = "sourceCurrencyCode") String sourceCurrencyCode);
 }
