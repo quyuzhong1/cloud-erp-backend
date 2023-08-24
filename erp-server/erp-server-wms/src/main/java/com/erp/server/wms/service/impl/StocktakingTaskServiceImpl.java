@@ -821,6 +821,15 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         String planCode = entity.getCode();
         // 2. 对需要盘点的 组织+仓库+仓位+skuId+库存状态 进行增加锁定库存操作
         inventoryList.stream().forEach(item -> {
+            // 判断如果已存在盘点任务，抛出异常
+            String existKey = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, "*", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), "*");
+            Collection<String> keys = redisUtil.keys(existKey);
+            if (CollUtil.isNotEmpty(keys)) {
+                WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
+                String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : item.getWarehouseId();
+                log.error("仓库【{}】库位【{}】 SKU【{}】【{}】库存 已存在盘点任务，不能重复创建", warehouseName,item.getWarehouseLocation(),item.getSkuNo(),item.getDictInventoryStatus());
+                throw new ServiceException(ApiError.STOCKTAKING_TASK_EXIST, warehouseName, item.getWarehouseLocation(), item.getSkuNo(), item.getDictInventoryStatus());
+            }
             String redisKey = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getCode(), item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
             redisUtil.set(redisKey, planCode);
         });

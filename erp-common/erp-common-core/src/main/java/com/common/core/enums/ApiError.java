@@ -711,11 +711,14 @@ public enum ApiError implements Serializable {
     WAREHOUSE_LOCATION_IS_NULL(99092, "仓位不能为null"),
     WAREHOUSE_AREA_IS_NULL(99093, "库区不能为null"),
     // 库存冻结中无法操作
-    STOCK_FREEZE_NOT_ALLOW(99094, "仓库【{}】库位【{}】 SKU【{}】 库存【{}】中, 无法操作"),
+    STOCK_FREEZE_NOT_ALLOW(99094, "仓库【{}】库位【{}】 SKU【{}】 【{}】库存【{}】中, 无法操作"),
     ERROR_SUB_CHILD_LOCATION_BLANK(99088,"委外订单子SKU【{}】仓位不能为空"),
     // 已下推退货入库单不能反审核
     ERROR_RETURN_ORDER_PUSHED(99089, "已下推退货入库单，不能反审核"),
     ERROR_WAREHOUSE_NOT_EXIST_ORG(99090, "仓库【{}】下未发现库存组织"),
+
+    STOCKTAKING_TASK_EXIST(99090 , "仓库【{}】库位【{}】 SKU【{}】 已存在盘点任务"),
+
 
 
     /**
