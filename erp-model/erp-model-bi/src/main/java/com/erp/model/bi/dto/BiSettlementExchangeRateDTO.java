@@ -168,4 +168,17 @@ public class BiSettlementExchangeRateDTO {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class CurrencyParamDTO {
+      /**
+       * 日期
+       */
+      private LocalDate date;
+      /**
+       * 币别
+       */
+      @NotBlank(message = "币别")
+      private String currency;
+    }
 }

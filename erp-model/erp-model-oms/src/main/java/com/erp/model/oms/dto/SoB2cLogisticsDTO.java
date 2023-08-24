@@ -126,7 +126,7 @@ public class SoB2cLogisticsDTO implements Serializable {
         private BigDecimal weight;
 
         /**
-        * 包装辅料skuId
+        * 包装辅料skuId http://172.16.100.11:3002/project/47/interface/api/19600
         */
         @Size(max = 19,message = "包装辅料skuId最大长度不能超过19位")
         private String accessoriesSkuId;

@@ -37,4 +37,12 @@ public interface ProductAccessoriesService  extends IService<ProductAccessoriesE
     List<ProductAccessoriesDTO> getBySkuId(String skuId);
 
     List<ProductAccessoriesEntity> getListByIds(List<String> ids);
+    /**
+     * @description: 查询辅料信息
+     * @author Will
+     * @date: 2023/8/24 18:05
+     * @param dto
+     * @return List<ProductAccessoriesDTO.ListDTO>
+     */
+    List<ProductAccessoriesDTO.ListDTO> listAccessories(ProductAccessoriesDTO.ParamDTO dto);
 }

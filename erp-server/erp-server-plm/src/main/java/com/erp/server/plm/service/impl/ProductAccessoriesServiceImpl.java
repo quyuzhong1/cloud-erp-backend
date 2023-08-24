@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.ProductAccessoriesDTO;
 import com.erp.model.plm.entity.ProductAccessoriesEntity;
 import com.erp.server.plm.mapper.ProductAccessoriesMapper;
@@ -12,7 +13,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 产品包装/辅料信息(ProductAccessories)表服务实现类
@@ -70,6 +73,20 @@ public class ProductAccessoriesServiceImpl extends ServiceImpl<ProductAccessorie
         LambdaQueryWrapper<ProductAccessoriesEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductAccessoriesEntity::getId, ids);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<ProductAccessoriesDTO.ListDTO> listAccessories(ProductAccessoriesDTO.ParamDTO dto) {
+        List<ProductAccessoriesEntity> list = lambdaQuery().in(ProductAccessoriesEntity::getParentSkuId, dto.getSkuIdList()).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<ProductAccessoriesEntity> accessoriesList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getAccessoriesSkuId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(accessoriesList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<ProductAccessoriesDTO.ListDTO> resultList = BeanMapperUtils.copyList(ProductAccessoriesDTO.ListDTO.class, list);
+        return resultList;
     }
 
 

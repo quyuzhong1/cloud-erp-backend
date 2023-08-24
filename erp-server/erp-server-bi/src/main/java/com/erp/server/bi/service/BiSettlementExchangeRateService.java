@@ -7,6 +7,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiSettlementExchangeRateDTO;
 import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -98,4 +100,13 @@ public interface BiSettlementExchangeRateService  extends IService<BiSettlementE
      * @return Boolean
      */
     Boolean disApprove(List<String> ids);
+    /**
+     * @description: 根据币制和日期查询汇率信息
+     * @author Will
+     * @date: 2023/8/24 17:45
+     * @param date
+     * @param sourceCurrencyCode
+     * @return BigDecimal
+     */
+    BigDecimal findByCurrencyAndDate(LocalDate date, String sourceCurrencyCode);
 }
