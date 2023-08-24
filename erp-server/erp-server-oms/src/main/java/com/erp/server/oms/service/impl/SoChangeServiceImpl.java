@@ -895,21 +895,21 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         if (StringUtils.isEmpty(id)) {
             return Boolean.TRUE;
         }
-//        SoChangeEntity soChange = this.getById(id);
-//        if (Objects.nonNull(soChange)) {
-//            //同步成功的
-//            String successSyncStatus = SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode();
-//            //表示同步成功
-//            if (successSyncStatus.equals(syncKingdeeStatus)) {
-//                Boolean existAdd = soChangeDetailService.existAdd(id);
-//                //如果有添加新的sku 销售订单需要重新推送
-//                if (existAdd) {
-//                    String soId = soChange.getSoId();
-//                    soDetailService.updateDetailKingdeeId(soId);
-//                }
-//            }
-//
-//        }
+        SoChangeEntity soChange = this.getById(id);
+        if (Objects.nonNull(soChange)) {
+            //同步成功的
+            String successSyncStatus = SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode();
+            //表示同步成功
+            if (successSyncStatus.equals(syncKingdeeStatus)) {
+                Boolean existAdd = soChangeDetailService.existAdd(id);
+                //如果有添加新的sku 销售订单需要重新推送
+                if (existAdd) {
+                    String soId = soChange.getSoId();
+                    soDetailService.updateDetailKingdeeId(soId);
+                }
+            }
+
+        }
         return this.lambdaUpdate()
                 .eq(SoChangeEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), SoChangeEntity::getSyncKingdeeStatus, syncKingdeeStatus)
