@@ -990,6 +990,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         base.setSellerId(customer.getSellerId());
         base.setSellerId(customer.getSellerName());
+        base.setUseOrgId(customer.getUseOrgId());
+        base.setUseOrgName(customer.getUseOrgName());
         String currencySymbol = "";
         if (CollectionUtils.isNotEmpty(currencyList)) {
             currencySymbol = currencyList.get(0).getSymbol();

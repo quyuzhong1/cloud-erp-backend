@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -789,6 +790,16 @@ public class CustomerDTO implements Serializable {
          * 销售员名称
          */
         private String sellerName;
+
+        /**
+         * 使用组织
+         */
+        private String useOrgId;
+
+        /**
+         * 使用组织名称
+         */
+        private String useOrgName;
 
         /**
          * 收款条件
