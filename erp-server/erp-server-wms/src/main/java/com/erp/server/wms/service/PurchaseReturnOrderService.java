@@ -205,10 +205,10 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * 修改到货状态
      * @Author Luo_WG
      * @Date 2023/4/28 11:41
-     * @param PurchaseOrderId PurchaseOrderId
+     * @param purchaseOrderIds
      * @return void
      **/
-    void updateArrivalState(String PurchaseOrderId, List<PurchaseOrderDetailEntity> detailEntityList);
+    void updateArrivalState(List<String> purchaseOrderIds, List<PurchaseOrderDetailEntity> detailEntityList);
 
     
     /**

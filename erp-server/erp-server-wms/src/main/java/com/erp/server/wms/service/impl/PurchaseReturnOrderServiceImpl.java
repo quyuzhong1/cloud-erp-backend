@@ -564,9 +564,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     .set(PurchaseReturnOrderEntity::getApproveTime, LocalDateTime.now())
                     .in(PurchaseReturnOrderEntity::getId, ids)
                     .update();
-
+            List<PurchaseOrderDetailEntity> list = new ArrayList<>();
             for (PurchaseReturnOrderEntity purchaseReturnOrderEntity : purchaseReturnOrderEntityList) {
-                List<PurchaseOrderDetailEntity> list = new ArrayList<>();
                 List<PurchaseReturnOrderDetailEntity> detailByMainId = purchaseReturnOrderDetailService.getDetailByMainId(purchaseReturnOrderEntity.getId());
                 List<String> detailId = detailByMainId.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
                 List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
@@ -585,11 +584,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
                         });
                     }
-
-                    if (StringUtils.isNotBlank(purchaseReturnOrderEntity.getPurchaseOrderId())) {
-                        updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId(), list);
-                    }
                 }
+            }
+            List<String> purchaseOrderIds = purchaseReturnOrderEntityList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(purchaseOrderIds)) {
+                updateArrivalState(purchaseOrderIds, list);
             }
             //自动生成补货采购订单
             autoAddPurchaseOrder(purchaseReturnOrderEntityList);
@@ -667,12 +666,13 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                         list.add(entity);
                     });
                 }
-                if (StringUtils.isNotBlank(purchaseReturnOrderEntity.getPurchaseOrderId())) {
-                    updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId(), list);
-                }
+
             }
         }
-
+        List<String> purchaseOrderIds = purchaseReturnOrderEntityList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(purchaseOrderIds)) {
+            updateArrivalState(purchaseOrderIds, list);
+        }
         unApproveInventory(purchaseReturnOrderEntityList); // 库存反审核操作
 
         //操作日志
@@ -968,7 +968,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     /**
      * 修改到货状态
      *
-     * @param PurchaseOrderId PurchaseOrderId
+     * @param purchaseOrderIds
      * @return void
      * @Author Luo_WG
      * @Date 2023/4/28 11:37
@@ -976,8 +976,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public void updateArrivalState(String PurchaseOrderId, List<PurchaseOrderDetailEntity> detailEntityList) {
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailByOrderId(PurchaseOrderId);
+    public void updateArrivalState(List<String> purchaseOrderIds, List<PurchaseOrderDetailEntity> detailEntityList) {
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listByPurchaseOrderIds(purchaseOrderIds);
         List<String> podIds = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
         List<WarehouseReceiveDetailEntity> receiveDetailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
@@ -989,6 +989,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //委外订单
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByIds(sourceDetailIds);
 
+        List<PurchaseOrderDetailEntity> list = new ArrayList<>();
         for (PurchaseOrderDetailEntity orderDetailEntity : purchaseOrderDetailEntities) {
             //结束交货的订单无需变更到货状态
             if (orderDetailEntity.getIsEndReceive()) {
@@ -1025,7 +1026,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             Integer subQty = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(orderDetailEntity.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
             String subArrivalStatus = warehouseReceiveDetailService.getSubArrivalStatus(purchaseOrderDetailIds, subQty);
             purchaseOrderDetailEntity.setSubArrivalStatus(subArrivalStatus);
-
+            list.add(purchaseOrderDetailEntity);
             scmTaskFeign.updatePoArrivalStatus(purchaseOrderDetailEntity);
 
         }

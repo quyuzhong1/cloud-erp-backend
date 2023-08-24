@@ -301,7 +301,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         operateLogService.addModuleOperateLog(String.format("新增了一个收货单【%s】", code), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), warehouseReceiveEntity.getId(), "新增操作");
 
         //修改到货状态
-        purchaseReturnOrderService.updateArrivalState(warehouseReceiveEntity.getPurchaseOrderId(), new ArrayList<>());
+        purchaseReturnOrderService.updateArrivalState(Arrays.asList(warehouseReceiveEntity.getPurchaseOrderId()), new ArrayList<>());
         return warehouseReceiveEntity.getId();
 
     }
@@ -339,7 +339,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         Boolean flag = warehouseReceiveDetailService.update(dto);
 
         if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
-            purchaseReturnOrderService.updateArrivalState(entity.getPurchaseOrderId(), new ArrayList<>());
+            purchaseReturnOrderService.updateArrivalState(Arrays.asList(entity.getPurchaseOrderId()), new ArrayList<>());
         }
 
 
@@ -822,10 +822,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //操作日志
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个收货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), pairList, "作废操作");
-        warehouseReceiveList.forEach(req -> {
-            //修改到货状态
-            purchaseReturnOrderService.updateArrivalState(req.getPurchaseOrderId(), new ArrayList<>());
-        });
+        List<String> purchaseOrderIds = warehouseReceiveList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
+        //修改到货状态
+        purchaseReturnOrderService.updateArrivalState(purchaseOrderIds, new ArrayList<>());
         return Boolean.TRUE;
     }
 
@@ -858,11 +857,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
         boolean flag = this.removeByIds(ids);
 
-        warehouseReceiveList.forEach(req -> {
-            //修改到货状态
-            purchaseReturnOrderService.updateArrivalState(req.getPurchaseOrderId(), new ArrayList<>());
-        });
-
+        List<String> purchaseOrderIds = warehouseReceiveList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
+        //修改到货状态
+        purchaseReturnOrderService.updateArrivalState(purchaseOrderIds, new ArrayList<>());
         //删除主表
         return flag;
     }
