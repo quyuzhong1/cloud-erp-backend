@@ -28,6 +28,7 @@ import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.StocktakingTaskDetailExcelListener;
@@ -177,11 +178,15 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listBaseByMainIds(idList);
         //盘点人信息
         List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseByTaskIds(idList);
+        List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(idList);
         for (StocktakingTaskDTO.PagingViewDTO item : list) {
             String id = item.getId();
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             String approveStatusName = approveStatus.getName();
             item.setApproveStatusName(approveStatusName);
+            List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+            String waitApproveUserName = StringUtils.join(curApproveName, ",");
+            item.setWaitApproveUserName(waitApproveUserName);
             //分担规则
             SeparateRuleEnum separateRule = item.getSeparateRule();
             item.setSeparateRuleName(Objects.nonNull(separateRule) ? separateRule.getName() : "");

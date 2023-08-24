@@ -456,57 +456,59 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, StocktakingProfitLossEntity entity) {
-        if (Objects.isNull(entity)) {
-            return Boolean.FALSE;
-        }
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        Boolean result = updateForApprove(entity.getId(), approveStatus);
-        if (result) {
-            if (ApproveType.PASS.equals(dto.getType())) {
-                //盘盈单
-                BillTypeEnum profit = BillTypeEnum.PROFIT;
-                //盘盈单
-                BillTypeEnum loss = BillTypeEnum.LOSS;
-                //是否盘盈
-                Boolean isProfit = Objects.equals(profit, entity.getBillType());
-                //是否盘亏
-                Boolean isLoss = Objects.equals(loss, entity.getBillType());
-
-                InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-                if (isProfit) {
-                    inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.STOCKTAKING_PROFIT.getCode());
-                }
-                if (isLoss) {
-                    inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.STOCKTAKING_LOSS.getCode());
-                }
-                List<InOutStockDTO> members = baseMapper.listInventoryInOut(Arrays.asList(entity.getId()));
-                InventoryStatusEnum inventoryStatus = InventoryStatusEnum.USABLE;
-                for (InOutStockDTO member : members) {
-                    member.setSourceType(InventorySourceTypeEnum.STOCKTAKING_PROFIT_LOSS);
-                    Integer qty = member.getQty();
-                    member.setQty(Math.abs(qty));
-                    member.setInventoryStatus(inventoryStatus);
-                }
-                if (CollectionUtils.isNotEmpty(members)) {
-                    inventoryInOutStockDTO.setMembers(members);
-                    //扣减库存
-                    inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
-                }
-
-
-                //盘盈单同步金蝶
-                if (isProfit) {
-                    syncKingdeeStocktakingProfitService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
-                }
-                //盘亏单同步金蝶
-                if (isLoss) {
-                    syncKingdeeStocktakingLossService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
-                }
-
+        try {
+            if (Objects.isNull(entity)) {
+                return Boolean.FALSE;
             }
-        }
+            ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+            Boolean result = updateForApprove(entity.getId(), approveStatus);
+            if (result) {
+                if (ApproveType.PASS.equals(dto.getType())) {
+                    //盘盈单
+                    BillTypeEnum profit = BillTypeEnum.PROFIT;
+                    //盘盈单
+                    BillTypeEnum loss = BillTypeEnum.LOSS;
+                    //是否盘盈
+                    Boolean isProfit = Objects.equals(profit, entity.getBillType());
+                    //是否盘亏
+                    Boolean isLoss = Objects.equals(loss, entity.getBillType());
 
-        return result;
+                    InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+                    if (isProfit) {
+                        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.STOCKTAKING_PROFIT.getCode());
+                    }
+                    if (isLoss) {
+                        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.STOCKTAKING_LOSS.getCode());
+                    }
+                    List<InOutStockDTO> members = baseMapper.listInventoryInOut(Arrays.asList(entity.getId()));
+                    InventoryStatusEnum inventoryStatus = InventoryStatusEnum.USABLE;
+                    for (InOutStockDTO member : members) {
+                        member.setSourceType(InventorySourceTypeEnum.STOCKTAKING_PROFIT_LOSS);
+                        Integer qty = member.getQty();
+                        member.setQty(Math.abs(qty));
+                        member.setInventoryStatus(inventoryStatus);
+                    }
+                    if (CollectionUtils.isNotEmpty(members)) {
+                        inventoryInOutStockDTO.setMembers(members);
+                        //扣减库存
+                        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+                    }
+
+                    //盘盈单同步金蝶
+                    if (isProfit) {
+                        syncKingdeeStocktakingProfitService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                    }
+                    //盘亏单同步金蝶
+                    if (isLoss) {
+                        syncKingdeeStocktakingLossService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                    }
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("审核出错>>>>>>>{} ", e);
+        }
+        return Boolean.TRUE;
     }
 
     /**
@@ -631,8 +633,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Override
     public List<StocktakingProfitLossEntity> listBySourceId(String sourceId) {
-        return this.lambdaQuery().eq(StocktakingProfitLossEntity::getSourceId,sourceId).
-                eq(StocktakingProfitLossEntity::getApproveStatus,ApproveStatusEnum.APPROVE_ING).
+        return this.lambdaQuery().eq(StocktakingProfitLossEntity::getSourceId, sourceId).
+                eq(StocktakingProfitLossEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING).
                 list();
 
     }

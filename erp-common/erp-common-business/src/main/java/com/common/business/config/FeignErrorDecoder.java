@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.FeignServiceException;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import feign.Response;
 import feign.Util;
@@ -40,17 +41,17 @@ public class FeignErrorDecoder implements ErrorDecoder {
                     } else {
                         msg = StrUtil.subBetween(trace, "msg=", ", data");
                     }
-                    return  new FeignServiceException(code, msg);
+                    return  new ServiceException(code, msg);
                 }else{
-                    return  new FeignServiceException(ApiError.Default);
+                    return  new ServiceException(ApiError.Default);
                 }
             }else{
-                return  new FeignServiceException(ApiError.Default);
+                return  new ServiceException(ApiError.Default);
             }
         } catch (Exception e) {
             log.error("FeignErrorDecoder 出错了 {}", e);
         }
 
-         return  new FeignServiceException(ApiError.Default);
+         return  new ServiceException(ApiError.Default);
     }
 }

@@ -30,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -177,7 +178,7 @@ public class StocktakingTaskController extends BaseController {
                     // 删除缓存
                     List<StocktakingTaskDetailDTO.ViewDTO> detailList = stocktakingTaskDetailService.listByMainId(id);
                     detailList.forEach(detail -> {
-                        String key = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getCode(), "*",
+                        String key = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getSourceCode(), "*",
                                 detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*");
                         redisUtil.keys(key).forEach(item -> redisUtil.del(item));
                     });
@@ -198,7 +199,11 @@ public class StocktakingTaskController extends BaseController {
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                String message = e.getMessage();
+//                if(StrUtil.isBlank(message) && ObjectUtil.isNotEmpty(((UndeclaredThrowableException) e).getUndeclaredThrowable())){
+//                    message = ((UndeclaredThrowableException) e).getUndeclaredThrowable().getMessage();
+//                }
+                submit = BatchResultDTO.fail(entity.getCode(), message);
             }
             resultDTOS.add(submit);
         }
