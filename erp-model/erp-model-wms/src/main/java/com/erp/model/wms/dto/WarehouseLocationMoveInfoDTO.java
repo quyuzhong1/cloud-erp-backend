@@ -210,7 +210,11 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 仓位移动明细
+         */
+        @NotEmpty(message = "仓位移动明细不能为空")
+        private List<WarehouseLocationMoveDetailDTO.AddDTO> detailList;
     }
 
     /**
@@ -226,6 +230,11 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 仓位移动明细
+         */
+        @NotEmpty(message = "仓位移动明细不能为空")
+        private List<WarehouseLocationMoveDetailDTO.UpdateDTO> detailList;
     }
 
     @Data

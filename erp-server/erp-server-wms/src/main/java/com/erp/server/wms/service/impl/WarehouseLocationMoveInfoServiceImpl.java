@@ -1,14 +1,16 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.WarehouseLocationMoveInfoEntity;
 import com.erp.server.wms.mapper.WarehouseLocationMoveInfoMapper;
+import com.erp.server.wms.service.WarehouseLocationMoveDetailService;
 import com.erp.server.wms.service.WarehouseLocationMoveInfoService;
 import com.common.business.service.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
@@ -17,6 +19,8 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,8 +36,6 @@ import com.google.common.collect.Sets;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
@@ -67,6 +69,8 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WorkflowFeign workflowFeign;
+    @Resource
+    private WarehouseLocationMoveDetailService warehouseLocationMoveDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -91,6 +95,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "仓位移动主单" , warehouseLocationMoveInfoEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveInfoEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
+        warehouseLocationMoveDetailService.add(addDTO.getDetailList(), warehouseLocationMoveInfoEntity.getId());
         return warehouseLocationMoveInfoEntity.getId();
     }
 
@@ -116,14 +121,13 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
             throw new ServiceException("仓位移动主单保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
+        warehouseLocationMoveDetailService.update(updateDTO.getDetailList(), warehouseLocationMoveInfoEntity.getId());
         // 记录主单操作日志
-            log.info("编辑 开始记录仓位移动主单日志数据，单号：【{}】", warehouseLocationMoveInfoEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), warehouseLocationMoveInfoEntity.getCode(), "仓位移动主单");
+        log.info("编辑 开始记录仓位移动主单日志数据，单号：【{}】", warehouseLocationMoveInfoEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), warehouseLocationMoveInfoEntity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLogByObj(old, warehouseLocationMoveInfoEntity, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveInfoEntity.getId(), msg);
         return Boolean.TRUE;
     }
-
 
     @Override
     public PagingVO<WarehouseLocationMoveInfoDTO.ListDTO> paging(PagingDTO<WarehouseLocationMoveInfoDTO.PagingParamDTO> pagingParamDTO) {

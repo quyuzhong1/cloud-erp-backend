@@ -2,13 +2,23 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
+import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.server.wms.mapper.WarehouseLocationMoveDetailMapper;
 import com.erp.server.wms.service.WarehouseLocationMoveDetailService;
 import com.common.business.service.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +26,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -37,25 +49,18 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public String add(WarehouseLocationMoveDetailDTO.AddDTO addDTO) {
-        WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity = new WarehouseLocationMoveDetailEntity();
-        BeanMapperUtils.copy(addDTO, warehouseLocationMoveDetailEntity);
+    public void add(List<WarehouseLocationMoveDetailDTO.AddDTO> addDTO, String mainId) {
+        List<WarehouseLocationMoveDetailEntity> warehouseLocationMoveDetailEntities = BeanMapperUtils.copyList(WarehouseLocationMoveDetailEntity.class, addDTO);
 
         // 数据处理
-        handleData(warehouseLocationMoveDetailEntity);
+        handleData(warehouseLocationMoveDetailEntities, mainId);
 
         log.info("开始新增仓位移动明细单");
-        boolean save = super.save(warehouseLocationMoveDetailEntity);
+        boolean save = super.saveBatch(warehouseLocationMoveDetailEntities);
         if(!save) {
             throw new ServiceException("仓位移动明细单保存失败");
         }
 
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "仓位移动明细单" , warehouseLocationMoveDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, warehouseLocationMoveDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-        return warehouseLocationMoveDetailEntity.getId();
     }
 
     /**
@@ -63,33 +68,65 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(WarehouseLocationMoveDetailDTO.UpdateDTO updateDTO) {
-        WarehouseLocationMoveDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "仓位移动明细单"));
-        WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity =  BeanMapperUtils.map(WarehouseLocationMoveDetailEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(warehouseLocationMoveDetailEntity);
-        log.info("编辑 开始修改仓位移动明细单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(warehouseLocationMoveDetailEntity);
-        if(!save) {
-            throw new ServiceException("仓位移动明细单保存失败");
+    public Boolean update(List<WarehouseLocationMoveDetailDTO.UpdateDTO> detailList, String mainId) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_1040, SourceTypeEnum.SO_B2C.getName());
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
-        // 记录主单操作日志
-            log.info("编辑 开始记录仓位移动明细单日志数据，id：【{}】", warehouseLocationMoveDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), warehouseLocationMoveDetailEntity.getId(), "仓位移动明细单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, warehouseLocationMoveDetailEntity, null, warehouseLocationMoveDetailEntity.getId(), msg);
-        return Boolean.TRUE;
+        //原明细数据
+        List<WarehouseLocationMoveDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<String> deleteIds = getDeleteIds(detailList, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<WarehouseLocationMoveDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"编辑操作");
+            this.removeByIds(deleteIds);
+        }
+
+        List<WarehouseLocationMoveDetailEntity> list = BeanMapperUtils.copyList(WarehouseLocationMoveDetailEntity.class, detailList);
+        // 数据处理
+        handleData(list, mainId);
+        return this.saveOrUpdateBatch(list);
     }
 
+    @Override
+    public List<WarehouseLocationMoveDetailEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery().in(WarehouseLocationMoveDetailEntity::getMainId, mainIds).list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean removeByMainId(String mainId) {
+        lambdaUpdate().eq(WarehouseLocationMoveDetailEntity::getMainId, mainId).remove();
+        return Boolean.TRUE;
+    }
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(List<WarehouseLocationMoveDetailEntity> list, String mainId) {
+        for (WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity : list) {
+
+        }
+
+        //添加操作日志
+        List<String> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).map(WarehouseLocationMoveDetailEntity::getId).collect(Collectors.toList());
+        //添加操作日志
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<WarehouseLocationMoveDetailEntity> receiveDetailEntityList = this.listByIds(addList);
+            List<Pair<String, String>> addPairList = receiveDetailEntityList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), addPairList, "编辑操作");
+        }
+    }
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<WarehouseLocationMoveDetailDTO.UpdateDTO> newList, List<WarehouseLocationMoveDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(WarehouseLocationMoveDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(WarehouseLocationMoveDetailEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 }
