@@ -229,4 +229,36 @@
         ti.id desc,tid.id desc
     </select>
 
+    <select id="pdaPaging" resultType="com.erp.model.wms.dto.TransferInfoDTO$PdaListDTO">
+        SELECT
+        DISTINCT
+        ti.id,
+        ti.in_warehouse_name,
+        ti.out_warehouse_name,
+        ti.approve_status,
+        ti.create_time
+        FROM transfer_info ti
+        INNER JOIN transfer_info_detail tid ON ti.id = tid.main_id AND tid.is_deleted = FALSE
+        WHERE ti.is_deleted = FALSE
+        AND ti.invalid_status = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and ti.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and ti.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ti.bill_date
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ORDER BY ti.create_time desc
+    </select>
+
 </mapper>

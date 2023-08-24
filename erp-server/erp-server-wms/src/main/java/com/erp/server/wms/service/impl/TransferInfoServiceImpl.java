@@ -22,6 +22,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
@@ -32,18 +33,12 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
-import com.erp.model.wms.dto.DictBasicDTO;
-import com.erp.model.wms.dto.TransferInfoDTO;
-import com.erp.model.wms.dto.TransferInfoDetailDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
-import com.erp.model.wms.entity.PoInstockEntity;
-import com.erp.model.wms.entity.TransferInfoDetailEntity;
-import com.erp.model.wms.entity.TransferInfoEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -71,6 +66,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -868,4 +864,70 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 .update();
     }
 
+    @Override
+    public PagingVO<TransferInfoDTO.PdaListDTO> pdaPaging(PagingDTO<TransferInfoDTO.PdaSearchParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        TransferInfoDTO.PdaSearchParamDTO params = pagingParamDTO.getParams();
+        List<String> approveStatusList = params.getApproveStatusList();
+        if (approveStatusList.contains(ApproveStatusEnum.APPROVE)) {
+            List<LocalDate> dateList = new ArrayList<>();
+            LocalDate now = LocalDate.now();
+            dateList.add(now.minusDays(30));
+            dateList.add(now);
+            params.setBillDateList(dateList);
+        }
+        IPage<TransferInfoDTO.PdaListDTO> pageData = this.baseMapper.pdaPaging(query, pagingParamDTO.getParams());
+        if (CollectionUtils.isEmpty(pageData.getRecords())) {
+            return new PagingVO(new Page());
+        }
+        List<TransferInfoDTO.PdaListDTO> records = pageData.getRecords();
+        //主键id
+        List<String> ids = records.stream().map(req -> req.getId()).collect(Collectors.toList());
+        //查询详情
+        List<TransferInfoDetailEntity> transferInfoDetailEntities = transferInfoDetailService.listByMainIds(ids);
+        for (TransferInfoDTO.PdaListDTO record : records) {
+            record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
+            List<TransferInfoDetailEntity> detailEntities = transferInfoDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
+            List<SoReturnReceiveDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, SoReturnReceiveDTO.PdaItemDTO.class);
+            record.setDetailCount(itemDTOList.size());
+            record.setItemList(itemDTOList);
+        }
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<TransferInfoDTO.PdaListStatusCountDTO> pdaListCount(PermissionsDTO dto) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(30);
+        PdaTabFlagEnum[] values = PdaTabFlagEnum.values();
+        List<TransferInfoDTO.PdaListStatusCountDTO> list = new ArrayList<>();
+        for (PdaTabFlagEnum item : values) {
+            TransferInfoDTO.SearchParamDTO pagingParamDTO = new TransferInfoDTO.SearchParamDTO();
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            pagingParamDTO.setInvalidStatus(Boolean.FALSE);
+            TransferInfoDTO.PdaListStatusCountDTO resultDTO = new TransferInfoDTO.PdaListStatusCountDTO();
+            Integer count = MathUtil.ZERO;
+            if (PdaTabFlagEnum.WAIT_SUBMIT_AND_REJECT.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.REJECT.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
+                List<LocalDate> dateList = new ArrayList<>();
+                dateList.add(startDate);
+                dateList.add(endDate);
+                pagingParamDTO.setBillDateList(dateList);
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            list.add(resultDTO);
+        }
+        return list;
+    }
 }

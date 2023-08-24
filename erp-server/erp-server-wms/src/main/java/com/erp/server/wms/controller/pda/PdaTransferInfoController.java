@@ -44,11 +44,11 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:paging",
+            menuCode = "wms:pdaTransferInfo:paging",
             tableAlias = "ti"
     )
-    public ApiResult<PagingVO<TransferInfoDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<TransferInfoDTO.SearchParamDTO> dto) {
-        PagingVO<TransferInfoDTO.ListDTO> pagingVO = transferInfoService.paging(dto);
+    public ApiResult<PagingVO<TransferInfoDTO.PdaListDTO>> paging(@RequestBody @Validated PagingDTO<TransferInfoDTO.PdaSearchParamDTO> dto) {
+        PagingVO<TransferInfoDTO.PdaListDTO> pagingVO = transferInfoService.pdaPaging(dto);
         return success(pagingVO);
     }
 
@@ -62,11 +62,11 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:paging",
+            menuCode = "wms:pdaTransferInfo:paging",
             tableAlias = "ti"
     )
-    public ApiResult<List<TransferInfoDTO.ListStatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
-        List<TransferInfoDTO.ListStatusCountDTO> list = transferInfoService.listCount(dto);
+    public ApiResult<List<TransferInfoDTO.PdaListStatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
+        List<TransferInfoDTO.PdaListStatusCountDTO> list = transferInfoService.pdaListCount(dto);
         return success(list);
     }
 
@@ -80,7 +80,7 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:add",
+            menuCode = "wms:pdaTransferInfo:add",
             serviceClass = TransferInfoService.class,
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated TransferInfoDTO.AddDTO dto) {
@@ -98,7 +98,7 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:add",
+            menuCode = "wms:pdaTransferInfo:add",
             serviceClass = TransferInfoService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated TransferInfoDTO.AddDTO dto) {
@@ -116,7 +116,7 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:update",
+            menuCode = "wms:pdaTransferInfo:update",
             serviceClass = TransferInfoService.class,
             keyIdName = "id")
     public ApiResult update(@RequestBody @Validated TransferInfoDTO.UpdateDTO dto) {
@@ -134,7 +134,7 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:update",
+            menuCode = "wms:pdaTransferInfo:update",
             serviceClass = TransferInfoService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated TransferInfoDTO.UpdateDTO dto) {
@@ -152,7 +152,7 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:submit",
+            menuCode = "wms:pdaTransferInfo:submit",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
@@ -170,7 +170,7 @@ public class PdaTransferInfoController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:view",
+            menuCode = "wms:pdaTransferInfo:view",
             serviceClass = TransferInfoService.class,
             keyIdName = "id")
     public ApiResult<TransferInfoDTO.ViewDTO> view(@RequestParam("id") String id) {
@@ -189,7 +189,7 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:delete",
+            menuCode = "wms:pdaTransferInfo:delete",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
@@ -207,7 +207,7 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:invalid",
+            menuCode = "wms:pdaTransferInfo:invalid",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
@@ -225,7 +225,7 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:approve",
+            menuCode = "wms:pdaTransferInfo:approve",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
@@ -243,7 +243,7 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:disApprove",
+            menuCode = "wms:pdaTransferInfo:disApprove",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -261,7 +261,7 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:cancelProcess",
+            menuCode = "wms:pdaTransferInfo:cancelProcess",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -280,7 +280,7 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:paging",
+            menuCode = "wms:pdaTransferInfo:paging",
             tableAlias = "ti"
     )
     public ApiResult exportExcel(@RequestBody TransferInfoDTO.SearchParamDTO dto, HttpServletResponse response) {
