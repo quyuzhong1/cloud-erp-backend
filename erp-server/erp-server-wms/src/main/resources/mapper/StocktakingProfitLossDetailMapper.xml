@@ -26,7 +26,7 @@
 
     <select id="listByMainIds" resultType="com.erp.model.wms.dto.StocktakingProfitLossDetailDTO$ViewDTO">
         SELECT
-            spld.id,
+            spld.main_id AS id,
             spld.main_id,
             spld.sku_id,
             spld.sku_no,
