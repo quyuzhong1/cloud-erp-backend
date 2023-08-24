@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.enums.TypeEnum;
 import com.erp.server.oms.mapper.ListingInfoMapper;
@@ -8,6 +9,8 @@ import com.erp.server.oms.service.ListingInfoService;
 import com.common.business.service.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * <p>
@@ -76,5 +79,18 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 eq(ListingInfoEntity::getPlatform, platform).
                 last("LIMIT 1").
                 one();
+    }
+
+
+    /**
+     * 根据类型获取到对应数据
+     * @author yl
+     * @date 2023-08-24 14:54
+     * @param type
+     * @return java.util.List<com.erp.model.oms.dto.ListingInfoDTO.ListDTO>
+     */
+    @Override
+    public List<ListingInfoDTO.ListDTO> listByType(String type) {
+        return baseMapper.listByType(type);
     }
 }

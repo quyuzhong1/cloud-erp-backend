@@ -1,8 +1,12 @@
 package com.erp.server.oms.mapper;
 
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ListingInfoMapper extends BaseMapper<ListingInfoEntity> {
 
+    List<ListingInfoDTO.ListDTO> listByType(@Param("type") String type);
 }

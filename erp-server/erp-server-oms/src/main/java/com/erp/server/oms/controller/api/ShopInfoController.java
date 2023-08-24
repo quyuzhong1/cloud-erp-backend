@@ -148,7 +148,7 @@ public class ShopInfoController extends BaseController {
                 if (Objects.isNull(shop)) {
                     submit = BatchResultDTO.fail(id, "店铺不存在");
                 } else {
-                    submit = shopCostService.setCost(id, dto);
+                    submit = shopCostService.setCost(shop, dto);
                     flagCode = shop.getName();
                 }
             } catch (Exception e) {

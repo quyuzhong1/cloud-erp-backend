@@ -1,7 +1,10 @@
 package com.erp.server.oms.service;
 
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.common.business.service.SuperService;
+
+import java.util.List;
 
 /**
  * <p>
@@ -39,4 +42,12 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      * @return com.erp.model.oms.entity.ListingInfoEntity
      */
     ListingInfoEntity getByPlatformSkuNo(String platform,String platformSkuNo);
+    /**
+     * 根据类型获取到对应数据
+     * @author yl
+     * @date 2023-08-24 14:54
+     * @param type
+     * @return java.util.List<com.erp.model.oms.dto.ListingInfoDTO.ListDTO>
+     */
+    List<ListingInfoDTO.ListDTO> listByType(String type);
 }
