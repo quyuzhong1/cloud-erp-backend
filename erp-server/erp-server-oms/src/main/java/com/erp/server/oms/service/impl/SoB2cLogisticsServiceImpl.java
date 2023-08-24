@@ -54,4 +54,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     public Boolean deleteByMainIds(List<String> mainIds) {
         return lambdaUpdate().in(SoB2cLogisticsEntity::getMainId,mainIds).remove();
     }
+
+    @Override
+    public Boolean updateLogisticsCode(String mainId, String logisticsCode) {
+        return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId,mainId).set(SoB2cLogisticsEntity::getCode,logisticsCode).update(new SoB2cLogisticsEntity());
+    }
 }
