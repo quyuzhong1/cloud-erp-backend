@@ -365,9 +365,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        entity.setRemark(remark);
-        //更新
-        this.updateById(entity);
+       this.lambdaUpdate().eq(SoB2cEntity::getId,id).set(SoB2cEntity::getRemark,remark).update(new SoB2cEntity());
+        String msg = StrUtil.format("订单备注由{}变更为{}",entity.getRemark(),remark);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "修改订单备注");
         return BatchResultDTO.success(entity.getCode(),"更新订单备注");
     }
 
@@ -582,6 +582,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDTO.MergeListDTO> records = pageData.getRecords();
         fillMergeData(records);
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public Integer mergePagingCount(SoB2cDTO.MergePagingParamDTO pagingParamDTO) {
+        pagingParamDTO.setPermissionSql(pagingParamDTO.getPermissionSql());
+        return this.baseMapper.mergePagingCount(pagingParamDTO);
     }
 
 
@@ -1050,6 +1056,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        data.setApproveStatusName(data.getApproveStatus().getName());
+        data.setBillStatusName(SoB2cBillStatusEnum.getName(data.getBillStatus()));
     }
 
     /**
@@ -1249,7 +1257,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         // 待付款
         if (SoB2cTabEnum.ENUM_PAYMENT.getCode().equals(params.getTabFlag())) {
-            payStatusList.add(PayStatusEnum.ENUM_PAYMENT.getCode());
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
         }
         //待处理
         if (SoB2cTabEnum.ENUM_PENDING.getCode().equals(params.getTabFlag())) {

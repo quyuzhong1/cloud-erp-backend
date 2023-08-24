@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -36,7 +37,7 @@ public class SoB2cDTO implements Serializable {
      public static class TabListDTO {
 
          /**
-         * 类型
+         * 类型 （all全部，payment待付款，pending待处理，approveIng审核中，inDistribution配货中，waitShipped代发货，shipped已发货，frozen冻结中，invalid已作废）
          */
          private String tabFlag;
 
@@ -54,7 +55,7 @@ public class SoB2cDTO implements Serializable {
      public static class PagingParamDTO extends SortDTO {
 
          /**
-         * 搜索类型
+         * 搜索类型（all全部，payment待付款，pending待处理，approveIng审核中，inDistribution配货中，waitShipped代发货，shipped已发货，frozen冻结中，invalid已作废）
          */
          private String  tabFlag;
          /**
@@ -70,7 +71,7 @@ public class SoB2cDTO implements Serializable {
           */
          private Boolean invalidStatus;
          /**
-          * 平台集合（platform字典类型）
+          * 平台集合（platform字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
           */
          private List<String> platformList;
          /**
@@ -78,7 +79,7 @@ public class SoB2cDTO implements Serializable {
           */
          private List<String> shopIdList;
          /**
-          * 国家id集合
+          * 国家id集合 http://172.16.100.11:3002/project/36/interface/api/13390
           */
          private List<String> countryIdList;
          /**
@@ -109,6 +110,10 @@ public class SoB2cDTO implements Serializable {
           * 标签集合
           */
          private List<String> labelList;
+         /**
+          * 异常信息集合（soB2cAbnormalType字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
+          */
+         private List<String> abnormalTypeList;
      }
     /**
     * 分页列表
@@ -333,6 +338,28 @@ public class SoB2cDTO implements Serializable {
         * 主键id
         */
         private String  id;
+
+        /**
+         * 销售单号
+         */
+        private String code;
+        /**
+         * 审核状态
+         */
+        private ApproveStatusEnum approveStatus;
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 订单状态
+         */
+        private String billStatus;
+        /**
+         * 订单状态名称
+         */
+        private String billStatusName;
 
         /**
          * 物流信息

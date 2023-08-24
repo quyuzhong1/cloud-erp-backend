@@ -189,6 +189,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     PagingVO<SoB2cDTO.MergeListDTO> mergePaging(PagingDTO<SoB2cDTO.MergePagingParamDTO> dto);
     /**
+     * @description: 合并列表数量
+     * @author Will
+     * @date: 2023/8/24 16:17
+     * @param pagingParamDTO
+     * @return Integer
+     */
+    Integer mergePagingCount(SoB2cDTO.MergePagingParamDTO pagingParamDTO);
+    /**
      * @description:合并保存
      * @author Will
      * @date: 2023/8/21 9:02

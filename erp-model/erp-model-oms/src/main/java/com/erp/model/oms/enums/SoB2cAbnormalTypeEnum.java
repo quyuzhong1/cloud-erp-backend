@@ -12,9 +12,9 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum SoB2cAbnormalTypeEnum {
 
-    ENUM_APPROVE_REJECT("approve_reject",  "订单规则审核不通过"),
-    ENUM_DISTRIBUTION_REJECT("distribution_reject",  "配货规则匹配失败"),
-    ENUM_MANUAL_REJECT("manual_reject",  "人工审核不通过"),
+    ENUM_APPROVE_REJECT("approveReject",  "订单规则审核不通过"),
+    ENUM_DISTRIBUTION_REJECT("distributionReject",  "配货规则匹配失败"),
+    ENUM_MANUAL_REJECT("manualReject",  "人工审核不通过"),
 
     ;
     /**
