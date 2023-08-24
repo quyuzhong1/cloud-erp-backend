@@ -5,6 +5,8 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
@@ -14,11 +16,9 @@ import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
+import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
-import com.erp.server.wms.service.StocktakingPlanService;
-import com.erp.server.wms.service.StocktakingTaskDetailService;
-import com.erp.server.wms.service.StocktakingTaskService;
-import com.erp.server.wms.service.TransferInService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -51,6 +51,8 @@ public class StocktakingTaskController extends BaseController {
     private RedisUtil redisUtil;
     @Resource
     private StocktakingTaskDetailService stocktakingTaskDetailService;
+    @Resource
+    private StocktakingProfitLossService stocktakingProfitLossService;
 
 
     /**
@@ -80,8 +82,6 @@ public class StocktakingTaskController extends BaseController {
         PagingVO<StocktakingTaskDTO.PagingViewDTO> pagingVO = stocktakingTaskService.paging(dto);
         return success(pagingVO);
     }
-
-
 
 
     /**
@@ -128,7 +128,7 @@ public class StocktakingTaskController extends BaseController {
      */
     @PostMapping("/checkQty")
     public ApiResult<List<StocktakingTaskDTO.CheckResultDTO>> checkQty(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<StocktakingTaskDTO.CheckResultDTO> resultList=stocktakingTaskService.checkQty(dto.getIds());
+        List<StocktakingTaskDTO.CheckResultDTO> resultList = stocktakingTaskService.checkQty(dto.getIds());
         return success(resultList);
     }
 
@@ -170,9 +170,29 @@ public class StocktakingTaskController extends BaseController {
             StocktakingTaskEntity entity = stocktakingTaskService.getById(id);
             BatchResultDTO submit;
             try {
-                submit=stocktakingTaskService.approve(id,new ApproveOneDTO(id, dto.getType(),dto.getComment()));
-            }catch (Exception e){
-                log.error("盘点任务 审核失败>>>>{}",e);
+                submit = stocktakingTaskService.approve(id, new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+                StocktakingTaskEntity laterEntity = stocktakingTaskService.getById(id);
+                ApproveStatusEnum approveStatus = laterEntity.getApproveStatus();
+                if(ApproveStatusEnum.APPROVE.equals(approveStatus)){
+                    // 删除缓存
+                    List<StocktakingTaskDetailDTO.ViewDTO> detailList = stocktakingTaskDetailService.listByMainId(id);
+                    detailList.forEach(detail -> {
+                        String key = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getCode(), "*",
+                                detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*");
+                        redisUtil.keys(key).forEach(item -> redisUtil.del(item));
+                    });
+                    // 批量审核 待审核的
+                    List<StocktakingProfitLossEntity> profitLossList = stocktakingProfitLossService.listBySourceId(id);
+                    for (StocktakingProfitLossEntity profitLoss : profitLossList) {
+                        ApproveOneDTO approveOne = new ApproveOneDTO();
+                        approveOne.setType(ApproveTypeEnum.PASS.getStatus());
+                        approveOne.setId(profitLoss.getId());
+                        stocktakingProfitLossService.approveEnd(approveOne, profitLoss);
+                    }
+                }
+
+            } catch (Exception e) {
+                log.error("盘点任务 审核失败>>>>{}", e);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, "盘点任务单不存在, 提交失败");
                     resultDTOS.add(submit);
@@ -204,9 +224,9 @@ public class StocktakingTaskController extends BaseController {
         for (String id : ids) {
             BatchResultDTO submit;
             try {
-                submit=stocktakingTaskService.cancelProcess(id);
-            }catch (Exception e){
-                log.error("盘点任务 撤销流程失败>>>>{}",e);
+                submit = stocktakingTaskService.cancelProcess(id);
+            } catch (Exception e) {
+                log.error("盘点任务 撤销流程失败>>>>{}", e);
                 StocktakingTaskEntity entity = stocktakingTaskService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, "盘点任务单不存在, 提交失败");
@@ -234,9 +254,9 @@ public class StocktakingTaskController extends BaseController {
         for (String id : ids) {
             BatchResultDTO submit;
             try {
-                submit=stocktakingTaskService.assignUser(id,dto.getUserIdList());
-            }catch (Exception e){
-                log.error("盘点任务 撤销流程失败>>>>{}",e);
+                submit = stocktakingTaskService.assignUser(id, dto.getUserIdList());
+            } catch (Exception e) {
+                log.error("盘点任务 撤销流程失败>>>>{}", e);
                 StocktakingTaskEntity entity = stocktakingTaskService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, "盘点任务单不存在, 提交失败");

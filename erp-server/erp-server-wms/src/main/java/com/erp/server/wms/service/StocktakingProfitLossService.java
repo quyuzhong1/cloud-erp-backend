@@ -131,4 +131,13 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @return java.util.List<java.lang.String>
      */
     List<StocktakingProfitLossEntity> batchSave(List<StocktakingProfitLossDTO.AddDTO> list);
+
+    /**
+     * 根据SourceId 获取盘盈盘亏列表
+     * @author yl
+     * @date 2023-08-23 20:27
+     * @param sourceId
+     * @return java.util.List<com.erp.model.wms.entity.StocktakingProfitLossEntity>
+     */
+    List<StocktakingProfitLossEntity> listBySourceId(String sourceId);
 }
