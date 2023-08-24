@@ -41,6 +41,9 @@ public enum ModuleTypeEnum {
     STOCKTAKING_TASK("30", "盘点任务单"),
     STOCKTAKING_PROFIT_LOSS("31", "盘盈盘亏单"),
     STOCKTAKING_PLAN("40", "盘点计划单"),
+    SO_B2C("41", "B2C销售订单"),
+    WAREHOUSE_LOCATION_MOVE_INFO("42", "仓位移动单"),
+
     ;
 
 
