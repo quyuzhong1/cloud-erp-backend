@@ -822,7 +822,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         // 2. 对需要盘点的 组织+仓库+仓位+skuId+库存状态 进行增加锁定库存操作
         inventoryList.stream().forEach(item -> {
             // 判断如果已存在盘点任务，抛出异常
-            String existKey = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, "*", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), "*");
+            String existKey = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, "*", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
             Collection<String> keys = redisUtil.keys(existKey);
             if (CollUtil.isNotEmpty(keys)) {
                 WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
