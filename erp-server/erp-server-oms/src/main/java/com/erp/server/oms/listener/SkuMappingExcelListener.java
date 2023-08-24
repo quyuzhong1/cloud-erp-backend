@@ -2,6 +2,7 @@ package com.erp.server.oms.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -59,7 +60,10 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
     private List<SkuMappingEntity> addSkuMappingList = new ArrayList<>(10);
 
     private List<SkuMappingEntity> updateSkuMappingList = new ArrayList<>(10);
-
+    /**
+     * listing 信息
+     */
+    private List<ListingInfoEntity> addListingInfoEntityList = new ArrayList<>(10);
 
     /**
      * 导入错误数据
@@ -113,14 +117,6 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         if (Objects.isNull(platform)) {
             errorMsgList.add("平台不存在");
         }
-        //平台sku no
-        String platformSkuNo = skuMappingImportExcelDTO.getPlatformSkuNo();
-        ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream().filter(l -> l.getPlatformSkuNo().
-                equals(platformSkuNo)).findFirst().orElse(null);
-        if (Objects.isNull(listingInfoEntity)) {
-            errorMsgList.add("平台sku不存在");
-        }
-
 
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
@@ -128,14 +124,24 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             errorList.add(skuMappingImportExcelDTO);
             return;
         }
+        //平台sku no
+        String platformSkuNo = skuMappingImportExcelDTO.getPlatformSkuNo();
 
-        String listingId = listingInfoEntity.getId();
+        String platformProductName = skuMappingImportExcelDTO.getPlatformProductName();
+        ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream().filter(l -> l.getPlatformSkuNo().
+                equals(platformSkuNo)).findFirst().orElse(null);
+
+        String listingId = "";
+        if (Objects.nonNull(listingInfoEntity)) {
+            listingId = listingInfoEntity.getId();
+        }
 
         //平台标识
         String dictPlatform = platform.getValue();
         TypeEnum platformType = TypeEnum.PLATFORM;
         //已对应的平台sku
-        List<SkuMappingEntity> excelList = skuMappingList.stream().filter(s -> s.getListingId().equals(listingId)
+        String finalListingId = listingId;
+        List<SkuMappingEntity> excelList = skuMappingList.stream().filter(s -> s.getListingId().equals(finalListingId)
                 && dictPlatform.equals(s.getDictPlatform())
                 && platformType.equals(s.getType())
         ).collect(Collectors.toList());
@@ -143,7 +149,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         if (CollectionUtils.isNotEmpty(excelList)) {
             errorMsgList.add("相同平台sku只能对应一个平台sku");
         }
-        long count = addSkuMappingList.stream().filter(a -> a.getListingId().equals(listingId) &&
+        long count = addSkuMappingList.stream().filter(a -> a.getListingId().equals(finalListingId) &&
                 dictPlatform.equals(a.getDictPlatform())).count();
         if (count > 0) {
             errorMsgList.add("相同平台sku只能对应一个平台sku");
@@ -155,6 +161,16 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             return;
         }
 
+        if (Objects.isNull(listingInfoEntity)) {
+            listingId = IdWorker.getIdStr();
+            ListingInfoEntity addListingInfoEntity = new ListingInfoEntity();
+            addListingInfoEntity.setId(listingId);
+            addListingInfoEntity.setType(TypeEnum.PLATFORM.getCode());
+            addListingInfoEntity.setPlatformSkuNo(platformSkuNo);
+            addListingInfoEntity.setPlatformProductName(platformProductName);
+            addListingInfoEntity.setMatchResult(Boolean.TRUE);
+            addListingInfoEntityList.add(addListingInfoEntity);
+        }
         LocalDateTime now = LocalDateTime.now();
         SkuMappingEntity add = new SkuMappingEntity();
         add.setDictPlatform(dictPlatform);

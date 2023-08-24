@@ -6,35 +6,26 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.oms.dto.ShopDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.oms.enums.PlatformDictEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.ShopInfoMapper;
-import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.DictBasicService;
-import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.ShopInfoService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,6 +51,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private DictBasicService dictBasicService;
+
 
     /**
      * 添加店铺
@@ -83,6 +77,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             Boolean result = handleAmazonShop(dto);
             return result;
         }
+
         checkName("", dto.getName());
         if (shopify.getCode().equals(dictPlatform)) {
             if (StringUtils.isBlank(dto.getDomain())) {
@@ -135,7 +130,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         String salesOrgId = dto.getSalesOrgId();
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
         String orgName = CollectionUtils.isNotEmpty(orgList) ? orgList.get(0).getName() : "";
-        checkName("", name);
         //负责人
         String chargeId = dto.getChargeId();
         String chargeName = "";
@@ -148,11 +142,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         for (String countryId : countryIdList) {
             String countryName = countryList.stream().filter(c -> c.getId().equals(countryId)).findFirst().
                     map(DictCountryEntity::getNameCn).orElse("");
+            String shopName = name.concat(countryName);
+            checkName("", shopName);
             if (StringUtils.isNotBlank(countryName)) {
                 ShopInfoEntity shop = new ShopInfoEntity();
                 BeanMapper.copy(dto, shop);
                 shop.setDictCountryId(countryId);
-                shop.setName(name + countryName);
+                shop.setName(shopName);
                 shop.setSalesOrgName(orgName);
                 shop.setChargeName(chargeName);
                 addList.add(shop);
@@ -333,10 +329,15 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             throw new ServiceException("店铺不存在");
         }
         ShopDTO.ViewDTO view = new ShopDTO.ViewDTO();
+
         BeanMapper.copy(shop, view);
         String areaId = StringUtils.isNotBlank(view.getDictAreaId()) ? view.getDictAreaId() : "";
         String countryId = StringUtils.isNotBlank(view.getDictCountryId()) ? view.getDictCountryId() : "";
-
+        //平台
+        String dictPlatform = view.getDictPlatform();
+        String dictType = DictBasicEnum.PLATFORM.getType();
+        DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(dictType, dictPlatform);
+        String platformName = Objects.nonNull(dictBasic) ? dictBasic.getName() : "";
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Arrays.asList(countryId));
         List<DictGlobalAreaEntity> areaList = sysDictFeign.listGlobalAreaByIds(Arrays.asList(areaId));
 
@@ -346,6 +347,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         String countryName = countryList.stream().filter(a -> a.getId().equals(countryId)).
                 map(DictCountryEntity::getNameCn).findFirst().orElse("");
         view.setCountryName(countryName);
+        view.setPlatformName(platformName);
         return view;
     }
 

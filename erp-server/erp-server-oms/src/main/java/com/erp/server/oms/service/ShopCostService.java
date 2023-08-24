@@ -17,12 +17,29 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 public interface ShopCostService extends SuperService<ShopCostEntity> {
 
     /**
-     * 店铺设置费率
+     * 单个费率设置
      * @author yl
      * @date 2023-08-23 15:31
-     * @param shop
+     * @param dto
      * @param dto
      * @return com.common.business.dto.base.BatchResultDTO
      */
-    BatchResultDTO setCost(ShopInfoEntity shop, ShopDTO.SetCostDTO dto);
+    Boolean setCost(ShopDTO.SetCostDTO dto);
+
+    /**
+     * 批量设置 费率
+     * @param shop
+     * @param dto
+     * @return
+     */
+    BatchResultDTO batchSetCost(ShopInfoEntity shop, ShopDTO.BatchSetCostDTO dto);
+
+    /**
+     * 店铺的费率详情
+     * @author yl
+     * @date 2023-08-24 18:08
+     * @param shopId
+     * @return com.erp.model.oms.dto.ShopDTO.ViewCostDTO
+     */
+    ShopDTO.ViewCostDTO viewCost(String shopId);
 }

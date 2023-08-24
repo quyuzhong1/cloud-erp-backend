@@ -49,7 +49,7 @@ public class SkuMappingImportExcelDTO {
     @ColumnWidth(30)
     @ExcelProperty(value = "平台产品名称", index = 3)
     @FieldValid(fieldName = "平台产品名称")
-    private String platformSkuName;
+    private String platformProductName;
 
     /**
      * 产品sku

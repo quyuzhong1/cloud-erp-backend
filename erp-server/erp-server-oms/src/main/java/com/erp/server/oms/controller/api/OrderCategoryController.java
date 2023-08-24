@@ -1,24 +1,21 @@
 package com.erp.server.oms.controller.api;
 
 
-import com.common.core.controller.vo.ApiResult;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
 
 /**
-
- *店铺管理
+ * <p>
+ * 订单分类表 前端控制器
+ * </p>
+ *
  * @author Lambda
- * @since 2023-08-22
+ * @since 2023-08-24
  */
 @RestController
-@RequestMapping("/shopCost")
-public class ShopCostController extends BaseController {
-
-
-
-
+@RequestMapping("/order-category-entity")
+public class OrderCategoryController extends BaseController {
 
 }

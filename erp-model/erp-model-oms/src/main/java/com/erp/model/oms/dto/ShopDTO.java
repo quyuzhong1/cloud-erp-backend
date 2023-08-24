@@ -328,7 +328,7 @@ public class ShopDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class SetCostDTO  {
+    public static class BatchSetCostDTO  {
 
         @NotNull(message = "店铺不能为空")
         private List<String> ids;
@@ -363,6 +363,110 @@ public class ShopDTO implements Serializable {
          * 平台的选项
          */
         @NotBlank(message = "转帐的选项不能为空")
+        private String dictTransferOption;
+
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SetCostDTO  {
+
+        @NotNull(message = "id不能为空")
+        private String id;
+
+        @NotNull(message = "店铺不能为空")
+        private String shopId;
+
+        @DecimalMin( value = "0",message = "平台费率必须大于0")
+        @NotNull(message = "平台费率不能为空")
+        private BigDecimal platformRate;
+
+        /**
+         * 平台的选项
+         */
+        @NotBlank(message = "平台选项不能为空")
+        private String dictPlatformOption;
+
+        @DecimalMin( value = "0",message = "vat费率必须大于0")
+        @NotNull(message = "vat费率不能为空")
+        private BigDecimal vatRate;
+
+        /**
+         * 平台的选项
+         */
+        @NotBlank(message = "vat选项不能为空")
+        private String dictVatOption;
+
+
+        @DecimalMin( value = "0",message = "转账费率必须大于0")
+        @NotNull(message = "转账费率不能为空")
+        private BigDecimal transferRate;
+
+        /**
+         * 平台的选项
+         */
+        @NotBlank(message = "转帐的选项不能为空")
+        private String dictTransferOption;
+
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewCostDTO  {
+
+        /**
+         * 费用id
+         */
+        private String id;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+
+        /**
+         * 平台费率
+         */
+        private BigDecimal platformRate;
+
+        /**
+         * 平台的选项
+         */
+
+        private String dictPlatformOption;
+
+        /**
+         * vat 费率
+         */
+        private BigDecimal vatRate;
+
+        /**
+         * vat的选项
+         */
+        private String dictVatOption;
+
+
+        /**
+         * 转账费率
+         */
+        private BigDecimal transferRate;
+
+        /**
+         * 转帐选项
+         */
         private String dictTransferOption;
 
 

@@ -132,12 +132,12 @@ public class ShopInfoController extends BaseController {
     }
 
     /**
-     * 店铺费用设置
+     * 店铺批量费用设置
      *
      * @return
      */
-    @PostMapping("/setCost")
-    public ApiResult setCost(@RequestBody @Validated ShopDTO.SetCostDTO dto) {
+    @PostMapping("/batchSetCost")
+    public ApiResult batchSetCost(@RequestBody @Validated ShopDTO.BatchSetCostDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         for (String id : ids) {
@@ -148,7 +148,7 @@ public class ShopInfoController extends BaseController {
                 if (Objects.isNull(shop)) {
                     submit = BatchResultDTO.fail(id, "店铺不存在");
                 } else {
-                    submit = shopCostService.setCost(shop, dto);
+                    submit = shopCostService.batchSetCost(shop, dto);
                     flagCode = shop.getName();
                 }
             } catch (Exception e) {
@@ -158,6 +158,29 @@ public class ShopInfoController extends BaseController {
             resultDTOS.add(submit);
         }
         return success(resultDTOS);
+    }
+
+
+    /**
+     * 单个店铺费用设置
+     *
+     * @return
+     */
+    @PostMapping("/setCost")
+    public ApiResult setCost(@RequestBody @Validated ShopDTO.SetCostDTO dto) {
+        Boolean result = shopCostService.setCost(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 单个店铺费用详情
+     *
+     * @return
+     */
+    @PostMapping("/viewCost")
+    public ApiResult<ShopDTO.ViewCostDTO> viewCost(@RequestBody @Validated BaseIdDTO dto) {
+        ShopDTO.ViewCostDTO result = shopCostService.viewCost(dto.getId());
+        return success(result);
     }
 
 
