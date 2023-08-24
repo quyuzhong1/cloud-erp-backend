@@ -46,6 +46,15 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
     IPage<SoB2cDTO.MergeListDTO> mergePaging(Page query, @Param("params")SoB2cDTO.MergePagingParamDTO params);
 
     /**
+     * @description: 合并分页查询数量
+     * @author Will
+     * @date: 2023/8/22 16:10
+     * @param params
+     * @return IPage<MergeListDTO>
+     */
+    Integer mergePagingCount(@Param("params")SoB2cDTO.MergePagingParamDTO params);
+
+    /**
      * @description: 合并数据查询
      * @author Will
      * @date: 2023/8/22 18:36

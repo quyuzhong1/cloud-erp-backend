@@ -529,6 +529,23 @@ public class SoB2cController extends BaseController {
     }
 
     /**
+     * 合并列表数量
+     * @author Will
+     * @date: 2023/8/24 16:18
+     * @param dto
+     * @return ApiResult<Integer>
+     */
+    @PostMapping("/mergePagingCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:mergePaging",
+            tableAlias = ""
+    )
+    public ApiResult<Integer> mergePagingCount(@RequestBody @Validated SoB2cDTO.MergePagingParamDTO dto) {
+        return success(soB2cService.mergePagingCount(dto));
+    }
+
+    /**
      * 合并保存
      * @author Will
      * @date: 2023/8/18 18:35

@@ -106,10 +106,11 @@
         sb2cd.currency as sourceCurrency,
         sb2cd.qty as qty,
         sb2cd.warehouse_id as warehouseId,
-        sb2cd.warehouse_name as warehouseName
+        sb2cd.warehouse_name as warehouseName,
         sb2cd.warehouse_location as warehouseLocation
     </sql>
 
+    <!-- 列表分页查询 -->
     <select id="paging" resultMap="BaseResultMap">
         select
             <include refid="Base_Column_List"></include>
@@ -170,10 +171,17 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.abnormalTypeList != null and params.abnormalTypeList.size > 0">
+                and sb2c.abnormal_type in
+                <foreach collection="params.abnormalTypeList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
         </where>
 
     </select>
 
+    <!-- 列表数量查询 -->
     <select id="listCount" resultType="java.lang.Integer">
         select
         count(distinct sb2c.id)
@@ -207,7 +215,7 @@
         </where>
     </select>
 
-
+    <!-- 合并列表查询 -->
     <select id="mergePaging" resultType="com.erp.model.oms.dto.SoB2cDTO$MergeListDTO">
         select
            sb2c.dict_platform as dictPlatform,
@@ -265,7 +273,56 @@
         group by sb2c.dict_platform,sb2c.shop_id,sb2cr.name,sb2c.currency,sb2cr.receiver_name,sb2cr.first_address,sb2cr.second_address,sb2cr.full_address,sb2cd.warehouse_id,sb2cl.dict_logistics_method
     </select>
 
+    <!-- 合并列表数量查询 -->
+    <select id="mergePagingCount" resultType="java.lang.Integer">
+        select
+            count(0)
+        from so_b2c sb2c
+        inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
+        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        <where>
+            sb2c.is_deleted = false and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
+            and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
+            and not exists (select * from so_b2c_ref sbr where sbr.is_deleted = false and (sbr.source_id = sb2c.id or sbr.target_id = sb2c.id))
+            <if test="params.code != null and params.code != '' ">
+                and sb2c.code ilike concat('%',#{params.code},'%')
+            </if>
+            <if test="params.buyerName != null and params.buyerName != '' ">
+                and sb2cr.name ilike concat('%',#{params.buyerName},'%')
+            </if>
+            <if test="params.receiverName != null and params.receiverName != '' ">
+                and sb2cr.receiver_name ilike concat('%',#{params.receiverName},'%')
+            </if>
+            <if test="params.address != null and params.address != '' ">
+                and (sb2cr.first_address ilike concat('%',#{params.address},'%') or sb2cr.second_address ilike concat('%',#{params.address},'%') or sb2cr.full_address ilike concat('%',#{params.address},'%'))
+            </if>
+            <if test="params.platformList != null and params.platformList.size > 0">
+                and sb2c.dict_platform in
+                <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.shopIdList != null and params.shopIdList.size > 0">
+                and sb2c.shop_id in
+                <foreach collection="params.shopIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.countryIdList != null and params.countryIdList.size > 0">
+                and sb2c.country_id in
+                <foreach collection="params.countryIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by sb2c.dict_platform,sb2c.shop_id,sb2cr.name,sb2c.currency,sb2cr.receiver_name,sb2cr.first_address,sb2cr.second_address,sb2cr.full_address,sb2cd.warehouse_id,sb2cl.dict_logistics_method
+    </select>
 
+    <!-- 合并列表合并数据查询 -->
     <select id="listMerge" resultMap="MergeResultMap">
         select
            sb2c.id,
@@ -360,5 +417,6 @@
             </if>
         </where>
     </select>
+
 
 </mapper>

@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
  * @description: 付款状态
  * @date 2023/8/21 11:59
  */
-public enum PayStatusEnum {
+public enum SoB2cPayStatusEnum {
 
     ENUM_PAYMENT("payment",  "待付款"),
     ENUM_PAID("paid",  "已付款"),
@@ -28,7 +28,7 @@ public enum PayStatusEnum {
     private String name;
 
 
-    PayStatusEnum(String code, String name) {
+    SoB2cPayStatusEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -45,9 +45,9 @@ public enum PayStatusEnum {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (PayStatusEnum payStatusEnum : PayStatusEnum.values()) {
-            if (code.equals(payStatusEnum.getCode())) {
-                return payStatusEnum.getName();
+        for (SoB2cPayStatusEnum soB2cPayStatusEnum : SoB2cPayStatusEnum.values()) {
+            if (code.equals(soB2cPayStatusEnum.getCode())) {
+                return soB2cPayStatusEnum.getName();
             }
         }
         return "";

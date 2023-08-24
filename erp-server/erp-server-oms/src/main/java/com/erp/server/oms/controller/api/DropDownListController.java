@@ -2,7 +2,6 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -37,6 +36,9 @@ public class DropDownListController extends BaseController {
      *  collectionTerms 收款条件
      *  invoiceType 发票类型
      *  platform 平台类型
+     *  soB2cBillStatus  b2c销售订单状态
+     *  soB2cPayStatus  b2c销售订单付款状态
+     *  soB2cAbnormalType  b2c销售订单异常信息
      * @return
      */
     @GetMapping("/dict/list")
