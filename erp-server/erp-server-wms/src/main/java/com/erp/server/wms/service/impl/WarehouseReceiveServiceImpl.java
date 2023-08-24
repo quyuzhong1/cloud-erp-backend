@@ -1357,6 +1357,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                         } else {
                             WarehouseReceiveDetailDTO.UpdateDTO updateSkuDTO = new WarehouseReceiveDetailDTO.UpdateDTO();
                             updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
+                            updateSkuDTO.setMainId(updateDTO.getMainId());
+                            updateSkuDTO.setExceedQty(MathUtil.ZERO);
+                            updateSkuDTO.setRemark(updateDTO.getRemark());
+                            updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
                             if (receiveQty > entity.getPurchaseQty()) {
                                 receiveQty = receiveQty - entity.getPurchaseQty();
                                 updateSkuDTO.setReceiveQty(entity.getPurchaseQty());
@@ -1366,12 +1370,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                                 addDTOList.add(updateDTO);
                                 break;
                             }
-
-                            updateSkuDTO.setMainId(updateDTO.getMainId());
-                            updateSkuDTO.setExceedQty(MathUtil.ZERO);
-                            updateSkuDTO.setRemark(updateDTO.getRemark());
-                            updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
-                            dto.getWarehouseReceiveDetailList().add(updateSkuDTO);
                         }
                     }
                 }
