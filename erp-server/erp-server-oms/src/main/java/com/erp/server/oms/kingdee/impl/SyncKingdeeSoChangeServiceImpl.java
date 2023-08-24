@@ -192,7 +192,9 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         List<JSONObject> list = new ArrayList<>(detailList.size());
         //表示删除
         String deleteCode = SoChangeTypeEnum.DELETE.getCode();
-        for (SoChangeDetailDTO.ViewDTO item : detailList) {
+        List<SoChangeDetailDTO.ViewDTO> laterDetailList = soChangeDetailService.listDetailByMainId(id);
+
+        for (SoChangeDetailDTO.ViewDTO item : laterDetailList) {
             JSONObject jsonObject = new JSONObject();
             String changeType = item.getChangeType().getCode();
             //是否是删除
@@ -263,6 +265,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
      * @date 2023-06-07 14:08
      */
     private SoChangeEntity fillDb(SoChangeEntity entity, String soKingdeeId, String soCode) {
+        //销售变更单详情
         List<SoChangeDetailEntity> details = soChangeDetailService.listDetailDbByMainId(entity.getId());
         //订单详情的ids
         List<String> soDetailIdList = details.stream().map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
