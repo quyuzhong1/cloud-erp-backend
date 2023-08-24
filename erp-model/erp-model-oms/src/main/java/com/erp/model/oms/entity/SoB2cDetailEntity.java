@@ -2,7 +2,6 @@ package com.erp.model.oms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -10,7 +9,6 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.LinkedHashMap;
 
 
 /**
@@ -115,8 +113,7 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     /**
     * 标签json
     */
-    @TableField(value = "label_json", typeHandler= JacksonTypeHandler.class)
-    private LinkedHashMap<String, Object> labelJson;
+    private String labelJson;
     /**
     * 对应金蝶详情id
     */
