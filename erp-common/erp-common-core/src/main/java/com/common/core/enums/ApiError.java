@@ -601,7 +601,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_WH_REQUIRED(98105,"采购订单【{}】交货仓库不能为空"),
     ERROR_PURCHASE_ORG_REQUIRED(98105,"采购订单【{}】收料组织不能为空"),
     ERROR_PURCHASE_DETAIL_DATE(98105,"采购订单【{}】SKU【{}】预计交货日期不能为空"),
-    ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST(98106,"sku在采购单中未找到"),
+    ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST(98106,"sku【{}】在采购单中未找到"),
 
 
 

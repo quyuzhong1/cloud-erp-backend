@@ -100,7 +100,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        wr.create_time desc
+        wr.create_time desc, wrd.id ASC
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">
