@@ -252,6 +252,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     public List<WarehouseReceiveDetailEntity> getDetailByMainId(String mainId) {
         LambdaQueryWrapper<WarehouseReceiveDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(WarehouseReceiveDetailEntity::getMainId, mainId);
+        queryWrapper.orderByAsc(WarehouseReceiveDetailEntity::getId);
         return this.list(queryWrapper);
     }
 
