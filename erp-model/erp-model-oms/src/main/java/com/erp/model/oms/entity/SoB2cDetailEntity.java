@@ -58,8 +58,8 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     /**
     * 库存sku编号
     */
-    @TableField("stock_sku_no")
-     private String stockSkuNo;
+    @TableField("warehouse_sku_no")
+     private String warehouseSkuNo;
     /**
     * 数量
     */

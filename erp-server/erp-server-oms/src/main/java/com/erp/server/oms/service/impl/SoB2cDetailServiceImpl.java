@@ -8,6 +8,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -18,6 +19,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoB2cDetailMapper;
 import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SkuMappingService;
 import com.erp.server.oms.service.SoB2cDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -29,7 +31,6 @@ import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -55,6 +56,10 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private SkuMappingService skuMappingService;
+
 
     @Override
     public Boolean add(List<SoB2cDetailDTO.AddDTO> detailList, String mainId) {
@@ -177,15 +182,23 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
 
 
-        //SKU对照表信息 TODO
+        //SKU对照表信息
+        List<String> skuIdList = list.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+        List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuIdList(skuIdList);
 
         for (SoB2cDetailEntity detailEntity :list) {
 
             //产品信息
-            String skuNo = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst()
-                    .flatMap(obj -> Optional.ofNullable(obj.getSkuNo()))
-                    .orElse("");
-            detailEntity.setSkuNo(skuNo);
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst()
+                    .orElse(null);
+            if (ObjectUtils.isEmpty(skuVO)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            detailEntity.setSkuNo(skuVO.getSkuNo());
+            //建议售价
+            detailEntity.setAdvicePrice(skuVO.getRetailPrice());
+            //含税单价
+            detailEntity.setTaxCost(ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost());
 
             //仓库名称
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream()
@@ -206,9 +219,16 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             detailEntity.setWarehouseOrgId(updateDTO.getOrgId());
             detailEntity.setWarehouseOrgName(companyDTO.getName());
             detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
+
+            //库存SKU
+            if (CollectionUtils.isNotEmpty(SkuMappingList)) {
+                SkuMappingDTO.ListSkuDTO listSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(listSkuDTO)) {
+                    detailEntity.setWarehouseSkuNo(listSkuDTO.getWarehouseSkuNo());
+                    detailEntity.setPlatformSkuNo(listSkuDTO.getPlatformSkuNo());
+                }
+            }
         }
-
-
 
         //添加操作日志
         List<SoB2cDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());

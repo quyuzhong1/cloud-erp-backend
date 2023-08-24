@@ -2,17 +2,12 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.dto.ListingInfoDTO;
-import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -174,4 +169,16 @@ public class SkuMappingController extends BaseController {
     }
 
 
+    /**
+     * 根据sku集合查询库存sku
+     * @author Will
+     * @date: 2023/8/24 19:13
+     * @param dto
+     * @return ApiResult<List<ListSkuDTO>>
+     */
+    @PostMapping("/listBySkuIdList")
+    public ApiResult<List<SkuMappingDTO.ListSkuDTO>> listBySkuIdList(@RequestBody @Validated SkuMappingDTO.ListSkuParamDTO dto) {
+        List<SkuMappingDTO.ListSkuDTO> list = skuMappingService.listBySkuIdList(dto.getSkuIdList());
+        return success(list);
+    }
 }

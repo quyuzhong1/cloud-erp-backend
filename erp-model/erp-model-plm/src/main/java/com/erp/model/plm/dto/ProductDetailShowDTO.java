@@ -76,6 +76,15 @@ public class ProductDetailShowDTO implements Serializable {
      *侵权风险名
      */
     private String pirateRiskName;
+    /**
+     * 目标含税成本
+     */
+    private BigDecimal targetTaxCost;
+
+    /**
+     * 实际含税成本
+     */
+    private BigDecimal actualTaxCost;
 
     /**
      * 标准零售价

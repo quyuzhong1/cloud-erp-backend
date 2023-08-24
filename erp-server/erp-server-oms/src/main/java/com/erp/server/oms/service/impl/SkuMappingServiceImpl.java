@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.base.PagingDTO;
@@ -22,7 +23,6 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
-import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.oms.enums.TypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -40,7 +40,6 @@ import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -53,7 +52,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -532,6 +530,34 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         return "";
 
+    }
+
+    @Override
+    public List<SkuMappingDTO.ListSkuDTO> listBySkuIdList(List<String> skuIdList) {
+        List<SkuMappingEntity> list = lambdaQuery().in(SkuMappingEntity::getProductSkuId, skuIdList).eq(SkuMappingEntity::getIsExpire,Boolean.FALSE).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<String> listingIds = list.stream().map(SkuMappingEntity::getListingId).collect(Collectors.toList());
+        List<ListingInfoEntity> listingList = listingInfoService.listByIds(listingIds);
+        if (CollectionUtils.isEmpty(listingList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SkuMappingDTO.ListSkuDTO> resultList = new ArrayList<>();
+        for (SkuMappingEntity skuMappingEntity : list) {
+            SkuMappingDTO.ListSkuDTO listSkuDTO = new SkuMappingDTO.ListSkuDTO();
+            ListingInfoEntity listingInfoEntity = listingList.stream().filter(obj -> obj.getId().equals(skuMappingEntity.getListingId()) && TypeEnum.WAREHOUSE.getCode().equals(obj.getType())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(listingInfoEntity)) {
+                listSkuDTO.setProductSkuId(skuMappingEntity.getProductSkuId());
+                listSkuDTO.setProductSkuNo(skuMappingEntity.getProductSkuNo());
+                listSkuDTO.setWarehouseSkuNo(listingInfoEntity.getSkuNo());
+                listSkuDTO.setWarehouseProductName(listingInfoEntity.getProductName());
+                listSkuDTO.setPlatformSkuNo(listingInfoEntity.getPlatformSkuNo());
+                listSkuDTO.setPlatformProductName(listingInfoEntity.getPlatformProductName());
+                resultList.add(listSkuDTO);
+            }
+        }
+        return resultList;
     }
 
     /**

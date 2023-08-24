@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -578,7 +579,47 @@ public class SkuMappingDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ListSkuParamDTO {
+        /**
+         * 录入skuId
+         */
+        @NotEmpty(message = "录入sku不能为空")
+        private List<String> skuIdList;
+    }
 
+    @Data
+    @NoArgsConstructor
+    public static class ListSkuDTO {
+       /**
+        * 产品skuId
+        */
+       private String productSkuId;
 
+        /**
+         * 产品skuNo
+         */
+        private String productSkuNo;
 
+        /**
+         * 库存sku
+         */
+        private String warehouseSkuNo;
+
+        /**
+         * 库存产品名称
+         */
+        private String warehouseProductName;
+
+        /**
+         * 平台sku no
+         */
+        private String platformSkuNo;
+
+        /**
+         * 平台产品名称
+         */
+        private String platformProductName;
+    }
 }

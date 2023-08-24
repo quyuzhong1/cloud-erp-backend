@@ -158,9 +158,9 @@ public class SoB2cDetailDTO implements Serializable {
         private String skuNo;
 
         /**
-        * 库存sku编号
+        * 库存sku编号 http://172.16.100.11:3002/project/110/interface/api/19609
         */
-        private String stockSkuNo;
+        private String warehouseSkuNo;
 
         /**
         * 仓库名称

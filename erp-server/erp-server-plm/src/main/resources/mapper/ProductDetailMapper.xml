@@ -78,7 +78,9 @@
         pl.declare_chinese_name,
         pd.variant_property,
         pd.unit_name,
-        pd.version
+        pd.version,
+        pc.actual_tax_cost,
+        pc.target_tax_cost
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
@@ -711,13 +713,17 @@
         pp.main_supplier as supplierId,
         pd.warehouse_location as warehouseLocation,
         pi.sale_method,
-        ppk.gross_weight
+        ppk.gross_weight,
+        pc.actual_tax_cost,
+        pc.target_tax_cost,
+        pc.retail_price
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
         left join product_sale ps on pd.id = ps.sku_id and ps.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
         left join product_pack ppk on pd.id = ppk.sku_id AND ppk.is_deleted = FALSE
+        LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
         WHERE pi.is_deleted = FALSE AND pd.is_deleted = FALSE
         <if test="skuIds != null and skuIds.size>0">
             AND pd.id IN
