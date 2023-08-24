@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -456,7 +457,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         //货物物流单号，TODO
-
+        String logisticsCode = IdWorker.getIdStr();
+        soB2cLogisticsEntity.setCode(logisticsCode);
         //物流信息更新
         soB2cLogisticsService.updateById(soB2cLogisticsEntity);
         //明细仓库更新
@@ -486,7 +488,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_CODE);
         }
 
-        //货物物流单号，TODO
+        //货取物流单号，TODO
+        String logisticsCode = IdWorker.getIdStr();
+        soB2cLogisticsService.updateLogisticsCode(id,logisticsCode);
+
 
         if (Boolean.TRUE.equals(isDelivery)) {
             //提交发货

@@ -59,4 +59,13 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @return Boolean
      */
     Boolean deleteByMainIds(List<String> mainIds);
+    /**
+     * @description: 更新物流单号
+     * @author Will
+     * @date: 2023/8/24 15:51
+     * @param mainId
+     * @param logisticsCode
+     * @return Boolean
+     */
+    Boolean updateLogisticsCode(String mainId, String logisticsCode);
 }
