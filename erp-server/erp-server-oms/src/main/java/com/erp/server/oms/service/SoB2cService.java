@@ -5,7 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.B2cSoCategoryTypeEnum;
+import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
+import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 
 import java.util.List;
 
@@ -71,7 +72,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param id
      * @return
      */
-    BatchResultDTO submit(String id);
+    BatchResultDTO submit(String id,Boolean isProcess);
 
     /**
     * 审核
@@ -90,16 +91,17 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     * @param remark
     * @return
     */
-    BatchResultDTO invalid(String id, String remark);
+    BatchResultDTO invalid(String id, String remark, SoB2cInvalidTypeEnum soB2cInvalidTypeEnum);
 
     /**
      * @description: 反作废
      * @author Will
      * @date: 2023/8/18 15:33
      * @param id
+     * @param soB2cInvalidTypeEnum
      * @return BatchResultDTO
      */
-    BatchResultDTO unInvalid(String id);
+    BatchResultDTO unInvalid(String id, SoB2cInvalidTypeEnum soB2cInvalidTypeEnum);
 
     /**
     * 审核通过回调方法
@@ -126,7 +128,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param categoryIdList
      * @return BatchResultDTO
      */
-    BatchResultDTO updateCategory(String id, B2cSoCategoryTypeEnum typeEnum, List<String> categoryIdList);
+    BatchResultDTO updateCategory(String id, SoB2cCategoryTypeEnum typeEnum, List<String> categoryIdList);
     /**
      * @description: 订单配货数据显示
      * @author Will
@@ -206,9 +208,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @author Will
      * @date: 2023/8/21 9:18
      * @param id
-     * @return List<ViewSplitDTO>
+     * @return ViewSplitDTO
      */
-    List<SoB2cDTO.ViewSplitDTO> viewSplit(String id);
+    SoB2cDTO.ViewSplitDTO viewSplit(String id);
     /**
      * @description: 拆分保存
      * @author Will
@@ -217,6 +219,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return Boolean
      */
     Boolean splitSave(SoB2cDTO.SplitSaveDTO dto);
+    /**
+     * @description: 取消合并前数据展示
+     * @author Will
+     * @date: 2023/8/24 11:48
+     * @param ids
+     * @return List<CheckCancelSplitDTO>
+     */
+    List<SoB2cDTO.CheckCancelSplitDTO> checkCancelSplit(List<String> ids);
     /**
      * @description: 取消合并
      * @author Will

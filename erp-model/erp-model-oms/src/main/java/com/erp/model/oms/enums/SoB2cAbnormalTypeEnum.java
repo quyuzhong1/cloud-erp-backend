@@ -7,14 +7,14 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * @author Will
  * @version 1.0
- * @description: B2C销售订单分类类型枚举
+ * @description: B2C销售订单异常类型枚举
  * @date 2023/8/22 12:27
  */
-public enum B2cSoCategoryTypeEnum {
+public enum SoB2cAbnormalTypeEnum {
 
-    ENUM_ADD("add",  "新增"),
-    ENUM_UPDATE("update",  "修改"),
-    ENUM_DELETE("delete",  "删除"),
+    ENUM_APPROVE_REJECT("approve_reject",  "订单规则审核不通过"),
+    ENUM_DISTRIBUTION_REJECT("distribution_reject",  "配货规则匹配失败"),
+    ENUM_MANUAL_REJECT("manual_reject",  "人工审核不通过"),
 
     ;
     /**
@@ -29,7 +29,7 @@ public enum B2cSoCategoryTypeEnum {
     private String name;
 
 
-    B2cSoCategoryTypeEnum(String code, String name) {
+    SoB2cAbnormalTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -46,9 +46,9 @@ public enum B2cSoCategoryTypeEnum {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (B2cSoCategoryTypeEnum b2cSoCategoryTypeEnum : B2cSoCategoryTypeEnum.values()) {
-            if (code.equals(b2cSoCategoryTypeEnum.getCode())) {
-                return b2cSoCategoryTypeEnum.getName();
+        for (SoB2cAbnormalTypeEnum soB2cAbnormalTypeEnum : SoB2cAbnormalTypeEnum.values()) {
+            if (code.equals(soB2cAbnormalTypeEnum.getCode())) {
+                return soB2cAbnormalTypeEnum.getName();
             }
         }
         return "";

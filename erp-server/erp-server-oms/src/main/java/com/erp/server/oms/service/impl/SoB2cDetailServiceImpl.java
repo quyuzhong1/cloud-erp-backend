@@ -7,6 +7,7 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -127,6 +128,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 ;
     }
 
+    @Override
+    public Boolean deleteByMainIds(List<String> mainIds) {
+        return lambdaUpdate().in(SoB2cDetailEntity::getMainId,mainIds).remove();
+    }
+
 
     /**
      * 查询需要删除的数据
@@ -199,6 +205,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             }
             detailEntity.setWarehouseOrgId(updateDTO.getOrgId());
             detailEntity.setWarehouseOrgName(companyDTO.getName());
+            detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
         }
 
 

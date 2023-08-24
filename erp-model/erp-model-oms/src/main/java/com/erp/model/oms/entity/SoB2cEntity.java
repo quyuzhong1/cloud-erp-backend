@@ -1,15 +1,17 @@
 package com.erp.model.oms.entity;
 
-import java.math.BigDecimal;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -31,6 +33,13 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     */
     @TableField("code")
         private String code;
+
+    /**
+     * 订单日期
+     */
+    @TableField("bill_date")
+    private LocalDate billDate;
+
     /**
     * 审核状态
     */
@@ -56,6 +65,11 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     */
     @TableField("invalid_status")
         private Boolean invalidStatus;
+    /**
+     * 作废类型（manual手动作废，automatic自动作废）
+     */
+    @TableField("invalid_type")
+    private String invalidType;
     /**
     * 作废原因
     */

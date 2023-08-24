@@ -51,4 +51,12 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @return List<SoB2cLogisticsEntity>
      */
     List<SoB2cLogisticsEntity> listByMainIds(List<String> ids);
+    /**
+     * @description: 根据主表删除
+     * @author Will
+     * @date: 2023/8/23 12:26
+     * @param mainIds
+     * @return Boolean
+     */
+    Boolean deleteByMainIds(List<String> mainIds);
 }

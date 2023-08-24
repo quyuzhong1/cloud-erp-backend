@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -41,4 +43,20 @@ public interface SoB2cReceiverService extends SuperService<SoB2cReceiverEntity> 
      * @return SoB2cReceiverEntity
      */
     SoB2cReceiverEntity getByMainId(String mainId);
+    /**
+     * @description: 根据主表ids查询
+     * @author Will
+     * @date: 2023/8/23 10:04
+     * @param mainIds
+     * @return List<SoB2cReceiverEntity>
+     */
+    List<SoB2cReceiverEntity> listByMainIds(List<String> mainIds);
+    /**
+     * @description: 根据主表id删除
+     * @author Will
+     * @date: 2023/8/23 12:27
+     * @param mainIds
+     * @return Boolean
+     */
+    Boolean deleteByMainIds(List<String> mainIds);
 }
