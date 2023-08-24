@@ -146,7 +146,7 @@ public abstract class AbstractInventoryServiceImpl {
         txnFlows = txnFlows.stream().sorted(comparing).collect(Collectors.toList());
         txnFlows.stream().forEach(txnFlow->{
             // 检测是否允许库存交易
-            checkAllowTransaction(txnFlow.getOrgId(),txnFlow.getWarehouseId(),txnFlow.getWarehouseLocation(),txnFlow.getSkuId(),txnFlow.getDictInventoryStatus());
+            checkAllowTransaction(txnFlow.getOrgId(),txnFlow.getWarehouseId(),txnFlow.getWarehouseLocation(),txnFlow.getSkuId(),txnFlow.getSkuNo(),txnFlow.getDictInventoryStatus());
 
             // 获取单据业务类型
             InventoryBusinessTypeEnum businessTypeEnum = InventoryBusinessTypeEnum.getByCode(txnFlow.getDictBizType());// 取原交易流水的业务类型
@@ -227,7 +227,7 @@ public abstract class AbstractInventoryServiceImpl {
      * @param warehouseLocation 仓位
      * @param dictInventoryStatus   库存状态
      */
-    private void checkAllowTransaction(String orgId, String warehouseId, String warehouseLocation, String skuId, String dictInventoryStatus) {
+    private void checkAllowTransaction(String orgId, String warehouseId, String warehouseLocation, String skuId,String skuNo, String dictInventoryStatus) {
         //TODO 今后需要做 库存关账 等检测
         // 盘点冻结
         String redisKey = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, "*", orgId, warehouseId, warehouseLocation, skuId, dictInventoryStatus);
@@ -235,7 +235,9 @@ public abstract class AbstractInventoryServiceImpl {
         if (CollUtil.isEmpty(keys)) {
             return;
         }
-        throw new ServiceException(ApiError.STOCK_FREEZE_NOT_ALLOW);
+        WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(warehouseId);
+        String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : warehouseId;
+        throw new ServiceException(ApiError.STOCK_FREEZE_NOT_ALLOW, warehouseName, warehouseLocation, skuNo, dictInventoryStatus, "盘点");
     }
 
     private InventoryHisEntity getAvaliableInventoryHis(TransactionFlowEntity transactionFlow) {
@@ -309,7 +311,7 @@ public abstract class AbstractInventoryServiceImpl {
         if(Objects.isNull(warehouseInfo) || StrUtil.isEmpty(warehouseInfo.getId())) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
-        checkAllowTransaction(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), inventoryStatusEnum.getCode());
+        checkAllowTransaction(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(),param.getSkuNo(), inventoryStatusEnum.getCode());
         log.warn("交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走入库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName());
 
         // 按照仓库+仓位+库存状态+SKU 进行锁定
@@ -362,7 +364,7 @@ public abstract class AbstractInventoryServiceImpl {
         if(Objects.isNull(warehouseInfo) || StrUtil.isEmpty(warehouseInfo.getId())) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
-        checkAllowTransaction(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), inventoryStatusEnum.getCode());
+        checkAllowTransaction(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode());
         // 待出库数量
         Integer waitOutQty = param.getQty();
         log.info("交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走出库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), inventoryStatusEnum.getName(), param.getSkuNo());
