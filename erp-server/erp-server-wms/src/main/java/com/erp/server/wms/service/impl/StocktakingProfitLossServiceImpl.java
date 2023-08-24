@@ -454,7 +454,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      * @param entity
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    @Transactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, StocktakingProfitLossEntity entity) {
         if (Objects.isNull(entity)) {
             return Boolean.FALSE;
@@ -627,6 +627,14 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         }
 
         return addList;
+    }
+
+    @Override
+    public List<StocktakingProfitLossEntity> listBySourceId(String sourceId) {
+        return this.lambdaQuery().eq(StocktakingProfitLossEntity::getSourceId,sourceId).
+                eq(StocktakingProfitLossEntity::getApproveStatus,ApproveStatusEnum.APPROVE_ING).
+                list();
+
     }
 
     /**
