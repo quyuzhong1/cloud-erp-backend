@@ -133,4 +133,19 @@ public class SkuVO implements Serializable {
      * 毛重
      */
     private BigDecimal grossWeight;
+
+    /**
+     * 目标含税成本
+     */
+    private BigDecimal targetTaxCost;
+
+    /**
+     * 实际含税成本
+     */
+    private BigDecimal actualTaxCost;
+
+    /**
+     * 标准零售价
+     */
+    private BigDecimal retailPrice;
 }
