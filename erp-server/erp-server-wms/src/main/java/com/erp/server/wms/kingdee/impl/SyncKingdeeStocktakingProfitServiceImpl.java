@@ -75,6 +75,7 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
         resultMap.put("id", entity.getId());
         //业务id
         resultMap.put("code", entity.getCode());
+        resultMap.put("sourceCode", entity.getSourceCode());
         //单据类型
         resultMap.put("billType", entity.getBillType().getCode());
         //单据日期
