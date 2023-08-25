@@ -1,21 +1,17 @@
 package com.erp.server.oms.service.impl;
 
+import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.OrderCategoryDetailDTO;
-import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.OrderCategoryDetailEntity;
-import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.server.oms.mapper.OrderCategoryDetailMapper;
 import com.erp.server.oms.service.OrderCategoryDetailService;
-import com.common.business.service.SuperServiceImpl;
-import com.sun.org.apache.regexp.internal.RE;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
