@@ -951,10 +951,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //主键id
         List<String> ids = records.stream().map(req -> req.getId()).collect(Collectors.toList());
         //查询详情
-        List<SoReturnReceiveDetailEntity> detailEntityList = soReturnReceiveDetailService.listDetailByMainIds(ids);
+        List<SoReturnInstockDetailEntity> returnInstockDetailEntities = soReturnInstockDetailService.listDetailByMainIds(ids);
         for (SoReturnInstockDTO.PdaPagingView record : records) {
             record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
-            List<SoReturnReceiveDetailEntity> detailEntities = detailEntityList.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
+            List<SoReturnInstockDetailEntity> detailEntities = returnInstockDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
             List<SoReturnInstockDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, SoReturnInstockDTO.PdaItemDTO.class);
             record.setDetailCount(itemDTOList.size());
             record.setItemList(itemDTOList);

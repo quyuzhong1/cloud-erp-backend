@@ -173,7 +173,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         }
         for (WarehouseReceiveDetailDTO.UpdateDTO updateDTO : warehouseReceiveDetailList) {
             WarehouseReceiveDetailEntity warehouseReceiveDetailEntity = new WarehouseReceiveDetailEntity();
-            warehouseReceiveDetailEntity.setMainId(updateDTO.getMainId());
+            warehouseReceiveDetailEntity.setMainId(dto.getId());
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
             warehouseReceiveDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
             warehouseReceiveDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
