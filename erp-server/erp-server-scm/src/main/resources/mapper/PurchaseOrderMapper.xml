@@ -545,6 +545,8 @@
     <select id="listPoRefSubChildByParentPodIds"
             resultType="com.erp.model.scm.dto.PurchaseOrderDTO$SubcontractOrderChildDTO">
         select
+            psod.bom_version as parentBomVersion,
+            sod.bom_version as childBomVersion,
             po.id as childPoId,
             pod.id as childPodId,
             ppod.id as parentPodId,

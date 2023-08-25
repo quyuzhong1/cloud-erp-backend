@@ -81,8 +81,8 @@ public class KingdeePushJob {
             try {
                 syncKingdeePurchaseOrderService.syncDataToKingdee(obj, obj.getSyncOperate());
             } catch (Exception e) {
-                XxlJobHelper.log("采购订单【{}】推送金蝶失败",obj.getCode());
-                log.error("采购订单【{}】推送金蝶失败",obj.getCode());
+                XxlJobHelper.log("采购订单【{}】推送金蝶失败,error = {}",obj.getCode(),e);
+                log.error("采购订单【{}】推送金蝶失败",obj.getCode(),e);
             }
         });
 
@@ -105,8 +105,8 @@ public class KingdeePushJob {
             try {
                 syncKingdeePurchasePriceService.syncDataToKingdee(obj, obj.getSyncOperate());
             } catch (Exception e) {
-                XxlJobHelper.log("采购价目【{}】推送金蝶失败",obj.getCode());
-                log.error("采购价目【{}】推送金蝶失败",obj.getCode());
+                XxlJobHelper.log("采购价目【{}】推送金蝶失败,error = {}",obj.getCode(),e);
+                log.error("采购价目【{}】推送金蝶失败",obj.getCode(),e);
             }
         });
     }
@@ -128,8 +128,8 @@ public class KingdeePushJob {
             try {
                 syncKingdeePurchasePriceChangeService.syncDataToKingdee(obj, obj.getSyncOperate());
             } catch (Exception e) {
-                XxlJobHelper.log("采购调价【{}】推送金蝶失败",obj.getCode());
-                log.error("采购调价【{}】推送金蝶失败",obj.getCode());
+                XxlJobHelper.log("采购调价【{}】推送金蝶失败,error = {}",obj.getCode(),e);
+                log.error("采购调价【{}】推送金蝶失败",obj.getCode(),e);
             }
         });
     }
@@ -151,8 +151,8 @@ public class KingdeePushJob {
             try {
                 syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, obj.getSyncOperate());
             } catch (Exception e) {
-                XxlJobHelper.log("委外订单【{}】推送金蝶失败",obj.getCode());
-                log.error("委外订单【{}】推送金蝶失败",obj.getCode());
+                XxlJobHelper.log("委外订单【{}】推送金蝶失败,error = {}",obj.getCode(),e);
+                log.error("委外订单【{}】推送金蝶失败",obj.getCode(),e);
             }
         });
     }
@@ -174,8 +174,8 @@ public class KingdeePushJob {
             try {
                 syncKingdeeSubcontractChangeService.syncDataToKingdee(obj, obj.getSyncOperate());
             } catch (Exception e) {
-                XxlJobHelper.log("委外变更单【{}】推送金蝶失败",obj.getCode());
-                log.error("委外变更单【{}】推送金蝶失败",obj.getCode());
+                XxlJobHelper.log("委外变更单【{}】推送金蝶失败,error = {}",obj.getCode(),e);
+                log.error("委外变更单【{}】推送金蝶失败",obj.getCode(),e);
             }
 
         });
@@ -198,8 +198,8 @@ public class KingdeePushJob {
             try {
                 syncKingdeeSupplierService.syncDataToKingdee(obj, obj.getSyncOperate());
             } catch (Exception e) {
-                XxlJobHelper.log("供应商【{}】推送金蝶失败",obj.getCode());
-                log.error("供应商【{}】推送金蝶失败",obj.getCode());
+                XxlJobHelper.log("供应商【{}】推送金蝶失败,error = {}",obj.getCode(),e);
+                log.error("供应商【{}】推送金蝶失败",obj.getCode(),e);
             }
         });
     }

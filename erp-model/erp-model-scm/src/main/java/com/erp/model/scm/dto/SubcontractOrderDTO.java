@@ -544,6 +544,12 @@ public class SubcontractOrderDTO implements Serializable {
          */
         private String paymentCondition;
 
+        /**
+         * bom版本
+         */
+        private Integer bomVersion;
+
+
     }
 
     @Data

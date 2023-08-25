@@ -535,7 +535,6 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             //这个是不存在的 但是也要家进去 从新分摊折扣
             List<SoDetailEntity> notExistentList = dbSoDetailList.stream().
                     filter(d -> !saveOrUpdateDetailIdList.contains(d.getId())).collect(Collectors.toList());
-            saveOrUpdateList.addAll(notExistentList);
             if (CollUtil.isNotEmpty(saveOrUpdateList)) {
                 List<String> skuIdList = saveOrUpdateList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
                 List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
@@ -550,7 +549,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                     // 金额信息加上折扣额计算
                     String soId = soEntry.getKey();
                     SoInfoEntity soInfoEntity = soInfoMap.get(soId);
-                    SoUtils.handleDetailAmount(soInfoEntity.getDiscountAmount(), saveOrUpdateList);
+                    //SoUtils.handleDetailAmount(soInfoEntity.getDiscountAmount(), saveOrUpdateList);
                     for (SoDetailEntity item : saveOrUpdateList) {
                         // 计算毛利成本
                         soDetailService.calCost(purchasePriceList, skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);

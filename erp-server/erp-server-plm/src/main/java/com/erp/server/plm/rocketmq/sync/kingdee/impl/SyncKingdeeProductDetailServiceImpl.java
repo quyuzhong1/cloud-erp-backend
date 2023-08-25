@@ -184,21 +184,23 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
             String productSize = productPackEntity.getProductSize();
             if (StringUtils.isNotBlank(productSize)) {
                 List<String> productSizeList = Arrays.stream(productSize.split("X")).collect(Collectors.toList());
-                if (productSizeList.size() == 1) {
-                    //产品尺寸-长(cm)
-                    resultMap.put("productSize_length", productSizeList.get(0));
-                } else if (productSizeList.size() == 2) {
-                    //产品尺寸-长(cm)
-                    resultMap.put("productSize_length", productSizeList.get(0));
-                    //产品尺寸-宽(cm)
-                    resultMap.put("productSize_width", productSizeList.get(1));
-                } else {
-                    //产品尺寸-长(cm)
-                    resultMap.put("productSize_length", productSizeList.get(0));
-                    //产品尺寸-宽(cm)
-                    resultMap.put("productSize_width", productSizeList.get(1));
-                    //产品尺寸-高(cm)
-                    resultMap.put("productSize_height", productSizeList.get(2));
+                if (CollectionUtils.isNotEmpty(productSizeList)) {
+                    if (productSizeList.size() == 1) {
+                        //产品尺寸-长(cm)
+                        resultMap.put("productSize_length", productSizeList.get(0));
+                    } else if (productSizeList.size() == 2) {
+                        //产品尺寸-长(cm)
+                        resultMap.put("productSize_length", productSizeList.get(0));
+                        //产品尺寸-宽(cm)
+                        resultMap.put("productSize_width", productSizeList.get(1));
+                    } else {
+                        //产品尺寸-长(cm)
+                        resultMap.put("productSize_length", productSizeList.get(0));
+                        //产品尺寸-宽(cm)
+                        resultMap.put("productSize_width", productSizeList.get(1));
+                        //产品尺寸-高(cm)
+                        resultMap.put("productSize_height", productSizeList.get(2));
+                    }
                 }
             }
             //单箱数量

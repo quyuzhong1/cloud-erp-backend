@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.constant.SearchType;
@@ -14,6 +15,8 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.KingdeeDTO;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.excel.SoDetailImportExcelDTO;
@@ -96,7 +99,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     private SoOutstockFeign soOutstockFeign;
 
     @Resource
-    private WmsTaskFeign wmsTaskFeign;
+    private DmpTaskFeign dmpTaskFeign;
 
     @Resource
     private InventoryFeign inventoryFeign;
@@ -115,8 +118,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Autowired
     private ScmTaskFeign scmTaskFeign;
 
-    @Autowired
-    private DmpTaskFeign dmpTaskFeign;
+
 
     /**
      * 根据退货单详情表id查询退货单
@@ -1394,6 +1396,50 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         return resultList;
     }
 
+
+    /**
+     * 销售变更单成功后
+     * 更改销售订单详情的金蝶id
+     *
+     * @param soId
+     * @return void
+     * @author yl
+     * @date 2023-08-23 14:00
+     */
+    @Override
+    public void updateDetailKingdeeId(String soId) {
+        SoInfoEntity soInfo = soInfoService.getById(soId);
+        if (Objects.nonNull(soInfo)) {
+            KingdeeDTO kingdeeDTO = new KingdeeDTO();
+            kingdeeDTO.setNumber(soInfo.getCode());
+            kingdeeDTO.setId(soInfo.getSyncKingdeeId());
+            String moduleCode = KingdeePushModuleEnum.SAL_SALEORDER.getCode();
+            kingdeeDTO.setKingdeePushModuleCode(moduleCode);
+            JSONObject jsonObject = dmpTaskFeign.getByKingdeeId(kingdeeDTO);
+            List<SoDetailEntity> updateList = new ArrayList<>(10);
+            if (jsonObject.containsKey("SaleOrderEntry")) {
+                List<JSONObject> list = (List<JSONObject>) jsonObject.get("SaleOrderEntry");
+                List<SoDetailEntity> detailList = this.lambdaQuery().eq(SoDetailEntity::getMainId, soId).orderByAsc(SoDetailEntity::getId).list();
+                for (int i = 0; i < list.size(); i++) {
+                    if (detailList.size() >= list.size()) {
+                        JSONObject object = list.get(i);
+                        String kingdeeDetailId = String.valueOf(object.getOrDefault("Id", ""));
+                        SoDetailEntity soDetail = detailList.get(i);
+                        //如果不相等
+                        if (!kingdeeDetailId.equals(soDetail.getKingdeeDetailId())) {
+                            soDetail.setKingdeeDetailId(kingdeeDetailId);
+                            updateList.add(soDetail);
+                        }
+                    }
+
+                }
+            }
+            if (CollectionUtils.isNotEmpty(updateList)) {
+                this.updateBatchById(updateList);
+            }
+
+        }
+    }
 
 
 }

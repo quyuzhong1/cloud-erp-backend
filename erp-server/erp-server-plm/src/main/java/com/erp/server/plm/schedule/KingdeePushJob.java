@@ -60,8 +60,8 @@ public class KingdeePushJob {
             try {
                 syncKingdeeProductDetailService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
             } catch (Exception e) {
-                XxlJobHelper.log("SKU【{}】推送金蝶失败",obj.getSkuNo());
-                log.error("SKU【{}】推送金蝶失败",obj.getSkuNo());
+                XxlJobHelper.log("SKU【{}】推送金蝶失败,error = {}",obj.getSkuNo(),e);
+                log.error("SKU【{}】推送金蝶失败",obj.getSkuNo(),e);
             }
         });
     }
@@ -83,8 +83,8 @@ public class KingdeePushJob {
             try {
                 syncKingdeeBomInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
             } catch (Exception e) {
-                XxlJobHelper.log("BOM【{}】推送金蝶失败",obj.getParentSkuNo());
-                log.error("BOM【{}】推送金蝶失败",obj.getParentSkuNo());
+                XxlJobHelper.log("BOM【{}】推送金蝶失败,error = {}",obj.getParentSkuNo(),e);
+                log.error("BOM【{}】推送金蝶失败",obj.getParentSkuNo(),e);
             }
         });
     }

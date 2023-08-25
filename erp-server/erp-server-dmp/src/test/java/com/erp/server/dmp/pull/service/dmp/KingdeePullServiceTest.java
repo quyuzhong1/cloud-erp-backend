@@ -1,8 +1,10 @@
 package com.erp.server.dmp.pull.service.dmp;
 
+import cn.hutool.json.JSONObject;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
@@ -22,15 +24,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
- *
  * @Author Cloud
  * @Date 2023/2/6 12:04
  **/
@@ -41,7 +40,7 @@ public class KingdeePullServiceTest {
 
 
     @Test
-    public void pullDeliveryTest(){
+    public void pullDeliveryTest() {
         KingdeeOrderInfoServiceImpl gyyOrderInfoService = new KingdeeOrderInfoServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.SAL_SALEORDER;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
@@ -64,7 +63,7 @@ public class KingdeePullServiceTest {
     }
 
     @Test
-    public void pullKingdeeEccShopTest(){
+    public void pullKingdeeEccShopTest() {
         KingdeeEccShopServiceImpl shopService = new KingdeeEccShopServiceImpl();
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(PlatformApiEnum.ECC_SHOP.getTaskName());
@@ -82,13 +81,13 @@ public class KingdeePullServiceTest {
         try {
             List<KingdeeEccShopEntity> kingdeeEccShopEntities = shopService.pullDate(requestDTO);
             System.out.println("kingdeeEccShopEntities = " + kingdeeEccShopEntities);
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Test
-    public void pullKingdeeDeliveryDetailTest(){
+    public void pullKingdeeDeliveryDetailTest() {
         KingdeeDeliveryDetailServiceImpl deliveryDetailService = new KingdeeDeliveryDetailServiceImpl();
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(PlatformApiEnum.SAL_OUTSTOCK.getTaskName());
@@ -106,14 +105,14 @@ public class KingdeePullServiceTest {
         try {
             List<KingdeeDeliveryDetailEntity> entityList = deliveryDetailService.pullDate(requestDTO);
             System.out.println("entityList = " + entityList);
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
     @Test
-    public void pullKingdeeReturnOrderTest(){
+    public void pullKingdeeReturnOrderTest() {
         KingdeeReturnOrderInfoImpl returnOrderService = new KingdeeReturnOrderInfoImpl();
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(PlatformApiEnum.SAL_RETURNSTOCK.getTaskName());
@@ -131,26 +130,26 @@ public class KingdeePullServiceTest {
         try {
             List<KingdeeReturnOrderEntity> entityList = returnOrderService.pullDate(requestDTO);
             System.out.println("entityList = " + entityList);
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    @Resource
+    private KingdeeCommonService kingdeeCommonService;
+
     @Test
-    public void Test(){
+    public void Test() {
         //模块类型
-        Integer type = ApiModuleTypeEnum.SO_OUTSTOCK.getCode();
-        KingdeeCommonService kingdeeCommonService = new KingdeeCommonServiceImpl();
-        Map<String, Object> map = new LinkedHashMap<>();
+        Integer type = ApiModuleTypeEnum.SO_INFO.getCode();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
-        LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "XSCKD4064982"));
-        String filterStr = String.join(" and ", queryFilters);//5814757
-        String fieldKeys = "FModifyDate,FDocumentStatus,FApproveDate";
-        map.put("FCustMatID.FNumber", "XSCKD01_SYS，XSCKD07_SYS");
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
-        System.out.println(queryList);
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
+        Map<String, Object> map = new HashMap<>();
+        map.put("code", "XSD23082300002");
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
+
+        JSONObject model =kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
+        System.out.println(model);
     }
 
 }

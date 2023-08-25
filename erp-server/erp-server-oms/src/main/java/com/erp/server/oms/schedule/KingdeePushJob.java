@@ -63,8 +63,8 @@ public class KingdeePushJob {
             try {
                 syncKingdeeCustomerContactService.syncDataToKingdee(obj, obj.getSyncOperate());
             } catch (Exception e) {
-                XxlJobHelper.log("客户联系人【{}】推送金蝶失败",obj.getCode());
-                log.error("客户联系人【{}】推送金蝶失败",obj.getCode());
+                XxlJobHelper.log("客户联系人【{}】推送金蝶失败,error = {}",obj.getCode(),e);
+                log.error("客户联系人【{}】推送金蝶失败",obj.getCode(),e);
             }
         });
     }
@@ -86,8 +86,8 @@ public class KingdeePushJob {
             try {
                 syncKingdeeCustomerGroupService.syncDataToKingdee(obj, obj.getSyncOperate());
             } catch (Exception e) {
-                XxlJobHelper.log("客户分组【{}】推送金蝶失败",obj.getName());
-                log.error("客户分组【{}】推送金蝶失败",obj.getName());
+                XxlJobHelper.log("客户分组【{}】推送金蝶失败,error = {}",obj.getName(),e);
+                log.error("客户分组【{}】推送金蝶失败",obj.getName(),e);
             }
         });
     }
@@ -109,8 +109,8 @@ public class KingdeePushJob {
             try {
                 syncKingdeeCustomerService.syncDataToKingdee(obj, obj.getSyncOperate());
             } catch (Exception e) {
-                XxlJobHelper.log("客户【{}】推送金蝶失败",obj.getCode());
-                log.error("客户【{}】推送金蝶失败",obj.getCode());
+                XxlJobHelper.log("客户【{}】推送金蝶失败,error = {}",obj.getCode(),e);
+                log.error("客户【{}】推送金蝶失败",obj.getCode(),e);
             }
         });
     }
@@ -132,8 +132,8 @@ public class KingdeePushJob {
             try {
                 syncKingdeeSoChangeService.syncDataToKingdee(obj, obj.getSyncOperate());
             } catch (Exception e) {
-                XxlJobHelper.log("销售变更【{}】推送金蝶失败",obj.getCode());
-                log.error("销售变更【{}】推送金蝶失败",obj.getCode());
+                XxlJobHelper.log("销售变更【{}】推送金蝶失败,error = {}",obj.getCode(),e);
+                log.error("销售变更【{}】推送金蝶失败",obj.getCode(),e);
             }
         });
     }
@@ -155,8 +155,8 @@ public class KingdeePushJob {
             try {
                 syncKingdeeSoService.syncDataToKingdee(obj, obj.getSyncOperate());
             } catch (Exception e) {
-                XxlJobHelper.log("销售订单【{}】推送金蝶失败",obj.getCode());
-                log.error("销售订单【{}】推送金蝶失败",obj.getCode());
+                XxlJobHelper.log("销售订单【{}】推送金蝶失败,error = {}",obj.getCode(),e);
+                log.error("销售订单【{}】推送金蝶失败",obj.getCode(),e);
             }
         });
     }

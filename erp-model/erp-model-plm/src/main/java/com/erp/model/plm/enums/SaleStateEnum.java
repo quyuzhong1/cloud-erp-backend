@@ -7,7 +7,8 @@ public enum  SaleStateEnum implements EnumMessage {
     NOT_SALE(1, "未销售"),
     SALES(2, "销售中"),
     CLEARANCE(3, "清仓中"),
-    LOWER_SHELF(4, "已下架");
+    LOWER_SHELF(4, "已下架"),
+    SOLD_OUT(5, "卖完下架");
 
     private Integer code;
     private String name;

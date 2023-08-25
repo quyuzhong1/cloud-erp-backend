@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
@@ -22,4 +23,6 @@ public interface ProductBomSkuHistoryService  extends IService<ProductBomSkuHist
     List<ProductBomSkuHistoryEntity> getSkuByHistoryIds(List<String> bomHistoryIds);
 
     void removeByBomSku(BomSkuEntity bomSkuEntity);
+
+    List<BomChildrenSkuDTO> listHistoryBomChildBySkuIds(List<String> skuIds);
 }

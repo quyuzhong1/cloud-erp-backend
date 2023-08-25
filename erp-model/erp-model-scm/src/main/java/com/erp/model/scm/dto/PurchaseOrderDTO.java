@@ -1111,6 +1111,17 @@ public class PurchaseOrderDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SubcontractOrderChildDTO {
+
+        /**
+         * 父级SKUbom版本
+         */
+        private Integer parentBomVersion;
+
+        /**
+         * 子级SKUbom版本
+         */
+        private Integer childBomVersion;
+
         /**
          * 父级采购明细id
          */

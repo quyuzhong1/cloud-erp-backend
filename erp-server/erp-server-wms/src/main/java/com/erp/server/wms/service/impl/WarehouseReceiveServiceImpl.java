@@ -720,7 +720,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //下推入库单不能反审核
         warehouseReceiveList.forEach(req -> {
             List<PoInstockEntity> stockInBySourceId = poInstockService.getStockInBySourceId(req.getId());
-            if (CollectionUtils.isNotEmpty(stockInBySourceId)) {
+            List<PoInstockEntity> collect = stockInBySourceId.stream().filter(obj -> InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(collect)) {
                 throw new ServiceException(ApiError.ERROR_99011);
             }
             List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceId(req.getId());
