@@ -1290,10 +1290,15 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
                 Integer receiveQty = addDTO.getReceiveQty();
                 for (PurchaseOrderDetailEntity entity : detailEntityList) {
+                    //采购数量
+                    Integer purchaseQty = detailEntityList.stream().map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
                     //已签收数量
                     Integer alreadyReceiveQty = receiveDetailEntities.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(entity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     //退货补货数量
                     Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(entity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (receiveQty > purchaseQty + returnQty - alreadyReceiveQty) {
+                        throw new ServiceException(ApiError.ERROR_99054.code, String.format(ApiError.ERROR_99054.msg, entity.getSkuNo()));
+                    }
                     if (alreadyReceiveQty >= entity.getPurchaseQty() + returnQty) {
                         continue;
                     }
@@ -1302,9 +1307,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     addSkuDTO.setExceedQty(MathUtil.ZERO);
                     addSkuDTO.setRemark(addDTO.getRemark());
                     addSkuDTO.setPurchaseOrderDetailId(entity.getId());
-                    if (receiveQty > entity.getPurchaseQty()) {
-                        receiveQty = receiveQty - entity.getPurchaseQty();
-                        addSkuDTO.setReceiveQty(entity.getPurchaseQty());
+                    if (receiveQty > (entity.getPurchaseQty() - alreadyReceiveQty) && !detailEntityList.get(detailEntityList.size()-1).getId().equals(entity.getId())) {
+                        receiveQty = receiveQty - (entity.getPurchaseQty() - alreadyReceiveQty);
+                        addSkuDTO.setReceiveQty(entity.getPurchaseQty() - alreadyReceiveQty);
                         addDTOList.add(addSkuDTO);
                     } else {
                         addSkuDTO.setReceiveQty(receiveQty);
@@ -1341,10 +1346,15 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
                 Integer receiveQty = updateDTO.getReceiveQty();
                 for (PurchaseOrderDetailEntity entity : detailEntityList) {
+                    //采购数量
+                    Integer purchaseQty = detailEntityList.stream().map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
                     //已签收数量
-                    Integer alreadyReceiveQty = receiveDetailEntities.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(entity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                    Integer alreadyReceiveQty = receiveDetailEntities.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(entity.getId()) && !obj.getMainId().equals(dto.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     //退货补货数量
                     Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(entity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (receiveQty > purchaseQty + returnQty - alreadyReceiveQty) {
+                        throw new ServiceException(ApiError.ERROR_99054.code, String.format(ApiError.ERROR_99054.msg, entity.getSkuNo()));
+                    }
                     if (alreadyReceiveQty >= entity.getPurchaseQty() + returnQty) {
                         continue;
                     }
@@ -1354,13 +1364,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     updateSkuDTO.setExceedQty(MathUtil.ZERO);
                     updateSkuDTO.setRemark(updateDTO.getRemark());
                     updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
-                    if (receiveQty > entity.getPurchaseQty()) {
-                        receiveQty = receiveQty - entity.getPurchaseQty();
-                        updateSkuDTO.setReceiveQty(entity.getPurchaseQty());
-                        addDTOList.add(updateDTO);
+                    if (receiveQty > (entity.getPurchaseQty() - alreadyReceiveQty) && !detailEntityList.get(detailEntityList.size()-1).getId().equals(entity.getId())) {
+                        receiveQty = receiveQty - (entity.getPurchaseQty() - alreadyReceiveQty);
+                        updateSkuDTO.setReceiveQty(entity.getPurchaseQty() - alreadyReceiveQty);
+                        addDTOList.add(updateSkuDTO);
                     } else {
                         updateSkuDTO.setReceiveQty(receiveQty);
-                        addDTOList.add(updateDTO);
+                        addDTOList.add(updateSkuDTO);
                         break;
                     }
                 }
