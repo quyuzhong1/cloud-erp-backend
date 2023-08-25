@@ -105,7 +105,32 @@ public class SoB2cDetailDTO implements Serializable {
          * 冻结库存
          */
        private Integer freezeQty;
+       /**
+        * 明细标签
+        */
+       private String label;
+       /**
+        * 明细标签对象
+        */
+       private DetailLabelDTO detailLabelDTO;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LabelJsonDTO {
+        /**
+         * 速卖通已税
+         */
+        private String alreadyTaxed;
+        /**
+         * 菜鸟官方仓
+         */
+        private String logisticsWarehouseType;
+        /**
+         * 速卖通打标
+         */
+        private List<String> tagList;
     }
 
     @Data
