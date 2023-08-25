@@ -176,29 +176,37 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             if (Objects.isNull(taskDetail)) {
                 continue;
             }
-            OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
-            addModuleOperateLogDTO.setOperation("修改操作");
-            addModuleOperateLogDTO.setBusinessId(taskDetail.getMainId());
-            addModuleOperateLogDTO.setModuleType(moduleType);
-            StringBuffer sb = new StringBuffer("盘点任务单");
-            sb.append(" 修改");
-            sb.append(taskDetail.getSkuNo());
-            sb.append("盘点库存由原来的:");
-            sb.append(taskDetail.getQty());
-            Integer qty = item.getQty();
-            sb.append("修改为:").append(qty);
-            addModuleOperateLogDTO.setContent(sb.toString());
-            operateLogList.add(addModuleOperateLogDTO);
+            //这是修改的数量
+            Integer updateQty = item.getQty();
+            //这是数控
+            Integer dbQty = taskDetail.getQty();
+            //是否秀发i
+            Boolean isUpdate = !updateQty.equals(dbQty);
+            if (isUpdate) {
+                OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
+                addModuleOperateLogDTO.setOperation("修改操作");
+                addModuleOperateLogDTO.setBusinessId(taskDetail.getMainId());
+                addModuleOperateLogDTO.setModuleType(moduleType);
+                StringBuffer sb = new StringBuffer("盘点任务单");
+                sb.append(" 修改");
+                sb.append(taskDetail.getSkuNo());
+                sb.append("盘点库存由原来的:");
+                sb.append(taskDetail.getQty());
+                Integer qty = item.getQty();
+                sb.append("修改为:").append(qty);
+                addModuleOperateLogDTO.setContent(sb.toString());
+                operateLogList.add(addModuleOperateLogDTO);
 
-            taskDetail.setQty(qty);
-            //可用库存
-            Integer usableQty = taskDetail.getUsableQty();
-            //冻结数量
-            Integer frozenQty = taskDetail.getFrozenQty();
-            //差异数量 等于盘点库存-可用库存-冻结库存
-            Integer diffQty = qty - usableQty - frozenQty;
-            taskDetail.setDiffQty(diffQty);
-            updateTaskDetailList.add(taskDetail);
+                taskDetail.setQty(qty);
+                //可用库存
+                Integer usableQty = taskDetail.getUsableQty();
+                //冻结数量
+                Integer frozenQty = taskDetail.getFrozenQty();
+                //差异数量 等于盘点库存-可用库存-冻结库存
+                Integer diffQty = qty - usableQty - frozenQty;
+                taskDetail.setDiffQty(diffQty);
+                updateTaskDetailList.add(taskDetail);
+            }
         }
         if (CollectionUtils.isNotEmpty(updateTaskDetailList)) {
             operateLogService.batchAddModuleOperateLog(operateLogList);
