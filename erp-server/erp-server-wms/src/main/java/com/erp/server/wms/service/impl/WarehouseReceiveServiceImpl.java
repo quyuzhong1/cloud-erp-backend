@@ -1367,7 +1367,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 }
 
             } else {
-                updateDTO.setId("");
                 addDTOList.add(updateDTO);
             }
         }
