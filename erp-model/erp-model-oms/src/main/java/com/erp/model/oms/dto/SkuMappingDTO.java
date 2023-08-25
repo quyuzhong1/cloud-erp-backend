@@ -8,9 +8,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -583,10 +583,9 @@ public class SkuMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class ListSkuParamDTO {
         /**
-         * 录入skuId
+         * 录入skuNo
          */
-        @NotEmpty(message = "录入sku不能为空")
-        private List<String> skuIdList;
+        private List<String> skuNoList;
     }
 
     @Data
@@ -601,6 +600,11 @@ public class SkuMappingDTO implements Serializable {
          * 产品skuNo
          */
         private String productSkuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
 
         /**
          * 库存sku
@@ -621,5 +625,14 @@ public class SkuMappingDTO implements Serializable {
          * 平台产品名称
          */
         private String platformProductName;
+
+        /**
+         * 建议售价（本位币）
+         */
+        private BigDecimal advicePrice;
+        /**
+         * 含税成本（本位币）
+         */
+        private BigDecimal taxCost;
     }
 }

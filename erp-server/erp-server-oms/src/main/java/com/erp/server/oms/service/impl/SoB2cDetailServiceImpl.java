@@ -183,8 +183,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
 
         //SKU对照表信息
-        List<String> skuIdList = list.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuIdList(skuIdList);
+        List<String> skuNoList = list.stream().map(SoB2cDetailEntity::getSkuNo).collect(Collectors.toList());
+        List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(skuNoList);
 
         for (SoB2cDetailEntity detailEntity :list) {
 

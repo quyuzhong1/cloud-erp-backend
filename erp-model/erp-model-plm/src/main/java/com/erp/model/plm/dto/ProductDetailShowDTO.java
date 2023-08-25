@@ -87,7 +87,7 @@ public class ProductDetailShowDTO implements Serializable {
     private BigDecimal actualTaxCost;
 
     /**
-     * 标准零售价
+     * 标准零售价(建议售价)
      */
     private BigDecimal retailPrice;
 
