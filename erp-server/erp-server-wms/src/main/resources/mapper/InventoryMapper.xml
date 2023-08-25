@@ -314,6 +314,7 @@
     </select>
     <select id="listByStocktakingType" resultType="com.erp.model.wms.entity.InventoryEntity">
         SELECT
+            inv.id,
             inv.org_id,
             inv.warehouse_id,
             inv.warehouse_location,
@@ -345,6 +346,7 @@
                 (#{item.warehouseId}, #{item.warehouseLocation}, #{item.skuId})
             </foreach>
         </if>
+        GROUP BY inv.id
         order by inv.warehouse_id, inv.warehouse_location, inv.sku_id, inv.dict_inventory_status
     </select>
 </mapper>
