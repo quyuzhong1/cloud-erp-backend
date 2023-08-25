@@ -982,4 +982,21 @@ public class InventoryDTO implements Serializable {
          */
         private Integer todayStockInQty;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaSearchParamDTO {
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+    }
 }
