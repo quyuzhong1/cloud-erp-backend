@@ -21,6 +21,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
@@ -386,6 +387,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
+        viewDTO.setTypeName(BillTypeEnum.getName(viewDTO.getCode()));
         for (SoReturnReceiveDetailEntity detailEntity : detailEntityList) {
             SoReturnReceiveDetailDTO.View detailView = new SoReturnReceiveDetailDTO.View();
             BeanMapperUtils.copy(detailEntity, detailView);

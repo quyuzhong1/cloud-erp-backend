@@ -77,7 +77,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
                 SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_92023);
+                    throw new ServiceException(ApiError.ERROR_92023, detailDto.getSkuNo());
                 }
                 Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 //此单历史签收数量
@@ -156,7 +156,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
                 SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_92023);
+                    throw new ServiceException(ApiError.ERROR_92023, detailDto.getSkuNo());
                 }
                 //此单历史签收数量
                 Integer historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
