@@ -319,6 +319,11 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
     }
 
     @Override
+    public List<SoReturnInstockDetailEntity> listDetailByMainIds(List<String> ids) {
+        return lambdaQuery().in(SoReturnInstockDetailEntity::getMainId, ids).list();
+    }
+
+    @Override
     public List<SoReturnInstockDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds) {
         return baseMapper.listDetailBySourceDetailIds(sourceDetailIds);
     }
