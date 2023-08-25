@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
  * @author Lambda
  * @since 2023-06-28
  */
+@NoArgsConstructor
 @Getter
 @Setter
 @Accessors(chain = true)
@@ -121,6 +123,12 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     @TableField("customer_id")
     private String customerId;
 
+    /**
+     * 是否已生成调度任务
+     */
+    @TableField("is_gen_task")
+    private Boolean isGenTask;
+
 
     public static final String PLATFORM_DICT = "platform_dict";
 
@@ -129,6 +137,11 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     public static final String NAME = "name";
 
     public static final String CUSTOMER_CODE = "customer_code";
+
+    public ShopInfoEntity(String id, Boolean isGenTask) {
+        super(id);
+        this.isGenTask = isGenTask;
+    }
 
     @Override
     public Serializable pkVal() {

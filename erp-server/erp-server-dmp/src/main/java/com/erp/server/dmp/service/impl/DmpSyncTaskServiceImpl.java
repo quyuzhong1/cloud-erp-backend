@@ -14,6 +14,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpSyncMqDTO;
+import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.DmpSyncTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
@@ -43,10 +44,6 @@ import java.util.Map;
 @Slf4j
 @Service
 public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, DmpSyncTaskEntity> implements DmpSyncTaskService {
-
-    @Autowired
-    private DmpSyncTaskMapper dmpSyncTaskMapper;
-
     @Resource
     private MQProducerService mqProducerService;
 
@@ -136,5 +133,11 @@ public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, 
         }
 
         return result;
+    }
+
+    @Override
+    public Boolean createPlatformTask(PlatformTaskDTO.AddDTO dto) {
+
+        return null;
     }
 }

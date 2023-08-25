@@ -25,4 +25,6 @@ public interface TaskConstant {
      * 艾姆勒任务名称
      */
     String IML_PULL_DATA_TASK = "IML_PULL_DATA_TASK";
+
+    String MABANG = "马帮";
 }

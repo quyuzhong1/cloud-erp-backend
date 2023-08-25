@@ -63,4 +63,11 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return com.erp.model.oms.dto.ShopDTO.ViewDTO
      */
     ShopDTO.ViewDTO view(String id);
+
+    /**
+     * 更新店铺信息
+     * @param shopInfoEntity
+     * @return
+     */
+    Boolean updateShopInfoById(ShopInfoEntity shopInfoEntity);
 }

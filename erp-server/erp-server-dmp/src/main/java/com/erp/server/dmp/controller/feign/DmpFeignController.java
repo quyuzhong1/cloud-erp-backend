@@ -8,20 +8,19 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
+import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.service.BiSettlementExchangeRateService;
-import com.erp.server.dmp.service.DmpShopInfoService;
-import com.erp.server.dmp.service.DmpSyncTaskService;
-import com.erp.server.dmp.service.PlatformService;
+import com.erp.server.dmp.service.*;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -52,6 +51,8 @@ public class DmpFeignController extends BaseController {
 
     @Autowired
     private BiSettlementExchangeRateService biSettlementExchangeRateService;
+    @Resource
+    private PlatformApiTaskService platformApiTaskService;
 
 
     @PostMapping("/getShopById")
@@ -137,5 +138,10 @@ public class DmpFeignController extends BaseController {
         result = dmpSyncTaskService.listKingdeeCode(conditon);
 
         return result;
+    }
+
+    @PostMapping("/createPlatformTask")
+    public Boolean createPlatformTask(@RequestBody @Valid PlatformTaskDTO.AddDTO dto){
+        return platformApiTaskService.createPlatformTask(dto);
     }
 }

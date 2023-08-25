@@ -14,25 +14,23 @@
     <select id="selectApiTask" resultType="com.erp.model.dmp.dto.JobTaskDTO">
         SELECT
         pat.id,
-        pat.platform_id,
-        pat.api_id,
+        pat.dict_platform,
         pat.interval_time,
         pat.last_time,
         pat.next_time,
-        pat.state,
+        pat.status,
         pat.create_time,
         pat.update_time,
-        pat.retry_count,
-        pa.api_code,
-        pa.api_name,
-        p.task_name,
-        p.name AS platformName
+        pat.retry_times,
+        pat.shop_name,
+        pat.shop_id,
+        pat.bill_type,
+        pat.operate_type,
+        pat.api_param,
+        pat.platform_api_id
         FROM platform_api_task pat
-        LEFT JOIN platform_api pa ON pat.api_id = pa.id
-        LEFT JOIN platform p ON pa.platform_id = p.id
-        WHERE
-        (pat.next_time &lt; #{localTime} and pat.next_time IS NOT NULL)
-        and pat.is_deleted = false
+        WHERE (pat.next_time  &lt; #{localTime} and pat.next_time IS NOT NULL)
+        and pat.is_deleted = false and pat.disabled = FALSE
     </select>
 
     <insert id="batchInsert" parameterType="com.erp.model.dmp.entity.PlatformApiTaskEntity">

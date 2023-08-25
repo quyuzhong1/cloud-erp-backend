@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 /**
- *
+ * rocketMQ生产者测试方法
  * @Author Cloud
  * @Date 2023/2/17 12:39
  **/

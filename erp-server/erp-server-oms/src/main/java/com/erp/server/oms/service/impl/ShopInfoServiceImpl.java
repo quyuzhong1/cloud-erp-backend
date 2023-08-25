@@ -365,5 +365,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return view;
     }
 
+    @Override
+    public Boolean updateShopInfoById(ShopInfoEntity shopInfoEntity) {
+        return  lambdaUpdate()
+                .eq(ShopInfoEntity::getId, shopInfoEntity.getId())
+                .set(ShopInfoEntity::getIsGenTask, shopInfoEntity.getIsGenTask())
+                .update();
+    }
+
 
 }
