@@ -105,6 +105,14 @@ public class SoB2cDetailDTO implements Serializable {
          * 冻结库存
          */
        private Integer freezeQty;
+       /**
+        * 明细标签
+        */
+       private String label;
+       /**
+        * 明细标签对象
+        */
+       private DetailLabelDTO detailLabelDTO;
 
     }
 

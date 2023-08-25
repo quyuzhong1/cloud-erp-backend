@@ -15,6 +15,7 @@ public enum DictBasicEnum {
     SUPPLIER_ACCOUNT_PAYMENT("supplierAccountPayment","供应商账户付款方式"),
     RECEIVE_METHOD("receiveMethod",  "收款方式"),
     COLLECTION_TERMS("collectionTerms",  "收款条件"),
+    LOGISTICS_METHOD("logisticsMethod",  "b2c销售订单物流方式"),
     ;
 
 

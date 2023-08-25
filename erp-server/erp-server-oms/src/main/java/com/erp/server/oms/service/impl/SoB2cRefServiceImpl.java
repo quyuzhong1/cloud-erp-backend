@@ -76,4 +76,9 @@ public class SoB2cRefServiceImpl extends SuperServiceImpl<SoB2cRefMapper, SoB2cR
                 .eq(ObjectUtils.isEmpty(typeEnum),SoB2cRefEntity::getType,typeEnum.getCode())
                 .list();
     }
+
+    @Override
+    public List<SoB2cRefEntity> listBySourceIdOrTargetId(List<String> ids) {
+        return null;
+    }
 }

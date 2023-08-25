@@ -113,6 +113,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private SoB2cRefService soB2cRefService;
 
+    @Autowired
+    private DictBasicService dictBasicService;
+
+
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -1140,7 +1144,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(CollUtil.isEmpty(list)) {
            return;
         }
-        //店铺 TODO
+        //店铺
         List<String> shopIdList = list.stream().map(SoB2cDTO.ListDTO::getShopId).collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoList = shopInfoService.listByIds(shopIdList);
         if (CollectionUtils.isEmpty(shopIdList)) {
@@ -1167,9 +1171,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         skuInventoryDTO.setSkuIdList(skuIdList);
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
 
+        //物流方式
+        List<DictBasicDTO.ViewDTO> logisticsMethodList = dictBasicService.getByKey(DictBasicEnum.LOGISTICS_METHOD.getType());
+
+        List<String> ids = list.stream().map(SoB2cDTO.ListDTO::getId).collect(Collectors.toList());
+        soB2cRefService.listBySourceIdOrTargetId(ids);
+
         // 属性赋值
         for(SoB2cDTO.ListDTO data : list) {
-            //物流方式 TODO
+            //物流方式
+            if (CollectionUtils.isNotEmpty(logisticsMethodList)) {
+                String logisticsMethodName = logisticsMethodList.stream().filter(obj -> obj.getValue().equals(data.getDictLogisticsMethod())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                data.setDictLogisticsMethodName(logisticsMethodName);
+            }
 
             //国家
             if (CollectionUtils.isNotEmpty(dictCountryList)) {
@@ -1179,6 +1193,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //店铺
             String shopName = shopInfoList.stream().filter(obj -> obj.getId().equals(data.getShopId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             data.setShopName(shopName);
+
+            //标签处理
+            String label = data.getLabel();
+            SoB2cDTO.LabelDTO labelDTO = new SoB2cDTO.LabelDTO();
+            labelDTO.setIsIntercept(data.getIsIntercept());
+            labelDTO.setIsManual(data.getSourceType().equals(SourceTypeEnum.SELF_ADD.getCode()));
+
 
             //明细信息
             List<SoB2cDetailDTO.ListDTO> detailList = data.getDetailList();
