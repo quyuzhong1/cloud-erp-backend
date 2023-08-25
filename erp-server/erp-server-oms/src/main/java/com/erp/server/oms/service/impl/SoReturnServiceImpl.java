@@ -800,6 +800,15 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             }
             return m;
         })));
+
+        List<String> collect = soReturnReceiveDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
+        List<String> ids = soReturnIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
+        soReturnDetailIds.addAll(ids);
+
+        if (CollectionUtils.isEmpty(soReturnDetailIds)) {
+            return new ArrayList<>();
+        }
+
         //根据未到货的退货单详情id获取退货单id
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnDetailService.listByIds(soReturnDetailIds);
         List<String> notAllReceiveSoReturnId = returnDetailEntityList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
