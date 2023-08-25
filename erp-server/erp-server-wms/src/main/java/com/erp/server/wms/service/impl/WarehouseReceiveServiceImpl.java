@@ -1339,7 +1339,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 List<String> podIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
                 List<WarehouseReceiveDetailEntity> receiveDetailEntities = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
                 List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
-                warehouseReceiveDetailService.deleteBySkuId(dto.getId(), detailEntity.getSkuId());
                 Integer receiveQty = updateDTO.getReceiveQty();
                 for (PurchaseOrderDetailEntity entity : detailEntityList) {
                     //已签收数量
