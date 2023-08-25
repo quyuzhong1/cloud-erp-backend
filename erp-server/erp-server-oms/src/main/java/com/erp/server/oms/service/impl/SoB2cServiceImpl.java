@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -26,6 +27,7 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -1161,6 +1163,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
+        //根据SKU查询BOM判断是否是组合SKU
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
         //可用库存
         List<String> warehouseIdList = list.stream().flatMap(obj -> Stream.of(obj.getDetailList().stream().map(SoB2cDetailDTO.ListDTO::getWarehouseId).toArray(String[]::new))).distinct().collect(Collectors.toList());
 
@@ -1175,7 +1180,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<DictBasicDTO.ViewDTO> logisticsMethodList = dictBasicService.getByKey(DictBasicEnum.LOGISTICS_METHOD.getType());
 
         List<String> ids = list.stream().map(SoB2cDTO.ListDTO::getId).collect(Collectors.toList());
-        soB2cRefService.listBySourceIdOrTargetId(ids);
+        List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listBySourceIdOrTargetId(ids);
 
         // 属性赋值
         for(SoB2cDTO.ListDTO data : list) {
@@ -1199,10 +1204,30 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cDTO.LabelDTO labelDTO = new SoB2cDTO.LabelDTO();
             labelDTO.setIsIntercept(data.getIsIntercept());
             labelDTO.setIsManual(data.getSourceType().equals(SourceTypeEnum.SELF_ADD.getCode()));
+            if (CollectionUtils.isNotEmpty(soB2cRefList)) {
+                //合并
+                long mergeCount = soB2cRefList.stream().filter(obj -> (obj.getTargetId().equals(data.getId()) || obj.getSourceId().equals(data.getId()))  && SoB2cOptionTypeEnum.ENUM_MERGE.getCode().equals(obj.getType())).count();
+                if (mergeCount > 0) {
+                    labelDTO.setRefType(SoB2cOptionTypeEnum.ENUM_MERGE.getCode());
+                }
+                //拆分
+                long splitCount = soB2cRefList.stream().filter(obj -> (obj.getTargetId().equals(data.getId()) || obj.getSourceId().equals(data.getId()))  && SoB2cOptionTypeEnum.ENUM_SPLIT.getCode().equals(obj.getType())).count();
+                if (splitCount > 0) {
+                    labelDTO.setRefType(SoB2cOptionTypeEnum.ENUM_MERGE.getCode());
 
+                }
+            }
+            //主表标签
+            if (StringUtils.isNotBlank(label)) {
+                SoB2cDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(label, SoB2cDTO.LabelJsonDTO.class);
+                labelDTO.setAliexpressStatus(labelJsonDTO.getAliexpressStatus());
+                labelDTO.setAmazonStatus(labelJsonDTO.getAmazonStatus());
+            }
 
             //明细信息
             List<SoB2cDetailDTO.ListDTO> detailList = data.getDetailList();
+
+            Boolean isCombination = Boolean.FALSE;
             for (SoB2cDetailDTO.ListDTO detailDTO : detailList) {
                 //SKU信息
                 SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())).findFirst().orElse(null);
@@ -1211,15 +1236,32 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 detailDTO.setVariantProperty(skuVO.getVariantProperty());
                 detailDTO.setProductName(skuVO.getSkuName());
+                //是否是组合SKU
+                if (CollectionUtils.isNotEmpty(bomChildrenList)) {
+                    long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailDTO.getSkuId())).count();
+                    if (count > 0) {
+                        isCombination = Boolean.TRUE;
+                    }
+                }
                 //订单本位币金额
                 BigDecimal amount = MathUtil.multiply(detailDTO.getSourceAmount(), detailDTO.getExchangeRate());
                 detailDTO.setAmount(amount);
                 detailDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
 
-
+                //标签处理
+                SoB2cDetailDTO.DetailLabelDTO detailLabelDTO = new SoB2cDetailDTO.DetailLabelDTO();
+                String detailLabel = detailDTO.getLabel();
+                if (StringUtils.isNotBlank(detailLabel)) {
+                    SoB2cDetailDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(detailLabel, SoB2cDetailDTO.LabelJsonDTO.class);
+                    detailLabelDTO.setAlreadyTaxed(labelJsonDTO.getAlreadyTaxed());
+                    detailLabelDTO.setLogisticsWarehouseType(labelJsonDTO.getLogisticsWarehouseType());
+                    detailLabelDTO.setTagList(labelJsonDTO.getTagList());
+                }
+                Integer useableQty = MathUtil.ZERO;
+                Integer freezeQty = MathUtil.ZERO;
                 if (CollectionUtils.isNotEmpty(inventoryList)) {
                     //可用库存
-                    Integer useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
+                     useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
                                     && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
                                     && obj.getWarehouseLocationId().equals(detailDTO.getWarehouseLocation())
                                     && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
@@ -1227,7 +1269,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             .orElse(MathUtil.ZERO);
                     detailDTO.setUseableQty(useableQty);
                     //冻结库存
-                    Integer freezeQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
+                     freezeQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
                                     && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
                                     && obj.getWarehouseLocationId().equals(detailDTO.getWarehouseLocation())
                                     && InventoryStatusEnum.FROZEN.getCode().equals(obj.getInventoryStatus()))
@@ -1235,7 +1277,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             .orElse(MathUtil.ZERO);
                     detailDTO.setFreezeQty(freezeQty);
                 }
+                //缺货订单
+                if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(data.getBillStatus())
+                        ||  SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(data.getBillStatus()))
+                        && MathUtil.compareTo(MathUtil.ZERO,useableQty) == MathUtil.ZERO) {
+                    detailLabelDTO.setIsOutStock(Boolean.TRUE);
+                }
+                detailDTO.setDetailLabelDTO(detailLabelDTO);
             }
+            //明细存在一条数据时组合SKU则标识
+            labelDTO.setIsCombination(isCombination);
+            data.setLabelDTO(labelDTO);
         }
     }
     /**

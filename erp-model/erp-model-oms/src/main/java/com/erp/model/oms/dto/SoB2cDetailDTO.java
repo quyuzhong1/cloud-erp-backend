@@ -118,6 +118,23 @@ public class SoB2cDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class LabelJsonDTO {
+        /**
+         * 速卖通已税
+         */
+        private String alreadyTaxed;
+        /**
+         * 菜鸟官方仓
+         */
+        private String logisticsWarehouseType;
+        /**
+         * 速卖通打标
+         */
+        private List<String> tagList;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class DetailLabelDTO {
 
         /**

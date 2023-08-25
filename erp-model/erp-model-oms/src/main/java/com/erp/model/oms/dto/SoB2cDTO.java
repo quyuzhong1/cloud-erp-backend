@@ -307,12 +307,33 @@ public class SoB2cDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class LabelJsonDTO {
+        /**
+         * 速卖通状态
+         */
+        private String aliexpressStatus;
+        /**
+         * 亚马逊状态
+         */
+        private String amazonStatus;
+        /**
+         * 亚马逊订单
+         */
+        private String FulfillmentChannel;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class LabelDTO {
 
         /**
-         * 速卖通风控
+         * 速卖通状态（RISK_CONTROL，IN_FROZEN）时冻结中
          */
-         private String aliexpressRisk;
+         private String aliexpressStatus;
+        /**
+         * 亚马逊状态（Unfulfillable）冻结中
+         */
+        private String amazonStatus;
         /**
          * 组合产品（映射SKU为组合产品）
          */
