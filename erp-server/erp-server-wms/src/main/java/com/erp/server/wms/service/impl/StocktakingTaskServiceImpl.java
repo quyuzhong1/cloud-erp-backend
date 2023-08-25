@@ -272,7 +272,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), rejectPairList, "状态变更");
 
-            stocktakingTaskDetailService.updateQty(taskDetailList);
+
         }
         return BatchResultDTO.success(code, OperationTypeEnum.SUBMIT);
 
@@ -382,12 +382,12 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         String comment = dto.getComment();
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个盘点任务单", approveType.getName()).concat("【%s】").concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.STOCKTAKING_TASK.getCode(), pairList, "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
-        // 查询盘点计划下其他单据是否全部审核完成
-        List<StocktakingTaskEntity> stocktakingTaskEntities = listBySourceId(entity.getSourceId());
-        // 全部审核完成 修改盘点计划单据状态
-        if (stocktakingTaskEntities.stream().allMatch(task -> Objects.equals(task.getStatus(), StocktakingStatusEnum.COMPLETED))) {
-            stocktakingPlanService.updateForStocktakingStatus(entity.getSourceId(), StocktakingStatusEnum.COMPLETED);
-        }
+//        // 查询盘点计划下其他单据是否全部审核完成
+//        List<StocktakingTaskEntity> stocktakingTaskEntities = listBySourceId(entity.getSourceId());
+//        // 全部审核完成 修改盘点计划单据状态
+//        if (stocktakingTaskEntities.stream().allMatch(task -> Objects.equals(task.getStatus(), StocktakingStatusEnum.COMPLETED))) {
+//            stocktakingPlanService.updateForStocktakingStatus(entity.getSourceId(), StocktakingStatusEnum.COMPLETED);
+//        }
         return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
@@ -463,6 +463,12 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             // 批量提审
             List<StocktakingProfitLossEntity> profitLossList = stocktakingProfitLossService.batchSave(list);
 
+        }
+        // 查询盘点计划下其他单据是否全部审核完成
+        List<StocktakingTaskEntity> stocktakingTaskEntities = listBySourceId(entity.getSourceId());
+        // 全部审核完成 修改盘点计划单据状态
+        if (stocktakingTaskEntities.stream().allMatch(task -> Objects.equals(task.getStatus(), StocktakingStatusEnum.COMPLETED))) {
+            stocktakingPlanService.updateForStocktakingStatus(entity.getSourceId(), StocktakingStatusEnum.COMPLETED);
         }
         return result;
     }

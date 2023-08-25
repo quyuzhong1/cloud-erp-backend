@@ -11,10 +11,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * listing
+ * SKU对照表管理
  *
  * @author Lambda
  * @since 2023-08-18
@@ -23,10 +24,15 @@ import java.util.List;
 @RequestMapping("/listing")
 public class ListingInfoController extends BaseController {
 
-
+    @Resource
     private ListingInfoService listingInfoService;
 
 
+    /**
+     * 根据类型获取对应 sku
+     * @param type
+     * @return
+     */
     @GetMapping("list")
     public ApiResult<List<ListingInfoDTO.ListDTO>> listByType(@RequestParam("type") String type) {
         List<ListingInfoDTO.ListDTO> list = listingInfoService.listByType(type);

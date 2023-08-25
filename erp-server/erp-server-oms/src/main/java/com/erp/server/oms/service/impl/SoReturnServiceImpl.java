@@ -800,6 +800,15 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             }
             return m;
         })));
+
+        List<String> collect = soReturnReceiveDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
+        List<String> ids = soReturnIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
+        soReturnDetailIds.addAll(ids);
+
+        if (CollectionUtils.isEmpty(soReturnDetailIds)) {
+            return new ArrayList<>();
+        }
+
         //根据未到货的退货单详情id获取退货单id
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnDetailService.listByIds(soReturnDetailIds);
         List<String> notAllReceiveSoReturnId = returnDetailEntityList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
@@ -834,6 +843,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(orderDetailIds);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
+        viewDTO.setTypeName(BillTypeEnum.getName(viewDTO.getType()));
         List<CustomerInfoEntity> customerInfoEntities = customerInfoService.list();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         soReturnEntity.setCustomerName(customerInfoEntity.getName());

@@ -12,6 +12,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -117,13 +118,14 @@ public class StocktakingTaskDetailEntity extends BaseEntity<StocktakingTaskDetai
         this.skuId = inventoryEntities.get(0).getSkuId();
         this.skuNo = inventoryEntities.get(0).getSkuNo();
         inventoryEntities.stream().forEach(item -> {
-            if (ObjectUtil.equals(InventoryStatusEnum.USABLE.getCode(), item.getDictInventoryStatus())){
+            if (ObjectUtil.equals(InventoryStatusEnum.USABLE.getCode(), item.getDictInventoryStatus())) {
                 this.usableQty = item.getQty();
             }
-            if (ObjectUtil.equals(InventoryStatusEnum.FROZEN.getCode(), item.getDictInventoryStatus())){
+            if (ObjectUtil.equals(InventoryStatusEnum.FROZEN.getCode(), item.getDictInventoryStatus())) {
                 this.frozenQty = item.getQty();
             }
         });
+        this.diffQty = 0- (Objects.isNull(usableQty)?0:usableQty) - (Objects.isNull(frozenQty)?0:frozenQty);
     }
 
     public StocktakingTaskDetailEntity(List<InventoryEntity> inventoryEntities, String id, String warehouseName, String uid, String username) {

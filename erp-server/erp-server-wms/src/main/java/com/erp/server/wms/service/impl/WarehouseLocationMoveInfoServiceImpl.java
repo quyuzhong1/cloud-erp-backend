@@ -94,7 +94,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "仓位移动主单" , warehouseLocationMoveInfoEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveInfoEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        // 新增明细
         warehouseLocationMoveDetailService.add(addDTO.getDetailList(), warehouseLocationMoveInfoEntity.getId());
         return warehouseLocationMoveInfoEntity.getId();
     }
@@ -120,7 +120,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         if(!save) {
             throw new ServiceException("仓位移动主单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        // 修改明细数据（包含增删改）
         warehouseLocationMoveDetailService.update(updateDTO.getDetailList(), warehouseLocationMoveInfoEntity.getId());
         // 记录主单操作日志
         log.info("编辑 开始记录仓位移动主单日志数据，单号：【{}】", warehouseLocationMoveInfoEntity.getCode());

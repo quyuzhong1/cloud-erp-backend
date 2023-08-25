@@ -1395,7 +1395,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         SoOutstockDTO.PdaPagingParamDTO params = pagingParamDTO.getParams();
         List<String> approveStatusList = params.getApproveStatusList();
-        if (approveStatusList.contains(ApproveStatusEnum.APPROVE)) {
+        if (approveStatusList.contains(ApproveStatusEnum.APPROVE.getCode())) {
             List<LocalDate> dateList = new ArrayList<>();
             LocalDate now = LocalDate.now();
             dateList.add(now.minusDays(30));

@@ -64,6 +64,15 @@ public interface SoReturnInstockDetailService extends SuperService<SoReturnInsto
     List<SoReturnInstockDetailEntity> listDetailByMainId(String id);
 
     /**
+     * 根据主键id查询详情表信息
+     * @Author Luo_WG
+     * @Date 2023/5/15 18:56
+     * @param ids ids
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnInstockDetailEntity>
+     **/
+    List<SoReturnInstockDetailEntity> listDetailByMainIds(List<String> ids);
+
+    /**
      * 根据来源详情id查询详情信息
      * @Author Luo_WG
      * @Date 2023/5/22 15:31

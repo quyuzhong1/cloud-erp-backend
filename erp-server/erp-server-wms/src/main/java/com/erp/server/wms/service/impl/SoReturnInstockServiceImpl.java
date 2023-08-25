@@ -936,7 +936,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         SoReturnInstockDTO.PdaPagingParam params = pagingParamDTO.getParams();
         List<String> approveStatusList = params.getApproveStatusList();
-        if (approveStatusList.contains(ApproveStatusEnum.APPROVE)) {
+        if (approveStatusList.contains(ApproveStatusEnum.APPROVE.getCode())) {
             List<LocalDate> dateList = new ArrayList<>();
             LocalDate now = LocalDate.now();
             dateList.add(now.minusDays(30));
@@ -951,10 +951,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //主键id
         List<String> ids = records.stream().map(req -> req.getId()).collect(Collectors.toList());
         //查询详情
-        List<SoReturnReceiveDetailEntity> detailEntityList = soReturnReceiveDetailService.listDetailByMainIds(ids);
+        List<SoReturnInstockDetailEntity> returnInstockDetailEntities = soReturnInstockDetailService.listDetailByMainIds(ids);
         for (SoReturnInstockDTO.PdaPagingView record : records) {
             record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
-            List<SoReturnReceiveDetailEntity> detailEntities = detailEntityList.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
+            List<SoReturnInstockDetailEntity> detailEntities = returnInstockDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
             List<SoReturnInstockDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, SoReturnInstockDTO.PdaItemDTO.class);
             record.setDetailCount(itemDTOList.size());
             record.setItemList(itemDTOList);

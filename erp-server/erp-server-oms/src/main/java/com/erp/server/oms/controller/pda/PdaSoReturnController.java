@@ -30,14 +30,14 @@ public class PdaSoReturnController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.SoReturnDTO.PdaSoReturn>>
      **/
-    @GetMapping(value = "/pdaList")
+    @PostMapping(value = "/pdaList")
     public ApiResult<List<SoReturnDTO.PdaSoReturn>> pdaList(@RequestBody SoReturnDTO.PdaSoReturnParam dto) {
         List<SoReturnDTO.PdaSoReturn> entityList = soReturnService.pdaList(dto);
         return success(entityList);
     }
 
     /**
-     * 查询采购单详情
+     * 查询退货单详情
      * @Author Luo_WG
      * @Date 2023/8/11 14:39
      * @param id
