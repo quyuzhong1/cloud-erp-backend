@@ -113,9 +113,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private SoB2cRefService soB2cRefService;
 
-    @Autowired
-    private SkuMappingService skuMappingService;
-
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -1238,8 +1235,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
        if (ObjectUtils.isEmpty(soB2cEntity)) {
            return;
        }
+       soB2cEntity.setBillDate(LocalDate.now());
+       BigDecimal  exchangeRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+       soB2cEntity.setExchangeRate(exchangeRate);
 
-
+       //店铺
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(soB2cEntity.getShopId());
+        if (ObjectUtils.isEmpty(shopInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92058);
+        }
+        soB2cEntity.setOrgId(shopInfoEntity.getSalesOrgId());
+        soB2cEntity.setOrgName(shopInfoEntity.getSalesOrgName());
     }
 
     /**

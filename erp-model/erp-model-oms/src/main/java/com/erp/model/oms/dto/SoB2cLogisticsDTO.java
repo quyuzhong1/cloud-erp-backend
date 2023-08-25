@@ -90,7 +90,7 @@ public class SoB2cLogisticsDTO implements Serializable {
         private LocalDateTime deliveryTime;
 
         /**
-        * 物流方式
+        * 物流方式 （logisticsMethod字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
         */
         @Size(max = 32,message = "物流方式最大长度不能超过32位")
         private String dictLogisticsMethod;
