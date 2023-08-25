@@ -27,6 +27,11 @@ public class WarehouseReceiveDetailDTO {
     public static class AddDTO {
 
         /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
          * 收货数量
          */
         @NotNull(message = "收货数量不能为空")
@@ -70,6 +75,11 @@ public class WarehouseReceiveDetailDTO {
          * 采购单详情表id
          */
         private String PurchaseOrderDetailId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
 
         /**
          * 收货数量
