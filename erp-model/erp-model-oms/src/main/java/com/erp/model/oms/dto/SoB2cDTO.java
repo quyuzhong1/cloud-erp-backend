@@ -264,6 +264,11 @@ public class SoB2cDTO implements Serializable {
         private String remark;
 
         /**
+         * 拦截状态
+         */
+        private Boolean isIntercept;
+
+        /**
         * 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         */
         private String abnormalType;
@@ -272,9 +277,25 @@ public class SoB2cDTO implements Serializable {
          * 异常原因名称
          */
         private String abnormalTypeName;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
 
         /**
          * 标签
+         */
+        private String label;
+        /**
+         * 标签对象
          */
         private LabelDTO labelDTO;
 
@@ -286,12 +307,33 @@ public class SoB2cDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class LabelJsonDTO {
+        /**
+         * 速卖通状态
+         */
+        private String aliexpressStatus;
+        /**
+         * 亚马逊状态
+         */
+        private String amazonStatus;
+        /**
+         * 亚马逊订单
+         */
+        private String FulfillmentChannel;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class LabelDTO {
 
         /**
-         * 速卖通风控
+         * 速卖通状态（RISK_CONTROL，IN_FROZEN）时冻结中
          */
-         private String aliexpressRisk;
+         private String aliexpressStatus;
+        /**
+         * 亚马逊状态（Unfulfillable）冻结中
+         */
+        private String amazonStatus;
         /**
          * 组合产品（映射SKU为组合产品）
          */
@@ -303,7 +345,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 手工订单（在ERP手动创建的订单）
          */
-         private String isManual;
+         private Boolean isManual;
         /**
          * 拦截订单（ERP发货拦截中，拦截成功，拦截失败的订单）
          */

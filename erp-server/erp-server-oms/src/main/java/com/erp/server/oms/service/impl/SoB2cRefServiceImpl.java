@@ -15,6 +15,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -74,6 +75,18 @@ public class SoB2cRefServiceImpl extends SuperServiceImpl<SoB2cRefMapper, SoB2cR
         return lambdaQuery()
                 .in(SoB2cRefEntity::getSourceId,sourceIdList)
                 .eq(ObjectUtils.isEmpty(typeEnum),SoB2cRefEntity::getType,typeEnum.getCode())
+                .list();
+    }
+
+    @Override
+    public List<SoB2cRefEntity> listBySourceIdOrTargetId(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery()
+                .in(SoB2cRefEntity::getSourceId,ids)
+                .or()
+                .in(SoB2cRefEntity::getTargetId,ids)
                 .list();
     }
 }

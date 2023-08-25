@@ -71,4 +71,12 @@ public interface SoB2cRefService extends SuperService<SoB2cRefEntity> {
      * @return List<SoB2cRefEntity>
      */
     List<SoB2cRefEntity> listBySourceIds(List<String> sourceIdList, SoB2cOptionTypeEnum typeEnum);
+    /**
+     * @description: 根据ids查询
+     * @author Will
+     * @date: 2023/8/25 10:53
+     * @param ids
+     * @return List<SoB2cRefEntity>
+     */
+    List<SoB2cRefEntity> listBySourceIdOrTargetId(List<String> ids);
 }

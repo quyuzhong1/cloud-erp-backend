@@ -103,7 +103,7 @@ public class ProductAccessoriesDTO implements Serializable {
         /**
          * 数量
          */
-        private String quantity;
+        private Integer quantity;
     }
 
 

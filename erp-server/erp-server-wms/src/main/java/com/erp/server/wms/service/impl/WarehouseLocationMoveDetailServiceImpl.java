@@ -10,7 +10,9 @@ import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.mapper.WarehouseLocationMoveDetailMapper;
+import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.WarehouseLocationMoveDetailService;
 import com.common.business.service.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
@@ -45,6 +47,8 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private InventoryService inventoryService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -106,6 +110,8 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     * 新增修改处理数据
     */
     private void handleData(List<WarehouseLocationMoveDetailEntity> list, String mainId) {
+//        Integer usableQty = inventoryService.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), detail.getSkuId(), detail.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
+
         for (WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity : list) {
 
         }
