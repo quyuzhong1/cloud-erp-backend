@@ -32,7 +32,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     * 单据编码
     */
     @TableField("code")
-        private String code;
+    private String code;
 
     /**
      * 订单日期
@@ -44,27 +44,27 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     * 审核状态
     */
     @TableField("approve_status")
-        private ApproveStatusEnum approveStatus;
+    private ApproveStatusEnum approveStatus;
     /**
     * 平台订单号
     */
     @TableField("platform_code")
-        private String platformCode;
+    private String platformCode;
     /**
     * 销售平台
     */
     @TableField("dict_platform")
-        private String dictPlatform;
+    private String dictPlatform;
     /**
     * 店铺
     */
     @TableField("shop_id")
-        private String shopId;
+    private String shopId;
     /**
     * 作废状态（false未作废，true已作废）
     */
     @TableField("invalid_status")
-        private Boolean invalidStatus;
+    private Boolean invalidStatus;
     /**
      * 作废类型（manual手动作废，automatic自动作废）
      */
@@ -74,127 +74,127 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     * 作废原因
     */
     @TableField("invalid_remark")
-        private String invalidRemark;
+    private String invalidRemark;
     /**
     * 订单状态
     */
     @TableField("bill_status")
-        private String billStatus;
+    private String billStatus;
     /**
     * 付款状态（待付款、已付款）
     */
     @TableField("pay_status")
-        private String payStatus;
+    private String payStatus;
     /**
     * 订单金额
     */
     @TableField("amount")
-        private BigDecimal amount;
+    private BigDecimal amount;
     /**
     * 币别（原币）
     */
     @TableField("currency")
-        private String currency;
+    private String currency;
     /**
     * 汇率
     */
     @TableField("exchange_rate")
-        private BigDecimal exchangeRate;
+    private BigDecimal exchangeRate;
     /**
     * 运费收入
     */
     @TableField("shipping_fee")
-        private BigDecimal shippingFee;
+    private BigDecimal shippingFee;
     /**
     * 付款时间
     */
     @TableField("pay_time")
-        private LocalDateTime payTime;
+    private LocalDateTime payTime;
     /**
     * 付款金额
     */
     @TableField("pay_amount")
-        private BigDecimal payAmount;
+    private BigDecimal payAmount;
     /**
     * 付款方式
     */
     @TableField("dict_pay_method")
-        private String dictPayMethod;
+    private String dictPayMethod;
     /**
     * 买家备注
     */
     @TableField("buyer_remark")
-        private String buyerRemark;
+    private String buyerRemark;
     /**
     * 订单备注
     */
     @TableField("remark")
-        private String remark;
+    private String remark;
     /**
     * 销售组织id
     */
     @TableField("org_id")
-        private String orgId;
+    private String orgId;
     /**
     * 销售组织名称
     */
     @TableField("org_name")
-        private String orgName;
+    private String orgName;
     /**
     * 是否拦截
     */
     @TableField("is_intercept")
-        private Boolean isIntercept;
+    private Boolean isIntercept;
     /**
     * 拦截备注
     */
     @TableField("intercept_remark")
-        private String interceptRemark;
+    private String interceptRemark;
     /**
     * 来源类型
     */
     @TableField("source_type")
-        private String sourceType;
+    private String sourceType;
     /**
     * 来源id
     */
     @TableField("source_id")
-        private String sourceId;
+    private String sourceId;
     /**
     * 来源编码
     */
     @TableField("source_code")
-        private String sourceCode;
+    private String sourceCode;
     /**
     * 标签json
     */
     @TableField("label_json")
-        private String labelJson;
+    private String labelJson;
     /**
     * 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
     */
     @TableField("abnormal_type")
-        private String abnormalType;
+    private String abnormalType;
     /**
     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
     */
     @TableField("sync_kingdee_status")
-        private String syncKingdeeStatus;
+    private String syncKingdeeStatus;
     /**
     * 同步时间
     */
     @TableField("sync_kingdee_time")
-        private LocalDateTime syncKingdeeTime;
+    private LocalDateTime syncKingdeeTime;
     /**
     * 金蝶数据id
     */
     @TableField("sync_kingdee_id")
-        private String syncKingdeeId;
+    private String syncKingdeeId;
     /**
     * 同步操作
     */
     @TableField("sync_operate")
-        private String syncOperate;
+    private String syncOperate;
 
 
     public static final String CODE = "code";

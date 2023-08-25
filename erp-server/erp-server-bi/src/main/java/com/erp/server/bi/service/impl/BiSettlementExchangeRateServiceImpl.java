@@ -306,6 +306,9 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         if (CurrencyEnum.CNY.getCurrencyCode().equals(sourceCurrencyCode)) {
             return BigDecimal.ONE;
         }
+        if (ObjectUtils.isEmpty(parseDate)) {
+            parseDate = LocalDate.now();
+        }
         List<BiSettlementExchangeRateEntity> biSettlementExchangeRateEntityList = this.baseMapper.findByCurrencyAndDate(parseDate, sourceCurrencyCode);
         if(CollUtil.isEmpty(biSettlementExchangeRateEntityList)) {
             return null;

@@ -1,15 +1,19 @@
 package com.erp.server.oms.controller.api;
 
 
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.entity.OrderCategoryEntity;
+import com.erp.server.oms.service.OrderCategoryService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 /**
- * <p>
- * 订单分类表 前端控制器
- * </p>
+ * 订单分类表
  *
  * @author Lambda
  * @since 2023-08-24
@@ -17,5 +21,20 @@ import com.common.core.controller.BaseController;
 @RestController
 @RequestMapping("/order-category-entity")
 public class OrderCategoryController extends BaseController {
+
+    @Resource
+    private OrderCategoryService orderCategoryService;
+
+
+    /**
+     * 获取订单分类列表
+     *
+     * @return
+     */
+    @GetMapping("/list")
+    public ApiResult<List<OrderCategoryEntity>> list() {
+        List<OrderCategoryEntity> list = orderCategoryService.list();
+        return success(list);
+    }
 
 }

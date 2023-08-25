@@ -75,7 +75,7 @@ public class SoB2cDTO implements Serializable {
           */
          private List<String> platformList;
          /**
-          * 店铺id集合
+          * 店铺id集合 http://172.16.100.11:3002/project/110/interface/api/16513
           */
          private List<String> shopIdList;
          /**
@@ -95,19 +95,19 @@ public class SoB2cDTO implements Serializable {
           */
          private List<String> approveStatusList;
          /**
-          * 订单状态
+          * 订单状态 （soB2cBillStatus字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
           */
          private List<String> billStatusList;
          /**
-          * 付款状态
+          * 付款状态 （soB2cPayStatus字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
           */
          private List<String> payStatusList;
          /**
-          * 分类集合
+          * 分类集合 http://172.16.100.11:3002/project/110/interface/api/19699
           */
          private List<String> categoryList;
          /**
-          * 标签集合
+          * 标签集合 （soB2cLable字典类型）http://172.16.100.11:3002/project/110/interface/api/13435
           */
          private List<String> labelList;
          /**
@@ -362,7 +362,7 @@ public class SoB2cDTO implements Serializable {
         private String billStatusName;
 
         /**
-         * 销售汇率 http://172.16.100.11:3002/project/74/interface/api/18151
+         * 销售汇率 http://172.16.100.11:3002/project/74/interface/api/19717
          */
         private BigDecimal exchangeRate;
 
