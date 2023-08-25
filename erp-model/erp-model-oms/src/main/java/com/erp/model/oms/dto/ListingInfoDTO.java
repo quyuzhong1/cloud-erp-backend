@@ -10,7 +10,7 @@ import java.io.Serializable;
 /**
  * @author Lambda
  * @Classname ListingInfoDTO
- * @Description TODO
+
  * @Date 2023-08-18 16:13
  * @Created by yl
  */

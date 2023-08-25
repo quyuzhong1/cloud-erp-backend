@@ -15,6 +15,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.oms.enums.PlatformDictEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -244,39 +245,52 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @param list
      */
     private void fillDb(List<ShopDTO.PagingViewDTO> list) {
-        List<String> accountList = list.stream().map(ShopDTO.PagingViewDTO::getAccount).collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoList = this.listByAccountList(accountList);
         //区域的id
-        List<String> areaIdList = shopInfoList.stream().map(ShopInfoEntity::getDictAreaId).collect(Collectors.toList());
+        List<String> areaIdList = list.stream().map(ShopDTO.PagingViewDTO::getDictAreaId).collect(Collectors.toList());
         //国家id
-        List<String> countryIdList = shopInfoList.stream().map(ShopInfoEntity::getDictCountryId).collect(Collectors.toList());
+        List<String> countryIdList = list.stream().map(ShopDTO.PagingViewDTO::getDictCountryId).collect(Collectors.toList());
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
         List<DictGlobalAreaEntity> areaList = sysDictFeign.listGlobalAreaByIds(areaIdList);
+
+        List<String> flagList = new ArrayList<>();
         for (ShopDTO.PagingViewDTO item : list) {
-            String account = item.getAccount();
-            List<ShopInfoEntity> shopList = shopInfoList.stream().filter(s -> s.getAccount().equals(account)).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(shopList)) {
-                continue;
-            }
             //平台
-            String dictPlatform = shopList.get(0).getDictPlatform();
+            String dictPlatform = item.getDictPlatform();
+            //账号
+            String account = item.getAccount();
+            //区域
+            String dictAreaId = item.getDictAreaId();
+
+            Boolean notContains = !flagList.contains(account);
             item.setDictPlatform(dictPlatform);
+            String areaId = item.getDictAreaId();
+            String areaName = areaList.stream().filter(a -> a.getId().equals(areaId)).
+                    map(DictGlobalAreaEntity::getRegionName).findFirst().orElse("");
+            item.setAreaName(areaName);
+            String countryId = item.getDictCountryId();
+            String countryName = countryList.stream().filter(a -> a.getId().equals(countryId)).
+                    map(DictCountryEntity::getNameCn).findFirst().orElse("");
+            item.setCountryName(countryName);
+            Boolean disabled = item.getDisabled();
+            String disabledName = disabled ? "禁用" : "启用";
+            item.setDisabledName(disabledName);
+            String authStatus = item.getAuthStatus();
+            item.setAuthStatusName(AuthStatusEnum.getName(authStatus));
 
-            List<ShopDTO.ViewDTO> detailList = BeanMapper.copyList(shopList, ShopDTO.ViewDTO.class);
-            for (ShopDTO.ViewDTO detail : detailList) {
-                String areaId = detail.getDictAreaId();
-                String areaName = areaList.stream().filter(a -> a.getId().equals(areaId)).
-                        map(DictGlobalAreaEntity::getRegionName).findFirst().orElse("");
-                detail.setAreaName(areaName);
-
-                String countryId = detail.getDictCountryId();
-                String countryName = countryList.stream().filter(a -> a.getId().equals(countryId)).
-                        map(DictCountryEntity::getNameCn).findFirst().orElse("");
-                detail.setCountryName(countryName);
+            if (notContains) {
+                item.setName("");
+                item.setCountryName("");
+                item.setDisabledName("");
+                item.setAuthStatusName("");
+                item.setCreateUserName("");
+                item.setCreateTime(null);
+                item.setAuthTime(null);
+                item.setUpdateTime(null);
+                item.setUpdateUserName("");
             }
-            item.setDictAreaId(detailList.get(0).getDictAreaId());
-            item.setAreaName(detailList.get(0).getAreaName());
-            item.setDetailList(detailList);
+
+            flagList.add(account);
+
         }
 
     }

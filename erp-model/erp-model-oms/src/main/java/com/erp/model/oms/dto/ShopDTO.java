@@ -31,11 +31,26 @@ public class ShopDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingViewDTO {
 
+        private String id;
+
 
         /**
          * 平台
          */
         private String dictPlatform;
+
+        /**
+         * 平台名称
+         */
+        private String platformName;
+
+
+
+
+        /**
+         * 店铺名称
+         */
+        private String name;
 
 
         /**
@@ -45,17 +60,97 @@ public class ShopDTO implements Serializable {
 
 
         /**
+         * 店铺负责人
+         */
+        private String chargeId;
+
+        /**
+         * 店铺负责人
+         */
+        private String chargeName;
+
+        /**
+         * 销售组织
+         */
+        private String salesOrgId;
+
+        /**
+         * 销售组织名
+         */
+        private String salesOrgName;
+
+        /**
          * 区域id
          */
         private String dictAreaId;
 
         /**
-         * 区域名称
+         * 区域名
          */
         private String areaName;
 
+        /**
+         * 国家id
+         */
+        private String dictCountryId;
 
-        private List<ShopDTO.ViewDTO> detailList;
+        /**
+         * 国家名
+         */
+        private String countryName;
+
+        /**
+         * 域名
+         */
+        private String domain;
+
+        /**
+         * 授权状态
+         */
+        private String authStatus;
+
+        /**
+         * 授权状态名
+         */
+        private String authStatusName;
+
+
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
+
+        /**
+         * 禁用状态名
+         */
+        private String disabledName;
+
+
+        /**
+         * 授权时间
+         */
+        private LocalDateTime authTime;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间时间
+         */
+        private LocalDateTime createTime;
+
+
+        /**
+         * 修改人
+         */
+        private String updateUserName;
+
+        /**
+         * 创建时间时间
+         */
+        private LocalDateTime updateTime;
 
 
     }

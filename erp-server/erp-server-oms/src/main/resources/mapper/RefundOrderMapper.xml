@@ -26,5 +26,33 @@
         <result column="reason" property="reason" />
         <result column="refund_time" property="refundTime" />
     </resultMap>
+    <select id="paging" resultType="com.erp.model.oms.dto.RefundOrderDTO$PagingViewDTO">
+        SELECT
+            id,
+            create_user_name,
+            create_time,
+            update_user_name,
+            update_time,
+            code,
+            dict_platform,
+            shop_id,
+            shop_name,
+            platform_order_no,
+            platform_refund_no,
+            refund_amount,
+            currency,
+            currency_symbol,
+            reason,
+            refund_time
+        FROM refund_order ro
+        WHERE ro.is_deleted =FALSE
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+
+
+
+    </select>
 
 </mapper>

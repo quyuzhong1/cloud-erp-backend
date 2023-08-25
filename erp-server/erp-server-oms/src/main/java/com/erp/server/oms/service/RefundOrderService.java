@@ -1,5 +1,8 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.RefundOrderDTO;
 import com.erp.model.oms.entity.RefundOrderEntity;
 import com.common.business.service.SuperService;
 
@@ -13,4 +16,13 @@ import com.common.business.service.SuperService;
  */
 public interface RefundOrderService extends SuperService<RefundOrderEntity> {
 
+    
+    /**
+     * 售后订单分页
+     * @author yl
+     * @date 2023-08-25 14:09
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.RefundOrderDTO.PagingViewDTO>
+     */
+    PagingVO<RefundOrderDTO.PagingViewDTO> paging(PagingDTO<RefundOrderDTO.PagingParamDTO> dto);
 }
