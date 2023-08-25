@@ -535,6 +535,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Override
     public List<SkuMappingDTO.ListSkuDTO> listBySkuNoList(List<String> skuNoList) {
 
+        List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
+        if (CollectionUtils.isEmpty(skuList)) {
+            return Collections.EMPTY_LIST;
+        }
         List<SkuMappingEntity> list = lambdaQuery().in(SkuMappingEntity::getProductSkuNo, skuNoList).eq(SkuMappingEntity::getIsExpire,Boolean.FALSE).list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
@@ -544,28 +548,25 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(listingList)) {
             return Collections.EMPTY_LIST;
         }
-        List<String> skuIdList = list.stream().map(SkuMappingEntity::getProductSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-
         List<SkuMappingDTO.ListSkuDTO> resultList = new ArrayList<>();
-        for (SkuMappingEntity skuMappingEntity : list) {
+        for (SkuVO skuVO : skuList) {
             SkuMappingDTO.ListSkuDTO listSkuDTO = new SkuMappingDTO.ListSkuDTO();
-            listSkuDTO.setProductSkuId(skuMappingEntity.getProductSkuId());
-            listSkuDTO.setProductSkuNo(skuMappingEntity.getProductSkuNo());
-            listSkuDTO.setProductName(skuMappingEntity.getProductName());
+            listSkuDTO.setProductSkuId(skuVO.getSkuId());
+            listSkuDTO.setProductSkuNo(skuVO.getSkuNo());
+            listSkuDTO.setProductName(skuVO.getSkuName());
+            listSkuDTO.setAdvicePrice(skuVO.getRetailPrice());
+            listSkuDTO.setTaxCost(MathUtil.compareTo(skuVO.getActualTaxCost(),MathUtil.ZERO) == MathUtil.ZERO ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost() );
+            //查询sku映射表
+            SkuMappingEntity skuMappingEntity = list.stream().filter(obj -> obj.getProductSkuId().equals(obj.getProductSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(skuMappingEntity)) {
+                continue;
+            }
             ListingInfoEntity listingInfoEntity = listingList.stream().filter(obj -> obj.getId().equals(skuMappingEntity.getListingId()) && TypeEnum.WAREHOUSE.getCode().equals(obj.getType())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(listingInfoEntity)) {
                 listSkuDTO.setWarehouseSkuNo(listingInfoEntity.getSkuNo());
                 listSkuDTO.setWarehouseProductName(listingInfoEntity.getProductName());
                 listSkuDTO.setPlatformSkuNo(listingInfoEntity.getPlatformSkuNo());
                 listSkuDTO.setPlatformProductName(listingInfoEntity.getPlatformProductName());
-            }
-            if (CollectionUtils.isEmpty(skuList)) {
-                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(skuMappingEntity.getProductSkuId())).findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(skuVO)) {
-                    listSkuDTO.setAdvicePrice(skuVO.getRetailPrice());
-                    listSkuDTO.setTaxCost(MathUtil.compareTo(skuVO.getActualTaxCost(),MathUtil.ZERO) == MathUtil.ZERO ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost() );
-                }
             }
             resultList.add(listSkuDTO);
         }
