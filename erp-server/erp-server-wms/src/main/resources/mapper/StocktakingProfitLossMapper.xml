@@ -34,6 +34,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$PagingViewDTO">
         SELECT
         id,
+        id AS mainId,
         code,
         source_id,
         source_code,

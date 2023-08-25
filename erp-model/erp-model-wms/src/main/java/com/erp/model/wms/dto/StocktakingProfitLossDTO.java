@@ -168,6 +168,8 @@ public class StocktakingProfitLossDTO implements Serializable {
 
 
         private String id;
+
+        private String mainId;
         /**
          * 单号
          */
