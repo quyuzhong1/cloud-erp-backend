@@ -1983,10 +1983,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<WarehouseReceiveDetailEntity> receiveDetailEntities = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
         //获取未全部到货的采购详情id
         List<String> purchaseOrderDetailIds = new ArrayList<>();
+        List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
         receiveDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getPurchaseOrderDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
             int receiveQty = m.stream().mapToInt(WarehouseReceiveDetailEntity::getReceiveQty).sum();
             PurchaseOrderDetailEntity detailEntity = detailEntityList.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
-            if (receiveQty < detailEntity.getPurchaseQty()) {
+            //退货补货数量
+            Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            if (receiveQty < detailEntity.getPurchaseQty() + returnQty) {
                 purchaseOrderDetailIds.add(m.get(MathUtil.ZERO).getPurchaseOrderDetailId());
             }
             return m;
