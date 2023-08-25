@@ -1395,7 +1395,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(warehouseReceiveEntity.getPurchaseOrderId());
         //获取采购单供应商信息
         PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
-
+        List<PurchaseOrderDetailEntity> detailEntityList = scmTaskFeign.listByPurchaseOrderIds(Arrays.asList(purchaseOrderEntity.getId()));
         //查询供应商信息
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(warehouseReceiveEntity.getSupplierId());
         viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
@@ -1450,7 +1450,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         }
 
         Map<String, WarehouseReceiveDetailDTO.ViewDTO> collect = detailViewDTOS.stream().collect(Collectors.groupingBy(n -> n.getSkuNo(), Collectors.collectingAndThen(Collectors.toList(), m -> {
-            int purchaseQty = m.stream().mapToInt(WarehouseReceiveDetailDTO.ViewDTO::getPurchaseQty).sum();
+            Integer purchaseQty = detailEntityList.stream().filter(obj -> obj.getSkuNo().equals(m.get(0).getSkuNo())).map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+
+//            int purchaseQty = m.stream().mapToInt(WarehouseReceiveDetailDTO.ViewDTO::getPurchaseQty).sum();
             int receiveQty = m.stream().mapToInt(WarehouseReceiveDetailDTO.ViewDTO::getReceiveQty).sum();
             int unReceiveQty = m.stream().mapToInt(WarehouseReceiveDetailDTO.ViewDTO::getUnReceiveQty).sum();
             int exceedQty = m.stream().mapToInt(WarehouseReceiveDetailDTO.ViewDTO::getExceedQty).sum();
@@ -1504,5 +1506,23 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         poReceiveList.sort(Comparator.comparing(WarehouseReceiveDTO.PdaPoReceive::getCode).reversed());
         list.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
         return poReceiveList;
+    }
+
+    @Override
+    public Boolean pdaAddAndSubmit(WarehouseReceiveDTO.AddDTO dto) {
+        String id = this.pdaAdd(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        return this.submit(Arrays.asList(id));
+    }
+
+    @Override
+    public Boolean pdaUpdateAndSubmit(WarehouseReceiveDTO.UpdateDTO dto) {
+        Boolean update = this.pdaUpdate(dto);
+        if (!update) {
+            throw new ServiceException(ApiError.ERROR_1020);
+        }
+        return this.submit(Arrays.asList(dto.getId()));
     }
 }
