@@ -254,4 +254,22 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.PdaPoReceive>
      **/
     List<WarehouseReceiveDTO.PdaPoReceive> pdaList(WarehouseReceiveDTO.PdaPoReceiveParam dto);
+
+    /**
+     * 新增提交
+     * @Author Luo_WG
+     * @Date 2023/4/6 18:52
+     * @param dto dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaAddAndSubmit(WarehouseReceiveDTO.AddDTO dto);
+
+    /**
+     * 修改提交
+     * @Author Luo_WG
+     * @Date 2023/4/6 18:52
+     * @param dto dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaUpdateAndSubmit(WarehouseReceiveDTO.UpdateDTO dto);
 }
