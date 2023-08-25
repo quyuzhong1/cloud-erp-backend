@@ -12,6 +12,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -123,8 +124,8 @@ public class StocktakingTaskDetailEntity extends BaseEntity<StocktakingTaskDetai
             if (ObjectUtil.equals(InventoryStatusEnum.FROZEN.getCode(), item.getDictInventoryStatus())) {
                 this.frozenQty = item.getQty();
             }
-            this.diffQty = 0- usableQty - frozenQty;
         });
+        this.diffQty = 0- (Objects.isNull(usableQty)?0:usableQty) - (Objects.isNull(frozenQty)?0:frozenQty);
     }
 
     public StocktakingTaskDetailEntity(List<InventoryEntity> inventoryEntities, String id, String warehouseName, String uid, String username) {
