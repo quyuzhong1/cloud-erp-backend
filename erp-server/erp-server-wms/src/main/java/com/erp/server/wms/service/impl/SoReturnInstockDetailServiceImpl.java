@@ -244,11 +244,14 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
      * @Date 2023/7/25 10:33
      **/
     private Boolean notReturnOrderUpdate(SoReturnInstockDTO.Update dto) {
+        //获取退货签收单详情表id
+        List<String> sourceDetailIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailList = soReturnReceiveDetailService.listDetailBySourceDetailIds(sourceDetailIds);
+
         List<String> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(SoReturnInstockDetailDTO.Update::getId).collect(Collectors.toList());
         List<String> skuIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Update::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIds);
-        //获取退货签收单详情表id
-        List<String> sourceDetailIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
+
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailByIds(sourceDetailIds);
         List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = this.listDetailBySourceDetailIds(sourceDetailIds);
         List<SoReturnInstockDetailEntity> list = new ArrayList<>();
@@ -263,6 +266,11 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             this.removeByIds(deleteIds);
         }
         for (SoReturnInstockDetailDTO.Update detailDto : dto.getDetailList()) {
+            SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
+            SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailList.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
+            if (ObjectUtil.isEmpty(soReturnReceiveDetailEntity)) {
+                throw new ServiceException(ApiError.SO_RETURN_RECEIVE_SKU_NOT_EXIST, skuVO.getSkuNo());
+            }
             SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
             //实退 入库数量
             Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -277,7 +285,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             }
             detailEntity.setMainId(dto.getId());
             detailEntity.setSkuId(detailEntity.getSkuId());
-            SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
+
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setRealQty(detailDto.getRealQty());
             detailEntity.setReceiveQty(detailDto.getReceiveQty());
