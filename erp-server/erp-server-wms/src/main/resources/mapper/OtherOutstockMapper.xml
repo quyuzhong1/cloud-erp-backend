@@ -124,6 +124,9 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.billDateList != null and params.billDateList.size > 0">
+                and oo.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oo.bill_date
+            </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
@@ -235,6 +238,9 @@
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
+        </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and oo.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oo.bill_date
         </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

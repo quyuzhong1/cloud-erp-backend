@@ -66,7 +66,6 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
         if(!save) {
             throw new ServiceException(ApiError.LOCATION_MOVE_DETAIL_ADD);
         }
-
     }
 
     /**
@@ -129,7 +128,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
                     && req.getSkuId().equals(warehouseLocationMoveDetailEntity.getSkuId())
                     && req.getWarehouseLocation().equals(warehouseLocationMoveDetailEntity.getOutWarehouseLocation())).findFirst().orElse(new InventoryDTO.PdaInventoryDTO());
             if (warehouseLocationMoveDetailEntity.getQty() > inventoryDTO.getUsableQty()) {
-                throw new ServiceException(ApiError.ERROR_1040);
+                throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR);
             }
         }
 

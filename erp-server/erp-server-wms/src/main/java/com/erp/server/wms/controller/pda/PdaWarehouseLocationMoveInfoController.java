@@ -315,23 +315,4 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
         return success(warehouseLocationMoveInfoService.view(id));
     }
 
-    /**
-    * 导出Excel数据
-    * @author Luo_WG
-    * @date:  2023-08-24
-    * @param dto
-    * @param response
-    * @return
-    */
-    @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:warehouseLocationMoveInfo:export",
-            tableAlias = ""
-    )
-    public void exportList(@RequestBody @Validated WarehouseLocationMoveInfoDTO.ExportDTO dto, HttpServletResponse response) {
-        warehouseLocationMoveInfoService.exportList(dto, response);
-    }
-
-
 }

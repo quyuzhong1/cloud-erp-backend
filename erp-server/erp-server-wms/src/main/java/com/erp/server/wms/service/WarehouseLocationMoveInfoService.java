@@ -126,16 +126,6 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
     BatchResultDTO cancelProcess(String id);
 
     /**
-    * 导出Excel
-    * @author Luo_WG
-    * @date: 2023-08-24
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(WarehouseLocationMoveInfoDTO.ExportDTO dto, HttpServletResponse response);
-
-    /**
     * 审核通过回调方法
     * @param dto
     * @param entity
