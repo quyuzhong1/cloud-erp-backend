@@ -601,7 +601,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             for (StocktakingTaskDTO.CheckResultDTO detail : list) {
                 sb.append("SKU为: ");
                 sb.append(detail.getSkuNo()+" ");
-                sb.append("盘点库存为0");
+                sb.append("盘点库存为 0");
             }
             addModuleOperateLog.setContent(sb.toString());
             addModuleOperateLog.setModuleType(moduleType);
