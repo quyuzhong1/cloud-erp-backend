@@ -269,6 +269,17 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_SUBCONTRACT_CHANGE_TAG(1025, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_subcontract_change_tag"),
 
+    /**
+     *盘盈单同步到金蝶
+     */
+    KINGDEE_STOCKTAKING_PROFIT_TAG(1026, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_stocktaking_profit_tag"),
+
+    /**
+     *盘亏单同步到金蝶
+     */
+    KINGDEE_STOCKTAKING_LOSS_TAG(1027, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_stocktaking_loss_tag"),
+
+
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
     /**

@@ -342,6 +342,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Transactional(rollbackFor = Exception.class)
     public Boolean saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type) {
         SaveResult save;
+        log.info("param>>>>>>>{}",param);
         String msg = "新增数据";
         if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
             msg = "修改数据";

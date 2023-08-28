@@ -65,7 +65,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         if (ApiModuleTypeEnum.SO_CHANGE.getCode().toString().equals(code)) {
             soChangeService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
         }
-        //销售变更
+        //客户联系人
         if (ApiModuleTypeEnum.CUSTOMER_CONTACT.getCode().toString().equals(code)) {
             customerContactService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
         }

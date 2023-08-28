@@ -40,6 +40,7 @@ import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
+import com.erp.model.wms.entity.PoInstockEntity;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
@@ -399,7 +400,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //删除明细数据
         transferInfoDetailService.removeByMainIds(ids);
         //删除操作日志
-        operateLogService.removeByBusinessIds(ids);
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", commonService.getUserInfo().getUserName(), list.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "删除操作");
         //删除主表数据
         return this.removeByIds(ids);
     }

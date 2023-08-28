@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -34,10 +35,7 @@ import com.erp.model.wms.dto.OtherOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.OtherOutstockCustomerEntity;
-import com.erp.model.wms.entity.OtherOutstockDetailEntity;
-import com.erp.model.wms.entity.OtherOutstockEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.OutstockTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -334,7 +332,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //删除明细数据
         otherOutstockDetailService.removeByMainIds(ids);
         //删除操作日志
-        operateLogService.removeByBusinessIds(ids);
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的其他出库单", commonService.getUserInfo().getUserName(), list.stream().map(OtherOutstockEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), pairList, "删除操作");
         //删除主表数据
         return this.removeByIds(ids);
     }

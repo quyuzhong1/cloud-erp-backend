@@ -199,11 +199,11 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
             pageIndex++;
         }
         List<KingdeeTransferDirectEntity> entityList = resultAll.stream().map(entity ->
-                        BeanUtil.toBeanIgnoreError(entity, KingdeeTransferDirectEntity.class)).distinct()
+                BeanUtil.toBeanIgnoreError(entity, KingdeeTransferDirectEntity.class)).distinct()
                 .collect(Collectors.toList());
 
         Map<String, List<KingdeeTransferDirectItemEntity>> itemMap = resultAll.stream().map(entity ->
-                        BeanUtil.toBeanIgnoreError(entity, KingdeeTransferDirectItemEntity.class))
+                BeanUtil.toBeanIgnoreError(entity, KingdeeTransferDirectItemEntity.class))
                 .collect(Collectors.groupingBy(KingdeeTransferDirectItemEntity::getFBillNo));
         entityList.stream().peek(m -> m.setItemList(itemMap.get(m.getFBillNo())))
                 .distinct()

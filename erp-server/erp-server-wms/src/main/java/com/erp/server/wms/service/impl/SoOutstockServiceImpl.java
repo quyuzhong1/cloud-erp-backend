@@ -455,7 +455,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<InOutStockDTO> members = baseMapper.listInventoryInOut(allList);
         for (InOutStockDTO member : members) {
             member.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
-            member.setBillDate(LocalDate.now());
         }
         if (CollectionUtils.isNotEmpty(members)) {
             inventoryInOutStockDTO.setMembers(members);

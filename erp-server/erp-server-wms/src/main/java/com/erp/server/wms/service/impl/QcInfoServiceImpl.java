@@ -1030,7 +1030,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             throw new ServiceException(ApiError.ERROR_99022);
         }
         //删除操作日志
-        operateLogService.removeByBusinessIds(ids);
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的质检单", commonService.getUserInfo().getUserName(), qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "删除操作");
         Boolean result = this.removeByIds(ids);
         qcResultService.removeByMainIds(ids);
         qcRemarkService.removeByMainIds(ids);
@@ -2208,24 +2210,24 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     public void reQcSample(QcInfoDTO.ReQcDTO dto) {
         dto.setIds(dto.getIds().stream().distinct().collect(Collectors.toList()));
         List<QcResultEntity> qcResultlist = qcResultService.getByMainIdList(dto.getIds());
-        Map<String, QcResultEntity> qcResultMap = qcResultlist.stream().collect(Collectors.toMap(QcResultEntity::getMainId, Function.identity()));
-        dto.getIds().stream().forEach(id -> {
+        Map<String,QcResultEntity> qcResultMap = qcResultlist.stream().collect(Collectors.toMap(QcResultEntity::getMainId, Function.identity()));
+        dto.getIds().stream().forEach(id->{
             QcInfoEntity qcInfoEntity = super.getById(id);
-            Optional.ofNullable(qcInfoEntity).orElseThrow(() -> new ServiceException("质检单信息不存在"));
+            Optional.ofNullable(qcInfoEntity).orElseThrow(()->new ServiceException("质检单信息不存在"));
 
             // 只有已质检才允许操作
             QcBillStatusEnum qcBillStatusEnum = qcInfoEntity.getQcStatus();
-            if (!Objects.equals(qcBillStatusEnum, QcBillStatusEnum.FINISH_QC)) {
+            if(!Objects.equals(qcBillStatusEnum, QcBillStatusEnum.FINISH_QC)) {
                 throw new ServiceException("只有已质检才允许操作");
             }
 
             // 是否库内抽检为是才可以操作
             QcResultEntity qcResultEntity = qcResultMap.get(id);
-            if (Objects.isNull(qcResultEntity) || !Objects.equals(qcResultEntity.getIsInsideQc(), Boolean.TRUE)) {
+            if(Objects.isNull(qcResultEntity) || !Objects.equals(qcResultEntity.getIsInsideQc(), Boolean.TRUE)) {
                 throw new ServiceException("只有库内抽检为是才允许操作");
             }
             // 添加备注
-            if (StrUtils.isNotEmpty(dto.getRemark())) {
+            if(StrUtils.isNotEmpty(dto.getRemark())) {
                 QcRemarkEntity qcRemarkEntity = new QcRemarkEntity();
                 qcRemarkEntity.setMainId(id);
                 qcRemarkEntity.setRemark(dto.getRemark());

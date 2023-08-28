@@ -57,11 +57,13 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         // dto转换为 processDefinitionEntity 和 processBusinessEntity 两个实体
         ProcessDefinitionEntity processDefinitionEntity = new ProcessDefinitionEntity(dto);
         // 不存在则新增
+        Boolean isSave = Boolean.FALSE;
         if (null == entity) {
             // 保存 processDefinitionEntity
             if (!(save(processDefinitionEntity))) {
                 throw new ServiceException(ApiError.SAVE_PROCESS_ERROR);
             }
+            isSave = Boolean.TRUE;
         }else {
             processDefinitionEntity.setId(entity.getId());
             processDefinitionEntity.setIsDeploy(Boolean.FALSE);
@@ -71,7 +73,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
             }
         }
         // 保存 processBusinessEntity
-        processBusinessService.addOrUpdate(dto);
+        processBusinessService.addOrUpdate(dto, isSave);
         return Boolean.TRUE;
     }
 
@@ -137,7 +139,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     public Boolean exportExcel(ProcessDefinitionDTO.QueryExportDTO dto, HttpServletResponse response) {
         // 查询数据
         List<ProcessDefinitionDTO.ExportDTO> list = this.baseMapper.query(dto);
-        list.stream().peek(x -> x.setApproveStatusName(x.getApproveStatusCode().getName())).collect(Collectors.toList());
+//        list.stream().peek(x -> x.setApproveStatusName(x.getApproveStatusCode().getName())).collect(Collectors.toList());
         // 导出数据
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;

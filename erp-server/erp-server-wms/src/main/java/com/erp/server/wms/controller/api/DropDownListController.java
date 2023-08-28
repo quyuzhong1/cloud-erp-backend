@@ -1,20 +1,18 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.entity.QcRuleEntity;
-import com.erp.model.wms.enums.QcBillStatusEnum;
-import com.erp.model.wms.enums.QcResultEnum;
-import com.erp.model.wms.enums.QcTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.server.wms.pull.service.ProductInfoService;
 import com.erp.server.wms.service.QcRuleService;
+import com.erp.server.wms.service.WarehouseLocationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
@@ -37,6 +35,8 @@ public class DropDownListController extends BaseController {
 
     @Autowired
     private ProductInfoService productInfoService;
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
 
 
     /**
@@ -119,6 +119,32 @@ public class DropDownListController extends BaseController {
         return success(productInfoService.getNotEmptySpuNos());
     }
 
+    /**
+     * 单据类型下拉
+     *
+     * @return
+     */
+    @GetMapping("/billType/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listBillTypeDropDown(@RequestParam(value = "type",required = true)String type) {
+        List<BillTypeEnum> billTypeList=BillTypeEnum.listByType(type);
+        List<BaseDropDownDTO.CommonDTO> result = billTypeList.stream()
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getCode(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    @GetMapping("/warehouseArea/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> ListWarehouseArea(@RequestParam(value = "warehouseId",required = false) String warehouseId){
+        // 0 返回库区
+        return success(warehouseLocationService.getWarehouseArea(warehouseId,  WarehouseLocationTypeEnum.AREA, ""));
+    }
+
+    @GetMapping("/warehouseLocation/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> ListWarehouseLocation(@RequestParam(value = "warehouseId",required = false) String warehouseId,
+                                                                            @RequestParam(value = "areaCode",required = false) String areaId){
+        // 1 返回库位
+        return success(warehouseLocationService.getWarehouseArea(warehouseId, WarehouseLocationTypeEnum.LOCATION, areaId));
+    }
 
 
 }

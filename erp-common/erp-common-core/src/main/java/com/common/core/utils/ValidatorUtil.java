@@ -1,5 +1,6 @@
 package com.common.core.utils;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.google.common.collect.Maps;
@@ -11,6 +12,7 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -234,4 +236,14 @@ public class ValidatorUtil {
 		}
 	}
 
+	public static void isNotNull(Object obj, ApiError apiError, String... args) {
+		if(Objects.isNull(obj)) {
+			throw new ServiceException(apiError, args);
+		}
+	}
+	public static void isNotBlank(String str, ApiError apiError, String... args) {
+		if(StrUtil.isBlank(str)) {
+			throw new ServiceException(apiError, args);
+		}
+	}
 }

@@ -21,7 +21,6 @@
          approve_status AS approveStatus,
          is_enable_location as isEnableLocation
       FROM  warehouse  WHERE is_deleted=false
-
         <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
             AND create_user_id IN
             <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
@@ -132,5 +131,114 @@
 
 
 
+    </select>
+    <select id="pagingNoPermission" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingNoPermissionDTO">
+        SELECT
+        id AS warehouseId,
+        name,
+        type_id AS typeId ,
+        disabled,
+        org_id AS orgId,
+        kingdee_warehouse_code AS code
+        FROM warehouse  WHERE is_deleted=false
+        <if test="params.name !=null  and params.name!=''">
+            AND  name ILIKE concat('%', #{params.name} ,'%')
+        </if>
+        <if test="params.code !=null  and params.code!=''">
+            AND  kingdee_warehouse_code ILIKE concat('%', #{params.code} ,'%')
+        </if>
+        <if test="params.typeIdList !=null and params.typeIdList.size>0">
+            AND type_id IN
+            <foreach collection="params.typeIdList" item="typeId" open="(" separator="," close=")">
+                #{typeId}
+            </foreach>
+        </if>
+        <if test="params.orgIds !=null and params.orgIds.size>0">
+            AND org_id IN
+            <foreach collection="params.orgIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        "name" ASC
+    </select>
+    <select id="pagingProduct" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingProductViewDTO">
+        SELECT
+        MAX(inv.id) as inventoryId,
+        pi.spu_no as spuNo,
+        pi.category as category,
+        pd.id as skuId,
+        pd.sku_no as skuNo,
+        pd.images_url as productImgUrl,
+        pd."name" as productName,
+        inv.warehouse_id as warehouseId,
+        wh."name" as warehouseName,
+        COALESCE(wl.code,'') as warehouseLocation,
+        COALESCE(wlt.code,'') as warehouseArea,
+        COALESCE(wlt."name",'') as warehouseAreaName,
+        SUM(CASE WHEN inv.dict_inventory_status ='usable' THEN inv.qty ELSE 0 END) as usableQty,
+        SUM(CASE WHEN inv.dict_inventory_status ='frozen' THEN inv.qty ELSE 0 END) as frozenQty,
+        inv.org_id as orgId,
+        MAX(tf.trade_time) as latestSalesTime
+        FROM product_detail pd
+        LEFT JOIN product_info pi on pd.product_id = pi."id"  and pi.is_deleted = false
+        LEFT JOIN inventory inv on pd.id = inv.sku_id and inv.is_deleted = false AND inv.dict_inventory_status IN ( 'usable', 'frozen' )
+        LEFT JOIN warehouse wh on inv.warehouse_id = wh.id and wh.is_deleted = false
+        LEFT JOIN warehouse_location wl on inv.warehouse_location = wl.code and wl.is_deleted = false AND wl.warehouse_id = inv.warehouse_id
+        LEFT JOIN warehouse_location wlt on wl.parent_id = wlt.id and wlt.is_deleted = false
+        LEFT JOIN (select inventory_id, max(trade_time) as trade_time from transaction_flow
+        where is_deleted=false
+        <if test="params.saleTimeList !=null and params.saleTimeList.size>0">
+            AND trade_time >= #{params.saleTimeList[0]} and (#{params.saleTimeList[1]}) > trade_time
+        </if>
+        group by inventory_id) as tf on inv.id = tf.inventory_id
+        where pd.is_deleted = false
+        and pi.property not in ('服务','费用')
+        and pd.status = 2
+        AND inv.org_id is not null
+        <if test="params.saleTimeList !=null and params.saleTimeList.size>0">
+            and tf.trade_time is not null
+        </if>
+        <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
+            AND inv.warehouse_id IN
+            <foreach collection="params.warehouseIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.spuNoList !=null and params.spuNoList.size>0">
+            AND pi.spu_no IN
+            <foreach collection="params.spuNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.categoryIds !=null and params.categoryIds.size>0">
+            AND pi.category_id IN
+            <foreach collection="params.categoryIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNoList != null and params.skuNoList.size>0">
+            AND pd.sku_no IN
+            <foreach collection="params.skuNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuStr !=null  and params.skuStr!=''">
+            AND (pd.name ILIKE concat('%', #{params.skuStr} ,'%')
+            or  pd.sku_no ILIKE concat('%', #{params.skuStr} ,'%'))
+        </if>
+
+        GROUP BY spuNo,category,skuId, skuNo, productImgUrl,productName,warehouseId,warehouseName,warehouseLocation,warehouseArea,warehouseAreaName,inv.org_id
+        ORDER BY skuNo ASC,warehouseName ASC, inventoryId ASC
     </select>
 </mapper>
