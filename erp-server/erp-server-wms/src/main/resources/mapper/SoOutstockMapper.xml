@@ -327,6 +327,11 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.actualDeliveryDateList !=null and params.actualDeliveryDateList.size>0">
+            AND so.actual_delivery_date >= #{params.actualDeliveryDateList[0]} and
+            (#{params.actualDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > so.actual_delivery_date
+        </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -350,7 +355,11 @@
                 #{item}
             </foreach>
         </if>
-
+        <if test="params.actualDeliveryDateList !=null and params.actualDeliveryDateList.size>0">
+            AND so.actual_delivery_date >= #{params.actualDeliveryDateList[0]} and
+            (#{params.actualDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > so.actual_delivery_date
+        </if>
         <if test="params.invalidStatus != null">
             and so.invalid_status = #{params.invalidStatus}
         </if>

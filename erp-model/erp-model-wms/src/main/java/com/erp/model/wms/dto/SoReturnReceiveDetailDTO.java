@@ -136,6 +136,10 @@ public class SoReturnReceiveDetailDTO implements Serializable {
          */
         private String skuNo;
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+        /**
          * 产品名称
          */
         private String productName;

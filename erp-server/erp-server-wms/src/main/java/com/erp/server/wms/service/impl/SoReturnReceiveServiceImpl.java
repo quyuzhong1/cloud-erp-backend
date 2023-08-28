@@ -378,7 +378,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //获取sku的id集合
         List<String> skuIdList = detailEntityList.stream().map(SoReturnReceiveDetailEntity::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
-        List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);
+        List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIdList);
         //退货单详情
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(Arrays.asList(entity.getSourceId()));
         //销售单详情id集合
@@ -392,8 +392,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             SoReturnReceiveDetailDTO.View detailView = new SoReturnReceiveDetailDTO.View();
             BeanMapperUtils.copy(detailEntity, detailView);
             //产品sku信息
-            ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(detailEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-            detailView.setProductName(productDetailEntity.getName());
+            SkuVO productDetailEntity = skuInfoByIds.stream().filter(entityClass -> entityClass.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
+            detailView.setProductName(productDetailEntity.getSkuName());
+            detailView.setVariantProperty(productDetailEntity.getVariantProperty());
             SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
 
             //销售单信息

@@ -127,6 +127,9 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and sri.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sri.bill_date
+        </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -248,6 +251,7 @@
             sri.id,
             sri.code,
             sri.approve_status,
+            sri.warehouse_name,
             sri.seller_name,
             sri.create_time
         FROM so_return_instock sri
@@ -260,6 +264,9 @@
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
+        </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and sri.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sri.bill_date
         </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
