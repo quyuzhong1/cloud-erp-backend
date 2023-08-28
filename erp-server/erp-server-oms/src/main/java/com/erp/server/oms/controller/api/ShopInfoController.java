@@ -10,6 +10,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,9 @@ public class ShopInfoController extends BaseController {
 
     @Resource
     private ShopCostService shopCostService;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
 
     /**
@@ -183,5 +187,16 @@ public class ShopInfoController extends BaseController {
         return success(result);
     }
 
+
+    /**
+     * 获取到向商户申请授权码
+     *
+     * @return
+     */
+    @GetMapping("/getShopAuthorizeUrl")
+    public ApiResult getShopAuthUrl() {
+
+        return success();
+    }
 
 }

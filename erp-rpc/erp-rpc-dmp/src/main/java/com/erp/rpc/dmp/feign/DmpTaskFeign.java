@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -79,4 +80,15 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/getKingdeeSourceCode")
     List<String> getKingdeeSourceCode(@RequestBody Map<String,Object> conditon);
+
+
+    /**
+     * 根据id获取到第三方应用信息
+     * @author yl
+     * @date 2023-08-28 16:22
+     * @param id
+     * @return com.erp.model.dmp.entity.CfgAppClientEntity
+     */
+    @PostMapping("feign/getCfgAppClient")
+    CfgAppClientEntity getCfgAppClientById(@RequestBody String id);
 }

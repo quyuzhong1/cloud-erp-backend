@@ -9,6 +9,7 @@ import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -51,8 +52,13 @@ public class DmpFeignController extends BaseController {
 
     @Autowired
     private BiSettlementExchangeRateService biSettlementExchangeRateService;
+
     @Resource
     private PlatformApiTaskService platformApiTaskService;
+
+
+    @Resource
+    private CfgAppClientService cfgAppClientService;
 
 
     @PostMapping("/getShopById")
@@ -143,5 +149,17 @@ public class DmpFeignController extends BaseController {
     @PostMapping("/createPlatformTask")
     public Boolean createPlatformTask(@RequestBody @Valid PlatformTaskDTO.AddDTO dto){
         return platformApiTaskService.createPlatformTask(dto);
+    }
+
+    /**
+     * 根据id获取到第三方应用信息
+     * @author yl
+     * @date 2023-08-28 16:22
+     * @param id
+     * @return com.erp.model.dmp.entity.CfgAppClientEntity
+     */
+    @PostMapping("/getCfgAppClientById")
+    public CfgAppClientEntity getCfgAppClientById(String id){
+          return cfgAppClientService.getById(id);
     }
 }
