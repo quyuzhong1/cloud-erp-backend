@@ -200,6 +200,11 @@ public class StocktakingProfitLossDTO implements Serializable {
          */
         private ApproveStatusEnum approveStatus;
 
+        /**
+         * 单据状态
+         */
+        private String approveStatusName;
+
 
         /**
          * 盘点人
