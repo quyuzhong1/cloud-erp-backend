@@ -255,7 +255,7 @@
             AND sm.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > sm.create_time
         </if>
-        ORDER BY sm.id,sm.create_time DESC
+        ORDER BY sm.id DESC
 
     </select>
 
