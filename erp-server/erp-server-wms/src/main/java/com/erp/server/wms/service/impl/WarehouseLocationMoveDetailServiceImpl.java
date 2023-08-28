@@ -6,17 +6,17 @@ import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.mapper.WarehouseLocationMoveDetailMapper;
-import com.erp.server.wms.service.InventoryService;
-import com.erp.server.wms.service.WarehouseLocationMoveDetailService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -49,20 +49,22 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     private CommonService commonService;
     @Autowired
     private InventoryService inventoryService;
+    @Autowired
+    private WarehouseService warehouseService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void add(List<WarehouseLocationMoveDetailDTO.AddDTO> addDTO, String mainId) {
-        List<WarehouseLocationMoveDetailEntity> warehouseLocationMoveDetailEntities = BeanMapperUtils.copyList(WarehouseLocationMoveDetailEntity.class, addDTO);
+    public void add(WarehouseLocationMoveInfoDTO.AddDTO addDTO, String mainId) {
+        List<WarehouseLocationMoveDetailEntity> warehouseLocationMoveDetailEntities = BeanMapperUtils.copyList(WarehouseLocationMoveDetailEntity.class, addDTO.getDetailList());
 
         // 数据处理
-        handleData(warehouseLocationMoveDetailEntities, mainId);
+        handleData(warehouseLocationMoveDetailEntities, mainId, addDTO.getWarehouseId());
 
         log.info("开始新增仓位移动明细单");
         boolean save = super.saveBatch(warehouseLocationMoveDetailEntities);
         if(!save) {
-            throw new ServiceException("仓位移动明细单保存失败");
+            throw new ServiceException(ApiError.LOCATION_MOVE_DETAIL_ADD);
         }
 
     }
@@ -72,14 +74,14 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(List<WarehouseLocationMoveDetailDTO.UpdateDTO> detailList, String mainId) {
-        if (CollectionUtils.isEmpty(detailList)) {
+    public Boolean update(WarehouseLocationMoveInfoDTO.UpdateDTO dto, String mainId) {
+        if (CollectionUtils.isEmpty(dto.getDetailList())) {
             throw new ServiceException(ApiError.ERROR_1040, SourceTypeEnum.SO_B2C.getName());
         }
 
         //原明细数据
         List<WarehouseLocationMoveDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
-        List<String> deleteIds = getDeleteIds(detailList, oldList);
+        List<String> deleteIds = getDeleteIds(dto.getDetailList(), oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<WarehouseLocationMoveDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
@@ -88,9 +90,9 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             this.removeByIds(deleteIds);
         }
 
-        List<WarehouseLocationMoveDetailEntity> list = BeanMapperUtils.copyList(WarehouseLocationMoveDetailEntity.class, detailList);
+        List<WarehouseLocationMoveDetailEntity> list = BeanMapperUtils.copyList(WarehouseLocationMoveDetailEntity.class, dto.getDetailList());
         // 数据处理
-        handleData(list, mainId);
+        handleData(list, mainId, dto.getWarehouseId());
         return this.saveOrUpdateBatch(list);
     }
 
@@ -109,11 +111,26 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<WarehouseLocationMoveDetailEntity> list, String mainId) {
-//        Integer usableQty = inventoryService.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), detail.getSkuId(), detail.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
+    private void handleData(List<WarehouseLocationMoveDetailEntity> list, String mainId, String warehouseId) {
+        List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<String> outWarehouseLocations = list.stream().map(req -> req.getOutWarehouseLocation()).distinct().collect(Collectors.toList());
+        //获取仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+        InventoryDTO.PdaSearchParamDTO paramDTO = new InventoryDTO.PdaSearchParamDTO();
+        paramDTO.setOrgId(warehouseEntity.getOrgId());
+        paramDTO.setWarehouseId(warehouseId);
+        paramDTO.setSkuIds(skuIds);
+        paramDTO.setWarehouseLocations(outWarehouseLocations);
+        List<InventoryDTO.PdaInventoryDTO> inventoryByParam = inventoryService.getInventoryByParam(paramDTO);
 
         for (WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity : list) {
-
+            InventoryDTO.PdaInventoryDTO inventoryDTO = inventoryByParam.stream().filter(req -> req.getOrgId().equals(warehouseEntity.getOrgId())
+                    && req.getWarehouseId().equals(warehouseId)
+                    && req.getSkuId().equals(warehouseLocationMoveDetailEntity.getSkuId())
+                    && req.getWarehouseLocation().equals(warehouseLocationMoveDetailEntity.getOutWarehouseLocation())).findFirst().orElse(new InventoryDTO.PdaInventoryDTO());
+            if (warehouseLocationMoveDetailEntity.getQty() > inventoryDTO.getUsableQty()) {
+                throw new ServiceException(ApiError.ERROR_1040);
+            }
         }
 
         //添加操作日志

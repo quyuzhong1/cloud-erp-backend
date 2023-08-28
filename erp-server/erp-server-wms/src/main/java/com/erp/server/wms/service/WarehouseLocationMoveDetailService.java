@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.common.business.service.SuperService;
@@ -26,17 +27,17 @@ public interface WarehouseLocationMoveDetailService extends SuperService<Warehou
     * @param mainId
     * @return
     */
-    void add(List<WarehouseLocationMoveDetailDTO.AddDTO> dto, String mainId);
+    void add(WarehouseLocationMoveInfoDTO.AddDTO dto, String mainId);
 
     /**
     * 修改
     * @author Luo_WG
     * @date: 2023-08-24
-    * @param detailList
+    * @param dto
     * @param mainId
     * @return
     */
-    Boolean update(List<WarehouseLocationMoveDetailDTO.UpdateDTO> detailList, String mainId);
+    Boolean update(WarehouseLocationMoveInfoDTO.UpdateDTO dto, String mainId);
 
     /**
      * 根据主表id查询详情

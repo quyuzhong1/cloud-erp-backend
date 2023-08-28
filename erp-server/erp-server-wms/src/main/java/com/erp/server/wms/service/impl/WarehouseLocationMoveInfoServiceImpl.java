@@ -8,13 +8,12 @@ import cn.hutool.core.util.StrUtil;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveInfoEntity;
 import com.erp.server.wms.mapper.WarehouseLocationMoveInfoMapper;
-import com.erp.server.wms.service.WarehouseLocationMoveDetailService;
-import com.erp.server.wms.service.WarehouseLocationMoveInfoService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
@@ -71,6 +70,10 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     private WorkflowFeign workflowFeign;
     @Resource
     private WarehouseLocationMoveDetailService warehouseLocationMoveDetailService;
+    @Resource
+    private InventoryService inventoryService;
+    @Resource
+    private WarehouseService warehouseService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -95,7 +98,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "仓位移动主单" , warehouseLocationMoveInfoEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveInfoEntity.getId(), "新增操作");
         // 新增明细
-        warehouseLocationMoveDetailService.add(addDTO.getDetailList(), warehouseLocationMoveInfoEntity.getId());
+        warehouseLocationMoveDetailService.add(addDTO, warehouseLocationMoveInfoEntity.getId());
         return warehouseLocationMoveInfoEntity.getId();
     }
 
@@ -121,7 +124,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
             throw new ServiceException("仓位移动主单保存失败");
         }
         // 修改明细数据（包含增删改）
-        warehouseLocationMoveDetailService.update(updateDTO.getDetailList(), warehouseLocationMoveInfoEntity.getId());
+        warehouseLocationMoveDetailService.update(updateDTO, warehouseLocationMoveInfoEntity.getId());
         // 记录主单操作日志
         log.info("编辑 开始记录仓位移动主单日志数据，单号：【{}】", warehouseLocationMoveInfoEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), warehouseLocationMoveInfoEntity.getCode(), "仓位移动主单");

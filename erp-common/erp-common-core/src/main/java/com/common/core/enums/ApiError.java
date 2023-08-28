@@ -82,6 +82,7 @@ public enum ApiError implements Serializable {
     TIME_NOT_NULL(1043,"{}不能为空"),
     SAVE_BILL_FAIL(1044, "保存{}单据失败"),
     START_GE_END_ERROR(1045, "{}不能大于等于{}"),
+    ERROR_EXCHANGE_RATE_NOT_EXIST(1046, "日期【{}】币别【{}】下未找到汇率"),
 
 
 
@@ -440,7 +441,11 @@ public enum ApiError implements Serializable {
     ERROR_95241(95241, "审核中和审核通过状态不可删除"),
     ERROR_95242(95242, "Sku已被其他单据引用不能删除"),
     ERROR_95243(95243, "请检查产品必填项是否填写完成"),
+    ERROR_BOM_SKU_REPEAT(95244,"父级sku【{}】和子级sku不能重复"),
     ERROR_BOM_PARENT_SKU_REPEAT(95245,"父级sku【{}】已生成BOM"),
+    ERROR_BOM_COMBINATION_STATE(95246,"组合品状态有误"),
+    ERROR_BOM_COMBINATION_PARENT_SKU_NAME_DIFFERENT(95247,"组合产品SKU【{}】对应名称不一致"),
+
 
 
     /**
@@ -714,10 +719,12 @@ public enum ApiError implements Serializable {
     ERROR_SUB_CHILD_LOCATION_BLANK(99088,"委外订单子SKU【{}】仓位不能为空"),
     // 已下推退货入库单不能反审核
     ERROR_RETURN_ORDER_PUSHED(99089, "已下推退货入库单，不能反审核"),
+    ERROR_WAREHOUSE_NOT_EXIST_ORG(99090, "仓库【{}】下未发现库存组织"),
 
     STOCKTAKING_TASK_EXIST(99090 , "仓库【{}】库位【{}】 SKU【{}】 已存在盘点任务"),
     ERROR_SO_RETURN_INSTOCK_NOT_GENERATE(99090,"退货入库单【{}】未审核通过，不支持下推"),
     ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL(99091,"采购退货单退货扣款类型退款单价必填"),
+    LOCATION_MOVE_DETAIL_ADD(99091 , "仓位移动明细单保存失败"),
 
 
 
@@ -787,6 +794,41 @@ public enum ApiError implements Serializable {
     ERROR_92058(92058,"店铺不存在"),
     ERROR_92059(92059,"要货日期必须大于单据日期"),
     ERROR_KINGDEE_CODE_NOT_EXIST(92059,"金蝶单号不存在"),
+    ERROR_SO_RETURN_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
+    ERROR_SO_B2C_NOT_EXIST(92061,"未找到B2C销售订单"),
+    ERROR_SO_B2C_LOGISTICS_NOT_EXIST(92062,"未找到B2C销售订单物流信息"),
+    ERROR_SO_B2C_RECEIVER_NOT_EXIST(92062,"未找到B2C销售订单买家信息"),
+    ERROR_SO_B2C_HAND_DISTRIBUTION(92063,"只有待配货和配货中数据允许手动配货"),
+    ERROR_SO_B2C_LOGISTICS_CODE(92064,"B2C销售订单【{}】不支持获取物流单号"),
+    ERROR_SO_B2C_DETAIL_NOT_EXIST(92065,"未找到B2C销售订单明细信息"),
+    ERROR_SO_B2C_DELIVERY_WAREHOUSE_COMPLEX(92066,"B2C销售订单【{}】存在多个发货仓库不支持提交发货"),
+    ERROR_SO_B2C_NOT_INVENTORY(92067,"B2C销售订单【{}】未找到可用库存"),
+    ERROR_SO_B2C_SKU_NOT_INVENTORY(92068,"B2C销售订单【{}】SKU【{}】仓库【{}】未找到可用库存"),
+    ERROR_SO_B2C_PLATFORM_CODE_COMPLEX(92069,"合并订单销售平台必须相同"),
+    ERROR_SO_B2C_SHOP_COMPLEX(92070,"合并订单店铺必须相同"),
+    ERROR_SO_B2C_CURRENCY_COMPLEX(92071,"合并订单币别必须相同"),
+    ERROR_SO_B2C_LOGISTICS_METHOD_COMPLEX(92072,"合并订单物流方式必须相同"),
+    ERROR_SO_B2C_BUYER_NAME_COMPLEX(92073,"合并订单买家必须相同"),
+    ERROR_SO_B2C_RECEIVER_NAME_COMPLEX(92074,"合并订单收货人必须相同"),
+    ERROR_SO_B2C_ADDRESS_COMPLEX(92075,"合并订单收货地址必须相同"),
+    ERROR_SO_B2C_WAREHOUSE_COMPLEX(92076,"合并订单发货仓库必须相同"),
+    ERROR_SO_B2C_CANCEL_MERGE_NOT_EXIST(92077,"订单【{}】非合并订单不支持取消合并"),
+    ERROR_SO_B2C_MERGE_NOT_SPLIT(92078,"订单【{}】属于合并订单不支持拆分"),
+    ERROR_SO_B2C_CHILD_SPLIT_NOT_SPLIT(92079,"订单【{}】属于拆分后子单不支持再次拆分"),
+    ERROR_SO_B2C_SPLIT_QTY(92080,"订单【{}】SKU【{}】拆分数量【{}】不能大于原数量【{}】"),
+    ERROR_SO_B2C_NOT_SPLIT(92081,"B2C销售订单【{}】非拆分后订单不支持取消拆分"),
+    ERROR_SO_B2C_NOT_SPLIT_EXIST(92082,"未找到拆分前B2C销售订单【{}】"),
+    ERROR_SO_B2C_REF_CATEGORY_NOT_EXIST(92083,"未找到B2C销售订单分类信息"),
+    ERROR_SO_B2C_NOT_INVALID(92084, "单据【{}】不支持【{}】"),
+    ERROR_SO_B2C_INVALID(92085, "单据【{}】未作废不支持作废"),
+    ERROR_SO_B2C_MERGE_SIZE(92086, "请至少选择2条订单数据进行合并"),
+    ERROR_SO_B2C_PARENT_NOT_SPLIT(92081,"B2C销售订单【{}】非拆分前订单不支持取消拆分"),
+    ERROR_SO_B2C_CHILD_NOT_EXIST(92082,"B2C销售订单【{}】未发现拆分后单据"),
+    ERROR_SO_B2C_CHILD_HAS_INVALID(92083,"拆分后B2C销售订单【{}】已作废不支持取消拆分"),
+    ERROR_SO_B2C_CHILD_HAS_APPROVE(92084,"拆分后B2C销售订单【{}】已审核不支持取消拆分"),
+
+
+
 
     ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),

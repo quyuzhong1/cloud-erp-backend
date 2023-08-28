@@ -312,47 +312,6 @@
         group by inv.warehouse_id,inv.org_id,inv.sku_id,inv.warehouse_location,ind.instock_batch_date
         ) m group by warehouse_id,org_id,sku_id,warehouse_location order by real_inventory desc
     </select>
-    <select id="listByStocktakingType" resultType="com.erp.model.wms.entity.InventoryEntity">
-        SELECT
-            inv.id,
-            inv.org_id,
-            inv.warehouse_id,
-            inv.warehouse_location,
-            inv.sku_id,
-            inv.sku_no,
-            inv.dict_inventory_status,
-            inv.qty
-        FROM "inventory" inv
-        WHERE inv.is_deleted = false and inv.dict_inventory_status in ('usable','frozen')
-        AND ( inv.qty != 0 OR (inv.qty = 0
-            AND EXISTS (
-                SELECT 1 FROM transaction_flow tf
-                WHERE tf.inventory_id = inv.id AND tf.is_deleted = FALSE
-                <if test="null != startTime and null != endTime">
-                    AND tf.trade_time &gt;= #{startTime} AND tf.trade_time &lt; #{endTime}
-                </if>
-            )))
-        <if test="type != null and type == 'byWarehouse' and null != params and params.size > 0">
-              and inv.warehouse_id in
-            <foreach collection="params" item="item" open="(" close=")" separator=",">
-                #{item.warehouseId}
-            </foreach>
-        </if>
-        <if test="type != null and type == 'byLocation' and null != params and params.size > 0">
-            and (inv.warehouse_id, inv.warehouse_location)  in
-            <foreach collection="params" item="item" open="(" close=")" separator=",">
-                (#{item.warehouseId}, #{item.warehouseLocation})
-            </foreach>
-        </if>
-        <if test="type != null and type == 'bySku' and null != params and params.size > 0">
-            and (inv.warehouse_id, inv.warehouse_location, inv.sku_id) in
-            <foreach collection="params" item="item" open="(" close=")" separator=",">
-                (#{item.warehouseId}, #{item.warehouseLocation}, #{item.skuId})
-            </foreach>
-        </if>
-        GROUP BY inv.id
-        order by inv.warehouse_id, inv.warehouse_location, inv.sku_id, inv.dict_inventory_status
-    </select>
 
     <select id="getInventoryByWarehouseId" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaHomeInventoryBalanceDTO">
         SELECT
@@ -393,4 +352,75 @@
         )tt ON t.warehouse_id = tt.warehouse_id
     </select>
 
+    <select id="listByStocktakingType" resultType="com.erp.model.wms.entity.InventoryEntity">
+        SELECT
+            inv.id,
+            inv.org_id,
+            inv.warehouse_id,
+            inv.warehouse_location,
+            inv.sku_id,
+            inv.sku_no,
+            inv.dict_inventory_status,
+            inv.qty
+        FROM "inventory" inv
+        LEFT JOIN transaction_flow tf ON inv."id" = tf.inventory_id
+        AND tf.is_deleted = FALSE
+        AND tf.trade_time BETWEEN #{startTime} AND #{endTime}
+        WHERE inv.is_deleted = false and inv.dict_inventory_status in ('usable','frozen')
+        AND ( inv.qty > 0 OR (inv.qty = 0 AND tf.inventory_id IS NOT NULL) )
+        <if test="type != null and type == 'byWarehouse' and null != params and params.size > 0">
+              and inv.warehouse_id in
+            <foreach collection="params" item="item" open="(" close=")" separator=",">
+                #{item.warehouseId}
+            </foreach>
+        </if>
+        <if test="type != null and type == 'byLocation' and null != params and params.size > 0">
+            and (inv.warehouse_id, inv.warehouse_location)  in
+            <foreach collection="params" item="item" open="(" close=")" separator=",">
+                (#{item.warehouseId}, #{item.warehouseLocation})
+            </foreach>
+        </if>
+        <if test="type != null and type == 'bySku' and null != params and params.size > 0">
+            and (inv.warehouse_id, inv.warehouse_location, inv.sku_id) in
+            <foreach collection="params" item="item" open="(" close=")" separator=",">
+                (#{item.warehouseId}, #{item.warehouseLocation}, #{item.skuId})
+            </foreach>
+        </if>
+        GROUP BY inv.id
+        order by inv.warehouse_id, inv.warehouse_location, inv.sku_id, inv.dict_inventory_status
+    </select>
+
+    <select id="getInventoryByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryDTO">
+        SELECT
+            it.warehouse_id,
+            it.org_id,
+            it.sku_id,
+            it.dict_inventory_status,
+            sum(case when itv.dict_inventory_status = 'usable' then it.qty else 0 end) as usableQty,
+            sum(case when itv.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozenQty,
+            sum(case when itv.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransitQty,
+            sum(case when itv.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqcQty
+        FROM "inventory" itv
+        WHERE itv.is_deleted = FALSE
+        <if test="params.skuIds != null and params.skuIds.size > 0">
+            and itv.sku_id in
+            <foreach collection="params.skuIds" item="skuId" open="(" close=")" separator=",">
+                #{skuId}
+            </foreach>
+        </if>
+
+        <if test="params.warehouseId != null and params.warehouseId != ''">
+            and itv.warehouse_id = #{params.warehouseId}
+        </if>
+        <if test="params.orgId != null and params.orgId != ''">
+            and itv.org_id in #{params.orgId}
+        </if>
+        <if test="params.warehouseLocations != null and params.warehouseLocations.size > 0">
+            and itv.warehouse_location in
+            <foreach collection="params.warehouseLocations" item="warehouseLocation" open="(" close=")" separator=",">
+                #{warehouseLocation}
+            </foreach>
+        </if>
+        GROUP BY it.warehouse_id, it.org_id, it.sku_id, it.dict_inventory_status
+    </select>
 </mapper>

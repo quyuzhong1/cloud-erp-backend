@@ -248,28 +248,6 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         @Size(max = 19,message = "仓库id最大长度不能超过19位")
         private String warehouseId;
 
-        /**
-        * 仓库名称
-        */
-        @NotBlank(message = "仓库名称不能为空")
-        @Size(max = 255,message = "仓库名称最大长度不能超过255位")
-        private String warehouseName;
-
-        /**
-        * 库存组织id
-        */
-        @NotBlank(message = "库存组织id不能为空")
-        @Size(max = 19,message = "库存组织id最大长度不能超过19位")
-        private String inventoryOrgId;
-
-        /**
-        * 库存组织名称
-        */
-        @NotBlank(message = "库存组织名称不能为空")
-        @Size(max = 255,message = "库存组织名称最大长度不能超过255位")
-        private String inventoryOrgName;
-
-
     }
 
 
