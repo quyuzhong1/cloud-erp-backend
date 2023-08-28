@@ -401,7 +401,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (StringUtils.isBlank(listingId)) {
             throw new ServiceException(warehouseSkuNo + "未找到");
         }
-        checkWarehouseSkuExist("", listingId,warehouseId);
+        checkWarehouseSkuExist("", listingId, warehouseId, skuId);
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         if (CollectionUtils.isEmpty(warehouseList)) {
             throw new ServiceException("仓库不存在");
@@ -505,7 +505,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (StringUtils.isBlank(listingId)) {
             throw new ServiceException(warehouseSkuNo + "未找到");
         }
-        checkWarehouseSkuExist(id, listingId,warehouseId);
+        checkWarehouseSkuExist(id, listingId, warehouseId,productSkuId);
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         if (CollectionUtils.isEmpty(warehouseList)) {
             throw new ServiceException("仓库不存在");
@@ -533,7 +533,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
 
-
     @Override
     public List<SkuMappingDTO.ListSkuDTO> listBySkuNoList(List<String> skuNoList) {
 
@@ -541,7 +540,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(skuList)) {
             return Collections.EMPTY_LIST;
         }
-        List<SkuMappingEntity> list = lambdaQuery().in(SkuMappingEntity::getProductSkuNo, skuNoList).eq(SkuMappingEntity::getIsExpire,Boolean.FALSE).list();
+        List<SkuMappingEntity> list = lambdaQuery().in(SkuMappingEntity::getProductSkuNo, skuNoList).eq(SkuMappingEntity::getIsExpire, Boolean.FALSE).list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
@@ -557,7 +556,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             listSkuDTO.setProductSkuNo(skuVO.getSkuNo());
             listSkuDTO.setProductName(skuVO.getSkuName());
             listSkuDTO.setAdvicePrice(skuVO.getRetailPrice());
-            listSkuDTO.setTaxCost(MathUtil.compareTo(skuVO.getActualTaxCost(),MathUtil.ZERO) == MathUtil.ZERO ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost() );
+            listSkuDTO.setTaxCost(MathUtil.compareTo(skuVO.getActualTaxCost(), MathUtil.ZERO) == MathUtil.ZERO ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost());
             //查询sku映射表
             SkuMappingEntity skuMappingEntity = list.stream().filter(obj -> obj.getProductSkuId().equals(obj.getProductSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuMappingEntity)) {
@@ -631,20 +630,30 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     /**
      * 检查库存sku 是否存在
+     *
      * @param id
      * @param listingId
      * @param warehouseId
      */
-    private void checkWarehouseSkuExist(String id, String listingId, String warehouseId) {
+    private void checkWarehouseSkuExist(String id, String listingId, String warehouseId, String skuId) {
         LambdaQueryWrapper<SkuMappingEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SkuMappingEntity::getListingId, listingId);
         queryWrapper.eq(SkuMappingEntity::getIsExpire, Boolean.FALSE);
-        queryWrapper.eq(SkuMappingEntity::getWarehouseId,warehouseId);
+        queryWrapper.eq(SkuMappingEntity::getType,TypeEnum.WAREHOUSE);
+        queryWrapper.eq(SkuMappingEntity::getWarehouseId, warehouseId);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(SkuMappingEntity::getId, id);
         }
         long count = this.count(queryWrapper);
         if (count > 0) {
+            throw new ServiceException("同仓库库存SKU只能对应一个产品SKU");
+        }
+
+        List<SkuMappingEntity> list = this.lambdaQuery().eq(SkuMappingEntity::getWarehouseId, warehouseId).
+                eq(SkuMappingEntity::getProductSkuId, skuId).
+                eq(SkuMappingEntity::getType,TypeEnum.WAREHOUSE).list();
+        long skuCount = list.stream().map(SkuMappingEntity::getListingId).distinct().count();
+        if (skuCount > 1) {
             throw new ServiceException("SKU在该仓库已关联其他库存SKU，请更换其他SKU");
         }
     }

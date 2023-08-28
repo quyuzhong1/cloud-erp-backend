@@ -22,7 +22,7 @@ public class SkuMappingWarehouseImportExcelDTO {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "库存SKU", index = 0)
-    @FieldValid(fieldName = "库存SKU", isNotBlank = true)
+    @FieldValid(fieldName = "库存SKU", isNotBlank = true ,maxLength =100 )
     private String warehouseSkuNo;
 
     /**
@@ -30,7 +30,7 @@ public class SkuMappingWarehouseImportExcelDTO {
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "库存产品名称", index = 1)
-    @FieldValid(fieldName = "库存产品名称", isNotBlank = true)
+    @FieldValid(fieldName = "库存产品名称", isNotBlank = true,maxLength =200)
     private String warehouseProductName;
 
 
@@ -39,7 +39,7 @@ public class SkuMappingWarehouseImportExcelDTO {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "仓库名称", index = 2)
-    @FieldValid(fieldName = "仓库名称", isNotBlank = true)
+    @FieldValid(fieldName = "仓库名称", isNotBlank = true,maxLength =200)
     private String warehouseName;
 
 
@@ -48,7 +48,7 @@ public class SkuMappingWarehouseImportExcelDTO {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "SKU", index = 3)
-    @FieldValid(fieldName = "sku")
+    @FieldValid(fieldName = "sku",isNotBlank = true,maxLength =200)
     private String skuNo ;
 
     /**

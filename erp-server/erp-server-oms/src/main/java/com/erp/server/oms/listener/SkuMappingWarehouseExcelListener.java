@@ -142,10 +142,11 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         if (CollectionUtils.isNotEmpty(excelList)) {
             errorMsgList.add("同仓库库存SKU只能对应一个产品SKU");
         }
-        long count = addSkuMappingList.stream().filter(a -> a.getListingId().equals(finalListingId) &&
-                warehouseId.equals(a.getWarehouseId())).count();
-        if (count > 0) {
-            errorMsgList.add("同仓库库存SKU只能对应一个产品SKU");
+        long count = skuMappingList.stream().filter(a -> warehouseType.equals(a.getType()) &&
+                warehouseId.equals(a.getWarehouseId())
+                &&sku.getSkuId().equals(a.getProductSkuId())).count();
+        if (count > 1) {
+            errorMsgList.add("SKU在该仓库已关联其他库存SKU，请更换其他SKU");
         }
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
@@ -176,6 +177,8 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         //生效时间
         add.setEffectiveTime(now);
         add.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
+        //校验用
+        skuMappingList.add(add);
         addSkuMappingList.add(add);
     }
 
