@@ -8,8 +8,10 @@ import cn.hutool.core.util.StrUtil;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveInfoEntity;
 import com.erp.server.wms.mapper.WarehouseLocationMoveInfoMapper;
 import com.erp.server.wms.service.*;
@@ -176,7 +178,6 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         log.info("提交 开始修改仓位移动主单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
         log.info("提交 开始启动仓位移动主单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
@@ -223,8 +224,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -238,7 +238,6 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         LoginUser userInfo = commonService.getUserInfo();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
         approveDTO.setBusinessKey(ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
@@ -263,7 +262,6 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         WarehouseLocationMoveInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到仓位移动主单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -279,7 +277,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         if (Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
+
         return true;
     }
 
@@ -291,8 +289,8 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
-
+        // 删除明细数据
+        warehouseLocationMoveDetailService.removeByMainId(id);
         // 删除主单数据
         log.info("删除 开始删除仓位移动主单主单数据，id：【{}】", id);
         super.removeById(id);
@@ -352,7 +350,9 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         WarehouseLocationMoveInfoDTO.ViewDTO data = BeanMapperUtils.map(WarehouseLocationMoveInfoDTO.ViewDTO.class, warehouseLocationMoveInfoEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
+        List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(Arrays.asList(data.getId()));
+        List<WarehouseLocationMoveDetailDTO.ViewDTO> detailList = BeanMapper.copyList(detailEntityList, WarehouseLocationMoveDetailDTO.ViewDTO.class);
+        data.setDetailList(detailList);
         return data;
     }
     /**

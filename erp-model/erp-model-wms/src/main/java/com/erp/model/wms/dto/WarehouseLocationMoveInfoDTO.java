@@ -200,7 +200,10 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         */
         private LocalDateTime approveTime;
 
-
+        /**
+         * 明细信息
+         */
+        private List<WarehouseLocationMoveDetailDTO.ViewDTO> detailList;
     }
 
     /**
