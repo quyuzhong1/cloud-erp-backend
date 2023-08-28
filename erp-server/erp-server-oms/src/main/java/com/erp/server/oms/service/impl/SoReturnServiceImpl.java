@@ -788,21 +788,23 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             return new ArrayList<>();
         }
         List<String> soReturnIds = pdaSoReturns.stream().map(req -> req.getId()).collect(Collectors.toList());
-        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveFeign.listDetailBySourceIds(soReturnIds);
+        List<SoReturnDetailEntity> soReturnDetailEntityList = soReturnDetailService.listDetailByMainIds(soReturnIds);
+        List<String> srdIds = soReturnDetailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveFeign.listDetailBySourceDetailIds(srdIds);
 
         //获取未全部到货的退货单详情id
         List<String> soReturnDetailIds = new ArrayList<>();
         soReturnReceiveDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getSourceDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
-            int returnQty = m.stream().mapToInt(SoReturnReceiveDetailEntity::getReturnQty).sum();
+            SoReturnDetailEntity detailEntity = soReturnDetailEntityList.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             int receiveQty = m.stream().mapToInt(SoReturnReceiveDetailEntity::getReceiveQty).sum();
-            if (receiveQty < returnQty) {
+            if (receiveQty < detailEntity.getReturnQty()) {
                 soReturnDetailIds.add(m.get(MathUtil.ZERO).getSourceDetailId());
             }
             return m;
         })));
 
         List<String> collect = soReturnReceiveDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
-        List<String> ids = soReturnIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
+        List<String> ids = srdIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
         soReturnDetailIds.addAll(ids);
 
         if (CollectionUtils.isEmpty(soReturnDetailIds)) {

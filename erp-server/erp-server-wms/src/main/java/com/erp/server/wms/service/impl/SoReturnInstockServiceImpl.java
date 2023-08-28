@@ -256,6 +256,15 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     entity.setSoId(soInfo.getId());
                     entity.setSoCode(soInfo.getCode());
                 }
+            } else {
+                SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(dto.getSourceId());
+                dto.setSellerId(soReturnReceiveEntity.getSellerId());
+                dto.setCustomerId(soReturnReceiveEntity.getCustomerId());
+                dto.setSalesDeptId(soReturnReceiveEntity.getSalesDeptId());
+                dto.setSellerId(soReturnReceiveEntity.getSellerId());
+                dto.setWarehouseId(soReturn.getWarehouseId());
+                dto.setSalesOrgId(soReturnReceiveEntity.getSalesOrgId());
+                dto.setType(soReturnReceiveEntity.getType());
             }
 
             if (!Objects.isNull(soReturn)) {
@@ -379,6 +388,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
+        viewDTO.setType(BillTypeEnum.getName(viewDTO.getType()));
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         viewDTO.setCustomerName(customerInfoEntity.getName());
