@@ -41,6 +41,7 @@
         bill_type,
         create_time,
         approve_time,
+        approve_user_name,
         approve_status
         FROM stocktaking_profit_loss spl
         WHERE spl.is_deleted=FALSE

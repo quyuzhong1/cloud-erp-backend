@@ -594,12 +594,13 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             addModuleOperateLog.setBusinessId(taskId);
             addModuleOperateLog.setOperation("确认操作");
             StringBuffer sb = new StringBuffer();
-            sb.append(userName).append("确认了").append("盘点任务单");
+            sb.append(userName).append("确认了,").append("盘点任务单:");
             List<StocktakingTaskDTO.CheckResultDTO> list = item.getValue();
             String code = list.get(0).getCode();
-            sb.append(code);
+            sb.append(code+" ");
             for (StocktakingTaskDTO.CheckResultDTO detail : list) {
-                sb.append(detail.getSkuNo());
+                sb.append("SKU为: ");
+                sb.append(detail.getSkuNo()+" ");
                 sb.append("盘点库存为0");
             }
             addModuleOperateLog.setContent(sb.toString());
