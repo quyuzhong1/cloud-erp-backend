@@ -50,6 +50,53 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+        <!--code-->
+        <if test="params.code!=null and params.code!=''">
+           AND code ILIKE concat('%',#{params.code},'%')
+        </if>
+        <!--平台单号-->
+        <if test="params.platformOrderNo!=null and params.platformOrderNo!=''">
+            AND platform_order_no ILIKE concat('%',#{params.platformOrderNo},'%')
+        </if>
+        <!--平台退款单号-->
+        <if test="params.platformRefundNo!=null and params.platformRefundNo!=''">
+            AND platform_refund_no ILIKE concat('%',#{params.platformRefundNo},'%')
+        </if>
+        <!--原因-->
+        <if test="params.reason!=null and params.reason!=''">
+            AND reason ILIKE concat('%',#{params.reason},'%')
+        </if>
+        <!--平台-->
+        <if test="params.dictPlatformList!=null and params.dictPlatformList.size>0 ">
+            AND dict_platform IN
+            <foreach collection="params.dictPlatformList" item="dictPlatform" open="(" separator="," close=")">
+                #{dictPlatform}
+            </foreach>
+        </if>
+
+        <!--店铺-->
+        <if test="params.shopIdList!=null and params.shopIdList.size>0 ">
+            AND shop_id IN
+            <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
+                #{shopId}
+            </foreach>
+        </if>
+        <!--状态-->
+        <if test="params.statusList!=null and params.statusList.size>0 ">
+            AND status IN
+            <foreach collection="params.statusList" item="status" open="(" separator="," close=")">
+                #{status}
+            </foreach>
+        </if>
+        <!--创建时间-->
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > create_time
+        </if>
+        <if test="params.refundTimeList !=null and params.refundTimeList.size>0">
+            AND refund_time >= #{params.refundTimeList[0]} and (#{params.refundTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > refund_time
+        </if>
 
 
 

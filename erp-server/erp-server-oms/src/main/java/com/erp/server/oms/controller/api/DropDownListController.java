@@ -6,6 +6,8 @@ import com.common.business.enums.BillApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.enums.CommonStatusTypeEnum;
+import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.server.oms.service.DictBasicService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -63,6 +65,22 @@ public class DropDownListController extends BaseController {
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getStatus(), x.getName()))
                 .collect(Collectors.toList());
         return success(result);
+    }
+
+    /**
+     * 公共单据状态下拉
+     * type=refundOrder 退货订单状态
+     *
+     * @return
+     */
+    @GetMapping("/status/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listStatusDropDown(@RequestParam(value = "type")String type) {
+        List<CommonStatusTypeEnum> statusTypeList=CommonStatusTypeEnum.listByType(type);
+        List<BaseDropDownDTO.CommonDTO> result = statusTypeList.stream()
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getCode(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+
     }
 
 

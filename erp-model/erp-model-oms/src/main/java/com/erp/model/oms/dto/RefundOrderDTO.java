@@ -23,7 +23,56 @@ public class RefundOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO  extends SortDTO {
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 平台集合
+         */
+        private List<String> dictPlatformList;
+
+        /**
+         * 店铺集合
+         */
+        private List<String> shopIdList;
+
+        /**
+         * 平台订单号
+         */
+        private String platformOrderNo;
+
+
+        /**
+         * 平台退款号
+         */
+        private String platformRefundNo;
+
+        /**
+         * 退款原因
+         */
+        private String reason;
+
+        /**
+         * 状态
+         */
+        private List<String> statusList;
+
+
+
+        /**
+         * 创建时间集合
+         */
+        private List<LocalDate> createTimeList;
+
+
+        /**
+         * 退款时间
+         */
+        private List<LocalDate> refundTimeList;
 
     }
 
@@ -100,7 +149,6 @@ public class RefundOrderDTO implements Serializable {
         /**
          * 退款时间
          */
-        @TableField("refund_time")
         private Date refundTime;
 
         /**
