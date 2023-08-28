@@ -366,6 +366,7 @@
             srr.code,
             srr.so_code,
             srr.seller_name,
+            srr.warehouse_id,
             srr.warehouse_name,
             srr.approve_status
         FROM so_return_receive srr

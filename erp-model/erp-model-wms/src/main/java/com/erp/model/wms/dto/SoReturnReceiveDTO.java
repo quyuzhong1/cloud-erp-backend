@@ -771,6 +771,10 @@ public class SoReturnReceiveDTO {
          */
         private String sellerName;
         /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
          * 仓库名称
          */
         private String warehouseName;
