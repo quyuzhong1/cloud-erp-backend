@@ -368,7 +368,8 @@
             srr.seller_name,
             srr.warehouse_id,
             srr.warehouse_name,
-            srr.approve_status
+            srr.approve_status,
+            srr.create_time
         FROM so_return_receive srr
         LEFT JOIN so_return_receive_detail srrd ON srr.id = srrd.main_id AND srrd.is_deleted = FALSE
         WHERE srr.is_deleted = FALSE
@@ -380,5 +381,6 @@
         <if test="code != '' and code != null ">
             AND srr.code ILIKE concat('%', #{code} ,'%')
         </if>
+        ORDER BY srr.create_time
     </select>
 </mapper>

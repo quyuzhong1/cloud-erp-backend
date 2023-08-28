@@ -276,6 +276,14 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
     }
 
     @Override
+    public List<SoReturnReceiveDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds) {
+        if (CollectionUtils.isEmpty(sourceDetailIds)) {
+            return new ArrayList<>();
+        }
+        return baseMapper.listDetailBySourceDetailIds(sourceDetailIds);
+    }
+
+    @Override
     public List<SoReturnReceiveDetailEntity> listDetailByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return new ArrayList<>();

@@ -50,6 +50,19 @@ public class SoReturnReceiveFeignController {
     }
 
     /**
+     * 根据来源明细id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/5/15 16:55
+     * @param sourceDetailIds sourceDetailIds
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnNoticeDetailEntity>
+     **/
+    @PostMapping("/listDetailBySourceDetailIds")
+    public List<SoReturnReceiveDetailEntity> listDetailBySourceDetailIds(@RequestBody List<String> sourceDetailIds) {
+        List<SoReturnReceiveDetailEntity> list = soReturnReceiveDetailService.listDetailBySourceDetailIds(sourceDetailIds);
+        return list;
+    }
+
+    /**
      * 根据来源id查询销售退货通知单主表
      * @Author Luo_WG
      * @Date 2023/5/15 12:29

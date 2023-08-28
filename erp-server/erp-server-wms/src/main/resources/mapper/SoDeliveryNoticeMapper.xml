@@ -301,7 +301,8 @@
         sdn.seller_name,
         sdn.warehouse_name,
         sdn.customer_name,
-        sdn.approve_status
+        sdn.approve_status,
+        sdn.create_time
         FROM so_delivery_notice sdn
         LEFT JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdnd.is_deleted = FALSE
         WHERE sdn.is_deleted = FALSE
@@ -313,5 +314,6 @@
         <if test="code != '' and code != null ">
             AND sdn.code ILIKE concat('%', #{code} ,'%')
         </if>
+        ORDER BY sdn.create_time
     </select>
 </mapper>

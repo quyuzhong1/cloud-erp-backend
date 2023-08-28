@@ -28,6 +28,15 @@ public interface SoReturnReceiveDetailMapper extends BaseMapper<SoReturnReceiveD
     List<SoReturnReceiveDetailEntity> listDetailBySourceIds(@Param("ids") List<String> sourceIds);
 
     /**
+     * 根据来源明细id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/8/28 15:39
+     * @param sourceDetailIds
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnReceiveDetailEntity>
+     **/
+    List<SoReturnReceiveDetailEntity> listDetailBySourceDetailIds(@Param("ids") List<String> sourceDetailIds);
+
+    /**
      * 根据详情id查询退货签收单详情
      * @Author Luo_WG
      * @Date 2023/5/19 12:03
@@ -44,4 +53,5 @@ public interface SoReturnReceiveDetailMapper extends BaseMapper<SoReturnReceiveD
      * @return java.util.List<com.erp.model.wms.entity.SoReturnReceiveDetailEntity>
      **/
     List<SoReturnReceiveDetailEntity> listDetailByMainIds(@Param("ids") List<String> ids);
+
 }
