@@ -707,6 +707,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             String id = item.getId();
             List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = detailDbList.stream().filter(d -> d.getMainId().equals(id)).collect(Collectors.toList());
             item.setDetailList(detailList);
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            item.setApproveStatusName(approveStatus.getName());
             BillTypeEnum billType = item.getBillType();
             item.setBillTypeName(billType.getName());
             //盘点人
