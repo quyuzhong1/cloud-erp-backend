@@ -1198,11 +1198,4 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         inventoryInOutStockDTO.setMembers(members);
         inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
     }
-
-    public static void main(String[] args) {
-        List<String> productGradeList = Arrays.asList("S,A,B,C,D,", "S,A,B,C,D,未知");
-        String newProductGrade = String.join(",", productGradeList);
-        System.out.println(newProductGrade.contains(""));
-
-    }
 }

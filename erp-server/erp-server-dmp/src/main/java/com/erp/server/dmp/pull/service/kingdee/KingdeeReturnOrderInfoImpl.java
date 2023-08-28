@@ -260,11 +260,11 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             pageIndex++;
         }
         List<KingdeeReturnOrderEntity> entityList = resultAll.stream().map(entity ->
-                        BeanUtil.toBean(entity, KingdeeReturnOrderEntity.class)).distinct()
+                BeanUtil.toBean(entity, KingdeeReturnOrderEntity.class)).distinct()
                 .collect(Collectors.toList());
 
         Map<String, List<KingdeeReturnOrderItemEntity>> itemMap = resultAll.stream().map(entity ->
-                        BeanUtil.toBean(entity, KingdeeReturnOrderItemEntity.class))
+                BeanUtil.toBean(entity, KingdeeReturnOrderItemEntity.class))
                 .collect(Collectors.groupingBy(KingdeeReturnOrderItemEntity::getFBillNo));
         entityList.stream().peek(m -> m.setItemEntityList(itemMap.get( m.getFBillNo())))
                 .distinct()

@@ -47,7 +47,10 @@ public enum BusinessNoTypeEnum {
     CODE_KHLXR(37, "khlxr","客户联系人编号"),
     CODE_SUB(38, "sub","委外订单","SUB"),
     CODE_SUBCH(39, "subch","委外变更单"),
-
+    STOCKTAKING_PLAN(40, "pdjh","盘点计划","PDJH"),
+    STOCKTAKING_TASK(41, "pdrw","盘点任务","PDRW"),
+    STOCKTAKING_PROFIT(42, "pyd","盘盈单","PYD"),
+    STOCKTAKING_LOSS(43, "pkd","盘盈单","PKD"),
     ;
 
 

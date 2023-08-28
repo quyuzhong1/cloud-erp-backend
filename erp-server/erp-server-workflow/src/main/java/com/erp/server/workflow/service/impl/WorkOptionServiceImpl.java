@@ -148,6 +148,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         return returnWaitDoMenus;
     }
 
+
     /**
      * 常用模块-模块分类下拉
      *
@@ -331,21 +332,21 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             SysClassifyEnum enumByCode = SysClassifyEnum.getEnumByCode(req.getSysClassify());
             if (enumByCode != null) {
                 switch (enumByCode) {
-                case PLM:
-                    req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + req.getModuleUrl());
-                    break;
-                case SCM:
-                    req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + req.getModuleUrl());
-                    break;
-                case WMS:
-                    req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + req.getModuleUrl());
-                    break;
-                case OMS:
-                    req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.OMS_PORT + req.getModuleUrl());
-                    break;
-                default:
-                    break;
-            }
+                    case PLM:
+                        req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + req.getModuleUrl());
+                        break;
+                    case SCM:
+                        req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + req.getModuleUrl());
+                        break;
+                    case WMS:
+                        req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + req.getModuleUrl());
+                        break;
+                    case OMS:
+                        req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.OMS_PORT + req.getModuleUrl());
+                        break;
+                    default:
+                        break;
+                }
             }
         });
         return frequentlyViewDTOS;

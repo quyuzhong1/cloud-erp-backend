@@ -79,6 +79,9 @@ public enum ApiError implements Serializable {
     ERROR_1040(1040,"未找到{}单据明细数据"),
     ERROR_1041(1041,"{}明细数据不能为空"),
     ERROR_1042(1042,"单据提交失败"),
+    TIME_NOT_NULL(1043,"{}不能为空"),
+    SAVE_BILL_FAIL(1044, "保存{}单据失败"),
+    START_GE_END_ERROR(1045, "{}不能大于等于{}"),
 
 
 
@@ -344,6 +347,7 @@ public enum ApiError implements Serializable {
     ERROR_MSG_IS_NOT_NULL(95158, "消息模板不能为空"),
     ERROR_NOT_FOUND_SKU(95159,"SKU【{}】不存在"),
     ERROR_95160(95160,"文件不可超过{}m"),
+    REJECT_COMMENT_NOT_EMPTY(95161, "审核不通过必须填写审核意见"),
 
 
 
@@ -586,6 +590,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_ORDER_ID_REPEAT(98101,"请选择同一采购订单下明细进行变更"),
     ERROR_PURCHASE_DATE(98102,"采购订单SKU【{}】预计交货日期不能小于【{}】"),
     ERROR_PURCHASE_PRICE(98103,"采购订单SKU【{}】单价必须大于0"),
+    ERROR_PURCHASE_WAREHOUSE_ORG(98102,"交货仓库【{}】与收料组织【{}】不匹配"),
     ERROR_PURCHASE_ORG_NOT_FOUND(98104,"采购组织不存在"),
     ERROR_RECEIVE_ORG_NOT_FOUND(98105,"收料组织不存在"),
     ERROR_PURCHASE_WH_REQUIRED(98105,"采购订单【{}】交货仓库不能为空"),
@@ -691,8 +696,21 @@ public enum ApiError implements Serializable {
     ERROR_WAREHOUSE_REF_LOCATION(99085,"仓库【{}】下未找到有效仓位【{}】"),
     ERROR_PURCHASE_RETURN_REF_PO(99086,"采购退货单【{}】已下推采购订单"),
     ERROR_PURCHASE_RETURN_REF_PO_APPROVE(99087,"采购退货单【{}】未审核完成，不支持下推采购订单"),
+    ERROR_BILL_NOT_EXIST(99088,"单据不存在"),
+    ERROR_99089(99089,"只有待提交的单据支持分配盘点人"),
+    ERROR_99090(99090,"盘点任务明细为空"),
+    NOT_EXIST_BILL(99091, "{}单据不存在"),
+    STOCKTAKING_TASK_STARTED(99091, "盘点任务已开始, 无法反审核"),
+    // 仓位不能为空
+    WAREHOUSE_LOCATION_IS_NULL(99092, "仓位不能为null"),
+    WAREHOUSE_AREA_IS_NULL(99093, "库区不能为null"),
+    // 库存冻结中无法操作
+    STOCK_FREEZE_NOT_ALLOW(99094, "仓库【{}】库位【{}】 SKU【{}】 【{}】库存【{}】中, 无法操作"),
     ERROR_SUB_CHILD_LOCATION_BLANK(99088,"委外订单子SKU【{}】仓位不能为空"),
-    ERROR_99089(99089,"已下推退货入库单不能反审核"),
+    // 已下推退货入库单不能反审核
+    ERROR_RETURN_ORDER_PUSHED(99089, "已下推退货入库单，不能反审核"),
+
+    STOCKTAKING_TASK_EXIST(99090 , "仓库【{}】库位【{}】 SKU【{}】 已存在盘点任务"),
 
 
 
@@ -766,7 +784,6 @@ public enum ApiError implements Serializable {
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),
-    ERROR_PURCHASE_WAREHOUSE_ORG(98102,"交货仓库【{}】与收料组织【{}】不匹配"),
     ;
 
     public Integer code;

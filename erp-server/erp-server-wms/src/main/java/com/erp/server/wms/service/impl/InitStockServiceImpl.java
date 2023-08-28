@@ -351,7 +351,9 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         });
         // 删除期初库存日志数据
         log.info("删除 开始删除期初库存日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        operateLogService.removeByBusinessIds(ids);
+        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的期初库存", commonService.getUserInfo().getUserName(), list.stream().map(InitStockEntity::getCode).collect(Collectors.joining(",")));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "删除操作");
 
         // 删除期初库存明细数据
         log.info("删除 开始删除期初库存明细数据，id集合：【{}】", JSONObject.toJSONString(ids));

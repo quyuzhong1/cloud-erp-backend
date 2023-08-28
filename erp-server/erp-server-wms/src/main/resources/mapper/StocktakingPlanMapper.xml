@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.StocktakingPlanMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.StocktakingPlanEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="name" property="name" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="status" property="status" />
+       <result column="mode" property="mode" />
+       <result column="separate_rule" property="separateRule" />
+       <result column="type" property="type" />
+       <result column="submit_time" property="submitTime" />
+       <result column="submit_user_id" property="submitUserId" />
+       <result column="submit_user_name" property="submitUserName" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_time" property="approveTime" />
+       <result column="start_time" property="startTime" />
+       <result column="end_time" property="endTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        code, name, approve_status, status, mode, separate_rule, type, submit_time, submit_user_id, submit_user_name, approve_user_id, approve_user_name, approve_time, start_time, end_time
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.StocktakingPlanDTO$ListDTO">
+        SELECT
+        id,
+        code,
+        name,
+        approve_status AS approveStatus,
+        status,
+        mode,
+        separate_rule AS separateRule,
+        type,
+        submit_time AS submitTime,
+        submit_user_id AS submitUserId,
+        submit_user_name AS submitUserName,
+        approve_user_id AS approveUserId,
+        approve_user_name AS approveUserName,
+        approve_time AS approveTime,
+        start_time AS startTime,
+        end_time AS endTime
+        FROM  stocktaking_plan
+        WHERE is_deleted=FALSE
+        <if test="params.code!=null and params.code!=''">
+            AND code LIKE CONCAT('%',#{params.code},'%')
+        </if>
+        <if test="params.name!=null and params.name!=''">
+            AND name LIKE CONCAT('%',#{params.name},'%')
+        </if>
+        <if test="params.approveStatusList!=null and params.approveStatusList.size > 0">
+            AND approve_status in
+            <foreach collection="params.approveStatusList" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.modeList!=null and params.modeList.size > 0">
+            AND mode in
+            <foreach collection="params.modeList" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.statusList!=null and params.statusList.size > 0">
+            AND status in
+            <foreach collection="params.statusList" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.typeList!=null and params.typeList.size > 0">
+            AND type in
+            <foreach collection="params.typeList" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.separateRuleList != null and params.separateRuleList.size > 0">
+            AND separate_rule in
+            <foreach collection="params.separateRuleList" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.submitUserIdList != null and params.submitUserIdList.size > 0">
+            AND submit_user_id in
+            <foreach collection="params.submitUserIdList" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.submitTimeList != null and params.submitTimeList.size > 1">
+            AND submit_time >= #{params.submitTimeList[0]} AND submit_time <![CDATA[<]]> #{params.submitTimeList[1]}
+        </if>
+        <if test="params.tabFlag != null and params.tabFlag != '' and params.tabFlag != 'all' ">
+            AND approve_status = #{params.tabFlag}
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if> id DESC
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from stocktaking_plan where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.StocktakingPlanDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.wms.dto.StocktakingPlanDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  stocktaking_plan
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+</mapper>

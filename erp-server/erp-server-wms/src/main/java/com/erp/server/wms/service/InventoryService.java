@@ -9,6 +9,9 @@ import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.InventorySaveDTO;
 import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
+import com.erp.model.wms.entity.StocktakingPlanEntity;
+import com.erp.model.wms.enums.StocktakingTypeEnum;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
@@ -178,4 +181,11 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      */
     void exportInventoryAge(InventoryReportDTO.ExportInventoryAgeSearchParamDTO paramDTO, HttpServletResponse response);
 
+    /**
+     * 根据盘点类型查询库存
+     * @param entity
+     * @param detailEntityList
+     * @return
+     */
+    List<InventoryEntity> listByStocktakingType(StocktakingPlanEntity entity, List<StocktakingPlanDetailEntity> detailEntityList);
 }

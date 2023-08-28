@@ -1,21 +1,32 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FilterUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.WarehouseLocationMapper;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.google.common.collect.Lists;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,6 +40,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLocationMapper, WarehouseLocationEntity> implements WarehouseLocationService {
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     public List<WarehouseLocationDTO.LocationListDTO> select(String warehouseId) {
@@ -153,5 +167,68 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         }
         List<WarehouseLocationEntity> list = lambdaQuery().in(WarehouseLocationEntity::getWarehouseId, warehouseIds).list();
         return CollUtil.isNotEmpty(list) ? list : Lists.newArrayList();
+    }
+
+    @Override
+    public List<BaseDropDownDTO.CommonDTO> getWarehouseArea(String warehouseId,  WarehouseLocationTypeEnum returnType, String areaId) {
+        // 根据仓库查询区域
+        List<WarehouseLocationEntity> warehouseLocationList =  lambdaQuery()
+                .eq(StrUtil.isNotBlank(warehouseId), WarehouseLocationEntity::getWarehouseId, warehouseId)
+                .eq(ObjectUtil.isNotEmpty(returnType), WarehouseLocationEntity::getType, returnType.getCode())
+                .eq(StrUtil.isNotBlank(areaId) && ObjectUtil.equals(WarehouseLocationTypeEnum.LOCATION, returnType), WarehouseLocationEntity::getParentId, areaId)
+                .eq(WarehouseLocationEntity::getDisabled, Boolean.FALSE)
+                .list();
+        if (CollUtil.isEmpty(warehouseLocationList)) {
+            return Lists.newArrayList();
+        }
+        warehouseLocationList=warehouseLocationList.stream().distinct().
+                filter(FilterUtil.distinctByKey(WarehouseLocationEntity::getCode)).
+                collect(Collectors.toList());
+
+        return warehouseLocationList.stream().map(warehouseLocation->{
+            BaseDropDownDTO.CommonDTO data = new BaseDropDownDTO.CommonDTO();
+            data.setCode(warehouseLocation.getId());
+            data.setValue(warehouseLocation.getCode());
+            return data;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public PagingVO<WarehouseLocationDTO.PagingViewDTO> paging(PagingDTO<WarehouseLocationDTO.PagingParamDTO> dto) {
+        Page<WarehouseLocationDTO.PagingViewDTO> pageDto = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        Page<WarehouseLocationDTO.PagingViewDTO> pagResult = baseMapper.pagingByParams(pageDto, dto.getParams());
+        List<WarehouseLocationDTO.PagingViewDTO> records = pagResult.getRecords();
+        if (CollUtil.isEmpty(records)) {
+            return new PagingVO<>(pagResult);
+        }
+        List<String> orgIdList = records.stream().map(WarehouseLocationDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+        if(CollUtil.isNotEmpty(records)) {
+            records.stream().forEach(record->{
+                String orgId = record.getOrgId();
+                String orgName = orgList.stream().filter(o -> orgId.equals(o.getId())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                record.setOrgName(orgName);
+            });
+        }
+        return new PagingVO<>(pagResult);
+    }
+
+    @Override
+    public Map<String, String> locationAreaMap() {
+        List<WarehouseLocationEntity> list = lambdaQuery()
+                .eq(WarehouseLocationEntity::getDisabled, Boolean.FALSE)
+                .list();
+        Map<String, List<WarehouseLocationEntity>> locationMap = list.stream()
+                .collect(Collectors.groupingBy(WarehouseLocationEntity::getType));
+        List<WarehouseLocationEntity> areaList = locationMap.get(WarehouseLocationTypeEnum.AREA.getCode());
+        Map<String, String> areaMap = areaList.stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, WarehouseLocationEntity::getCode));
+
+        List<WarehouseLocationEntity> locationEntityList = locationMap.get(WarehouseLocationTypeEnum.LOCATION.getCode());
+        Map<String, String> locationAreaMap = locationEntityList
+                .stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getCode, item -> areaMap.get(item.getParentId()), (e1, e2) -> e2));
+        return locationAreaMap;
     }
 }

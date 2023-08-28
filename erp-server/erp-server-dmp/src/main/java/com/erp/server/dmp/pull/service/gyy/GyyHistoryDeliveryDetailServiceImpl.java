@@ -3,11 +3,9 @@ package com.erp.server.dmp.pull.service.gyy;
 import cn.hutool.json.JSONUtil;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
-import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.server.dmp.pull.service.IReportHistoryService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
-import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.service.DmpErrorLogService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -22,7 +20,6 @@ import javax.annotation.Resource;
  */
 @Slf4j
 @Component
-//@SaveData(method = PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET)
 public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryService<GyyDeliveryDetailEntity> {
     @Resource
     private PlatformApiTaskService platformApiTaskService;

@@ -131,6 +131,11 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
     }
 
     @Override
+    public Boolean addModuleOperateLogByObj(Object oldObj, Object newObj, String moduleType, String businessId, String msg) {
+        return this.addModuleOperateLogByObj(oldObj, newObj, moduleType, businessId, null, msg);
+    }
+
+    @Override
     public Boolean addModuleOperateLog(String content, String moduleType, String businessId,String operation) {
         OperateLogEntity entity = new OperateLogEntity();
         entity.setModuleType(moduleType)

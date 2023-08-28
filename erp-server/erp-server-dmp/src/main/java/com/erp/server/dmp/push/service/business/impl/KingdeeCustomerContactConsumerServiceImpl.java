@@ -75,9 +75,9 @@ public class KingdeeCustomerContactConsumerServiceImpl implements KingdeeCustome
         //联系人编号
         String code = String.valueOf(map.get("code"));
         //如果所有编码都没有无法同步，需要手动设置好编号
-        if (StringUtils.isBlank(addressCode) && StringUtils.isBlank(syncKingdeeId) && StringUtils.isBlank(code)) {
+        if (StringUtils.isBlank(addressCode) || (StringUtils.isBlank(syncKingdeeId) && StringUtils.isBlank(code))) {
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,"","地址编码、联系人金蝶id、联系人编号都是空，同步金蝶失败，请手动维护数据",type, ApiSendStatusEnum.FAILURE.getCode());
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,"","地址编码或联系人编号是空，同步金蝶失败，请手动维护数据",type, ApiSendStatusEnum.FAILURE.getCode());
         }
 
         //判断金蝶系统是否已存在该数据

@@ -4,7 +4,13 @@ package ${package.Controller};
 <#list table.fields as field>
     <#assign fieldMap += {field.propertyName:field.propertyName} />
 </#list>
+<#assign docName = "${table.comment!}">
+<#if docName?ends_with("表")>
+    <#assign docName = docName[0..<docName?length-1] + "单">
+</#if>
 
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -22,17 +28,17 @@ import com.common.core.controller.vo.ApiResult;
 <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
+import cn.hutool.core.util.ObjectUtil;
+</#if>
 <#if dataPermission>
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 </#if>
 import ${package.Dto}.${table.dtoName};
-</#if>
-
 <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
+import java.util.*;
+import ${package.Entity}.${entity};
 </#if>
 
 /**
@@ -41,6 +47,7 @@ import java.util.List;
  * @author ${author}
  * @since ${date}
  */
+@Slf4j
 <#if restControllerStyle>
 @RestController
 <#else>
@@ -58,6 +65,38 @@ public class ${table.controllerName} {
 
     @Autowired
     private ${table.serviceName} ${serviceBean};
+
+    /**
+    * 新增
+    * @author ${author}
+    * @date:  ${date}
+    * @param dto
+    * @return ApiResult<String>
+    */
+    @PostMapping("/add")
+    public ApiResult<String> add(@RequestBody @Validated ${table.dtoName}.AddDTO dto) {
+        return success(${serviceBean}.add(dto));
+    }
+
+    /**
+    * 修改
+    * @author ${author}
+    * @date:  ${date}
+    * @param dto
+    * @return ApiResult
+    */
+    @PostMapping("/update")
+    <#if dataPermission>
+        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+        tableField = "create_user_id",
+        menuCode = "${modelName}<#if package.ModuleName??>:${package.ModuleName}</#if>:<#if controllerMappingHyphenStyle??>${controllerMappingHyphen}<#else>${table.entityPath}</#if>:update",
+        serviceClass = ${table.serviceName}.class,
+        keyIdName = "id")
+    </#if>
+    public ApiResult update(@RequestBody @Validated ${table.dtoName}.UpdateDTO dto) {
+        ${serviceBean}.update(dto);
+        return success();
+    }
 
    <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
     /**
@@ -95,46 +134,6 @@ public class ${table.controllerName} {
         return success(${serviceBean}.paging(dto));
     }
 
-   /**
-   * 新增
-   * @author ${author}
-   * @date:  ${date}
-   * @param dto
-   * @return ApiResult<Void>
-   */
-   @PostMapping("/add")
-   <#if dataPermission>
-   @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-           tableField = "create_user_id",
-           menuCode = "${modelName}<#if package.ModuleName??>:${package.ModuleName}</#if>:<#if controllerMappingHyphenStyle??>${controllerMappingHyphen}<#else>${table.entityPath}</#if>:add",
-           serviceClass = ${table.serviceName}.class,
-           keyIdName = "id")
-   </#if>
-   public ApiResult<Void> add(@RequestBody @Validated ${table.dtoName}.AddDTO dto) {
-      ${serviceBean}.add(dto);
-      return success();
-   }
-
-    /**
-    * 修改
-    * @author ${author}
-    * @date:  ${date}
-    * @param dto
-    * @return ApiResult<Void>
-    */
-    @PostMapping("/update")
-    <#if dataPermission>
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "${modelName}<#if package.ModuleName??>:${package.ModuleName}</#if>:<#if controllerMappingHyphenStyle??>${controllerMappingHyphen}<#else>${table.entityPath}</#if>:update",
-            serviceClass = ${table.serviceName}.class,
-            keyIdName = "id")
-    </#if>
-    public ApiResult<Void> update(@RequestBody @Validated ${table.dtoName}.UpdateDTO dto) {
-        ${serviceBean}.update(dto);
-        return success();
-    }
-
     /**
     * 新增并提交审核
     * @author ${author}
@@ -143,13 +142,6 @@ public class ${table.controllerName} {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
-    <#if dataPermission>
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "${modelName}<#if package.ModuleName??>:${package.ModuleName}</#if>:<#if controllerMappingHyphenStyle??>${controllerMappingHyphen}<#else>${table.entityPath}</#if>:addAndSubmit",
-            serviceClass = ${table.serviceName}.class,
-            keyIdName = "id")
-    </#if>
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated ${table.dtoName}.AddDTO dto) {
         ${serviceBean}.addAndSubmit(dto);
         return success();
@@ -180,7 +172,7 @@ public class ${table.controllerName} {
     * @author ${author}
     * @date:  ${date}
     * @param dto
-    * @return ApiResult<Void>
+    * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/submit")
     <#if dataPermission>
@@ -190,9 +182,25 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
-    public ApiResult<Void> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        ${serviceBean}.submit(dto.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO submit;
+            try {
+                submit = ${serviceBean}.submit(id);
+            }catch (Exception e){
+                log.error("${docName} 提交审核失败",e);
+                ${entity} entity = ${serviceBean}.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, "${docName}不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return success(resultDTOS);
     }
 
     /**
@@ -200,7 +208,7 @@ public class ${table.controllerName} {
     * @author ${author}
     * @date:  ${date}
     * @param dto
-    * @return ApiResult<Void>
+    * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/approve")
     <#if dataPermission>
@@ -210,9 +218,26 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
-    public ApiResult<Void> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
-        ${serviceBean}.approve(dto);
-        return success();
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : ids) {
+            BatchResultDTO approveResult;
+            try {
+                approveResult = ${serviceBean}.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+            }catch (Exception e){
+                log.error("${docName}审核失败",e);
+                ${entity} entity = ${serviceBean}.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    approveResult = BatchResultDTO.fail(entity.getCode(), "${docName}不存在, 审核失败");
+                    resultDTOS.add(approveResult);
+                    continue;
+                }
+                approveResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(approveResult);
+        }
+        return success(resultDTOS);
     }
 
     /**
@@ -220,7 +245,7 @@ public class ${table.controllerName} {
     * @author ${author}
     * @date:  ${date}
     * @param dto
-    * @return ApiResult<Void>
+    * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/disApprove")
     <#if dataPermission>
@@ -230,9 +255,25 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
-    public ApiResult<Void> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        ${serviceBean}.disApprove(dto.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO disApproveResult;
+            try {
+                disApproveResult = ${serviceBean}.disApprove(id);
+            }catch (Exception e){
+                log.error("${docName}反审核失败",e);
+                ${entity} entity = ${serviceBean}.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    disApproveResult = BatchResultDTO.fail(entity.getCode(), "${docName}不存在, 反审核失败");
+                    resultDTOS.add(disApproveResult);
+                    continue;
+                }
+                disApproveResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(disApproveResult);
+        }
+        return success(resultDTOS);
     }
 
 
@@ -241,7 +282,7 @@ public class ${table.controllerName} {
     * @author ${author}
     * @date:  ${date}
     * @param dto
-    * @return ApiResult<Void>
+    * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/delete")
     <#if dataPermission>
@@ -251,9 +292,25 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
-    public ApiResult<Void> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        ${serviceBean}.delete(dto.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = ${serviceBean}.delete(id);
+            }catch (Exception e){
+                log.error("${docName}删除失败",e);
+                ${entity} entity = ${serviceBean}.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(entity.getCode(), "${docName}不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return success(resultDTOS);
     }
     <#if fieldMap["invalidStatus"]?? && fieldMap["invalidRemark"]??>
     /**
@@ -261,7 +318,7 @@ public class ${table.controllerName} {
     * @author ${author}
     * @date:  ${date}
     * @param dto
-    * @return ApiResult<Void>
+    * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/invalid")
     <#if dataPermission>
@@ -271,9 +328,25 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
-    public ApiResult<Void> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        ${serviceBean}.invalid(dto.getIds(), dto.getRemark());
-        return success();
+    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO invalidResult;
+            try {
+                invalidResult = ${serviceBean}.invalid(id,dto.getRemark());
+            }catch (Exception e){
+                log.error("${docName}作废失败",e);
+                ${entity} entity = ${serviceBean}.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    invalidResult = BatchResultDTO.fail(entity.getCode(), "${docName}不存在, 作废失败");
+                    resultDTOS.add(invalidResult);
+                    continue;
+                }
+                invalidResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(invalidResult);
+        }
+        return success(resultDTOS);
     }
     </#if>
 
@@ -282,7 +355,7 @@ public class ${table.controllerName} {
     * @author ${author}
     * @date:  ${date}
     * @param dto
-    * @return ApiResult<Void>
+    * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/cancelProcess")
     <#if dataPermission>
@@ -292,9 +365,25 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
-    public ApiResult<Void> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        ${serviceBean}.cancelProcess(dto.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO cancelResult;
+            try {
+                cancelResult = ${serviceBean}.cancelProcess(id);
+            }catch (Exception e){
+                log.error("${docName}撤回流程失败",e);
+                ${entity} entity = ${serviceBean}.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    cancelResult = BatchResultDTO.fail(entity.getCode(), "${docName}不存在, 撤回流程失败");
+                    resultDTOS.add(cancelResult);
+                    continue;
+                }
+                cancelResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(cancelResult);
+        }
+        return success(resultDTOS);
     }
 
     /**

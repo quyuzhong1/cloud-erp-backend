@@ -331,7 +331,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         String warehouseKeeperId = dto.getWarehouseKeeperId();
         String warehouseKeeperName = "";
         if (StringUtils.isNotBlank(warehouseKeeperId)) {
-        //获取用户信息
+            //获取用户信息
             List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(warehouseKeeperId));
             if (CollectionUtils.isNotEmpty(userList)) {
                 warehouseKeeperName = userList.get(0).getUserName();

@@ -57,7 +57,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @return com.erp.model.plm.entity.ProductInfoEntity
      **/
     @Override
-    public List<ProductDetailEntity> ListProductDetailByIds(List<String> ids) {
+    public List<ProductDetailEntity> listProductDetailByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return new ArrayList<>();
         }
@@ -69,32 +69,24 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @Author Luo_WG
      * @Date 2023/4/19 16:05
      **/
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean saveOrUpdateProductDetail(List<ProductDetailEntity> productDetailEntityList) {
         List<String> detailIds = productDetailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-        List<ProductDetailEntity> detailEntityList = ListProductDetailByIds(detailIds);
+        List<ProductDetailEntity> detailEntityList = listProductDetailByIds(detailIds);
         List<String> ids = productDetailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         List<String> dbIds = detailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         List<String> existIdList = ids.stream().filter(s -> dbIds.contains(s)).collect(Collectors.toList());
         List<String> notExistIdList = ids.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
-        List<ProductDetailEntity> notExistDetailEntityList = new ArrayList<>();
-        List<ProductDetailEntity> existDetailEntityList = new ArrayList<>();
         for (ProductDetailEntity detailEntity : productDetailEntityList) {
             if (notExistIdList.contains(detailEntity.getId())) {
-//                notExistDetailEntityList.add(detailEntity);
                 this.save(detailEntity);
             }
             if (existIdList.contains(detailEntity.getId())) {
-//                existDetailEntityList.add(detailEntity);
                 baseMapper.updateAllById(detailEntity);
             }
         }
-//        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
-//            this.saveBatch(notExistDetailEntityList);
-//        }
-//        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
-//            baseMapper.updateBatchSelective(existDetailEntityList);
-//        }
+
         return Boolean.TRUE;
     }
 }

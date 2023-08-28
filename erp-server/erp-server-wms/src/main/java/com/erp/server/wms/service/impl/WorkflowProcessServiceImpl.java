@@ -1,11 +1,14 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.wms.entity.StocktakingPlanEntity;
+import com.erp.model.wms.entity.StocktakingProfitLossEntity;
+import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.model.wms.entity.TransferApplicationEntity;
 import com.erp.model.workflow.dto.EndProcessDTO;
-import com.erp.server.wms.service.TransferApplicationService;
-import com.erp.server.wms.service.WorkflowProcessService;
+import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -23,6 +26,15 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
 
     @Resource
     private TransferApplicationService transferApplicationService;
+    @Resource
+    private StocktakingPlanService stocktakingPlanService;
+
+
+    @Resource
+    private StocktakingTaskService stocktakingTaskService;
+
+    @Resource
+    private StocktakingProfitLossService  stocktakingProfitLossService;
 
 
     @Override
@@ -33,13 +45,54 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
                 //调拨申请
                 transferApplicationApproveEnd(dto);
                 break;
+            case STOCKTAKING_PLAN:
+                //调拨申请
+                StocktakingPlanApproveEnd(dto);
+                break;
+
+            case STOCKTAKING_TASK:
+                //盘点任务
+                stocktakingTaskApproveEnd(dto);
+                break;
+
+            case STOCKTAKING_PROFIT_LOSS:
+                //盘盈盘亏单
+                stocktakingProfitLossApproveEnd(dto);
+                break;
             default:
                 break;
         }
         return Boolean.TRUE;
     }
 
+    /**
+     * 盘盈盘亏单审核通过
+     * @param dto
+     */
+    private Boolean stocktakingProfitLossApproveEnd(EndProcessDTO dto) {
+        StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOne = new ApproveOneDTO();
+        approveOne.setType(dto.getApproveStatus().getStatus());
+        approveOne.setId(dto.getBusinessId());
+        return stocktakingProfitLossService.approveEnd(approveOne,entity);
+    }
 
+
+    /**
+     * 盘点任务单审核通过
+     * @author yl
+     * @date 2023-08-18 8:56
+     * @param dto
+     * @return void
+     */
+    private Boolean stocktakingTaskApproveEnd(EndProcessDTO dto) {
+
+        StocktakingTaskEntity entity = stocktakingTaskService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOne = new ApproveOneDTO();
+        approveOne.setType(dto.getApproveStatus().getStatus());
+        approveOne.setId(dto.getBusinessId());
+        return stocktakingTaskService.approveEnd(approveOne,entity);
+    }
 
     /**
      * @description: 直接调拨单
@@ -55,6 +108,22 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
         baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
         return transferApplicationService.approveEnd(baseApproveParamDTO,list);
+    }
+
+    /**
+     * @description: 直接调拨单
+     * @author Will
+     * @date: 2023/8/2 16:13
+     * @param dto
+     * @return Boolean
+     */
+    private Boolean StocktakingPlanApproveEnd(EndProcessDTO dto) {
+        //直接调拨单
+        StocktakingPlanEntity entity = stocktakingPlanService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOne = new ApproveOneDTO();
+        approveOne.setType(dto.getApproveStatus().getStatus());
+        approveOne.setId(dto.getBusinessId());
+        return stocktakingPlanService.approveEnd(approveOne,entity);
     }
 
 }

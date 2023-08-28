@@ -1,10 +1,15 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -75,4 +80,26 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      */
     List<WarehouseLocationEntity> listByWarehouseIds(List<String> warehouseIds);
 
+
+    /**
+     * 根据仓库id获取仓位
+     * @param warehouseId
+     * @param returnType
+     * @param areaId
+     * @return
+     */
+    List<BaseDropDownDTO.CommonDTO> getWarehouseArea(String warehouseId, WarehouseLocationTypeEnum returnType, String areaId);
+
+    /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
+    PagingVO<WarehouseLocationDTO.PagingViewDTO> paging(PagingDTO<WarehouseLocationDTO.PagingParamDTO> dto);
+
+    /**
+     * 库位库区对应关系
+     * @return
+     */
+    Map<String, String> locationAreaMap();
 }

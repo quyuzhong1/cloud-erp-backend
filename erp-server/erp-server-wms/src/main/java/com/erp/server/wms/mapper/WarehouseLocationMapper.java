@@ -32,4 +32,12 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
      * @return List<WarehouseLocationEntity>
      */
     List<WarehouseLocationEntity> listByWarehouseIdAndCode(@Param("listParam") List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> listParam);
+
+    /**
+     * 根据仓库id和仓位编码获取
+     * @param query
+     * @param params
+     * @return
+     */
+    Page<WarehouseLocationDTO.PagingViewDTO> pagingByParams(Page<WarehouseLocationDTO.PagingViewDTO> query,@Param("params") WarehouseLocationDTO.PagingParamDTO params);
 }

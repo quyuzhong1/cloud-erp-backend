@@ -1,5 +1,6 @@
 package com.common.core.entity;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
@@ -94,7 +95,7 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
 
     public BaseEntity(String id) {
         super();
-        if(null != id){
+        if(StrUtil.isNotBlank(id)){
             this.id = id;
         }
     }
