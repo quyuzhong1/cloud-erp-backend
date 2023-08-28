@@ -1,9 +1,13 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -15,67 +19,130 @@ import javax.validation.constraints.Size;
  *
  * @author Lambda
  * @since 2023-08-28
-*/
+ */
 @Data
 @NoArgsConstructor
 public class RuleOrderApprovalDTO implements Serializable {
 
 
+    /**
+     * 分页详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO {
 
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 优先级
+         */
+        private Integer priority;
+
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 修改人
+         */
+        private String updateUserName;
+
+
+        /**
+         * 修改时间
+         */
+        private LocalDateTime updateTime;
+
+
+    }
 
     /**
-    * 详情
-    */
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO  extends SortDTO {
+
+        /**
+         * 规则名称
+         */
+        private String name;
+    }
+
+    /**
+     * 详情
+     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 主键id
+         */
+        private String id;
 
         /**
-        * 名称
-        */
+         * 名称
+         */
         private String name;
 
         /**
-        * 优先级
-        */
+         * 优先级
+         */
         private String priority;
 
         /**
-        * 是否禁用 false 未禁用
-        */
+         * 是否禁用 false 未禁用
+         */
         private Boolean disabled;
 
         /**
-        * 备注
-        */
+         * 备注
+         */
         private String remark;
 
         /**
-        * 分类明细id
-        */
+         * 分类明细id
+         */
         private String categoryDetailId;
 
         /**
-        * 操作类型多个逗号分割
-        */
+         * 操作类型多个逗号分割
+         */
         private String operationType;
 
         /**
-        * 流向状态
-        */
+         * 流向状态
+         */
         private String flowStatus;
 
 
     }
 
     /**
-    * 新增
-    */
+     * 新增
+     */
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
@@ -84,15 +151,15 @@ public class RuleOrderApprovalDTO implements Serializable {
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         @NotBlank(message = "主键id不能为空")
         private String id;
 
@@ -103,51 +170,51 @@ public class RuleOrderApprovalDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 名称
-        */
+         * 名称
+         */
         @NotBlank(message = "名称不能为空")
-        @Size(max = 50,message = "名称最大长度不能超过50位")
+        @Size(max = 50, message = "名称最大长度不能超过50位")
         private String name;
 
         /**
-        * 优先级
-        */
+         * 优先级
+         */
         @NotBlank(message = "优先级不能为空")
-        @Size(max = 5,message = "优先级最大长度不能超过5位")
-        private String priority;
+        @Size(max = 5, message = "优先级最大长度不能超过5位")
+        private Integer priority;
 
         /**
-        * 是否禁用 false 未禁用
-        */
+         * 是否禁用 false 未禁用
+         */
         @NotNull(message = "是否禁用 false 未禁用不能为空")
         private Boolean disabled;
 
         /**
-        * 备注
-        */
+         * 备注
+         */
         @NotBlank(message = "备注不能为空")
-        @Size(max = 255,message = "备注最大长度不能超过255位")
+        @Size(max = 255, message = "备注最大长度不能超过255位")
         private String remark;
 
         /**
-        * 分类明细id
-        */
+         * 分类明细id
+         */
         @NotBlank(message = "分类明细id不能为空")
-        @Size(max = 19,message = "分类明细id最大长度不能超过19位")
+        @Size(max = 19, message = "分类明细id最大长度不能超过19位")
         private String categoryDetailId;
 
         /**
-        * 操作类型多个逗号分割
-        */
+         * 操作类型多个逗号分割
+         */
         @NotBlank(message = "操作类型多个逗号分割不能为空")
-        @Size(max = 30,message = "操作类型多个逗号分割最大长度不能超过30位")
+        @Size(max = 30, message = "操作类型多个逗号分割最大长度不能超过30位")
         private String operationType;
 
         /**
-        * 流向状态
-        */
+         * 流向状态
+         */
         @NotBlank(message = "流向状态不能为空")
-        @Size(max = 30,message = "流向状态最大长度不能超过30位")
+        @Size(max = 30, message = "流向状态最大长度不能超过30位")
         private String flowStatus;
 
 

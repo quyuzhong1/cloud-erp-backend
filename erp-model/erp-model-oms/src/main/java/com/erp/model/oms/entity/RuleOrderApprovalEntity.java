@@ -33,7 +33,7 @@ public class RuleOrderApprovalEntity extends BaseEntity<RuleOrderApprovalEntity>
     * 优先级
     */
     @TableField("priority")
-    private String priority;
+    private Integer priority;
     /**
     * 是否禁用 false 未禁用
     */

@@ -34,6 +34,27 @@
         is_deleted,
         name, priority, disabled, remark, category_detail_id, operation_type, flow_status
     </sql>
+    <select id="paging" resultType="com.erp.model.oms.dto.RuleOrderApprovalDTO$PagingViewDTO">
+        SELECT
+        id,
+        name,
+        priority,
+        disabled,
+        remark,
+        category_detail_id,
+        operation_type,
+        flow_status,
+        create_user_name,
+        create_time,
+        update_user_name,
+        update_time
+        FROM rule_order_approval roa
+        WHERE roa.is_deleted=FALSE
+        <if test="params.name !=null and params.name!=''">
+           AND name ILIKE concat('%', #{params.name} ,'%')
+        </if>
+
+    </select>
 
 
 </mapper>

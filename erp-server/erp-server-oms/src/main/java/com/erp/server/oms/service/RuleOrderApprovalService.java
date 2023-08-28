@@ -1,4 +1,5 @@
 package com.erp.server.oms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.RuleOrderApprovalEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -32,5 +33,10 @@ public interface RuleOrderApprovalService extends SuperService<RuleOrderApproval
     */
     Boolean update(RuleOrderApprovalDTO.UpdateDTO dto);
 
-
+    /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
+    PagingVO<RuleOrderApprovalDTO.PagingViewDTO> paging(PagingDTO<RuleOrderApprovalDTO.PagingParamDTO> dto);
 }

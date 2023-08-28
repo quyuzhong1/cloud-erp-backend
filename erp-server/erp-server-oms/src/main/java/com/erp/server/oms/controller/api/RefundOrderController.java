@@ -18,7 +18,7 @@ import com.common.core.controller.BaseController;
 import javax.annotation.Resource;
 
 /**
- * 售后订单-退款订单
+ * 售后订单-B2C退款订单
  *
  * @author Lambda
  * @since 2023-08-25

@@ -1,6 +1,9 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.RefundOrderDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -27,6 +30,20 @@ public class RuleOrderApprovalController extends BaseController {
 
     @Autowired
     private RuleOrderApprovalService ruleOrderApprovalService;
+
+
+    /**
+     * 分页查询
+     * @author Lambda
+     * @date:  2023-08-28
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<RuleOrderApprovalDTO.PagingViewDTO>> queryByPage(@RequestBody  @Validated PagingDTO<RuleOrderApprovalDTO.PagingParamDTO> dto) {
+        PagingVO<RuleOrderApprovalDTO.PagingViewDTO> pagingVO = ruleOrderApprovalService.paging(dto);
+        return success(pagingVO);
+    }
 
     /**
     * 新增
