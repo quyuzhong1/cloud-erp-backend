@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.erp.model.wms.enums.StocktakingModeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -119,6 +120,8 @@ public class StocktakingTaskDetailDTO implements Serializable {
         private String id;
 
 
+
+
         private String code;
 
         /**
@@ -152,6 +155,14 @@ public class StocktakingTaskDetailDTO implements Serializable {
          */
         private String productName;
 
+
+
+
+
+        /**
+         * 盘点方式名
+         */
+        private String stocktakingModeName;
 
         /**
          * 可用数量
