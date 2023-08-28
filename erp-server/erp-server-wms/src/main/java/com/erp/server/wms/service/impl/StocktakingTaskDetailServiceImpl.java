@@ -16,15 +16,18 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.excel.KingdeeBusinessOperatorImportExcelDTO;
 import com.erp.model.wms.dto.OperateLogDTO;
+import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.model.wms.entity.StocktakingTaskUserEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.StocktakingModeEnum;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.server.wms.listener.StocktakingTaskDetailExcelListener;
 import com.erp.server.wms.mapper.StocktakingTaskDetailMapper;
+import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
@@ -70,9 +73,21 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
     @Resource
     private OperateLogService operateLogService;
 
+    @Resource
+    private StocktakingTaskMapper stocktakingTaskMapper;
+
     @Override
     public Boolean exportExcel(BaseIdDTO dto, HttpServletResponse response) {
         String mainId = dto.getId();
+        StocktakingTaskDTO.ViewDTO view = stocktakingTaskMapper.getViewById(mainId);
+        if(Objects.isNull(view)){
+            throw new ServiceException("盘点任务不存在");
+        }
+        //盘点方式
+        StocktakingModeEnum stocktakingMode = view.getStocktakingMode();
+        String stocktakingModeName = Objects.nonNull(stocktakingMode) ? stocktakingMode.getName() : "";
+        //是否盲盘
+        Boolean isBlindCount = StocktakingModeEnum.BLIND_COUNT.equals(stocktakingMode);
         //盘点人信息
         List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseByTaskIds(Arrays.asList(mainId));
         String stocktakingUserName = taskUserList.stream().
@@ -89,6 +104,14 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             String skuName = skuList.stream().filter(s -> s.getId().equals(item.getSkuId())).findFirst().
                     map(ProductDetailEntity::getName).orElse("");
             item.setProductName(skuName);
+            item.setStocktakingModeName(stocktakingModeName);
+            //如果是盲盘就要清空一些数据
+            if(isBlindCount){
+                item.setUsableQty(null);
+                item.setDiffQty(null);
+                item.setFrozenQty(null);
+            }
+
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/StocktakingTaskDetail.xlsx";
