@@ -1,11 +1,14 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.wms.service.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,8 +42,12 @@ public class WmsWorkOptionFeignController {
     @Resource
     private TransferApplicationService transferApplicationService;
 
+    @Resource
+    private StocktakingTaskService stocktakingTaskService;
+
     /**
      * 根据入参查询单据数量
+     *
      * @Author Luo_WG
      * @Date 2023/4/21 15:34
      **/
@@ -51,10 +58,11 @@ public class WmsWorkOptionFeignController {
 
     /**
      * 采购收货审核
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:06
+     *
      * @param baseApproveParamDTO baseApproveParamDTO
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:06
      **/
     @PostMapping("/warehouseReceiveApprove")
     public Boolean warehouseReceiveApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
@@ -64,21 +72,24 @@ public class WmsWorkOptionFeignController {
 
     /**
      * 采购入库审核
-     * @author Will
-     * @date: 2023/4/11 20:11
+     *
      * @param baseApproveParamDTO
      * @return ApiResult
+     * @author Will
+     * @date: 2023/4/11 20:11
      */
     @PostMapping("/poInstockApprove")
     public void poInstockApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
         poInstockService.approve(baseApproveParamDTO);
     }
+
     /**
      * 采购退货审核
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:06
+     *
      * @param baseApproveParamDTO baseApproveParamDTO
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:06
      **/
     @PostMapping("/purchaseReturnOrderApprove")
     public Boolean purchaseReturnOrderApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
@@ -88,14 +99,33 @@ public class WmsWorkOptionFeignController {
 
     /**
      * 调拨申请单审核
-     * @Author Luo_WG
-     * @Date 2023/8/3 16:38
+     *
      * @param baseApproveParamDTO
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/8/3 16:38
      **/
     @PostMapping("/transferApplicationApprove")
     public Boolean transferApplicationApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
         transferApplicationService.approve(baseApproveParamDTO);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 盘底任务审核
+     *
+     * @param baseApproveParamDTO
+     * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/8/3 16:38
+     **/
+    @PostMapping("/stocktakingTaskApprove")
+    public Boolean stocktakingTaskApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
+        ApproveOneDTO oneDto = new ApproveOneDTO();
+        BeanMapper.copy(baseApproveParamDTO,oneDto);
+        String id= CollectionUtils.isNotEmpty(baseApproveParamDTO.getIds())?baseApproveParamDTO.getIds().get(0):"";
+        oneDto.setId(id);
+        stocktakingTaskService.approve(id, oneDto);
         return Boolean.TRUE;
     }
 }
