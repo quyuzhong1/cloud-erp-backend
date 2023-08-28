@@ -148,8 +148,8 @@ public class StocktakingProfitLossController extends BaseController {
                     continue;
                 }
                 submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
-                resultDTOS.add(submit);
             }
+            resultDTOS.add(submit);
         }
 
         return success(resultDTOS);
@@ -180,8 +180,8 @@ public class StocktakingProfitLossController extends BaseController {
                     continue;
                 }
                 submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
-                resultDTOS.add(submit);
             }
+            resultDTOS.add(submit);
         }
 
         return success(resultDTOS);
@@ -218,8 +218,8 @@ public class StocktakingProfitLossController extends BaseController {
                     continue;
                 }
                 submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
-                resultDTOS.add(submit);
             }
+            resultDTOS.add(submit);
         }
 
         return success(resultDTOS);
