@@ -719,6 +719,7 @@ public enum ApiError implements Serializable {
     ERROR_WAREHOUSE_NOT_EXIST_ORG(99090, "仓库【{}】下未发现库存组织"),
 
     STOCKTAKING_TASK_EXIST(99090 , "仓库【{}】库位【{}】 SKU【{}】 已存在盘点任务"),
+    LOCATION_MOVE_DETAIL_ADD(99091 , "仓位移动明细单保存失败"),
 
 
 

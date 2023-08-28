@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.inventory;
 
+import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.utils.MathUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -993,6 +994,32 @@ public class InventoryDTO implements Serializable {
     @NoArgsConstructor
     public static class PdaSearchParamDTO {
         /**
+         * 组织id
+         */
+        private String orgId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private List<String> skuIds;
+        /**
+         * 库位
+         */
+        private List<String> warehouseLocations;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaInventoryDTO {
+        /**
+         * 组织id
+         */
+        private String orgId;
+        /**
          * 仓库id
          */
         private String warehouseId;
@@ -1004,5 +1031,18 @@ public class InventoryDTO implements Serializable {
          * 库位
          */
         private String warehouseLocation;
+
+        /**
+         * 实际库存
+         */
+        private Integer realQty;
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+        /**
+         * 冻结库存
+         */
+        private Integer frozenQty;
     }
 }
