@@ -721,6 +721,7 @@ public enum ApiError implements Serializable {
     STOCKTAKING_TASK_EXIST(99090 , "仓库【{}】库位【{}】 SKU【{}】 已存在盘点任务"),
     LOCATION_MOVE_DETAIL_ADD(99091 , "仓位移动明细单保存失败"),
     LOCATION_MOVE_QTY_ERROR(99091 , "sku【{}】仓位移动数量不能大于可用库存数量"),
+    SO_RETURN_RECEIVE_SKU_NOT_EXIST(99092 , "sku【{}】在退货签收单中不存在"),
 
 
 
