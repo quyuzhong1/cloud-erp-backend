@@ -1,6 +1,7 @@
 package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
@@ -145,6 +146,16 @@ public interface WmsTaskFeign {
      **/
     @PostMapping("feign/wmsWorkOption/transferApplicationApprove")
     Boolean transferApplicationApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 盘点任务审核通过
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:06
+     * @param approveOneDTO baseApproveParamDTO
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("feign/wmsWorkOption/stocktakingTaskApprove")
+    Boolean stocktakingTaskApprove(@RequestBody @Validated BaseApproveParamDTO approveOneDTO);
 
     /**
      * 根据销售 销售订单详情ids 获取是否有下推的单据
