@@ -42,9 +42,9 @@ public enum OperationTypeEnum {
         if (Objects.nonNull(approveStatus)) {
             switch (approveStatus) {
                 case APPROVE:
-                    return OperationTypeEnum.APPROVE_PASS.getStatus();
+                    return OperationTypeEnum.APPROVE_PASS.getName();
                 case REJECT:
-                    return OperationTypeEnum.APPROVE_REJECT.getStatus();
+                    return OperationTypeEnum.APPROVE_REJECT.getName();
                 default:
                     return null;
             }
