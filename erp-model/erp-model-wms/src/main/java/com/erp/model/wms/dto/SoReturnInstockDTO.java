@@ -699,6 +699,18 @@ public class SoReturnInstockDTO {
          */
         private Integer childQty;
 
+        /**
+         * 子级SKU仓库id
+         */
+        private String childWarehouseId;
+        /**
+         * 子级SKU供应商id
+         */
+        private String childSupplierId;
+        /**
+         * 子级SKU仓位
+         */
+        private String childWarehouseLocation;
     }
 
     @Data
