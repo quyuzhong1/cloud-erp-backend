@@ -113,6 +113,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     private PurchaseReturnOrderService purchaseReturnOrderService;
 
     @Resource
+    private WarehouseReceiveService warehouseReceiveService;
+
+    @Resource
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
 
     @Resource
@@ -391,7 +394,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             throw new ServiceException(ApiError.ERROR_98025);
         }
         dto.setPurchaseOrderCode(purchaseOrderDTO.getCode());
-
+        WarehouseReceiveEntity receiveEntity = warehouseReceiveService.getById(entity.getSourceId());
+        dto.setSourceCode(receiveEntity.getCode());
         //采购组织
         dto.setPurchaseOrgName(purchaseOrderDTO.getPurchaseOrgName());
 
