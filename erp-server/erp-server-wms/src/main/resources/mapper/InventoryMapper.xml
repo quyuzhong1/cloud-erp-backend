@@ -325,7 +325,9 @@
         FROM "inventory" inv
         LEFT JOIN transaction_flow tf ON inv."id" = tf.inventory_id
         AND tf.is_deleted = FALSE
-        AND tf.trade_time BETWEEN #{startTime} AND #{endTime}
+        <if test="null != startTime and startTime != '' and null != endTime and endTime != ''">
+            AND tf.trade_time &gt;= #{startTime} AND tf.trade_time &lt; #{endTime}
+        </if>
         WHERE inv.is_deleted = false and inv.dict_inventory_status in ('usable','frozen')
         AND ( inv.qty > 0 OR (inv.qty = 0 AND tf.inventory_id IS NOT NULL) )
         <if test="type != null and type == 'byWarehouse' and null != params and params.size > 0">
