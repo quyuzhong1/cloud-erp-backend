@@ -672,6 +672,11 @@ public class SoReturnInstockDTO {
         private Integer bomVersion;
 
         /**
+         * 拆卸数量
+         */
+        private Integer qty;
+
+        /**
          * 即时库存
          */
         private Integer curInventoryQty;

@@ -1012,6 +1012,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             }
             viewDTO.setBomVersion(childList.get(0).getBomVersion());
             viewDTO.setCurInventoryQty(curInventoryQty);
+            viewDTO.setQty(curInventoryQty);
             //显示按明细维度显示数据
             for (BomChildrenSkuDTO childrenSkuDTO : childList) {
                 SoReturnInstockDTO.ViewGenerateMachineInfoDTO viewChildDTO = new SoReturnInstockDTO.ViewGenerateMachineInfoDTO();
