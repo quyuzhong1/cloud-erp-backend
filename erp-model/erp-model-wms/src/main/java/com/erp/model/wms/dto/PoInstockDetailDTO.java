@@ -31,9 +31,6 @@ public class PoInstockDetailDTO implements Serializable {
         /**
          * 超收数量
          */
-        @NotNull(message = "超收数量不能为空")
-        @Min(value = 0,message = "超收数量最小值为0")
-        @Max(value = 999999999,message = "超收数量最大值为999999999")
         private Integer exceedQty;
 
         /**
@@ -50,7 +47,6 @@ public class PoInstockDetailDTO implements Serializable {
         /**
          * 来源明细id
          */
-        @NotBlank(message = "来源明细id不能为空")
         private String sourceDetailId;
 
         /**
@@ -63,6 +59,11 @@ public class PoInstockDetailDTO implements Serializable {
          * 是否校验（前端无需传值）
          */
         private Boolean isNotCheck;
+
+        /**
+         * sku编号（PDA用）
+         */
+        private String skuNo;
     }
 
     @Data

@@ -66,6 +66,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -1641,5 +1643,35 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             list.add(resultDTO);
         }
         return list;
+    }
+
+    @Override
+    public String pdaAdd(PoInstockDTO.AddDTO dto, Boolean aFalse) {
+        List<PoInstockDetailDTO.AddDTO> details = dto.getDetails();
+        //采购明细信息
+        List<String> podIds = details.stream().map(PoInstockDetailDTO.AddDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
+        for (PoInstockDetailDTO.AddDTO entity : details) {
+            PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(detailEntity)) {
+                throw new ServiceException(ApiError.ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST, entity.getSkuNo());
+            }
+        }
+        return this.add(dto, aFalse);
+    }
+
+    @Override
+    public Boolean pdaUpdate(PoInstockDTO.UpdateDTO dto) {
+        List<PoInstockDetailDTO.UpdateDTO> details = dto.getDetails();
+        //采购明细信息
+        List<String> podIds = details.stream().map(PoInstockDetailDTO.UpdateDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
+        for (PoInstockDetailDTO.UpdateDTO entity : details) {
+            PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(detailEntity)) {
+                throw new ServiceException(ApiError.ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST, entity.getSkuNo());
+            }
+        }
+        return this.update(dto);
     }
 }

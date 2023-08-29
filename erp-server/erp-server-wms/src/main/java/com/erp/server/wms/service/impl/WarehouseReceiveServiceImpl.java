@@ -389,6 +389,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<WarehouseReceiveDetailEntity> detailEntitieList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(detailId);
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(detailId);
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
+
+        //采购订单明细下所有入库数据
+        List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailByPodIds(detailId);
         for (WarehouseReceiveDetailEntity warehouseReceiveDetailEntity : detail) {
             WarehouseReceiveDetailDTO.ViewDTO detailView = new WarehouseReceiveDetailDTO.ViewDTO();
             BeanMapperUtils.copy(warehouseReceiveDetailEntity, detailView);
@@ -399,14 +402,18 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
             Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 
-
             Integer receive = detailEntitieList.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderDetailId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             detailView.setUnReceiveQty(purchaseOrderDetailEntity.getPurchaseQty() + returnQty - receive);
-
             //获取sku信息
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailView.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_95107);
+            }
+
+            if (CollectionUtils.isNotEmpty(poInstockDetailList)) {
+                Integer effectiveStockInQty = poInstockDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                detailView.setEffectiveStockInQty(effectiveStockInQty);
+                detailView.setUnStockInQty(purchaseOrderDetailEntity.getPurchaseQty() - effectiveStockInQty + returnQty);
             }
             detailView.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
             detailView.setPlanDeliveryDate(purchaseOrderDetailEntity.getPlanDeliveryDate());
