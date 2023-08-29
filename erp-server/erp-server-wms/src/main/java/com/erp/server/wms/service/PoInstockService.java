@@ -273,4 +273,23 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * @return java.util.List<com.erp.model.wms.dto.PoInstockDTO.PdaPoInStockCountDTO>
      **/
     List<PoInstockDTO.PdaPoInStockCountDTO> pdaListCount(PermissionsDTO dto);
+
+    /**
+     * PDA:新增
+     * @Author Luo_WG
+     * @Date 2023/8/29 14:35
+     * @param dto
+     * @param aFalse
+     * @return java.lang.String
+     **/
+    String pdaAdd(PoInstockDTO.AddDTO dto, Boolean aFalse);
+
+    /**
+     * PDA:修改
+     * @Author Luo_WG
+     * @Date 2023/8/29 14:40
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaUpdate(PoInstockDTO.UpdateDTO dto);
 }

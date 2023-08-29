@@ -162,6 +162,16 @@ public class WarehouseReceiveDetailDTO {
         private Integer exceedQty;
 
         /**
+         * 有效入库数量
+         */
+        private Integer effectiveStockInQty;
+
+        /**
+         * 未入库数量
+         */
+        private Integer unStockInQty;
+
+        /**
          * 备注
          */
         private String remark;

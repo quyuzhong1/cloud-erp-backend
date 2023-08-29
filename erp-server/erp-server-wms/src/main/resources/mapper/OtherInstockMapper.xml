@@ -120,6 +120,9 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.invalidStatus != null ">
+                and oi.invalid_status = #{params.invalidStatus}
+            </if>
             <if test="params.billDateList != null and params.billDateList.size > 0">
                 and oi.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oi.bill_date
             </if>
