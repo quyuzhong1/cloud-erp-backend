@@ -10,7 +10,7 @@ import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.server.dmp.config.SaveHandler;
+import com.erp.server.dmp.handler.SaveHandler;
 import com.erp.server.dmp.pull.service.ModelService;
 import com.erp.server.dmp.service.DmpErrorLogService;
 import com.erp.server.dmp.service.PlatformApiTaskService;

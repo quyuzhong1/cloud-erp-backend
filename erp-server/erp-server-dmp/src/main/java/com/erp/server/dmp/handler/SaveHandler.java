@@ -1,4 +1,4 @@
-package com.erp.server.dmp.config;
+package com.erp.server.dmp.handler;
 
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.RequestDTO;

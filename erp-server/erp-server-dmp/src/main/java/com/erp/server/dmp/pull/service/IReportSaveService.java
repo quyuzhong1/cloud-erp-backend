@@ -2,8 +2,6 @@ package com.erp.server.dmp.pull.service;
 
 
 import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.gyy.GyyRefundEntity;
-import org.springframework.transaction.annotation.Transactional;
 
 public interface IReportSaveService<T> {
 

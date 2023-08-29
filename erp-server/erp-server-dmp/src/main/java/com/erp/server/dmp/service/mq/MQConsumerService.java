@@ -5,7 +5,6 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
@@ -49,12 +48,6 @@ public class MQConsumerService {
     private DmpSkuInfoService dmpSkuInfoService;
 
     @Resource
-    private ProductInfoService productInfoService;
-
-    @Resource
-    private ProductDetailService productDetailService;
-
-    @Resource
     private DmpOrderItemService dmpOrderItemService;
     @Resource
     private DmpBomService dmpBomService;
@@ -63,9 +56,6 @@ public class MQConsumerService {
 
     @Resource
     private DmpSyncTaskService dmpSyncTaskService;
-
-    @Resource
-    private MQProducerService mqProducerService;
 
     @Autowired
     private DmpFbaDeliveryService dmpFbaDeliveryService;
@@ -427,7 +417,7 @@ public class MQConsumerService {
     }
 
 
-    private <T extends CleanBaseDTO> void finishClean(MapUtil mapUtil, OrderMongoDTO updateDto,String tableName, Class<T> clazz) {
+    private <T extends CleanBaseDTO> void finishClean(MapUtil mapUtil, OrderMongoDTO updateDto, String tableName, Class<T> clazz) {
         List<T> mongoData = mongoService.findMongoData(updateDto, 0, 0, tableName, clazz);
         if(CollectionUtil.isEmpty(mongoData)){
             throw new RuntimeException("mongo暂未写入数据, 请稍后重试");

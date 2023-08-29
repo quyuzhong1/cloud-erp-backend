@@ -8,7 +8,6 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.dto.CleanOrderMongoDTO;
 import com.erp.model.dmp.dto.GoodcangDTO;
 import com.erp.model.dmp.dto.OmsMongoDTO;
 import com.erp.server.dmp.pull.mongo.MongoService;

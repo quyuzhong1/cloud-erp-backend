@@ -1,8 +1,7 @@
 package com.erp.server.dmp.pull.service;
 
 import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.server.dmp.config.SaveHandler;
-import com.erp.server.dmp.pull.service.ModelService;
+import com.erp.server.dmp.handler.SaveHandler;
 import org.springframework.stereotype.Service;
 
 @Service
