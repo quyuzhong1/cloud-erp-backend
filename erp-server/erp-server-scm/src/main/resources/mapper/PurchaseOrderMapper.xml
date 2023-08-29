@@ -61,8 +61,7 @@
         from purchase_order po
         inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
-        left join subcontract_order_detail sod on pod.source_detail_id = sod.id and sod.is_deleted = false
-        left join subcontract_order so on so.id = sod.main_id and so.is_deleted = false
+        left join subcontract_order so on so.id = po.source_id and so.is_deleted = false
         <where>
             po.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
