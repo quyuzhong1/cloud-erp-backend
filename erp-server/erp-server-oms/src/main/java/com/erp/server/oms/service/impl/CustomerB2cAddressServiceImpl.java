@@ -1,7 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.constant.BusinessNoConstant;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -11,7 +11,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.entity.CustomerB2cAddressEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerB2cAddressMapper;
 import com.erp.server.oms.service.CustomerB2cAddressService;
@@ -51,6 +50,9 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
     @Resource
     private SoInfoService soInfoService;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     /**
      * 检查默认地址是否存在多个
      *
@@ -87,7 +89,7 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
         for (CustomerB2cAddressEntity addDTO : addList) {
             addDTO.setMainId(mainId);
             //生成单号
-            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.KHDZ, BusinessNoTypeEnum.CODE_KHDZ.getCode()));
+            String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHDZC);
             addDTO.setCode(code);
         }
         this.saveBatch(addList);
@@ -132,7 +134,7 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
         List<CustomerAddressDTO.ViewDTO> addList = addressList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
         for (CustomerAddressDTO.ViewDTO viewDTO : addList) {
             //生成单号
-            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.KHDZ, BusinessNoTypeEnum.CODE_KHDZ.getCode()));
+            String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHDZC);
             viewDTO.setCode(code);
         }
         //这个是要修改的实体
@@ -157,16 +159,16 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
         saveOrUpdateList.forEach(s -> s.setMainId(mainId));
         //这是删除
         List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getAddress())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("删除了一个联系地址【%s】", ModuleTypeEnum.CUSTOMER.getCode(), removePairList, "编辑操作");
+        operateLogService.batchAddModuleOperateLog("删除了一个联系地址【%s】", ModuleTypeEnum.CUSTOMER_B2C.getCode(), removePairList, "编辑操作");
         //这是添加
         List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getAddress())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("添加了一个联系地址【%s】", ModuleTypeEnum.CUSTOMER.getCode(), addPairList, "编辑操作");
+        operateLogService.batchAddModuleOperateLog("添加了一个联系地址【%s】", ModuleTypeEnum.CUSTOMER_B2C.getCode(), addPairList, "编辑操作");
         //修改的
         for (CustomerB2cAddressEntity update : updateEntityList) {
             String id = update.getId();
             CustomerB2cAddressEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
             if (old != null) {
-                operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.CUSTOMER.getCode(), mainId, "", "");
+                operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.CUSTOMER_B2C.getCode(), mainId, "", "");
             }
         }
         if(CollectionUtils.isNotEmpty(saveOrUpdateList)){

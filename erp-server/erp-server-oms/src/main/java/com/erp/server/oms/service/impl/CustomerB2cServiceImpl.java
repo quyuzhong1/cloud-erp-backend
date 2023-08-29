@@ -9,8 +9,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -123,6 +123,10 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
     @Resource
     private DictBasicService dictBasicService;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
+
     /**
      * 获取到分组的id 集合
      *
@@ -187,7 +191,8 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         addEntity.setGroupName(groupName);
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CUST, BusinessNoTypeEnum.CODE_CUST.getCode()));
+        //生成单号
+        String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
         addEntity.setCode(code);
         //销售员
         String sellerId = dto.getSellerId();
@@ -280,11 +285,11 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER_B2C.getCode(), pairList, "状态变更");
 
             //审核不通过
             String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            operateLogService.batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), rejectPairList, "状态变更");
+            operateLogService.batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.CUSTOMER_B2C.getCode(), rejectPairList, "状态变更");
         }
         return result;
 
@@ -375,7 +380,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         List<String> ids = list.stream().map(CustomerDTO.PagingViewDTO::getId).collect(Collectors.toList());
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         ids.forEach(obj -> {
-            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_INFO.getCode(), obj));
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_B2C.getCode(), obj));
         });
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
         if (CollectionUtils.isNotEmpty(dtoList)) {
@@ -572,7 +577,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             /**
              * 添加修改日志
              */
-            operateLogService.addModuleOperateLogByObj(old, customer, ModuleTypeEnum.CUSTOMER.getCode(), id, "", "");
+            operateLogService.addModuleOperateLogByObj(old, customer, ModuleTypeEnum.CUSTOMER_B2C.getCode(), id, "", "");
 
             Class<CustomerB2cEntity> customerClass = CustomerB2cEntity.class;
             TableName tableName = customerClass.getDeclaredAnnotation(TableName.class);
@@ -641,7 +646,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         //添加日志
         List<Pair<String, String>> pairList = list.stream().
                 map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个客户信息", ApproveTypeEnum.getName(dto.getType())).concat("【%s】").concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.CUSTOMER.getCode(), pairList, "审核操作");
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个客户信息", ApproveTypeEnum.getName(dto.getType())).concat("【%s】").concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.CUSTOMER_B2C.getCode(), pairList, "审核操作");
         return Boolean.TRUE;
     }
 
@@ -726,7 +731,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         if (result) {
             //添加日志
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
-            operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
+            operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER_B2C.getCode(), pairList, "状态变更");
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
@@ -763,7 +768,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             //添加日志
             String content = "删除客户[%s]";
             List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "删除");
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER_B2C.getCode(), pairList, "删除");
         }
         return result;
     }
@@ -873,7 +878,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
                 map(obj -> new Pair<>(obj.getId(), obj.getName())).collect(Collectors.toList());
         String content = String.format("启用状态[%s]变更为[%s]", disabled ? "启用" : "停用", disabled ? "停用" : "启用");
         String finalContent = "[%s]," + content;
-        operateLogService.batchAddModuleOperateLog(finalContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
+        operateLogService.batchAddModuleOperateLog(finalContent, ModuleTypeEnum.CUSTOMER_B2C.getCode(), pairList, "状态变更");
 
         customerList.forEach(req -> {
             //发送金蝶
@@ -920,7 +925,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "");
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("客户【%s】取消流程", ModuleTypeEnum.CUSTOMER.getCode(), pairList, "取消流程操作");
+        operateLogService.batchAddModuleOperateLog("客户【%s】取消流程", ModuleTypeEnum.CUSTOMER_B2C.getCode(), pairList, "取消流程操作");
         return result;
     }
 
@@ -1610,7 +1615,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
             startDTO.setBusinessId(obj.getId());
             startDTO.setBusinessCode(obj.getCode());
-            startDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_INFO.getCode());
+            startDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_B2C.getCode());
             startDTO.setBusinessName(obj.getCode());
             startDTO.setUserId(userInfo.getUid());
             startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
@@ -1635,7 +1640,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         list.forEach(obj -> {
             ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
             approveDTO.setBusinessId(obj.getId());
-            approveDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_INFO.getCode());
+            approveDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_B2C.getCode());
             approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
             approveDTO.setComment(dto.getComment());
             approveDTO.setUserId(userInfo.getUid());

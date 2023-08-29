@@ -20,7 +20,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("customer_invoice")
+@TableName("customer_b2c_invoice")
 public class CustomerB2cInvoiceEntity extends BaseEntity<CustomerB2cInvoiceEntity> {
 
     /**

@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("customer_group")
+@TableName("customer_b2c_group")
 public class CustomerB2cGroupEntity extends BaseEntity<CustomerB2cGroupEntity> {
 
     /**
