@@ -33,4 +33,21 @@ public interface ShopAuthService extends SuperService<ShopAuthEntity> {
     Boolean update(ShopAuthDTO.UpdateDTO dto);
 
 
+    /**
+     * 获取到授权信息 根据店铺id
+     * @author yl
+     * @date 2023-08-29 16:15
+     * @param shopId
+     * @return com.erp.model.oms.entity.ShopAuthEntity
+     */
+    ShopAuthEntity getByShopId(String shopId);
+
+    /**
+     * 删除根据店铺id
+     * @author yl
+     * @date 2023-08-29 16:48
+     * @param id
+     * @return void
+     */
+    void removeByShopId(String id);
 }

@@ -12,6 +12,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.TypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,9 +58,10 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
 
     private SkuMappingService skuMappingService;
 
+    private ListingInfoService listingInfoService;
+
     private List<SkuMappingEntity> addSkuMappingList = new ArrayList<>(10);
 
-    private List<SkuMappingEntity> updateSkuMappingList = new ArrayList<>(10);
     /**
      * listing 信息
      */
@@ -72,13 +74,17 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
 
     public SkuMappingExcelListener(SkuMappingService skuMappingService, List<SkuVO> skuList,
                                    List<ShopInfoEntity> shopList, List<SkuMappingEntity> skuMappingList,
-                                   List<DictBasicDTO.ViewDTO> dictBasicList, List<ListingInfoEntity> listingInfoEntityList) {
+                                   List<DictBasicDTO.ViewDTO> dictBasicList,
+                                   List<ListingInfoEntity> listingInfoEntityList,
+                                   ListingInfoService listingInfoService) {
         this.skuMappingService = skuMappingService;
         this.skuList = skuList;
         this.shopList = shopList;
         this.skuMappingList = skuMappingList;
         this.dictBasicList = dictBasicList;
         this.listingInfoEntityList = listingInfoEntityList;
+        this.listingInfoService = listingInfoService;
+
     }
 
     /**
@@ -194,8 +200,8 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             skuMappingService.saveBatch(addSkuMappingList);
         }
 
-        if (CollectionUtils.isNotEmpty(updateSkuMappingList)) {
-            skuMappingService.updateBatchById(updateSkuMappingList);
+        if (CollectionUtils.isNotEmpty(addListingInfoEntityList)) {
+            listingInfoService.saveBatch(addListingInfoEntityList);
         }
     }
 

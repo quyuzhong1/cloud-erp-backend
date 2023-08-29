@@ -15,7 +15,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.ShopAuthDTO;
 
 /**
- * 店铺授权表
+ * 店铺管理
  *
  * @author Lambda
  * @since 2023-08-28

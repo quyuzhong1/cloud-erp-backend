@@ -41,7 +41,6 @@ public class ShopInfoController extends BaseController {
     private ShopCostService shopCostService;
 
 
-
     /**
      * 店铺 分页
      *
@@ -197,6 +196,20 @@ public class ShopInfoController extends BaseController {
         return success(resultUrl);
     }
 
+    /**
+     * 获取到向商户申请授权码
+     *
+     * @return
+     */
+    @GetMapping("/index")
+    public ApiResult index(@RequestParam("hmac") String hmac,
+                           @RequestParam("host") String host,
+                           @RequestParam("shop") String shop,
+                           @RequestParam("timestamp") String timestamp) {
+        String resultUrl = shopInfoService.index(hmac, host, shop, timestamp);
+        return success(resultUrl);
+    }
+
 
     /**
      * 店铺授权
@@ -205,14 +218,24 @@ public class ShopInfoController extends BaseController {
      */
     @GetMapping("/shopAuthorize")
     public ApiResult shopAuthorize(@RequestParam("code") String code,
-                                    @RequestParam("hmac") String hmac,
-                                    @RequestParam("host") String host,
-                                    @RequestParam("shop") String shop,
-                                    @RequestParam("timestamp")String timestamp,
-                                    @RequestParam("shopId")String shopId
-                                    ) {
-        Boolean result = shopInfoService.shopAuthorize(code,hmac,host,shop,timestamp,shopId);
-        return result?success():failure();
+                                   @RequestParam("hmac") String hmac,
+                                   @RequestParam("host") String host,
+                                   @RequestParam("shop") String shop,
+                                   @RequestParam("timestamp") String timestamp
+    ) {
+        Boolean result = shopInfoService.shopAuthorize(code, hmac, host, shop, timestamp);
+        return result ? success() : failure();
     }
 
+
+    /**
+     * 获取消授权
+     *
+     * @return
+     */
+    @PostMapping("/cancelAuthorize")
+    public ApiResult cancelAuthorize(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = shopInfoService.cancelAuthorize(dto.getId());
+        return result ? success() : failure();
+    }
 }

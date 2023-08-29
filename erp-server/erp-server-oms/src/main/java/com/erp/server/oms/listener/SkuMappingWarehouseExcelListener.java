@@ -114,14 +114,14 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         if (Objects.isNull(warehouse)) {
             errorMsgList.add("仓库不存在");
         }
-        //仓库id
-        String warehouseId = warehouse.getId();
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(importExcelDTO);
             return;
         }
+        //仓库id
+        String warehouseId = warehouse.getId();
         //库存sku
         String warehouseSkuNo = importExcelDTO.getWarehouseSkuNo();
         ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream().filter(l -> l.getSkuNo().

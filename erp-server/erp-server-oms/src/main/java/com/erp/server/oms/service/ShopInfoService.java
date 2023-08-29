@@ -75,7 +75,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * 方法说明
      * @author yl
      * @date 2023-08-28 20:00
-     * @param id
+     * @param
      * @return java.lang.String
      */
     String getShopAuthUrl(String id);
@@ -89,8 +89,29 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param host
      * @param shop
      * @param timestamp
-     * @param shopId
      * @return
      */
-    Boolean shopAuthorize(String code, String hmac, String host, String shop, String timestamp, String shopId);
+    Boolean shopAuthorize(String code, String hmac, String host, String shop, String timestamp);
+
+    /**
+     * 取消授权
+     * @author yl
+     * @date 2023-08-29 16:41
+     * @param id
+     * @return java.lang.Boolean
+     */
+    Boolean cancelAuthorize(String id);
+
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2023-08-29 17:07
+     * @param code
+     * @param hmac
+     * @param host
+     * @param shop
+     * @param timestamp
+     * @return java.lang.String
+     */
+    String index( String hmac, String host, String shop, String timestamp);
 }

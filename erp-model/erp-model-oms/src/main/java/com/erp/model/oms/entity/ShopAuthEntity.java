@@ -41,10 +41,10 @@ public class ShopAuthEntity extends BaseEntity<ShopAuthEntity> {
     @TableField("access_token ")
     private String accessToken ;
     /**
-    * 过期时间
+    * 访问令牌过期之前的秒数。
     */
-    @TableField("expired_time ")
-    private LocalDate expiredTime ;
+    @TableField("expires_in ")
+    private Integer expiresIn ;
     /**
     * 对应 dmp 表id
     */

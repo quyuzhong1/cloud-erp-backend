@@ -32,15 +32,15 @@ public class ShopSdkServer {
      * 获取授权的url
      *
      * @param entity
-     * @param shopName
+     * @param shopDomain
      * @return
      */
-    public String getShopAuthorizeUrl(CfgAppClientEntity entity, String shopName) {
+    public String getShopAuthorizeUrl(CfgAppClientEntity entity, String shopDomain,String shopId) {
         if (Objects.isNull(entity)) {
             return "";
         }
         String grantOptions = "per-user";
-        String shopAuthorizeUrl = String.format(entity.getUrl(), shopName, entity.getClientId(), grantOptions, entity.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
+        String shopAuthorizeUrl = String.format(entity.getUrl(), shopDomain, entity.getClientId(), grantOptions, entity.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE,shopId);
         return shopAuthorizeUrl;
     }
 
@@ -53,13 +53,12 @@ public class ShopSdkServer {
      * @author yl
      * @date 2023-08-29 8:59
      */
-    public JSONObject getShopAuthorizeInfo(AuthorizeDTO.FindShopAuthorizeDTO dto) {
+    public String getShopAuthorizeInfo(AuthorizeDTO.FindShopAuthorizeDTO dto) {
         String code = dto.getCode();
         String host = dto.getHost();
         String shop = dto.getShop();
         String timestamp = dto.getTimestamp();
         String hmac = dto.getHmac();
-        String clientId = dto.getClientId();
         String clientSecret = dto.getClientSecret();
         String params = "code=" + code + "&host=" + host + "&shop=" + shop + "&timestamp=" + timestamp;
         boolean verify = verifyShop(params, hmac, shop, clientSecret);
@@ -67,14 +66,13 @@ public class ShopSdkServer {
             throw new ServiceException("店铺授权检验未通过");
         }
         String accessTokenUrl = dto.getAccessTokenUrl();
-        String path = String.format(accessTokenUrl, shop, clientId, clientSecret, code);
+        String path = String.format(accessTokenUrl, shop);
         Map<String, Object> paramsMap = new HashMap<>();
         paramsMap.put("client_id", dto.getClientId());
         paramsMap.put("client_secret", dto.getClientSecret());
         paramsMap.put("code", dto.getCode());
         String bodyStr = OkHttpUtils.doPost(path, paramsMap, null);
-        JSONObject jsonObject = JSONObject.parseObject(bodyStr);
-        return jsonObject;
+        return bodyStr;
     }
 
     /**
@@ -85,7 +83,7 @@ public class ShopSdkServer {
      * @param shop
      * @return
      */
-    private boolean verifyShop(String params, String hmac, String shop, String clientSecret) {
+    public boolean verifyShop(String params, String hmac, String shop, String clientSecret) {
         HMac HMAC = new HMac(HmacAlgorithm.HmacSHA256, clientSecret.getBytes(StandardCharsets.UTF_8));
         String digest = HMAC.digestHex(params.getBytes(StandardCharsets.UTF_8));
         Boolean verify = HMAC.verify(digest.getBytes(StandardCharsets.UTF_8), hmac.getBytes(StandardCharsets.UTF_8));
