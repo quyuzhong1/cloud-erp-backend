@@ -1006,6 +1006,10 @@ public class WarehouseReceiveDTO {
          */
         private String supplierName;
         /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
          * 仓库名称
          */
         private String warehouseName;

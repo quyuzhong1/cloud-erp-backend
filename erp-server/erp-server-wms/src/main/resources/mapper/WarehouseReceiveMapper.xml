@@ -391,6 +391,7 @@
             pr.code,
             pr.supplier_name,
             pr.approve_status,
+            pr.delivery_warehouse_id AS warehouseId,
             pr.delivery_warehouse_name AS warehouseName,
             pr.create_time
         FROM po_receive pr
