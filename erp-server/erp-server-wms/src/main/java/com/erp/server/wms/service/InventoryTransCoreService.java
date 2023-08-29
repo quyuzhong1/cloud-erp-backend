@@ -1,6 +1,8 @@
 package com.erp.server.wms.service;
 
 import com.erp.model.wms.dto.inventory.*;
+import com.erp.model.wms.enums.inventory.InventoryBizTypeEnum;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @Classname: InventoryCoreService
@@ -33,6 +35,13 @@ public interface InventoryTransCoreService {
      * @param dto
      */
     void approveByRule(InventoryInOutStockRuleDTO dto);
+
+    /**
+     * 自定义业务类型-来源于InventoryBizTypeEnum枚举，自定义规则，操作引起当前仓和目的仓两个仓库的库存变化
+     * @param dto
+     */
+    void approveByRule(InventoryTransferRuleDTO dto, InventoryBizTypeEnum locationMove);
+
 
     /**
      * 反审核
