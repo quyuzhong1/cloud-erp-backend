@@ -231,6 +231,9 @@
             <if test="params.skuNo != null and params.skuNo != ''">
                 and pbs.parent_sku_no ilike concat('%', #{params.skuNo},'%')
             </if>
+            <if test="params.childSkuNo != null and params.childSkuNo != ''">
+                and cpd.sku_no ilike concat('%', #{params.childSkuNo},'%')
+            </if>
             <if test="params.name != null and params.name != ''">
                 and pd.name ilike concat('%', #{params.name},'%')
             </if>
