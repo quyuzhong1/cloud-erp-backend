@@ -55,6 +55,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String code;
 
         /**
+         * 委外订单编号
+         */
+        private String subContractCode;
+
+        /**
          * 供应商名称
          */
         private String supplierName;
@@ -281,6 +286,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 采购订单编号
          */
         private String code;
+
+        /**
+         * 委外订单编号
+         */
+        private String subContractCode;
 
         /**
          * 产品名称
@@ -1062,6 +1072,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 采购单号
          */
         private String code;
+
+        /**
+         * 委外订单编号
+         */
+        private String subContractCode;
 
         /**
          * 供应商名称

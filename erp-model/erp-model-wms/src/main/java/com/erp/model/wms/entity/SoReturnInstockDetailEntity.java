@@ -102,6 +102,12 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     private String warehouseId;
 
     /**
+     * 是否委外（true是、false否）
+     */
+    @TableField("is_sub_contract")
+    private Boolean isSubContract;
+
+    /**
      * 仓库名称
      */
     @TableField("warehouse_name")

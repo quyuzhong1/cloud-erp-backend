@@ -4,9 +4,8 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,6 +38,11 @@ public class SoReturnInstockDTO {
          * 销售单号
          */
         private String sourceCode;
+        /**
+         * 是否委外（true是、false否）
+         */
+        private Boolean isSubContract;
+
         /**
          * 库存组织
          */
@@ -87,6 +91,10 @@ public class SoReturnInstockDTO {
          * id
          */
         private String id;
+        /**
+         * 明细id
+         */
+        private String detailId;
         /**
          * 来源id
          */
@@ -199,6 +207,11 @@ public class SoReturnInstockDTO {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 是否委外（true是、false否）
+         */
+        private Boolean isSubContract;
     }
 
     /**
@@ -729,5 +742,132 @@ public class SoReturnInstockDTO {
          * 数量
          */
         private Integer count;
+    }
+
+    /**
+     * 下推加工单显示
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewGenerateMachineInfoDTO {
+        /**
+         * 事务类型
+         */
+        private String workType;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+        /**
+         * bom版本
+         */
+        private Integer bomVersion;
+
+        /**
+         * 即时库存
+         */
+        private Integer curInventoryQty;
+
+        /**
+         * 子级skuId
+         */
+        private String childSkuId;
+        /**
+         * 子级sku编号
+         */
+        private String childSkuNo;
+
+        /**
+         * 用量
+         */
+        private Integer quantity;
+        /**
+         * 子件数量
+         */
+        private Integer childQty;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class GenerateMachineInfoDTO {
+        /**
+         * skuId
+         */
+        @NotBlank(message = "sku不能为空")
+        private String skuId;
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库不能为空")
+        private String warehouseId;
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 数量
+         */
+        @NotEmpty(message = "数量不能为空")
+        private Integer qty;
+        /**
+         * bom版本
+         */
+        @NotBlank(message = "BOM版本不能为空")
+        private Integer bomVersion;
+        /**
+         * 子级skuId
+         */
+        @NotBlank(message = "子级SKU不能为空")
+        private String childSkuId;
+        /**
+         * 处理类型
+         */
+        @NotBlank(message = "子级SKU处理类型不能为空")
+        private String handleType;
+        /**
+         * 子级SKU仓库id
+         */
+        private String childWarehouseId;
+        /**
+         * 子级SKU供应商id
+         */
+        private String childSupplierId;
+        /**
+         * 子级SKU仓位
+         */
+        private String childWarehouseLocation;
+
     }
 }

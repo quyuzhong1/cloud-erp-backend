@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.BomSkuDTO;
+import com.erp.model.plm.dto.ProductBomHistoryDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
 import com.erp.model.plm.vo.BomVersionVO;
@@ -24,4 +25,12 @@ public interface ProductBomHistoryService  extends IService<ProductBomHistoryEnt
     List<BomVersionVO> getVersionList(String id);
 
     List<ProductBomHistoryEntity> listByBomId(String bomId);
+    /**
+     * @description: 根据sku查询历史版本
+     * @author Will
+     * @date: 2023/8/28 19:01
+     * @param dto
+     * @return List<VersionDTO>
+     */
+    List<ProductBomHistoryDTO.VersionDTO> listHistoryVersion(ProductBomHistoryDTO.ParamDTO dto);
 }

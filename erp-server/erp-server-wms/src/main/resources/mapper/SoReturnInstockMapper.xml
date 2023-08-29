@@ -17,6 +17,7 @@
         sri.invalid_status,
         sri.seller_id,
         sri.seller_name,
+        srid.id as detailId,
         srid.sku_id,
         srid.sku_no,
         srid.return_type_dict,
@@ -28,7 +29,8 @@
         sri.create_user_name,
         sri.create_time,
         sri.inventory_org_id,
-        sri.inventory_org_name
+        sri.inventory_org_name,
+        srid.is_sub_contract
         FROM so_return_instock_detail srid
         INNER JOIN so_return_instock sri ON sri.id = srid.main_id
         WHERE srid.is_deleted = FALSE
@@ -46,7 +48,9 @@
                 #{item}
             </foreach>
         </if>
-
+        <if test="params.isSubContract != null">
+            and srid.is_sub_contract = #{params.isSubContract}
+        </if>
         <if test="params.code != null and params.code != ''">
             and sri.code = #{params.code}
         </if>

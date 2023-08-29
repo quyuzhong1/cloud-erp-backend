@@ -2,12 +2,17 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.BomSkuDTO;
+import com.erp.model.plm.dto.ProductBomHistoryDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
+import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
 import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
 import com.erp.model.plm.vo.BomVersionVO;
 import com.erp.server.plm.mapper.ProductBomHistoryMapper;
+import com.erp.server.plm.service.BomSkuService;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProductBomHistoryService;
 import com.erp.server.plm.service.ProductBomSkuHistoryService;
@@ -15,6 +20,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,6 +39,10 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private BomSkuService bomSkuService;
+
 
     /**
      * 保存bom的历史信息
@@ -114,5 +124,21 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
     public List<ProductBomHistoryEntity> listByBomId(String bomId) {
         List<ProductBomHistoryEntity> list = lambdaQuery().eq(ProductBomHistoryEntity::getBomId, bomId).list();
         return list;
+    }
+
+    @Override
+    public List<ProductBomHistoryDTO.VersionDTO> listHistoryVersion(ProductBomHistoryDTO.ParamDTO dto) {
+        List<BomSkuEntity> bomList = bomSkuService.getByParentSkuId(dto.getSkuId());
+        if (CollectionUtils.isEmpty(bomList)) {
+            throw new ServiceException(ApiError.ERROR_95163);
+        }
+        List<ProductBomHistoryEntity> list = lambdaQuery().eq(ProductBomHistoryEntity::getBomId, bomList.get(0).getBomId())
+                .select(ProductBomHistoryEntity::getVersion)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<ProductBomHistoryDTO.VersionDTO>  resultList= list.stream().map(obj -> new ProductBomHistoryDTO.VersionDTO(obj.getVersion())).collect(Collectors.toList());
+        return resultList;
     }
 }

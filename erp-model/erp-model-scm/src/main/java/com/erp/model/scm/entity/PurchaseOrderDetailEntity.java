@@ -178,6 +178,12 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private String subArrivalStatus;
 
     /**
+     * 委外订单类型（child子级，parent父级）
+     */
+    @TableField(exist = false)
+    private String subcontractType;
+
+    /**
      *   采购申请明细id(无需传值，后端使用)
      */
     @TableField(exist = false)

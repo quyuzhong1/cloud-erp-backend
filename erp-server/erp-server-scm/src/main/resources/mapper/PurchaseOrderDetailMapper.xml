@@ -106,6 +106,7 @@
             ID,
             purchase_order_id,
             purchase_date,
+            subcontract_type,
             sku_id,
             sku_no,
             product_name,
@@ -131,6 +132,7 @@
                 select
                 pod.purchase_order_id,
                 po.purchase_date,
+                po.subcontract_type,
                 pod.id,
                 pod.sku_id ,
                 pod.sku_no,

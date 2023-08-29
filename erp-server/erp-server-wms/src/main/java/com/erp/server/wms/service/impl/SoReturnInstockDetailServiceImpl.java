@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.SubcontractTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -8,18 +10,17 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.ObjectUtils;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
-import com.erp.model.wms.dto.SoReturnReceiveDTO;
-import com.erp.model.wms.dto.SoReturnReceiveDetailDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.SoReturnInstockDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.QcInfoService;
 import com.erp.server.wms.service.SoReturnInstockDetailService;
 import com.erp.server.wms.service.SoReturnReceiveDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -30,7 +31,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -54,7 +54,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
     private OperateLogService operateLogService;
 
     @Resource
-    private QcInfoService qcInfoService;
+    private ScmTaskFeign scmTaskFeign;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -106,11 +106,14 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
                 list.add(detailEntity);
             }
+            //更新委外标识
+            updateSubContract(list);
             return this.saveBatch(list);
         } else {
             return notReturnOrderAdd(dto, id);
         }
     }
+
 
     /**
      * 无退货订单新增
@@ -159,6 +162,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
             list.add(detailEntity);
         }
+        //更新委外标识
+        updateSubContract(list);
         return this.saveBatch(list);
     }
 
@@ -338,5 +343,28 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
     @Override
     public List<SoReturnInstockDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds) {
         return baseMapper.listDetailBySourceDetailIds(sourceDetailIds);
+    }
+
+    /**
+     * @description: 更新委外标识
+     * @author Will
+     * @date: 2023/8/29 11:26
+     * @param list
+     */
+    private void updateSubContract (List<SoReturnInstockDetailEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> skuIdList = list.stream().map(SoReturnInstockDetailEntity::getSkuId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> detailList = scmTaskFeign.getLatest(skuIdList);
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        for (SoReturnInstockDetailEntity entity : list) {
+            PurchaseOrderDetailEntity detailEntity = detailList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(detailEntity) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(detailEntity.getSubcontractType()) ) {
+                entity.setIsSubContract(Boolean.TRUE);
+            }
+        }
     }
 }
