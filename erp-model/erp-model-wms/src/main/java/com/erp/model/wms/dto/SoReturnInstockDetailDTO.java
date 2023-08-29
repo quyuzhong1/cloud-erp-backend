@@ -145,6 +145,10 @@ public class SoReturnInstockDetailDTO {
          */
         private String unitName;
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+        /**
          * 产品名称
          */
         private String productName;

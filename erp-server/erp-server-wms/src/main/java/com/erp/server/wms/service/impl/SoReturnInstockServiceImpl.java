@@ -433,6 +433,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             detailView.setProductName(productDetailEntity.getSkuName());
             detailView.setSpuNo(productDetailEntity.getSpuNo());
             detailView.setUnitName(productDetailEntity.getUnitName());
+            detailView.setVariantProperty(productDetailEntity.getVariantProperty());
             detailView.setWarehouseLocation(detailEntity.getWarehouseLocation());
             SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             if (StringUtils.isNotBlank(viewDTO.getSoReturnId())) {
@@ -1470,6 +1471,40 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             addDTO.setPurchasePriceDetailList(addDetailList);
             purchaseReturnOrderService.add(addDTO);
         }
+    }
+
+    @Override
+    public Boolean pdaAddAndSubmit(SoReturnInstockDTO.Add dto) {
+        String id = this.pdaAdd(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        return this.submit(Arrays.asList(id));
+    }
+
+    @Override
+    public Boolean pdaUpdateAndSubmit(SoReturnInstockDTO.Update dto) {
+        Boolean update = this.pdaUpdate(dto);
+        if (!update) {
+            throw new ServiceException(ApiError.ERROR_1020);
+        }
+        return this.submit(Arrays.asList(dto.getId()));
+    }
+
+    @Override
+    public SoReturnInstockDTO.View pdaView(String id) {
+        SoReturnInstockDTO.View view = this.view(id);
+        if (SourceTypeEnum.SO_RETURN.getCode().equals(view.getSourceCode())) {
+            List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveService.listBySourceIds(Arrays.asList(view.getSourceId()));
+            if (CollectionUtils.isNotEmpty(soReturnReceiveEntities)) {
+                SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveEntities.stream().filter(req -> req.getId().equals(view.getSourceId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(soReturnReceiveEntity)) {
+                    view.setSourceId(soReturnReceiveEntity.getId());
+                    view.setSourceCode(soReturnReceiveEntity.getCode());
+                }
+            }
+        }
+        return view;
     }
 
 

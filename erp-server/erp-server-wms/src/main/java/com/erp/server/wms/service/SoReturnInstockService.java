@@ -216,22 +216,6 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return java.lang.Boolean
      **/
     Boolean saveKingdeeSoReturn(SoReturnInstockEntity instockEntity, List<SoReturnInstockDetailEntity> detailEntityList, List<String> ids);
-    /**
-     * @description: 下推加工单
-     * @author Will
-     * @date: 2023/8/28 14:13
-     * @param ids
-     * @return List<ViewGenerateMachineInfoDTO>
-     */
-    List<SoReturnInstockDTO.ViewGenerateMachineInfoDTO> viewGenerateMachineInfo(List<String> ids);
-    /**
-     * @description: 生成加工单
-     * @author Will
-     * @date: 2023/8/28 15:02
-     * @param list
-     * @return Boolean
-     */
-    Boolean generateMachineInfo(ValidList<SoReturnInstockDTO.GenerateMachineInfoDTO> list);
 
     /**
      * Pda:列表查询
@@ -268,4 +252,47 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return java.lang.String
      **/
     Boolean pdaUpdate(SoReturnInstockDTO.Update dto);
+    /**
+     * @description: 下推加工单
+     * @author Will
+     * @date: 2023/8/28 14:13
+     * @param ids
+     * @return List<ViewGenerateMachineInfoDTO>
+     */
+    List<SoReturnInstockDTO.ViewGenerateMachineInfoDTO> viewGenerateMachineInfo(List<String> ids);
+    /**
+     * @description: 生成加工单
+     * @author Will
+     * @date: 2023/8/28 15:02
+     * @param list
+     * @return Boolean
+     */
+    Boolean generateMachineInfo(ValidList<SoReturnInstockDTO.GenerateMachineInfoDTO> list);
+
+    /**
+     * PDA:查询详情
+     * @Author Luo_WG
+     * @Date 2023/8/29 15:23
+     * @param id
+     * @return com.erp.model.wms.dto.SoReturnInstockDTO.View
+     **/
+    SoReturnInstockDTO.View pdaView(String id);
+
+    /**
+     * PDA:新增提交
+     * @Author Luo_WG
+     * @Date 2023/8/29 15:35
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaAddAndSubmit(SoReturnInstockDTO.Add dto);
+
+    /**
+     * pda:修改提交
+     * @Author Luo_WG
+     * @Date 2023/8/29 15:35
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaUpdateAndSubmit(SoReturnInstockDTO.Update dto);
 }
