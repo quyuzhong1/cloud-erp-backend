@@ -369,7 +369,7 @@
             AND tf.trade_time &gt;= #{startTime} AND tf.trade_time &lt; #{endTime}
         </if>
         WHERE inv.is_deleted = false and inv.dict_inventory_status in ('usable','frozen')
-        AND ( inv.qty > 0 OR (inv.qty = 0 AND tf.inventory_id IS NOT NULL) )
+        AND ( inv.qty != 0 OR (inv.qty = 0 AND tf.inventory_id IS NOT NULL) )
         <if test="type != null and type == 'byWarehouse' and null != params and params.size > 0">
               and inv.warehouse_id in
             <foreach collection="params" item="item" open="(" close=")" separator=",">
