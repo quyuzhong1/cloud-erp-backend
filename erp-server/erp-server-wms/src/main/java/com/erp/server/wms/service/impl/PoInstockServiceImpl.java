@@ -383,6 +383,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         }
         BeanMapperUtils.copy(entity, dto);
 
+        //状态名称
+        dto.setApproveStatusName(ApproveStatusEnum.getName(dto.getApproveStatus()));
         //采购信息
         PurchaseOrderDTO.GetOneDTO purchaseOrderDTO = scmTaskFeign.getByOrderId(entity.getPurchaseOrderId());
         if (ObjectUtils.isEmpty(purchaseOrderDTO)) {
@@ -427,6 +429,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 obj.setProductName(skuVO.getSkuName());
                 obj.setSpuNo(skuVO.getSpuNo());
                 obj.setUnitName(skuVO.getUnitName());
+                obj.setVariantProperty(skuVO.getVariantProperty());
             }
             if (CollectionUtils.isNotEmpty(purchaseOrderDetailList)) {
                 Integer purchaseQty = purchaseOrderDetailList.stream().filter(e -> e.getId().equals(obj.getPurchaseOrderDetailId())).map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -463,6 +466,10 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         supplierDTO.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
         supplierDTO.setSupplierName(purchaseOrderSupplierEntity.getSupplierName());
         supplierDTO.setSupplierContactId(purchaseOrderSupplierEntity.getSupplierContactId());
+        if (StringUtils.isNotBlank(purchaseOrderSupplierEntity.getSupplierContactId())) {
+            SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(purchaseOrderSupplierEntity.getSupplierContactId());
+            supplierDTO.setSupplierContactName(supplierContactById.getPerson());
+        }
 
         //查询供应商信息
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(purchaseOrderSupplierEntity.getSupplierId());

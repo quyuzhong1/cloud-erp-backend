@@ -410,6 +410,10 @@ public class SoReturnInstockDTO {
          */
         private String type;
         /**
+         * 单据类型名称
+         */
+        private String typeName;
+        /**
          * 客户id
          */
         private String customerId;

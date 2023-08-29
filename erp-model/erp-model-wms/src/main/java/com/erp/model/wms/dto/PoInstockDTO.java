@@ -349,6 +349,11 @@ public class PoInstockDTO implements Serializable {
         private String supplierContactId;
 
         /**
+         * 供应商联系人名称
+         */
+        private String supplierContactName;
+
+        /**
          * 供应商地址
          */
         private String supplierAddress;
@@ -366,12 +371,27 @@ public class PoInstockDTO implements Serializable {
         /**
          * 入库单号
          */
-        private String  code;
+        private String code;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
 
         /**
          * 审核状态
          */
-        private String  approveStatus;
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
 
         /**
          * 入库日期

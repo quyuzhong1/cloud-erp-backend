@@ -2,6 +2,8 @@ package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
@@ -70,6 +72,11 @@ public class WarehouseLocationMoveInfoEntity extends BaseEntity<WarehouseLocatio
     */
     @TableField("approve_time")
     private LocalDateTime approveTime;
+    /**
+    * 审核时间
+    */
+    @TableField("bill_date")
+    private LocalDate billDate;
 
 
     public static final String CODE = "code";

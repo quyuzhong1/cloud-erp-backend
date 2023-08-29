@@ -10,9 +10,13 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryTransferRuleDTO;
+import com.erp.model.wms.dto.inventory.TransactionRuleDTO;
+import com.erp.model.wms.dto.inventory.TransferDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveInfoEntity;
+import com.erp.model.wms.enums.inventory.*;
 import com.erp.server.wms.mapper.WarehouseLocationMoveInfoMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
@@ -21,6 +25,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +50,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
 import java.util.stream.Collectors;
@@ -76,6 +82,8 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     private InventoryService inventoryService;
     @Resource
     private WarehouseService warehouseService;
+    @Resource
+    private InventoryTransCoreService inventoryTransCoreService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -339,7 +347,32 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
+        InventoryTransferRuleDTO ruleDTO = new InventoryTransferRuleDTO();
+
+        WarehouseLocationMoveInfoEntity infoEntity = this.getById(dto.getId());
+        List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(Arrays.asList(infoEntity.getId()));
+        List<TransferDTO> transferDTOList = new ArrayList<>();
+        for (WarehouseLocationMoveDetailEntity detailEntity : detailEntityList) {
+            TransferDTO transferDTO = new TransferDTO();
+            transferDTO.setSourceType(InventorySourceTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
+            transferDTO.setSourceId(infoEntity.getId());
+            transferDTO.setSourceCode(infoEntity.getCode());
+            transferDTO.setBillDate(infoEntity.getBillDate());
+            transferDTO.setSourceDetailId(detailEntity.getId());
+            transferDTO.setCurWarehouseId(infoEntity.getWarehouseId());
+            transferDTO.setCurWarehouseLocation(detailEntity.getOutWarehouseLocation());
+            transferDTO.setTargetWarehouseId(infoEntity.getWarehouseId());
+            transferDTO.setTargetWarehouseLocation(detailEntity.getInWarehouseLocation());
+            transferDTO.setQty(detailEntity.getQty());
+            transferDTOList.add(transferDTO);
+        }
+        List<TransactionRuleDTO> transactionRuleDTOList = new ArrayList<>(2);
+        transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK));
+        transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryStatusEnum.USABLE, InventoryModeEnum.IN_STOCK));
+        ruleDTO.setMembers(transferDTOList);
+        ruleDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
+        ruleDTO.setRules(transactionRuleDTOList);
+        inventoryTransCoreService.approveByRule(ruleDTO, InventoryBizTypeEnum.WAREHOUSE_LOCATION_MOVE);
 
         return Boolean.TRUE;
     }
@@ -452,6 +485,8 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     * 新增修改处理数据
     */
     private void handleData(WarehouseLocationMoveInfoEntity warehouseLocationMoveInfoEntity) {
-    // TODO 验证数据 & 数据赋值
+        if (StringUtils.isBlank(warehouseLocationMoveInfoEntity.getId())) {
+            warehouseLocationMoveInfoEntity.setBillDate(LocalDate.now());
+        }
     }
 }
