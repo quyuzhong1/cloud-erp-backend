@@ -1142,6 +1142,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 viewChildDTO.setChildSkuNo(childrenSkuDTO.getSkuNo());
                 viewChildDTO.setQuantity(childrenSkuDTO.getQuantity());
                 viewChildDTO.setChildQty(curInventoryQty * childrenSkuDTO.getQuantity());
+                viewChildDTO.setChildWarehouseId(viewDTO.getWarehouseId());
+                viewChildDTO.setChildWarehouseLocation(viewDTO.getWarehouseLocation());
+                viewChildDTO.setChildSupplierId(skuVO.getSupplierId());
                 resultList.add(viewChildDTO);
             }
 
