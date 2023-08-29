@@ -179,8 +179,13 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String add(PurchaseReturnOrderDTO.AddDTO dto) {
+        SysUserDTO userDTO = new SysUserDTO();
+
         //获取用户信息
-        SysUserDTO userDTO = sysUserFeign.getSysUserById(dto.getReturnUserId());
+        if (ObjectUtils.isNotEmpty(dto.getReturnUserId())) {
+            userDTO =  sysUserFeign.getSysUserById(dto.getReturnUserId());
+        }
+
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getReturnOrgId());
         //获取仓库信息

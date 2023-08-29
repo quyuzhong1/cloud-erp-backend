@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -860,12 +859,12 @@ public class SoReturnInstockDTO {
         /**
          * 数量
          */
-        @NotEmpty(message = "数量不能为空")
+        @NotNull(message = "数量不能为空")
         private Integer qty;
         /**
          * bom版本
          */
-        @NotBlank(message = "BOM版本不能为空")
+        @NotNull(message = "BOM版本不能为空")
         private Integer bomVersion;
         /**
          * 子级skuId
