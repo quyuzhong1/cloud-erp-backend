@@ -8,17 +8,14 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
-import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.server.wms.service.SoReturnInstockService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -307,6 +304,37 @@ public class SoReturnInstockController extends BaseController {
     @PostMapping(value = "/receiveGenerateSoReturnInstockSave")
     public ApiResult receiveGenerateSoReturnInstockSave(@RequestBody ValidList<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> list) {
         Boolean flag = soReturnInstockService.receiveGenerateSoReturnInstockSave(list.getList());
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 下推加工单显示
+     * @author Will
+     * @date: 2023/8/28 14:12
+     * @param dto
+     * @return ApiResult<List<viewGenerateMachineInfoDTO>>
+     */
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnInstock:ViewGenerateMachineInfoDTO",
+            serviceClass = SoReturnInstockService.class,
+            keyIdName = "ids")
+    @PostMapping(value = "/viewGenerateMachineInfo")
+    public ApiResult<List<SoReturnInstockDTO.ViewGenerateMachineInfoDTO>> viewGenerateMachineInfo(@RequestBody @Validated  BaseIdsDTO.IdsDTO dto) {
+        List<SoReturnInstockDTO.ViewGenerateMachineInfoDTO> resultList =  soReturnInstockService.viewGenerateMachineInfo(dto.getIds());
+        return success(resultList) ;
+    }
+
+    /**
+     * 下推加工单保存
+     * @author Will
+     * @date: 2023/8/28 15:26
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping(value = "/generateMachineInfo")
+    public ApiResult generateMachineInfo(@RequestBody @Validated  ValidList<SoReturnInstockDTO.GenerateMachineInfoDTO> list) {
+        Boolean flag = soReturnInstockService.generateMachineInfo(list);
         return flag == true ? success() : failure();
     }
 }

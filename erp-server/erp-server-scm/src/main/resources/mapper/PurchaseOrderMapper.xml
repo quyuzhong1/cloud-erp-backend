@@ -56,10 +56,13 @@
             po.purchase_user_name as purchaseUserName,
             po.create_user_name as createUserName,
             po.create_time as createTime,
-            pod.is_end_receive as isEndReceive
+            pod.is_end_receive as isEndReceive,
+            so.code as subContractCode
         from purchase_order po
         inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+        left join subcontract_order_detail sod on pod.source_detail_id = sod.id and sod.is_deleted = false
+        left join subcontract_order so on so.id = sod.main_id and so.is_deleted = false
         <where>
             po.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
@@ -67,6 +70,9 @@
             </if>
             <if test="params.code != null and params.code != ''">
                 and po.code like concat('%',#{params.code},'%')
+            </if>
+            <if test="params.subContractCode != null and params.subContractCode != ''">
+                and so.code like concat('%',#{params.subContractCode},'%')
             </if>
             <if test="params.isUrgent != null ">
                 and pod.is_urgent = #{params.isUrgent}
@@ -157,6 +163,8 @@
         from purchase_order po
         inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+        left join subcontract_order_detail sod on pod.source_detail_id = sod.id and sod.is_deleted = false
+        left join subcontract_order so on so.id = sod.main_id and so.is_deleted = false
         <where>
             po.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
@@ -164,6 +172,9 @@
             </if>
             <if test="params.code != null and params.code != ''">
                 and po.code like concat('%',#{params.code},'%')
+            </if>
+            <if test="params.subContractCode != null and params.subContractCode != ''">
+                and so.code like concat('%',#{params.subContractCode},'%')
             </if>
             <if test="params.isUrgent != null ">
                 and pod.is_urgent = #{params.isUrgent}
@@ -266,10 +277,14 @@
             po.approve_user_name as approveUserName,
             po.purchase_user_name as purchaseUserName,
             po.create_user_name as createUserName,
-            po.create_time as createTime
+            po.create_time as createTime,
+            pod.is_end_receive as isEndReceive,
+            so.code as subContractCode
         from purchase_order po
         inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+        left join subcontract_order_detail sod on pod.source_detail_id = sod.id and sod.is_deleted = false
+        left join subcontract_order so on so.id = sod.main_id and so.is_deleted = false
         <where>
             po.is_deleted = false
             <if test="params.ids != null and params.ids.size > 0">
@@ -281,6 +296,12 @@
             <if test="params.ids == null or params.ids.size == 0">
                 <if test="params.productName != null and params.productName != ''">
                     and pod.product_name like concat('%',#{params.productName},'%')
+                </if>
+                <if test="params.code != null and params.code != ''">
+                    and po.code like concat('%',#{params.code},'%')
+                </if>
+                <if test="params.subContractCode != null and params.subContractCode != ''">
+                    and so.code like concat('%',#{params.subContractCode},'%')
                 </if>
                 <if test="params.isUrgent != null ">
                     and pod.is_urgent = #{params.isUrgent}
@@ -529,10 +550,12 @@
                 pod.sku_no as skuNo,
                 pod.plan_delivery_date as planDeliveryDate,
                 po.delivery_warehouse_name as deliveryWarehouseName,
-                po.purchase_user_name as purchaseUserName
+                po.purchase_user_name as purchaseUserName,
+                so.code as subContractCode
             from purchase_order po
             inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
             inner join subcontract_order_detail sod on pod.source_detail_id = sod.id and sod.is_deleted = false
+            inner join subcontract_order so on so.id = sod.main_id and so.is_deleted = false
             left join supplier s on sod.supplier_id = s.id and s.is_deleted = false
             <where>
                 po.is_deleted = false and po.invalid_status = false

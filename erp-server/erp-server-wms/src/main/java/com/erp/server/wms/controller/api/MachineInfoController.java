@@ -197,13 +197,13 @@ public class MachineInfoController extends BaseController {
      * 通过SKU查询BOM子集
      * @author Will
      * @date: 2023/5/16 19:40
-     * @param skuId
+     * @param dto
      * @return ApiResult<List<ViewDTO>> 
      */
-    @GetMapping("/viewBomSubComponents")
-    public ApiResult<List<MachineSubComponentsDTO.ViewDTO>> viewBomSubComponents(@RequestParam("skuId") String skuId) {
-        List<MachineSubComponentsDTO.ViewDTO> dto = machineInfoService.viewBomSubComponents(skuId);
-        return success(dto);
+    @PostMapping("/viewBomSubComponents")
+    public ApiResult<List<MachineSubComponentsDTO.ViewDTO>> viewBomSubComponents(@RequestBody @Validated MachineSubComponentsDTO.ViewBomParamDTO dto) {
+        List<MachineSubComponentsDTO.ViewDTO> list = machineInfoService.viewBomSubComponents(dto);
+        return success(list);
     }
 
 

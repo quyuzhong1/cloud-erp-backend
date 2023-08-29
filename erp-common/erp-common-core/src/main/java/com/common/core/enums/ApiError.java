@@ -28,6 +28,7 @@ public enum ApiError implements Serializable {
 
 
     /**
+    /**
      * 通用错误
      */
     ERROR_405(405, "方法不被允许"),
@@ -507,6 +508,8 @@ public enum ApiError implements Serializable {
     ERROR_INTERVAL_DIFFERENT(98048,"区间从,区间到 两个值不能相同"),
     ERROR_INTERVAL_SIZE(98050,"区间从值不能大于区间到值"),
     ERROR_PRICE_ZERO_SKUNO(98102,"以下SKU【{}】价格不能为零"),
+    ERROR_MACHINE_EXIST_TRANSFER_INFO(98102,"加工单【{}】已存在下推直接调拨单，不支持反审核"),
+    ERROR_MACHINE_EXIST_PURCHASE_RETURN(98102,"加工单【{}】已存在下推采购退货单，不支持反审核"),
 
 
     ERROR_98024(98024,"采购价目表不存在"),
