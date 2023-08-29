@@ -135,9 +135,4 @@ public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, 
         return result;
     }
 
-    @Override
-    public Boolean createPlatformTask(PlatformTaskDTO.AddDTO dto) {
-
-        return null;
-    }
 }

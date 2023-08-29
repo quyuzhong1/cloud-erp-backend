@@ -69,14 +69,14 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_RETURN_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
-        jobTaskDTO.setApiId(9);
+        jobTaskDTO.setPlatformApiId("9");
         jobTaskDTO.setApiName("获取退货订单数据");
         jobTaskDTO.setId(34L);
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(null);
         jobTaskDTO.setNextTime(null);
-        jobTaskDTO.setPlatformId(1);
-        jobTaskDTO.setState(1);
+        jobTaskDTO.setDictPlatform("1");
+        jobTaskDTO.setStatus(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);

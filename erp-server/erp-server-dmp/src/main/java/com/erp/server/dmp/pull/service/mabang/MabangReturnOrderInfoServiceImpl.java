@@ -66,14 +66,14 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
         PlatformApiEnum platformApiEnum = PlatformApiEnum.ORDER_GET_RETURN_ORDER_LIST;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
-        jobTaskDTO.setApiId(5);
+        jobTaskDTO.setPlatformApiId("5");
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId(30L);
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(null);
         jobTaskDTO.setNextTime(null);
-        jobTaskDTO.setPlatformId(1);
-        jobTaskDTO.setState(1);
+        jobTaskDTO.setDictPlatform("1");
+        jobTaskDTO.setStatus(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);

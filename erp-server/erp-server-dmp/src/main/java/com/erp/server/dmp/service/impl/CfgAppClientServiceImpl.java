@@ -2,22 +2,22 @@ package com.erp.server.dmp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.service.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.server.dmp.mapper.CfgAppClientMapper;
 import com.erp.server.dmp.service.CfgAppClientService;
-import com.common.business.service.SuperServiceImpl;
-import com.erp.server.dmp.service.OperateLogService;
 import com.erp.server.dmp.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.dmp.dto.CfgAppClientDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 /**
  * <p>
  * 第三方应用程序信息表 服务实现类
@@ -29,8 +29,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper, CfgAppClientEntity> implements CfgAppClientService {
-    @Autowired
-    private OperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
 
@@ -53,7 +52,7 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "第三方应用程序信息单" , cfgAppClientEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, cfgAppClientEntity.getId(), "新增操作");
+//        operateLogService.addModuleOperateLog(msg, null, cfgAppClientEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
         return cfgAppClientEntity.getId();
     }
@@ -81,7 +80,7 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
             log.info("编辑 开始记录第三方应用程序信息单日志数据，id：【{}】", cfgAppClientEntity.getId());
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), cfgAppClientEntity.getId(), "第三方应用程序信息单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, cfgAppClientEntity, null, cfgAppClientEntity.getId(), msg);
+//        operateLogService.addModuleOperateLogByObj(old, cfgAppClientEntity, null, cfgAppClientEntity.getId(), msg);
         return Boolean.TRUE;
     }
 

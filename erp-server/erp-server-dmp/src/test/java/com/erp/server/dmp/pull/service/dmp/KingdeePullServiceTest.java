@@ -45,13 +45,13 @@ public class KingdeePullServiceTest {
         PlatformApiEnum platformApiEnum = PlatformApiEnum.SAL_SALEORDER;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
-        jobTaskDTO.setApiId(7);
+        jobTaskDTO.setPlatformApiId("7");
         jobTaskDTO.setApiName("管易云查询订单列表");
         jobTaskDTO.setId(32L);
         jobTaskDTO.setLastTime(LocalDateTime.parse("2022-12-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setNextTime(LocalDateTime.parse("2022-12-31 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        jobTaskDTO.setPlatformId(1);
-        jobTaskDTO.setState(1);
+        jobTaskDTO.setDictPlatform("1");
+        jobTaskDTO.setStatus(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);

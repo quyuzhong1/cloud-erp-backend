@@ -55,14 +55,14 @@ public class PullErpDateThread {
         dto.setPlatformApiEnum(enumByType);
         dto.setJobTaskDTO(jobTaskDTO);
         try {
-            log.info("发起异步{}调用任务{}", dto.getJobTaskDTO().getPlatformName(),dto.getJobTaskDTO().getApiName());
+            log.info("发起异步{}调用任务{}", dto.getJobTaskDTO().getDictPlatform(),dto.getJobTaskDTO().getApiName());
             modelService.pullDataSave(dto);
             Boolean aBoolean = platformApiTaskService.updateTaskStateById(jobTaskDTO, 0);
             if (!aBoolean) {
                 throw new RuntimeException("修改任务下次执行时间失败！");
             }
         } catch (Exception e) {
-            log.error(" {}拉取数据错误dto={}", jobTaskDTO.getPlatformName(), JSONUtil.toJsonStr(dto), e);
+            log.error(" {}拉取数据错误dto={}", jobTaskDTO.getDictPlatform(), JSONUtil.toJsonStr(dto), e);
             Boolean aBoolean = platformApiTaskService.updateTaskStateById(jobTaskDTO, 1);
             String message = e.getMessage();
             if (!aBoolean) {

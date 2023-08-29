@@ -38,14 +38,14 @@ public class GyyPullServiceTest {
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_DELIVERY_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
-        jobTaskDTO.setApiId(7);
+        jobTaskDTO.setPlatformApiId("7");
         jobTaskDTO.setApiName("管易云查询订单列表");
         jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.now().minusHours(1));
         jobTaskDTO.setNextTime(LocalDateTime.now());
-        jobTaskDTO.setPlatformId(1);
-        jobTaskDTO.setState(1);
+        jobTaskDTO.setDictPlatform("1");
+        jobTaskDTO.setStatus(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);

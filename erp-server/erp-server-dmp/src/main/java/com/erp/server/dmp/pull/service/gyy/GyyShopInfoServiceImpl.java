@@ -61,14 +61,14 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_SHOP_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
-        jobTaskDTO.setApiId(12);
+        jobTaskDTO.setPlatformApiId("12");
         jobTaskDTO.setApiName("管易云查询店铺列表");
         jobTaskDTO.setId(36L);
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(null);
         jobTaskDTO.setNextTime(null);
-        jobTaskDTO.setPlatformId(1);
-        jobTaskDTO.setState(1);
+        jobTaskDTO.setDictPlatform("1");
+        jobTaskDTO.setStatus(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
