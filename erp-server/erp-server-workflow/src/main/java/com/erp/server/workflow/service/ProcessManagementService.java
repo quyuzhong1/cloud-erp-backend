@@ -7,15 +7,10 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
-import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
-import com.erp.model.workflow.vo.ApproveNodeRecordVO;
-import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.camunda.bpm.engine.impl.pvm.PvmActivity;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -66,9 +61,12 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
 
     /**
      * 执行流程开始监听服务处理
-     * @param executionDelegate
+     *
+     * @param act
+     * @param processInstanceId
+     * @param startUserId
      */
-    void startExecutionHandle(DelegateExecution executionDelegate);
+    List<String> getCandidateByAct(PvmActivity act, String processInstanceId, String startUserId);
 
     /**
      * 退回流程
