@@ -102,6 +102,10 @@ public class BomCombinationDTO implements Serializable {
          */
         private String name;
         /**
+         * 子级sku编号
+         */
+        private String childSkuNo;
+        /**
          * 更新人id集合
          */
         private List<String> updateUserIdList;
