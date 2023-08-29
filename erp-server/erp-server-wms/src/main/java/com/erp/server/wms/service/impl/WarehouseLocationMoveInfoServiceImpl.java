@@ -276,6 +276,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
+
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "反审核操作");
