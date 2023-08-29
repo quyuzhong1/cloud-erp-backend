@@ -75,6 +75,18 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     }
 
     /**
+     * 自定义业务类型-来源于InventoryBizTypeEnum枚举，自定义规则，操作引起当前仓仓位和目的仓仓位两个仓库的库存变化
+     * @param dto
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void approveByRule(InventoryTransferRuleDTO dto, InventoryBizTypeEnum locationMove) {
+        ValidatorUtil.validateEntity(dto, ValidGroup.Update.class);
+        AbstractInventoryServiceImpl inventoryService = inventoryHelper.getInventoryService(locationMove);
+        inventoryService.approve(dto.getMembers(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
+    }
+
+    /**
      * 反审核
      * @param dto
      */
