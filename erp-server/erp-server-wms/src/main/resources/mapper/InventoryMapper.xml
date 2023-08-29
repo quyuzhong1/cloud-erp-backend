@@ -368,7 +368,7 @@
             AND EXISTS (
                 SELECT 1 FROM transaction_flow tf
                 WHERE tf.inventory_id = inv.id AND tf.is_deleted = FALSE
-                <if test="null != startTime and startTime != '' and null != endTime and endTime != ''">
+                <if test="null != startTime and null != endTime">
                     AND tf.trade_time &gt;= #{startTime} AND tf.trade_time &lt; #{endTime}
                 </if>
             )))
