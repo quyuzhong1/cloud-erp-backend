@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.common.business.enums.*;
+import com.common.business.validator.ValidGroup;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
@@ -53,6 +54,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
+import javax.validation.constraints.NotEmpty;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
@@ -364,15 +366,22 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
             transferDTO.setTargetWarehouseId(infoEntity.getWarehouseId());
             transferDTO.setTargetWarehouseLocation(detailEntity.getInWarehouseLocation());
             transferDTO.setQty(detailEntity.getQty());
+            transferDTO.setSkuId(detailEntity.getSkuId());
+            transferDTO.setSkuNo(detailEntity.getSkuNo());
+            transferDTO.setWarehouseId(infoEntity.getWarehouseId());
+//            transferDTO.setWarehouseLocation("");
+            transferDTO.setInventoryStatus(InventoryStatusEnum.USABLE);
             transferDTOList.add(transferDTO);
         }
+
+
         List<TransactionRuleDTO> transactionRuleDTOList = new ArrayList<>(2);
         transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK));
         transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryStatusEnum.USABLE, InventoryModeEnum.IN_STOCK));
         ruleDTO.setMembers(transferDTOList);
         ruleDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
         ruleDTO.setRules(transactionRuleDTOList);
-        inventoryTransCoreService.approveByRule(ruleDTO, InventoryBizTypeEnum.WAREHOUSE_LOCATION_MOVE);
+        inventoryTransCoreService.approveByRule(ruleDTO);
 
         return Boolean.TRUE;
     }
