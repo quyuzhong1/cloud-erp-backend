@@ -34,6 +34,8 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -146,7 +148,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Resource
     private WarehouseLocationService warehouseLocationService;
-    
+
 
     @Override
     public PagingVO<SoReturnInstockDTO.PagingView> paging(PagingDTO<SoReturnInstockDTO.PagingParam> pagingParamDTO) {
@@ -1026,6 +1028,48 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             list.add(resultDTO);
         }
         return list;
+    }
+
+    @Override
+    public String pdaAdd(SoReturnInstockDTO.Add dto) {
+        if (StringUtils.isNotBlank(dto.getSoReturnId())) {
+            //获取来源详情id
+            List<String> detailIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
+            List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(detailIds);
+
+            if (ObjectUtils.isEmpty(soReturnDetailEntities)) {
+                List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailByIds(detailIds);
+                for (SoReturnInstockDetailDTO.Add addDetailDto : dto.getDetailList()) {
+                    SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(addDetailDto.getSourceDetailId())).findFirst().orElse(null);
+                    if (ObjectUtils.isNotEmpty(soReturnReceiveDetailEntity)) {
+                        addDetailDto.setSourceDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
+                        addDetailDto.setSoReturnDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
+                    }
+                }
+            }
+        }
+        return this.add(dto);
+    }
+
+    @Override
+    public Boolean pdaUpdate(SoReturnInstockDTO.Update dto) {
+        if (StringUtils.isNotBlank(dto.getSoReturnId())) {
+            //获取来源详情id
+            List<String> detailIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
+            List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(detailIds);
+
+            if (ObjectUtils.isEmpty(soReturnDetailEntities)) {
+                List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailByIds(detailIds);
+                for (SoReturnInstockDetailDTO.Update addDetailDto : dto.getDetailList()) {
+                    SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(addDetailDto.getSourceDetailId())).findFirst().orElse(null);
+                    if (ObjectUtils.isNotEmpty(soReturnReceiveDetailEntity)) {
+                        addDetailDto.setSourceDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
+                        addDetailDto.setSoReturnDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
+                    }
+                }
+            }
+        }
+        return this.update(dto);
     }
 
     @Override

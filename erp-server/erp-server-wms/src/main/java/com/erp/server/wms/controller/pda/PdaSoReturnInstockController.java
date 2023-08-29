@@ -77,7 +77,7 @@ public class PdaSoReturnInstockController extends BaseController {
      **/
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SoReturnInstockDTO.Add dto) {
-        String id = soReturnInstockService.add(dto);
+        String id = soReturnInstockService.pdaAdd(dto);
         return StringUtils.isNotBlank(id) == true ? success() : failure();
     }
 
@@ -95,7 +95,7 @@ public class PdaSoReturnInstockController extends BaseController {
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
     public ApiResult update(@RequestBody @Validated SoReturnInstockDTO.Update dto) {
-        Boolean flag = soReturnInstockService.update(dto);
+        Boolean flag = soReturnInstockService.pdaUpdate(dto);
         return flag == true ? success() : failure();
     }
 

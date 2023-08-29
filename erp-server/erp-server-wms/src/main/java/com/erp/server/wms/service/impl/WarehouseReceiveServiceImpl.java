@@ -1491,13 +1491,24 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> receiveDetailIds = new ArrayList<>();
         poInstockDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getPurchaseOrderDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
             int stockInQty = m.stream().mapToInt(PoInstockDetailEntity::getStockInQty).sum();
-            WarehouseReceiveDetailEntity warehouseReceiveDetailEntity = receiveDetailEntitieList.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getPurchaseOrderDetailId())).findFirst().orElse(new WarehouseReceiveDetailEntity());
-            if (stockInQty < warehouseReceiveDetailEntity.getReceiveQty()) {
-                receiveDetailIds.add(m.get(MathUtil.ZERO).getSourceDetailId());
+            WarehouseReceiveDetailEntity warehouseReceiveDetailEntity = receiveDetailEntitieList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(m.get(MathUtil.ZERO).getPurchaseOrderDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(warehouseReceiveDetailEntity)) {
+                if (stockInQty < warehouseReceiveDetailEntity.getReceiveQty()) {
+                    receiveDetailIds.add(m.get(MathUtil.ZERO).getSourceDetailId());
+                }
             }
             return m;
         })));
+
         //根据未入库采购收货单详情id获取未入库收货单id
+        List<String> collect = poInstockDetailEntities.stream().map(req -> req.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+        List<String> ids = pordIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
+        receiveDetailIds.addAll(ids);
+
+        if (CollectionUtils.isEmpty(receiveDetailIds)) {
+            return new ArrayList<>();
+        }
+
         List<WarehouseReceiveDetailEntity> receiveDetailEntities = warehouseReceiveDetailService.listByIds(receiveDetailIds);
         List<String> notAllReceivePoReceiveId = receiveDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
 

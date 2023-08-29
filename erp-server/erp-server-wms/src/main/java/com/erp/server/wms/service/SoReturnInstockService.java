@@ -250,4 +250,22 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.PdaSoReturnInstockCountDTO>
      **/
     List<SoReturnInstockDTO.PdaSoReturnInstockCountDTO> pdaListCount(PermissionsDTO dto);
+
+    /**
+     * PDA:新增
+     * @Author Luo_WG
+     * @Date 2023/8/28 18:45
+     * @param dto
+     * @return java.lang.String
+     **/
+    String pdaAdd(SoReturnInstockDTO.Add dto);
+
+    /**
+     * PDA:修改
+     * @Author Luo_WG
+     * @Date 2023/8/28 18:45
+     * @param dto
+     * @return java.lang.String
+     **/
+    Boolean pdaUpdate(SoReturnInstockDTO.Update dto);
 }
