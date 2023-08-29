@@ -316,7 +316,7 @@ public class SoReturnInstockController extends BaseController {
      */
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnInstock:ViewGenerateMachineInfoDTO",
+            menuCode = "wms:soReturnInstock:viewGenerateMachineInfo",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
     @PostMapping(value = "/viewGenerateMachineInfo")
@@ -329,7 +329,7 @@ public class SoReturnInstockController extends BaseController {
      * 下推加工单保存
      * @author Will
      * @date: 2023/8/28 15:26
-     * @param dto
+     * @param list
      * @return ApiResult
      */
     @PostMapping(value = "/generateMachineInfo")

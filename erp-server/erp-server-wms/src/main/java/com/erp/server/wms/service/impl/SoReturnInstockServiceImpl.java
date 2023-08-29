@@ -953,12 +953,18 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public List<SoReturnInstockDTO.ViewGenerateMachineInfoDTO> viewGenerateMachineInfo(List<String> ids) {
         List<SoReturnInstockDetailEntity> list = soReturnInstockDetailService.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_99083);
+            throw new ServiceException(ApiError.ERROR_98004);
         }
         List<SoReturnInstockDetailEntity> viewList = list.stream().filter(obj -> obj.getIsSubContract()).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(viewList)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+        List<String> mainIds = viewList.stream().map(SoReturnInstockDetailEntity::getMainId).collect(Collectors.toList());
+        List<SoReturnInstockEntity> mainList = this.listByIds(mainIds);
+        if (CollectionUtils.isEmpty(mainList)) {
+            throw new ServiceException(ApiError.ERROR_99083);
+        }
+
         List<String> skuIds = viewList.stream().map(SoReturnInstockDetailEntity::getSkuId).collect(Collectors.toList());
         //bom信息
         List<BomChildrenSkuDTO> bomList = plmTaskFeign.listBomChildBySkuIds(skuIds);
@@ -971,18 +977,23 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             throw new ServiceException(ApiError.ERROR_95084);
         }
         //根据sku、仓库、仓位合并显示
-        Map<String, List<SoReturnInstockDetailEntity>> map = viewList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId()).concat(obj.getWarehouseLocation())));
+        Map<String, List<SoReturnInstockDetailEntity>> map = viewList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(mainList.stream().filter(e -> e.getId().equals(obj.getMainId())).findFirst().flatMap(e -> Optional.ofNullable(e.getWarehouseId())).orElse("")).concat(obj.getWarehouseLocation())));
 
         List<SoReturnInstockDTO.ViewGenerateMachineInfoDTO> resultList = new ArrayList<>();
         for (Map.Entry<String, List<SoReturnInstockDetailEntity>> entry : map.entrySet()) {
             SoReturnInstockDetailEntity entity = entry.getValue().get(0);
             SoReturnInstockDTO.ViewGenerateMachineInfoDTO viewDTO = new SoReturnInstockDTO.ViewGenerateMachineInfoDTO();
+
+            SoReturnInstockEntity soReturnInstockEntity = mainList.stream().filter(obj -> obj.getId().equals(entity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soReturnInstockEntity)) {
+                throw new ServiceException(ApiError.ERROR_99083);
+            }
             //事务类型默认拆卸
             viewDTO.setWorkType(WorkTypeEnum.DISASSEMBLE.getCode());
             viewDTO.setSkuId(entity.getSkuId());
             viewDTO.setSkuNo(entity.getSkuNo());
-            viewDTO.setWarehouseId(entity.getWarehouseId());
-            viewDTO.setWarehouseName(entity.getWarehouseName());
+            viewDTO.setWarehouseId(soReturnInstockEntity.getWarehouseId());
+            viewDTO.setWarehouseName(soReturnInstockEntity.getWarehouseName());
             viewDTO.setWarehouseLocation(entity.getWarehouseLocation());
             //产品信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
@@ -1000,15 +1011,16 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 throw new ServiceException(ApiError.ERROR_95166);
             }
             viewDTO.setBomVersion(childList.get(0).getBomVersion());
+            viewDTO.setCurInventoryQty(curInventoryQty);
             //显示按明细维度显示数据
             for (BomChildrenSkuDTO childrenSkuDTO : childList) {
                 SoReturnInstockDTO.ViewGenerateMachineInfoDTO viewChildDTO = new SoReturnInstockDTO.ViewGenerateMachineInfoDTO();
                 BeanMapperUtils.copy(viewDTO,viewChildDTO);
-                viewChildDTO.setSkuId(childrenSkuDTO.getSkuId());
-                viewChildDTO.setSkuNo(childrenSkuDTO.getSkuNo());
+                viewChildDTO.setChildSkuId(childrenSkuDTO.getSkuId());
+                viewChildDTO.setChildSkuNo(childrenSkuDTO.getSkuNo());
                 viewChildDTO.setQuantity(childrenSkuDTO.getQuantity());
                 viewChildDTO.setChildQty(curInventoryQty * childrenSkuDTO.getQuantity());
-                resultList.add(viewDTO);
+                resultList.add(viewChildDTO);
             }
 
         }

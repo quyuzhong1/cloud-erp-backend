@@ -17,6 +17,7 @@
         sri.invalid_status,
         sri.seller_id,
         sri.seller_name,
+        srid.id as detailId,
         srid.sku_id,
         srid.sku_no,
         srid.return_type_dict,

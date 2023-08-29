@@ -92,6 +92,10 @@ public class SoReturnInstockDTO {
          */
         private String id;
         /**
+         * 明细id
+         */
+        private String detailId;
+        /**
          * 来源id
          */
         private String sourceId;

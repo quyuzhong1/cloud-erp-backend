@@ -154,6 +154,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             list.add(detailEntity);
         }
         //更新委外标识
+        updateSubContract(list);
         return this.saveBatch(list);
     }
 
