@@ -69,4 +69,13 @@ public enum CommonStatusTypeEnum implements EnumMessage {
         }
         return list;
     }
+
+    public static String getName(String code) {
+        for (CommonStatusTypeEnum statusTypeEnum : CommonStatusTypeEnum.values()) {
+            if (code.equals(statusTypeEnum.getCode())) {
+                return statusTypeEnum.getName();
+            }
+        }
+        return "";
+    }
 }

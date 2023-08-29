@@ -132,6 +132,11 @@ public class RefundOrderDTO implements Serializable {
         private BigDecimal refundAmount;
 
         /**
+         * 退款人名币
+         */
+        private BigDecimal refundCnyAmount;
+
+        /**
          * 币别
          */
         private String currency;

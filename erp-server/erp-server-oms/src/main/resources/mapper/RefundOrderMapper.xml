@@ -43,6 +43,8 @@
             currency,
             currency_symbol,
             reason,
+            refund_cny_amount,
+            status,
             refund_time
         FROM refund_order ro
         WHERE ro.is_deleted =FALSE
