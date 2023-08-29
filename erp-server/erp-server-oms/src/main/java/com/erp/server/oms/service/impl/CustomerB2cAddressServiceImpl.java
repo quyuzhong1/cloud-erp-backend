@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
@@ -51,6 +52,9 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
     @Resource
     private SoInfoService soInfoService;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     /**
      * 检查默认地址是否存在多个
      *
@@ -87,7 +91,7 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
         for (CustomerB2cAddressEntity addDTO : addList) {
             addDTO.setMainId(mainId);
             //生成单号
-            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.KHDZ, BusinessNoTypeEnum.CODE_KHDZ.getCode()));
+            String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHDZC);
             addDTO.setCode(code);
         }
         this.saveBatch(addList);

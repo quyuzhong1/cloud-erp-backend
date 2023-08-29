@@ -53,7 +53,8 @@ public enum BusinessNoTypeEnum {
     STOCKTAKING_LOSS(43, "pkd","盘盈单","PKD"),
     CODE_SO_B2C(44, "xsd","b2c销售订单","XSD"),
     CODE_CYYD(45, "cyyd","仓位移动","CYYD"),
-
+    CODE_KHDZC(46, "khdzc","b2c客户地址编号"),
+    CODE_KHLXRC(47, "khlxrc","b2c客户联系人编号"),
     ;
 
 

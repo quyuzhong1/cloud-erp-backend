@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
@@ -43,6 +44,10 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     /**
      * 检查客户默认联系人是否多个
      *
@@ -78,7 +83,7 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
         for (CustomerB2cContactEntity addDTO : addList) {
             addDTO.setMainId(mainId);
             //生成单号
-            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.KHLXR, BusinessNoTypeEnum.CODE_KHLXR.getCode()));
+            String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHLXRC);
             addDTO.setCode(code);
         }
         this.saveBatch(addList);
