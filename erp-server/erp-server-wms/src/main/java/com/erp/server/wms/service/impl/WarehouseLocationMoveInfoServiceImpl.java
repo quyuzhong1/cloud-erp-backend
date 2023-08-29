@@ -10,10 +10,7 @@ import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
-import com.erp.model.wms.dto.inventory.InventoryDTO;
-import com.erp.model.wms.dto.inventory.InventoryTransferRuleDTO;
-import com.erp.model.wms.dto.inventory.TransactionRuleDTO;
-import com.erp.model.wms.dto.inventory.TransferDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveInfoEntity;
@@ -276,6 +273,9 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
+        // 回滚库存
+        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO, Arrays.asList(id));
+        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单");
