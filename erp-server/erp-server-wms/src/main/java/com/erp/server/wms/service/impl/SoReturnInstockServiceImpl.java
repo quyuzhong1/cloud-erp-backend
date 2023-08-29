@@ -256,17 +256,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     entity.setSoId(soInfo.getId());
                     entity.setSoCode(soInfo.getCode());
                 }
-            } else {
-                SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(dto.getSourceId());
-                dto.setSellerId(soReturnReceiveEntity.getSellerId());
-                dto.setCustomerId(soReturnReceiveEntity.getCustomerId());
-                dto.setSalesDeptId(soReturnReceiveEntity.getSalesDeptId());
-                dto.setSellerId(soReturnReceiveEntity.getSellerId());
-                dto.setWarehouseId(soReturn.getWarehouseId());
-                dto.setSalesOrgId(soReturnReceiveEntity.getSalesOrgId());
-                dto.setType(soReturnReceiveEntity.getType());
             }
-
             if (!Objects.isNull(soReturn)) {
                 dto.setSoReturnId(soReturnId);
                 dto.setSoReturnCode(soReturn.getCode());
@@ -274,6 +264,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 dto.setSourceCode(soReturn.getCode());
             }
 
+        } else {
+            SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(dto.getSourceId());
+            dto.setSellerId(soReturnReceiveEntity.getSellerId());
+            dto.setCustomerId(soReturnReceiveEntity.getCustomerId());
+            dto.setSalesDeptId(soReturnReceiveEntity.getSalesDeptId());
+            dto.setSellerId(soReturnReceiveEntity.getSellerId());
+            dto.setSalesOrgId(soReturnReceiveEntity.getSalesOrgId());
+            dto.setType(soReturnReceiveEntity.getType());
         }
 
 
@@ -1010,6 +1008,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     public String pdaAdd(SoReturnInstockDTO.Add dto) {
         if (StringUtils.isNotBlank(dto.getSoReturnId())) {
+            dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
             //获取来源详情id
             List<String> detailIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
             List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(detailIds);
@@ -1024,6 +1023,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     }
                 }
             }
+        } else {
+            dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
         }
         return this.add(dto);
     }

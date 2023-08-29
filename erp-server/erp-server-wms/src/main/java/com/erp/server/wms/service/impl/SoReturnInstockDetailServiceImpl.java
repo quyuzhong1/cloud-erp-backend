@@ -199,7 +199,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
                 if (receiveQty < detailDto.getRealQty() + realQty) {
-                    throw new ServiceException(ApiError.ERROR_92026);
+                    throw new ServiceException(ApiError.ERROR_92026, soReturnDetailEntity.getSkuNo());
                 }
                 detailEntity.setMainId(dto.getId());
                 detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
@@ -276,7 +276,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             if (receiveQty < detailDto.getRealQty() + realQty) {
-                throw new ServiceException(ApiError.ERROR_92026);
+                throw new ServiceException(ApiError.ERROR_92026, skuVO.getSkuNo());
             }
             detailEntity.setMainId(dto.getId());
             detailEntity.setSkuId(detailEntity.getSkuId());
