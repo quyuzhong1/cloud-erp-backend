@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -395,7 +396,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         }
         dto.setPurchaseOrderCode(purchaseOrderDTO.getCode());
         WarehouseReceiveEntity receiveEntity = warehouseReceiveService.getById(entity.getSourceId());
-        dto.setSourceCode(receiveEntity.getCode());
+        if (ObjectUtil.isNotEmpty(receiveEntity)) {
+            dto.setSourceCode(receiveEntity.getCode());
+        }
         //采购组织
         dto.setPurchaseOrgName(purchaseOrderDTO.getPurchaseOrgName());
 
