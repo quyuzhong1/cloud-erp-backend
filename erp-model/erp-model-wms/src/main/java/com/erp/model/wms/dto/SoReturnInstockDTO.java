@@ -793,6 +793,11 @@ public class SoReturnInstockDTO {
         private Integer bomVersion;
 
         /**
+         * 拆卸数量
+         */
+        private Integer qty;
+
+        /**
          * 即时库存
          */
         private Integer curInventoryQty;
@@ -852,7 +857,7 @@ public class SoReturnInstockDTO {
         @NotBlank(message = "子级SKU不能为空")
         private String childSkuId;
         /**
-         * 处理类型
+         * 处理类型 （machineHandleType） http://172.16.100.11:3002/project/92/interface/api/13147
          */
         @NotBlank(message = "子级SKU处理类型不能为空")
         private String handleType;
