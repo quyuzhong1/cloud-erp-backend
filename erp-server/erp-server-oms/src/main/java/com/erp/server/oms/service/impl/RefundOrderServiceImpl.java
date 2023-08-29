@@ -9,6 +9,7 @@ import com.erp.model.oms.dto.RefundOrderDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.RefundOrderEntity;
+import com.erp.model.oms.enums.CommonStatusTypeEnum;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.server.oms.mapper.RefundOrderMapper;
 import com.erp.server.oms.service.DictBasicService;
@@ -72,6 +73,9 @@ public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, 
             String platformName = dictBasicList.stream().filter(d -> d.getValue().equals(dictPlatform)).
                     map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
             item.setPlatformName(platformName);
+            String status = item.getStatus();
+            String name = CommonStatusTypeEnum.getName(status);
+            item.setStatusName(name);
         }
     }
 }

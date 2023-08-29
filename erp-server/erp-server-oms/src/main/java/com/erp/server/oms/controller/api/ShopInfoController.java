@@ -196,19 +196,7 @@ public class ShopInfoController extends BaseController {
         return success(resultUrl);
     }
 
-    /**
-     * 获取到向商户申请授权码
-     *
-     * @return
-     */
-    @GetMapping("/index")
-    public ApiResult index(@RequestParam("hmac") String hmac,
-                           @RequestParam("host") String host,
-                           @RequestParam("shop") String shop,
-                           @RequestParam("timestamp") String timestamp) {
-        String resultUrl = shopInfoService.index(hmac, host, shop, timestamp);
-        return success(resultUrl);
-    }
+
 
 
     /**
@@ -229,7 +217,7 @@ public class ShopInfoController extends BaseController {
 
 
     /**
-     * 获取消授权
+     * 取消授权
      *
      * @return
      */
