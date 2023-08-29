@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
@@ -15,7 +16,6 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BomOperationTypeEnum;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
 import com.erp.server.plm.constant.BomOperateContent;
 import com.erp.server.plm.service.*;
 import org.springframework.transaction.annotation.Transactional;
@@ -209,7 +209,7 @@ public class BomInfoExcelListener extends AnalysisEventListener<BomInfoExcelDTO>
         //保存关联数据历史版本
         ProductBomSkuHistoryEntity entity = new ProductBomSkuHistoryEntity();
         entity.setParentSkuId(bomSkuEntity.getParentSkuId());
-        entity.setParentSkuNo(bomSkuEntity.getParentSkuId());
+        entity.setParentSkuNo(bomSkuEntity.getParentSkuNo());
         entity.setSkuId(bomSkuEntity.getSkuId());
         entity.setSkuNo(bomSkuEntity.getSkuNo());
         entity.setQuantity(bomSkuEntity.getQuantity());

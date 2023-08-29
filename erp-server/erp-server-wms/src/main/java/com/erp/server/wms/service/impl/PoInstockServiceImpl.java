@@ -1380,6 +1380,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 Integer quantity = bomList.stream()
                         .filter(obj -> bomVersion.equals(obj.getBomVersion()) && obj.getSkuId().equals(subDetail.getSkuId()) && obj.getParentSkuId().equals(parentSubDetail.getSkuId()))
                         .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(quantity)) {
+                    throw new ServiceException(ApiError.ERROR_95166);
+                }
                 //子级采购数量
                 Integer childQty = subDetail.getQty();
                 //本次出库数量
