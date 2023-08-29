@@ -114,7 +114,7 @@ public class PdaSoReturnInstockController extends BaseController {
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
     public ApiResult<SoReturnInstockDTO.View> view(@RequestParam("id") String id) {
-        SoReturnInstockDTO.View dto = soReturnInstockService.view(id);
+        SoReturnInstockDTO.View dto = soReturnInstockService.pdaView(id);
         return success(dto);
     }
 
@@ -150,7 +150,7 @@ public class PdaSoReturnInstockController extends BaseController {
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated SoReturnInstockDTO.Add dto) {
-        Boolean flag = soReturnInstockService.addAndSubmit(dto);
+        Boolean flag = soReturnInstockService.pdaAddAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
@@ -168,7 +168,7 @@ public class PdaSoReturnInstockController extends BaseController {
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated SoReturnInstockDTO.Update dto) {
-        Boolean flag = soReturnInstockService.updateAndSubmit(dto);
+        Boolean flag = soReturnInstockService.pdaUpdateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
