@@ -171,16 +171,16 @@ public class CustomerB2cSellerServiceImpl extends SuperServiceImpl<CustomerB2cSe
 
         //这是删除
         List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSellerName())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("删除了一个联系人【%s】", ModuleTypeEnum.CUSTOMER.getCode(), removePairList, "编辑操作");
+        operateLogService.batchAddModuleOperateLog("删除了一个联系人【%s】", ModuleTypeEnum.CUSTOMER_B2C.getCode(), removePairList, "编辑操作");
         //这是添加
         List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSellerName())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("添加了一个联系人【%s】", ModuleTypeEnum.CUSTOMER.getCode(), addPairList, "编辑操作");
+        operateLogService.batchAddModuleOperateLog("添加了一个联系人【%s】", ModuleTypeEnum.CUSTOMER_B2C.getCode(), addPairList, "编辑操作");
         //修改的
         for (CustomerB2cSellerEntity update : updateEntityList) {
             String id = update.getId();
             CustomerB2cSellerEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
             if (old != null) {
-                operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.CUSTOMER.getCode(), mainId, "", "");
+                operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.CUSTOMER_B2C.getCode(), mainId, "", "");
             }
         }
         if (CollectionUtils.isNotEmpty(saveOrUpdateList)) {
