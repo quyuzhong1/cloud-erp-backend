@@ -1416,10 +1416,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //主键id
         List<String> ids = records.stream().map(req -> req.getId()).collect(Collectors.toList());
         //查询详情
-        List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailByMainIds(ids);
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listByMainIds(ids);
         for (SoOutstockDTO.PdaPagingViewDTO record : records) {
             record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
-            List<SoDeliveryNoticeDetailEntity> detailEntities = noticeDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
+            List<SoOutstockDetailEntity> detailEntities = soOutstockDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
             List<SoOutstockDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, SoOutstockDTO.PdaItemDTO.class);
             record.setDetailCount(itemDTOList.size());
             record.setItemList(itemDTOList);
