@@ -592,6 +592,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 //bom信息
                 BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> childViewDTO.getBomVersion().equals(obj.getBomVersion()) && obj.getParentSkuId().equals(viewDTO.getSkuId()) && obj.getSkuId().equals(childViewDTO.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
+                    log.error("未找到对应bom子件信息，viewDTO.skuId = 【{}】，childViewDTO = 【{}】，bomChildrenList = 【{}】",viewDTO.getSkuId(),childViewDTO,bomChildrenList);
                     throw new ServiceException(ApiError.ERROR_95163);
                 }
                 childViewDTO.setQuantity(bomChildrenSkuDTO.getQuantity());
