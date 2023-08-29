@@ -649,7 +649,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException("同仓库库存SKU只能对应一个产品SKU");
         }
 
-        List<SkuMappingEntity> list = this.lambdaQuery().eq(SkuMappingEntity::getWarehouseId, warehouseId).
+        List<SkuMappingEntity> list = this.lambdaQuery().
+                ne(StringUtils.isNotBlank(id),SkuMappingEntity::getId,id).
+                eq(SkuMappingEntity::getWarehouseId, warehouseId).
                 eq(SkuMappingEntity::getProductSkuId, skuId).
                 eq(SkuMappingEntity::getType,TypeEnum.WAREHOUSE).list();
         long skuCount = list.stream().map(SkuMappingEntity::getListingId).distinct().count();

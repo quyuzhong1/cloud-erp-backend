@@ -3,7 +3,7 @@
 <mapper namespace="com.cloud.erp.chrome.mapper.OrderGyyDeliverMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.cloud.erp.chrome.entity.OrderGyyDeliverEntity">
+    <resultMap id="BaseResultMap" type="com.sdk.oms.shopify.chrome.entity.OrderGyyDeliverEntity">
         <id column="id" property="id" />
         <result column="deliver_time" property="deliverTime" />
         <result column="platform_type" property="platformType" />

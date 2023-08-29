@@ -83,7 +83,7 @@ public class OrderCategoryDetailServiceImpl extends SuperServiceImpl<OrderCatego
         //这是修改的
         List<OrderCategoryDetailDTO.UpdateDTO> updateList = detailList.stream().filter(d -> StringUtils.isNotBlank(d.getId())).collect(Collectors.toList());
         List<OrderCategoryDetailEntity> saveOrUpdateList = BeanMapper.copyList(detailList, OrderCategoryDetailEntity.class);
-
+        saveOrUpdateList.forEach(s->s.setMainId(mainId));
         List<Pair<String, String>> pairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         //获取到要删除的id
         List<String> deleteIdList = getDeleteIds(pairList, dbList);

@@ -1,8 +1,11 @@
 package com.erp.server.oms.service.impl;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.sdk.oms.shopify.service.ShopSdkServer;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.AuthorizeDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -12,6 +15,9 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -20,6 +26,7 @@ import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.oms.enums.PlatformDictEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.ShopInfoMapper;
@@ -54,6 +61,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Resource
     private DictBasicService dictBasicService;
+
+    @Resource
+    private ShopSdkServer shopSdkServer;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
 
     /**
@@ -367,10 +380,79 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Override
     public Boolean updateShopInfoById(ShopInfoEntity shopInfoEntity) {
-        return  lambdaUpdate()
+        return lambdaUpdate()
                 .eq(ShopInfoEntity::getId, shopInfoEntity.getId())
                 .set(ShopInfoEntity::getIsGenTask, shopInfoEntity.getIsGenTask())
                 .update();
+    }
+
+
+    /**
+     * 获取到店铺授权utl
+     *
+     * @param id
+     * @return java.lang.String
+     * @author yl
+     * @date 2023-08-28 20:00
+     */
+    @Override
+    public String getShopAuthUrl(String id) {
+        ShopInfoEntity shop = this.getById(id);
+        if (Objects.isNull(shop)) {
+            throw new ServiceException("店铺不存在");
+        }
+        AppClientEnum appClient = AppClientEnum.SHOP_AUTHORIZE;
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        findDTO.setBusinessType(appClient.getBusinessType());
+        findDTO.setDictPlatform(appClient.getPlatform());
+        findDTO.setPlatformType(appClient.getPlatformType());
+        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        String url = shopSdkServer.getShopAuthorizeUrl(cfgAppClient, shop.getName());
+        return url;
+    }
+
+
+    /**
+     * 店铺授权
+     *
+     * @param code
+     * @param hmac
+     * @param host
+     * @param shop
+     * @param timestamp
+     * @param shopId
+     * @return
+     */
+    @Override
+    public Boolean shopAuthorize(String code, String hmac, String host, String shop, String timestamp, String shopId) {
+        ShopInfoEntity shopInfo = this.getById(shopId);
+        if (Objects.isNull(shopInfo)) {
+            throw new ServiceException("店铺不存在");
+        }
+        AppClientEnum appClient = AppClientEnum.SHOP_ACCESS_TOKEN;
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        findDTO.setBusinessType(appClient.getBusinessType());
+        findDTO.setDictPlatform(appClient.getPlatform());
+        findDTO.setPlatformType(appClient.getPlatformType());
+        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        if (Objects.isNull(cfgAppClient)) {
+            throw new ServiceException("shopify应用授权配置不存在");
+        }
+
+
+        AuthorizeDTO.FindShopAuthorizeDTO findShopAuthorize = new AuthorizeDTO.FindShopAuthorizeDTO();
+        findShopAuthorize.setAccessTokenUrl(cfgAppClient.getUrl());
+        findShopAuthorize.setClientId(cfgAppClient.getClientId());
+        findShopAuthorize.setClientSecret(cfgAppClient.getClientSecret());
+        findShopAuthorize.setCode(code);
+        findShopAuthorize.setHmac(hmac);
+        findShopAuthorize.setHost(host);
+        findShopAuthorize.setShop(shop);
+        findShopAuthorize.setTimestamp(timestamp);
+
+        JSONObject jsonObject = shopSdkServer.getShopAuthorizeInfo(findShopAuthorize);
+
+        return null;
     }
 
 

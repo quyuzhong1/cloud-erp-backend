@@ -1,0 +1,23 @@
+package com.sdk.oms.shopify.gateway.config;
+
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * @Classname JwtProperties
+
+ * @Date 2022-07-11 10:22
+ * @Created by yl
+ */
+@ConfigurationProperties(prefix = "auth.jwt")
+@Data
+@Configuration
+public class JwtProperties {
+    private String secret;
+
+    private Long expire;
+
+    private String header;
+
+}

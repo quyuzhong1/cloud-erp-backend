@@ -33,4 +33,12 @@ public interface CfgAppClientService extends SuperService<CfgAppClientEntity> {
     Boolean update(CfgAppClientDTO.UpdateDTO dto);
 
 
+    /**
+     * 获取根据信息 获取到配置信息
+     * @author yl
+     * @date 2023-08-29 10:43
+     * @param dto
+     * @return com.erp.model.dmp.entity.CfgAppClientEntity
+     */
+    CfgAppClientEntity getCfgAppClient(CfgAppClientDTO.FindDTO dto);
 }

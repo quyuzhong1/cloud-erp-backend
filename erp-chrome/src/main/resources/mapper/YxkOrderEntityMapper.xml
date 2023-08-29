@@ -3,7 +3,7 @@
 <mapper namespace="com.cloud.erp.chrome.mapper.YxkOrderMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.cloud.erp.chrome.entity.YxkOrderEntity">
+    <resultMap id="BaseResultMap" type="com.sdk.oms.shopify.chrome.entity.YxkOrderEntity">
         <id column="id" property="id" />
         <result column="shipment_date" property="shipmentDate" />
         <result column="document_no" property="documentNo" />

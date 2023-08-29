@@ -2,6 +2,7 @@ package com.erp.rpc.dmp.feign;
 
 
 import cn.hutool.json.JSONObject;
+import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
@@ -86,9 +87,9 @@ public interface DmpTaskFeign {
      * 根据id获取到第三方应用信息
      * @author yl
      * @date 2023-08-28 16:22
-     * @param id
+     * @param dto
      * @return com.erp.model.dmp.entity.CfgAppClientEntity
      */
     @PostMapping("feign/getCfgAppClient")
-    CfgAppClientEntity getCfgAppClientById(@RequestBody String id);
+    CfgAppClientEntity getCfgAppClient(@RequestBody CfgAppClientDTO.FindDTO dto);
 }

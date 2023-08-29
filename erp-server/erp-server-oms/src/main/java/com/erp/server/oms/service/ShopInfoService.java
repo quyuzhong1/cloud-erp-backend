@@ -70,4 +70,27 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return
      */
     Boolean updateShopInfoById(ShopInfoEntity shopInfoEntity);
+
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2023-08-28 20:00
+     * @param id
+     * @return java.lang.String
+     */
+    String getShopAuthUrl(String id);
+
+
+    /**
+     * 店铺授权
+     *
+     * @param code
+     * @param hmac
+     * @param host
+     * @param shop
+     * @param timestamp
+     * @param shopId
+     * @return
+     */
+    Boolean shopAuthorize(String code, String hmac, String host, String shop, String timestamp, String shopId);
 }

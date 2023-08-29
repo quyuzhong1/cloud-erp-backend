@@ -40,8 +40,6 @@ public class ShopInfoController extends BaseController {
     @Resource
     private ShopCostService shopCostService;
 
-    @Resource
-    private DmpTaskFeign dmpTaskFeign;
 
 
     /**
@@ -194,9 +192,27 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @GetMapping("/getShopAuthorizeUrl")
-    public ApiResult getShopAuthUrl() {
+    public ApiResult getShopAuthUrl(@RequestParam("id") String id) {
+        String resultUrl = shopInfoService.getShopAuthUrl(id);
+        return success(resultUrl);
+    }
 
-        return success();
+
+    /**
+     * 店铺授权
+     *
+     * @return
+     */
+    @GetMapping("/shopAuthorize")
+    public ApiResult shopAuthorize(@RequestParam("code") String code,
+                                    @RequestParam("hmac") String hmac,
+                                    @RequestParam("host") String host,
+                                    @RequestParam("shop") String shop,
+                                    @RequestParam("timestamp")String timestamp,
+                                    @RequestParam("shopId")String shopId
+                                    ) {
+        Boolean result = shopInfoService.shopAuthorize(code,hmac,host,shop,timestamp,shopId);
+        return result?success():failure();
     }
 
 }
