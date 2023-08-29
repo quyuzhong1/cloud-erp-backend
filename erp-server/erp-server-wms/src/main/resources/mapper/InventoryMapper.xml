@@ -323,13 +323,15 @@
             inv.dict_inventory_status,
             inv.qty
         FROM "inventory" inv
-        LEFT JOIN transaction_flow tf ON inv."id" = tf.inventory_id
-        AND tf.is_deleted = FALSE
-        <if test="null != startTime and startTime != '' and null != endTime and endTime != ''">
-            AND tf.trade_time &gt;= #{startTime} AND tf.trade_time &lt; #{endTime}
-        </if>
         WHERE inv.is_deleted = false and inv.dict_inventory_status in ('usable','frozen')
-        AND ( inv.qty != 0 OR (inv.qty = 0 AND tf.inventory_id IS NOT NULL) )
+        AND ( inv.qty != 0 OR (inv.qty = 0
+            AND EXISTS (
+                SELECT 1 FROM transaction_flow tf
+                WHERE tf.inventory_id = inv.id AND tf.is_deleted = FALSE
+                <if test="null != startTime and startTime != '' and null != endTime and endTime != ''">
+                    AND tf.trade_time &gt;= #{startTime} AND tf.trade_time &lt; #{endTime}
+                </if>
+            )))
         <if test="type != null and type == 'byWarehouse' and null != params and params.size > 0">
               and inv.warehouse_id in
             <foreach collection="params" item="item" open="(" close=")" separator=",">
