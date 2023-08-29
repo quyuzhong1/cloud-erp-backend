@@ -52,7 +52,6 @@ public class PoInstockDetailDTO implements Serializable {
         /**
          * 采购明细id
          */
-        @NotBlank(message = "采购明细id不能为空")
         private String purchaseOrderDetailId;
 
         /**
