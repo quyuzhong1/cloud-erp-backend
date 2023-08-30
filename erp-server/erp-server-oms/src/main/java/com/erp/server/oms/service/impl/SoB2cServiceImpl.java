@@ -187,7 +187,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cDetailService.add(addDTO.getDetailList(), soB2cEntity.getId());
         //新增订单分类
         if (CollectionUtils.isNotEmpty(addDTO.getCategoryIdList())) {
-            List<SoB2cRefCategoryDTO.AddDTO> addList = addDTO.getCategoryIdList().stream().map(obj -> new SoB2cRefCategoryDTO.AddDTO()).collect(Collectors.toList());
+            List<SoB2cRefCategoryDTO.AddDTO> addList = addDTO.getCategoryIdList().stream().map(obj -> new SoB2cRefCategoryDTO.AddDTO(soB2cEntity.getId(),obj)).collect(Collectors.toList());
             soB2cRefCategoryService.add(addList,soB2cEntity.getId());
         }
 

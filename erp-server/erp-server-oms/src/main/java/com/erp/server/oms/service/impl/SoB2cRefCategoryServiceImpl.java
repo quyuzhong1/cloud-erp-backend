@@ -1,16 +1,21 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cRefCategoryDTO;
+import com.erp.model.oms.entity.OrderCategoryDetailEntity;
 import com.erp.model.oms.entity.SoB2cRefCategoryEntity;
 import com.erp.server.oms.mapper.SoB2cRefCategoryMapper;
+import com.erp.server.oms.service.OrderCategoryDetailService;
 import com.erp.server.oms.service.SoB2cRefCategoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -24,16 +29,30 @@ import java.util.List;
 @Service
 public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCategoryMapper, SoB2cRefCategoryEntity> implements SoB2cRefCategoryService {
 
+    @Resource
+    private OrderCategoryDetailService orderCategoryDetailService;
+    
     @Override
     public Boolean add(List<SoB2cRefCategoryDTO.AddDTO> addList, String mainId) {
         if (CollectionUtils.isEmpty(addList)) {
             return Boolean.TRUE;
         }
-        SoB2cRefCategoryDTO.AddDTO addDTO = new SoB2cRefCategoryDTO.AddDTO();
+        List<SoB2cRefCategoryEntity> soB2cRefCategoryList = BeanMapperUtils.copyList(SoB2cRefCategoryEntity.class, addList);
+        handleCategory(soB2cRefCategoryList);
 
-        return null;
+        return this.saveOrUpdateBatch(soB2cRefCategoryList);
     }
 
+    private void handleCategory (List<SoB2cRefCategoryEntity> soB2cRefCategoryList) {
+        if (CollectionUtils.isEmpty(soB2cRefCategoryList)) {
+            return;
+        }
+        List<String> categoryIdList = soB2cRefCategoryList.stream().map(SoB2cRefCategoryEntity::getCategoryId).collect(Collectors.toList());
+        List<OrderCategoryDetailEntity> orderCategoryDetailList = orderCategoryDetailService.listByIds(categoryIdList);
+
+        for (SoB2cRefCategoryEntity entity : soB2cRefCategoryList) {
+        }
+    }
 
 
     @Override

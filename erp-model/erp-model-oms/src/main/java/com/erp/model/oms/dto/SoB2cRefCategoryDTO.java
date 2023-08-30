@@ -41,7 +41,7 @@ public class SoB2cRefCategoryDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
 
-        private AddDTO (String soB2cId, String categoryId) {
+        public AddDTO (String soB2cId, String categoryId) {
             super.setSoB2cId(soB2cId);
             super.setCategoryId(categoryId);
         }
