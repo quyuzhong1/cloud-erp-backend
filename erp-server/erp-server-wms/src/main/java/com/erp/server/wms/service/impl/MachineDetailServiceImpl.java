@@ -159,7 +159,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             throw new ServiceException(ApiError.ERROR_95084);
         }
         //bom信息
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
         if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
@@ -206,7 +206,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     private void checkBomChildrenSku (List<BomChildrenSkuDTO> bomChildrenSkuList,MachineDetailEntity detail) {
 
         //验证SKU及子件明细数量
-        List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(detail.getSkuId())).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(detail.getSkuId()) && obj.getBomVersion().equals(detail.getReferenceVersion())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(bomList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
