@@ -8,6 +8,8 @@ import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.common.business.service.SuperService;
 
+import java.util.List;
+
 /**
  * <p>
  * 店铺表 服务类
@@ -114,4 +116,13 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return java.lang.String
      */
     String index( String hmac, String host, String shop, String timestamp);
+
+    /**
+     * 店铺账号下拉
+     * @author yl
+     * @date 2023-08-30 16:43
+     * @param
+     * @return java.util.List<java.lang.String>
+     */
+    List<String> accountList();
 }

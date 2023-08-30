@@ -67,6 +67,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
     private List<ListingInfoEntity> addListingInfoEntityList = new ArrayList<>(10);
 
     private List<SkuMappingEntity> addSkuMappingList = new ArrayList<>(10);
+
     private List<Pair<String, String>> skuWarehouseList = new ArrayList<>(10);
 
     /**
@@ -163,7 +164,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             return;
         }
         skuWarehouseList.add(new Pair<>(warehouseId, sku.getSkuId()));
-        long skuCount=skuWarehouseList.stream().filter(s -> s.getKey().equals(warehouseId) &&
+        long skuCount = skuWarehouseList.stream().filter(s -> s.getKey().equals(warehouseId) &&
                 s.getValue().equals(sku.getSkuId())).count();
         if (skuCount > 1) {
             errorMsgList.add("SKU在该仓库已关联其他库存SKU，请更换其他SKU");

@@ -100,6 +100,17 @@ public class ShopInfoController extends BaseController {
     }
 
     /**
+     * 店铺账号列表
+     *
+     * @return
+     */
+    @GetMapping("/accountList")
+    public ApiResult accountList() {
+        List<String> list = shopInfoService.accountList();
+        return success(list);
+    }
+
+    /**
      * 启用或者禁用店铺
      *
      * @param

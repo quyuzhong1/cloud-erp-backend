@@ -96,6 +96,7 @@ public class DictRuleConditionServiceImpl extends SuperServiceImpl<DictRuleCondi
      * @return java.lang.Boolean
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean batchSaveOrUpdate(List<DictRuleConditionDTO.UpdateDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return true;
