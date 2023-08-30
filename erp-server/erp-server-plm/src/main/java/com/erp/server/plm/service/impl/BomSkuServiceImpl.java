@@ -162,6 +162,15 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         return baseMapper.listBomByParentSkuNos(parentSkuNos);
     }
 
+
+    @Override
+    public List<BomInfoEntity> listAllBomByParentSkuNos(List<String> parentSkuNos) {
+        if (CollectionUtils.isEmpty(parentSkuNos)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listAllBomByParentSkuNos(parentSkuNos);
+    }
+
     /**
      * 根据Bomid 删除 bom sku 信息
      *
