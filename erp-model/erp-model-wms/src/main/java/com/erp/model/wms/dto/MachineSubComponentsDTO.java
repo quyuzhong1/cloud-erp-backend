@@ -110,6 +110,11 @@ public class MachineSubComponentsDTO implements Serializable {
          * bom版本
          */
         private Integer bomVersion;
+
+        /**
+         * 子级SKU数量
+         */
+        private Integer childLength;
     }
 
     @Data
