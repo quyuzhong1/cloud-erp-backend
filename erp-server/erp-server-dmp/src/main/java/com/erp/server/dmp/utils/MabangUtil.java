@@ -15,7 +15,6 @@ import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.HashOperations;
 
 import java.util.List;
 import java.util.Map;

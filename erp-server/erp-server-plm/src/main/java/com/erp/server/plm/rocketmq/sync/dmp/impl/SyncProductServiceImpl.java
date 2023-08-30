@@ -4,7 +4,6 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.utils.RedisUtil;
-import com.common.core.utils.ObjectUtils;
 import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -13,8 +12,6 @@ import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.plm.rocketmq.sync.dmp.SyncProductService;
-import com.erp.server.plm.service.ProductDetailService;
-import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProductSaleService;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * 同步plm产品信息

@@ -6,7 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.core.utils.Md5Util;
 import com.erp.model.dmp.dto.GoodcangDTO;
 import com.erp.server.dmp.pull.service.GoodcangStockService;
-import com.common.business.utils.GoodCangApiUtils;
+import com.sdk.third.kingdee.utils.GoodCangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
