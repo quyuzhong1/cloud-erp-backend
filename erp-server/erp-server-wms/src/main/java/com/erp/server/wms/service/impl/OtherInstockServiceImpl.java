@@ -109,6 +109,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     public PagingVO<OtherInstockDTO.ListDTO> paging(PagingDTO<OtherInstockDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        if (CollectionUtils.isNotEmpty(pagingDTO.getParams().getApproveStatusList())) {
+            pagingDTO.getParams().setInvalidStatus(Boolean.FALSE);
+        }
         IPage<OtherInstockDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         List<OtherInstockDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {

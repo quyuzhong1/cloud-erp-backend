@@ -733,7 +733,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         //根据搜索类型获取到审核状态
         List<String> approveList = listBySearchType(searchType);
-
+        if (CollectionUtils.isNotEmpty(params.getApproveStatusList())) {
+            params.setInvalidStatus(Boolean.FALSE);
+        }
         //处理国家数据
         handleCountryIdList(params);
         IPage pageData = baseMapper.paging(query, params, approveList);
