@@ -1,7 +1,7 @@
 package com.erp.server.dmp.service.mq;
 
 import cn.hutool.extra.spring.SpringUtil;
-import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.common.business.constant.MongoTableNameContant;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.mongo.MongoService;

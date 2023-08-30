@@ -7,15 +7,16 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.enums.PlatformApiEnum;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.dto.JobTaskDTO;
+import com.common.business.constant.MongoTableNameContant;
+import com.common.business.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.dto.RequestDTO;
+import com.common.business.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
@@ -23,12 +24,12 @@ import com.erp.model.dmp.enums.*;
 import com.erp.model.dmp.kingdee.KingdeeOrderEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeOrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.pull.service.IReportSaveService;
-import com.erp.server.dmp.pull.service.SaveData;
+import com.common.business.service.IReportSaveService;
+import com.common.business.annotation.SaveData;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpErrorLogService;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
+import com.sdk.third.kingdee.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -181,6 +182,11 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
+    }
+
+    @Override
+    public List<KingdeeOrderEntity> downloadData(RequestDTO dto) {
+        return null;
     }
 
     /**

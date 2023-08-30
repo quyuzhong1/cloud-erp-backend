@@ -1,14 +1,12 @@
-package com.erp.server.dmp.handler;
+package com.common.business.handler;
 
+import com.common.business.config.AbstractSparrowAnnotationBeanMap;
+import com.common.business.dto.RequestDTO;
+import com.common.business.enums.PlatformApiEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.server.dmp.bean.AbstractSparrowAnnotationBeanMap;
-
-import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.server.dmp.pull.service.IReportSaveService;
-import com.erp.server.dmp.pull.service.SaveData;
+import com.common.business.service.IReportSaveService;
+import com.common.business.annotation.SaveData;
 import com.google.common.collect.Maps;
-import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -41,7 +39,6 @@ public class SaveHandler extends AbstractSparrowAnnotationBeanMap<SaveData, IRep
     public static void cleanDataSave(String tableName) {
         PlatformApiEnum apiEnum = PlatformApiEnum.getByMongoTable(tableName);
         if(null ==apiEnum){
-            XxlJobHelper.log("清除数据失败，未找到对应的apiEnum tableName = " + tableName);
             throw new ServiceException("清除数据失败，未找到对应的apiEnum tableName = " + tableName);
         }
         //通过枚举获取对应service

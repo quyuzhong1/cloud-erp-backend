@@ -1,7 +1,6 @@
-package com.erp.model.dmp.dto;
+package com.common.business.dto;
 
-import com.erp.model.dmp.entity.PlatformApiTaskEntity;
-import com.erp.model.dmp.enums.PlatformEnum;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -99,23 +98,23 @@ public class JobTaskDTO {
 
 
 
-    public JobTaskDTO(PlatformApiTaskEntity entity, String taskName) {
-        this.id = Long.parseLong(entity.getId());
-        this.dictPlatform = entity.getDictPlatform();
-        this.intervalTime = entity.getIntervalTime();
-        this.lastTime = entity.getLastTime();
-        this.nextTime = entity.getNextTime();
-        this.status = entity.getStatus();
-        this.createTime = entity.getCreateTime();
-        this.apiCode = entity.getApiCode();
-        this.apiName = entity.getApiName();
-        this.retryTimes = entity.getRetryTimes();
-        this.shopName = entity.getShopName();
-        this.shopId = entity.getShopId();
-        this.billType = entity.getBillType();
-        this.operateType = entity.getOperateType();
-        this.apiParam = entity.getApiParam();
-    }
+//    public JobTaskDTO(PlatformApiTaskEntity entity, String taskName) {
+//        this.id = Long.parseLong(entity.getId());
+//        this.dictPlatform = entity.getDictPlatform();
+//        this.intervalTime = entity.getIntervalTime();
+//        this.lastTime = entity.getLastTime();
+//        this.nextTime = entity.getNextTime();
+//        this.status = entity.getStatus();
+//        this.createTime = entity.getCreateTime();
+//        this.apiCode = entity.getApiCode();
+//        this.apiName = entity.getApiName();
+//        this.retryTimes = entity.getRetryTimes();
+//        this.shopName = entity.getShopName();
+//        this.shopId = entity.getShopId();
+//        this.billType = entity.getBillType();
+//        this.operateType = entity.getOperateType();
+//        this.apiParam = entity.getApiParam();
+//    }
 
     public JobTaskDTO(JobTaskDTO tbTask) {
         this.id = tbTask.getId();

@@ -1,14 +1,12 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpBomEntity;
-import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.model.dmp.mabang.ComboSkuInfoEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
@@ -16,7 +14,6 @@ import com.erp.server.dmp.mapper.DmpBomMapper;
 import com.erp.server.dmp.service.DmpBomService;
 import com.common.business.service.SuperServiceImpl;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;

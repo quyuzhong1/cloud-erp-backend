@@ -2,16 +2,12 @@ package com.erp.server.dmp.controller.open;
 
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.crypto.SecureUtil;
-import cn.hutool.crypto.digest.MD5;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.core.utils.Md5Util;
 import com.erp.model.dmp.dto.GoodcangDTO;
 import com.erp.server.dmp.pull.service.GoodcangStockService;
-import com.erp.server.dmp.utils.GoodCangApiUtils;
+import com.common.business.utils.GoodCangApiUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;

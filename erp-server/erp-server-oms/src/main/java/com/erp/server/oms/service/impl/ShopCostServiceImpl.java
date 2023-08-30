@@ -2,10 +2,8 @@ package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.OperationTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.dmp.mabang.ShopEntity;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopCostEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;

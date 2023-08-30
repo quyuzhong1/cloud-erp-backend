@@ -1,7 +1,7 @@
-package com.erp.model.dmp.dto;
+package com.common.business.dto;
 
 
-import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.common.business.enums.PlatformApiEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

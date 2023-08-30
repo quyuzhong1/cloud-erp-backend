@@ -6,8 +6,6 @@ import com.erp.server.dmp.mapper.CfgSettingMapper;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.common.business.service.SuperServiceImpl;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
 

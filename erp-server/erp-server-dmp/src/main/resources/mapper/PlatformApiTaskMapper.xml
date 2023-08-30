@@ -11,7 +11,7 @@
         create_time
     </sql>
 
-    <select id="selectApiTask" resultType="com.erp.model.dmp.dto.JobTaskDTO">
+    <select id="selectApiTask" resultType="com.common.business.dto.JobTaskDTO">
         SELECT
         pat.id,
         pat.dict_platform,

@@ -15,7 +15,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.entity.DmpSyncTaskEntity;
-import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.common.business.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.wms.enums.inventory.InventoryInOutEnum;

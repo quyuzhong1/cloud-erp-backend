@@ -11,20 +11,20 @@ import com.common.core.utils.date.EnumTimePattern;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.common.business.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.dto.RequestDTO;
+import com.common.business.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
-import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.common.business.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.dmp.gyy.bean.DetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.pull.service.IReportSaveService;
-import com.erp.server.dmp.pull.service.SaveData;
+import com.common.business.service.IReportSaveService;
+import com.common.business.annotation.SaveData;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
@@ -141,6 +141,11 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
+    }
+
+    @Override
+    public List<GyyOrderEntity> downloadData(RequestDTO dto) {
+        return null;
     }
 
     @Override

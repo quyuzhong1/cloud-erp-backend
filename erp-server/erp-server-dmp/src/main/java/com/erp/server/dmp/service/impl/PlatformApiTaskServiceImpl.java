@@ -3,7 +3,7 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.service.SuperServiceImpl;
-import com.erp.model.dmp.dto.JobTaskDTO;
+import com.common.business.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.server.dmp.mapper.PlatformApiTaskMapper;
@@ -11,7 +11,6 @@ import com.erp.server.dmp.service.PlatformApiTaskService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;

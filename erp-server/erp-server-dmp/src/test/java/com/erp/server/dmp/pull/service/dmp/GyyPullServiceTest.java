@@ -1,8 +1,8 @@
 package com.erp.server.dmp.pull.service.dmp;
 
-import com.erp.model.dmp.dto.JobTaskDTO;
-import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.common.business.dto.JobTaskDTO;
+import com.common.business.dto.RequestDTO;
+import com.common.business.enums.PlatformApiEnum;
 import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.service.gyy.*;
@@ -15,7 +15,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;

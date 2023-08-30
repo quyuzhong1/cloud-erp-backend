@@ -1,8 +1,12 @@
-package com.erp.server.dmp.pull.service;
+package com.common.business.service;
 
 
-import com.erp.model.dmp.dto.RequestDTO;
+import com.common.business.dto.RequestDTO;
 
+/**
+ * 平台数据拉取对接历史数据
+ * @author Cloud
+ */
 public interface IReportHistoryService<T> {
 
     void pullDataSave(RequestDTO dto) throws Exception;

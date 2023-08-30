@@ -13,10 +13,7 @@ import com.erp.server.sys.service.MessageUserReadService;
 import com.erp.server.sys.service.PdaVersionService;
 import com.common.business.service.SuperServiceImpl;
 import com.erp.server.sys.service.SysUserInfoService;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
 

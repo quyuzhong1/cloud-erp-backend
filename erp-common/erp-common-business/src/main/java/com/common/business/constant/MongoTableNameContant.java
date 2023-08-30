@@ -1,4 +1,4 @@
-package com.erp.model.dmp.constant;
+package com.common.business.constant;
 
 import java.util.Arrays;
 import java.util.Collections;

@@ -7,26 +7,27 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.enums.PlatformApiEnum;
 import com.common.core.constant.CommonConstants;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.common.business.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.KingdeeOutStockDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.dto.RequestDTO;
+import com.common.business.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
 import com.erp.model.dmp.enums.*;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.pull.service.IReportSaveService;
-import com.erp.server.dmp.pull.service.SaveData;
+import com.common.business.service.IReportSaveService;
+import com.common.business.annotation.SaveData;
 import com.erp.server.dmp.service.CfgSettingService;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -198,6 +199,11 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
+    }
+
+    @Override
+    public List<KingdeeDeliveryDetailEntity> downloadData(RequestDTO dto) {
+        return null;
     }
 
     /**

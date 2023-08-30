@@ -1,7 +1,7 @@
 package com.erp.server.dmp.service;
 
 import com.common.business.service.SuperService;
-import com.erp.model.dmp.dto.JobTaskDTO;
+import com.common.business.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 

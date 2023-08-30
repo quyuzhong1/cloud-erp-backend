@@ -2,7 +2,7 @@ package com.erp.server.dmp.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
-import com.erp.model.dmp.dto.JobTaskDTO;
+import com.common.business.dto.JobTaskDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

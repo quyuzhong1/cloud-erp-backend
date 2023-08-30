@@ -1,4 +1,4 @@
-package com.erp.server.dmp.bean;
+package com.common.business.config;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;

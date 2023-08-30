@@ -3,7 +3,6 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.server.oms.mapper.ShopAuthMapper;
 import com.erp.server.oms.service.ShopAuthService;
 import com.common.business.service.SuperServiceImpl;

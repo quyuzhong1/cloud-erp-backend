@@ -5,7 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
-import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.common.business.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.CleanStatusEnum;

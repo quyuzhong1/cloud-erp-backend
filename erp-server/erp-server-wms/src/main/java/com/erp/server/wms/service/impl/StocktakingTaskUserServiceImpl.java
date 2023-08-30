@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.FindUserDTO;
-import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.entity.StocktakingTaskEntity;

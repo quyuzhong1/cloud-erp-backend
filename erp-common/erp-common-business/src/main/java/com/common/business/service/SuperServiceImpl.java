@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.service.SuperService;
 import com.common.business.vo.LoginUser;
 import com.common.core.entity.BaseEntity;
 import org.apache.commons.collections4.CollectionUtils;

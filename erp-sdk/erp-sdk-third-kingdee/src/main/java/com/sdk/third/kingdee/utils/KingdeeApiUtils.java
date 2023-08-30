@@ -1,4 +1,4 @@
-package com.erp.server.dmp.utils;
+package com.sdk.third.kingdee.utils;
 
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;

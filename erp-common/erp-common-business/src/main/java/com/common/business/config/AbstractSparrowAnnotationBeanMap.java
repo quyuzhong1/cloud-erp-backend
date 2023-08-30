@@ -1,4 +1,4 @@
-package com.erp.server.dmp.bean;
+package com.common.business.config;
 
 
 import com.google.common.collect.Maps;

@@ -1,12 +1,18 @@
-package com.erp.server.dmp.pull.service;
+package com.common.business.service;
 
 
-import com.erp.model.dmp.dto.RequestDTO;
+import com.common.business.dto.RequestDTO;
 
+import java.util.List;
+
+/**
+ * 平台数据拉取对接
+ * @author Cloud
+ */
 public interface IReportSaveService<T> {
 
     /**
-     * 下载数据
+     * 下载数据封装数据
      * @param dto
      */
     void pullDataSave(RequestDTO dto);
@@ -23,5 +29,12 @@ public interface IReportSaveService<T> {
      * @param mongoDatum
      */
     void updateAndSaveDb(T mongoDatum);
+
+    /**
+     * 下载数据
+     * @param dto
+     * @return
+     */
+    List<T> downloadData(RequestDTO dto);
 
 }

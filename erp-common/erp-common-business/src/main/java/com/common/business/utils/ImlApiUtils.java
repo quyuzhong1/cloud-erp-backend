@@ -1,4 +1,4 @@
-package com.erp.server.dmp.utils;
+package com.common.business.utils;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.webservice.SoapClient;
@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
-import java.util.HashMap;
 
 /**
  * 谷仓OPENAPI封装

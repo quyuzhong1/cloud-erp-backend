@@ -1,7 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.erp.model.dmp.dto.JobTaskDTO;
+import com.common.business.dto.JobTaskDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;

@@ -1,7 +1,8 @@
-package com.erp.model.dmp.enums;
+package com.common.business.enums;
 
-import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.TaskConstant;
+
+import com.common.business.constant.MongoTableNameContant;
+import com.common.business.constant.TaskConstant;
 
 import java.util.Arrays;
 

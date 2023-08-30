@@ -11,7 +11,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.entity.DmpWarehouseInboundRecordEntity;
 import com.erp.server.dmp.service.ApiPlmSyncLogService;
 import com.erp.server.dmp.service.DmpWarehouseInboundRecordService;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.sdk.third.kingdee.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;

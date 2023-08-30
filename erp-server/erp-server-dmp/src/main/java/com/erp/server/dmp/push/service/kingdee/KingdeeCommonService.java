@@ -2,8 +2,8 @@ package com.erp.server.dmp.push.service.kingdee;
 
 import cn.hutool.json.JSONObject;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
+import com.sdk.third.kingdee.utils.KingdeeApiUtils;
 
 import java.util.Map;
 

@@ -5,20 +5,20 @@ import cn.hutool.core.util.NumberUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
-import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.dto.JobTaskDTO;
+import com.common.business.constant.MongoTableNameContant;
+import com.common.business.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.dto.RequestDTO;
+import com.common.business.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
-import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.common.business.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.gyy.GyySkuInfoEntity;
 import com.erp.model.dmp.gyy.bean.CombineItemsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.pull.service.IReportSaveService;
-import com.erp.server.dmp.pull.service.SaveData;
+import com.common.business.service.IReportSaveService;
+import com.common.business.annotation.SaveData;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpSkuInfoService;
 import com.erp.server.dmp.utils.GyyApiUtils;
@@ -153,6 +153,11 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
 //        if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
 //            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
 //        }
+    }
+
+    @Override
+    public List<GyySkuInfoEntity> downloadData(RequestDTO dto) {
+        return null;
     }
 
     /**

@@ -1,9 +1,14 @@
-package com.erp.server.dmp.pull.service;
+package com.common.business.service;
 
-import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.server.dmp.handler.SaveHandler;
+
+import com.common.business.dto.RequestDTO;
+import com.common.business.handler.SaveHandler;
 import org.springframework.stereotype.Service;
 
+/**
+ * 平台数据拉取对接模板模式
+ * @author Cloud
+ */
 @Service
 public class ModelServiceImpl implements ModelService {
 

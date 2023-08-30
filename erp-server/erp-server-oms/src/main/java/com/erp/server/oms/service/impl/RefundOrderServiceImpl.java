@@ -6,8 +6,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.RefundOrderDTO;
-import com.erp.model.oms.dto.ShopDTO;
-import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.RefundOrderEntity;
 import com.erp.model.oms.enums.CommonStatusTypeEnum;
 import com.erp.model.oms.enums.DictBasicEnum;
@@ -20,7 +18,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * <p>

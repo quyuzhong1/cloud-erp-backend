@@ -11,14 +11,12 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.OrderCategoryDTO;
 import com.erp.model.oms.dto.OrderCategoryDetailDTO;
-import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.OrderCategoryDetailEntity;
 import com.erp.model.oms.entity.OrderCategoryEntity;
 import com.erp.server.oms.mapper.OrderCategoryMapper;
 import com.erp.server.oms.service.OrderCategoryDetailService;
 import com.erp.server.oms.service.OrderCategoryService;
 import com.common.business.service.SuperServiceImpl;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

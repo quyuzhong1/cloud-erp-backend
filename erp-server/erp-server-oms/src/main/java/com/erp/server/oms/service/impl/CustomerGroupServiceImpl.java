@@ -8,7 +8,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerGroupDTO;
 import com.erp.model.oms.entity.CustomerGroupEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerGroupService;
 import com.erp.server.oms.mapper.CustomerGroupMapper;
 import com.erp.server.oms.service.CustomerGroupService;
