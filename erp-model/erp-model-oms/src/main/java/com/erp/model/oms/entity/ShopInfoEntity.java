@@ -61,15 +61,15 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     /**
      * 区域id
      */
-    @TableField("dict_area_id")
-    private String dictAreaId;
+    @TableField("dict_area_code")
+    private String dictAreaCode;
 
 
     /**
      * 国家id
      */
-    @TableField("dict_country_id")
-    private String dictCountryId;
+    @TableField("dict_country_code")
+    private String dictCountryCode;
 
 
     /**

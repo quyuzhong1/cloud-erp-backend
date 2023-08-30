@@ -14,12 +14,14 @@
             charge_name,
             sales_org_id,
             sales_org_name,
-            dict_area_id,
-            dict_country_id,
+            dict_area_code,
+            dict_country_code,
+            dict_country_code,
             auth_status,
             disabled,
             auth_time,
             domain,
+            dict_platform,
             create_user_name,
             create_time,
             update_user_name,
@@ -35,8 +37,8 @@
         <if test="params.account!=null and params.account!='' ">
             AND si.account ILIKE concat('%',#{params.account},'%')
         </if>
-        <if test="params.dictCountryId!=null and params.dictCountryId!='' ">
-            AND si.dict_country_id = #{params.dictCountryId}
+        <if test="params.dictCountryCode!=null and params.dictCountryCode!='' ">
+            AND si.dict_country_code = #{params.dictCountryCode}
         </if>
         <if test="params.disabledList!=null and params.disabledList.size>0 ">
             AND si.disabled IN
@@ -79,7 +81,7 @@
             ${params.permissionSql}
         </if>
         ORDER BY
-        si.dict_platform,si.account,si.dict_area_id desc
+        si.dict_platform,si.account,si.dict_area_code desc
     </select>
 
 </mapper>

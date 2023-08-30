@@ -49,9 +49,9 @@ public enum AuthStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (BillTypeEnum billTypeEnum : BillTypeEnum.values()) {
-            if (code.equals(billTypeEnum.getCode())) {
-                return billTypeEnum.getName();
+        for (AuthStatusEnum statusEnum : AuthStatusEnum.values()) {
+            if (code.equals(statusEnum.getCode())) {
+                return statusEnum.getName();
             }
         }
         return "";

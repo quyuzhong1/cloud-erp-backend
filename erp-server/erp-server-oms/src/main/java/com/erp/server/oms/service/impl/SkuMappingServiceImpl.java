@@ -168,6 +168,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         //仓库sku 对照
         if (warehouse.equals(type)) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
+            warehouseList=warehouseList.stream().filter(w->!w.getDisabled()).collect(Collectors.toList());
             SkuMappingWarehouseExcelListener excelListenerUtil = new SkuMappingWarehouseExcelListener(this, skuList, skuMappingList, warehouseList, list, listingInfoService);
             try {
                 EasyExcel.read(excelFile.getInputStream(), SkuMappingWarehouseImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();

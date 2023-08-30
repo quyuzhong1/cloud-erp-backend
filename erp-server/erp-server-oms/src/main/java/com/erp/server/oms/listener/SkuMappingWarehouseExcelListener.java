@@ -75,7 +75,9 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
 
     public SkuMappingWarehouseExcelListener(SkuMappingService skuMappingService, List<SkuVO> skuList,
                                             List<SkuMappingEntity> skuMappingList,
-                                            List<WarehouseDTO.UpdateDTO> warehouseList, List<ListingInfoEntity> listingInfoEntityList, ListingInfoService listingInfoService) {
+                                            List<WarehouseDTO.UpdateDTO> warehouseList,
+                                            List<ListingInfoEntity> listingInfoEntityList,
+                                            ListingInfoService listingInfoService) {
         this.skuMappingService = skuMappingService;
         this.skuList = skuList;
         this.skuMappingList = skuMappingList;
@@ -134,26 +136,17 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         TypeEnum warehouseType = TypeEnum.WAREHOUSE;
         //已对应的平台sku
         String finalListingId = listingId;
-        List<SkuMappingEntity> excelList = skuMappingList.stream().filter(s -> s.getListingId().equals(finalListingId)
-                && warehouseId.equals(s.getWarehouseId())
-                && warehouseType.equals(s.getType())
+        List<SkuMappingEntity> existList = skuMappingList.stream().filter(
+                s -> s.getListingId().equals(finalListingId)
+                        && warehouseId.equals(s.getWarehouseId())
+                        && (!s.getIsExpire())
+                        && warehouseType.equals(s.getType())
         ).collect(Collectors.toList());
 
-        if (CollectionUtils.isNotEmpty(excelList)) {
+        if (CollectionUtils.isNotEmpty(existList)) {
             errorMsgList.add("同仓库库存SKU只能对应一个产品SKU");
         }
-        long count = skuMappingList.stream().filter(a -> warehouseType.equals(a.getType()) &&
-                warehouseId.equals(a.getWarehouseId())
-                &&sku.getSkuId().equals(a.getProductSkuId())).count();
-        if (count > 1) {
-            errorMsgList.add("SKU在该仓库已关联其他库存SKU，请更换其他SKU");
-        }
-        //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
-            importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-            errorList.add(importExcelDTO);
-            return;
-        }
+
 
         if (Objects.isNull(listingInfoEntity)) {
             listingId = IdWorker.getIdStr();
@@ -164,6 +157,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             addListingInfoEntity.setProductName(importExcelDTO.getWarehouseProductName());
             addListingInfoEntity.setMatchResult(Boolean.TRUE);
             addListingInfoEntityList.add(addListingInfoEntity);
+            listingInfoEntityList.add(addListingInfoEntity);
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -174,12 +168,29 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         add.setType(warehouseType);
         add.setWarehouseId(warehouseId);
         add.setWarehouseName(warehouseName);
+        add.setIsExpire(Boolean.FALSE);
         //生效时间
         add.setEffectiveTime(now);
         add.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
         //校验用
         skuMappingList.add(add);
         addSkuMappingList.add(add);
+
+        long count = skuMappingList.stream().filter(
+                        a -> warehouseType.equals(a.getType()) &&
+                                warehouseId.equals(a.getWarehouseId()) &&
+                                sku.getSkuId().equals(a.getProductSkuId())).map(SkuMappingEntity::getListingId).
+                distinct().count();
+        if (count > 1) {
+            errorMsgList.add("SKU在该仓库已关联其他库存SKU，请更换其他SKU");
+        }
+        //存在错误数据则直接返回
+        if (errorMsgList.size() > 0) {
+            importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(importExcelDTO);
+            return;
+        }
+
     }
 
 

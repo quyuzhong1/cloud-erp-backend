@@ -3,15 +3,14 @@ package com.erp.server.oms.service.impl;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.*;
+import com.erp.model.oms.entity.DictAmazonAreaCountryEntity;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.server.oms.service.DictAmazonAreaCountryService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.service.ShopSdkServer;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.AuthorizeDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -76,6 +75,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Resource
     private ShopAuthService shopAuthService;
 
+    @Resource
+    private DictAmazonAreaCountryService dictAmazonAreaCountryService;
+
 
     /**
      * 添加店铺
@@ -100,11 +102,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             return result;
         }
 
-        checkName("", dto.getName());
+
         if (shopify.getCode().equals(dictPlatform)) {
             if (StringUtils.isBlank(dto.getDomain())) {
                 throw new ServiceException("域名不能为空");
             }
+            checkDomain("", dto.getDomain());
         }
 
         BeanMapper.copy(dto, shop);
@@ -128,6 +131,21 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     }
 
+
+    /**
+     * 检查域名
+     *
+     * @param id
+     * @param domain
+     */
+    private void checkDomain(String id, String domain) {
+        long count = this.lambdaQuery().ne(StringUtils.isNotBlank(id), ShopInfoEntity::getId, id).
+                eq(ShopInfoEntity::getDomain, domain).last("LIMIT 1").count();
+        if (count > 0) {
+            throw new ServiceException(domain + "二级域名已存在");
+        }
+    }
+
     /**
      * 处理
      *
@@ -137,16 +155,16 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @date 2023-08-21 15:07
      */
     public Boolean handleAmazonShop(ShopDTO.AddDTO dto) {
-        if (StringUtils.isBlank(dto.getDictAreaId())) {
+        if (StringUtils.isBlank(dto.getDictAreaCode())) {
             throw new ServiceException("区域不能为空");
         }
-        if (CollectionUtils.isEmpty(dto.getDictCountryIdList())) {
+        if (CollectionUtils.isEmpty(dto.getDictCountryCodeList())) {
             throw new ServiceException("国家不能为空");
         }
         //国家集合
-        List<String> countryIdList = dto.getDictCountryIdList();
-        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
-        List<ShopInfoEntity> addList = new ArrayList<>(countryIdList.size());
+        List<String> countryCodeList = dto.getDictCountryCodeList();
+        List<DictAmazonAreaCountryEntity> countryList = dictAmazonAreaCountryService.listByCountryCodes(countryCodeList);
+        List<ShopInfoEntity> addList = new ArrayList<>(countryList.size());
         //店铺名称
         String name = dto.getName();
         String salesOrgId = dto.getSalesOrgId();
@@ -161,15 +179,15 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 chargeName = user.getUserName();
             }
         }
-        for (String countryId : countryIdList) {
-            String countryName = countryList.stream().filter(c -> c.getId().equals(countryId)).findFirst().
-                    map(DictCountryEntity::getNameCn).orElse("");
+        for (String countryCode : countryCodeList) {
+            String countryName = countryList.stream().filter(c -> c.getCountryCode().equals(countryCode)).findFirst().
+                    map(DictAmazonAreaCountryEntity::getCountryName).orElse("");
             String shopName = name.concat(countryName);
             checkName("", shopName);
             if (StringUtils.isNotBlank(countryName)) {
                 ShopInfoEntity shop = new ShopInfoEntity();
                 BeanMapper.copy(dto, shop);
-                shop.setDictCountryId(countryId);
+                shop.setDictCountryCode(countryCode);
                 shop.setName(shopName);
                 shop.setSalesOrgName(orgName);
                 shop.setChargeName(chargeName);
@@ -266,51 +284,29 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @param list
      */
     private void fillDb(List<ShopDTO.PagingViewDTO> list) {
-        //区域的id
-        List<String> areaIdList = list.stream().map(ShopDTO.PagingViewDTO::getDictAreaId).collect(Collectors.toList());
-        //国家id
-        List<String> countryIdList = list.stream().map(ShopDTO.PagingViewDTO::getDictCountryId).collect(Collectors.toList());
-        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
-        List<DictGlobalAreaEntity> areaList = sysDictFeign.listGlobalAreaByIds(areaIdList);
 
-        List<String> flagList = new ArrayList<>();
+        //国家id
+        List<String> countryIdList = list.stream().map(ShopDTO.PagingViewDTO::getDictCountryCode).collect(Collectors.toList());
+        List<DictAmazonAreaCountryEntity> countryList = dictAmazonAreaCountryService.listByCountryCodes(countryIdList);
+        List<BaseDropDownDTO.CommonDTO> areaList = dictAmazonAreaCountryService.areaList();
         for (ShopDTO.PagingViewDTO item : list) {
             //平台
             String dictPlatform = item.getDictPlatform();
-            //账号
-            String account = item.getAccount();
-            //区域
-            String dictAreaId = item.getDictAreaId();
-
-            Boolean notContains = !flagList.contains(account);
             item.setDictPlatform(dictPlatform);
-            String areaId = item.getDictAreaId();
-            String areaName = areaList.stream().filter(a -> a.getId().equals(areaId)).
-                    map(DictGlobalAreaEntity::getRegionName).findFirst().orElse("");
+            String areaId = item.getDictAreaCode();
+            String areaName = areaList.stream().filter(a -> a.getCode().equals(areaId)).
+                    map(BaseDropDownDTO.CommonDTO::getValue).findFirst().orElse("");
             item.setAreaName(areaName);
-            String countryId = item.getDictCountryId();
-            String countryName = countryList.stream().filter(a -> a.getId().equals(countryId)).
-                    map(DictCountryEntity::getNameCn).findFirst().orElse("");
+            String countryId = item.getDictCountryCode();
+            String countryName = countryList.stream().filter(a -> a.getCountryCode().equals(countryId)).
+                    map(DictAmazonAreaCountryEntity::getCountryName).findFirst().orElse("");
             item.setCountryName(countryName);
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "禁用" : "启用";
             item.setDisabledName(disabledName);
             String authStatus = item.getAuthStatus();
-            item.setAuthStatusName(AuthStatusEnum.getName(authStatus));
-
-            if (notContains) {
-                item.setName("");
-                item.setCountryName("");
-                item.setDisabledName("");
-                item.setAuthStatusName("");
-                item.setCreateUserName("");
-                item.setCreateTime(null);
-                item.setAuthTime(null);
-                item.setUpdateTime(null);
-                item.setUpdateUserName("");
-            }
-
-            flagList.add(account);
+            String authStatusName = AuthStatusEnum.getName(authStatus);
+            item.setAuthStatusName(authStatusName);
 
         }
 
@@ -366,21 +362,23 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         ShopDTO.ViewDTO view = new ShopDTO.ViewDTO();
 
         BeanMapper.copy(shop, view);
-        String areaId = StringUtils.isNotBlank(view.getDictAreaId()) ? view.getDictAreaId() : "";
-        String countryId = StringUtils.isNotBlank(view.getDictCountryId()) ? view.getDictCountryId() : "";
+        String authStatus = shop.getAuthStatus();
+        view.setAuthStatusName(AuthStatusEnum.getName(authStatus));
+        String areaId = StringUtils.isNotBlank(view.getDictAreaCode()) ? view.getDictAreaCode() : "";
+        String countryId = StringUtils.isNotBlank(view.getDictCountryCode()) ? view.getDictCountryCode() : "";
         //平台
         String dictPlatform = view.getDictPlatform();
         String dictType = DictBasicEnum.PLATFORM.getType();
         DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(dictType, dictPlatform);
         String platformName = Objects.nonNull(dictBasic) ? dictBasic.getName() : "";
-        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Arrays.asList(countryId));
-        List<DictGlobalAreaEntity> areaList = sysDictFeign.listGlobalAreaByIds(Arrays.asList(areaId));
+        List<DictAmazonAreaCountryEntity> countryList = dictAmazonAreaCountryService.listByCountryCodes(Arrays.asList(countryId));
 
-        String areaName = areaList.stream().filter(a -> a.getId().equals(areaId)).
-                map(DictGlobalAreaEntity::getRegionName).findFirst().orElse("");
+
+        String countryName = countryList.stream().filter(a -> a.getCountryCode().equals(countryId)).
+                map(DictAmazonAreaCountryEntity::getCountryName).findFirst().orElse("");
+        String areaName = countryList.stream().filter(a -> a.getCountryCode().equals(countryId)).
+                map(DictAmazonAreaCountryEntity::getRegionName).findFirst().orElse("");
         view.setAreaName(areaName);
-        String countryName = countryList.stream().filter(a -> a.getId().equals(countryId)).
-                map(DictCountryEntity::getNameCn).findFirst().orElse("");
         view.setCountryName(countryName);
         view.setPlatformName(platformName);
         return view;

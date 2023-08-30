@@ -82,7 +82,7 @@ public class ShopDTO implements Serializable {
         /**
          * 区域id
          */
-        private String dictAreaId;
+        private String dictAreaCode;
 
         /**
          * 区域名
@@ -92,7 +92,7 @@ public class ShopDTO implements Serializable {
         /**
          * 国家id
          */
-        private String dictCountryId;
+        private String dictCountryCode;
 
         /**
          * 国家名
@@ -178,7 +178,7 @@ public class ShopDTO implements Serializable {
         /**
          * 国家
          */
-        private String dictCountryId;
+        private String dictCountryCode;
 
         /**
          * 禁用状态集合
@@ -262,12 +262,12 @@ public class ShopDTO implements Serializable {
         /**
          * 区域id
          */
-        private String dictAreaId;
+        private String dictAreaCode;
 
         /**
          * 国家id
          */
-        private List<String> dictCountryIdList;
+        private List<String> dictCountryCodeList;
 
         /**
          * 域名
@@ -333,7 +333,7 @@ public class ShopDTO implements Serializable {
         /**
          * 区域id
          */
-        private String dictAreaId;
+        private String dictAreaCode;
 
         /**
          * 区域名
@@ -343,7 +343,7 @@ public class ShopDTO implements Serializable {
         /**
          * 国家id
          */
-        private String dictCountryId;
+        private String dictCountryCode;
 
         /**
          * 国家名

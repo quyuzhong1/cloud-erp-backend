@@ -21,6 +21,7 @@
         li.product_image_url,
         li.product_spec,
         li.product_packing,
+        li.platform_update_time,
         sm.create_user_name,
         sm.create_time
         FROM sku_mapping sm
