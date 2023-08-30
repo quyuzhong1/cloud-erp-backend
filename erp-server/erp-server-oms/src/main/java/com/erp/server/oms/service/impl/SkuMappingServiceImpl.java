@@ -651,7 +651,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
         List<SkuMappingEntity> list = this.lambdaQuery().
-                ne(StringUtils.isNotBlank(id),SkuMappingEntity::getId,id).
                 eq(SkuMappingEntity::getWarehouseId, warehouseId).
                 eq(SkuMappingEntity::getProductSkuId, skuId).
                 eq(SkuMappingEntity::getType,TypeEnum.WAREHOUSE).list();

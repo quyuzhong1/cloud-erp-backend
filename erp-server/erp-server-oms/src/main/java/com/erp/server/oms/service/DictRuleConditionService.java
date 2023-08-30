@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.DictRuleConditionDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 条件字典表 服务类
@@ -33,4 +35,12 @@ public interface DictRuleConditionService extends SuperService<DictRuleCondition
     Boolean update(DictRuleConditionDTO.UpdateDTO dto);
 
 
+    /**
+     * 批量保存或者修改
+     * @author yl
+     * @date 2023-08-30 16:04
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean batchSaveOrUpdate(List<DictRuleConditionDTO.UpdateDTO> dto);
 }

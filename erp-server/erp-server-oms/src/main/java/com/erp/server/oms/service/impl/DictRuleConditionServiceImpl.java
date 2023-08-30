@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.DictRuleConditionEntity;
 import com.erp.server.oms.mapper.DictRuleConditionMapper;
 import com.erp.server.oms.service.DictRuleConditionService;
@@ -9,6 +10,7 @@ import com.common.business.service.SuperServiceImpl;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -83,6 +85,23 @@ public class DictRuleConditionServiceImpl extends SuperServiceImpl<DictRuleCondi
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, dictRuleConditionEntity, null, dictRuleConditionEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+
+    /**
+     * 批量保存或者修改
+     * @author yl
+     * @date 2023-08-30 16:04
+     * @param list
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean batchSaveOrUpdate(List<DictRuleConditionDTO.UpdateDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return true;
+        }
+        List<DictRuleConditionEntity> addList = BeanMapper.copyList(list, DictRuleConditionEntity.class);
+        return this.saveOrUpdateBatch(addList);
     }
 
 

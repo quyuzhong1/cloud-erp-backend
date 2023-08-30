@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.erp.model.oms.dto.DictBasicDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -13,6 +14,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.DictRuleConditionDTO;
+
+import java.util.List;
 
 /**
  * 条件字典表
@@ -38,6 +41,18 @@ public class DictRuleConditionController extends BaseController {
     @PostMapping("/add")
     public ApiResult<String> add(@RequestBody @Validated DictRuleConditionDTO.AddDTO dto) {
         return success(dictRuleConditionService.add(dto));
+    }
+
+    /**
+     * 保存或者修改字典信息
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/saveOrUpdateBatch")
+    public ApiResult saveOrUpdate(@RequestBody @Validated List<DictRuleConditionDTO.UpdateDTO> dto) {
+        Boolean result = dictRuleConditionService.batchSaveOrUpdate(dto);
+        return result == true ? success() : failure();
     }
 
     /**
