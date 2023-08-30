@@ -3,6 +3,7 @@ package com.erp.server.oms.listener;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -68,7 +69,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
 
     private List<SkuMappingEntity> addSkuMappingList = new ArrayList<>(10);
 
-    private List<Pair<String, String>> skuWarehouseList = new ArrayList<>(10);
+    private List<BaseIdDTO> skuWarehouseList = new ArrayList<>(10);
 
     /**
      * 导入错误数据
@@ -163,9 +164,12 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             errorList.add(importExcelDTO);
             return;
         }
-        skuWarehouseList.add(new Pair<>(warehouseId, sku.getSkuId()));
-        long skuCount = skuWarehouseList.stream().filter(s -> s.getKey().equals(warehouseId) &&
-                s.getValue().equals(sku.getSkuId())).count();
+        BaseIdDTO idDTO=new BaseIdDTO();
+        idDTO.setId(warehouseId);
+        idDTO.setName(sku.getSkuId());
+        skuWarehouseList.add(idDTO);
+        long skuCount = skuWarehouseList.stream().filter(s -> s.getId().equals(warehouseId) &&
+                s.getName().equals(sku.getSkuId())).count();
         if (skuCount > 1) {
             errorMsgList.add("SKU在该仓库已关联其他库存SKU，请更换其他SKU");
         }
