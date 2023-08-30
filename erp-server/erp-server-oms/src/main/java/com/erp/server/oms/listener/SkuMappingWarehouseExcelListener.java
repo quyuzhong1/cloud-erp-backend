@@ -168,7 +168,12 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         if (skuCount > 1) {
             errorMsgList.add("SKU在该仓库已关联其他库存SKU，请更换其他SKU");
         }
-
+        //存在错误数据则直接返回
+        if (errorMsgList.size() > 0) {
+            importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(importExcelDTO);
+            return;
+        }
         if (Objects.isNull(listingInfoEntity)) {
             listingId = IdWorker.getIdStr();
             ListingInfoEntity addListingInfoEntity = new ListingInfoEntity();

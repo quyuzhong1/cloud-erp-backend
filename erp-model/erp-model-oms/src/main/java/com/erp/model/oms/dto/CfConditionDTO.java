@@ -2,11 +2,9 @@ package com.erp.model.oms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -111,7 +109,6 @@ public class CfConditionDTO implements Serializable {
         /**
         * 对应api url
         */
-        @NotBlank(message = "对应api url不能为空")
         @Size(max = 255,message = "对应api url最大长度不能超过255位")
         private String apiUrl;
 

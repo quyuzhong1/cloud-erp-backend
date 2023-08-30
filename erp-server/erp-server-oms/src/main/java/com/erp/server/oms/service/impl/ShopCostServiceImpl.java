@@ -51,7 +51,7 @@ public class ShopCostServiceImpl extends SuperServiceImpl<ShopCostMapper, ShopCo
         ShopCostEntity shopCost = new ShopCostEntity();
         if (StringUtils.isNotBlank(dto.getId())) {
             shopCost = this.getById(dto.getId());
-            if (Objects.nonNull(shopCost)) {
+            if (Objects.isNull(shopCost)) {
                 throw new ServiceException("店铺费率不存在");
             }
         }

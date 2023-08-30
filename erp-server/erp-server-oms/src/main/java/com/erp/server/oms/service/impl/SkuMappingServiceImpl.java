@@ -655,7 +655,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 eq(SkuMappingEntity::getProductSkuId, skuId).
                 eq(SkuMappingEntity::getType,TypeEnum.WAREHOUSE).list();
         long skuCount = list.stream().map(SkuMappingEntity::getListingId).distinct().count();
-        if (skuCount > 1) {
+        if (skuCount > 0) {
             throw new ServiceException("SKU在该仓库已关联其他库存SKU，请更换其他SKU");
         }
     }
