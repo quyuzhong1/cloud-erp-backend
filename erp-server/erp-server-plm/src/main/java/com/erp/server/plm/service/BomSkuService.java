@@ -50,11 +50,20 @@ public interface BomSkuService extends IService<BomSkuEntity> {
     List<BomInfoEntity> listBomByParentSkuIds(List<String> parentSkuIds);
 
     /**
-     * @description: 根据父级skuNos查询BOM
+     * @description: 根据父级skuNos查询已归档BOM
      * @author zhangchunlin
      * @date: 2023/6/30 11:00
      * @param parentSkuNos
      * @return List<BomInfoEntity>
      */
     List<BomInfoEntity> listBomByParentSkuNos(List<String> parentSkuNos);
+
+    /**
+     * @description: 根据父级skuNos查询未作废BOM
+     * @author Will
+     * @date: 2023/8/30 11:00
+     * @param parentSkuNos
+     * @return List<BomInfoEntity>
+     */
+    List<BomInfoEntity> listAllBomByParentSkuNos(List<String> parentSkuNos);
 }
