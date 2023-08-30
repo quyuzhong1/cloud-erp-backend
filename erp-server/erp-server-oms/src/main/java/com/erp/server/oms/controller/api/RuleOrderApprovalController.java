@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.RefundOrderDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -34,47 +35,58 @@ public class RuleOrderApprovalController extends BaseController {
 
     /**
      * 分页查询
-     * @author Lambda
-     * @date:  2023-08-28
+     *
      * @param dto
      * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-08-28
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<RuleOrderApprovalDTO.PagingViewDTO>> queryByPage(@RequestBody  @Validated PagingDTO<RuleOrderApprovalDTO.PagingParamDTO> dto) {
+    public ApiResult<PagingVO<RuleOrderApprovalDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<RuleOrderApprovalDTO.PagingParamDTO> dto) {
         PagingVO<RuleOrderApprovalDTO.PagingViewDTO> pagingVO = ruleOrderApprovalService.paging(dto);
         return success(pagingVO);
     }
 
     /**
-    * 新增
-    * @author Lambda
-    * @date:  2023-08-28
-    * @param dto
-    * @return ApiResult<String>
-    */
+     * 新增
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-08-28
+     */
     @PostMapping("/add")
     public ApiResult<String> add(@RequestBody @Validated RuleOrderApprovalDTO.AddDTO dto) {
         return success(ruleOrderApprovalService.add(dto));
     }
 
     /**
-    * 修改
-    * @author Lambda
-    * @date:  2023-08-28
-    * @param dto
-    * @return ApiResult
-    */
+     * 修改
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Lambda
+     * @date: 2023-08-28
+     */
     @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "oms:ruleOrderApproval:update",
-        serviceClass = RuleOrderApprovalService.class,
-        keyIdName = "id")
     public ApiResult update(@RequestBody @Validated RuleOrderApprovalDTO.UpdateDTO dto) {
         ruleOrderApprovalService.update(dto);
         return success();
     }
 
+    /**
+     * 更改启用禁用状态
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-08-30 14:13
+     */
+    @PostMapping("/updateStatus")
+    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
+        Boolean result = ruleOrderApprovalService.updateStatus(dto);
+        return result?success():failure();
+    }
 
 
 }

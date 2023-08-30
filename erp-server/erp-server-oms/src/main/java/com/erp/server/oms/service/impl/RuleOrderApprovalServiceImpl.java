@@ -5,8 +5,10 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.RuleOrderApprovalEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleOrderApprovalMapper;
 import com.erp.server.oms.service.RuleOrderApprovalService;
 import com.common.business.service.SuperServiceImpl;
@@ -106,6 +108,31 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         return new PagingVO<>(pageData);
+    }
+
+
+    /**
+     * 更改启用禁用状态
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-08-30 14:15
+     */
+    @Override
+    public Boolean updateStatus(UpdateStateDTO dto) {
+        RuleOrderApprovalEntity ruleOrderApproval = this.getById(dto.getId());
+        if (Objects.isNull(ruleOrderApproval)) {
+            throw new ServiceException("订单审核规则不存在");
+        }
+        Boolean disabled = ruleOrderApproval.getDisabled();
+        if (disabled.equals(dto.getState())) {
+            throw new ServiceException(ApiError.ERROR_98027);
+        }
+        String content = String.format("启用状态[%s]变更为[%s]", disabled ? "启用" : "停用", disabled ? "停用" : "启用");
+        ruleOrderApproval.setDisabled(dto.getState());
+        operateLogService.addModuleOperateLog(content, ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode(), dto.getId(), "状态变更");
+        return this.updateById(ruleOrderApproval);
     }
 
 

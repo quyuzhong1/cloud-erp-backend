@@ -8,9 +8,8 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import java.util.List;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -172,22 +171,19 @@ public class RuleOrderApprovalDTO implements Serializable {
         /**
          * 名称
          */
-        @NotBlank(message = "名称不能为空")
-        @Size(max = 50, message = "名称最大长度不能超过50位")
+        @NotBlank(message = "规则名称不能为空")
+        @Size(max = 50, message = "规则名称最大长度不能超过50字符")
         private String name;
 
         /**
          * 优先级
          */
-        @NotBlank(message = "优先级不能为空")
-        @Size(max = 5, message = "优先级最大长度不能超过5位")
+        @NotNull(message = "优先级不能为空")
+        @DecimalMin(value = "0",message ="最小值为1" )
+        @DecimalMax(value = "10",message ="最小值为10" )
         private Integer priority;
 
-        /**
-         * 是否禁用 false 未禁用
-         */
-        @NotNull(message = "是否禁用 false 未禁用不能为空")
-        private Boolean disabled;
+
 
         /**
          * 备注
@@ -199,25 +195,22 @@ public class RuleOrderApprovalDTO implements Serializable {
         /**
          * 分类明细id
          */
-        @NotBlank(message = "分类明细id不能为空")
-        @Size(max = 19, message = "分类明细id最大长度不能超过19位")
         private String categoryDetailId;
 
         /**
          * 操作类型多个逗号分割
+         * category 分类
+         * flowStatus 流向状态
          */
         @NotBlank(message = "操作类型多个逗号分割不能为空")
-        @Size(max = 30, message = "操作类型多个逗号分割最大长度不能超过30位")
         private String operationType;
 
         /**
          * 流向状态
          */
-        @NotBlank(message = "流向状态不能为空")
-        @Size(max = 30, message = "流向状态最大长度不能超过30位")
         private String flowStatus;
 
-
+        private List<RuleConditionDTO.AddDTO> conditionList;
     }
 
 

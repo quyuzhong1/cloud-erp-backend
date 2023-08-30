@@ -44,6 +44,7 @@ public enum ModuleTypeEnum {
     SO_B2C("41", "B2C销售订单"),
     WAREHOUSE_LOCATION_MOVE_INFO("42", "仓位移动单"),
     CUSTOMER_B2C("43", "B2C客户"),
+    RULE_ORDER_APPROVAL("44", "订单审核规则"),
 
     ;
 

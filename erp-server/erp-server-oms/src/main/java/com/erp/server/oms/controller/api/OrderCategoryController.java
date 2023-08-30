@@ -10,8 +10,10 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.OrderCategoryDTO;
 import com.erp.model.oms.dto.ShopDTO;
+import com.erp.model.oms.entity.OrderCategoryDetailEntity;
 import com.erp.model.oms.entity.OrderCategoryEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.server.oms.service.OrderCategoryDetailService;
 import com.erp.server.oms.service.OrderCategoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -37,6 +39,8 @@ public class OrderCategoryController extends BaseController {
     private OrderCategoryService orderCategoryService;
 
 
+    @Resource
+    private OrderCategoryDetailService orderCategoryDetailService;
     /**
      * 订单分类分页
      *
@@ -55,8 +59,8 @@ public class OrderCategoryController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    public ApiResult<List<OrderCategoryEntity>> list() {
-        List<OrderCategoryEntity> list = orderCategoryService.list();
+    public ApiResult<List<OrderCategoryDetailEntity>> list() {
+        List<OrderCategoryDetailEntity> list = orderCategoryDetailService.list();
         return success(list);
     }
 

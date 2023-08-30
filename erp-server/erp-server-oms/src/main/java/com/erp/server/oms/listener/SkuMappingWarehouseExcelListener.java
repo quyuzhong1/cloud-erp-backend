@@ -16,6 +16,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
+import javafx.util.Pair;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,7 +67,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
     private List<ListingInfoEntity> addListingInfoEntityList = new ArrayList<>(10);
 
     private List<SkuMappingEntity> addSkuMappingList = new ArrayList<>(10);
-
+    private List<Pair<String, String>> skuWarehouseList = new ArrayList<>(10);
 
     /**
      * 导入错误数据
@@ -147,6 +148,26 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             errorMsgList.add("同仓库库存SKU只能对应一个产品SKU");
         }
 
+        long count = skuMappingList.stream().filter(
+                        a -> warehouseType.equals(a.getType()) &&
+                                warehouseId.equals(a.getWarehouseId()) &&
+                                sku.getSkuId().equals(a.getProductSkuId())).map(SkuMappingEntity::getListingId).
+                distinct().count();
+        if (count > 1) {
+            errorMsgList.add("SKU在该仓库已关联其他库存SKU，请更换其他SKU");
+        }
+        //存在错误数据则直接返回
+        if (errorMsgList.size() > 0) {
+            importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(importExcelDTO);
+            return;
+        }
+        skuWarehouseList.add(new Pair<>(warehouseId, sku.getSkuId()));
+        long skuCount=skuWarehouseList.stream().filter(s -> s.getKey().equals(warehouseId) &&
+                s.getValue().equals(sku.getSkuId())).count();
+        if (skuCount > 1) {
+            errorMsgList.add("SKU在该仓库已关联其他库存SKU，请更换其他SKU");
+        }
 
         if (Objects.isNull(listingInfoEntity)) {
             listingId = IdWorker.getIdStr();
@@ -176,20 +197,6 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
         skuMappingList.add(add);
         addSkuMappingList.add(add);
 
-        long count = skuMappingList.stream().filter(
-                        a -> warehouseType.equals(a.getType()) &&
-                                warehouseId.equals(a.getWarehouseId()) &&
-                                sku.getSkuId().equals(a.getProductSkuId())).map(SkuMappingEntity::getListingId).
-                distinct().count();
-        if (count > 1) {
-            errorMsgList.add("SKU在该仓库已关联其他库存SKU，请更换其他SKU");
-        }
-        //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
-            importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-            errorList.add(importExcelDTO);
-            return;
-        }
 
     }
 

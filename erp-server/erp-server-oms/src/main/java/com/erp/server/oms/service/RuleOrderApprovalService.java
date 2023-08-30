@@ -39,4 +39,14 @@ public interface RuleOrderApprovalService extends SuperService<RuleOrderApproval
      * @return
      */
     PagingVO<RuleOrderApprovalDTO.PagingViewDTO> paging(PagingDTO<RuleOrderApprovalDTO.PagingParamDTO> dto);
+
+    
+    /**
+     * 更改启用禁用状态
+     * @author yl
+     * @date 2023-08-30 14:15
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateStatus(UpdateStateDTO dto);
 }

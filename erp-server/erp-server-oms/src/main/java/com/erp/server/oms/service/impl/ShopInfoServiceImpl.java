@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -476,6 +477,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopAuth.setExpiresIn(expiresIn);
             shopAuth.setAppClientId(cfgAppClient.getId());
             shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
+            shopInfo.setAuthTime(LocalDateTime.now());
             shopAuthService.saveOrUpdate(shopAuth);
             return this.updateById(shopInfo);
 
