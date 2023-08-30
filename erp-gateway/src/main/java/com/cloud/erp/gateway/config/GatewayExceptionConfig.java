@@ -1,4 +1,4 @@
-package com.sdk.oms.shopify.gateway.config;
+package com.cloud.erp.gateway.config;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;

@@ -1,12 +1,12 @@
-package com.sdk.oms.shopify.gateway.component;
+package com.cloud.erp.gateway.component;
 
 import com.alibaba.fastjson.JSONObject;
-import com.sdk.oms.shopify.gateway.utils.ServletUtils;
-import com.sdk.oms.shopify.gateway.web.server.TokenService;
-import com.common.core.enums.ApiError;
+import com.cloud.erp.gateway.utils.ServletUtils;
+import com.cloud.erp.gateway.web.server.TokenService;
 import com.common.business.constant.AuthPassPath;
 import com.common.business.constant.TokenConstants;
 import com.common.business.vo.LoginUser;
+import com.common.core.enums.ApiError;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;

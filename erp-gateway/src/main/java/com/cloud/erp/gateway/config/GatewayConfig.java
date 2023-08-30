@@ -1,4 +1,4 @@
-package com.sdk.oms.shopify.gateway.config;
+package com.cloud.erp.gateway.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;

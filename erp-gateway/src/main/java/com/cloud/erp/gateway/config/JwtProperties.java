@@ -1,4 +1,4 @@
-package com.sdk.oms.shopify.gateway.config;
+package com.cloud.erp.gateway.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
