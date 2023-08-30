@@ -171,10 +171,6 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             //单位
             String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
             detail.setUnit(unit);
-            //版本
-            Integer version = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId())).map(SkuVO::getVersion).findFirst().orElse(MathUtil.ZERO);
-            detail.setReferenceVersion(version);
-
             detail.setMainId(mainId);
             //修改操作日志
             if (StringUtils.isNotBlank(detail.getId())) {
