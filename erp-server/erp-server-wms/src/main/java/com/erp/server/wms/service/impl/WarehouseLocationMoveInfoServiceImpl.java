@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.*;
 import com.common.business.validator.ValidGroup;
 import com.common.business.vo.LoginUser;
@@ -8,13 +9,16 @@ import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveInfoEntity;
 import com.erp.model.wms.enums.inventory.*;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.WarehouseLocationMoveInfoMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
@@ -51,7 +55,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
@@ -83,6 +89,8 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     private WarehouseService warehouseService;
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -145,7 +153,17 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     public PagingVO<WarehouseLocationMoveInfoDTO.ListDTO> paging(PagingDTO<WarehouseLocationMoveInfoDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<WarehouseLocationMoveInfoDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        WarehouseLocationMoveInfoDTO.PagingParamDTO params = pagingParamDTO.getParams();
+        List<String> approveStatusList = params.getApproveStatusList();
+        if (approveStatusList.contains(ApproveStatusEnum.APPROVE.getCode())) {
+            List<LocalDate> dateList = new ArrayList<>();
+            LocalDate now = LocalDate.now();
+            dateList.add(now.minusDays(30));
+            dateList.add(now);
+            params.setBillDateList(dateList);
+        }
+
+        IPage<WarehouseLocationMoveInfoDTO.PdaListDTO> pageData = this.baseMapper.pdaPaging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
            return new PagingVO(pageData);
         }
@@ -155,21 +173,37 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     }
 
     @Override
-    public List<WarehouseLocationMoveInfoDTO.TabListDTO> tabList(PermissionsDTO param) {
-        WarehouseLocationMoveInfoDTO.PagingParamDTO searchParam = new WarehouseLocationMoveInfoDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
-        List<WarehouseLocationMoveInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        List<String> statusList = ApproveStatusEnum.getStatusList();
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(WarehouseLocationMoveInfoDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new WarehouseLocationMoveInfoDTO.TabListDTO(status, 0));
+    public List<WarehouseLocationMoveInfoDTO.PdaTabListDTO> tabList(PermissionsDTO dto) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(30);
+        PdaTabFlagEnum[] values = PdaTabFlagEnum.values();
+        List<WarehouseLocationMoveInfoDTO.PdaTabListDTO> list = new ArrayList<>();
+        for (PdaTabFlagEnum item : values) {
+            WarehouseLocationMoveInfoDTO.PagingParamDTO pagingParamDTO = new WarehouseLocationMoveInfoDTO.PagingParamDTO();
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            pagingParamDTO.setInvalidStatus(Boolean.FALSE);
+            WarehouseLocationMoveInfoDTO.PdaTabListDTO resultDTO = new WarehouseLocationMoveInfoDTO.PdaTabListDTO();
+            Integer count = MathUtil.ZERO;
+            if (PdaTabFlagEnum.WAIT_SUBMIT_AND_REJECT.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.REJECT.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                List<LocalDate> dateList = new ArrayList<>();
+                dateList.add(startDate);
+                dateList.add(endDate);
+                pagingParamDTO.setBillDateList(dateList);
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            list.add(resultDTO);
         }
-        });
-        list.add(new WarehouseLocationMoveInfoDTO.TabListDTO("all", list.stream().mapToInt(WarehouseLocationMoveInfoDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
         return list;
     }
 
@@ -375,7 +409,6 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
             transferDTOList.add(transferDTO);
         }
 
-
         List<TransactionRuleDTO> transactionRuleDTOList = new ArrayList<>(2);
         transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK));
         transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryStatusEnum.USABLE, InventoryModeEnum.IN_STOCK));
@@ -395,6 +428,14 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         fillOne(data);
         List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(Arrays.asList(data.getId()));
         List<WarehouseLocationMoveDetailDTO.ViewDTO> detailList = BeanMapper.copyList(detailEntityList, WarehouseLocationMoveDetailDTO.ViewDTO.class);
+        List<String> skuIds = detailList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        for (WarehouseLocationMoveDetailDTO.ViewDTO viewDTO : detailList) {
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
+            viewDTO.setUnitName(skuVO.getUnitName());
+            viewDTO.setSkuImg(skuVO.getSkuImagesUrl());
+            viewDTO.setProductName(skuVO.getSkuName());
+        }
         data.setDetailList(detailList);
         return data;
     }
@@ -469,15 +510,14 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     /**
     * 分页查询、导出 数据处理
     */
-    private void fillList(List<WarehouseLocationMoveInfoDTO.ListDTO> list) {
+    private void fillList(List<WarehouseLocationMoveInfoDTO.PdaListDTO> list) {
         if(CollUtil.isEmpty(list)) {
            return;
         }
 
         // 属性赋值
-        for(WarehouseLocationMoveInfoDTO.ListDTO data : list) {
+        for(WarehouseLocationMoveInfoDTO.PdaListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            // TODO 其他如需要显示名称的字段赋值
         }
     }
     /**

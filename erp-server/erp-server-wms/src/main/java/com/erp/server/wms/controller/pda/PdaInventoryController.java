@@ -44,8 +44,8 @@ public class PdaInventoryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.inventory.InventoryDTO.PdaSearchParamDTO>
      **/
     @PostMapping(value = "/getInventoryByParam")
-    public ApiResult<List<InventoryDTO.PdaInventoryDTO>> getInventoryByParam(@RequestBody InventoryDTO.PdaSearchParamDTO dto) {
-        List<InventoryDTO.PdaInventoryDTO> inventorys = inventoryService.getInventoryByParam(dto);
-        return success(inventorys);
+    public ApiResult<InventoryDTO.PdaInventoryDTO> getInventoryByParam(@RequestBody InventoryDTO.PdaSearchParamDTO dto) {
+        InventoryDTO.PdaInventoryDTO inventory = inventoryService.getInventoryByParam(dto);
+        return success(inventory);
     }
 }

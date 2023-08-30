@@ -56,7 +56,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     @PostMapping("/update")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
-        menuCode = "wms:warehouseLocationMoveInfo:update",
+        menuCode = "wms:pdaWarehouseLocationMoveInfo:update",
         serviceClass = WarehouseLocationMoveInfoService.class,
         keyIdName = "id")
     public ApiResult update(@RequestBody @Validated WarehouseLocationMoveInfoDTO.UpdateDTO dto) {
@@ -71,10 +71,10 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:warehouseLocationMoveInfo:paging",
-            tableAlias = ""
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:paging",
+            tableAlias = "wlmi"
     )
-    public ApiResult<List<WarehouseLocationMoveInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+    public ApiResult<List<WarehouseLocationMoveInfoDTO.PdaTabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(warehouseLocationMoveInfoService.tabList(dto));
     }
 
@@ -88,8 +88,8 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:warehouseLocationMoveInfo:paging",
-            tableAlias = ""
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:paging",
+            tableAlias = "wlmi"
     )
     public ApiResult<PagingVO<WarehouseLocationMoveInfoDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseLocationMoveInfoDTO.PagingParamDTO> dto) {
         return success(warehouseLocationMoveInfoService.paging(dto));
@@ -118,7 +118,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:warehouseLocationMoveInfo:updateAndSubmit",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:updateAndSubmit",
             serviceClass = WarehouseLocationMoveInfoService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated WarehouseLocationMoveInfoDTO.UpdateDTO dto) {
@@ -136,7 +136,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:warehouseLocationMoveInfo:submit",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:submit",
             serviceClass = WarehouseLocationMoveInfoService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -170,7 +170,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:warehouseLocationMoveInfo:approve",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:approve",
             serviceClass = WarehouseLocationMoveInfoService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
@@ -205,7 +205,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:warehouseLocationMoveInfo:disApprove",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:disApprove",
             serviceClass = WarehouseLocationMoveInfoService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -240,7 +240,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:warehouseLocationMoveInfo:delete",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:delete",
             serviceClass = WarehouseLocationMoveInfoService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -274,7 +274,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:warehouseLocationMoveInfo:cancel",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:cancel",
             serviceClass = WarehouseLocationMoveInfoService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -308,7 +308,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:warehouseLocationMoveInfo:view",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:view",
             serviceClass = WarehouseLocationMoveInfoService.class,
             keyIdName = "id")
     public ApiResult<WarehouseLocationMoveInfoDTO.ViewDTO> view(@RequestParam("id") String id) {

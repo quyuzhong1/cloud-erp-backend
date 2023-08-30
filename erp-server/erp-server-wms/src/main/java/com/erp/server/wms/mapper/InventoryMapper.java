@@ -90,5 +90,5 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * @param params
      * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventoryDTO
      **/
-    List<InventoryDTO.PdaInventoryDTO> getInventoryByParam(@Param("params") InventoryDTO.PdaSearchParamDTO params);
+    InventoryDTO.PdaInventoryDTO getInventoryByParam(@Param("params") InventoryDTO.PdaSearchParamDTO params);
 }
