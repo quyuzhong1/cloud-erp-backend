@@ -37,27 +37,67 @@
         code, approve_status, warehouse_id, warehouse_name, inventory_org_id, inventory_org_name, approve_user_id, approve_user_name, approve_time
     </sql>
 
-    <select id="paging" resultType="com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO$ListDTO">
-
+    <select id="pdaPaging" resultType="com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO$PdaListDTO">
+        SELECT
+            DISTINCT
+            wlmi.id,
+            wlmi.code,
+            wlmi.approve_status,
+            wlmi.warehouse_id,
+            wlmi.warehouse_name,
+            wlmi.create_time
+        FROM warehouse_location_move_detail wlmd
+        INNER JOIN warehouse_location_move_info wlmi ON wlmd.main_id = wlmi = id AND wlmd.is_deleted = FALSE
+        WHERE wlmi.is_deleted = FALSE
+        AND wlmi.invalid_status = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and wlmi.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and wlmi.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wlmi.bill_date
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ORDER BY wlmi.create_time desc
     </select>
 
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from warehouse_location_move_info where is_deleted = false group by approve_status
+    <select id="listCount" resultType="integer">
+        select
+        count(distinct wlmi.id)
+        FROM warehouse_location_move_detail wlmd
+        INNER JOIN warehouse_location_move_info wlmi ON wlmd.main_id = wlmi = id AND wlmd.is_deleted = FALSE
+        WHERE wlmi.is_deleted = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and wlmi.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and wlmi.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wlmi.bill_date
+        </if>
+
+        <if test="params.invalidStatus != null">
+            and wlmi.invalid_status = #{params.invalidStatus}
+        </if>
+
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
     </select>
 
     <select id="listExport" resultType="com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO$ListDTO">
 
     </select>
-    <select id="tabList" resultType="com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO$TabListDTO">
-        SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  warehouse_location_move_info
-        WHERE is_deleted=FALSE
-        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
-            ${permissionSql}
-        </if>
-        GROUP BY approve_status
-    </select>
+
 
 </mapper>

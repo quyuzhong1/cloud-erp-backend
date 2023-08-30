@@ -51,7 +51,7 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
      * @param dto
      * @return List<WarehouseLocationMoveInfoDTO.TabListDTO>>
      */
-     List<WarehouseLocationMoveInfoDTO.TabListDTO> tabList(PermissionsDTO dto);
+     List<WarehouseLocationMoveInfoDTO.PdaTabListDTO> tabList(PermissionsDTO dto);
 
      /**
      * 详情

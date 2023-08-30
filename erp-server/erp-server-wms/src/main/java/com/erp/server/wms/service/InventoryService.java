@@ -215,5 +215,5 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @param dto
      * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventoryDTO
      **/
-    List<InventoryDTO.PdaInventoryDTO> getInventoryByParam(InventoryDTO.PdaSearchParamDTO dto);
+    InventoryDTO.PdaInventoryDTO getInventoryByParam(InventoryDTO.PdaSearchParamDTO dto);
 }

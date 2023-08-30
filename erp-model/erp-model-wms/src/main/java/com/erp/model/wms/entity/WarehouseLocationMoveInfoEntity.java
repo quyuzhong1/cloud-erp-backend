@@ -77,6 +77,11 @@ public class WarehouseLocationMoveInfoEntity extends BaseEntity<WarehouseLocatio
     */
     @TableField("bill_date")
     private LocalDate billDate;
+    /**
+    * 审核时间
+    */
+    @TableField("invalid_status")
+    private LocalDate invalidStatus;
 
 
     public static final String CODE = "code";

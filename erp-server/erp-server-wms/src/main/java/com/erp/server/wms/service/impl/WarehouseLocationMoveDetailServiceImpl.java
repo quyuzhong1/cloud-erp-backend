@@ -111,23 +111,16 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     * 新增修改处理数据
     */
     private void handleData(List<WarehouseLocationMoveDetailEntity> list, String mainId, String warehouseId) {
-        List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
-        List<String> outWarehouseLocations = list.stream().map(req -> req.getOutWarehouseLocation()).distinct().collect(Collectors.toList());
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
-        InventoryDTO.PdaSearchParamDTO paramDTO = new InventoryDTO.PdaSearchParamDTO();
-        paramDTO.setOrgId(warehouseEntity.getOrgId());
-        paramDTO.setWarehouseId(warehouseId);
-        paramDTO.setSkuIds(skuIds);
-        paramDTO.setWarehouseLocations(outWarehouseLocations);
-        List<InventoryDTO.PdaInventoryDTO> inventoryByParam = inventoryService.getInventoryByParam(paramDTO);
-
         for (WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity : list) {
-            InventoryDTO.PdaInventoryDTO inventoryDTO = inventoryByParam.stream().filter(req -> req.getOrgId().equals(warehouseEntity.getOrgId())
-                    && req.getWarehouseId().equals(warehouseId)
-                    && req.getSkuId().equals(warehouseLocationMoveDetailEntity.getSkuId())
-                    && req.getWarehouseLocation().equals(warehouseLocationMoveDetailEntity.getOutWarehouseLocation())).findFirst().orElse(new InventoryDTO.PdaInventoryDTO());
-            if (warehouseLocationMoveDetailEntity.getQty() > inventoryDTO.getUsableQty()) {
+            InventoryDTO.PdaSearchParamDTO paramDTO = new InventoryDTO.PdaSearchParamDTO();
+            paramDTO.setOrgId(warehouseEntity.getOrgId());
+            paramDTO.setWarehouseId(warehouseId);
+            paramDTO.setSkuId(warehouseLocationMoveDetailEntity.getSkuId());
+            paramDTO.setWarehouseLocation(warehouseLocationMoveDetailEntity.getOutWarehouseLocation());
+            InventoryDTO.PdaInventoryDTO inventoryByParam = inventoryService.getInventoryByParam(paramDTO);
+            if (warehouseLocationMoveDetailEntity.getQty() > inventoryByParam.getUsableQty()) {
                 throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR);
             }
         }

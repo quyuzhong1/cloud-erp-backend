@@ -777,12 +777,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 pdaHomeInventoryBalanceDTO.setTodayStockInQty(inventory.get(MathUtil.ZERO).getTodayStockInQty());
             }
         }
-
         return pdaHomeInventoryBalanceDTO;
     }
 
     @Override
-    public List<InventoryDTO.PdaInventoryDTO> getInventoryByParam(InventoryDTO.PdaSearchParamDTO dto) {
+    public InventoryDTO.PdaInventoryDTO getInventoryByParam(InventoryDTO.PdaSearchParamDTO dto) {
         return baseMapper.getInventoryByParam(dto);
     }
 }

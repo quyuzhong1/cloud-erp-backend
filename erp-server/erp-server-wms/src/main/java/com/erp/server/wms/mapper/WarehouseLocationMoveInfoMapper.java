@@ -24,19 +24,19 @@ import java.util.List;
 public interface WarehouseLocationMoveInfoMapper extends BaseMapper<WarehouseLocationMoveInfoEntity> {
 
     /**
-    * 分页查询
+    * Pda:分页查询
     * @param query
     * @param params
     * @return
     */
-    IPage<WarehouseLocationMoveInfoDTO.ListDTO> paging(Page query, @Param("params") WarehouseLocationMoveInfoDTO.PagingParamDTO params);
+    IPage<WarehouseLocationMoveInfoDTO.PdaListDTO> pdaPaging(Page query, @Param("params") WarehouseLocationMoveInfoDTO.PagingParamDTO params);
 
     /**
     * 状态数量
     * @param params
     * @return
     */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") WarehouseLocationMoveInfoDTO.PagingParamDTO params);
+    Integer listCount(@Param("params") WarehouseLocationMoveInfoDTO.PagingParamDTO params);
 
     /**
     * 导出Excel查询
@@ -44,12 +44,4 @@ public interface WarehouseLocationMoveInfoMapper extends BaseMapper<WarehouseLoc
     * @return
     */
     List<WarehouseLocationMoveInfoDTO.ListDTO> listExport(@Param("params") WarehouseLocationMoveInfoDTO.ExportDTO params);
-
-
-    /**
-    * 获取状态统计
-    * @param searchParam
-    * @return
-    */
-    List<WarehouseLocationMoveInfoDTO.TabListDTO> tabList(@Param("params") WarehouseLocationMoveInfoDTO.PagingParamDTO searchParam);
 }

@@ -395,32 +395,24 @@
             it.warehouse_id,
             it.org_id,
             it.sku_id,
-            it.dict_inventory_status,
-            sum(case when itv.dict_inventory_status = 'usable' then it.qty else 0 end) as usableQty,
-            sum(case when itv.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozenQty,
-            sum(case when itv.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransitQty,
-            sum(case when itv.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqcQty
-        FROM "inventory" itv
-        WHERE itv.is_deleted = FALSE
-        <if test="params.skuIds != null and params.skuIds.size > 0">
-            and itv.sku_id in
-            <foreach collection="params.skuIds" item="skuId" open="(" close=")" separator=",">
-                #{skuId}
-            </foreach>
+            sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usableQty,
+            sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozenQty,
+            sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransitQty,
+            sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqcQty
+        FROM "inventory" it
+        WHERE it.is_deleted = FALSE
+        <if test="params.skuId != null and params.skuId != ''">
+            and it.sku_id = #{params.skuId}
         </if>
-
         <if test="params.warehouseId != null and params.warehouseId != ''">
-            and itv.warehouse_id = #{params.warehouseId}
+            and it.warehouse_id = #{params.warehouseId}
         </if>
         <if test="params.orgId != null and params.orgId != ''">
-            and itv.org_id in #{params.orgId}
+            and it.org_id in #{params.orgId}
         </if>
-        <if test="params.warehouseLocations != null and params.warehouseLocations.size > 0">
-            and itv.warehouse_location in
-            <foreach collection="params.warehouseLocations" item="warehouseLocation" open="(" close=")" separator=",">
-                #{warehouseLocation}
-            </foreach>
+        <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
+            and it.warehouse_location = #{params.warehouseLocation}
         </if>
-        GROUP BY it.warehouse_id, it.org_id, it.sku_id, it.dict_inventory_status
+        GROUP BY it.warehouse_id, it.org_id, it.sku_id
     </select>
 </mapper>

@@ -4,9 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -49,6 +47,21 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
         * sku编号
         */
         private String skuNo;
+
+        /**
+        * 产品名称
+        */
+        private String productName;
+
+        /**
+        * sku图片
+        */
+        private String skuImg;
+
+        /**
+        * 单位
+        */
+        private String unitName;
 
         /**
         * 取货仓位
@@ -136,6 +149,8 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
         * 移动数量
         */
         @NotNull(message = "移动数量不能为空")
+        @Min(value = 0, message = "移动数量不能小于0")
+        @Max(value = 999999999,message = "移动数量最大值为999999999")
         private Integer qty;
 
 

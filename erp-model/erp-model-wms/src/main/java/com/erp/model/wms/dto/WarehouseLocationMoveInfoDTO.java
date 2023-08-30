@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
@@ -31,16 +32,15 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
      @Data
      @NoArgsConstructor
      @AllArgsConstructor
-     public static class TabListDTO {
+     public static class PdaTabListDTO {
 
          /**
-         * 类型
-         */
+          * 类型(waitSubmitAndReject 待提交/审核不通过，approveIng 审核中，approve 已审核)
+          */
          private String tabFlag;
-
          /**
-         * 数量
-         */
+          * 数量
+          */
          private Integer count;
 
      }
@@ -52,9 +52,19 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
      public static class PagingParamDTO extends SortDTO {
 
          /**
-         * 搜索类型
+         * 审核状态
          */
-         private String  tabFlag;
+         private List<String> ApproveStatusList;
+
+         /**
+         * 单据日期
+         */
+         private List<LocalDate> billDateList;
+
+         /**
+         * 作废状态
+         */
+         private Boolean invalidStatus;
 
      }
     /**
@@ -253,5 +263,43 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
 
     }
 
+
+    /**
+     * PDA:分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaListDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+    }
 
 }
