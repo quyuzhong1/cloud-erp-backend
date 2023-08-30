@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
@@ -18,16 +19,12 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomOperationTypeEnum;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -61,6 +58,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * bom 信息表(BomInfo)表服务实现类
@@ -183,14 +181,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        //查询审核通过的sku
-        List<ProductDetailEntity> productDetailList = productDetailService.listByAuditPass();
-        if (CollectionUtils.isEmpty(productDetailList)) {
-            throw new ServiceException(ApiError.ERROR_95154);
-        }
-        List<BomSkuEntity> bomSkuList = bomSkuService.list();
-
-        BomInfoExcelListener excelListenerUtil = new BomInfoExcelListener(this,productDetailService,bomOperateLogService,productBomHistoryService,productBomSkuHistoryService,bomSkuService,sysCodeService,productDetailList,bomSkuList);
+        BomInfoExcelListener excelListenerUtil = new BomInfoExcelListener();
         try {
             EasyExcel.read(excelFile.getInputStream(), BomInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -204,8 +195,13 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         }
-        List<BomInfoExcelDTO> list = excelListenerUtil.getErrorList();
-        if (list.size() > 0) {
+        List<BomInfoExcelDTO> errorList = excelListenerUtil.getErrorList();
+
+        List<BomInfoExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //处理验证成功数据
+        handleImportSuccessList(successList,errorList);
+
+        if (errorList.size() > 0) {
             StringBuffer sb = new StringBuffer();
             String excelPath = "excel/bomInfoError.xlsx";
             String name = "bomInfo";
@@ -213,7 +209,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             sb.append(date);
             sb.append(name);
             try {
-                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
             } catch (IOException e) {
                 throw new ServiceException(ApiError.ERROR_95125);
             }
@@ -221,6 +217,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
         return Boolean.TRUE;
     }
+
 
     @Override
     public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId) {
@@ -1301,4 +1298,129 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
     }
 
+    /**
+     * @description: 处理导入数据
+     * @author Will
+     * @date: 2023/8/30 15:10
+     * @param successList
+     * @param errorList
+     */
+    private void handleImportSuccessList (List<BomInfoExcelDTO> successList, List<BomInfoExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        List<String> skuNos = successList.stream().flatMap(obj -> Stream.of(obj.getChildSku(),obj.getParentSku())).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNos);
+
+        List<String> parentSkuNos = successList.stream().map(BomInfoExcelDTO::getParentSku).distinct().collect(Collectors.toList());
+        List<BomInfoEntity> bomInfoList = bomSkuService.listAllBomByParentSkuNos(parentSkuNos);
+        Map<String, List<BomInfoExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(BomInfoExcelDTO::getParentSku));
+        for (Map.Entry<String, List<BomInfoExcelDTO>> entry :  map.entrySet()) {
+            List<BomInfoExcelDTO> value = entry.getValue();
+            Boolean isError = Boolean.FALSE;
+            for (BomInfoExcelDTO addDTO : value) {
+                List<String> errorMsgList = new ArrayList<>();
+
+                if (StringUtils.equals(addDTO.getParentSku(),addDTO.getChildSku())) {
+                    errorMsgList.add("父级sku和子级sku不能重复");
+                }
+                //父级sku是否审核
+                SkuVO parentSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(addDTO.getParentSku())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(parentSkuVO)) {
+                    errorMsgList.add(ApiError.ERROR_95152.msg);
+                }
+                //子级sku是否审核
+                SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(addDTO.getChildSku())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(childSkuVO)) {
+                    errorMsgList.add(ApiError.ERROR_95153.msg);
+                }
+                //仅待提交或者审核不通过数据修改
+                if (CollectionUtils.isNotEmpty(bomInfoList)) {
+                    BomInfoEntity bomInfoEntity = bomInfoList.stream().filter(obj -> obj.getParentSkuId().equals(parentSkuVO.getSkuId())).findFirst().orElse(null);
+                    if (ObjectUtils.isNotEmpty(bomInfoEntity)) {
+                        if (!BomStateEnum.WAIT_SUBMIT_AUDIT.getState().equals(bomInfoEntity.getState()) && !BomStateEnum.AUDIT_NO_PASS.getState().equals(bomInfoEntity.getState())) {
+                            errorMsgList.add("仅待提交审核和审核不通过BOM支持更新");
+                        }
+                    }
+                }
+                //存在错误信息则
+                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                    isError = Boolean.TRUE;
+                    addDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    break;
+                }
+            }
+            //更新错误数据
+            if (isError) {
+                errorList.addAll(value);
+                continue;
+            }
+            //数据新增或修改
+            String key = entry.getKey();
+            //父级SKU
+            SkuVO parentSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(key)).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(parentSkuVO)) {
+                throw new ServiceException(ApiError.ERROR_95166);
+            }
+            BomInfoEntity bomInfoEntity = bomInfoList.stream().filter(obj -> obj.getParentSkuId().equals(parentSkuVO.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(bomInfoEntity)) {
+                //新增
+                AddBomDTO addBomDTO = new AddBomDTO();
+                BomInfoExcelDTO excelDTO = value.get(0);
+                addBomDTO.setType(BomTypeEnum.getType(excelDTO.getTypeName()));
+                addBomDTO.setVersion(MathUtil.ONE);
+                addBomDTO.setSubmitType(BomTypeEnum.CREATE.getType());
+                //获取sku信息
+                List<BomSkuDTO> parentSkuList = getBomSkuList(parentSkuVO,value,skuList);
+                addBomDTO.setSkuList(parentSkuList);
+                this.insert(addBomDTO);
+            } else {
+                //修改
+                UpdateBomDTO updateBomDTO = new UpdateBomDTO();
+                updateBomDTO.setId(bomInfoEntity.getId());
+                //获取sku信息
+                List<BomSkuDTO> parentSkuList = getBomSkuList(parentSkuVO,value,skuList);
+                updateBomDTO.setSkuList(parentSkuList);
+                this.edit(updateBomDTO);
+            }
+        }
+    }
+
+    /**
+     * @description: 格式化sku信息
+     * @author Will
+     * @date: 2023/8/30 15:10
+     * @param parentSkuVO
+     * @param value
+     * @param skuList
+     * @return List<BomSkuDTO>
+     */
+    private List<BomSkuDTO> getBomSkuList (SkuVO parentSkuVO,List<BomInfoExcelDTO> value,List<SkuVO> skuList) {
+        List<BomSkuDTO> parentSkuList = new ArrayList<>();
+        BomSkuDTO parentDTO = new BomSkuDTO();
+        parentDTO.setSkuId(parentSkuVO.getSkuId());
+        parentDTO.setSkuNo(parentSkuVO.getSkuNo());
+        parentDTO.setProductId(parentSkuVO.getProductId());
+
+        List<BomChildrenSkuDTO> childSkuList = new ArrayList<>();
+        for (BomInfoExcelDTO bomInfoExcelDTO : value) {
+            BomChildrenSkuDTO childDTO = new BomChildrenSkuDTO();
+            //子级SKU
+            SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(bomInfoExcelDTO.getChildSku())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(childSkuVO)) {
+                throw new ServiceException(ApiError.ERROR_95166);
+            }
+            childDTO.setSkuId(childSkuVO.getSkuId());
+            childDTO.setSkuNo(childSkuVO.getSkuNo());
+            childDTO.setSkuName(childSkuVO.getSkuName());
+            childDTO.setParentSkuId(parentSkuVO.getSkuId());
+            childDTO.setBomVersion(MathUtil.ONE);
+            childDTO.setQuantity(Integer.valueOf(bomInfoExcelDTO.getQuantityStr()));
+            childDTO.setProductId(childSkuVO.getProductId());
+            childSkuList.add(childDTO);
+        }
+        parentDTO.setChildren(childSkuList);
+        parentSkuList.add(parentDTO);
+        return parentSkuList;
+    }
 }
