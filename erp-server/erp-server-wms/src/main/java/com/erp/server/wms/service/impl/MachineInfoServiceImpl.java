@@ -338,7 +338,11 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         if (CollectionUtils.isEmpty(childrenList)) {
             return resultList;
         }
-        for (BomChildrenSkuDTO bomChildrenSkuDTO : childrenList) {
+        List<BomChildrenSkuDTO> versionChildList = childrenList.stream().filter(obj -> obj.getBomVersion().equals(dto.getBomVersion())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(versionChildList)) {
+            return resultList;
+        }
+        for (BomChildrenSkuDTO bomChildrenSkuDTO : versionChildList) {
             MachineSubComponentsDTO.ViewDTO viewDTO = new MachineSubComponentsDTO.ViewDTO();
             viewDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
             viewDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
