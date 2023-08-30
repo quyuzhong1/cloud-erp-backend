@@ -130,6 +130,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        if (CollectionUtils.isNotEmpty(pagingDTO.getParams().getApproveStatusList())) {
+            pagingDTO.getParams().setInvalidStatus(Boolean.FALSE);
+        }
         IPage<TransferInfoDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         List<TransferInfoDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {

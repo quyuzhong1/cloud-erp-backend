@@ -1218,9 +1218,9 @@ public class SoOutstockDTO implements Serializable {
         private String productName;
 
         /**
-         * 实退数量
+         * 实发数量
          */
-        private Integer realQty;
+        private Integer actualQty;
     }
 
     /**

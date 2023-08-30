@@ -350,6 +350,11 @@ public class PurchaseReturnOrderDTO {
         private String sourceId;
 
         /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
          * 退货来源
          */
         private String sourceType;

@@ -130,6 +130,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     public PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> paging(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        if (CollectionUtils.isNotEmpty(pagingParamDTO.getParams().getApproveStatusList())) {
+            pagingParamDTO.getParams().setInvalidStatus(Boolean.FALSE);
+        }
         IPage<PurchaseReturnOrderDTO.PagingViewDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         //明细数据
         List<PurchaseReturnOrderDTO.PagingViewDTO> records = pageData.getRecords();
@@ -408,6 +411,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             viewDTO.setPurchaseUserDeptName(purchaseOrderEntity.getPurchaseDeptName());
             viewDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
             viewDTO.setPurchaseOrgName(purchaseOrderEntity.getPurchaseOrgName());
+            viewDTO.setSourceCode(purchaseOrderEntity.getCode());
             SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(viewDTO.getReturnUserId());
             if (ObjectUtils.isNotEmpty(deptByUserId)) {
                 viewDTO.setReturnDeptId(deptByUserId.getDepartmentId());
