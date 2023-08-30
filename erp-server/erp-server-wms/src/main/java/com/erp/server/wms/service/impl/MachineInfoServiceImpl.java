@@ -332,7 +332,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @Override
     public List<MachineSubComponentsDTO.ViewDTO> viewBomSubComponents(MachineSubComponentsDTO.ViewBomParamDTO dto) {
         List<MachineSubComponentsDTO.ViewDTO> resultList = new ArrayList<>();
-        dto.setBomVersion(ObjectUtils.isEmpty(dto.getBomVersion()) ? MathUtil.ONE : dto.getBomVersion());
+        dto.setBomVersion(MathUtil.compareTo(dto.getBomVersion(),MathUtil.ZERO) == MathUtil.ZERO ? MathUtil.ONE : dto.getBomVersion());
         //查询BOM中SKU子集
         List<BomChildrenSkuDTO> childrenList = plmTaskFeign.listHistoryBomChildBySkuIds(Arrays.asList(dto.getSkuId()));
         if (CollectionUtils.isEmpty(childrenList)) {
