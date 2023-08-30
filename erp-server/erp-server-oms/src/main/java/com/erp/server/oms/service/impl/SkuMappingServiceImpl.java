@@ -542,14 +542,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             return Collections.EMPTY_LIST;
         }
         List<SkuMappingEntity> list = lambdaQuery().in(SkuMappingEntity::getProductSkuNo, skuNoList).eq(SkuMappingEntity::getIsExpire, Boolean.FALSE).list();
-        if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+
+        List<ListingInfoEntity> listingList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<String> listingIds = list.stream().map(SkuMappingEntity::getListingId).collect(Collectors.toList());
+            listingList = listingInfoService.listByIds(listingIds);
         }
-        List<String> listingIds = list.stream().map(SkuMappingEntity::getListingId).collect(Collectors.toList());
-        List<ListingInfoEntity> listingList = listingInfoService.listByIds(listingIds);
-        if (CollectionUtils.isEmpty(listingList)) {
-            return Collections.EMPTY_LIST;
-        }
+
         List<SkuMappingDTO.ListSkuDTO> resultList = new ArrayList<>();
         for (SkuVO skuVO : skuList) {
             SkuMappingDTO.ListSkuDTO listSkuDTO = new SkuMappingDTO.ListSkuDTO();
@@ -561,6 +560,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             //查询sku映射表
             SkuMappingEntity skuMappingEntity = list.stream().filter(obj -> obj.getProductSkuId().equals(obj.getProductSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuMappingEntity)) {
+                resultList.add(listSkuDTO);
+                continue;
+            }
+            if (CollectionUtils.isEmpty(listingList)) {
+                resultList.add(listSkuDTO);
                 continue;
             }
             ListingInfoEntity listingInfoEntity = listingList.stream().filter(obj -> obj.getId().equals(skuMappingEntity.getListingId()) && TypeEnum.WAREHOUSE.getCode().equals(obj.getType())).findFirst().orElse(null);
