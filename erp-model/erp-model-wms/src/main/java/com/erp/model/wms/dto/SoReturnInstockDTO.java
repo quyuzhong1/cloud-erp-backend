@@ -835,6 +835,10 @@ public class SoReturnInstockDTO {
          * 子级SKU仓位
          */
         private String childWarehouseLocation;
+        /**
+         * 子级SKU数量
+         */
+        private Integer childLength;
     }
 
     @Data

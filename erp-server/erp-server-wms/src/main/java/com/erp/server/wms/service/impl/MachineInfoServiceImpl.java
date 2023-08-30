@@ -361,6 +361,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             viewDTO.setUnit(bomChildrenSkuDTO.getUnitName());
             viewDTO.setQty(bomChildrenSkuDTO.getQuantity());
             viewDTO.setBomVersion(bomChildrenSkuDTO.getBomVersion());
+            viewDTO.setChildLength(versionChildList.size());
             resultList.add(viewDTO);
         }
         return resultList;
