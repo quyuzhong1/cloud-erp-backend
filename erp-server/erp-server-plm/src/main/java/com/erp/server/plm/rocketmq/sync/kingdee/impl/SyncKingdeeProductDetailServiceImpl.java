@@ -211,21 +211,23 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
             String boxSize = productPackEntity.getBoxSize();
             if (StringUtils.isNotBlank(boxSize)) {
                 List<String> boxSizeList = Arrays.stream(boxSize.split("X")).collect(Collectors.toList());
-                if (boxSizeList.size() == 1) {
-                    //产品尺寸-长(cm)
-                    resultMap.put("boxSize_length", boxSizeList.get(0));
-                } else if (boxSizeList.size() == 2) {
-                    //产品尺寸-长(cm)
-                    resultMap.put("boxSize_length", boxSizeList.get(0));
-                    //产品尺寸-宽(cm)
-                    resultMap.put("boxSize_width", boxSizeList.get(1));
-                } else {
-                    //产品尺寸-长(cm)
-                    resultMap.put("boxSize_length", boxSizeList.get(0));
-                    //产品尺寸-宽(cm)
-                    resultMap.put("boxSize_width", boxSizeList.get(1));
-                    //产品尺寸-高(cm)
-                    resultMap.put("boxSize_height", boxSizeList.get(2));
+                if (CollectionUtils.isNotEmpty(boxSizeList)) {
+                    if (boxSizeList.size() == 1) {
+                        //产品尺寸-长(cm)
+                        resultMap.put("boxSize_length", boxSizeList.get(0));
+                    } else if (boxSizeList.size() == 2) {
+                        //产品尺寸-长(cm)
+                        resultMap.put("boxSize_length", boxSizeList.get(0));
+                        //产品尺寸-宽(cm)
+                        resultMap.put("boxSize_width", boxSizeList.get(1));
+                    } else {
+                        //产品尺寸-长(cm)
+                        resultMap.put("boxSize_length", boxSizeList.get(0));
+                        //产品尺寸-宽(cm)
+                        resultMap.put("boxSize_width", boxSizeList.get(1));
+                        //产品尺寸-高(cm)
+                        resultMap.put("boxSize_height", boxSizeList.get(2));
+                    }
                 }
             }
         }
