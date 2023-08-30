@@ -784,4 +784,29 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public InventoryDTO.PdaInventoryDTO getInventoryByParam(InventoryDTO.PdaSearchParamDTO dto) {
         return baseMapper.getInventoryByParam(dto);
     }
+
+    @Override
+    public InventoryDTO.PdaInventorySearch getInventoryBySkuNo(String skuNo) {
+        InventoryDTO.PdaSearchParamDTO paramDTO = new InventoryDTO.PdaSearchParamDTO();
+        paramDTO.setSkuNo(skuNo);
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(skuNo));
+        if (ObjectUtil.isEmpty(skuVOList)) {
+            return new InventoryDTO.PdaInventorySearch();
+        }
+        InventoryDTO.PdaInventorySearch pdaInventorySearch = new InventoryDTO.PdaInventorySearch();
+        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(skuNo)).findFirst().orElse(new SkuVO());
+        pdaInventorySearch.setSkuNo(skuVO.getSkuNo());
+        pdaInventorySearch.setSkuName(skuVO.getSkuName());
+        pdaInventorySearch.setSpuNo(skuVO.getSpuNo());
+        pdaInventorySearch.setSpuName(skuVO.getSpuName());
+        pdaInventorySearch.setVariantProperty(skuVO.getVariantProperty());
+        List<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOList = baseMapper.listInventoryWarehouseByParam(paramDTO);
+        List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseLocationDTOList = baseMapper.listInventoryWarehouseLocationByParam(paramDTO);
+        for (InventoryDTO.PdaInventoryWarehouseDTO warehouseDTO : warehouseDTOList) {
+            List<InventoryDTO.PdaInventoryWarehouseLocationDTO> locationDTOList = warehouseLocationDTOList.stream().filter(req -> req.getWarehouseId().equals(warehouseDTO.getWarehouseId())).collect(Collectors.toList());
+            warehouseDTO.setWarehouseLocationDTOList(locationDTOList);
+        }
+        pdaInventorySearch.setWarehouseDTOList(warehouseDTOList);
+        return pdaInventorySearch;
+    }
 }

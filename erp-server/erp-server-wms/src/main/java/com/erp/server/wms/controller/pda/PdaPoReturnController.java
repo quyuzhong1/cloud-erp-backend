@@ -75,7 +75,7 @@ public class PdaPoReturnController extends BaseController {
      **/
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
-        String id = purchaseReturnOrderService.add(dto);
+        String id = purchaseReturnOrderService.pdaAdd(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
@@ -93,7 +93,7 @@ public class PdaPoReturnController extends BaseController {
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "id")
     public ApiResult update(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
-        Boolean flag = purchaseReturnOrderService.update(dto);
+        Boolean flag = purchaseReturnOrderService.pdaUpdate(dto);
         return flag == true ? success() : failure();
     }
 

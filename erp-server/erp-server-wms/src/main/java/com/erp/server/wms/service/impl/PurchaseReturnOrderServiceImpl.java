@@ -55,6 +55,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -412,6 +413,14 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 viewDTO.setReturnDeptId(deptByUserId.getDepartmentId());
                 viewDTO.setReturnDeptName(deptByUserId.getDepartmentName());
             }
+        } else {
+            List<SysDepartmentUserNumberDTO> sysDepartmentUserNumberDTOS = sysUserFeign.listDeptUserByUserIdList(Arrays.asList(viewDTO.getReturnUserId(), viewDTO.getPurchaseUserId()));
+            SysDepartmentUserNumberDTO purchaseUserDeptDTO = sysDepartmentUserNumberDTOS.stream().filter(req -> req.getUserId().equals(viewDTO.getPurchaseUserId())).findFirst().orElse(new SysDepartmentUserNumberDTO());
+            viewDTO.setPurchaseUserDeptId(purchaseUserDeptDTO.getDepartmentId());
+            viewDTO.setPurchaseUserDeptName(purchaseUserDeptDTO.getDepartmentName());
+            SysDepartmentUserNumberDTO returnDeptDTO = sysDepartmentUserNumberDTOS.stream().filter(req -> req.getUserId().equals(viewDTO.getReturnUserId())).findFirst().orElse(new SysDepartmentUserNumberDTO());
+            viewDTO.setReturnDeptId(returnDeptDTO.getDepartmentId());
+            viewDTO.setReturnDeptName(returnDeptDTO.getDepartmentName());
         }
 
         if (SourceTypeEnum.QC_INFO.getCode().equals(purchaseReturnOrderEntity.getSourceType())) {
@@ -1702,5 +1711,39 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             list.add(resultDTO);
         }
         return list;
+    }
+
+    @Override
+    public String pdaAdd(PurchaseReturnOrderDTO.AddDTO dto) {
+        if (StringUtils.isNotBlank(dto.getPurchaseOrderId())) {
+            List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
+            List<String> orderDetailIds = detailList.stream().map(req -> req.getPurchaseOrderDetailId()).collect(Collectors.toList());
+            //根据ids查询采购单详情
+            List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
+            for (PurchaseReturnOrderDetailDTO.AddDTO updateDTO : detailList) {
+                PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
+                    throw new ServiceException(ApiError.PURCHASE_SKU_NOT_EXIST, updateDTO.getSkuNo());
+                }
+            }
+        }
+        return this.add(dto);
+    }
+
+    @Override
+    public Boolean pdaUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        if (StringUtils.isNotBlank(dto.getPurchaseOrderId())) {
+            List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
+            List<String> orderDetailIds = detailList.stream().map(req -> req.getPurchaseOrderDetailId()).collect(Collectors.toList());
+            //根据ids查询采购单详情
+            List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
+            for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
+                PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
+                    throw new ServiceException(ApiError.PURCHASE_SKU_NOT_EXIST, updateDTO.getSkuNo());
+                }
+            }
+        }
+        return this.update(dto);
     }
 }

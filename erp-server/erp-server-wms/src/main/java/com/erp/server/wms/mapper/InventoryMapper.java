@@ -91,4 +91,22 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventoryDTO
      **/
     InventoryDTO.PdaInventoryDTO getInventoryByParam(@Param("params") InventoryDTO.PdaSearchParamDTO params);
+
+    /**
+     * 根据条件查询仓库信息
+     * @Author Luo_WG
+     * @Date 2023/8/25 18:13
+     * @param params
+     * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventoryDTO
+     **/
+    List<InventoryDTO.PdaInventoryWarehouseDTO> listInventoryWarehouseByParam(@Param("params") InventoryDTO.PdaSearchParamDTO params);
+
+    /**
+     * 根据条件查询仓库下的仓位库存信息
+     * @Author Luo_WG
+     * @Date 2023/8/25 18:13
+     * @param params
+     * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventoryDTO
+     **/
+    List<InventoryDTO.PdaInventoryWarehouseLocationDTO> listInventoryWarehouseLocationByParam(@Param("params") InventoryDTO.PdaSearchParamDTO params);
 }

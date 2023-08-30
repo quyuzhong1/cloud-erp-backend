@@ -50,15 +50,15 @@ public class PdaInventoryController extends BaseController {
     }
 
     /**
-     * 根据条件查询库存信息
+     * PDA:库存查询
      * @Author Luo_WG
-     * @Date 2023/8/25 11:20
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.inventory.InventoryDTO.PdaSearchParamDTO>
+     * @Date 2023/8/30 11:39
+     * @param skuNo
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventorySearch>
      **/
-    @PostMapping(value = "/getInventoryBySkuNo")
-    public ApiResult<InventoryDTO.PdaInventoryDTO> getInventoryBySkuNo(@RequestBody InventoryDTO.PdaSearchParamDTO dto) {
-        InventoryDTO.PdaInventoryDTO inventory = inventoryService.getInventoryByParam(dto);
+    @GetMapping(value = "/getInventoryBySkuNo")
+    public ApiResult<InventoryDTO.PdaInventorySearch> getInventoryBySkuNo(@RequestParam("skuNo") String skuNo) {
+        InventoryDTO.PdaInventorySearch inventory = inventoryService.getInventoryBySkuNo(skuNo);
         return success(inventory);
     }
 

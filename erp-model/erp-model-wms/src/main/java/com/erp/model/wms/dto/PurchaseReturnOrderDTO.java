@@ -345,6 +345,11 @@ public class PurchaseReturnOrderDTO {
         private LocalDateTime approveTime;
 
         /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
          * 退货来源
          */
         private String sourceType;
