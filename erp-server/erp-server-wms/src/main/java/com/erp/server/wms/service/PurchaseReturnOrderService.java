@@ -259,4 +259,22 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @return java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PdaReturnOrderCountDTO>
      **/
     List<PurchaseReturnOrderDTO.PdaReturnOrderCountDTO> pdaListCount(PermissionsDTO dto);
+
+    /**
+     * PDA:新增
+     * @Author Luo_WG
+     * @Date 2023/8/30 16:16
+     * @param dto
+     * @return java.lang.String
+     **/
+    String pdaAdd(PurchaseReturnOrderDTO.AddDTO dto);
+
+    /**
+     * PDA:修改
+     * @Author Luo_WG
+     * @Date 2023/8/30 16:17
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaUpdate(PurchaseReturnOrderDTO.UpdateDTO dto);
 }

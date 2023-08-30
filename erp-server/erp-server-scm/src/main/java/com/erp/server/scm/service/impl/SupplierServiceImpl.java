@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -123,6 +124,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Autowired
     private WorkflowFeign workflowFeign;
+
+    @Autowired
+    private SupplierService supplierService;
 
     /**
      * 保存供应商信息
@@ -913,6 +917,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         view.setPayMethodId(entity.getPayMethodId());
         view.setPayCurrency(entity.getPayCurrency());
         view.setPaymentCondition(entity.getPaymentCondition());
+        view.setCompanyAddress(entity.getCompanyAddress());
         return view;
     }
 

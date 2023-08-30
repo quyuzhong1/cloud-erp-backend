@@ -605,7 +605,10 @@
             po.id,
             po.code,
             po.approve_status,
+            pos.supplier_id,
             pos.supplier_name,
+            pos.supplier_contact_id,
+            po.delivery_warehouse_id AS warehouseId,
             po.delivery_warehouse_name AS warehouseName,
             po.create_time
         FROM purchase_order po

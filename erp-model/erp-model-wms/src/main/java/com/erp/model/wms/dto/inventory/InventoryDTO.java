@@ -1006,6 +1006,10 @@ public class InventoryDTO implements Serializable {
          */
         private String skuId;
         /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
          * 库位
          */
         private String warehouseLocation;
@@ -1014,6 +1018,100 @@ public class InventoryDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PdaInventoryDTO {
+        /**
+         * 组织id
+         */
+        private String orgId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 实际库存
+         */
+        private Integer realQty;
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+        /**
+         * 冻结库存
+         */
+        private Integer frozenQty;
+    }
+
+    /**
+     * PDA:库存查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaInventorySearch {
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * sku名称
+         */
+        private String skuName;
+        /**
+         * spu编号
+         */
+        private String spuNo;
+        /**
+         * spu名称
+         */
+        private String spuName;
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+        /**
+         * 仓库信息
+         */
+        private List<PdaInventoryWarehouseDTO> warehouseDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaInventoryWarehouseDTO {
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 实际库存
+         */
+        private Integer realQty;
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+        /**
+         * 冻结库存
+         */
+        private Integer frozenQty;
+        /**
+         * 仓位信息
+         */
+        private List<PdaInventoryWarehouseLocationDTO> warehouseLocationDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaInventoryWarehouseLocationDTO {
         /**
          * 组织id
          */
@@ -1042,14 +1140,5 @@ public class InventoryDTO implements Serializable {
          * 冻结库存
          */
         private Integer frozenQty;
-    }
-
-    /**
-     * PDA:库存查询
-     */
-    @Data
-    @NoArgsConstructor
-    public static class PdaInventorySearch {
-
     }
 }
