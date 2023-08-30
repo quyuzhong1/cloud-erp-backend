@@ -1,6 +1,7 @@
 package com.erp.server.oms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.oms.dto.SoB2cRefCategoryDTO;
 import com.erp.model.oms.entity.SoB2cRefCategoryEntity;
 
 import java.util.List;
@@ -32,4 +33,13 @@ public interface SoB2cRefCategoryService extends SuperService<SoB2cRefCategoryEn
      * @return Boolean
      */
     Boolean deleteByMainIds(List<String> mainIds);
+    /**
+     * @description: 新增订单分类
+     * @author Will
+     * @date: 2023/8/30 18:20
+     * @param addList
+     * @param mainId
+     * @return Boolean
+     */
+    Boolean add(List<SoB2cRefCategoryDTO.AddDTO> addList, String mainId);
 }

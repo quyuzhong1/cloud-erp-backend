@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
+import com.erp.model.oms.dto.SoB2cRefCategoryDTO;
 import com.erp.model.oms.entity.SoB2cRefCategoryEntity;
 import com.erp.server.oms.mapper.SoB2cRefCategoryMapper;
 import com.erp.server.oms.service.SoB2cRefCategoryService;
@@ -23,6 +24,17 @@ import java.util.List;
 @Service
 public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCategoryMapper, SoB2cRefCategoryEntity> implements SoB2cRefCategoryService {
 
+    @Override
+    public Boolean add(List<SoB2cRefCategoryDTO.AddDTO> addList, String mainId) {
+        if (CollectionUtils.isEmpty(addList)) {
+            return Boolean.TRUE;
+        }
+        SoB2cRefCategoryDTO.AddDTO addDTO = new SoB2cRefCategoryDTO.AddDTO();
+
+        return null;
+    }
+
+
 
     @Override
     public List<SoB2cRefCategoryEntity> listByMainIds(List<String> mainIds) {
@@ -36,4 +48,6 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
     public Boolean deleteByMainIds(List<String> mainIds) {
         return lambdaUpdate().in(SoB2cRefCategoryEntity::getSoB2cId,mainIds).remove();
     }
+
+
 }

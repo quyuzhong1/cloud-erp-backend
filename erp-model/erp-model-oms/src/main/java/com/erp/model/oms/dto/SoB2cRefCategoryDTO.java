@@ -41,6 +41,10 @@ public class SoB2cRefCategoryDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
 
+        private AddDTO (String soB2cId, String categoryId) {
+            super.setSoB2cId(soB2cId);
+            super.setCategoryId(categoryId);
+        }
     }
 
     /**
@@ -75,13 +79,6 @@ public class SoB2cRefCategoryDTO implements Serializable {
         @NotBlank(message = "分类id不能为空")
         @Size(max = 19,message = "分类id最大长度不能超过19位")
         private String categoryId;
-
-        /**
-        * 分类名称
-        */
-        @NotBlank(message = "分类名称不能为空")
-        @Size(max = 100,message = "分类名称最大长度不能超过100位")
-        private String categoryName;
     }
 
 }
