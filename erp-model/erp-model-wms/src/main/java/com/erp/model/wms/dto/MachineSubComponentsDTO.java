@@ -87,6 +87,11 @@ public class MachineSubComponentsDTO implements Serializable {
         private String productName;
 
         /**
+         * 供应商
+         */
+        private String childSupplierId;
+
+        /**
          * 单位
          */
         private String unit;

@@ -338,15 +338,26 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         if (CollectionUtils.isEmpty(childrenList)) {
             return resultList;
         }
+        //查询sku
+        List<String> skuIdList = childrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+
         List<BomChildrenSkuDTO> versionChildList = childrenList.stream().filter(obj -> obj.getBomVersion().equals(dto.getBomVersion())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(versionChildList)) {
             return resultList;
         }
         for (BomChildrenSkuDTO bomChildrenSkuDTO : versionChildList) {
+            //sku信息
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(skuVO)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
             MachineSubComponentsDTO.ViewDTO viewDTO = new MachineSubComponentsDTO.ViewDTO();
             viewDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
             viewDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
             viewDTO.setProductName(bomChildrenSkuDTO.getSkuName());
+            viewDTO.setChildSupplierId(skuVO.getSupplierId());
             viewDTO.setUnit(bomChildrenSkuDTO.getUnitName());
             viewDTO.setQty(bomChildrenSkuDTO.getQuantity());
             viewDTO.setBomVersion(bomChildrenSkuDTO.getBomVersion());
