@@ -1005,7 +1005,6 @@ public class InventoryDTO implements Serializable {
         private String warehouseLocation;
     }
 
-
     @Data
     @NoArgsConstructor
     public static class PdaInventoryDTO {
@@ -1037,5 +1036,14 @@ public class InventoryDTO implements Serializable {
          * 冻结库存
          */
         private Integer frozenQty;
+    }
+
+    /**
+     * PDA:库存查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaInventorySearch {
+
     }
 }
