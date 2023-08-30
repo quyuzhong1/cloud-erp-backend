@@ -1286,7 +1286,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         for (WarehouseReceiveDetailDTO.AddDTO addDTO : warehouseReceiveDetailList) {
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailEntityList.stream().filter(req -> req.getId().equals(addDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST, addDTO.getSkuNo());
+                throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST, addDTO.getSkuNo());
             }
 
             List<PurchaseOrderDetailEntity> detailEntityList = detailEntityListByPoId.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
@@ -1343,7 +1343,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         for (WarehouseReceiveDetailDTO.UpdateDTO updateDTO : warehouseReceiveDetailList) {
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailEntityList.stream().filter(req -> req.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST, updateDTO.getSkuNo());
+                throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST, updateDTO.getSkuNo());
             }
             List<PurchaseOrderDetailEntity> detailEntityList = detailEntityListByPoId.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
             //校验sku是否有重复，重复需要拆单
@@ -1435,6 +1435,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<WarehouseReceiveDetailEntity> detailEntitieList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(detailId);
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(detailId);
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
+        //采购订单明细下所有入库数据
+        List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailByPodIds(detailId);
         for (WarehouseReceiveDetailEntity warehouseReceiveDetailEntity : detail) {
             WarehouseReceiveDetailDTO.ViewDTO detailView = new WarehouseReceiveDetailDTO.ViewDTO();
             BeanMapperUtils.copy(warehouseReceiveDetailEntity, detailView);
@@ -1453,6 +1455,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             detailView.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
             detailView.setPlanDeliveryDate(purchaseOrderDetailEntity.getPlanDeliveryDate());
             detailView.setProductName(skuVO.getSkuName());
+
+            if (CollectionUtils.isNotEmpty(poInstockDetailList)) {
+                Integer effectiveStockInQty = poInstockDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                detailView.setEffectiveStockInQty(effectiveStockInQty);
+                detailView.setUnStockInQty(purchaseOrderDetailEntity.getPurchaseQty() - effectiveStockInQty + returnQty);
+            }
+
             detailViewDTOS.add(detailView);
         }
 

@@ -1604,22 +1604,25 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<String> receiveDetailIds = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getId).collect(Collectors.toList());
         //质检信息
         List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceDetailIds(receiveDetailIds);
-        List<QcInfoEntity> resultList = qcInfoList.stream().filter(obj -> QcBillStatusEnum.DRAFT.equals(obj.getQcStatus()) || QcBillStatusEnum.WAIT_QC.equals(obj.getQcStatus())).collect(Collectors.toList());
+        List<QcInfoEntity> resultList = qcInfoList.stream().filter(obj -> QcBillStatusEnum.EXEMPTION.equals(obj.getQcStatus())
+                || QcBillStatusEnum.FINISH_QC.equals(obj.getQcStatus())
+        ).collect(Collectors.toList());
 
         for (PoInstockDTO.PdaPagingView record : records) {
             record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
             List<PoInstockDetailEntity> detailEntities = poInstockDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
             List<PoInstockDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, PoInstockDTO.PdaItemDTO.class);
             record.setDetailCount(itemDTOList.size());
-            if (CollectionUtils.isEmpty(resultList)) {
+            if (CollectionUtils.isEmpty(qcInfoList)) {
                 record.setQcStatus(PdaQclStatusEnum.WAIT_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.WAIT_QC.getName());
-            } else if (resultList.size() != poInstockDetailEntities.size()) {
-                record.setQcStatus(PdaQclStatusEnum.PARTIAL_QC.getCode());
-                record.setQcStatusName(PdaQclStatusEnum.PARTIAL_QC.getName());
-            } else {
+            } else if (resultList.size() == detailEntities.size()) {
                 record.setQcStatus(PdaQclStatusEnum.FINISH_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.FINISH_QC.getName());
+            } else {
+                record.setQcStatus(PdaQclStatusEnum.PARTIAL_QC.getCode());
+                record.setQcStatusName(PdaQclStatusEnum.PARTIAL_QC.getName());
+
             }
 
             record.setItemList(itemDTOList);
