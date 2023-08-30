@@ -20,4 +20,12 @@ public interface ProcessTaskManagementMapper extends BaseMapper<ProcessTaskManag
 
 
     List<ProcessTaskManagementEntity> listByProcessInstanceId(@Param("ids") List<String> businessIds);
+
+    /**
+     * 查询任务前置节点任务列表
+     * @param taskManagementId
+     * @param processInstanceId
+     * @return
+     */
+    List<ProcessTaskManagementEntity> listPreActivityTask(@Param("taskManagementId") String taskManagementId, @Param("processInstanceId") String processInstanceId);
 }
