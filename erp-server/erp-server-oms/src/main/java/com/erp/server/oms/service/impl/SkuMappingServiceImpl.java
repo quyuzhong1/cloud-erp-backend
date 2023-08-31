@@ -556,6 +556,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             listSkuDTO.setProductSkuNo(skuVO.getSkuNo());
             listSkuDTO.setProductName(skuVO.getSkuName());
             listSkuDTO.setAdvicePrice(skuVO.getRetailPrice());
+            listSkuDTO.setVariantProperty(skuVO.getVariantProperty());
+            listSkuDTO.setImageUrl(skuVO.getSkuImagesUrl());
             listSkuDTO.setTaxCost(MathUtil.compareTo(skuVO.getActualTaxCost(), MathUtil.ZERO) == MathUtil.ZERO ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost());
             //查询sku映射表
             SkuMappingEntity skuMappingEntity = list.stream().filter(obj -> obj.getProductSkuId().equals(obj.getProductSkuId())).findFirst().orElse(null);
