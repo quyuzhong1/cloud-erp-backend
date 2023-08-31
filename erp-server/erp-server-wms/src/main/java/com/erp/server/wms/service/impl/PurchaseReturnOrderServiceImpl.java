@@ -332,13 +332,17 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         //获取采购单供应商信息
 //        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
+        if (StringUtils.isNotBlank(dto.getPurchaseUserId())) {
+            SysUserDTO purchaseUser = sysUserFeign.getSysUserById(dto.getPurchaseUserId());
+            purchaseReturnOrderEntity.setPurchaseUserName(purchaseUser.getUserName());
+        }
 
-        SysUserDTO purchaseUser = sysUserFeign.getSysUserById(dto.getPurchaseUserId());
         purchaseReturnOrderEntity.setPurchaseUserId(dto.getPurchaseUserId());
-        purchaseReturnOrderEntity.setPurchaseUserName(purchaseUser.getUserName());
         purchaseReturnOrderEntity.setSupplierId(dto.getSupplierId());
-        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(dto.getSupplierId());
-        purchaseReturnOrderEntity.setSupplierName(supplierEntity.getName());
+        if (StringUtils.isNotBlank(dto.getSupplierId())) {
+            SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(dto.getSupplierId());
+            purchaseReturnOrderEntity.setSupplierName(supplierEntity.getName());
+        }
         purchaseReturnOrderEntity.setSupplierContactId(dto.getSupplierContactId());
         if (StringUtils.isNotBlank(dto.getSupplierContactId())) {
             SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
