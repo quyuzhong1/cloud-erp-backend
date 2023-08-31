@@ -93,7 +93,7 @@
         sb2c.buyer_remark as buyerRemark,
         sb2c.remark as remark,
         sb2c.abnormal_type as abnormalType,
-        sb2c.label as label,
+        sb2c.label_json as label,
         sb2c.is_intercept as isIntercept,
          sb2c.source_id as sourceId,
          sb2c.source_type as sourceType,
@@ -119,7 +119,7 @@
         sb2cd.warehouse_id as warehouseId,
         sb2cd.warehouse_name as warehouseName,
         sb2cd.warehouse_location as warehouseLocation,
-        sb2cd.label as detailLabel
+        sb2cd.label_json as detailLabel
     </sql>
 
     <!-- 列表分页查询 -->
