@@ -413,8 +413,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> soIds = list.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
         //这个是销售订单详情
         List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(soIds);
-        //这个是销售订单详情id
-        List<String> soDetailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
         //这个是销售出库单id
         List<String> allList = list.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
         //发货通知单
@@ -490,8 +488,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //销售订单的id
         List<String> soIds = list.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
-        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(soIds);
-        List<String> detailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
         //发货通知单
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
         //发货通知单的
