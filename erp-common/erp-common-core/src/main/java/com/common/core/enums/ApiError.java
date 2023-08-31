@@ -136,9 +136,10 @@ public enum ApiError implements Serializable {
     ERROR_9046(9046, "字段编号不正确"),
     SCHEME_NOT_EXIST(9047, "方案不存在"),
     SCHEME_NAME_EXIST(9048, "查询方案[{}]已存在"),
-    ERROR_CURRENCY_NOT_EXIST(9048, "币别[{}]不存在"),
+    ERROR_CURRENCY_NOT_EXIST(9049, "币别[{}]不存在"),
+    ERROR_CITY_NOT_EXIST(9050, "所选城市不存在"),
+    ERROR_COUNTRY_NOT_EXIST(9051, "所选国家不存在"),
     ERROR_SERIAL_NUMBER_EXCEED(9049, "流水号已经超出999"),
-
 
 
     /**
@@ -721,9 +722,9 @@ public enum ApiError implements Serializable {
     // 已下推退货入库单不能反审核
     ERROR_RETURN_ORDER_PUSHED(99089, "已下推退货入库单，不能反审核"),
     ERROR_WAREHOUSE_NOT_EXIST_ORG(99090, "仓库【{}】下未发现库存组织"),
+    ERROR_SO_RETURN_INSTOCK_NOT_GENERATE(99090,"退货入库单【{}】未审核通过，不支持下推"),
 
     STOCKTAKING_TASK_EXIST(99090 , "仓库【{}】库位【{}】 SKU【{}】 已存在盘点任务"),
-    ERROR_SO_RETURN_INSTOCK_NOT_GENERATE(99090,"退货入库单【{}】未审核通过，不支持下推"),
     ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL(99091,"采购退货单退货扣款类型退款单价必填"),
     LOCATION_MOVE_DETAIL_ADD(99091 , "仓位移动明细单保存失败"),
     LOCATION_MOVE_QTY_ERROR(99091 , "sku【{}】仓位移动数量不能大于可用库存数量"),
