@@ -149,7 +149,7 @@ public class PdaPoReceiveController extends BaseController {
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.AddDTO dto) {
-        Boolean flag = warehouseReceiveService.addAndSubmit(dto);
+        Boolean flag = warehouseReceiveService.pdaAddAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
@@ -167,7 +167,7 @@ public class PdaPoReceiveController extends BaseController {
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.UpdateDTO dto) {
-        Boolean flag = warehouseReceiveService.updateAndSubmit(dto);
+        Boolean flag = warehouseReceiveService.pdaUpdateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 

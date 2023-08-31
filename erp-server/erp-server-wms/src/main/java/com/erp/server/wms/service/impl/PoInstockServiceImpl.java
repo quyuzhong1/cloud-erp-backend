@@ -45,6 +45,7 @@ import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.PdaQclStatusEnum;
 import com.erp.model.wms.enums.QcBillStatusEnum;
+import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -67,6 +68,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -1671,9 +1674,61 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         for (PoInstockDetailDTO.AddDTO entity : details) {
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST, entity.getSkuNo());
+                throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST, entity.getSkuNo());
             }
         }
+        List<PoInstockDetailDTO.AddDTO> addDTOList = new ArrayList<>();
+        List<PoInstockDetailDTO.AddDTO> detailList = dto.getDetails();
+        List<String> poReceiveDetailIds = detailList.stream().map(PoInstockDetailDTO.AddDTO::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<WarehouseReceiveDetailEntity> receiveDetailEntities = warehouseReceiveDetailService.listByIds(poReceiveDetailIds);
+        List<WarehouseReceiveDetailEntity> detailEntityListByMainId = warehouseReceiveDetailService.listDetailByMainIds(Arrays.asList(dto.getSourceId()));
+
+        for (PoInstockDetailDTO.AddDTO addDTO : detailList) {
+            WarehouseReceiveDetailEntity detailEntity = receiveDetailEntities.stream().filter(req -> req.getId().equals(addDTO.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(detailEntity)) {
+                throw new ServiceException(ApiError.ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST, addDTO.getSkuNo());
+            }
+
+            List<WarehouseReceiveDetailEntity> detailEntityList = detailEntityListByMainId.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
+            //校验sku是否有重复，重复需要拆单
+            if (detailEntityList.size() > MathUtil.ONE) {
+                List<String> pordIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+                List<PoInstockDetailEntity> poInstockDetailEntities = poInstockDetailService.listDetailBySourceDetailIds(pordIds);
+                Integer stockInQty = addDTO.getStockInQty();
+                for (WarehouseReceiveDetailEntity entity : detailEntityList) {
+                    //收货数量
+                    Integer receiveQty = detailEntityList.stream().map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                    //已签收数量
+                    Integer alreadyStockInQty = poInstockDetailEntities.stream().filter(obj -> obj.getSourceDetailId().equals(entity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (stockInQty > receiveQty - alreadyStockInQty) {
+                        throw new ServiceException(new ApiResult(MathUtil.ONE,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + receiveQty));
+
+                    }
+                    if (alreadyStockInQty >= entity.getReceiveQty()) {
+                        continue;
+                    }
+                    PoInstockDetailDTO.AddDTO addSkuDTO = new PoInstockDetailDTO.AddDTO();
+                    addSkuDTO.setSourceDetailId(entity.getId());
+                    addSkuDTO.setPurchaseOrderDetailId(entity.getPurchaseOrderDetailId());
+                    addSkuDTO.setWarehouseLocation(addDTO.getWarehouseLocation());
+                    addSkuDTO.setSkuNo(addDTO.getSkuNo());
+                    addSkuDTO.setExceedQty(addDTO.getExceedQty());
+                    addSkuDTO.setRemark(addDTO.getRemark());
+                    if (stockInQty > (entity.getReceiveQty() - alreadyStockInQty) && !detailEntityList.get(detailEntityList.size()-1).getId().equals(entity.getId())) {
+                        stockInQty = stockInQty - (entity.getReceiveQty() - alreadyStockInQty);
+                        addSkuDTO.setStockInQty(entity.getReceiveQty() - alreadyStockInQty);
+                        addDTOList.add(addSkuDTO);
+                    } else {
+                        addSkuDTO.setStockInQty(stockInQty);
+                        addDTOList.add(addSkuDTO);
+                        break;
+                    }
+                }
+            } else {
+                addDTOList.add(addDTO);
+            }
+        }
+        dto.setDetails(addDTOList);
         return this.add(dto, aFalse);
     }
 
@@ -1689,6 +1744,80 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 throw new ServiceException(ApiError.ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST, entity.getSkuNo());
             }
         }
+        List<PoInstockDetailDTO.UpdateDTO> updateDTOList = new ArrayList<>();
+        List<PoInstockDetailDTO.UpdateDTO> detailList = dto.getDetails();
+        List<String> poReceiveDetailIds = detailList.stream().map(PoInstockDetailDTO.UpdateDTO::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<WarehouseReceiveDetailEntity> receiveDetailEntities = warehouseReceiveDetailService.listByIds(poReceiveDetailIds);
+        List<WarehouseReceiveDetailEntity> detailEntityListByMainId = warehouseReceiveDetailService.listDetailByMainIds(Arrays.asList(dto.getSourceId()));
+
+        for (PoInstockDetailDTO.UpdateDTO updateDTO : detailList) {
+            WarehouseReceiveDetailEntity detailEntity = receiveDetailEntities.stream().filter(req -> req.getId().equals(updateDTO.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(detailEntity)) {
+                throw new ServiceException(ApiError.ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST, updateDTO.getSkuNo());
+            }
+
+            List<WarehouseReceiveDetailEntity> detailEntityList = detailEntityListByMainId.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
+            //校验sku是否有重复，重复需要拆单
+            if (detailEntityList.size() > MathUtil.ONE) {
+                List<String> pordIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+                List<PoInstockDetailEntity> poInstockDetailEntities = poInstockDetailService.listDetailBySourceDetailIds(pordIds);
+                Integer stockInQty = updateDTO.getStockInQty();
+                for (WarehouseReceiveDetailEntity entity : detailEntityList) {
+                    //收货数量
+                    Integer receiveQty = detailEntityList.stream().map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                    //已签收数量
+                    Integer alreadyStockInQty = poInstockDetailEntities.stream().filter(obj -> obj.getSourceDetailId().equals(entity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (stockInQty > receiveQty - alreadyStockInQty) {
+                        throw new ServiceException(new ApiResult(MathUtil.ONE,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + receiveQty));
+
+                    }
+                    if (alreadyStockInQty >= entity.getReceiveQty()) {
+                        continue;
+                    }
+                    PoInstockDetailDTO.UpdateDTO updateSkuDTO = new PoInstockDetailDTO.UpdateDTO();
+                    updateSkuDTO.setSourceDetailId(entity.getId());
+                    updateSkuDTO.setPurchaseOrderDetailId(entity.getPurchaseOrderDetailId());
+                    updateSkuDTO.setWarehouseLocation(updateDTO.getWarehouseLocation());
+                    updateSkuDTO.setSkuNo(updateDTO.getSkuNo());
+                    updateSkuDTO.setExceedQty(updateDTO.getExceedQty());
+                    updateSkuDTO.setRemark(updateDTO.getRemark());
+                    if (stockInQty > (entity.getReceiveQty() - alreadyStockInQty) && !detailEntityList.get(detailEntityList.size()-1).getId().equals(entity.getId())) {
+                        stockInQty = stockInQty - (entity.getReceiveQty() - alreadyStockInQty);
+                        updateSkuDTO.setStockInQty(entity.getReceiveQty() - alreadyStockInQty);
+                        updateDTOList.add(updateSkuDTO);
+                    } else {
+                        updateSkuDTO.setStockInQty(stockInQty);
+                        updateDTOList.add(updateSkuDTO);
+                        break;
+                    }
+                }
+            } else {
+                updateDTOList.add(updateDTO);
+            }
+        }
+        dto.setDetails(updateDTOList);
         return this.update(dto);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String pdaAddAndSubmit(PoInstockDTO.AddDTO dto) {
+        //新增
+        String id = this.pdaAdd(dto,Boolean.FALSE);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        //提交
+        this.submit(Arrays.asList(id));
+        return id;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pdaUpdateAndSubmit(PoInstockDTO.UpdateDTO dto) {
+        //修改
+        this.pdaUpdate(dto);
+        //提交
+        return this.submit(Arrays.asList(dto.getId()));
     }
 }

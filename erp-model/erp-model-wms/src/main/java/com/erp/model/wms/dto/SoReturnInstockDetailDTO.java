@@ -15,9 +15,13 @@ public class SoReturnInstockDetailDTO {
     @NoArgsConstructor
     public static class Add {
         /**
-         * skuid
+         * skuId
          */
         private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
         /**
          * 实退数量
          */
@@ -73,6 +77,10 @@ public class SoReturnInstockDetailDTO {
          * skuid
          */
         private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
         /**
          * 实退数量
          */

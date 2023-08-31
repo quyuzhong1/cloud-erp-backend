@@ -1676,4 +1676,24 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         }
         return this.update(dto);
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pdaAddAndSubmit(PurchaseReturnOrderDTO.AddDTO dto) {
+        String id = this.pdaAdd(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        return this.submit(Arrays.asList(id));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pdaUpdateAndSubmit(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        Boolean update = this.pdaUpdate(dto);
+        if (!update) {
+            throw new ServiceException(ApiError.ERROR_1020);
+        }
+        return this.submit(Arrays.asList(dto.getId()));
+    }
 }

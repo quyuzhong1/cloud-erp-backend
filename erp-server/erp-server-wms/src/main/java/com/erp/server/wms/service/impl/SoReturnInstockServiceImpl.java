@@ -506,6 +506,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(SoReturnInstockDTO.Add dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
@@ -515,6 +516,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(SoReturnInstockDTO.Update dto) {
         Boolean update = this.update(dto);
         if (!update) {
@@ -1437,6 +1439,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean pdaAddAndSubmit(SoReturnInstockDTO.Add dto) {
         String id = this.pdaAdd(dto);
         if (StringUtils.isBlank(id)) {
@@ -1446,6 +1449,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean pdaUpdateAndSubmit(SoReturnInstockDTO.Update dto) {
         Boolean update = this.pdaUpdate(dto);
         if (!update) {

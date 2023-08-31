@@ -321,7 +321,15 @@ public class PoInstockDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+        /**
+         * 来源主键id
+         */
+        private String sourceId;
 
+        /**
+         * 来源 purchaseOrder采购订单
+         */
+        private String sourceType;
         /**
          * 明细
          */
@@ -822,6 +830,11 @@ public class PoInstockDTO implements Serializable {
          * 产品数量
          */
         private Integer detailCount;
+
+        /**
+         * 委外标识
+         */
+        private String subcontractType;
 
         /**
          * 产品信息

@@ -172,6 +172,11 @@ public class WarehouseReceiveDetailDTO {
         private Integer unStockInQty;
 
         /**
+         * 仓位
+         */
+        private String warehouseLocation;
+
+        /**
          * 备注
          */
         private String remark;

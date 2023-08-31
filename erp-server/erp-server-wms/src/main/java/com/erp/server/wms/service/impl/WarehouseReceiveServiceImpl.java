@@ -1306,9 +1306,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     }
                     WarehouseReceiveDetailDTO.AddDTO addSkuDTO = new WarehouseReceiveDetailDTO.AddDTO();
                     addSkuDTO.setPurchaseOrderDetailId(entity.getId());
-                    addSkuDTO.setExceedQty(MathUtil.ZERO);
+                    addSkuDTO.setExceedQty(addDTO.getExceedQty());
                     addSkuDTO.setRemark(addDTO.getRemark());
-                    addSkuDTO.setPurchaseOrderDetailId(entity.getId());
+                    addSkuDTO.setSkuNo(addDTO.getSkuNo());
                     if (receiveQty > (entity.getPurchaseQty() - alreadyReceiveQty) && !detailEntityList.get(detailEntityList.size()-1).getId().equals(entity.getId())) {
                         receiveQty = receiveQty - (entity.getPurchaseQty() - alreadyReceiveQty);
                         addSkuDTO.setReceiveQty(entity.getPurchaseQty() - alreadyReceiveQty);
@@ -1363,9 +1363,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     WarehouseReceiveDetailDTO.UpdateDTO updateSkuDTO = new WarehouseReceiveDetailDTO.UpdateDTO();
                     updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
                     updateSkuDTO.setMainId(updateDTO.getMainId());
-                    updateSkuDTO.setExceedQty(MathUtil.ZERO);
+                    updateSkuDTO.setExceedQty(updateDTO.getExceedQty());
                     updateSkuDTO.setRemark(updateDTO.getRemark());
-                    updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
+                    updateSkuDTO.setSkuNo(updateDTO.getSkuNo());
                     if (receiveQty > (entity.getPurchaseQty() - alreadyReceiveQty) && !detailEntityList.get(detailEntityList.size()-1).getId().equals(entity.getId())) {
                         receiveQty = receiveQty - (entity.getPurchaseQty() - alreadyReceiveQty);
                         updateSkuDTO.setReceiveQty(entity.getPurchaseQty() - alreadyReceiveQty);
@@ -1450,7 +1450,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             detailView.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
             detailView.setPlanDeliveryDate(purchaseOrderDetailEntity.getPlanDeliveryDate());
             detailView.setProductName(skuVO.getSkuName());
-
+            detailView.setWarehouseLocation(purchaseOrderDetailEntity.getWarehouseLocation());
             if (CollectionUtils.isNotEmpty(poInstockDetailList)) {
                 Integer effectiveStockInQty = poInstockDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setEffectiveStockInQty(effectiveStockInQty);
@@ -1531,6 +1531,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean pdaAddAndSubmit(WarehouseReceiveDTO.AddDTO dto) {
         String id = this.pdaAdd(dto);
         if (StringUtils.isBlank(id)) {
@@ -1540,6 +1541,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean pdaUpdateAndSubmit(WarehouseReceiveDTO.UpdateDTO dto) {
         Boolean update = this.pdaUpdate(dto);
         if (!update) {
