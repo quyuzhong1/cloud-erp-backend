@@ -233,6 +233,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cReceiverService.update(updateDTO.getReceiverDTO(), soB2cEntity.getId());
         //修改明细
         soB2cDetailService.update(updateDTO.getDetailList(), soB2cEntity.getId());
+        //修改订单分类
+       soB2cRefCategoryService.update(updateDTO.getCategoryIdList(),soB2cEntity.getId());
 
 
         // 记录主单操作日志

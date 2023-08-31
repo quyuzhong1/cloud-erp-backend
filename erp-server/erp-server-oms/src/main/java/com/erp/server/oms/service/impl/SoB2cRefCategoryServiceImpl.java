@@ -15,9 +15,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -44,9 +42,27 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
         //数据处理
         handleCategory(soB2cRefCategoryList);
 
-        return this.saveOrUpdateBatch(soB2cRefCategoryList);
+        return this.saveBatch(soB2cRefCategoryList);
     }
 
+    @Override
+    public Boolean update(List<String> categoryIdList, String mainId) {
+        //删除原有分类
+        this.deleteByMainIds(Arrays.asList(mainId));
+        if (CollectionUtils.isEmpty(categoryIdList)) {
+            return Boolean.TRUE;
+        }
+        List<SoB2cRefCategoryEntity> soB2cRefCategoryList = new ArrayList<>();
+        for (String categoryId: categoryIdList) {
+            SoB2cRefCategoryEntity categoryEntity = new SoB2cRefCategoryEntity();
+            categoryEntity.setCategoryId(categoryId);
+            categoryEntity.setSoB2cId(mainId);
+            soB2cRefCategoryList.add(categoryEntity);
+        }
+        //数据处理
+        handleCategory(soB2cRefCategoryList);
+        return this.saveBatch(soB2cRefCategoryList);
+    }
 
 
     @Override

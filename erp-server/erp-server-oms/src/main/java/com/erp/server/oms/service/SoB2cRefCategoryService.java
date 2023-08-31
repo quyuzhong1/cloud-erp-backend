@@ -42,4 +42,13 @@ public interface SoB2cRefCategoryService extends SuperService<SoB2cRefCategoryEn
      * @return Boolean
      */
     Boolean add(List<SoB2cRefCategoryDTO.AddDTO> addList, String mainId);
+    /**
+     * @description: 更新订单分类
+     * @author Will
+     * @date: 2023/8/31 9:31
+     * @param categoryIdList
+     * @param mainId
+     * @return Boolean
+     */
+    Boolean update(List<String> categoryIdList, String mainId);
 }
