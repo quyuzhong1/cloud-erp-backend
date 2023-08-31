@@ -137,8 +137,9 @@ public enum ApiError implements Serializable {
     ERROR_9046(9046, "字段编号不正确"),
     SCHEME_NOT_EXIST(9047, "方案不存在"),
     SCHEME_NAME_EXIST(9048, "查询方案[{}]已存在"),
-    ERROR_CURRENCY_NOT_EXIST(9048, "币别[{}]不存在"),
-
+    ERROR_CURRENCY_NOT_EXIST(9049, "币别[{}]不存在"),
+    ERROR_CITY_NOT_EXIST(9050, "所选城市不存在"),
+    ERROR_COUNTRY_NOT_EXIST(9051, "所选国家不存在"),
 
 
     /**
