@@ -306,7 +306,7 @@ public class PurchaseOrderFeignController {
     }
 
     /**
-     * @description: 根据sku id集合获取审核通过的最新的采购订单明细信息
+     * @description: 根据sku id集合获取审核通过的最新的采购订单明细信息(采购日期倒序)
      * @author zhangchunlin
      * @date: 2023/6/26 10:20
      * @param skuIds
@@ -316,5 +316,15 @@ public class PurchaseOrderFeignController {
     public List<PurchaseOrderDetailEntity> getLatest(@RequestBody List<String> skuIds) {
         return purchaseOrderDetailService.getLatest(skuIds);
     }
-
+    /**
+     * @description: 根据sku id集合获取审核通过的最新的采购订单明细信息(创建时间倒序)
+     * @author Will
+     * @date: 2023/8/31 11:43
+     * @param skuIds
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    @PostMapping("/getLatestByCrtTime")
+    public List<PurchaseOrderDetailEntity> getLatestByCrtTime(@RequestBody List<String> skuIds) {
+        return purchaseOrderDetailService.getLatestByCrtTime(skuIds);
+    }
 }

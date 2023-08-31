@@ -334,7 +334,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             return;
         }
         List<String> skuIdList = list.stream().map(SoReturnInstockDetailEntity::getSkuId).collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> detailList = scmTaskFeign.getLatest(skuIdList);
+        List<PurchaseOrderDetailEntity> detailList = scmTaskFeign.getLatestByCrtTime(skuIdList);
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
