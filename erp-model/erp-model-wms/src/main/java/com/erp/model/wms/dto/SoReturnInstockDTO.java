@@ -387,6 +387,10 @@ public class SoReturnInstockDTO {
          */
         private String sourceCode;
         /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
          * 退货单id
          */
         private String soReturnId;

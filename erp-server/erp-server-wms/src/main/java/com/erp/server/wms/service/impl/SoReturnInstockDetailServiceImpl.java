@@ -78,7 +78,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
                 SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_92023);
+                    throw new ServiceException(ApiError.ERROR_92023, detailDto.getSkuNo());
                 }
                 //实退数量
                 Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -140,9 +140,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         List<SoReturnInstockDetailEntity> list = new ArrayList<>();
         for (SoReturnInstockDetailDTO.Add detailDto : dto.getDetailList()) {
             SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
-            SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailList.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
+            SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailList.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soReturnReceiveDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_92023);
+                throw new ServiceException(ApiError.SO_RETURN_RECEIVE_SKU_NOT_EXIST, detailDto.getSkuNo());
             }
             SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
             //实退数量

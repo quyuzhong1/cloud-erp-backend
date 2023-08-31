@@ -958,6 +958,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             }
             return m;
         })));
+
+        List<String> collect = soOutstockDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
+        List<String> ids = dndIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
+        receiveDetailIds.addAll(ids);
+
+        if (CollectionUtils.isEmpty(receiveDetailIds)) {
+            return new ArrayList<>();
+        }
+
         //根据未发货的发货通知单详情id获取未入库收货单id
         List<SoOutstockDetailEntity> soOutstockDetailEntitieList = soOutstockDetailService.listByIds(receiveDetailIds);
         List<String> notAllsoOutstockDetailIds = soOutstockDetailEntitieList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
