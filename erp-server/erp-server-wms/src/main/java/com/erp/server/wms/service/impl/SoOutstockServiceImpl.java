@@ -472,7 +472,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         if (CollectionUtils.isNotEmpty(members)) {
             inventoryInOutStockDTO.setMembers(members);
-            // inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
         }
     }
 
@@ -501,9 +501,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> noticeIdList = noticeSoOutstockList.stream().map(SoOutstockEntity::getSourceId).collect(Collectors.toList());
         //发货通知集合
         List<SoDeliveryNoticeEntity> noticeList = CollectionUtils.isNotEmpty(noticeIdList) ? soDeliveryNoticeService.listByIds(noticeIdList) : Collections.emptyList();
+
+        //这个是所有的销售订单管理的发货通知单id
+        List<SoDeliveryNoticeEntity> allDeliveryNoticeList = soDeliveryNoticeService.listBySourceIdList(soIds);
+        List<String> allDeliveryNoticeIds = allDeliveryNoticeList.stream().map(SoDeliveryNoticeEntity::getId).collect(Collectors.toList());
         //发货通知单详情
-        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainIds(noticeIdList);
-        detailIdList.addAll(soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList()));
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainIds(allDeliveryNoticeIds);
+        List<String> deliveryNoticeDetailIdList = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
         for (SoDeliveryNoticeEntity item : noticeList) {
             item.setDeliveryStatus(Boolean.FALSE);
         }
@@ -511,7 +515,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soDeliveryNoticeService.updateBatchById(noticeList);
 
         //这个是销售订单的 这个要统计 存在多个
-        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockDetailService.listDetailBySoDetailIds(detailIdList);
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockDetailService.listDetailBySoDetailIds(deliveryNoticeDetailIdList);
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         //分组
         Map<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> map = soOutstockDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailDTO.DeliveryQtyDTO::getSoDetailId));

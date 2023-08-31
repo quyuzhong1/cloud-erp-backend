@@ -21,6 +21,7 @@
             disabled,
             auth_time,
             domain,
+            country_name,
             dict_platform,
             create_user_name,
             create_time,
