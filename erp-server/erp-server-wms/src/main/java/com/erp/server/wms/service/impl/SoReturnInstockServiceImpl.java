@@ -1234,7 +1234,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             addDTO.setSourceId(entity.getId());
             addDTO.setSourceCode(entity.getCode());
             addDTO.setSourceType(SourceTypeEnum.MACHINE_INFO.getCode());
-            addDTO.setRemark("加工单（拆卸）自动生成直接调拨单");
+            addDTO.setRemark(StrUtil.format("加工单（拆卸）【{}】自动生成直接调拨单",entity.getCode()));
             //sku、仓库、仓位分组
             Map<String, List<MachineSubComponentsEntity>> childMap = value.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId().concat(obj.getWarehouseLocation()).concat(JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildWarehouseLocation()))));
 
@@ -1296,7 +1296,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             addDTO.setSourceId(entity.getId());
             addDTO.setSourceType(SourceTypeEnum.MACHINE_INFO.getCode());
             addDTO.setSupplierId(handleDetailDTO.getChildSupplierId());
-            addDTO.setReturnRemark("加工单（拆卸）自动生成采购退货单");
+            addDTO.setReturnRemark(StrUtil.format("加工单（拆卸）【{}】自动生成采购退货单",entity.getCode()));
             Map<String, List<MachineSubComponentsEntity>> childMap = value.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseLocation())));
             List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (Map.Entry<String, List<MachineSubComponentsEntity>> childEntry : childMap.entrySet()) {
