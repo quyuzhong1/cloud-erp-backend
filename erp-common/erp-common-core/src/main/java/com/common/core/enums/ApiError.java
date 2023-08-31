@@ -722,6 +722,8 @@ public enum ApiError implements Serializable {
     // 已下推退货入库单不能反审核
     ERROR_RETURN_ORDER_PUSHED(99089, "已下推退货入库单，不能反审核"),
     ERROR_WAREHOUSE_NOT_EXIST_ORG(99090, "仓库【{}】下未发现库存组织"),
+    ERROR_99089(99089,"已下推退货入库单不能反审核"),
+    ERROR_SO_RETURN_INSTOCK_NOT_GENERATE(99090,"退货入库单【{}】未审核通过，不支持下推"),
 
     STOCKTAKING_TASK_EXIST(99090 , "仓库【{}】库位【{}】 SKU【{}】 已存在盘点任务"),
     LOCATION_MOVE_DETAIL_ADD(99091 , "仓位移动明细单保存失败"),
