@@ -622,25 +622,29 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 newQc.setQcType(newProduct);
                 addList.add(newQc);
             } else if (StringUtils.isBlank(newProductGrade)) {
-                String[] split = newItem.getSaleMethod().split(",");
-                for (String s : split) {
-                    if (newSaleMethod.contains(s)) {
-                        QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
-                        BeanMapper.copy(newItem, newQc);
-                        newQc.setQcType(newProduct);
-                        addList.add(newQc);
-                        break;
+                if (StringUtils.isNotBlank(newItem.getSaleMethod())) {
+                    String[] split = newItem.getSaleMethod().split(",");
+                    for (String s : split) {
+                        if (newSaleMethod.contains(s)) {
+                            QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
+                            BeanMapper.copy(newItem, newQc);
+                            newQc.setQcType(newProduct);
+                            addList.add(newQc);
+                            break;
+                        }
                     }
                 }
             } else if (StringUtils.isBlank(newSaleMethod)) {
-                String[] split = newItem.getProductGrade().split(",");
-                for (String s : split) {
-                    if (newProductGrade.contains(s)) {
-                        QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
-                        BeanMapper.copy(newItem, newQc);
-                        newQc.setQcType(newProduct);
-                        addList.add(newQc);
-                        break;
+                if (StringUtils.isNotBlank(newItem.getProductGrade())) {
+                    String[] split = newItem.getProductGrade().split(",");
+                    for (String s : split) {
+                        if (newProductGrade.contains(s)) {
+                            QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
+                            BeanMapper.copy(newItem, newQc);
+                            newQc.setQcType(newProduct);
+                            addList.add(newQc);
+                            break;
+                        }
                     }
                 }
             } else {
@@ -662,25 +666,29 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 stockInQc.setQcType(stockIn);
                 addList.add(stockInQc);
             } else if (StringUtils.isBlank(stockInProductGrade)) {
-                String[] split = stockInItem.getSaleMethod().split(",");
-                for (String s : split) {
-                    if (stockInSaleMethod.contains(s)) {
-                        QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
-                        BeanMapper.copy(stockInItem, newQc);
-                        newQc.setQcType(stockIn);
-                        addList.add(newQc);
-                        break;
+                if (StringUtils.isNotBlank(stockInItem.getSaleMethod())) {
+                    String[] split = stockInItem.getSaleMethod().split(",");
+                    for (String s : split) {
+                        if (stockInSaleMethod.contains(s)) {
+                            QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
+                            BeanMapper.copy(stockInItem, newQc);
+                            newQc.setQcType(stockIn);
+                            addList.add(newQc);
+                            break;
+                        }
                     }
                 }
             } else if (StringUtils.isBlank(stockInSaleMethod)) {
-                String[] split = stockInItem.getProductGrade().split(",");
-                for (String s : split) {
-                    if (stockInProductGrade.contains(s)) {
-                        QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
-                        BeanMapper.copy(stockInItem, newQc);
-                        newQc.setQcType(stockIn);
-                        addList.add(newQc);
-                        break;
+                if (StringUtils.isNotBlank(stockInItem.getProductGrade())) {
+                    String[] split = stockInItem.getProductGrade().split(",");
+                    for (String s : split) {
+                        if (stockInProductGrade.contains(s)) {
+                            QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
+                            BeanMapper.copy(stockInItem, newQc);
+                            newQc.setQcType(stockIn);
+                            addList.add(newQc);
+                            break;
+                        }
                     }
                 }
             } else {

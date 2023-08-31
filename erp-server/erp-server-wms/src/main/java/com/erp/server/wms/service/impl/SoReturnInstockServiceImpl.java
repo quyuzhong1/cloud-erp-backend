@@ -414,7 +414,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         viewDTO.setCustomerName(customerInfoEntity.getName());
-
+        if (StringUtils.isNotBlank(entity.getSoReturnCode())) {
+            viewDTO.setSourceCode(entity.getSoReturnCode());
+        }
         //退货单id
         List<SoReturnEntity> returnEntityList = soReturnFeign.listByIds(Arrays.asList(viewDTO.getSoReturnId()));
         //销售单id
@@ -453,7 +455,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 Integer receiveQty = soReturnReceiveDetailEntitieList.stream().filter(req -> detailEntity.getSourceDetailId().equals(req.getId()) && req.getSkuId().equals(detailEntity.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setReceiveQty(receiveQty);
             }
-
 
             if (StringUtils.isNotBlank(detailEntity.getReturnTypeDict())) {
                 detailView.setReturnTypeDictName(ReturnTypeEnum.getName(detailEntity.getReturnTypeDict()));
@@ -778,7 +779,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(qcInfoEntity.getSourceId());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailService.getById(qcInfoEntity.getSourceDetailId());
             SoReturnInstockDTO.Add dto = new SoReturnInstockDTO.Add();
-            if (StringUtils.isBlank(receiveEntity.getSourceId())) {
+            /*if (StringUtils.isBlank(receiveEntity.getSourceId())) {
                 dto.setSourceCode(receiveEntity.getCode());
                 dto.setSourceId(receiveEntity.getId());
                 dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
@@ -786,7 +787,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 dto.setSourceCode(receiveEntity.getSourceCode());
                 dto.setSourceId(receiveEntity.getSourceId());
                 dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
-            }
+            }*/
+            dto.setSourceCode(receiveEntity.getCode());
+            dto.setSourceId(receiveEntity.getId());
+            dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
             dto.setSoReturnId(receiveEntity.getSourceId());
             dto.setSoReturnCode(receiveEntity.getSourceCode());
             dto.setCustomerId(receiveEntity.getCustomerId());
@@ -812,7 +816,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 if (StringUtils.isBlank(receiveEntity.getSourceId())) {
                     detailAddDTO.setSourceDetailId(view.getSourceDetailId());
                 } else {
-                    detailAddDTO.setSourceDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
+                    detailAddDTO.setSourceDetailId(view.getSourceDetailId());
+                    detailAddDTO.setSoReturnDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
                 }
                 detailList.add(detailAddDTO);
             }
@@ -841,7 +846,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(id);
             SoReturnInstockDTO.Add dto = new SoReturnInstockDTO.Add();
             //等于空表示无退货单的下推
-            if (StringUtils.isBlank(soReturnReceiveEntity.getSourceId())) {
+/*            if (StringUtils.isBlank(soReturnReceiveEntity.getSourceId())) {
                 dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
                 dto.setSourceCode(soReturnReceiveEntity.getCode());
                 dto.setSourceId(id);
@@ -849,7 +854,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
                 dto.setSourceCode(soReturnReceiveEntity.getSourceCode());
                 dto.setSourceId(soReturnReceiveEntity.getSourceId());
-            }
+            }*/
+            dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
+            dto.setSourceCode(soReturnReceiveEntity.getCode());
+            dto.setSourceId(id);
             dto.setSoReturnId(soReturnReceiveEntity.getSourceId());
             dto.setSoReturnCode(soReturnReceiveEntity.getSourceCode());
             dto.setCustomerId(soReturnReceiveEntity.getCustomerId());
@@ -869,6 +877,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailAddDTO.setRealQty(view.getRealQty());
                 detailAddDTO.setWarehouseLocation(view.getWarehouseLocation());
                 detailAddDTO.setRemark(view.getRemark());
+
+                if (StringUtils.isBlank(soReturnReceiveEntity.getSourceId())) {
+                    detailAddDTO.setSourceDetailId(view.getId());
+                } else {
+                    detailAddDTO.setSourceDetailId(view.getId());
+                    detailAddDTO.setSoReturnDetailId(view.getSourceDetailId());
+                }
+
                 if (StringUtils.isNotBlank(soReturnReceiveEntity.getSourceId())) {
                     detailAddDTO.setSourceDetailId(view.getSourceDetailId());
                 } else {
@@ -1038,17 +1054,17 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     public String pdaAdd(SoReturnInstockDTO.Add dto) {
         if (StringUtils.isNotBlank(dto.getSoReturnId())) {
-            dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
+            dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
             //获取来源详情id
             List<String> detailIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
             List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(detailIds);
-
+            //如果没有退货单，获取收货单的来源
             if (ObjectUtils.isEmpty(soReturnDetailEntities)) {
                 List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailByIds(detailIds);
                 for (SoReturnInstockDetailDTO.Add addDetailDto : dto.getDetailList()) {
                     SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(addDetailDto.getSourceDetailId())).findFirst().orElse(null);
                     if (ObjectUtils.isNotEmpty(soReturnReceiveDetailEntity)) {
-                        addDetailDto.setSourceDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
+                        addDetailDto.setSourceDetailId(soReturnReceiveDetailEntity.getId());
                         addDetailDto.setSoReturnDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
                     }
                 }
@@ -1071,7 +1087,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 for (SoReturnInstockDetailDTO.Update addDetailDto : dto.getDetailList()) {
                     SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(addDetailDto.getSourceDetailId())).findFirst().orElse(null);
                     if (ObjectUtils.isNotEmpty(soReturnReceiveDetailEntity)) {
-                        addDetailDto.setSourceDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
+                        addDetailDto.setSourceDetailId(soReturnReceiveDetailEntity.getId());
                         addDetailDto.setSoReturnDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
                     }
                 }

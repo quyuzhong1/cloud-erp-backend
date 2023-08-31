@@ -565,25 +565,30 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 newQc.setQcType(returnQc);
                 addList.add(newQc);
             } else if (StringUtils.isBlank(newProductGrade)) {
-                String[] split = newItem.getSaleMethod().split(",");
-                for (String s : split) {
-                    if (newSaleMethod.contains(s)) {
-                        QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
-                        BeanMapper.copy(newItem, newQc);
-                        newQc.setQcType(returnQc);
-                        addList.add(newQc);
-                        break;
+                if (StringUtils.isNotBlank(newItem.getSaleMethod())) {
+                    String[] split = newItem.getSaleMethod().split(",");
+                    for (String s : split) {
+                        if (newSaleMethod.contains(s)) {
+                            QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
+                            BeanMapper.copy(newItem, newQc);
+                            newQc.setQcType(returnQc);
+                            addList.add(newQc);
+                            break;
+                        }
                     }
                 }
+
             } else if (StringUtils.isBlank(newSaleMethod)) {
-                String[] split = newItem.getProductGrade().split(",");
-                for (String s : split) {
-                    if (newProductGrade.contains(s)) {
-                        QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
-                        BeanMapper.copy(newItem, newQc);
-                        newQc.setQcType(returnQc);
-                        addList.add(newQc);
-                        break;
+                if (StringUtils.isNotBlank(newItem.getProductGrade())) {
+                    String[] split = newItem.getProductGrade().split(",");
+                    for (String s : split) {
+                        if (newProductGrade.contains(s)) {
+                            QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
+                            BeanMapper.copy(newItem, newQc);
+                            newQc.setQcType(returnQc);
+                            addList.add(newQc);
+                            break;
+                        }
                     }
                 }
             } else {
