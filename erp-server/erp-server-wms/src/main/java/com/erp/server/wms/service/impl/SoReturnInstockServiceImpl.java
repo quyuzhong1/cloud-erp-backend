@@ -1105,8 +1105,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             throw new ServiceException(ApiError.ERROR_95163);
         }
         //sku信息
+        List<String> allSkuIdList = bomList.stream().flatMap(obj -> Stream.of(obj.getSkuId(), obj.getParentSkuId())).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        if (CollectionUtils.isEmpty(skuList)) {
+        if (CollectionUtils.isEmpty(allSkuIdList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
         //根据sku、仓库、仓位合并显示
@@ -1149,15 +1150,22 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             viewDTO.setChildLength(childList.size());
             //显示按明细维度显示数据
             for (BomChildrenSkuDTO childrenSkuDTO : childList) {
+                //产品信息
+                SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(childrenSkuDTO.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(childSkuVO)) {
+                    throw new ServiceException(ApiError.ERROR_95084);
+                }
                 SoReturnInstockDTO.ViewGenerateMachineInfoDTO viewChildDTO = new SoReturnInstockDTO.ViewGenerateMachineInfoDTO();
                 BeanMapperUtils.copy(viewDTO,viewChildDTO);
                 viewChildDTO.setChildSkuId(childrenSkuDTO.getSkuId());
                 viewChildDTO.setChildSkuNo(childrenSkuDTO.getSkuNo());
                 viewChildDTO.setQuantity(childrenSkuDTO.getQuantity());
                 viewChildDTO.setChildQty(curInventoryQty * childrenSkuDTO.getQuantity());
+                //默认退供应商
+                viewChildDTO.setHandleType(MachineHandleTypeEnum.RETURN_SUPPLIER.getCode());
                 viewChildDTO.setChildWarehouseId(viewDTO.getWarehouseId());
                 viewChildDTO.setChildWarehouseLocation(viewDTO.getWarehouseLocation());
-                viewChildDTO.setChildSupplierId(skuVO.getSupplierId());
+                viewChildDTO.setChildSupplierId(childSkuVO.getSupplierId());
                 resultList.add(viewChildDTO);
             }
 

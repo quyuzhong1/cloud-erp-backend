@@ -824,6 +824,11 @@ public class SoReturnInstockDTO {
         private Integer childQty;
 
         /**
+         * 处理类型
+         */
+        private String handleType;
+
+        /**
          * 子级SKU仓库id
          */
         private String childWarehouseId;
