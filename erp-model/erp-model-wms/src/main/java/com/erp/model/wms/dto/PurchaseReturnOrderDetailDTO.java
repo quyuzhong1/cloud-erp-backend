@@ -284,6 +284,11 @@ public class PurchaseReturnOrderDetailDTO {
         private String warehouseLocation;
 
         /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+
+        /**
          * 即时库存
          */
         private Integer curInventoryQty;

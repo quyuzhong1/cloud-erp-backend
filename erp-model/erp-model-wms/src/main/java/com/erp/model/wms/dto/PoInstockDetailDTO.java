@@ -134,6 +134,11 @@ public class PoInstockDetailDTO implements Serializable {
         private String warehouseLocation;
 
         /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+
+        /**
          * 库存状态
          */
         private String inventoryStatusName;
