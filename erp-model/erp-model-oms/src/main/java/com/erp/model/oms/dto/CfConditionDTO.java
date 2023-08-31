@@ -100,6 +100,11 @@ public class CfConditionDTO implements Serializable {
         private String logic;
 
         /**
+         * 逻辑关系名
+         */
+        private String logicName;
+
+        /**
         * 空间 如时间戳 输入框之类
         */
         @NotBlank(message = "空间 如时间戳 输入框之类不能为空")

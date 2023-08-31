@@ -14,6 +14,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.CfConditionDTO;
 
+import java.util.List;
+
 /**
  * 条件配置表
  *
@@ -29,35 +31,49 @@ public class CfConditionController extends BaseController {
     private CfConditionService cfConditionService;
 
     /**
-    * 新增
-    * @author Lambda
-    * @date:  2023-08-30
-    * @param dto
-    * @return ApiResult<String>
-    */
+     * 新增
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-08-30
+     */
     @PostMapping("/add")
     public ApiResult<String> add(@RequestBody @Validated CfConditionDTO.AddDTO dto) {
         return success(cfConditionService.add(dto));
     }
 
     /**
-    * 修改
-    * @author Lambda
-    * @date:  2023-08-30
-    * @param dto
-    * @return ApiResult
-    */
+     * 修改
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Lambda
+     * @date: 2023-08-30
+     */
     @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "oms:cfCondition:update",
-        serviceClass = CfConditionService.class,
-        keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:cfCondition:update",
+            serviceClass = CfConditionService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated CfConditionDTO.UpdateDTO dto) {
         cfConditionService.update(dto);
         return success();
     }
 
+    /**
+     * 根据条件code 获取到对应逻辑关系
+     *
+     * @param conditionCode
+     * @return
+     */
+    @GetMapping("/list")
+    public ApiResult<List<CfConditionDTO.CommonDTO>> listByConditionCode(@RequestParam("conditionCode") String conditionCode) {
+        List<CfConditionDTO.CommonDTO> resultList = cfConditionService.listByConditionCode(conditionCode);
+        return success(resultList);
+
+    }
 
 
 }

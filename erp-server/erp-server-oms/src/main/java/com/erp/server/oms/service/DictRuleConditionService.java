@@ -1,4 +1,5 @@
 package com.erp.server.oms.service;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.entity.DictRuleConditionEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -43,4 +44,13 @@ public interface DictRuleConditionService extends SuperService<DictRuleCondition
      * @return java.lang.Boolean
      */
     Boolean batchSaveOrUpdate(List<DictRuleConditionDTO.UpdateDTO> dto);
+
+    /**
+     * 根据key
+     * @author yl
+     * @date 2023-08-31 11:48
+     * @param type
+     * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.CommonDTO>
+     */
+    List<BaseDropDownDTO.CommonDTO> listByType(String type);
 }

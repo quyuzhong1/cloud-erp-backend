@@ -85,6 +85,16 @@ public class CfConditionServiceImpl extends SuperServiceImpl<CfConditionMapper, 
         return Boolean.TRUE;
     }
 
+    /**
+     * 根据添加code 获取到逻辑关系
+     * @param conditionCode
+     * @return
+     */
+    @Override
+    public List<CfConditionDTO.CommonDTO> listByConditionCode(String conditionCode) {
+        return baseMapper.listByConditionCode(conditionCode);
+    }
+
 
     /**
     * 新增修改处理数据

@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.DictRuleConditionEntity;
 import com.erp.server.oms.mapper.DictRuleConditionMapper;
@@ -103,6 +104,19 @@ public class DictRuleConditionServiceImpl extends SuperServiceImpl<DictRuleCondi
         }
         List<DictRuleConditionEntity> addList = BeanMapper.copyList(list, DictRuleConditionEntity.class);
         return this.saveOrUpdateBatch(addList);
+    }
+
+
+    /**
+     * 根据key
+     * @author yl
+     * @date 2023-08-31 11:48
+     * @param key
+     * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.CommonDTO>
+     */
+    @Override
+    public List<BaseDropDownDTO.CommonDTO> listByType(String key) {
+        return baseMapper.listByType(key);
     }
 
 

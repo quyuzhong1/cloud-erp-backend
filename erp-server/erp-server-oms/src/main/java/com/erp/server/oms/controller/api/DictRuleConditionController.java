@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,12 +33,13 @@ public class DictRuleConditionController extends BaseController {
     private DictRuleConditionService dictRuleConditionService;
 
     /**
-    * 新增
-    * @author Lambda
-    * @date:  2023-08-30
-    * @param dto
-    * @return ApiResult<String>
-    */
+     * 新增
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-08-30
+     */
     @PostMapping("/add")
     public ApiResult<String> add(@RequestBody @Validated DictRuleConditionDTO.AddDTO dto) {
         return success(dictRuleConditionService.add(dto));
@@ -56,23 +58,29 @@ public class DictRuleConditionController extends BaseController {
     }
 
     /**
-    * 修改
-    * @author Lambda
-    * @date:  2023-08-30
-    * @param dto
-    * @return ApiResult
-    */
+     * 修改
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Lambda
+     * @date: 2023-08-30
+     */
     @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "oms:dictRuleCondition:update",
-        serviceClass = DictRuleConditionService.class,
-        keyIdName = "id")
     public ApiResult update(@RequestBody @Validated DictRuleConditionDTO.UpdateDTO dto) {
         dictRuleConditionService.update(dto);
         return success();
     }
 
+    /**
+     * approvalCondition 订单审核条件下拉
+     *
+     * @param type
+     * @return
+     */
+    @GetMapping("/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listByKey(@RequestParam("type") String type) {
+        return success(dictRuleConditionService.listByType(type));
+    }
 
 
 }

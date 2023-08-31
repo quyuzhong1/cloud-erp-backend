@@ -31,6 +31,9 @@
         is_deleted,
         condition_field, logic, controls, api_url
     </sql>
+    <select id="listByConditionCode" resultType="com.erp.model.oms.dto.CfConditionDTO$CommonDTO">
+
+    </select>
 
 
 </mapper>

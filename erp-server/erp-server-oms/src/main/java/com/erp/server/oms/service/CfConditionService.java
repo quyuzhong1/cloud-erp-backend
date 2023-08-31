@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.CfConditionDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 条件配置表 服务类
@@ -32,5 +34,10 @@ public interface CfConditionService extends SuperService<CfConditionEntity> {
     */
     Boolean update(CfConditionDTO.UpdateDTO dto);
 
-
+    /**
+     * 根据添加code 获取到逻辑关系
+     * @param conditionCode
+     * @return
+     */
+    List<CfConditionDTO.CommonDTO> listByConditionCode(String conditionCode);
 }
