@@ -15,18 +15,17 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.ShopDTO;
-import com.erp.model.oms.entity.DictAmazonAreaCountryEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.oms.enums.PlatformDictEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.ShopInfoMapper;
-import com.erp.server.oms.service.DictAmazonAreaCountryService;
 import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
@@ -73,9 +72,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Resource
     private ShopAuthService shopAuthService;
-
-    @Resource
-    private DictAmazonAreaCountryService dictAmazonAreaCountryService;
 
 
     /**
@@ -162,7 +158,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
         //国家集合
         List<String> countryCodeList = dto.getDictCountryCodeList();
-        List<DictAmazonAreaCountryEntity> countryList = dictAmazonAreaCountryService.listByCountryCodes(countryCodeList);
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryCodeList);
         List<ShopInfoEntity> addList = new ArrayList<>(countryList.size());
         //店铺名称
         String name = dto.getName();
@@ -179,8 +175,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
         }
         for (String countryCode : countryCodeList) {
-            String countryName = countryList.stream().filter(c -> c.getCountryCode().equals(countryCode)).findFirst().
-                    map(DictAmazonAreaCountryEntity::getCountryName).orElse("");
+            String countryName = countryList.stream().filter(c -> c.getId().equals(countryCode)).findFirst().
+                    map(DictCountryEntity::getNameCn).orElse("");
             String shopName = name.concat(countryName);
             checkName("", shopName);
             if (StringUtils.isNotBlank(countryName)) {
@@ -188,6 +184,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 BeanMapper.copy(dto, shop);
                 shop.setDictCountryCode(countryCode);
                 shop.setName(shopName);
+                shop.setCountryName(countryName);
                 shop.setSalesOrgName(orgName);
                 shop.setChargeName(chargeName);
                 addList.add(shop);
@@ -286,20 +283,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
         //国家id
         List<String> countryIdList = list.stream().map(ShopDTO.PagingViewDTO::getDictCountryCode).collect(Collectors.toList());
-        List<DictAmazonAreaCountryEntity> countryList = dictAmazonAreaCountryService.listByCountryCodes(countryIdList);
-        List<BaseDropDownDTO.CommonDTO> areaList = dictAmazonAreaCountryService.areaList();
         for (ShopDTO.PagingViewDTO item : list) {
             //平台
             String dictPlatform = item.getDictPlatform();
             item.setDictPlatform(dictPlatform);
             String areaId = item.getDictAreaCode();
-            String areaName = areaList.stream().filter(a -> a.getCode().equals(areaId)).
-                    map(BaseDropDownDTO.CommonDTO::getValue).findFirst().orElse("");
-            item.setAreaName(areaName);
+            item.setAreaName(item.getDictAreaCode());
             String countryId = item.getDictCountryCode();
-            String countryName = countryList.stream().filter(a -> a.getCountryCode().equals(countryId)).
-                    map(DictAmazonAreaCountryEntity::getCountryName).findFirst().orElse("");
-            item.setCountryName(countryName);
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "禁用" : "启用";
             item.setDisabledName(disabledName);
@@ -363,22 +353,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         BeanMapper.copy(shop, view);
         String authStatus = shop.getAuthStatus();
         view.setAuthStatusName(AuthStatusEnum.getName(authStatus));
-        String areaId = StringUtils.isNotBlank(view.getDictAreaCode()) ? view.getDictAreaCode() : "";
-        String countryId = StringUtils.isNotBlank(view.getDictCountryCode()) ? view.getDictCountryCode() : "";
         //平台
         String dictPlatform = view.getDictPlatform();
         String dictType = DictBasicEnum.PLATFORM.getType();
         DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(dictType, dictPlatform);
         String platformName = Objects.nonNull(dictBasic) ? dictBasic.getName() : "";
-        List<DictAmazonAreaCountryEntity> countryList = dictAmazonAreaCountryService.listByCountryCodes(Arrays.asList(countryId));
-
-
-        String countryName = countryList.stream().filter(a -> a.getCountryCode().equals(countryId)).
-                map(DictAmazonAreaCountryEntity::getCountryName).findFirst().orElse("");
-        String areaName = countryList.stream().filter(a -> a.getCountryCode().equals(countryId)).
-                map(DictAmazonAreaCountryEntity::getRegionName).findFirst().orElse("");
-        view.setAreaName(areaName);
-        view.setCountryName(countryName);
+        view.setAreaName(shop.getDictAreaCode());
         view.setPlatformName(platformName);
         return view;
     }

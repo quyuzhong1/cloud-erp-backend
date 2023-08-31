@@ -101,6 +101,18 @@ public class DictCountryEntity extends BaseEntity<DictCountryEntity> {
     @TableField("kingdee_code")
     private String kingdeeCode;
 
+    /**
+     * 亚马逊区域
+     */
+    @TableField("amazon_area")
+    private String amazonArea;
+
+    /**
+     * 数据标识
+     */
+    @TableField("data_flag")
+    private String dataFlag;
+
 
     public static final String NAME_CN = "name_cn";
 

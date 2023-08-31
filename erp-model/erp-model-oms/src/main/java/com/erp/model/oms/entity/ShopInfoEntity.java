@@ -71,6 +71,12 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     @TableField("dict_country_code")
     private String dictCountryCode;
 
+    /**
+     * 国家名
+     */
+    @TableField("country_name")
+    private String countryName;
+
 
     /**
      * 负责人id
