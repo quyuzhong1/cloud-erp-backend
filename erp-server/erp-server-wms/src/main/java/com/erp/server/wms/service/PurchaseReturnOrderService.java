@@ -277,4 +277,22 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @return java.lang.Boolean
      **/
     Boolean pdaUpdate(PurchaseReturnOrderDTO.UpdateDTO dto);
+
+    /**
+     * PDA:新增并提交
+     * @Author Luo_WG
+     * @Date 2023/8/30 18:28
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaAddAndSubmit(PurchaseReturnOrderDTO.AddDTO dto);
+
+    /**
+     * 修改并提交
+     * @Author Luo_WG
+     * @Date 2023/8/30 18:28
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaUpdateAndSubmit(PurchaseReturnOrderDTO.UpdateDTO dto);
 }

@@ -148,7 +148,7 @@ public class PdaPoReturnController extends BaseController {
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
-        Boolean flag = purchaseReturnOrderService.addAndSubmit(dto);
+        Boolean flag = purchaseReturnOrderService.pdaAddAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
@@ -166,7 +166,7 @@ public class PdaPoReturnController extends BaseController {
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
-        Boolean flag = purchaseReturnOrderService.updateAndSubmit(dto);
+        Boolean flag = purchaseReturnOrderService.pdaUpdateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 

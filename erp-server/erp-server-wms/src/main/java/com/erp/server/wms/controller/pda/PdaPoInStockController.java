@@ -129,7 +129,7 @@ public class PdaPoInStockController extends BaseController {
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PoInstockDTO.AddDTO dto) {
-        String id = poInstockService.addAndSubmit(dto);
+        String id = poInstockService.pdaAddAndSubmit(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
@@ -147,7 +147,7 @@ public class PdaPoInStockController extends BaseController {
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated PoInstockDTO.UpdateDTO dto) {
-        Boolean flag = poInstockService.updateAndSubmit(dto);
+        Boolean flag = poInstockService.pdaUpdateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
