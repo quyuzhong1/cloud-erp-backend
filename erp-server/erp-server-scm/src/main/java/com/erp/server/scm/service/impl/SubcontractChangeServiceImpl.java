@@ -624,7 +624,10 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             }
             //已下推采购订单数量
             Integer qty = poList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId())).map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
-
+           //如果已下推数量等于变更后数量则无需下推采购订单
+            if (MathUtil.compareTo(detailEntity.getQty(),qty) == MathUtil.ZERO) {
+                continue;
+            }
             SubcontractOrderDTO.GeneratePoDTO generatePoDTO = new SubcontractOrderDTO.GeneratePoDTO();
             generatePoDTO.setSourceDetailId(detailEntity.getSourceDetailId());
             generatePoDTO.setSourceId(subcontractChangeEntity.getSourceId());
