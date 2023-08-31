@@ -644,5 +644,14 @@ public class SkuMappingDTO implements Serializable {
          * 含税成本（本位币）
          */
         private BigDecimal taxCost;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+        /**
+         * 图片url
+         */
+        private String imageUrl;
     }
 }
