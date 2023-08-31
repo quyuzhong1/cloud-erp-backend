@@ -115,6 +115,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Autowired
     private InventoryService inventoryService;
 
+    @Autowired
+    private WarehouseLocationService warehouseLocationService;
+
     @Value("${companyCode}")
     private String companyCode;
 
@@ -432,6 +435,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //可用数量
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
 
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(purchaseReturnOrderEntity.getReturnWarehouseId()));
+
         for (PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity : detail) {
             Integer stockInQty = stockInDetailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(purchaseReturnOrderDetailEntity.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             PurchaseReturnOrderDetailDTO.ViewDTO detailView = new PurchaseReturnOrderDetailDTO.ViewDTO();
@@ -452,7 +457,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             detailView.setSpuNo(productDetailEntity.getSpuNo());
             detailView.setUnit(productDetailEntity.getUnitName());
             detailView.setVariantProperty(productDetailEntity.getVariantProperty());
-
             //根据组织、仓库、sku查询可用库存
             /*
             Integer curInventoryQty = inventoryService.getUsableInventoryTotal(purchaseReturnOrderEntity.getReturnWarehouseId(), purchaseReturnOrderDetailEntity.getSkuId());
@@ -464,6 +468,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     && Objects.equals(r.getWarehouseLocationId(), StrUtils.null2EmptyWithTrim(purchaseReturnOrderDetailEntity.getWarehouseLocation()))).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
             detailView.setCurInventoryQty(curInventoryQty);
 
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(detailView.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            detailView.setWarehouseLocationName(warehouseLocationEntity.getName());
             detailViewDTOS.add(detailView);
         }
         viewDTO.setPurchasePriceDetailList(detailViewDTOS);

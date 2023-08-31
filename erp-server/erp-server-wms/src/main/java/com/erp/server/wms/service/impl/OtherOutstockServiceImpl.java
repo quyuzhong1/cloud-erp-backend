@@ -108,6 +108,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     @Resource
     private InventoryService inventoryService;
 
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
+
     @Override
     public PagingVO<OtherOutstockDTO.ListDTO> paging(PagingDTO<OtherOutstockDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -306,6 +309,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //产品信息
         List<String> skuIds = detailList.stream().map(OtherOutstockDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(entity.getWarehouseId()));
         for (OtherOutstockDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
@@ -315,6 +319,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             //根据组织、仓库、sku查询可用库存
             Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getWarehouseId(), viewDetailDTO.getSkuId());
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(viewDetailDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            viewDetailDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
         }
         viewDTO.setDetailList(viewDetailList);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));

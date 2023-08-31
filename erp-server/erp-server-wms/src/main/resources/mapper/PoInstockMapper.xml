@@ -112,7 +112,7 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.stockInDateList != null and params.stockInDateList.size > 0">AND
+            <if test="params.stockInDateList != null and params.stockInDateList.size > 0">
                 and psi.stock_in_date >= #{params.stockInDateList[0]} AND (#{params.stockInDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > psi.stock_in_date
             </if>
             <if test="params.invalidStatus != null">
@@ -341,7 +341,7 @@
                 #{item}
             </foreach>
         </if>
-        <if test="params.stockInDateList != null and params.stockInDateList.size > 0">AND
+        <if test="params.stockInDateList != null and params.stockInDateList.size > 0">
             and psi.stock_in_date >= #{params.stockInDateList[0]} AND (#{params.stockInDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > psi.stock_in_date
         </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">

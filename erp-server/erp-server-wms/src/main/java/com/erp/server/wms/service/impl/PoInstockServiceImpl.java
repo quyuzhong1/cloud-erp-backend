@@ -132,6 +132,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     @Autowired
     private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
 
+    @Autowired
+    private WarehouseLocationService warehouseLocationService;
+
     @Override
     public PagingVO<PoInstockDTO.ListDTO> paging(PagingDTO<PoInstockDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -430,6 +433,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         //收货单明细
         List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(entity.getDeliveryWarehouseId()));
 
         details.forEach(obj -> {
             if (CollectionUtils.isNotEmpty(skuVOList)) {
@@ -463,6 +467,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 Integer receiveQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 obj.setReceiveQty(receiveQty);
             }
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            obj.setWarehouseLocationName(warehouseLocationEntity.getName());
             //库存状态默认可用
             obj.setInventoryStatusName(InventoryStatusEnum.USABLE.getName());
         });

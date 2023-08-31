@@ -105,6 +105,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Resource
     private SyncKingdeeOtherInstockService syncKingdeeOtherInstockService;
 
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
+
     @Override
     public PagingVO<OtherInstockDTO.ListDTO> paging(PagingDTO<OtherInstockDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -278,12 +281,15 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //产品信息
         List<String> skuIds = detailList.stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(entity.getWarehouseId()));
         for (OtherInstockDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
                 String productName = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
                 viewDetailDTO.setProductName(productName);
             }
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(viewDetailDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            viewDetailDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
         }
         viewDTO.setDetailList(viewDetailList);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));

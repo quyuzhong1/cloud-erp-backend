@@ -382,6 +382,11 @@ public class SoOutstockDetailDTO implements Serializable {
         private String warehouseLocation;
 
         /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
+
+        /**
          * 箱麦附件名集合
          */
         private List<String> attachNameList;

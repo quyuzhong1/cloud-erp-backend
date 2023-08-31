@@ -118,6 +118,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private SyncKingdeeSoOutstockService syncKingdeeSoOutstockService;
 
     @Resource
+    private WarehouseLocationService warehouseLocationService;
+
+    @Resource
     private RedisService redisService;
 
     @Override
@@ -328,6 +331,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             result.setSalesOrgName(soInfo.getSalesOrgName());
         }
         List<SoOutstockDetailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id, soOutstock.getWarehouseId());
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(soOutstock.getWarehouseId()));
+        for (SoOutstockDetailDTO.ViewDTO viewDTO : detailList) {
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(viewDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            viewDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
+        }
         result.setDetailList(detailList);
         return result;
     }
