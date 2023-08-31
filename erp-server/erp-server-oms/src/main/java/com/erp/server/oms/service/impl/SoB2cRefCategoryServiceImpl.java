@@ -1,15 +1,24 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.SoB2cRefCategoryDTO;
+import com.erp.model.oms.entity.OrderCategoryDetailEntity;
 import com.erp.model.oms.entity.SoB2cRefCategoryEntity;
 import com.erp.server.oms.mapper.SoB2cRefCategoryMapper;
+import com.erp.server.oms.service.OrderCategoryDetailService;
 import com.erp.server.oms.service.SoB2cRefCategoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -23,6 +32,22 @@ import java.util.List;
 @Service
 public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCategoryMapper, SoB2cRefCategoryEntity> implements SoB2cRefCategoryService {
 
+    @Resource
+    private OrderCategoryDetailService orderCategoryDetailService;
+    
+    @Override
+    public Boolean add(List<SoB2cRefCategoryDTO.AddDTO> addList, String mainId) {
+        if (CollectionUtils.isEmpty(addList)) {
+            return Boolean.TRUE;
+        }
+        List<SoB2cRefCategoryEntity> soB2cRefCategoryList = BeanMapperUtils.copyList(SoB2cRefCategoryEntity.class, addList);
+        //数据处理
+        handleCategory(soB2cRefCategoryList);
+
+        return this.saveOrUpdateBatch(soB2cRefCategoryList);
+    }
+
+
 
     @Override
     public List<SoB2cRefCategoryEntity> listByMainIds(List<String> mainIds) {
@@ -35,5 +60,26 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
     @Override
     public Boolean deleteByMainIds(List<String> mainIds) {
         return lambdaUpdate().in(SoB2cRefCategoryEntity::getSoB2cId,mainIds).remove();
+    }
+
+    /**
+     * 数据处理
+     */
+    private void handleCategory (List<SoB2cRefCategoryEntity> soB2cRefCategoryList) {
+        if (CollectionUtils.isEmpty(soB2cRefCategoryList)) {
+            return;
+        }
+        List<String> categoryIdList = soB2cRefCategoryList.stream().map(SoB2cRefCategoryEntity::getCategoryId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(categoryIdList)) {
+            return;
+        }
+        List<OrderCategoryDetailEntity> orderCategoryDetailList = orderCategoryDetailService.listByIds(categoryIdList);
+        if (CollectionUtils.isEmpty(orderCategoryDetailList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_REF_CATEGORY_NOT_EXIST);
+        }
+        for (SoB2cRefCategoryEntity entity : soB2cRefCategoryList) {
+            String categoryName = orderCategoryDetailList.stream().filter(obj -> obj.getId().equals(entity.getCategoryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            entity.setCategoryName(categoryName);
+        }
     }
 }

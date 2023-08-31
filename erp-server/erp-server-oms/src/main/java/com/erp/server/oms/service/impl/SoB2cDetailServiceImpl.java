@@ -98,7 +98,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Override
     public List<SoB2cDetailEntity> listByMainId(String mainId) {
-        return lambdaQuery().eq(SoB2cDetailEntity::getId,mainId).list();
+        return lambdaQuery().eq(SoB2cDetailEntity::getMainId,mainId).list();
     }
 
     @Override
@@ -106,7 +106,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         if (CollectionUtils.isEmpty(mainIds)) {
             return Collections.EMPTY_LIST;
         }
-        return lambdaQuery().in(SoB2cDetailEntity::getId,mainIds).list();
+        return lambdaQuery().in(SoB2cDetailEntity::getMainId,mainIds).list();
     }
 
     @Override
@@ -162,7 +162,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         //产品信息
         List<String> skuIds = list.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        if (CollectionUtils.isNotEmpty(skuList)) {
+        if (CollectionUtils.isEmpty(skuList)) {
             log.error("未找到SKU，warehouseIds = {}",skuList);
             throw new ServiceException(ApiError.ERROR_95084);
         }
@@ -194,6 +194,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             if (ObjectUtils.isEmpty(skuVO)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
+            detailEntity.setMainId(mainId);
             detailEntity.setSkuNo(skuVO.getSkuNo());
             //建议售价
             detailEntity.setAdvicePrice(skuVO.getRetailPrice());

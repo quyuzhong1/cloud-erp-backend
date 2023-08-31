@@ -42,12 +42,12 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
 
     @Override
     public SoB2cReceiverEntity getByMainId(String mainId) {
-        return lambdaQuery().eq(SoB2cReceiverEntity::getId,mainId).one();
+        return lambdaQuery().eq(SoB2cReceiverEntity::getMainId,mainId).one();
     }
 
     @Override
     public List<SoB2cReceiverEntity> listByMainIds(List<String> mainIds) {
-        return lambdaQuery().in(SoB2cReceiverEntity::getId,mainIds).list();
+        return lambdaQuery().in(SoB2cReceiverEntity::getMainId,mainIds).list();
     }
 
     @Override

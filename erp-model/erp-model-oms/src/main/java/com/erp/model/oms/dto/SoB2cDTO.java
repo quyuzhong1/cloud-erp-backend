@@ -464,7 +464,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 明细信息
          */
-        @NotNull(message = "明细信息不能为空")
+        @NotEmpty(message = "明细信息不能为空")
         @Valid
         private List<SoB2cDetailDTO.AddDTO> detailList;
     }
