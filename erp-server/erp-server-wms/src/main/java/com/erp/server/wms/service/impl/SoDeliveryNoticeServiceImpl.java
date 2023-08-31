@@ -749,7 +749,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             // 忽略库存计算SKU
             List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
             List<String> ignoreInventorySkuIds = Lists.newArrayList();
-            if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            if (CollUtil.isNotEmpty(ignoreInventorySkuList)) {
                 ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
             }
 
@@ -761,7 +761,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                         entity.getWarehouseName(), detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getDeliveryQty());
 
                 List<InventoryEntity> inventoryList = Lists.newArrayList();
-                if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
+                if (ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
                     InventoryEntity inventoryEntity = new InventoryEntity();
                     inventoryEntity.setWarehouseId(dto.getWarehouseId());
                     inventoryEntity.setOrgId(dto.getOrgId());
@@ -831,7 +831,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         // 产品属性为费用或服务的sku忽略库存计算
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+        if (CollUtil.isNotEmpty(ignoreInventorySkuList)) {
             ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
         }
 
@@ -846,7 +846,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 add.setPlanDeliveryDate(view.getPlanDeliveryDate());
                 SoDeliveryNoticeDetailDTO.Add detailAdd = new SoDeliveryNoticeDetailDTO.Add();
 
-                if(ignoreInventorySkuIds.contains(view.getSkuId())) {
+                if (ignoreInventorySkuIds.contains(view.getSkuId())) {
                     log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", view.getSkuId(), view.getSkuNo());
                 } else {
                     //即时库存
@@ -923,8 +923,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    public Map<String,Long> getPushDownDeliveryNoticeCnt(List<String> soIds) {
-        if(CollUtil.isEmpty(soIds)) {
+    public Map<String, Long> getPushDownDeliveryNoticeCnt(List<String> soIds) {
+        if (CollUtil.isEmpty(soIds)) {
             return Maps.newHashMap();
         }
         List<SoDeliveryNoticeEntity> deliveryNoticeList = this.lambdaQuery()
@@ -932,7 +932,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 .eq(SoDeliveryNoticeEntity::getSourceType, SourceTypeEnum.SO_INFO.getCode())
                 .eq(SoDeliveryNoticeEntity::getInvalidStatus, Boolean.FALSE).list();
 
-        if(CollUtil.isEmpty(deliveryNoticeList)) {
+        if (CollUtil.isEmpty(deliveryNoticeList)) {
             return Maps.newHashMap();
         }
         return deliveryNoticeList.stream().collect(Collectors.groupingBy(SoDeliveryNoticeEntity::getSourceId, Collectors.counting()));
@@ -968,5 +968,21 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeList.sort(Comparator.comparing(SoDeliveryNoticeDTO.PdaSoDeliveryNotice::getCode).reversed());
         list.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
         return list;
+    }
+
+    /**
+     * 根据来源ids 获取数据
+     *
+     * @param sourceIds
+     * @return java.util.List<com.erp.model.wms.entity.SoDeliveryNoticeEntity>
+     * @author yl
+     * @date 2023-08-30 19:23
+     */
+    @Override
+    public List<SoDeliveryNoticeEntity> listBySourceIdList(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoDeliveryNoticeEntity::getSourceId,sourceIds).list();
     }
 }

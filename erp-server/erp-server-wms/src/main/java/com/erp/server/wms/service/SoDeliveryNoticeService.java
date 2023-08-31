@@ -204,4 +204,13 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PdaSoDeliveryNotice>
      **/
     List<SoDeliveryNoticeDTO.PdaSoDeliveryNotice> pdaList(SoDeliveryNoticeDTO.PdaSoDeliveryNoticeParam dto);
+
+    /**
+     * 根据来源ids 获取数据
+     * @author yl
+     * @date 2023-08-30 19:23
+     * @param sourceIds
+     * @return java.util.List<com.erp.model.wms.entity.SoDeliveryNoticeEntity>
+     */
+    List<SoDeliveryNoticeEntity> listBySourceIdList(List<String> sourceIds);
 }
