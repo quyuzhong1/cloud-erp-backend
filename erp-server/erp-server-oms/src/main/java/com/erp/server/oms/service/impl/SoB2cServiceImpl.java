@@ -33,6 +33,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -42,6 +43,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.*;
@@ -112,6 +114,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Autowired
     private DmpTaskFeign dmpTaskFeign;
+
+    @Autowired
+    private WmsTaskFeign wmsTaskFeign;
 
     @Autowired
     private SoB2cRefService soB2cRefService;
@@ -403,19 +408,35 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        String msg ;
+        //原分类
+        String oldCategoryName = "";
+        List<SoB2cRefCategoryEntity> list = soB2cRefCategoryService.listByMainIds(Arrays.asList(id));
+        if (CollectionUtils.isNotEmpty(list)) {
+            oldCategoryName = list.stream().map(SoB2cRefCategoryEntity::getCategoryName).collect(Collectors.joining(","));
+        }
+        //添加分类
+        String newCategoryName = "";
+        if (CollectionUtils.isNotEmpty(categoryIdList)) {
+            List<OrderCategoryDetailEntity> categoryList = orderCategoryDetailService.listByIds(categoryIdList);
+            newCategoryName = categoryList.stream().map(obj -> obj.getName()).collect(Collectors.joining(","));
+        }
+
+        String msg = "";
         if (SoB2cCategoryTypeEnum.ENUM_ADD.equals(typeEnum)) {
             addCategory(categoryIdList, id);
-            msg = SoB2cCategoryTypeEnum.ENUM_ADD.getName().concat("");
+            msg = "原分类：【{}】，新增分类：【{}】。";
         }
         if (SoB2cCategoryTypeEnum.ENUM_UPDATE.equals(typeEnum)) {
             updateCategory(categoryIdList, id);
+            msg = "原分类：【{}】，更新分类：【{}】。";
         }
         if (SoB2cCategoryTypeEnum.ENUM_DELETE.equals(typeEnum)) {
             deleteCategory(id);
+            msg = "原分类：【{}】，删除分类。";
         }
         // 记录操作日志
         log.info("更新分类 开始记录B2C销售订单表日志数据，id：【{}】", id);
+        operateLogService.addModuleOperateLog(StrUtil.format(msg,oldCategoryName,newCategoryName), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "修改订单备注");
         return BatchResultDTO.success(entity.getCode(), "更新订单分类");
     }
 
@@ -484,9 +505,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cLogisticsEntity.setDictLogisticsMethod(dto.getDictLogisticsMethod());
             }
         }
-        //货物物流单号，TODO
-        String logisticsCode = IdWorker.getIdStr();
-        soB2cLogisticsEntity.setCode(logisticsCode);
         //物流信息更新
         soB2cLogisticsService.updateById(soB2cLogisticsEntity);
         //明细仓库更新
@@ -496,6 +514,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //销售订单更新
         entity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
         this.updateById(entity);
+
+        //物流方式
+        DictBasicEntity dictBasicEntity = dictBasicService.getByTypeAndValue(DictBasicEnum.LOGISTICS_METHOD.getDesc(), dto.getDictLogisticsMethod());
+        if (ObjectUtils.isEmpty(dictBasicEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
+        }
+        //仓库信息
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        //操作日志
+        String msg = "B2C销售订单配货,物流方式【{}】,仓库【{}】";
+        operateLogService.addModuleOperateLog(StrUtil.format(msg,dictBasicEntity.getName(),warehouseList.get(0).getName()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "手动配货");
         return BatchResultDTO.success(entity.getCode(), "手动配货");
     }
 
@@ -528,7 +560,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //提交发货
             submitDelivery(id);
         }
-
+        //操作日志
+        String msg = "获取物流单号【{}】";
+        operateLogService.addModuleOperateLog(StrUtil.format(msg,logisticsCode), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "获取物流单号");
         return BatchResultDTO.success(entity.getCode(), "获取物流单号");
     }
 
@@ -581,6 +615,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.ERROR_SO_B2C_SKU_NOT_INVENTORY, entity.getCode(), detailEntity.getSkuNo(), detailEntity.getWarehouseName());
             }
         }
+        //操作日志
+        String msg = "B2C销售订单【{}】提交发货";
+        operateLogService.addModuleOperateLog(StrUtil.format(msg,entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
         return BatchResultDTO.success(entity.getCode(), "提交发货");
     }
 
