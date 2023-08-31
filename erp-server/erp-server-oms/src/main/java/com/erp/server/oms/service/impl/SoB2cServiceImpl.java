@@ -118,8 +118,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private DictBasicService dictBasicService;
 
-    @Autowired
-    private DictAmazonAreaCountryService dictAmazonAreaCountryService;
+
 
 
     @Override
@@ -1423,7 +1422,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //国家信息
         List<String> countryIdList = shopList.stream().map(ShopInfoEntity::getDictCountryCode).collect(Collectors.toList());
-        List<DictAmazonAreaCountryEntity> dictCountryList = dictAmazonAreaCountryService.listByCountryCodes(countryIdList);
+        List<DictCountryEntity> dictCountryList = sysDictFeign.listCountryByIds(countryIdList);
 
         //平台
         List<String> platformList = records.stream().map(SoB2cDTO.MergeListDTO::getDictPlatform)
@@ -1488,7 +1487,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //国家信息
             if (CollectionUtils.isNotEmpty(dictCountryList)) {
                 String countryName = dictCountryList.stream().filter(obj -> obj.getId().equals(shopInfoEntity.getDictCountryCode()))
-                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCountryName())).orElse("");
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
                 mergeListDTO.setCountyName(countryName);
             }
             //主表数据
