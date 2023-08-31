@@ -299,6 +299,7 @@
         sdn.code,
         sdn.source_code AS soCode,
         sdn.seller_name,
+        sdn.warehouse_id,
         sdn.warehouse_name,
         sdn.customer_name,
         sdn.approve_status,

@@ -534,5 +534,10 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 未交货数量
          */
         private Integer unReceiveQty;
+
+        /**
+         * 未交货数量
+         */
+        private Integer hasStockInQty;
     }
 }
