@@ -851,7 +851,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     //即时库存
                     Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(view.getSkuId()) && s.getWarehouseId().equals(view.getWarehouseId())).mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
                     if (view.getDeliveryQty() > curInventoryQty) {
-                        throw new ServiceException(ApiError.ERROR_99070);
+                        throw new ServiceException(ApiError.ERROR_99070, view.getSkuNo());
                     }
                 }
                 detailAdd.setDeliveryQty(view.getDeliveryQty());
