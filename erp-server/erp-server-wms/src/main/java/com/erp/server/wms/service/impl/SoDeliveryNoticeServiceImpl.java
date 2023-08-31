@@ -937,4 +937,19 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
 
+    /**
+     * 根据来源ids 获取数据
+     *
+     * @param sourceIds
+     * @return java.util.List<com.erp.model.wms.entity.SoDeliveryNoticeEntity>
+     * @author yl
+     * @date 2023-08-30 19:23
+     */
+    @Override
+    public List<SoDeliveryNoticeEntity> listBySourceIdList(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoDeliveryNoticeEntity::getSourceId,sourceIds).list();
+    }
 }
