@@ -552,6 +552,10 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     public List<PurchaseOrderDetailEntity> getLatest(List<String> skuIds) {
         return this.baseMapper.getLatest(skuIds);
     }
+    @Override
+    public List<PurchaseOrderDetailEntity> getLatestByCrtTime(List<String> skuIds) {
+        return this.baseMapper.getLatestByCrtTime(skuIds);
+    }
 
     @Override
     public void updateKingdeeDetailId(JSONArray list) {

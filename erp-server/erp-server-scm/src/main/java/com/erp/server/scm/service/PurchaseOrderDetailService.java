@@ -139,6 +139,13 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
     List<PurchaseOrderDetailEntity> getLatest(List<String> skuIds);
 
     /**
+     * 根据sku id集合获取最新的一个审核通过的采购订单明细，按创建日期倒序
+     * @param skuIds
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    List<PurchaseOrderDetailEntity> getLatestByCrtTime(List<String> skuIds);
+
+    /**
      * 更新明细金蝶id
      * @Author Luo_WG
      * @Date 2023/7/12 10:22
