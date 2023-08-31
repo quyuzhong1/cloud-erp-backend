@@ -271,7 +271,6 @@
             srr.code,
             srr.source_id,
             srrd.source_detail_id,
-            srrd.so_,
             srr.customer_id,
             srr.customer_name,
             srr.sales_org_id,

@@ -2102,6 +2102,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         List<String> skuNos = entityDetails.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
         List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuNos);
+
+        //入库信息
+        List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+
         for (PurchaseOrderDetailDTO.PdaViewDTO detail : details) {
             SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).findFirst().orElse(new SkuVO());
             detail.setUnitName(skuVO.getUnitName());
@@ -2110,11 +2114,18 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             detail.setReceiveQty(receiveQty);
             Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detail.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             detail.setUnReceiveQty(detail.getPurchaseQty() + returnQty - receiveQty);
+            //已入库数量
+            Integer hasStockInQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(stockInDetailList)) {
+                hasStockInQty = stockInDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detail.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            detail.setHasStockInQty(hasStockInQty);
         }
         Map<String, PurchaseOrderDetailDTO.PdaViewDTO> collect = details.stream().collect(Collectors.groupingBy(n -> n.getSkuNo(), Collectors.collectingAndThen(Collectors.toList(), m -> {
             int purchaseQty = m.stream().mapToInt(PurchaseOrderDetailDTO.PdaViewDTO::getPurchaseQty).sum();
             int receiveQty = m.stream().mapToInt(PurchaseOrderDetailDTO.PdaViewDTO::getReceiveQty).sum();
             int unReceiveQty = m.stream().mapToInt(PurchaseOrderDetailDTO.PdaViewDTO::getUnReceiveQty).sum();
+            int hasStockInQty = m.stream().mapToInt(PurchaseOrderDetailDTO.PdaViewDTO::getHasStockInQty).sum();
             String podId = m.stream().max(Comparator.comparing(PurchaseOrderDetailDTO.PdaViewDTO::getId)).map(PurchaseOrderDetailDTO.PdaViewDTO::getId).get();
             PurchaseOrderDetailDTO.PdaViewDTO updateDTO = new PurchaseOrderDetailDTO.PdaViewDTO();
             BeanMapper.copy(m.get(MathUtil.ZERO), updateDTO);
@@ -2122,6 +2133,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             updateDTO.setPurchaseQty(purchaseQty);
             updateDTO.setReceiveQty(receiveQty);
             updateDTO.setUnReceiveQty(unReceiveQty);
+            updateDTO.setHasStockInQty(hasStockInQty);
             return updateDTO;
         })));
 
