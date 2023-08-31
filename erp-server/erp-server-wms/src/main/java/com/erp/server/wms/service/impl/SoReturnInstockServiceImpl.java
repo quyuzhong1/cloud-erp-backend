@@ -973,8 +973,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         //sku信息
         List<String> allSkuIdList = bomList.stream().flatMap(obj -> Stream.of(obj.getSkuId(), obj.getParentSkuId())).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        if (CollectionUtils.isEmpty(allSkuIdList)) {
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(allSkuIdList);
+        if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
         //根据sku、仓库、仓位合并显示
