@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.ProductAccessoriesDTO;
@@ -17,7 +18,6 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -98,8 +98,15 @@ public class ProductAccessoriesServiceImpl extends ServiceImpl<ProductAccessorie
             listDTO.setSkuId(productAccessoriesEntity.getAccessoriesSkuId());
             listDTO.setQuantity(productAccessoriesEntity.getQuantity());
             if (CollectionUtils.isNotEmpty(skuList)) {
-                String skuNo = skuList.stream().findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
-                listDTO.setSkuNo(skuNo);
+                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(listDTO.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(skuVO)) {
+                    listDTO.setSkuNo(skuVO.getSkuNo());
+                    listDTO.setSkuName(skuVO.getSkuName());
+                    listDTO.setSkuContent(skuVO.getSkuNo().concat("【").concat(skuVO.getSkuName()).concat("】"));
+                }
+            }
+            if (StringUtils.isNotBlank(listDTO.getSkuId())) {
+                resultList.add(listDTO);
             }
         }
         return resultList;

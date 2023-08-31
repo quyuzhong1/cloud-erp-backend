@@ -104,6 +104,16 @@ public class ProductAccessoriesDTO implements Serializable {
          * 数量
          */
         private Integer quantity;
+
+        /**
+         * 辅料sku名称
+         */
+        private String skuName;
+
+        /**
+         * 包装辅料SKU编号 + 辅料名称
+         */
+        private String skuContent;
     }
 
 

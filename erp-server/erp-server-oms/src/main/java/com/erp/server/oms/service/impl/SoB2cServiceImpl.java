@@ -31,6 +31,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -1013,8 +1014,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public SoB2cDTO.ViewDTO view(String id) {
         SoB2cEntity soB2cEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C销售订单表数据"));
         SoB2cDTO.ViewDTO data = BeanMapperUtils.map(SoB2cDTO.ViewDTO.class, soB2cEntity);
-        // 数据填充处理
-        fillOne(data);
         //物流
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
         if (ObjectUtils.isEmpty(soB2cLogisticsEntity)) {
@@ -1044,6 +1043,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         List<SoB2cDetailDTO.ViewDTO> detailList = BeanMapperUtils.copyList(SoB2cDetailDTO.ViewDTO.class, soB2cDetailList);
         data.setDetailList(detailList);
+        // 数据填充处理
+        fillOne(data);
         return data;
     }
 
@@ -1069,12 +1070,33 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
     }
 
+    /**
+     * 查询详情数据处理
+     */
     private void fillOne(SoB2cDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
         data.setApproveStatusName(data.getApproveStatus().getName());
         data.setBillStatusName(SoB2cBillStatusEnum.getName(data.getBillStatus()));
+        //城市、国家名称
+        SoB2cReceiverDTO.ViewDTO receiverDTO = data.getReceiverDTO();
+        if (ObjectUtils.isNotEmpty(receiverDTO)) {
+            if (ObjectUtils.isNotEmpty(receiverDTO.getCityId())) {
+                DictCityEntity dictCityEntity = sysUserFeign.getCityById(receiverDTO.getCityId());
+                if (ObjectUtils.isEmpty(dictCityEntity)) {
+                    throw new ServiceException(ApiError.ERROR_CITY_NOT_EXIST);
+                }
+                receiverDTO.setCityName(dictCityEntity.getName());
+            }
+            if (ObjectUtils.isNotEmpty(receiverDTO.getCountryId())) {
+                DictCountryEntity dictCountryEntity = sysUserFeign.getCountryById(receiverDTO.getCountryId());
+                if (ObjectUtils.isEmpty(dictCountryEntity)) {
+                    throw new ServiceException(ApiError.ERROR_COUNTRY_NOT_EXIST);
+                }
+                receiverDTO.setCountryName(dictCountryEntity.getNameCn());
+            }
+        }
     }
 
     /**
