@@ -49,4 +49,11 @@ public interface RuleOrderApprovalService extends SuperService<RuleOrderApproval
      * @return java.lang.Boolean
      */
     Boolean updateStatus(UpdateStateDTO dto);
+
+    /**
+     * 订单规则详情
+     * @param id
+     * @return
+     */
+    RuleOrderApprovalDTO.ViewDTO view(String id);
 }

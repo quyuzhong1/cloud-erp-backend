@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.RuleConditionDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 规则条件表 服务类
@@ -33,4 +35,33 @@ public interface RuleConditionService extends SuperService<RuleConditionEntity> 
     Boolean update(RuleConditionDTO.UpdateDTO dto);
 
 
+    /**
+     * 保存规则条件
+     * @author yl
+     * @date 2023-08-31 15:47
+     * @param ruleId
+     * @param conditionList
+     * @return void
+     */
+    void saveRuleCondition(String ruleId, List<RuleConditionDTO.AddDTO> conditionList);
+
+    
+    /**
+     * 根据规则id 获取详情
+     * @author yl
+     * @date 2023-08-31 16:19
+     * @param ruleId
+     * @return java.util.List<com.erp.model.oms.dto.RuleConditionDTO.UpdateDTO>
+     */
+    List<RuleConditionDTO.ViewDTO> listByRuleId(String ruleId,String type);
+
+    /**
+     * 修改规则条件
+     * @author yl
+     * @date 2023-08-31 17:10
+     * @param ruleId
+     * @param conditionList
+     * @return void
+     */
+    void updateRuleCondition(String ruleId, List<RuleConditionDTO.UpdateDTO> conditionList);
 }

@@ -16,6 +16,10 @@ public enum DictBasicEnum {
     RECEIVE_METHOD("receiveMethod",  "收款方式"),
     COLLECTION_TERMS("collectionTerms",  "收款条件"),
     LOGISTICS_METHOD("logisticsMethod",  "b2c销售订单物流方式"),
+    LOGIC("logic",  "订单规则的逻辑关系"),
+    AND("and",  "且"),
+    OR("or",  "或"),
+    APPROVAL_CONDITION("approvalCondition","订单审核规则")
     ;
 
 
@@ -36,5 +40,14 @@ public enum DictBasicEnum {
 
     public String getDesc() {
         return desc;
+    }
+
+    public static String getName(String type) {
+        for (DictBasicEnum dictBasic : DictBasicEnum.values()) {
+            if (type.equals(dictBasic.getType())) {
+                return dictBasic.getDesc();
+            }
+        }
+        return "";
     }
 }

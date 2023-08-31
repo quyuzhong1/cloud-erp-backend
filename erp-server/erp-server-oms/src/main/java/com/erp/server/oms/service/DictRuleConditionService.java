@@ -53,4 +53,13 @@ public interface DictRuleConditionService extends SuperService<DictRuleCondition
      * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.CommonDTO>
      */
     List<BaseDropDownDTO.CommonDTO> listByType(String type);
+
+    /**
+     * 根据typeList 获取对应数据
+     * @author yl
+     * @date 2023-08-31 11:48
+     * @param typeList
+     * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.CommonDTO>
+     */
+    List<DictRuleConditionEntity> listDbByTypes(List<String> typeList);
 }

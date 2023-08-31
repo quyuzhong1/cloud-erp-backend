@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -28,43 +29,22 @@ public class RuleConditionDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ViewDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 字段名
+         */
+        private String fieldName;
 
         /**
-        * 左括号
-        */
-        private String leftBracket;
+         * 字段逻辑名
+         */
+        private String compareName;
 
         /**
-        * 条件的字段
-        */
-        private String field;
-
-        /**
-        * 逻辑关系
-        */
-        private String dictCompare;
-
-        /**
-        * 对应的值
-        */
-        private String value;
-
-        /**
-        * 右括号
-        */
-        private String rightBracket;
-
-        /**
-        * 逻辑关系 or 和 and
-        */
-        private String logic;
-
+         * 后面的逻辑名
+         */
+        private String logicName;
 
     }
 
@@ -93,6 +73,9 @@ public class RuleConditionDTO implements Serializable {
 
     }
 
+
+
+
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
@@ -100,7 +83,6 @@ public class RuleConditionDTO implements Serializable {
         /**
         * 左括号
         */
-        @NotBlank(message = "左括号不能为空")
         @Size(max = 10,message = "左括号最大长度不能超过10位")
         private String leftBracket;
 
@@ -128,15 +110,13 @@ public class RuleConditionDTO implements Serializable {
         /**
         * 右括号
         */
-        @NotBlank(message = "右括号不能为空")
         @Size(max = 10,message = "右括号最大长度不能超过10位")
         private String rightBracket;
 
         /**
         * 逻辑关系 or 和 and
         */
-        @NotBlank(message = "逻辑关系 or 和 and不能为空")
-        @Size(max = 10,message = "逻辑关系 or 和 and最大长度不能超过10位")
+        @StateEnumValue(strValues = {"or","and"},message = "逻辑关系有误")
         private String logic;
 
 

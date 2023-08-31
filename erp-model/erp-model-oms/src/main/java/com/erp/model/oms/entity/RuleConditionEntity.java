@@ -55,6 +55,9 @@ public class RuleConditionEntity extends BaseEntity<RuleConditionEntity> {
     @TableField("logic")
     private String logic;
 
+    @TableField("rule_id")
+    private String ruleId;
+
 
     public static final String LEFT_BRACKET = "left_bracket";
 

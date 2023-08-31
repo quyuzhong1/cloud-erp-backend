@@ -31,6 +31,8 @@ public class RuleOrderApprovalDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingViewDTO {
 
+
+        private String id;
         /**
          * 名称
          */
@@ -81,7 +83,7 @@ public class RuleOrderApprovalDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO  extends SortDTO {
+    public static class PagingParamDTO extends SortDTO {
 
         /**
          * 规则名称
@@ -94,50 +96,13 @@ public class RuleOrderApprovalDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ViewDTO extends CommonDTO {
 
-        /**
-         * 主键id
-         */
         private String id;
 
-        /**
-         * 名称
-         */
-        private String name;
-
-        /**
-         * 优先级
-         */
-        private String priority;
-
-        /**
-         * 是否禁用 false 未禁用
-         */
-        private Boolean disabled;
-
-        /**
-         * 备注
-         */
-        private String remark;
-
-        /**
-         * 分类明细id
-         */
-        private String categoryDetailId;
-
-        /**
-         * 操作类型多个逗号分割
-         */
-        private String operationType;
-
-        /**
-         * 流向状态
-         */
-        private String flowStatus;
-
-
+        private List<RuleConditionDTO.ViewDTO> conditionList;
     }
+
 
     /**
      * 新增
@@ -145,12 +110,14 @@ public class RuleOrderApprovalDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
-
+        private List<RuleConditionDTO.AddDTO> conditionList;
     }
+
 
     /**
      * 修改
+     *
+     * @author Administrator
      */
     @Data
     @NoArgsConstructor
@@ -161,6 +128,8 @@ public class RuleOrderApprovalDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        private List<RuleConditionDTO.UpdateDTO> conditionList;
 
     }
 
@@ -179,10 +148,9 @@ public class RuleOrderApprovalDTO implements Serializable {
          * 优先级
          */
         @NotNull(message = "优先级不能为空")
-        @DecimalMin(value = "0",message ="最小值为1" )
-        @DecimalMax(value = "10",message ="最小值为10" )
+        @DecimalMin(value = "0", message = "最小值为1")
+        @DecimalMax(value = "10", message = "最小值为10")
         private Integer priority;
-
 
 
         /**
@@ -198,20 +166,19 @@ public class RuleOrderApprovalDTO implements Serializable {
         private String categoryDetailId;
 
         /**
-         * 操作类型多个逗号分割
+         * 设定操作
          * category 分类
          * flowStatus 流向状态
          */
-        @NotBlank(message = "操作类型多个逗号分割不能为空")
-        private String operationType;
+        @NotNull(message = "设定操作不能为空")
+        @Size(min = 1, message = "设定操作不能为空")
+        private List<String> operationTypeList;
 
         /**
          * 流向状态
          */
         private String flowStatus;
 
-        private List<RuleConditionDTO.AddDTO> conditionList;
+
     }
-
-
 }

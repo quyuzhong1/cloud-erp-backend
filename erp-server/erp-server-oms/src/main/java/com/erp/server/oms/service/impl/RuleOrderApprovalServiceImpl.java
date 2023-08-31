@@ -7,14 +7,18 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.RuleOrderApprovalEntity;
+import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleOrderApprovalMapper;
+import com.erp.server.oms.service.RuleConditionService;
 import com.erp.server.oms.service.RuleOrderApprovalService;
 import com.common.business.service.SuperServiceImpl;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,9 +27,12 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.RuleOrderApprovalDTO;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.xml.stream.events.DTD;
 
 /**
  * <p>
@@ -43,26 +50,28 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     @Autowired
     private CommonService commonService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Autowired
+    private RuleConditionService ruleConditionService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(RuleOrderApprovalDTO.AddDTO addDTO) {
         RuleOrderApprovalEntity ruleOrderApprovalEntity = new RuleOrderApprovalEntity();
         BeanMapperUtils.copy(addDTO, ruleOrderApprovalEntity);
-
-        // 数据处理
-        handleData(ruleOrderApprovalEntity);
-
-        log.info("开始新增订单审核规则");
-        boolean save = super.save(ruleOrderApprovalEntity);
+        List<String> operationTypeList = addDTO.getOperationTypeList();
+        ruleOrderApprovalEntity.setOperationType(operationTypeList.stream().collect(Collectors.joining(",")));
+        Boolean save = super.save(ruleOrderApprovalEntity);
         if (!save) {
             throw new ServiceException("订单审核规则保存失败");
         }
-
+        String id = ruleOrderApprovalEntity.getId();
+        List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
+        //保存规则条件
+        ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "订单审核规则", ruleOrderApprovalEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, ruleOrderApprovalEntity.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode(), id, "新增操作");
         // TODO 新增明细（如果有明细的话）
         return ruleOrderApprovalEntity.getId();
     }
@@ -73,24 +82,23 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(RuleOrderApprovalDTO.UpdateDTO updateDTO) {
-        RuleOrderApprovalEntity old = super.getById(updateDTO.getId());
+        String id = updateDTO.getId();
+        RuleOrderApprovalEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "订单审核规则"));
         RuleOrderApprovalEntity ruleOrderApprovalEntity = BeanMapperUtils.map(RuleOrderApprovalEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(ruleOrderApprovalEntity);
-        log.info("编辑 开始修改订单审核规则数据，id：【{}】", old.getId());
-        boolean save = super.updateById(ruleOrderApprovalEntity);
+        List<String> operationTypeList = updateDTO.getOperationTypeList();
+        ruleOrderApprovalEntity.setOperationType(operationTypeList.stream().collect(Collectors.joining(",")));
+        Boolean save = super.updateById(ruleOrderApprovalEntity);
         if (!save) {
             throw new ServiceException("订单审核规则保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
-        // 记录主单操作日志
-        log.info("编辑 开始记录订单审核规则日志数据，id：【{}】", ruleOrderApprovalEntity.getId());
+        List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
+        ruleConditionService.updateRuleCondition(id, conditionList);
+
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ruleOrderApprovalEntity.getId(), "订单审核规则");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, ruleOrderApprovalEntity, null, ruleOrderApprovalEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, ruleOrderApprovalEntity, ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode(), ruleOrderApprovalEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -133,6 +141,23 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         ruleOrderApproval.setDisabled(dto.getState());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode(), dto.getId(), "状态变更");
         return this.updateById(ruleOrderApproval);
+    }
+
+    @Override
+    public RuleOrderApprovalDTO.ViewDTO view(String id) {
+        RuleOrderApprovalEntity ruleOrderApproval = this.getById(id);
+        if (Objects.isNull(ruleOrderApproval)) {
+            throw new ServiceException("审核规则存在");
+        }
+        RuleOrderApprovalDTO.ViewDTO view = new RuleOrderApprovalDTO.ViewDTO();
+        BeanMapper.copy(ruleOrderApproval, view);
+        String operationType = ruleOrderApproval.getOperationType();
+        List<String> operationTypeList = StringUtils.isNotBlank(operationType) ? Arrays.asList(operationType.split(",")) : Collections.emptyList();
+        view.setOperationTypeList(operationTypeList);
+        String type = DictBasicEnum.APPROVAL_CONDITION.getType();
+        List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);
+        view.setConditionList(conditionList);
+        return view;
     }
 
 

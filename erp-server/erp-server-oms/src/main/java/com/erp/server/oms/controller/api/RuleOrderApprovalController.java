@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
@@ -60,6 +61,21 @@ public class RuleOrderApprovalController extends BaseController {
         return success(ruleOrderApprovalService.add(dto));
     }
 
+
+    /**
+     * 详情
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Lambda
+     * @date: 2023-08-28
+     */
+    @PostMapping("/view")
+    public ApiResult<RuleOrderApprovalDTO.ViewDTO> update(@RequestBody @Validated BaseIdDTO dto) {
+        RuleOrderApprovalDTO.ViewDTO viewDTO = ruleOrderApprovalService.view(dto.getId());
+        return success(viewDTO);
+    }
+
     /**
      * 修改
      *
@@ -70,8 +86,8 @@ public class RuleOrderApprovalController extends BaseController {
      */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated RuleOrderApprovalDTO.UpdateDTO dto) {
-        ruleOrderApprovalService.update(dto);
-        return success();
+        Boolean result = ruleOrderApprovalService.update(dto);
+        return result?success():failure();
     }
 
     /**
@@ -85,7 +101,7 @@ public class RuleOrderApprovalController extends BaseController {
     @PostMapping("/updateStatus")
     public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean result = ruleOrderApprovalService.updateStatus(dto);
-        return result?success():failure();
+        return result ? success() : failure();
     }
 
 
