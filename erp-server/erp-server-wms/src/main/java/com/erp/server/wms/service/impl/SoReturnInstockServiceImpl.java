@@ -1016,6 +1016,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             viewDTO.setCurInventoryQty(curInventoryQty);
             viewDTO.setQty(curInventoryQty);
             viewDTO.setChildLength(childList.size());
+            Boolean childHidden = false;
             //显示按明细维度显示数据
             for (BomChildrenSkuDTO childrenSkuDTO : childList) {
                 //产品信息
@@ -1025,6 +1026,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 }
                 SoReturnInstockDTO.ViewGenerateMachineInfoDTO viewChildDTO = new SoReturnInstockDTO.ViewGenerateMachineInfoDTO();
                 BeanMapperUtils.copy(viewDTO,viewChildDTO);
+                if (!childHidden) {
+                    childHidden = Boolean.TRUE;
+                    viewChildDTO.setChildHidden(childHidden);
+                }
                 viewChildDTO.setChildSkuId(childrenSkuDTO.getSkuId());
                 viewChildDTO.setChildSkuNo(childrenSkuDTO.getSkuNo());
                 viewChildDTO.setQuantity(childrenSkuDTO.getQuantity());
@@ -1246,6 +1251,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 MachineSubComponentsDTO.HandleDetailDTO subHandleDetailDTO = JSONUtil.toBean(subComponentsEntity.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class);
                 TransferInfoDetailDTO.AddDTO addDetailDTO = new TransferInfoDetailDTO.AddDTO();
                 BeanMapperUtils.copy(subComponentsEntity,addDetailDTO);
+                //相同仓库无需生成直接调拨单
+                if (subComponentsEntity.getWarehouseId().equals(subHandleDetailDTO.getChildWarehouseId())) {
+                    continue;
+                }
                 addDetailDTO.setOutWarehouseId(subComponentsEntity.getWarehouseId());
                 addDetailDTO.setOutWarehouseLocation(subComponentsEntity.getWarehouseLocation());
                 addDetailDTO.setInWarehouseId(subHandleDetailDTO.getChildWarehouseId());
@@ -1258,12 +1267,17 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 addDetailDTO.setSourceDetailId(sourceIds);
                 addDetailList.add(addDetailDTO);
             }
-            addDTO.setDetailList(addDetailList);
-            String id = transferInfoService.add(addDTO);
-            ids.add(id);
+            //存在明细则新增
+            if (CollectionUtils.isNotEmpty(addDetailList)) {
+                addDTO.setDetailList(addDetailList);
+                String id = transferInfoService.add(addDTO);
+                ids.add(id);
+            }
         }
-        //提交
-        transferInfoService.submit(ids);
+        if (CollectionUtils.isNotEmpty(ids)) {
+            //提交
+            transferInfoService.submit(ids);
+        }
     }
 
     /**
