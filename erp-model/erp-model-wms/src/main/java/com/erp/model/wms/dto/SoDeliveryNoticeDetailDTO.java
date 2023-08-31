@@ -137,6 +137,7 @@ public class SoDeliveryNoticeDetailDTO {
          * 发货数量
          */
         private Integer deliveryQty;
+
         /**
          * 仓库id
          */

@@ -43,6 +43,7 @@ import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -370,6 +371,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         viewDTO.setCustomerName(customerInfoEntity.getName());
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
+        viewDTO.setTypeName(BillTypeEnum.getName(viewDTO.getType()));
         if (viewDTO.getDeliveryStatus()) {
             viewDTO.setDeliveryStatusName(DeliveryStatusEnum.COMPLETE_SHIPMENT.getName());
         } else {

@@ -334,6 +334,10 @@ public class SoDeliveryNoticeDTO {
          */
         private String type;
         /**
+         * 单据类型名称
+         */
+        private String typeName;
+        /**
          * 销售组织id
          */
         private String salesOrgId;
