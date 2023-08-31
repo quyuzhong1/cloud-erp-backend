@@ -1,6 +1,7 @@
 package com.common.business.dto;
 
 
+import com.common.business.enums.BusinessTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -19,9 +20,19 @@ public class JobTaskDTO {
     private Long id;
 
     /**
-     * 平台表id
+     * 平台分类 PlatformCategoryEnum
+     */
+    private String platformCategory;
+
+    /**
+     * 平台表id PlatformDictEnum
      */
     private String dictPlatform;
+
+    /**
+     * 业务类型 BusinessTypeEnum
+     */
+    private String businessType;
 
     /**
      * 间隙时间

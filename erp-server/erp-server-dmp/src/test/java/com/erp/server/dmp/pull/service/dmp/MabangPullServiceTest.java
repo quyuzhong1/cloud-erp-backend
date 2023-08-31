@@ -17,7 +17,7 @@ import com.common.business.enums.PlatformApiEnum;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.service.mabang.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;

@@ -7,26 +7,29 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.annotation.SaveData;
+import com.common.business.constant.MongoTableNameContant;
+import com.common.business.dto.JobTaskDTO;
+import com.common.business.dto.RequestDTO;
 import com.common.business.enums.PlatformApiEnum;
+import com.common.business.service.IReportSaveService;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.common.business.constant.MongoTableNameContant;
-import com.common.business.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.common.business.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.model.dmp.enums.*;
+import com.erp.model.dmp.enums.CleanStatusEnum;
+import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.model.dmp.mabang.item.OrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.common.business.service.IReportSaveService;
-import com.common.business.annotation.SaveData;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
@@ -189,10 +192,6 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         }
     }
 
-    @Override
-    public List<OrderEntity> downloadData(RequestDTO dto) {
-        return null;
-    }
 
     /**
      * 请求马帮订单接口

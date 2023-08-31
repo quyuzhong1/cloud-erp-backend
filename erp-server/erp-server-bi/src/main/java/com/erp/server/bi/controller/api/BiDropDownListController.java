@@ -2,7 +2,7 @@ package com.erp.server.bi.controller.api;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.enums.SalesPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.MathUtil;
@@ -59,7 +59,7 @@ public class BiDropDownListController extends BaseController {
      */
     @GetMapping("/platform/list")
     public ApiResult<List<SalesPlatformEnumVO>> listPlatformDropDown() {
-        List<SalesPlatformEnumVO> result = Arrays.stream(SalesPlatformEnum.values())
+        List<SalesPlatformEnumVO> result = Arrays.stream(PlatformDictEnum.values())
                 .map(x -> new SalesPlatformEnumVO(x.getCode(),x.getName(),x.getDesc()))
                 .collect(Collectors.toList());
         return success(result);

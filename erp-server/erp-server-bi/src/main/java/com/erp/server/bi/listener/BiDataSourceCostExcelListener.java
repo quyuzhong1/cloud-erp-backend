@@ -5,7 +5,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.enums.SalesPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
@@ -147,7 +147,7 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
             if (StringUtils.isBlank(entity.getPlatformName())) {
                 errorMsgList.add("平台名称不能为空");
             } else {
-                SalesPlatformEnum platformEnum = SalesPlatformEnum.getByName(entity.getPlatformName());
+                PlatformDictEnum platformEnum = PlatformDictEnum.getByName(entity.getPlatformName());
                 if (ObjectUtils.isEmpty(platformEnum)) {
                     errorMsgList.add("系统中不存在此平台名称");
                 }

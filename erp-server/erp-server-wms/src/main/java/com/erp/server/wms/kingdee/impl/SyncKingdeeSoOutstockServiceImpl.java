@@ -3,7 +3,7 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SalesPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
@@ -43,7 +43,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -147,7 +146,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             resultMap.put("customerCode", customerInfoEntity.getCode());
             resultMap.put("customerName", customerInfoEntity.getName());
-            SalesPlatformEnum salesPlatformEnum = SalesPlatformEnum.getByCode(customerInfoEntity.getPlatformType());
+            PlatformDictEnum salesPlatformEnum = PlatformDictEnum.getByCode(customerInfoEntity.getPlatformType());
             String salesPlatformCode = salesPlatformEnum != null ? salesPlatformEnum.getKingdeeCode() : "";
             //平台类型
             resultMap.put("platformType", salesPlatformCode);

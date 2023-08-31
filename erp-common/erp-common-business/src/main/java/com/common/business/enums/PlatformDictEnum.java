@@ -5,13 +5,13 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * 销售平台枚举类
- *
- * @Author Cloud
- * @Date 2022/12/19 11:01
- **/
-public enum SalesPlatformEnum implements EnumMessage {
-
+ * @author Lambda
+ * @Classname DictEnum
+ * @Description 平台字典表
+ * @Date 2023-08-21 14:15
+ */
+public enum PlatformDictEnum implements EnumMessage {
+    OFFLINECELEBRITY("Offlinecelebrity","线下发网红","","023"),
     AMAZON("Amazon", "亚马逊", "亚马逊", "100"),
     SHOPIFY("Shopify", "Shopify", "Shopify", "004"),
     ALI_EXPRESS("AliExpress", "速卖通", "AliExpress", "002"),
@@ -29,9 +29,8 @@ public enum SalesPlatformEnum implements EnumMessage {
     PDD("PDD", "拼多多", "Temu", "009"),
     TMALL("Tmall", "天猫", "Tmall", "006"),
     SOP("JDZY", "京东自营厂送", "京东自营", "007"),
+        ;
 
-
-    ;
 
     @JsonValue
     @EnumValue
@@ -61,16 +60,17 @@ public enum SalesPlatformEnum implements EnumMessage {
         return kingdeeCode;
     }
 
-    SalesPlatformEnum(String code, String name, String desc, String kingdeeCode) {
+    PlatformDictEnum(String code, String name, String desc, String kingdeeCode) {
         this.code = code;
         this.name = name;
         this.desc = desc;
         this.kingdeeCode = kingdeeCode;
     }
 
-    public static SalesPlatformEnum getByCode(String code) {
-        SalesPlatformEnum[] values = values();
-        for (SalesPlatformEnum value : values) {
+
+    public static PlatformDictEnum getByCode(String code) {
+        PlatformDictEnum[] values = values();
+        for (PlatformDictEnum value : values) {
             if (value.code.equals(code) ) {
                 return value;
             }
@@ -79,8 +79,8 @@ public enum SalesPlatformEnum implements EnumMessage {
     }
 
     public static String getNameByName(String name) {
-        SalesPlatformEnum[] values = values();
-        for (SalesPlatformEnum value : values) {
+        PlatformDictEnum[] values = values();
+        for (PlatformDictEnum value : values) {
             if (value.name.equals(name)) {
                 return value.getName();
             }
@@ -88,15 +88,13 @@ public enum SalesPlatformEnum implements EnumMessage {
         return "";
     }
 
-    public static SalesPlatformEnum getByName(String name) {
-        SalesPlatformEnum[] values = values();
-        for (SalesPlatformEnum value : values) {
+    public static PlatformDictEnum getByName(String name) {
+        PlatformDictEnum[] values = values();
+        for (PlatformDictEnum value : values) {
             if (value.name.equals(name)) {
                 return value;
             }
         }
         return null;
     }
-
-
 }

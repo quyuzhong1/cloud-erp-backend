@@ -3,8 +3,6 @@ package com.common.business.service;
 
 import com.common.business.dto.RequestDTO;
 
-import java.util.List;
-
 /**
  * 平台数据拉取对接
  * @author Cloud
@@ -29,12 +27,5 @@ public interface IReportSaveService<T> {
      * @param mongoDatum
      */
     void updateAndSaveDb(T mongoDatum);
-
-    /**
-     * 下载数据
-     * @param dto
-     * @return
-     */
-    List<T> downloadData(RequestDTO dto);
 
 }

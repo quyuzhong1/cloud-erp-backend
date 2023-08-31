@@ -16,7 +16,7 @@ import com.erp.server.dmp.pull.service.kingdee.KingdeeEccShopServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeOrderInfoServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeReturnOrderInfoImpl;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;

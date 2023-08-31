@@ -75,6 +75,10 @@ public class  OrderMongoDTO {
     @Panno(findType=PannoEnum.EQ,  field = "delivery_no")
     private String delivery_no;
 
+
+    @Panno(findType=PannoEnum.EQ,  field = "unique_id")
+    private String uniqueId;
+
     public static OrderMongoDTO getByFBillNo(String fBillNo) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setBillNo(fBillNo);
@@ -186,6 +190,12 @@ public class  OrderMongoDTO {
     public static OrderMongoDTO getByStockSku(String stockSku) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setStockSku(stockSku);
+        return orderMongoDTO;
+    }
+
+    public static OrderMongoDTO getUniqId(String uniqueId) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setUniqueId(uniqueId);
         return orderMongoDTO;
     }
 

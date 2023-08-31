@@ -17,9 +17,9 @@
 //import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 //import com.common.business.enums.PlatformApiEnum;
 //import com.erp.model.dmp.enums.PlatformEnum;
-//import com.erp.model.dmp.kingdee.KingdeeOrderEntity;
-//import com.erp.model.dmp.kingdee.KingdeeRefundOrderEntity;
-//import com.erp.model.dmp.kingdee.KingdeeShopEntity;
+//import com.sdk.third.kingdee.dto.KingdeeOrderEntity;
+//import com.sdk.third.kingdee.dto.KingdeeRefundOrderEntity;
+//import com.sdk.third.kingdee.dto.KingdeeShopEntity;
 //import com.erp.server.dmp.pull.mongo.MongoService;
 //import com.common.business.service.IReportSaveService;
 //import com.common.business.annotation.SaveData;

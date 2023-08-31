@@ -1,7 +1,9 @@
 package com.erp.model.dmp.entity;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.dto.UniqueDto;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -114,6 +116,21 @@ public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
     public static final String SOURCE_ID = "source_id";
 
     public static final String SOURCE_CODE = "source_code";
+
+    public <R extends UniqueDto> DmpSyncTaskEntity(String category, String platform, String business, String topic, String tag, R item) {
+        this.targetPlatformName = platform;
+        this.mqTopic = topic;
+        this.mqTag = tag;
+        this.mqData = JSONUtil.toJsonStr(item);
+        this.sourcePlatformName = category;
+        this.sourceType = business;
+        this.sourceId = item.getUniqueId();
+        this.sourceCode = item.getUniqueId();
+    }
+
+    public DmpSyncTaskEntity() {
+
+    }
 
     @Override
     public Serializable pkVal() {

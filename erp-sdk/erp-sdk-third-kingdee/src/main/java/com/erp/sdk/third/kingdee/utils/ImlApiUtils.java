@@ -1,4 +1,4 @@
-package com.sdk.third.kingdee.utils;
+package com.erp.sdk.third.kingdee.utils;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.webservice.SoapClient;

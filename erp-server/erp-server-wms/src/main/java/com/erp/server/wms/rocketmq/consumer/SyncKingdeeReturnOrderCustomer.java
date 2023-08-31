@@ -1,7 +1,5 @@
 package com.erp.server.wms.rocketmq.consumer;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;

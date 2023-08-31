@@ -6,15 +6,20 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 /**
- * 退货订单数据传输对象
- * @author Cloud
- * @Classname ReturnOrderDataDTO
- */
+ * 唯一标识
+ *
+ * @Author Cloud
+ * @Date 2023/8/31 14:48
+ **/
 
 @Data
 @NoArgsConstructor
-public class PlatformReturnOrderDataDTO implements Serializable {
-    // Order related fields and methods
+public class UniqueDto implements Serializable {
+
+    /**
+     * 唯一标识 必填
+     */
+    private String uniqueId;
 
     /**
      * 平台名称

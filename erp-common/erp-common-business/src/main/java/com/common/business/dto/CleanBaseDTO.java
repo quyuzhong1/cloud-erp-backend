@@ -1,4 +1,4 @@
-package com.erp.model.dmp.dto;
+package com.common.business.dto;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  **/
 @Getter
 @Setter
-public class CleanBaseDTO {
+public class CleanBaseDTO extends UniqueDto {
     /**
      * 清洗数据 0 未清洗 1 清洗中 2 清洗完成
      */

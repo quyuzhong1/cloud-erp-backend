@@ -1,6 +1,6 @@
 package com.common.business.annotation;
 
-import com.common.business.enums.SalesPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -16,5 +16,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface PlatformType {
-    SalesPlatformEnum value();
+    PlatformDictEnum value();
 }

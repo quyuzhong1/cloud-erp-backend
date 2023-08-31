@@ -1,4 +1,4 @@
-package com.sdk.third.kingdee.utils;
+package com.erp.sdk.third.kingdee.utils;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

@@ -79,5 +79,8 @@ public class RocketMqTopic {
      */
     public static final String DMP_SYNC_TASK_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_sync_task_topic";
 
-
+    /**
+     * dmp下载第三方数据
+     */
+    public static final String PLATFORM_PULL_DATA_TOPIC = "${spring.cloud.nacos.discovery.namespace}-platform_pull_data_topic";
 }

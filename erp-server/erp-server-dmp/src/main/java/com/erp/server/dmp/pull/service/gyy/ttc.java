@@ -2,7 +2,7 @@ package com.erp.server.dmp.pull.service.gyy;
 
 import com.alibaba.fastjson.JSONObject;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
-import com.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 
 import java.util.List;
 import java.util.Map;

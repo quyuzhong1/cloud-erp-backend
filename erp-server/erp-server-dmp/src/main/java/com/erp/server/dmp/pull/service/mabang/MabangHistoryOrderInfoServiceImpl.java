@@ -5,21 +5,21 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.annotation.SaveData;
+import com.common.business.constant.MongoTableNameContant;
+import com.common.business.dto.RequestDTO;
+import com.common.business.enums.PlatformApiEnum;
+import com.common.business.service.IReportSaveService;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.common.business.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.common.business.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
-import com.common.business.enums.PlatformApiEnum;
 import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.common.business.service.IReportSaveService;
-import com.common.business.annotation.SaveData;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -124,8 +124,4 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
 
     }
 
-    @Override
-    public List<OrderEntity> downloadData(RequestDTO dto) {
-        return null;
-    }
 }

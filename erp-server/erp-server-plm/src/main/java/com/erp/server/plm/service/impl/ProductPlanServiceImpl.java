@@ -12,7 +12,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.MonthEnum;
 import com.common.business.enums.ProductTypeEnum;
-import com.common.business.enums.SalesPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SeasonEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -191,7 +191,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         ProductPlanSaleDTO productPlanSaleDTO = new ProductPlanSaleDTO();
         BeanMapperUtils.copy(productPlanSaleEntity, productPlanSaleDTO);
         resultDTO.setProductPlanSaleDTO(productPlanSaleDTO);
-        productPlanSaleDTO.setSalesPlatformName(SalesPlatformEnum.getNameByName(productPlanSaleEntity.getSalesPlatform()));
+        productPlanSaleDTO.setSalesPlatformName(PlatformDictEnum.getNameByName(productPlanSaleEntity.getSalesPlatform()));
 
         //查询备注信息
         List<ProductPlanRemarkEntity> remarkList = productPlanRemarkService.listByProductPlanId(id);
@@ -294,7 +294,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 obj.setProductStyleName(ProductStyleEnum.getNameByCode(obj.getProductStyleName()));
                 obj.setProductTypeName(ProductTypeEnum.getNameByCode(obj.getProductTypeName()));
                 obj.setThreeGenerationPlanningName(ThreeGenerationPlanningEnum.getNameByCode(obj.getThreeGenerationPlanningName()));
-                obj.setSalesPlatformName(SalesPlatformEnum.getNameByName(obj.getSalesPlatformName()));
+                obj.setSalesPlatformName(PlatformDictEnum.getNameByName(obj.getSalesPlatformName()));
                 obj.setPlanMarketingSeasonName(SeasonEnum.getNameByCode(obj.getPlanMarketingSeasonName()));
                 //销售数据信息
                 if (CollectionUtils.isEmpty(productPlanSaleInfoList)) {

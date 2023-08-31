@@ -20,7 +20,7 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.DictBasicEnum;
-import com.erp.model.oms.enums.PlatformDictEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;

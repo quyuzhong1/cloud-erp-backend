@@ -1103,7 +1103,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
         for (CustomerInfoEntity item : list) {
             String platformType = item.getPlatformType();
-            String platformTypeName = SalesPlatformEnum.getByCode(platformType).getName();
+            String platformTypeName = PlatformDictEnum.getByCode(platformType).getName();
             String newPlatformType = dictList.stream().filter(d -> d.getName().equals(platformTypeName)).
                     findFirst().map(DictBasicDTO.ViewDTO::getValue).orElse("");
             item.setPlatformType(newPlatformType);

@@ -3,7 +3,7 @@ package com.erp.server.dmp.pull.service.dmp;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.RequestDTO;
 import com.common.business.enums.PlatformApiEnum;
-import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
+import com.erp.sdk.third.kingdee.dto.KingdeeEccShopEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.service.gyy.*;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeEccShopServiceImpl;
