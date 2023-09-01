@@ -12,7 +12,6 @@ import java.util.List;
  * @author Cloud
  */
 public abstract class AbstractOrderHandler<T extends CleanBaseDTO, R extends UniqueDto> implements IBusinessHandler<T, R> {
-    // Common logic for order handling can be defined here
 
     public PlatformDataDTO<T, R> pullHandle(JobTaskDTO data) {
         // 调用数据下载功能
@@ -22,22 +21,30 @@ public abstract class AbstractOrderHandler<T extends CleanBaseDTO, R extends Uni
     }
 
 
-    public void pushHandle(JobTaskDTO data) {
+    public List<?> pushHandle(JobTaskDTO data) {
         // 组装数据
-
+        List<?> resultList = pushDataPackage(data);
         // 1. Deserialize the message body to PlatformOrderDataDTO
+        return resultList;
     }
 
     /**
      * 平台数据下载数据
      * @return
      */
-    protected abstract List<T> download(JobTaskDTO data);
+    public abstract List<T> download(JobTaskDTO data);
 
     /**
      * 平台数据转换为mq数据
      * @param sourceDataList
      * @return
      */
-    protected abstract List<R> convert(List<T> sourceDataList);
+    public abstract List<R> convert(List<T> sourceDataList);
+
+    /**
+     * 推送数据封装
+     * @param data
+     * @return
+     */
+    public abstract List<?> pushDataPackage(JobTaskDTO data);
 }

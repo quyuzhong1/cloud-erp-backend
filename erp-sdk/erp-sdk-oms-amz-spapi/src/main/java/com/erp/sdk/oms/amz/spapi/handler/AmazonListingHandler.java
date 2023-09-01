@@ -4,18 +4,18 @@ import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
+import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractOrderHandler;
-import com.common.business.dto.PlatformOrderDTO;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 /**
- * 亚马逊订单处理器
+ * 亚马逊产品处理器
  *
  * @Author Cloud
  * @Date 2023/8/31 15:48
@@ -24,10 +24,10 @@ import java.util.List;
 @PlatformCategoryType(PlatformCategoryEnum.OMS)
 @PlatformType(PlatformDictEnum.AMAZON)
 @BusinessType(BusinessTypeEnum.ORDER)
-public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrderDTO, PlatformOrderDTO> {
+public class AmazonListingHandler extends AbstractOrderHandler<PlatformAmazonListingDTO, PlatformProductDTO> {
 
     @Override
-    public List<PlatformAmazonOrderDTO> download(JobTaskDTO data) {
+    public List<PlatformAmazonListingDTO> download(JobTaskDTO data) {
 
         // TODO: 亚马逊订单下载
 
@@ -37,7 +37,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
 
 
     @Override
-    public List<PlatformOrderDTO> convert(List<PlatformAmazonOrderDTO> sourceDataList) {
+    public List<PlatformProductDTO> convert(List<PlatformAmazonListingDTO> sourceDataList) {
 
         // TODO: 亚马逊订单转换为发送mq数据
         // 包含数据过滤数据 数据转换 数据合并拆分等操作

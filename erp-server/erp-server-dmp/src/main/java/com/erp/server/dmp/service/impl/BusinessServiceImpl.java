@@ -56,7 +56,7 @@ public class BusinessServiceImpl {
      * @param data     业务数据
      * @param <T>      业务类型
      * @param <R>      业务返回类型
-     * @param <V>      业务数据类型
+     * @param <>      业务数据类型
      */
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")

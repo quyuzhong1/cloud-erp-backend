@@ -5,6 +5,8 @@ import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformDataDTO;
 import com.common.business.dto.UniqueDto;
 
+import java.util.List;
+
 /**
  * 业务处理器
  * @author Cloud
@@ -20,5 +22,5 @@ public interface IBusinessHandler<T extends CleanBaseDTO,R extends UniqueDto> {
      * 拉取数据处理
      * @param data
      */
-    void pushHandle(JobTaskDTO data);
+    List<?> pushHandle(JobTaskDTO data);
 }

@@ -20,10 +20,11 @@ public abstract class AbstractProductHandler<T extends CleanBaseDTO,R extends Un
     }
 
 
-    public void pushHandle(JobTaskDTO data) {
+    public List<?> pushHandle(JobTaskDTO data) {
         // 组装数据
-
+        List<?> resultList = pushDataPackage(data);
         // 1. Deserialize the message body to PlatformOrderDataDTO
+        return resultList;
     }
 
     /**
@@ -38,4 +39,11 @@ public abstract class AbstractProductHandler<T extends CleanBaseDTO,R extends Un
      * @return
      */
     abstract List<R> convert(List<T> sourceDataList);
+
+    /**
+     * 推送数据封装
+     * @param data
+     * @return
+     */
+    public abstract List<?> pushDataPackage(JobTaskDTO data);
 }
