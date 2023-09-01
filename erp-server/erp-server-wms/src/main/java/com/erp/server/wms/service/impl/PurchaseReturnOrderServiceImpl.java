@@ -446,7 +446,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             viewDTO.setSourceType(ReturnOrderSourceEnum.QC.getCode());
             viewDTO.setSourceTypeName(ReturnOrderSourceEnum.QC.getName());
         } else {
-            viewDTO.setSourceType(ReturnOrderSourceEnum.OTHER.getCode());
             viewDTO.setSourceTypeName(ReturnOrderSourceEnum.OTHER.getName());
         }
         if (StringUtils.isNotBlank(viewDTO.getReturnMode())) {
@@ -682,7 +681,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     }
                 }
             }
-            List<String> purchaseOrderIds = purchaseReturnOrderEntityList.stream().map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
+            List<String> purchaseOrderIds = purchaseReturnOrderEntityList.stream().filter(req -> StringUtils.isNotBlank(req.getPurchaseOrderId())).map(req -> req.getPurchaseOrderId()).distinct().collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(purchaseOrderIds)) {
                 updateArrivalState(purchaseOrderIds, list);
             }
