@@ -48,7 +48,6 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货人组织id
          */
-        @NotBlank(message = "退货人组织不能为空")
         private String returnOrgId;
 
         /**
@@ -155,13 +154,11 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货人id
          */
-        @NotBlank(message = "退货人不能为空")
         private String returnUserId;
 
         /**
          * 退货人组织id
          */
-        @NotBlank(message = "退货人组织不能为空")
         private String returnOrgId;
 
         /**
