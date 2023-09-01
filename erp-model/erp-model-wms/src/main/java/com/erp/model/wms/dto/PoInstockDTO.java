@@ -797,6 +797,11 @@ public class PoInstockDTO implements Serializable {
         private String code;
 
         /**
+         * 入库单号
+         */
+        private String sourceType;
+
+        /**
          * 供应商名称
          */
         private String supplierName;

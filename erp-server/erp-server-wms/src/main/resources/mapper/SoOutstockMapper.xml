@@ -314,6 +314,7 @@
         DISTINCT
         so.id,
         so.code,
+        so.source_type,
         so.seller_name,
         so.warehouse_name,
         so.approve_status,

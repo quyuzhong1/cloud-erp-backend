@@ -647,6 +647,11 @@ public class SoReturnInstockDTO {
         private String code;
 
         /**
+         * 单据来源
+         */
+        private String sourceType;
+
+        /**
          * 销售员
          */
         private String sellerName;

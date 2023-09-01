@@ -253,6 +253,7 @@
             DISTINCT
             sri.id,
             sri.code,
+            sri.source_type,
             sri.approve_status,
             sri.warehouse_name,
             sri.seller_name,

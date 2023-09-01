@@ -1180,6 +1180,11 @@ public class SoOutstockDTO implements Serializable {
         private String code;
 
         /**
+         * 单据来源
+         */
+        private String sourceType;
+
+        /**
          * 审核状态
          */
         private String approveStatus;
