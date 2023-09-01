@@ -635,6 +635,8 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             generatePoDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
             generatePoDTO.setSupplierId(detailEntity.getSupplierId());
             generatePoDTO.setQty(detailEntity.getQty() - qty);
+            generatePoDTO.setPlanDeliveryDate(detailEntity.getPlanDeliveryDate());
+            generatePoDTO.setPaymentCondition(detailEntity.getPaymentCondition());
             resultLust.add(generatePoDTO);
         }
         if (CollectionUtils.isNotEmpty(resultLust)) {
