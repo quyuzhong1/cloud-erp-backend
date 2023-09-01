@@ -112,9 +112,13 @@ public class MachineSubComponentsDTO implements Serializable {
         private Integer bomVersion;
 
         /**
-         * 子级SKU数量
+         * 子级SKU数量(前端需要的标识)
          */
         private Integer childLength;
+        /**
+         * 子级SKU是否显示(前端需要的标识)
+         */
+        private Boolean childHidden;
     }
 
     @Data

@@ -346,6 +346,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         if (CollectionUtils.isEmpty(versionChildList)) {
             return resultList;
         }
+        Boolean childHidden = Boolean.FALSE;
         for (BomChildrenSkuDTO bomChildrenSkuDTO : versionChildList) {
             //sku信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(null);
@@ -353,6 +354,10 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                 throw new ServiceException(ApiError.ERROR_95084);
             }
             MachineSubComponentsDTO.ViewDTO viewDTO = new MachineSubComponentsDTO.ViewDTO();
+            if (!childHidden) {
+                childHidden = Boolean.TRUE;
+                viewDTO.setChildHidden(Boolean.TRUE);
+            }
             viewDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
             viewDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
             viewDTO.setProductName(bomChildrenSkuDTO.getSkuName());
