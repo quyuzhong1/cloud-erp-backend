@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -290,6 +291,17 @@ public class SubcontractChangeDetailDTO implements Serializable {
         */
         @NotNull(message = "是否自动生成采购订单不能为空")
         private Boolean isGeneratePo;
+
+        /**
+         * 预计交货日期
+         */
+        @NotNull(message = "预计交货日期不能为空")
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
 
         /**
          * 库位

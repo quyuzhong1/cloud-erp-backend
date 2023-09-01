@@ -1050,6 +1050,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             parentDTO.setDeliveryQty(null);
             parentDTO.setAmount(null);
             parentDTO.setRemark(null);
+            parentDTO.setPlanDeliveryDate(parentEntity.getPlanDeliveryDate());
+            parentDTO.setPaymentCondition(parentEntity.getPaymentCondition());
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
                 String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(parentEntity.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse(null);
@@ -1071,6 +1073,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 childDTO.setDeliveryQty(null);
                 childDTO.setAmount(null);
                 childDTO.setRemark(null);
+                parentDTO.setPlanDeliveryDate(childEntity.getPlanDeliveryDate());
+                parentDTO.setPaymentCondition(childEntity.getPaymentCondition());
                 //产品名称
                 if (CollectionUtils.isNotEmpty(skuList)) {
                     String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(childEntity.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse(null);
