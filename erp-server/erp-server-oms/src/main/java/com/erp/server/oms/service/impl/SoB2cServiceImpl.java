@@ -1761,6 +1761,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<ReportDTO.ProductSalesPagingViewDTO> list = pageData.getRecords();
         Duration between = LocalDateTimeUtil.between(params.getOrderCreateTimeList().get(0), params.getOrderCreateTimeList().get(1));
         long diffDays = between.toDays();
+        if(diffDays==0){
+            diffDays=1;
+        }
         fillProductSalesList(list, diffDays);
         return new PagingVO<>(pageData);
 
