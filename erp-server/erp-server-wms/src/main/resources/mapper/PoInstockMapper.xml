@@ -336,6 +336,10 @@
         inner join po_instock_detail psid on psi.id = psid.main_id and psid.is_deleted = false
         WHERE psi.is_deleted = false
         AND psi.invalid_status = false
+
+        <if test="params.code != null and params.code != ''">
+            AND psi.code = #{params.code}
+        </if>
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and psi.approve_status in
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">

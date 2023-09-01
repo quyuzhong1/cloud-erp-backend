@@ -883,6 +883,10 @@ public class PoInstockDTO implements Serializable {
     @NoArgsConstructor
     public static class PdaSearchParamDTO extends SortDTO {
         /**
+         * 单据编号
+         */
+        private String code;
+        /**
          * 审核状态集合
          */
         private List<String> approveStatusList;

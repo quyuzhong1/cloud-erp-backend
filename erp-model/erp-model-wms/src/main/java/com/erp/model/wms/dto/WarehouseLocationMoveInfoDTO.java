@@ -211,6 +211,11 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         private LocalDateTime approveTime;
 
         /**
+        * 审核时间
+        */
+        private LocalDate billDate;
+
+        /**
          * 明细信息
          */
         private List<WarehouseLocationMoveDetailDTO.ViewDTO> detailList;
