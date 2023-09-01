@@ -2,8 +2,18 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.RuleLogisticsEntity;
+import com.erp.model.oms.enums.DictBasicEnum;
+import com.erp.model.oms.enums.TypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleLogisticsMapper;
+import com.erp.server.oms.service.RuleConditionService;
 import com.erp.server.oms.service.RuleLogisticsService;
 import com.common.business.service.SuperServiceImpl;
 import com.erp.server.oms.service.OperateLogService;
@@ -15,9 +25,12 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.RuleLogisticsDTO;
+
 import java.util.*;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
 /**
  * <p>
  * 物流规则表 服务实现类
@@ -33,6 +46,8 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
     private OperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private RuleConditionService ruleConditionService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -40,56 +55,117 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
     public String add(RuleLogisticsDTO.AddDTO addDTO) {
         RuleLogisticsEntity ruleLogisticsEntity = new RuleLogisticsEntity();
         BeanMapperUtils.copy(addDTO, ruleLogisticsEntity);
-
         // 数据处理
         handleData(ruleLogisticsEntity);
-
-        log.info("开始新增物流规则单");
         boolean save = super.save(ruleLogisticsEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("物流规则单保存失败");
         }
-
+        List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
+        String id = ruleLogisticsEntity.getId();
+        //保存规则条件
+        ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物流规则单" , ruleLogisticsEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, ruleLogisticsEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "物流规则单", id);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.RULE_LOGISTICS.getCode(), id, "新增操作");
         return ruleLogisticsEntity.getId();
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(RuleLogisticsDTO.UpdateDTO updateDTO) {
-        RuleLogisticsEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单"));
-        RuleLogisticsEntity ruleLogisticsEntity =  BeanMapperUtils.map(RuleLogisticsEntity.class, updateDTO);
-
+        String id = updateDTO.getId();
+        RuleLogisticsEntity old = super.getById(id);
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单"));
+        RuleLogisticsEntity ruleLogisticsEntity = BeanMapperUtils.map(RuleLogisticsEntity.class, updateDTO);
         // 数据处理
         handleData(ruleLogisticsEntity);
-        log.info("编辑 开始修改物流规则单数据，id：【{}】", old.getId());
         boolean save = super.updateById(ruleLogisticsEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("物流规则单保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
+        List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
+        ruleConditionService.updateRuleCondition(id, conditionList);
         // 记录主单操作日志
-            log.info("编辑 开始记录物流规则单日志数据，id：【{}】", ruleLogisticsEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ruleLogisticsEntity.getId(), "物流规则单");
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ruleLogisticsEntity.getId(), "物流规则单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, ruleLogisticsEntity, null, ruleLogisticsEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, ruleLogisticsEntity, ModuleTypeEnum.RULE_LOGISTICS.getCode(), ruleLogisticsEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
 
     /**
-    * 新增修改处理数据
-    */
+     * 物流规则分页
+     *
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.RuleLogisticsDTO.PagingViewDTO>
+     * @author yl
+     * @date 2023-09-01 9:07
+     */
+    @Override
+    public PagingVO<RuleLogisticsDTO.PagingViewDTO> paging(PagingDTO<RuleLogisticsDTO.PagingParamDTO> dto) {
+        RuleLogisticsDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+        return new PagingVO<>(pageData);
+
+    }
+
+
+    /**
+     * 物流规则详情
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public RuleLogisticsDTO.ViewDTO view(String id) {
+        RuleLogisticsEntity ruleLogistics = this.getById(id);
+        Optional.ofNullable(ruleLogistics).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单"));
+        RuleLogisticsDTO.ViewDTO view = new RuleLogisticsDTO.ViewDTO();
+        BeanMapper.copy(ruleLogistics, view);
+        String type = DictBasicEnum.RULE_CONDITION.getType();
+        List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);
+        view.setConditionList(conditionList);
+        String modeType = view.getModeType();
+        String modeTypeName = TypeEnum.getName(modeType);
+        view.setModeTypeName(modeTypeName);
+        return view;
+    }
+
+    /**
+     * 更改启用禁用状态
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-08-30 14:15
+     */
+    @Override
+    public Boolean updateStatus(UpdateStateDTO dto) {
+        RuleLogisticsEntity ruleLogistics = this.getById(dto.getId());
+        Optional.ofNullable(ruleLogistics).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单"));
+        Boolean disabled = ruleLogistics.getDisabled();
+        if (disabled.equals(dto.getState())) {
+            throw new ServiceException(ApiError.ERROR_98027);
+        }
+        String content = String.format("启用状态[%s]变更为[%s]", disabled ? "启用" : "停用", disabled ? "停用" : "启用");
+        ruleLogistics.setDisabled(dto.getState());
+        operateLogService.addModuleOperateLog(content, ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode(), dto.getId(), "状态变更");
+        return this.updateById(ruleLogistics);
+
+    }
+
+
+    /**
+     * 新增修改处理数据
+     */
     private void handleData(RuleLogisticsEntity ruleLogisticsEntity) {
-    // TODO 验证数据 & 数据赋值
+        // TODO 验证数据 & 数据赋值
     }
 }

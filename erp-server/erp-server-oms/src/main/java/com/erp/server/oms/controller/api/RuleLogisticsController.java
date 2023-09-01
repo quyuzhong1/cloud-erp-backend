@@ -1,6 +1,11 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.RuleOrderApprovalDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -28,36 +33,74 @@ public class RuleLogisticsController extends BaseController {
     @Autowired
     private RuleLogisticsService ruleLogisticsService;
 
+
     /**
-    * 新增
-    * @author Lambda
-    * @date:  2023-08-28
-    * @param dto
-    * @return ApiResult<String>
-    */
+     * 分页查询
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-08-28
+     */
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<RuleLogisticsDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<RuleLogisticsDTO.PagingParamDTO> dto) {
+        PagingVO<RuleLogisticsDTO.PagingViewDTO> pagingVO = ruleLogisticsService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 新增
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-08-28
+     */
     @PostMapping("/add")
     public ApiResult<String> add(@RequestBody @Validated RuleLogisticsDTO.AddDTO dto) {
         return success(ruleLogisticsService.add(dto));
     }
 
     /**
-    * 修改
-    * @author Lambda
-    * @date:  2023-08-28
-    * @param dto
-    * @return ApiResult
-    */
+     * 修改
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Lambda
+     * @date: 2023-08-28
+     */
     @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "oms:ruleLogistics:update",
-        serviceClass = RuleLogisticsService.class,
-        keyIdName = "id")
     public ApiResult update(@RequestBody @Validated RuleLogisticsDTO.UpdateDTO dto) {
-        ruleLogisticsService.update(dto);
-        return success();
+        Boolean result = ruleLogisticsService.update(dto);
+        return result?success():failure();
     }
 
+    /**
+     * 详情
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Lambda
+     * @date: 2023-08-28
+     */
+    @PostMapping("/view")
+    public ApiResult<RuleLogisticsDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+        RuleLogisticsDTO.ViewDTO viewDTO = ruleLogisticsService.view(dto.getId());
+        return success(viewDTO);
+    }
 
+    /**
+     * 更改启用禁用状态
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-08-30 14:13
+     */
+    @PostMapping("/updateStatus")
+    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
+        Boolean result = ruleLogisticsService.updateStatus(dto);
+        return result ? success() : failure();
+    }
 
 }

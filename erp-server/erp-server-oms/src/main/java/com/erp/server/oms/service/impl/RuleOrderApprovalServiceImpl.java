@@ -130,9 +130,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     @Override
     public Boolean updateStatus(UpdateStateDTO dto) {
         RuleOrderApprovalEntity ruleOrderApproval = this.getById(dto.getId());
-        if (Objects.isNull(ruleOrderApproval)) {
-            throw new ServiceException("订单审核规则不存在");
-        }
+        Optional.ofNullable(ruleOrderApproval).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "订单审核规则"));
         Boolean disabled = ruleOrderApproval.getDisabled();
         if (disabled.equals(dto.getState())) {
             throw new ServiceException(ApiError.ERROR_98027);
@@ -146,9 +144,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     @Override
     public RuleOrderApprovalDTO.ViewDTO view(String id) {
         RuleOrderApprovalEntity ruleOrderApproval = this.getById(id);
-        if (Objects.isNull(ruleOrderApproval)) {
-            throw new ServiceException("审核规则存在");
-        }
+        Optional.ofNullable(ruleOrderApproval).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "订单审核规则"));
         RuleOrderApprovalDTO.ViewDTO view = new RuleOrderApprovalDTO.ViewDTO();
         BeanMapper.copy(ruleOrderApproval, view);
         String operationType = ruleOrderApproval.getOperationType();

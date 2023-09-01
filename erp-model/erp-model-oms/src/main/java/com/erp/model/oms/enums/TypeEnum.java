@@ -3,6 +3,7 @@ package com.erp.model.oms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author Lambda
@@ -14,6 +15,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum TypeEnum  implements EnumMessage {
     PLATFORM("platform","平台"),
     WAREHOUSE("warehouse","仓库"),
+    ASSIGN("assign","指定物流"),
+    MIN_FREIGHT("minFreight","最低运费")
     ;
 
     TypeEnum(String code, String name) {
@@ -39,5 +42,17 @@ public enum TypeEnum  implements EnumMessage {
     @Override
     public String getName() {
         return name;
+    }
+
+    public static String getName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        for (TypeEnum typeEnum : TypeEnum.values()) {
+            if (code.equals(typeEnum.getCode())) {
+                return typeEnum.getName();
+            }
+        }
+        return "";
     }
 }

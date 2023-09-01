@@ -11,6 +11,7 @@ import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuVO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -564,4 +565,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      **/
     List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto);
+
+    /**
+     * 根据创建时间获取到对应实体
+     * @author yl
+     * @date 2023-09-01 12:21
+     * @param createTimeList
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     */
+    List<ProductDetailEntity> listByCreateTimeList(List<LocalDateTime> createTimeList);
 }

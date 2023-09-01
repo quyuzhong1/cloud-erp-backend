@@ -17,6 +17,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -252,4 +253,12 @@ public class ProductSkuFeignController {
         return productDetailService.getNoInventorySku();
     }
 
+    /**
+     * 根据创建时间获取到对应的sku
+     * @return
+     */
+    @PostMapping("/listByCreateTimeList")
+    public List<ProductDetailEntity> listByCreateTimeList(@RequestBody List<LocalDateTime> createTimeList) {
+        return productDetailService.listByCreateTimeList(createTimeList);
+    }
 }

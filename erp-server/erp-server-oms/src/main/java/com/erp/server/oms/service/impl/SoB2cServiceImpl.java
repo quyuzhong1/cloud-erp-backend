@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -24,10 +25,12 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -48,11 +51,13 @@ import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -120,8 +125,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private DictBasicService dictBasicService;
 
 
-
-
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -187,8 +190,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cDetailService.add(addDTO.getDetailList(), soB2cEntity.getId());
         //新增订单分类
         if (CollectionUtils.isNotEmpty(addDTO.getCategoryIdList())) {
-            List<SoB2cRefCategoryDTO.AddDTO> addList = addDTO.getCategoryIdList().stream().map(obj -> new SoB2cRefCategoryDTO.AddDTO(soB2cEntity.getId(),obj)).collect(Collectors.toList());
-            soB2cRefCategoryService.add(addList,soB2cEntity.getId());
+            List<SoB2cRefCategoryDTO.AddDTO> addList = addDTO.getCategoryIdList().stream().map(obj -> new SoB2cRefCategoryDTO.AddDTO(soB2cEntity.getId(), obj)).collect(Collectors.toList());
+            soB2cRefCategoryService.add(addList, soB2cEntity.getId());
         }
 
         // 操作日志
@@ -234,7 +237,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //修改明细
         soB2cDetailService.update(updateDTO.getDetailList(), soB2cEntity.getId());
         //修改订单分类
-       soB2cRefCategoryService.update(updateDTO.getCategoryIdList(),soB2cEntity.getId());
+        soB2cRefCategoryService.update(updateDTO.getCategoryIdList(), soB2cEntity.getId());
 
 
         // 记录主单操作日志
@@ -988,6 +991,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return BatchResultDTO.success(entity.getCode(), "取消拆分");
     }
 
+
     /**
      * @param ids
      * @description: 根据主表id删除
@@ -1727,5 +1731,62 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(SoB2cEntity::getBillStatus, soB2cBillStatusEnum.getCode())
                 .update(new SoB2cEntity());
+    }
+
+
+    /**
+     * 报表管理 销售统计
+     *
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.ReportDTO.ProductSalesPagingViewDTO>
+     * @author yl
+     * @date 2023-09-01 11:19
+     */
+    @Override
+    public PagingVO<ReportDTO.ProductSalesPagingViewDTO> productSalesPaging(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
+        ReportDTO.ProductSalesPagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        //sku 创建时间
+        List skuCreateTimeList = params.getSkuCreateTimeList();
+        List<String> skuIdList = Lists.newArrayList();
+        if (CollectionUtils.isNotEmpty(skuCreateTimeList)) {
+            List<ProductDetailEntity> skuList = plmTaskFeign.listByCreateTimeList(skuCreateTimeList);
+            skuIdList = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(skuIdList)) {
+                return new PagingVO<>(new Page<>());
+            }
+        }
+        IPage pageData = baseMapper.productSalesPaging(query, params, skuIdList);
+        List<ReportDTO.ProductSalesPagingViewDTO> list = pageData.getRecords();
+        Duration between = LocalDateTimeUtil.between(params.getOrderCreateTimeList().get(0), params.getOrderCreateTimeList().get(1));
+        long diffDays = between.toDays();
+        fillProductSalesList(list, diffDays);
+        return new PagingVO<>(pageData);
+
+    }
+
+    /**
+     * 填充销售订单数据
+     *
+     * @param list
+     * @param diffDays
+     */
+    private void fillProductSalesList(List<ReportDTO.ProductSalesPagingViewDTO> list, long diffDays) {
+        List<String> shopIdList = list.stream().map(ReportDTO.ProductSalesPagingViewDTO::getShopId).collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = shopInfoService.listByIds(shopIdList);
+        for (ReportDTO.ProductSalesPagingViewDTO item : list) {
+            String shopId = item.getShopId();
+            String shopName = shopInfoList.stream().filter(s -> s.getId().equals(shopId)).
+                    findFirst().map(ShopInfoEntity::getName).orElse("");
+            item.setShopName(shopName);
+            Integer qty = item.getQty();
+            Integer avgQty = Math.toIntExact(qty / diffDays);
+            item.setAvgQty(avgQty);
+            BigDecimal amount = item.getAmount();
+            BigDecimal avgAmount = amount.divide(new BigDecimal(diffDays));
+            item.setAvgAmount(avgAmount);
+
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.erp.server.oms.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ReportDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
@@ -243,4 +244,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return BatchResultDTO
      */
     BatchResultDTO cancelSplit(String id);
+
+    /**
+     * 报表管理 销售统计
+     * @author yl
+     * @date 2023-09-01 11:19
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.ReportDTO.ProductSalesPagingViewDTO>
+     */
+    PagingVO<ReportDTO.ProductSalesPagingViewDTO> productSalesPaging(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto);
 }

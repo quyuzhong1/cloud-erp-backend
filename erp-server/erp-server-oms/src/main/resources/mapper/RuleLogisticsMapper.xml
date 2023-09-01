@@ -35,6 +35,31 @@
         is_deleted,
         name, priority, disabled, remark, type, logistics_supplier, mode, auto_get_track_no
     </sql>
+    <select id="paging" resultType="com.erp.model.oms.dto.RuleLogisticsDTO$PagingViewDTO">
+        SELECT
+        id,
+        name,
+        priority,
+        disabled,
+        remark,
+        logistics_supplier,
+        type,
+        mode,
+        auto_get_track_no,
+        create_user_name,
+        create_time,
+        update_user_name,
+        update_time
+        FROM rule_logistics
+        WHERE roa.is_deleted=FALSE
+        <if test="params.name !=null and params.name!=''">
+            AND name ILIKE concat('%', #{params.name} ,'%')
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
 
 
 </mapper>

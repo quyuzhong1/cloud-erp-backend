@@ -8,6 +8,7 @@ import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -278,5 +279,8 @@ public interface PlmTaskFeign {
      * @return
      */
     @PostMapping("/feign/product/getNoInventorySku")
-    List<SkuVO> getNoInventorySku( );
+    List<SkuVO> getNoInventorySku();
+
+    @PostMapping("feign/product/listByCreateTimeList")
+    List<ProductDetailEntity> listByCreateTimeList(@Param("createTimeList") List skuCreateTimeList);
 }

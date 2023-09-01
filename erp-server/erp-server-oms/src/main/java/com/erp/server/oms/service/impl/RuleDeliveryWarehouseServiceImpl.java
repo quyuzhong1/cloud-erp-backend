@@ -134,9 +134,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
     @Override
     public RuleDeliveryWarehouseDTO.ViewDTO view(String id) {
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouse = this.getById(id);
-        if (Objects.isNull(ruleDeliveryWarehouse)) {
-            throw new ServiceException("仓库规则不存在");
-        }
+        Optional.ofNullable(ruleDeliveryWarehouse).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单"));
         RuleDeliveryWarehouseDTO.ViewDTO view = new RuleDeliveryWarehouseDTO.ViewDTO();
         BeanMapper.copy(ruleDeliveryWarehouse, view);
         String type = DictBasicEnum.RULE_CONDITION.getType();
@@ -157,9 +155,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
     public Boolean updateStatus(UpdateStateDTO dto) {
         String id = dto.getId();
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouse = this.getById(id);
-        if (Objects.isNull(ruleDeliveryWarehouse)) {
-            throw new ServiceException("仓库规则不存在");
-        }
+        Optional.ofNullable(ruleDeliveryWarehouse).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单"));
         Boolean disabled = ruleDeliveryWarehouse.getDisabled();
         if (disabled.equals(dto.getState())) {
             throw new ServiceException(ApiError.ERROR_98027);

@@ -3,6 +3,7 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.ReportDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -62,4 +63,12 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @return List<MergeMainDTO>
      */
     List<SoB2cDTO.MergeMainDTO> listMerge(@Param("params")SoB2cDTO.MergeParamDTO mergeParamDTO);
+
+    /**
+     * 销售订单统计
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<ReportDTO.ProductSalesPagingViewDTO> productSalesPaging(Page query,@Param("params") ReportDTO.ProductSalesPagingParamDTO params,List<String> skuIdList);
 }

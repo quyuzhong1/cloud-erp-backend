@@ -1,4 +1,5 @@
 package com.erp.server.oms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.RuleLogisticsEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -33,4 +34,28 @@ public interface RuleLogisticsService extends SuperService<RuleLogisticsEntity> 
     Boolean update(RuleLogisticsDTO.UpdateDTO dto);
 
 
+    /**
+     * 物流规则分页
+     * @author yl
+     * @date 2023-09-01 9:07
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.RuleLogisticsDTO.PagingViewDTO>
+     */
+    PagingVO<RuleLogisticsDTO.PagingViewDTO> paging(PagingDTO<RuleLogisticsDTO.PagingParamDTO> dto);
+
+    /**
+     * 物流规则详情
+     * @param id
+     * @return
+     */
+    RuleLogisticsDTO.ViewDTO view(String id);
+
+    /**
+     * 更改启用禁用状态
+     * @author yl
+     * @date 2023-08-30 14:15
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateStatus(UpdateStateDTO dto);
 }
