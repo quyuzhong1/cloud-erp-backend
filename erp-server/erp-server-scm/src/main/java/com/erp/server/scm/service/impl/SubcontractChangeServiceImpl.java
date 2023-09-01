@@ -348,11 +348,11 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         if(Objects.equals(ApproveTypeEnum.PASS, approveType)) {
            // TODO 审核通过流程处理
 
-            //审核通过发送金蝶(防止数据先删除导致查不到，需要先发送金蝶)
-            list.forEach(obj -> syncKingdeeSubcontractChangeService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
-
             //审核通过更新委外订单
             handleSubcontractOrder(ids,list);
+
+            //审核通过发送金蝶(防止数据先删除导致查不到，需要先发送金蝶)
+            list.forEach(obj -> syncKingdeeSubcontractChangeService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
 
         } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) {
            // TODO 终止审批流程
@@ -624,7 +624,10 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             }
             //已下推采购订单数量
             Integer qty = poList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId())).map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
-
+           //如果已下推数量等于变更后数量则无需下推采购订单
+            if (MathUtil.compareTo(detailEntity.getQty(),qty) == MathUtil.ZERO) {
+                continue;
+            }
             SubcontractOrderDTO.GeneratePoDTO generatePoDTO = new SubcontractOrderDTO.GeneratePoDTO();
             generatePoDTO.setSourceDetailId(detailEntity.getSourceDetailId());
             generatePoDTO.setSourceId(subcontractChangeEntity.getSourceId());
