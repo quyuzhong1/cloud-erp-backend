@@ -625,7 +625,7 @@
         <if test="code != '' and code != null ">
             AND po.code ILIKE concat('%', #{code} ,'%')
         </if>
-        ORDER BY po.create_time
+        ORDER BY po.create_time DESC
     </select>
 
 </mapper>

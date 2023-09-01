@@ -69,9 +69,19 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
         private String outWarehouseLocation;
 
         /**
+        * 取货仓位名称
+        */
+        private String outWarehouseLocationName;
+
+        /**
         * 上架仓位
         */
         private String inWarehouseLocation;
+
+        /**
+        * 上架仓位名称
+        */
+        private String inWarehouseLocationName;
 
         /**
         * 移动数量

@@ -177,6 +177,11 @@ public class WarehouseReceiveDetailDTO {
         private String warehouseLocation;
 
         /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+
+        /**
          * 备注
          */
         private String remark;

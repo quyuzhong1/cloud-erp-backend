@@ -1674,16 +1674,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     @Override
     public String pdaAdd(PoInstockDTO.AddDTO dto, Boolean aFalse) {
-        List<PoInstockDetailDTO.AddDTO> details = dto.getDetails();
-        //采购明细信息
-        List<String> podIds = details.stream().map(PoInstockDetailDTO.AddDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
-        for (PoInstockDetailDTO.AddDTO entity : details) {
-            PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrderDetailId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST, entity.getSkuNo());
-            }
-        }
+
         List<PoInstockDetailDTO.AddDTO> addDTOList = new ArrayList<>();
         List<PoInstockDetailDTO.AddDTO> detailList = dto.getDetails();
         List<String> poReceiveDetailIds = detailList.stream().map(PoInstockDetailDTO.AddDTO::getSourceDetailId).distinct().collect(Collectors.toList());
@@ -1741,16 +1732,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     @Override
     public Boolean pdaUpdate(PoInstockDTO.UpdateDTO dto) {
-        List<PoInstockDetailDTO.UpdateDTO> details = dto.getDetails();
-        //采购明细信息
-        List<String> podIds = details.stream().map(PoInstockDetailDTO.UpdateDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
-        for (PoInstockDetailDTO.UpdateDTO entity : details) {
-            PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrderDetailId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(detailEntity)) {
-                throw new ServiceException(ApiError.ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST, entity.getSkuNo());
-            }
-        }
         List<PoInstockDetailDTO.UpdateDTO> updateDTOList = new ArrayList<>();
         List<PoInstockDetailDTO.UpdateDTO> detailList = dto.getDetails();
         List<String> poReceiveDetailIds = detailList.stream().map(PoInstockDetailDTO.UpdateDTO::getSourceDetailId).distinct().collect(Collectors.toList());
