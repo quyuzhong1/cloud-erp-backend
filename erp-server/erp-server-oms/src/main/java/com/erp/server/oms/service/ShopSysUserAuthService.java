@@ -15,24 +15,6 @@ import com.erp.model.oms.entity.ShopSysUserAuthEntity;
 public interface ShopSysUserAuthService extends SuperService<ShopSysUserAuthEntity> {
 
     /**
-    * 新增
-    * @author Will
-    * @date: 2023-09-01
-    * @param dto
-    * @return
-    */
-    String add(ShopSysUserAuthDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author Will
-    * @date: 2023-09-01
-    * @param dto
-    * @return
-    */
-    Boolean update(ShopSysUserAuthDTO.UpdateDTO dto);
-
-    /**
      * @description: 批量授权
      * @author Will
      * @date: 2023/9/1 10:59
@@ -40,4 +22,12 @@ public interface ShopSysUserAuthService extends SuperService<ShopSysUserAuthEnti
      * @return Boolean
      */
     Boolean batchAuth(ShopSysUserAuthDTO.BatchAuthDTO dto);
+    /**
+     * @description: 查看详情
+     * @author Will
+     * @date: 2023/9/1 14:48
+     * @param dto
+     * @return ViewDTO
+     */
+    ShopSysUserAuthDTO.ViewDTO view(ShopSysUserAuthDTO.ViewParamDTO dto);
 }

@@ -1,8 +1,6 @@
 package com.erp.server.oms.controller.api;
 
 
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
@@ -43,23 +41,17 @@ public class ShopSysUserAuthController extends BaseController {
     }
 
     /**
-    * 修改
-    * @author Will
-    * @date:  2023-09-01
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "oms:shopSysUserAuth:update",
-        serviceClass = ShopSysUserAuthService.class,
-        keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated ShopSysUserAuthDTO.UpdateDTO dto) {
-        shopSysUserAuthService.update(dto);
-        return success();
+     * 查看详情
+     * @author Will
+     * @date: 2023/9/1 14:48
+     * @param dto
+     * @return ApiResult<ViewDTO>
+     */
+    @PostMapping("/view")
+    public ApiResult<ShopSysUserAuthDTO.ViewDTO> batchAuth(@RequestBody @Validated ShopSysUserAuthDTO.ViewParamDTO dto) {
+        ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthService.view(dto);
+        return success(viewDTO);
     }
-
 
 
 }

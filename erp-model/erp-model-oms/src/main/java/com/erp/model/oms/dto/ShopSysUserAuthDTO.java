@@ -37,20 +37,45 @@ public class ShopSysUserAuthDTO implements Serializable {
         private String  id;
 
         /**
-        * 店铺id
-        */
-        private String shopId;
-
-        /**
         * 用户id
         */
         private String userId;
 
         /**
-        * 授权类型（all全部，part部分）字典shopAuthType
+         * 平台编号
+         */
+        private String dictPlatform;
+
+        /**
+         * 平台名称
+         */
+        private String dictPlatformName;
+
+        /**
+        * 授权类型（all全部授权，part指定授权）字典shopAuthType
         */
         private String authType;
 
+        /**
+         * 店铺信息
+         */
+        private List<ViewShopDTO> detailList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewShopDTO {
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
     }
 
     /**
@@ -130,6 +155,17 @@ public class ShopSysUserAuthDTO implements Serializable {
         @NotBlank(message = "授权类型不能为空")
         private String authType;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewParamDTO {
+
+        /**
+         * 用户id
+         */
+        @NotBlank(message = "用户id不能为空")
+        private String userId;
     }
 
 }
