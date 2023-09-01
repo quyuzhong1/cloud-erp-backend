@@ -1400,7 +1400,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             addDTO.setSourceType(SourceTypeEnum.MACHINE_INFO.getCode());
             addDTO.setRemark(StrUtil.format("加工单（拆卸）【{}】自动生成直接调拨单",entity.getCode()));
             //sku、仓库、仓位分组
-            Map<String, List<MachineSubComponentsEntity>> childMap = value.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId().concat(obj.getWarehouseLocation()).concat(JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildWarehouseLocation()))));
+            Map<String, List<MachineSubComponentsEntity>> childMap = value.stream()
+                            .collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId().concat(StringUtils.isNotBlank(obj.getWarehouseLocation()) ? obj.getWarehouseLocation() : "")
+                            .concat(StringUtils.isNotBlank(JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildWarehouseLocation()) ? JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildWarehouseLocation() : "" ))));
 
             List<TransferInfoDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for ( Map.Entry<String, List<MachineSubComponentsEntity>> childEntry : childMap.entrySet()) {
@@ -1470,7 +1472,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             addDTO.setSourceType(SourceTypeEnum.MACHINE_INFO.getCode());
             addDTO.setSupplierId(handleDetailDTO.getChildSupplierId());
             addDTO.setReturnRemark(StrUtil.format("加工单（拆卸）【{}】自动生成采购退货单",entity.getCode()));
-            Map<String, List<MachineSubComponentsEntity>> childMap = value.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseLocation())));
+            Map<String, List<MachineSubComponentsEntity>> childMap = value.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(StringUtils.isNotBlank(obj.getWarehouseLocation()) ? obj.getWarehouseLocation() : "" )));
             List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (Map.Entry<String, List<MachineSubComponentsEntity>> childEntry : childMap.entrySet()) {
                 List<MachineSubComponentsEntity> childValue = childEntry.getValue();
