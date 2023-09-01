@@ -291,15 +291,16 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             }
 
         } else {
-            SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(dto.getSourceId());
-            dto.setSellerId(soReturnReceiveEntity.getSellerId());
-            dto.setCustomerId(soReturnReceiveEntity.getCustomerId());
-            dto.setSalesDeptId(soReturnReceiveEntity.getSalesDeptId());
-            dto.setSellerId(soReturnReceiveEntity.getSellerId());
-            dto.setSalesOrgId(soReturnReceiveEntity.getSalesOrgId());
-            dto.setType(soReturnReceiveEntity.getType());
+            if (StringUtils.isNotBlank(dto.getSourceId())) {
+                SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(dto.getSourceId());
+                dto.setSellerId(soReturnReceiveEntity.getSellerId());
+                dto.setCustomerId(soReturnReceiveEntity.getCustomerId());
+                dto.setSalesDeptId(soReturnReceiveEntity.getSalesDeptId());
+                dto.setSellerId(soReturnReceiveEntity.getSellerId());
+                dto.setSalesOrgId(soReturnReceiveEntity.getSalesOrgId());
+                dto.setType(soReturnReceiveEntity.getType());
+            }
         }
-
 
         //获取用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(dto.getSellerId(), dto.getWarehouseKeeperId()));
