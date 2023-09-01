@@ -71,7 +71,7 @@ public class RuleOrderApprovalController extends BaseController {
      * @date: 2023-08-28
      */
     @PostMapping("/view")
-    public ApiResult<RuleOrderApprovalDTO.ViewDTO> update(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<RuleOrderApprovalDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         RuleOrderApprovalDTO.ViewDTO viewDTO = ruleOrderApprovalService.view(dto.getId());
         return success(viewDTO);
     }

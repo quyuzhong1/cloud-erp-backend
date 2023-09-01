@@ -34,5 +34,29 @@
         name, priority, disabled, remark, warehouse_id, warehouse_name
     </sql>
 
+    <select id="paging" resultType="com.erp.model.oms.dto.RuleDeliveryWarehouseDTO$PagingViewDTO">
+        SELECT
+        id,
+        name,
+        priority,
+        disabled,
+        remark,
+        warehouse_id,
+        warehouse_name,
+        create_user_name,
+        create_time,
+        update_user_name,
+        update_time
+        FROM rule_delivery_warehouse
+        WHERE roa.is_deleted=FALSE
+        <if test="params.name !=null and params.name!=''">
+            AND name ILIKE concat('%', #{params.name} ,'%')
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
 
 </mapper>

@@ -1,4 +1,5 @@
 package com.erp.server.oms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.RuleDeliveryWarehouseEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -32,5 +33,30 @@ public interface RuleDeliveryWarehouseService extends SuperService<RuleDeliveryW
     */
     Boolean update(RuleDeliveryWarehouseDTO.UpdateDTO dto);
 
+    /**
+     * 分页查询
+     * @author yl
+     * @date 2023-08-31 17:50
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.RuleDeliveryWarehouseDTO.PagingViewDTO>
+     */
+    PagingVO<RuleDeliveryWarehouseDTO.PagingViewDTO> paging(PagingDTO<RuleDeliveryWarehouseDTO.PagingParamDTO> dto);
 
+    /**
+     * 详情
+     * @author yl
+     * @date 2023-08-31 18:31
+     * @param id
+     * @return com.erp.model.oms.dto.RuleDeliveryWarehouseDTO.ViewDTO
+     */
+    RuleDeliveryWarehouseDTO.ViewDTO view(String id);
+
+    /**
+     * 更改启用禁用状态
+     * @author yl
+     * @date 2023-08-30 14:15
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateStatus(UpdateStateDTO dto);
 }

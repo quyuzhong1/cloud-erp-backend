@@ -53,7 +53,10 @@
         <if test="params.name !=null and params.name!=''">
            AND name ILIKE concat('%', #{params.name} ,'%')
         </if>
-
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
     </select>
 
 

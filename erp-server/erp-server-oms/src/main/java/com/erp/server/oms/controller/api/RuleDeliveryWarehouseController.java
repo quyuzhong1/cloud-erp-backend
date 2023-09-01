@@ -1,6 +1,11 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.RuleOrderApprovalDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -28,6 +33,23 @@ public class RuleDeliveryWarehouseController extends BaseController {
     @Autowired
     private RuleDeliveryWarehouseService ruleDeliveryWarehouseService;
 
+
+
+
+    /**
+     * 分页查询
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-08-28
+     */
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<RuleDeliveryWarehouseDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<RuleDeliveryWarehouseDTO.PagingParamDTO> dto) {
+        PagingVO<RuleDeliveryWarehouseDTO.PagingViewDTO> pagingVO = ruleDeliveryWarehouseService.paging(dto);
+        return success(pagingVO);
+    }
+
     /**
     * 新增
     * @author Lambda
@@ -48,16 +70,36 @@ public class RuleDeliveryWarehouseController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "oms:ruleDeliveryWarehouse:update",
-        serviceClass = RuleDeliveryWarehouseService.class,
-        keyIdName = "id")
     public ApiResult update(@RequestBody @Validated RuleDeliveryWarehouseDTO.UpdateDTO dto) {
-        ruleDeliveryWarehouseService.update(dto);
-        return success();
+        Boolean result = ruleDeliveryWarehouseService.update(dto);
+        return result?success():failure();
     }
 
 
-
+    /**
+     * 详情
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Lambda
+     * @date: 2023-08-28
+     */
+    @PostMapping("/view")
+    public ApiResult<RuleDeliveryWarehouseDTO.ViewDTO> update(@RequestBody @Validated BaseIdDTO dto) {
+        RuleDeliveryWarehouseDTO.ViewDTO viewDTO = ruleDeliveryWarehouseService.view(dto.getId());
+        return success(viewDTO);
+    }
+    /**
+     * 更改启用禁用状态
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-08-30 14:13
+     */
+    @PostMapping("/updateStatus")
+    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
+        Boolean result = ruleDeliveryWarehouseService.updateStatus(dto);
+        return result ? success() : failure();
+    }
 }

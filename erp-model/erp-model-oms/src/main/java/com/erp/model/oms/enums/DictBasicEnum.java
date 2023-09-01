@@ -19,7 +19,8 @@ public enum DictBasicEnum {
     LOGIC("logic",  "订单规则的逻辑关系"),
     AND("and",  "且"),
     OR("or",  "或"),
-    APPROVAL_CONDITION("approvalCondition","订单审核规则")
+    RULE_CONDITION("ruleCondition","审核规则"),
+
     ;
 
 
