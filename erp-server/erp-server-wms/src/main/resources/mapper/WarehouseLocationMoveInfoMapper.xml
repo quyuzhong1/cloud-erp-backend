@@ -47,7 +47,7 @@
             wlmi.warehouse_name,
             wlmi.create_time
         FROM warehouse_location_move_detail wlmd
-        INNER JOIN warehouse_location_move_info wlmi ON wlmd.main_id = wlmi = id AND wlmd.is_deleted = FALSE
+        INNER JOIN warehouse_location_move_info wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
         WHERE wlmi.is_deleted = FALSE
         AND wlmi.invalid_status = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
@@ -74,7 +74,7 @@
         select
         count(distinct wlmi.id)
         FROM warehouse_location_move_detail wlmd
-        INNER JOIN warehouse_location_move_info wlmi ON wlmd.main_id = wlmi = id AND wlmd.is_deleted = FALSE
+        INNER JOIN warehouse_location_move_info wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
         WHERE wlmi.is_deleted = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and wlmi.approve_status in
