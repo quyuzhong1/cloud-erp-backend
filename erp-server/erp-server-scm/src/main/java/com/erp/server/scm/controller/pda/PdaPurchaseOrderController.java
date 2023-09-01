@@ -26,7 +26,7 @@ public class PdaPurchaseOrderController extends BaseController {
     private PurchaseOrderService purchaseOrderService;
 
     /**
-     * 根据sku编号查询采购单信息
+     * 根据sku编号查询采购单未到货信息
      * @Author Luo_WG
      * @Date 2023/8/11 14:18
      * @param dto
@@ -35,6 +35,19 @@ public class PdaPurchaseOrderController extends BaseController {
     @PostMapping("/pdaList")
     public ApiResult<List<PurchaseOrderDTO.PdaPurchaseOrder>> pdaList(@RequestBody PurchaseOrderDTO.PdaPurchaseOrderParam dto) {
         List<PurchaseOrderDTO.PdaPurchaseOrder> list = purchaseOrderService.pdaList(dto);
+        return success(list);
+    }
+
+    /**
+     * 根据sku编号查询采购单所有审核通过的信息
+     * @Author Luo_WG
+     * @Date 2023/8/11 14:18
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.scm.dto.PurchaseOrderDTO.PdaPurchaseOrder>>
+     **/
+    @PostMapping("/pdaListAll")
+    public ApiResult<List<PurchaseOrderDTO.PdaPurchaseOrder>> pdaListAll(@RequestBody PurchaseOrderDTO.PdaPurchaseOrderParam dto) {
+        List<PurchaseOrderDTO.PdaPurchaseOrder> list = purchaseOrderService.pdaListAll(dto);
         return success(list);
     }
 

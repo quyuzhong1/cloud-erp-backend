@@ -2144,4 +2144,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         dto.setDetails(updateDTOS);
         return dto;
     }
+
+    @Override
+    public List<PurchaseOrderDTO.PdaPurchaseOrder> pdaListAll(PurchaseOrderDTO.PdaPurchaseOrderParam dto) {
+        List<PurchaseOrderDTO.PdaPurchaseOrder> list = baseMapper.pdaList(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        return list;
+    }
 }
