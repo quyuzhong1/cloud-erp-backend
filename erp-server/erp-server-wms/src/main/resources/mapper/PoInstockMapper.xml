@@ -326,6 +326,7 @@
             DISTINCT
             psi.id,
             psi.code,
+            psi.source_type,
             psi.supplier_name,
             psi.delivery_warehouse_name,
             psi.approve_status,

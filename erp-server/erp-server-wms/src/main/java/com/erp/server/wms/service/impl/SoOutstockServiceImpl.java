@@ -31,6 +31,7 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -48,6 +49,7 @@ import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.mapper.SoOutstockMapper;
 import com.erp.server.wms.service.*;
@@ -120,6 +122,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
 
     @Resource
     private RedisService redisService;
@@ -313,6 +318,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String countryName = countryList.stream().filter(obj -> obj.getId().equals(customerList.get(0).getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
             result.setCountryId(customerList.get(0).getCountryId());
             result.setCountryName(countryName);
+        }
+
+        if (StringUtils.isNotBlank(result.getCarrierId())) {
+            //获取采购单供应商信息
+            SupplierEntity supplierById = scmTaskFeign.getSupplierById(result.getCarrierId());
+            result.setCarrierName(supplierById.getName());
         }
 
         String soId = soOutstock.getSoId();

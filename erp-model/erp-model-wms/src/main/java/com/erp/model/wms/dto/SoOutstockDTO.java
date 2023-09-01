@@ -625,6 +625,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private String sourceType;
 
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
 
         /**
          * 库存组织id
@@ -669,9 +673,19 @@ public class SoOutstockDTO implements Serializable {
         private String warehouseId;
 
         /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
          * 仓管员
          */
         private String warehouseKeeperId;
+
+        /**
+         * 仓管员名称
+         */
+        private String warehouseKeeperName;
 
         /**
          * 客户id
@@ -705,6 +719,11 @@ public class SoOutstockDTO implements Serializable {
          * 承运商id 来源供应商
          */
         private String carrierId;
+
+        /**
+         * 承运商名称 来源供应商
+         */
+        private String carrierName;
 
 
         /**

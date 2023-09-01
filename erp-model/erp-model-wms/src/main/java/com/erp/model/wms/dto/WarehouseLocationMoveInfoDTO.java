@@ -333,10 +333,10 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
         /**
          * 仓位
          */
-        private String warehouseLocation;
+        private String inWarehouseLocation;
         /**
          * 仓位名称
          */
-        private String warehouseLocationName;
+        private String inWarehouseLocationName;
     }
 }
