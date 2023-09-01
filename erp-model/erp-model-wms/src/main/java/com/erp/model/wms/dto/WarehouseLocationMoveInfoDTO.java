@@ -300,6 +300,43 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
          * 仓库名称
          */
         private String warehouseName;
+
+        /**
+         * 产品明细数量
+         */
+        private Integer detailCount;
+
+        /**
+         * 产品信息
+         */
+        private List<PdaItemDTO> itemList;
     }
 
+    /**
+     * PDA:商品详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaItemDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 调拨数量
+         */
+        private String qty;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+    }
 }

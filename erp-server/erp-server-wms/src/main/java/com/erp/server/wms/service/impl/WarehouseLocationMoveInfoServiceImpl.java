@@ -17,6 +17,7 @@ import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveInfoEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.WarehouseLocationMoveInfoMapper;
@@ -514,10 +515,18 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         if(CollUtil.isEmpty(list)) {
            return;
         }
-
+        //主键id
+        List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        //查询详情
+        List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(ids);
         // 属性赋值
         for(WarehouseLocationMoveInfoDTO.PdaListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+            List<WarehouseLocationMoveDetailEntity> detailEntities = detailEntityList.stream().filter(obj -> obj.getMainId().equals(data.getId())).collect(Collectors.toList());
+            List<WarehouseLocationMoveInfoDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, WarehouseLocationMoveInfoDTO.PdaItemDTO.class);
+            List<String> skuList = itemDTOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+            data.setDetailCount(skuList.size());
+            data.setItemList(itemDTOList);
         }
     }
     /**
