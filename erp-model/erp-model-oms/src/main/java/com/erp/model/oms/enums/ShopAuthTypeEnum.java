@@ -8,8 +8,8 @@ package com.erp.model.oms.enums;
  */
 public enum ShopAuthTypeEnum {
 
-    ENUM_ALL("all",  "全部"),
-    ENUM_PART("part",  "部分"),
+    ENUM_ALL("all",  "全部店铺"),
+    ENUM_PART("part",  "指定店铺"),
     ;
 
 

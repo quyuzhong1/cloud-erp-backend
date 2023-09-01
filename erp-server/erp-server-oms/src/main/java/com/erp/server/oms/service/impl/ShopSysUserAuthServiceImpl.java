@@ -14,6 +14,7 @@ import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.ShopSysUserAuthService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,11 +80,20 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
     @Override
     public Boolean batchAuth(ShopSysUserAuthDTO.BatchAuthDTO dto) {
         String authType = dto.getAuthType();
+        List<String> userIdList = dto.getUserIdList();
         if (ShopAuthTypeEnum.ENUM_ALL.getCode().equals(authType)) {
-            List<String> userIdList = dto.getUserIdList();
             List<ShopSysUserAuthDTO.AddDTO> addList = userIdList.stream().map(obj -> new ShopSysUserAuthDTO.AddDTO("", obj, authType)).collect(Collectors.toList());
         }
         if (ShopAuthTypeEnum.ENUM_PART.getCode().equals(authType)) {
+            if (CollectionUtils.isEmpty(dto.getShopIdList())) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_SHOP_USER_AUTH_PART);
+            }
+            List<ShopSysUserAuthDTO.AddDTO> addList = userIdList.stream().map(obj ->{
+                for (String shopId : dto.getShopIdList()) {
+                  return new ShopSysUserAuthDTO.AddDTO(shopId, obj, authType);
+                }
+                return null;
+            }).collect(Collectors.toList());
 
         }
 

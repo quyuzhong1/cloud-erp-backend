@@ -835,6 +835,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_NOT_CANCEL_MERGE(92090,"B2C销售订单【{}】只有待配货或配货中支持取消合并"),
     ERROR_SO_B2C_STATE_NOT_CANCEL_SPLIT(92091,"B2C销售订单【{}】只有待配货或配货中支持取消拆分"),
     ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST(92092,"未找到B2C销售订单物流方式"),
+    ERROR_SO_B2C_SHOP_USER_AUTH_PART(92093,"指定店铺授权店铺不能为空"),
 
 
 
