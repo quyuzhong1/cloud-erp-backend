@@ -795,6 +795,10 @@ public class SoReturnInstockDTO {
          */
         private String warehouseLocation;
         /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+        /**
          * bom版本
          */
         private Integer bomVersion;

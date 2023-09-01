@@ -147,6 +147,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
+
+
     @Override
     public PagingVO<SoReturnInstockDTO.PagingView> paging(PagingDTO<SoReturnInstockDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -1124,6 +1128,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
+        //仓位信息
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = viewList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
+
         //根据sku、仓库、仓位合并显示
         Map<String, List<SoReturnInstockDetailEntity>> map = viewList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(mainList.stream().filter(e -> e.getId().equals(obj.getMainId())).findFirst().flatMap(e -> Optional.ofNullable(e.getWarehouseId())).orElse("")).concat(obj.getWarehouseLocation())));
 
@@ -1146,6 +1154,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             viewDTO.setWarehouseId(soReturnInstockEntity.getWarehouseId());
             viewDTO.setWarehouseName(soReturnInstockEntity.getWarehouseName());
             viewDTO.setWarehouseLocation(entity.getWarehouseLocation());
+            if (CollectionUtils.isNotEmpty(warehouseLocationList)) {
+                String warehouseLocationName = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(viewDTO.getWarehouseId()) && obj.getCode().equals(viewDTO.getWarehouseLocation())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                viewDTO.setWarehouseLocationName(warehouseLocationName);
+            }
             //产品信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuVO)) {
