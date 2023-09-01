@@ -147,9 +147,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
-    @Resource
-    private WarehouseLocationService warehouseLocationService;
-
 
     @Override
     public PagingVO<SoReturnInstockDTO.PagingView> paging(PagingDTO<SoReturnInstockDTO.PagingParam> pagingParamDTO) {
