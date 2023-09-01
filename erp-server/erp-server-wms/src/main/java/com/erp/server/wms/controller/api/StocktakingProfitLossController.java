@@ -143,11 +143,11 @@ public class StocktakingProfitLossController extends BaseController {
                 log.error("盘盈盘亏单 提交审核失败>>>>{}",e);
                 StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, "盘盈盘亏单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "盘盈盘亏单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
         }
@@ -175,11 +175,11 @@ public class StocktakingProfitLossController extends BaseController {
                 log.error("盘盈盘亏单 审核失败>>>>{}",e);
                 StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, "盘盈盘亏单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "盘盈盘亏单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
         }
@@ -213,11 +213,11 @@ public class StocktakingProfitLossController extends BaseController {
                 log.error("盘盈盘亏单 撤销流程失败>>>>{}",e);
                 StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, "盘盈盘亏单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "盘盈盘亏单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
         }
