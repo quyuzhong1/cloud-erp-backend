@@ -226,7 +226,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         log.info("提交 开始记录仓位移动主单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "提交操作");
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.SUBMIT);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -268,7 +268,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
     /**
@@ -315,7 +315,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "反审核操作");
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.DISAPPROVE);
+        return BatchResultDTO.success(entity.getId(),entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
     private Boolean validateDisApprove(WarehouseLocationMoveInfoEntity entity) {
@@ -344,7 +344,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         log.info("删除 开始删除仓位移动主单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除仓位移动主单数据");
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(),entity.getCode(), OperationTypeEnum.DELETE);
     }
 
     /**
@@ -374,7 +374,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         revokeDTO.setBusinessKey(ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
         revokeDTO.setUserId(commonService.getUserInfo().getUid());
         workflowFeign.revokeProcess(revokeDTO);
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
     @Override

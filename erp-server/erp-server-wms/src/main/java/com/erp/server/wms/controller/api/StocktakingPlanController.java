@@ -162,11 +162,11 @@ public class StocktakingPlanController extends BaseController {
                 log.error("盘点计划 提交审核失败",e);
                 StocktakingPlanEntity entity = stocktakingPlanService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, "盘点计划不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "盘点计划不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
         }
@@ -197,11 +197,11 @@ public class StocktakingPlanController extends BaseController {
             }catch (Exception e){
                 log.error("盘点计划审核失败",e);
                 if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(entity.getCode(), "盘点计划不存在, 审核失败");
+                    approveResult = BatchResultDTO.fail(id, id, "盘点计划不存在, 审核失败");
                     resultDTOS.add(approveResult);
                     continue;
                 }
-                approveResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
                 // 删除盘点锁定的库存
                 redisUtil.keys(StrUtil.format(RedisKeyConstant.INVENTORY_LOCK_CODE, entity.getCode()))
                         .forEach(key -> redisUtil.del(key));
@@ -237,11 +237,11 @@ public class StocktakingPlanController extends BaseController {
             }catch (Exception e){
                 log.error("盘点计划反审核失败",e);
                 if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(entity.getCode(), "盘点计划不存在, 反审核失败");
+                    disApproveResult = BatchResultDTO.fail(id, id, "盘点计划不存在, 反审核失败");
                     resultDTOS.add(disApproveResult);
                     continue;
                 }
-                disApproveResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(disApproveResult);
         }
@@ -272,11 +272,11 @@ public class StocktakingPlanController extends BaseController {
                 log.error("盘点计划删除失败",e);
                 StocktakingPlanEntity entity = stocktakingPlanService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(entity.getCode(), "盘点计划不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "盘点计划不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }
@@ -306,11 +306,11 @@ public class StocktakingPlanController extends BaseController {
                 log.error("盘点计划撤回流程失败",e);
                 StocktakingPlanEntity entity = stocktakingPlanService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(entity.getCode(), "盘点计划不存在, 撤回流程失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "盘点计划不存在, 撤回流程失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }

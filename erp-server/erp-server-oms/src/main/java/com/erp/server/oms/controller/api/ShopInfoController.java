@@ -129,14 +129,14 @@ public class ShopInfoController extends BaseController {
             try {
                 ShopInfoEntity shop = shopInfoService.getById(id);
                 if (Objects.isNull(shop)) {
-                    submit = BatchResultDTO.fail(id, "店铺不存在");
+                    submit = BatchResultDTO.fail(id, id, "店铺不存在");
                 } else {
                     submit = shopInfoService.updateStatus(shop, disabled);
                     flagCode = shop.getName();
                 }
             } catch (Exception e) {
                 log.error("店铺更改状态失败>>>>{}", e);
-                submit = BatchResultDTO.fail(flagCode, e.getMessage());
+                submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
             }
             resultDTOS.add(submit);
         }
@@ -158,14 +158,14 @@ public class ShopInfoController extends BaseController {
             try {
                 ShopInfoEntity shop = shopInfoService.getById(id);
                 if (Objects.isNull(shop)) {
-                    submit = BatchResultDTO.fail(id, "店铺不存在");
+                    submit = BatchResultDTO.fail(id, id, "店铺不存在");
                 } else {
                     submit = shopCostService.batchSetCost(shop, dto);
                     flagCode = shop.getName();
                 }
             } catch (Exception e) {
                 log.error("店铺设置费率失败>>>>{}", e);
-                submit = BatchResultDTO.fail(flagCode, e.getMessage());
+                submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
             }
             resultDTOS.add(submit);
         }

@@ -149,11 +149,11 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
                 log.error("仓位移动主单 提交审核失败",e);
                 WarehouseLocationMoveInfoEntity entity = warehouseLocationMoveInfoService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, "仓位移动主单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "仓位移动主单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
         }
@@ -184,11 +184,11 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
                 log.error("仓位移动主单审核失败",e);
                 WarehouseLocationMoveInfoEntity entity = warehouseLocationMoveInfoService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(entity.getCode(), "仓位移动主单不存在, 审核失败");
+                    approveResult = BatchResultDTO.fail(id, id, "仓位移动主单不存在, 审核失败");
                     resultDTOS.add(approveResult);
                     continue;
                 }
-                approveResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(approveResult);
         }
@@ -218,11 +218,11 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
                 log.error("仓位移动主单反审核失败",e);
                 WarehouseLocationMoveInfoEntity entity = warehouseLocationMoveInfoService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(entity.getCode(), "仓位移动主单不存在, 反审核失败");
+                    disApproveResult = BatchResultDTO.fail(id, id, "仓位移动主单不存在, 反审核失败");
                     resultDTOS.add(disApproveResult);
                     continue;
                 }
-                disApproveResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(disApproveResult);
         }
@@ -253,11 +253,11 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
                 log.error("仓位移动主单删除失败",e);
                 WarehouseLocationMoveInfoEntity entity = warehouseLocationMoveInfoService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(entity.getCode(), "仓位移动主单不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "仓位移动主单不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }
@@ -287,11 +287,11 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
                 log.error("仓位移动主单撤回流程失败",e);
                 WarehouseLocationMoveInfoEntity entity = warehouseLocationMoveInfoService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    cancelResult = BatchResultDTO.fail(entity.getCode(), "仓位移动主单不存在, 撤回流程失败");
+                    cancelResult = BatchResultDTO.fail(id, id, "仓位移动主单不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
                     continue;
                 }
-                cancelResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(cancelResult);
         }

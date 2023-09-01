@@ -244,7 +244,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         log.info("编辑 开始记录B2C销售订单表日志数据，单号：【{}】", soB2cEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), soB2cEntity.getCode(), "B2C销售订单表");
         operateLogService.addModuleOperateLogByObj(old, soB2cEntity, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), msg);
-        return BatchResultDTO.success(soB2cEntity.getCode(), OperationTypeEnum.SUBMIT);
+        return BatchResultDTO.success(soB2cEntity.getId(),soB2cEntity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -268,7 +268,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         log.info("提交 开始记录B2C销售订单表日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交操作");
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.SUBMIT);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -291,7 +291,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
     /**
@@ -343,7 +343,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "作废操作");
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.INVALID);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -364,7 +364,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         log.info("反作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反作废操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "B2C销售订单表");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "反作废操作");
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.UN_INVALID);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UN_INVALID);
     }
 
     @Override
@@ -389,7 +389,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         this.lambdaUpdate().eq(SoB2cEntity::getId, id).set(SoB2cEntity::getRemark, remark).update(new SoB2cEntity());
         String msg = StrUtil.format("订单备注由{}变更为{}", entity.getRemark(), remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "修改订单备注");
-        return BatchResultDTO.success(entity.getCode(), "更新订单备注");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新订单备注");
     }
 
     @Override
@@ -409,7 +409,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (SoB2cCategoryTypeEnum.ENUM_DELETE.equals(typeEnum)) {
             deleteCategory(id);
         }
-        return BatchResultDTO.success(entity.getCode(), "更新订单分类");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新订单分类");
     }
 
     @Override
@@ -489,7 +489,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //销售订单更新
         entity.setBillStatus(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
         this.updateById(entity);
-        return BatchResultDTO.success(entity.getCode(), "手动配货");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动配货");
     }
 
     @Override
@@ -519,7 +519,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             submitDelivery(id);
         }
 
-        return BatchResultDTO.success(entity.getCode(), "获取物流单号");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "获取物流单号");
     }
 
     @Override
@@ -568,7 +568,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.ERROR_SO_B2C_SKU_NOT_INVENTORY, entity.getCode(), detailEntity.getSkuNo(), detailEntity.getWarehouseName());
             }
         }
-        return BatchResultDTO.success(entity.getCode(), "提交发货");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "提交发货");
     }
 
     @Override
@@ -580,7 +580,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
         //TODO
-        return BatchResultDTO.success(entity.getCode(), "发货拦截");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "发货拦截");
     }
 
     @Override
@@ -592,7 +592,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
         //TODO
-        return BatchResultDTO.success(entity.getCode(), "取消发货拦截");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消发货拦截");
     }
 
     @Override
@@ -757,7 +757,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             log.info("作废原销售订单数据，id = {}", refEntity.getId());
             unInvalid(refEntity.getId(), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
         }
-        return BatchResultDTO.success(entity.getCode(), "取消合并");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消合并");
     }
 
 
@@ -988,7 +988,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //反作废合并前的数据
         log.info("反作废原B2C销售订单数据，id = {}", entity.getId());
         unInvalid(entity.getId(), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
-        return BatchResultDTO.success(entity.getCode(), "取消拆分");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消拆分");
     }
 
 

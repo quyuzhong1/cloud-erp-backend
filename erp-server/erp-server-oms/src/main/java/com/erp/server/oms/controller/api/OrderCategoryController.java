@@ -118,14 +118,14 @@ public class OrderCategoryController extends BaseController {
             try {
                 OrderCategoryEntity orderCategory = orderCategoryService.getById(id);
                 if (Objects.isNull(orderCategory)) {
-                    submit = BatchResultDTO.fail(id, "订单分类不存在");
+                    submit = BatchResultDTO.fail(id, id, "订单分类不存在");
                 } else {
                     submit = orderCategoryService.updateStatus(orderCategory, disabled);
                     flagCode = orderCategory.getGroupName();
                 }
             } catch (Exception e) {
                 log.error("店铺更改状态失败>>>>{}", e);
-                submit = BatchResultDTO.fail(flagCode, e.getMessage());
+                submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
             }
             resultDTOS.add(submit);
         }

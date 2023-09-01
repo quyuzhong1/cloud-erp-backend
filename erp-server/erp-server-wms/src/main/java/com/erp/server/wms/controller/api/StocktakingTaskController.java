@@ -104,11 +104,11 @@ public class StocktakingTaskController extends BaseController {
                 log.error("盘点任务 提交审核失败", e);
                 StocktakingTaskEntity entity = stocktakingTaskService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, "盘点任务单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "盘点任务单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
         }
@@ -190,7 +190,7 @@ public class StocktakingTaskController extends BaseController {
             } catch (Exception e) {
                 log.error("盘点任务 审核失败>>>>{}", e);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, "盘点任务单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "盘点任务单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
@@ -198,7 +198,7 @@ public class StocktakingTaskController extends BaseController {
 //                if(StrUtil.isBlank(message) && ObjectUtil.isNotEmpty(((UndeclaredThrowableException) e).getUndeclaredThrowable())){
 //                    message = ((UndeclaredThrowableException) e).getUndeclaredThrowable().getMessage();
 //                }
-                submit = BatchResultDTO.fail(entity.getCode(), message);
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
             }
             resultDTOS.add(submit);
         }
@@ -229,11 +229,11 @@ public class StocktakingTaskController extends BaseController {
                 log.error("盘点任务 撤销流程失败>>>>{}", e);
                 StocktakingTaskEntity entity = stocktakingTaskService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, "盘点任务单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "盘点任务单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
         }
@@ -259,11 +259,11 @@ public class StocktakingTaskController extends BaseController {
                 log.error("盘点任务 撤销流程失败>>>>{}", e);
                 StocktakingTaskEntity entity = stocktakingTaskService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, "盘点任务单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "盘点任务单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
         }

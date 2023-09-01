@@ -80,9 +80,9 @@ public class ShopCostServiceImpl extends SuperServiceImpl<ShopCostMapper, ShopCo
         this.removeByShopId(shop.getId());
         Boolean saveResult = this.save(shopCost);
         if (saveResult) {
-            return BatchResultDTO.success(shop.getName(), "设置费率成功");
+            return BatchResultDTO.success(shop.getId(),shop.getName(), "设置费率成功");
         }
-        return BatchResultDTO.fail(shop.getName(), "设置费率失败");
+        return BatchResultDTO.fail(shop.getId(),shop.getName(), "设置费率失败");
 
     }
 

@@ -143,10 +143,10 @@ public class OrderCategoryServiceImpl extends SuperServiceImpl<OrderCategoryMapp
             }
             orderCategory.setDisabled(disabled);
             this.updateById(orderCategory);
-            return BatchResultDTO.success(orderCategory.getGroupName(), OperationTypeEnum.DISABLED);
+            return BatchResultDTO.success(orderCategory.getId(), orderCategory.getGroupName(), OperationTypeEnum.DISABLED);
 
         }
-        return BatchResultDTO.fail(orderCategory.getGroupName(), "订单分类不存在");
+        return BatchResultDTO.fail(orderCategory.getId(), orderCategory.getGroupName(), "订单分类不存在");
     }
 
 

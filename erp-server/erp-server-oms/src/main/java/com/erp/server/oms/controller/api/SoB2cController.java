@@ -122,11 +122,11 @@ public class SoB2cController extends BaseController {
                 log.error("B2C销售订单 提交审核失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, "B2C销售订单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                submit = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
         }
@@ -157,11 +157,11 @@ public class SoB2cController extends BaseController {
                 log.error("B2C销售订单审核失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 审核失败");
+                    approveResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 审核失败");
                     resultDTOS.add(approveResult);
                     continue;
                 }
-                approveResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                approveResult = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
             }
             resultDTOS.add(approveResult);
         }
@@ -191,11 +191,11 @@ public class SoB2cController extends BaseController {
                 log.error("B2C销售订单作废失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    invalidResult = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 作废失败");
+                    invalidResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 作废失败");
                     resultDTOS.add(invalidResult);
                     continue;
                 }
-                invalidResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                invalidResult = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
             }
             resultDTOS.add(invalidResult);
         }
@@ -225,11 +225,11 @@ public class SoB2cController extends BaseController {
                 log.error("B2C销售订单取消作废失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    unInvalidResult = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 取消作废失败");
+                    unInvalidResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 取消作废失败");
                     resultDTOS.add(unInvalidResult);
                     continue;
                 }
-                unInvalidResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                unInvalidResult = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
             }
             resultDTOS.add(unInvalidResult);
         }
@@ -278,11 +278,11 @@ public class SoB2cController extends BaseController {
                 log.error("B2C销售订单修改订单备注失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    updateRemarkResult = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 修改订单备注失败");
+                    updateRemarkResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 修改订单备注失败");
                     resultDTOS.add(updateRemarkResult);
                     continue;
                 }
-                updateRemarkResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                updateRemarkResult = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
             }
             resultDTOS.add(updateRemarkResult);
         }
@@ -312,11 +312,11 @@ public class SoB2cController extends BaseController {
                 log.error("B2C销售订单修改分类失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    updateRemarkResult = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 修改分类失败");
+                    updateRemarkResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 修改分类失败");
                     resultDTOS.add(updateRemarkResult);
                     continue;
                 }
-                updateRemarkResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                updateRemarkResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(updateRemarkResult);
         }
@@ -364,11 +364,11 @@ public class SoB2cController extends BaseController {
                 log.error("B2C销售订单配货失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 配货失败");
+                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 配货失败");
                     resultDTOS.add(result);
                     continue;
                 }
-                result = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(result);
         }
@@ -398,11 +398,11 @@ public class SoB2cController extends BaseController {
                 log.error("B2C销售订单获取物流单号失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 获取物流单号失败");
+                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 获取物流单号失败");
                     resultDTOS.add(result);
                     continue;
                 }
-                result = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(result);
         }
@@ -432,11 +432,11 @@ public class SoB2cController extends BaseController {
                 log.error("B2C销售订单提交发货失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 提交发货失败");
+                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 提交发货失败");
                     resultDTOS.add(result);
                     continue;
                 }
-                result = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(result);
         }
@@ -466,11 +466,11 @@ public class SoB2cController extends BaseController {
                 log.error("B2C销售订单发货拦截失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 发货拦截失败");
+                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 发货拦截失败");
                     resultDTOS.add(result);
                     continue;
                 }
-                result = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(result);
         }
@@ -500,11 +500,11 @@ public class SoB2cController extends BaseController {
                 log.error("B2C销售订单取消发货拦截失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 取消发货拦截失败");
+                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 取消发货拦截失败");
                     resultDTOS.add(result);
                     continue;
                 }
-                result = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(result);
         }
@@ -586,11 +586,11 @@ public class SoB2cController extends BaseController {
                 log.error("B2C销售订单取消合并失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 取消合并失败");
+                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 取消合并失败");
                     resultDTOS.add(result);
                     continue;
                 }
-                result = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(result);
         }
@@ -672,11 +672,11 @@ public class SoB2cController extends BaseController {
                 log.error("B2C销售订单取消拆分失败",e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(entity.getCode(), "B2C销售订单不存在, 取消拆分失败");
+                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 取消拆分失败");
                     resultDTOS.add(result);
                     continue;
                 }
-                result = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(result);
         }

@@ -273,7 +273,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
 
         }
-        return BatchResultDTO.success(code, OperationTypeEnum.SUBMIT);
+        return BatchResultDTO.success(task.getId(), code, OperationTypeEnum.SUBMIT);
 
     }
 
@@ -387,7 +387,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 //        if (stocktakingTaskEntities.stream().allMatch(task -> Objects.equals(task.getStatus(), StocktakingStatusEnum.COMPLETED))) {
 //            stocktakingPlanService.updateForStocktakingStatus(entity.getSourceId(), StocktakingStatusEnum.COMPLETED);
 //        }
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
     private static StocktakingStatusEnum isAllMatchStocktakingStatus(List<StocktakingTaskEntity> stocktakingTaskEntities) {
@@ -662,7 +662,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         if (ObjectUtil.isNotEmpty(stocktakingStatus)) {
             stocktakingPlanService.updateForStocktakingStatus(taskEntity.getSourceId(), stocktakingStatus);
         }
-        return BatchResultDTO.success(taskEntity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+        return BatchResultDTO.success(taskEntity.getId(), taskEntity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
     /**
@@ -705,7 +705,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         }
         Boolean result = stocktakingTaskUserService.assignUser(task, userIdList);
 
-        return BatchResultDTO.success(task.getCode(), "分配成功");
+        return BatchResultDTO.success(task.getId(), task.getCode(), "分配成功");
 
     }
 

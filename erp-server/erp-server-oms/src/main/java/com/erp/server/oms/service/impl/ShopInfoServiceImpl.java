@@ -326,10 +326,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
             shop.setDisabled(disabled);
             this.updateById(shop);
-            return BatchResultDTO.success(shop.getName(), OperationTypeEnum.DISABLED);
+            return BatchResultDTO.success(shop.getId(), shop.getName(), OperationTypeEnum.DISABLED);
 
         }
-        return BatchResultDTO.fail(shop.getName(), "店铺不存在");
+        return BatchResultDTO.fail(shop.getId(), shop.getName(), "店铺不存在");
 
     }
 
