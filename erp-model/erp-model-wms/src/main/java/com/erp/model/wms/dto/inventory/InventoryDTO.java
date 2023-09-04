@@ -998,7 +998,7 @@ public class InventoryDTO implements Serializable {
         /**
          * skuId
          */
-        private String skuId;
+        private List<String> skuIds;
         /**
          * skuNo
          */
@@ -1006,7 +1006,7 @@ public class InventoryDTO implements Serializable {
         /**
          * 库位
          */
-        private String warehouseLocation;
+        private List<String> warehouseLocations;
     }
 
     @Data

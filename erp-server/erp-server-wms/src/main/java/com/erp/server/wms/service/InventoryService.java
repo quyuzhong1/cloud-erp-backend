@@ -212,10 +212,10 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * 根据条件查询库存信息
      * @Author Luo_WG
      * @Date 2023/8/25 18:00
-     * @param dto
+     * @param list
      * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventoryDTO
      **/
-    InventoryDTO.PdaInventoryDTO getInventoryByParam(InventoryDTO.PdaSearchParamDTO dto);
+    List<InventoryDTO.PdaInventoryDTO> getInventoryByParam(InventoryDTO.PdaSearchParamDTO list);
 
     /**
      * PDA:库存查询

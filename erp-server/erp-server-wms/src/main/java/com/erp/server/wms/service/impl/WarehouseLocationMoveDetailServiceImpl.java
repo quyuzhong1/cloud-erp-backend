@@ -108,17 +108,19 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
     private void handleData(List<WarehouseLocationMoveDetailEntity> list, String mainId, String warehouseId) {
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
-        for (WarehouseLocationMoveDetailEntity warehouseLocationMoveDetailEntity : list) {
+        for (WarehouseLocationMoveDetailEntity detailEntity : list) {
             InventoryDTO.PdaSearchParamDTO paramDTO = new InventoryDTO.PdaSearchParamDTO();
             paramDTO.setOrgId(warehouseEntity.getOrgId());
             paramDTO.setWarehouseId(warehouseId);
-            paramDTO.setSkuId(warehouseLocationMoveDetailEntity.getSkuId());
-            paramDTO.setWarehouseLocation(warehouseLocationMoveDetailEntity.getOutWarehouseLocation());
-            InventoryDTO.PdaInventoryDTO inventoryByParam = inventoryService.getInventoryByParam(paramDTO);
-            if (ObjectUtil.isEmpty(inventoryByParam) || warehouseLocationMoveDetailEntity.getQty() > inventoryByParam.getUsableQty()) {
-                throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, warehouseLocationMoveDetailEntity.getSkuNo());
+            paramDTO.setSkuIds(Arrays.asList(detailEntity.getSkuId()));
+            paramDTO.setWarehouseLocations(Arrays.asList(detailEntity.getOutWarehouseLocation()));
+            List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);
+            InventoryDTO.PdaInventoryDTO inventoryByParam = inventoryByParams.stream().filter(req -> req.getWarehouseId().equals(detailEntity.getOutWarehouseLocation())
+                    && req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new InventoryDTO.PdaInventoryDTO());
+            if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getUsableQty()) {
+                throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, detailEntity.getSkuNo());
             }
-            warehouseLocationMoveDetailEntity.setMainId(mainId);
+            detailEntity.setMainId(mainId);
         }
 
         //添加操作日志
