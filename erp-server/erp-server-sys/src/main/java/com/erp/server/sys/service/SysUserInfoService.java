@@ -8,7 +8,6 @@ import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
@@ -220,5 +219,13 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return java.util.List<com.erp.model.sys.entity.SysUserInfoEntity>
      **/
     List<SysUserInfoEntity> listUserByDept(String deptName);
+    /**
+     * @description: 店铺权限设置分页查询
+     * @author Will
+     * @date: 2023/9/4 12:21
+     * @param dto
+     * @return PagingVO
+     */
+    PagingVO shopAuthPaging(PagingDTO<SysUserInfoDTO.ShopAuthPagingSearchDTO> dto);
 }
 

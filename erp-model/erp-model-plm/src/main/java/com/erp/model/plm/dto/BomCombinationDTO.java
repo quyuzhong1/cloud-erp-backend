@@ -79,7 +79,7 @@ public class BomCombinationDTO implements Serializable {
         /**
          * 用量
          */
-        private String qty;
+        private Integer qty;
         /**
          * 实际成本
          */

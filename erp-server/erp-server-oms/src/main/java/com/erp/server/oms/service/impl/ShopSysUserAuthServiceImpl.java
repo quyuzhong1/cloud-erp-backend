@@ -6,11 +6,14 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.ShopSysUserAuthEntity;
+import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.server.oms.mapper.ShopSysUserAuthMapper;
+import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.erp.server.oms.service.ShopSysUserAuthService;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +21,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +38,10 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
 
     @Resource
     private ShopInfoService shopInfoService;
+
+    @Resource
+    private DictBasicService dictBasicService;
+
 
     @Override
     public Boolean batchAuth(ShopSysUserAuthDTO.BatchAuthDTO dto) {
@@ -83,22 +89,84 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
             throw new ServiceException(ApiError.ERROR_92058);
         }
         //平台信息
-        List<String> dictPlatformList = shopList.stream().map(ShopInfoEntity::getDictPlatform).collect(Collectors.toList());
-
-
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicEnum.PLATFORM.getType());
+        if (CollectionUtils.isEmpty(dictList)) {
+            throw new ServiceException(ApiError.ERROR_92053);
+        }
+        List<ShopSysUserAuthDTO.ViewShopDTO> detailList = new ArrayList<>();
         for (ShopSysUserAuthEntity entity : list) {
             //店铺
             ShopInfoEntity shopInfoEntity = shopList.stream().filter(obj -> obj.getId().equals(entity.getShopId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(shopInfoEntity)) {
                 throw new ServiceException(ApiError.ERROR_92058);
             }
+            //平台
+            String dictPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(shopInfoEntity.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             ShopSysUserAuthDTO.ViewShopDTO viewShopDTO = new ShopSysUserAuthDTO.ViewShopDTO();
             viewShopDTO.setShopId(entity.getShopId());
             viewShopDTO.setShopName(shopInfoEntity.getName());
             viewShopDTO.setDictPlatform(shopInfoEntity.getDictPlatform());
+            viewShopDTO.setDictPlatformName(dictPlatformName);
+            detailList.add(viewShopDTO);
         }
+        viewDTO.setDetailList(detailList);
+        return viewDTO;
+    }
 
-        return null;
+    @Override
+    public List<ShopSysUserAuthDTO.ViewDTO> listShopSysUserAuthByUserIdList(List<String> userIdList) {
+        if (CollectionUtils.isEmpty(userIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        //店铺权限设置信息
+        List<ShopSysUserAuthEntity> list = this.listByUserIdList(userIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        //所有店铺
+        List<ShopInfoEntity> shopInfoList = shopInfoService.list();
+
+        List<ShopSysUserAuthDTO.ViewDTO> resultList = new ArrayList<>();
+        Map<String, List<ShopSysUserAuthEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getUserId().concat(obj.getAuthType())));
+        for (Map.Entry<String, List<ShopSysUserAuthEntity>> entry :  map.entrySet()) {
+            List<ShopSysUserAuthEntity> value = entry.getValue();
+            ShopSysUserAuthDTO.ViewDTO viewDTO = new ShopSysUserAuthDTO.ViewDTO();
+            viewDTO.setUserId(value.get(0).getUserId());
+            viewDTO.setAuthType(value.get(0).getAuthType());
+            //店铺
+            List<ShopSysUserAuthDTO.ViewShopDTO> detailList = new ArrayList<>();
+            //全部指定则返回全部店铺信息
+            if (ShopAuthTypeEnum.ENUM_ALL.getCode().equals(list.get(0).getAuthType())) {
+                //全部指定
+                if (CollectionUtils.isEmpty(shopInfoList)) {
+                    continue;
+                }
+                for (ShopInfoEntity shopInfoEntity : shopInfoList) {
+                    ShopSysUserAuthDTO.ViewShopDTO viewShopDTO = new ShopSysUserAuthDTO.ViewShopDTO();
+                    viewShopDTO.setShopId(shopInfoEntity.getId());
+                    viewShopDTO.setShopName(shopInfoEntity.getName());
+                    viewShopDTO.setDictPlatform(shopInfoEntity.getDictPlatform());
+                    detailList.add(viewShopDTO);
+                }
+            } else {
+                //选择指定
+                for (ShopSysUserAuthEntity shopSysUserAuthEntity : list) {
+                    //店铺信息
+                    ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(shopSysUserAuthEntity.getShopId())).findFirst().orElse(null);
+                    if (ObjectUtils.isEmpty(shopInfoEntity)) {
+                        throw new ServiceException(ApiError.ERROR_92058);
+                    }
+                    ShopSysUserAuthDTO.ViewShopDTO viewShopDTO = new ShopSysUserAuthDTO.ViewShopDTO();
+                    viewShopDTO.setShopId(shopSysUserAuthEntity.getShopId());
+                    viewShopDTO.setShopName(shopInfoEntity.getName());
+                    viewShopDTO.setDictPlatform(shopInfoEntity.getDictPlatform());
+                    detailList.add(viewShopDTO);
+                }
+            }
+            viewDTO.setDetailList(detailList);
+            resultList.add(viewDTO);
+        }
+        return resultList;
     }
 
     /**
@@ -110,5 +178,16 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
      */
     private List<ShopSysUserAuthEntity> listByUserId(String userId) {
         return  lambdaQuery().eq(ShopSysUserAuthEntity::getUserId,userId).list();
+    }
+
+    /**
+     * @description: 根据用户id集合查询权限设置数据
+     * @author Will
+     * @date: 2023/9/4 10:08
+     * @param userIdList
+     * @return List<ShopSysUserAuthEntity>
+     */
+    private List<ShopSysUserAuthEntity> listByUserIdList(List<String> userIdList) {
+        return  lambdaQuery().in(ShopSysUserAuthEntity::getUserId,userIdList).list();
     }
 }

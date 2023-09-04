@@ -2,11 +2,12 @@ package com.erp.server.oms.service;
 
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.common.business.service.SuperService;
+
+import java.util.List;
 
 import java.util.List;
 
@@ -125,4 +126,11 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return java.util.List<java.lang.String>
      */
     List<String> accountList();
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/9/4 15:22
+     * @return List<ShopInfoEntity>
+     */
+    List<ShopInfoEntity> listUnDisabledShop();
 }

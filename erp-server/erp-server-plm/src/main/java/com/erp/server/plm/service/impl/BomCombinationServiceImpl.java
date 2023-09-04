@@ -10,10 +10,12 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.BomCombinationImportExcelDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
@@ -168,8 +170,17 @@ public class BomCombinationServiceImpl implements BomCombinationService {
 
 
         if (CollectionUtils.isNotEmpty(errorList)) {
-            String fileName = "组合产品错误数据.xlsx";
-            ExcelUtil.exportFile(fileName, "error", errorList, BomCombinationImportExcelDTO.class);
+            StringBuffer sb = new StringBuffer();
+            String excelPath = "excel/bomCombination.xlsx";
+            String name = "bomCombination";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
         }
         return Boolean.TRUE;
     }
@@ -196,25 +207,17 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             //bom信息
             List<BomSkuEntity> bomSkuList = bomSkuService.listByParentSkuNos(Arrays.asList(entry.getKey()));
             try {
-                if (CollectionUtils.isEmpty(bomSkuList)) {
-                    //新增bom
-                    BomCombinationDTO.AddDTO addDTO = new BomCombinationDTO.AddDTO();
-                    addDTO.setSkuNo(entry.getKey());
-                    addDTO.setName(value.get(0).getName());
-                    List<BomCombinationDetailDTO.UpdateDTO> detailList = getDetailList(value, bomSkuList);
-                    List<BomCombinationDetailDTO.AddDTO> addList = BeanMapperUtils.copyList(BomCombinationDetailDTO.AddDTO.class, detailList);
-                    addDTO.setDetailList(addList);
-                    this.add(addDTO);
-                } else {
-                    //新增bom
-                    BomCombinationDTO.UpdateDTO updateDTO = new BomCombinationDTO.UpdateDTO();
-                    updateDTO.setId(bomSkuList.get(0).getBomId());
-                    updateDTO.setSkuNo(entry.getKey());
-                    updateDTO.setName(value.get(0).getName());
-                    List<BomCombinationDetailDTO.UpdateDTO> detailList = getDetailList(value, bomSkuList);
-                    updateDTO.setDetailList(detailList);
-                    this.update(updateDTO);
+                if (CollectionUtils.isNotEmpty(bomSkuList)) {
+                    throw new ServiceException(ApiError.ERROR_BOM_COMBINATION_EXPORT,entry.getKey());
                 }
+                //新增bom
+                BomCombinationDTO.AddDTO addDTO = new BomCombinationDTO.AddDTO();
+                addDTO.setSkuNo(entry.getKey());
+                addDTO.setName(value.get(0).getName());
+                List<BomCombinationDetailDTO.UpdateDTO> detailList = getDetailList(value, bomSkuList);
+                List<BomCombinationDetailDTO.AddDTO> addList = BeanMapperUtils.copyList(BomCombinationDetailDTO.AddDTO.class, detailList);
+                addDTO.setDetailList(addList);
+                this.add(addDTO);
             } catch (Exception e) {
                 value.forEach(obj -> obj.setErrorMsg(e.getMessage()));
                 errorList.addAll(value);
@@ -272,7 +275,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
                 updateDTO.setId(bomSkuEntity.getId());
             }
             updateDTO.setSkuId(productDetailEntity.getId());
-            updateDTO.setQty(importExcelDTO.getQty());
+            updateDTO.setQty(Integer.valueOf(importExcelDTO.getQty()));
             updateList.add(updateDTO);
         }
         return updateList;
@@ -287,6 +290,9 @@ public class BomCombinationServiceImpl implements BomCombinationService {
      */
     private String addProductDetail (BomCombinationDTO.AddDTO dto) {
 
+        //组合产品不能输入中文
+        checkSkuNo(dto.getSkuNo());
+
         Map<String, String> params = new HashMap<>();
         params.put("skuNo",dto.getSkuNo());
         ProductDetailDTO productDetailDTO = productDetailService.getSkuByParam(params);
@@ -296,6 +302,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
            throw new ServiceException(ApiError.ERROR_BOM_COMBINATION_SKU,dto.getSkuNo());
         }
 
+
         List<BomCombinationDetailDTO.AddDTO> detailList = dto.getDetailList();
         //新增产品信息
         String id = commonProductDetail(dto, detailList.get(0).getSkuId());
@@ -303,6 +310,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         skuSubmitApprove(id);
         return id;
     }
+
 
     /**
      * @description: 修改
@@ -312,12 +320,25 @@ public class BomCombinationServiceImpl implements BomCombinationService {
      * @return String
      */
     private String updateProductDetail (BomCombinationDTO.UpdateDTO dto) {
+        //原组合产品信息
+        List<BomSkuDTO> oldList = bomSkuService.getByBomId(dto.getId());
+        if (CollectionUtils.isEmpty(oldList)) {
+            throw new ServiceException(ApiError.ERROR_BOM_COMBINATION_NOT_EXIST);
+        }
+        //组合产品不能输入中文
+        checkSkuNo(dto.getSkuNo());
+
         Map<String, String> params = new HashMap<>();
         params.put("skuNo",dto.getSkuNo());
         ProductDetailDTO productDetailDTO = productDetailService.getSkuByParam(params);
         //已存在则直接返回sku主键id
         if (ObjectUtils.isNotEmpty(productDetailDTO)) {
             log.info("已存在SKU【{}】",dto.getSkuNo());
+
+            //修改时变更组合产品编码
+            if (!oldList.get(0).getSkuNo().equals(dto.getSkuNo())) {
+                throw new ServiceException(ApiError.ERROR_BOM_COMBINATION_SKU,dto.getSkuNo());
+            }
             //如果已变更sku名称则需要更新sku名称
             if (!dto.getName().equals(productDetailDTO.getName())) {
                 updateSkuName(dto.getName(),productDetailDTO);
@@ -590,9 +611,21 @@ public class BomCombinationServiceImpl implements BomCombinationService {
                 //子级sku编号
                 String childSkoNos = dto.getChildList().stream().map(BomCombinationDTO.ChildDTO::getChildSkuNo).collect(Collectors.joining(","));
                 dto.setChildSkuNos(childSkoNos);
-                BigDecimal childSkuCost = dto.getChildList().stream().map(obj -> MathUtil.compareTo(obj.getActualTaxCost(), BigDecimal.ZERO) == MathUtil.ZERO ? obj.getTargetTaxCost() : obj.getActualTaxCost()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal childSkuCost = dto.getChildList().stream().map(obj -> MathUtil.multiply(MathUtil.compareTo(obj.getActualTaxCost(), BigDecimal.ZERO) == MathUtil.ZERO ? obj.getTargetTaxCost() : obj.getActualTaxCost(),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
                 dto.setChildSkuCost(childSkuCost);
             }
         }
     }
+
+    /**
+     * 校验不能为中文
+     */
+    private void checkSkuNo (String skuNo) {
+        String desc = FieldFormatPatternTypeEnum.ENUM_NOT_CHINESE.getDesc();
+        Boolean matches = skuNo.matches(desc);
+        //枚举格式未匹配正确
+        if (!matches) {
+            throw new ServiceException(ApiError.ERROR_BOM_COMBINATION_SKU_NOT_CHINESE,skuNo);
+        }
+    };
 }
