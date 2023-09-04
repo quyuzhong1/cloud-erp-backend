@@ -376,6 +376,8 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         productInfoDTO.setBrandName("");
         productInfoDTO.setChargeId("");
         productInfoDTO.setChargeName("");
+        productInfoDTO.setChargeId(child.getChargeId());
+        productInfoDTO.setChargeName(child.getChargeName());
         productInfoDTO.setCategory(productInfoEntity.getCategory());
         productInfoDTO.setCategoryId(productInfoEntity.getCategoryId());
         productBaseInfoDTO.setProductSpuBaseInfoDTO(productInfoDTO);
