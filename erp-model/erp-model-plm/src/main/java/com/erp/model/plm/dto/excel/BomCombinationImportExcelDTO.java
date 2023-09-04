@@ -20,29 +20,29 @@ public class BomCombinationImportExcelDTO implements Serializable {
      * 组合产品编码
      */
     @ExcelProperty(value = "*组合产品编码", index = 0)
-    @FieldValid(fieldName = "组合产品编码", isNotBlank = true)
+    @FieldValid(fieldName = "组合产品编码", isNotBlank = true ,maxLength = 50)
     private String parentSkuNo;
 
     /**
      * 组合产品名称
      */
     @ExcelProperty(value = "*组合产品名称", index = 1)
-    @FieldValid(fieldName = "组合产品名称",isNotBlank = true)
+    @FieldValid(fieldName = "组合产品名称",isNotBlank = true ,maxLength = 100)
     private String name;
 
     /**
      * 组合SKU
      */
     @ExcelProperty(value = "*组合SKU", index = 2)
-    @FieldValid(fieldName = "组合SKU", isNotBlank = true)
+    @FieldValid(fieldName = "组合SKU", isNotBlank = true ,maxLength = 50)
     private String skuNo;
 
     /**
      * 组合数量
      */
     @ExcelProperty(value = "*组合数量", index = 3)
-    @FieldValid(fieldName = "组合数量",formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
-    private Integer qty;
+    @FieldValid(fieldName = "组合数量", isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
+    private String qty;
 
     /**
      * 错误数据

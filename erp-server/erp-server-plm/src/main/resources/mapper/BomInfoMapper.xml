@@ -247,5 +247,6 @@
                 and pbi.update_time >= #{params.updateTimeList[0]} and  (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pbi.update_time
             </if>
         </where>
+        order by pbi.update_time desc, pbi.id desc
     </select>
 </mapper>
