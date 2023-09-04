@@ -247,11 +247,16 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             if (!planQty.equals(deliveryQty)) {
                 throw new ServiceException(ApiError.ERROR_92031);
             }
-
+            List<String> skuIds = detailList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+            List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIds);
             for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
                 String sourceDetailId = item.getSourceDetailId();
                 String soDetailId = deliveryNoticeDetailList.stream().filter(d -> d.getId().equals(sourceDetailId)).
                         findFirst().flatMap(obj -> Optional.ofNullable(obj.getSourceDetailId())).orElse("");
+                SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
+                if (StringUtils.isBlank(soDetailId)) {
+                    throw new ServiceException(ApiError.ERROR_SO_OUTSTOCK_NOT_EXIST, skuVO.getSkuNo());
+                }
                 //这个是已出的数量
                 Integer outStockQty = soOutstockDetailList.stream().filter(s ->
                         s.getSoDetailId().equals(soDetailId)

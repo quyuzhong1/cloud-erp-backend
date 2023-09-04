@@ -338,6 +338,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             result.setRequireDate(soInfo.getRequireDate());
             result.setTelNumber(soInfo.getTelNumber());
             result.setTypeName(soInfo.getOrderTypeName());
+            result.setSellerId(soInfo.getSellerId());
+            result.setSellerName(soInfo.getSellerName());
             result.setSalesDeptId(soInfo.getSalesDeptId());
             result.setSalesDeptName(soInfo.getSalesDeptName());
             result.setSalesOrgName(soInfo.getSalesOrgName());
