@@ -4,6 +4,7 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -25,6 +26,8 @@ import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
+import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.plm.listener.BomCombinationExcelListener;
 import com.erp.server.plm.mapper.BomInfoMapper;
 import com.erp.server.plm.service.*;
@@ -72,7 +75,8 @@ public class BomCombinationServiceImpl implements BomCombinationService {
     @Resource
     private ProductInfoService productInfoService;
 
-
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
     @Override
     public PagingVO<BomCombinationDTO.ListDTO> paging(PagingDTO<BomCombinationDTO.SearchParamDTO> dto) {
         BomCombinationDTO.SearchParamDTO params = dto.getParams();
@@ -606,14 +610,26 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
+        List<String> supplierIdList = records.stream().filter(obj -> CollectionUtils.isNotEmpty(obj.getChildList())).flatMap(obj -> Stream.of(obj.getChildList().stream().filter(e -> StringUtils.isNotBlank(e.getMainSupplierId()))
+                .map(BomCombinationDTO.ChildDTO::getMainSupplierId).toArray(String[]::new))).distinct().collect(Collectors.toList());
+        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+
         for (BomCombinationDTO.ListDTO dto : records) {
-            if (CollectionUtils.isNotEmpty(dto.getChildList())) {
-                //子级sku编号
-                String childSkoNos = dto.getChildList().stream().map(BomCombinationDTO.ChildDTO::getChildSkuNo).collect(Collectors.joining(","));
-                dto.setChildSkuNos(childSkoNos);
-                BigDecimal childSkuCost = dto.getChildList().stream().map(obj -> MathUtil.multiply(MathUtil.compareTo(obj.getActualTaxCost(), BigDecimal.ZERO) == MathUtil.ZERO ? obj.getTargetTaxCost() : obj.getActualTaxCost(),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
-                dto.setChildSkuCost(childSkuCost);
+            if (CollectionUtils.isEmpty(dto.getChildList())) {
+                continue;
             }
+            for (BomCombinationDTO.ChildDTO childDTO : dto.getChildList()) {
+                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(childDTO.getMainSupplierId()) && req.getSkuId().equals(childDTO.getChildSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
+                    //含税价
+                    childDTO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
+                }
+            }
+            //子级sku编号
+            String childSkoNos = dto.getChildList().stream().map(BomCombinationDTO.ChildDTO::getChildSkuNo).collect(Collectors.joining(","));
+            dto.setChildSkuNos(childSkoNos);
+            BigDecimal childSkuCost = dto.getChildList().stream().map(obj -> MathUtil.multiply(MathUtil.compareTo(obj.getActualTaxCost(), BigDecimal.ZERO) == MathUtil.ZERO ? obj.getTargetTaxCost() : obj.getActualTaxCost(),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+            dto.setChildSkuCost(childSkuCost);
         }
     }
 

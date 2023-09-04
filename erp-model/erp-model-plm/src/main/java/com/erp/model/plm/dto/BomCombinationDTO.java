@@ -73,6 +73,10 @@ public class BomCombinationDTO implements Serializable {
          */
         private String id;
         /**
+         * skuid
+         */
+        private String childSkuId;
+        /**
          * sku编号
          */
         private String childSkuNo;
@@ -88,6 +92,11 @@ public class BomCombinationDTO implements Serializable {
          * 目标成本
          */
         private BigDecimal targetTaxCost;
+
+        /**
+         * 一级供应商id
+         */
+        private String mainSupplierId;
     }
 
 

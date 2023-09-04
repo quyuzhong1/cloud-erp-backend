@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.*;
@@ -27,6 +28,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.message.dto.email.EmailDTO;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.common.message.service.MailService;
+import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysRoleUserEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
@@ -1305,16 +1307,28 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             return new PagingVO<>(pageData);
         }
         handleData(records);
-
-        return null;
+        return new PagingVO(pageData);
     }
 
+    /**
+     * 处理数据
+     */
     private void handleData (List<SysUserInfoDTO.ShopAuthPagingDTO> records) {
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
         List<String> userIdList = records.stream().map(SysUserInfoDTO.ShopAuthPagingDTO::getUserId).collect(Collectors.toList());
-        shopSysUserAuthFeign.listShopSysUserAuthByUserIdList(userIdList);
-
+        List<ShopSysUserAuthDTO.ViewDTO> viewList = shopSysUserAuthFeign.listShopSysUserAuthByUserIdList(userIdList);
+        if (CollectionUtils.isEmpty(viewList)) {
+            return;
+        }
+        for (SysUserInfoDTO.ShopAuthPagingDTO shopAuthPagingDTO : records) {
+            ShopSysUserAuthDTO.ViewDTO viewDTO = viewList.stream().filter(obj -> obj.getUserId().equals(shopAuthPagingDTO.getUserId())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(viewDTO) || CollectionUtils.isEmpty(viewDTO.getDetailList())) {
+                continue;
+            }
+            String shopNames = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopName).collect(Collectors.joining(","));
+            shopAuthPagingDTO.setShopNames(shopNames);
+        }
     }
 }
