@@ -9,13 +9,10 @@ import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
-import com.erp.model.wms.entity.WarehouseLocationMoveInfoEntity;
-import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -526,7 +523,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         if(CollUtil.isEmpty(list)) {
            return;
         }
-        //主键id
+       //主键id
         List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
         //查询详情
         List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(ids);

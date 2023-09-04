@@ -525,6 +525,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private String warehouseLocation;
 
         /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
+
+        /**
          * 采购申请明细id(无需传值，后端使用)
          */
         private String purchaseApplicationDetailId;

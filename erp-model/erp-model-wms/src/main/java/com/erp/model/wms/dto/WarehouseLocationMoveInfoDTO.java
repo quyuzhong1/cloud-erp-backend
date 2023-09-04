@@ -324,6 +324,10 @@ public class WarehouseLocationMoveInfoDTO implements Serializable {
     @NoArgsConstructor
     public static class PdaItemDTO {
         /**
+         * 详情id
+         */
+        private String id;
+        /**
          * skuId
          */
         private String skuId;
