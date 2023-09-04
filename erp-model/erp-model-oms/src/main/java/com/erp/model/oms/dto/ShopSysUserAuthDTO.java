@@ -32,24 +32,9 @@ public class ShopSysUserAuthDTO implements Serializable {
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
-
-        /**
         * 用户id
         */
         private String userId;
-
-        /**
-         * 平台编号
-         */
-        private String dictPlatform;
-
-        /**
-         * 平台名称
-         */
-        private String dictPlatformName;
 
         /**
         * 授权类型（all全部授权，part指定授权）字典shopAuthType
@@ -66,6 +51,16 @@ public class ShopSysUserAuthDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewShopDTO {
+
+        /**
+         * 平台编号
+         */
+        private String dictPlatform;
+
+        /**
+         * 平台名称
+         */
+        private String dictPlatformName;
 
         /**
          * 店铺id

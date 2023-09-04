@@ -56,8 +56,30 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
 
     @Override
     public ShopSysUserAuthDTO.ViewDTO view(ShopSysUserAuthDTO.ViewParamDTO dto) {
+        String userId = dto.getUserId();
+        List<ShopSysUserAuthEntity> list = this.listByUserId(userId);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ShopSysUserAuthDTO.ViewDTO();
+        }
+        /**
+         * 根据用户和权限类型分组
+         */
+        ShopSysUserAuthDTO.ViewDTO viewDTO = new ShopSysUserAuthDTO.ViewDTO();
+        viewDTO.setUserId(userId);
+        viewDTO.setAuthType(list.get(0).getAuthType());
+
+
         return null;
     }
 
-
+    /**
+     * @description: 根据用户id查询权限设置数据
+     * @author Will
+     * @date: 2023/9/4 10:08
+     * @param userId
+     * @return List<ShopSysUserAuthEntity>
+     */
+    private List<ShopSysUserAuthEntity> listByUserId(String userId) {
+        return  lambdaQuery().eq(ShopSysUserAuthEntity::getUserId,userId).list();
+    }
 }
