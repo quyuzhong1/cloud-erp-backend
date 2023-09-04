@@ -2,7 +2,6 @@ package com.erp.server.sys.controller.api;
 
 
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -169,4 +168,17 @@ public class SysUserInfoController extends BaseController {
         sysUserInfoService.importUserKingdee(file);
         return success();
     }
+
+    /**
+     * 店铺权限设置分页查询
+     * @param dto
+     * @return
+     */
+    @RequestMapping("/shopAuthPaging")
+    public ApiResult shopAuthPaging(@RequestBody @Validated PagingDTO<SysUserInfoDTO.ShopAuthPagingSearchDTO> dto) {
+        PagingVO pagingVO = sysUserInfoService.shopAuthPaging(dto);
+        return success(pagingVO);
+    }
+
+
 }

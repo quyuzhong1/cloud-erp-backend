@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.oms.entity.ShopSysUserAuthEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 店铺权限设置表 服务类
@@ -30,4 +32,12 @@ public interface ShopSysUserAuthService extends SuperService<ShopSysUserAuthEnti
      * @return ViewDTO
      */
     ShopSysUserAuthDTO.ViewDTO view(ShopSysUserAuthDTO.ViewParamDTO dto);
+    /**
+     * @description: 根据用户id集合查询店铺权限设置
+     * @author Will
+     * @date: 2023/9/4 15:05
+     * @param userIdList
+     * @return List<ViewDTO>
+     */
+    List<ShopSysUserAuthDTO.ViewDTO> listShopSysUserAuthByUserIdList(List<String> userIdList);
 }

@@ -3,14 +3,8 @@ package com.erp.server.oms.service.impl;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.*;
-import com.erp.model.oms.entity.DictAmazonAreaCountryEntity;
-import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.server.oms.service.DictAmazonAreaCountryService;
-import com.erp.server.oms.service.ShopAuthService;
-import com.sdk.oms.shopify.constant.ShopifyConstant;
-import com.sdk.oms.shopify.service.ShopSdkServer;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -21,19 +15,23 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.ShopDTO;
+import com.erp.model.oms.entity.DictAmazonAreaCountryEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.oms.enums.PlatformDictEnum;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.ShopInfoMapper;
+import com.erp.server.oms.service.DictAmazonAreaCountryService;
 import com.erp.server.oms.service.DictBasicService;
+import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
+import com.sdk.oms.shopify.constant.ShopifyConstant;
+import com.sdk.oms.shopify.service.ShopSdkServer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -544,6 +542,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         String grantOptions = "per-user";
         String path = String.format(cfgAppClient.getUrl(), shop, cfgAppClient.getClientId(), grantOptions, cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
         return path;
+    }
+
+    @Override
+    public List<ShopInfoEntity> listUnDisabledShop() {
+        return lambdaQuery().eq(ShopInfoEntity::getDisabled,Boolean.FALSE).list();
     }
 
 

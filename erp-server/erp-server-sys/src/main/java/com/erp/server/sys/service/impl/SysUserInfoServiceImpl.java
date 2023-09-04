@@ -37,6 +37,7 @@ import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.rpc.auth.feign.AuthFeign;
+import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.mapper.SysDepartmentMapper;
@@ -101,6 +102,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private ShopSysUserAuthFeign shopSysUserAuthFeign;
 
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
 
@@ -1289,5 +1293,28 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         List<SysDepartmentTreeDTO> treeList = baseMapper.listSonDeptAll(deptName);
         List<String> deptIds = treeList.stream().map(SysDepartmentTreeDTO::getId).distinct().collect(Collectors.toList());
         return baseMapper.listUserByDept(deptIds);
+    }
+
+    @Override
+    public PagingVO shopAuthPaging(PagingDTO<SysUserInfoDTO.ShopAuthPagingSearchDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        SysUserInfoDTO.ShopAuthPagingSearchDTO params = dto.getParams();
+        IPage<SysUserInfoDTO.ShopAuthPagingDTO> pageData = baseMapper.shopAuthPaging(query, params);
+        List<SysUserInfoDTO.ShopAuthPagingDTO> records = pageData.getRecords();
+        if (CollectionUtils.isEmpty(records)) {
+            return new PagingVO<>(pageData);
+        }
+        handleData(records);
+
+        return null;
+    }
+
+    private void handleData (List<SysUserInfoDTO.ShopAuthPagingDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        List<String> userIdList = records.stream().map(SysUserInfoDTO.ShopAuthPagingDTO::getUserId).collect(Collectors.toList());
+        shopSysUserAuthFeign.listShopSysUserAuthByUserIdList(userIdList);
+
     }
 }
