@@ -126,11 +126,4 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return java.util.List<java.lang.String>
      */
     List<String> accountList();
-    /**
-     * @description:
-     * @author Will
-     * @date: 2023/9/4 15:22
-     * @return List<ShopInfoEntity>
-     */
-    List<ShopInfoEntity> listUnDisabledShop();
 }
