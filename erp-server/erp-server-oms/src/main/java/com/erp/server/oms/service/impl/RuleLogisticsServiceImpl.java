@@ -15,7 +15,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleLogisticsMapper;
 import com.erp.server.oms.service.RuleConditionService;
 import com.erp.server.oms.service.RuleLogisticsService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;

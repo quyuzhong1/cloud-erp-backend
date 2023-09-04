@@ -1,6 +1,6 @@
 package com.erp.server.plm.service.impl;
 
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
 import com.erp.server.plm.mapper.PlmAttachmentMapper;
 import com.erp.server.plm.service.PlmAttachmentService;

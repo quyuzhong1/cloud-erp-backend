@@ -13,7 +13,7 @@ import com.erp.server.wms.mapper.StocktakingPlanDetailMapper;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.StocktakingPlanDetailService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;

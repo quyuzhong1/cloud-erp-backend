@@ -7,13 +7,14 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.entity.DmpSyncTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
@@ -131,6 +132,20 @@ public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, 
         }
 
         return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void sendMqAndSaveTask(DmpSyncTaskDTO dto) {
+        // 保存任务表
+        DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity(dto);
+        this.saveOrUpdateDmpSyncTask(dmpSyncTaskEntity);
+        // 发送MQ消息
+        DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), dto.getMqData());
+        SendResult result = mqProducerService.syncClassMsg(dto.getMqTopic(), dto.getMqTag(), dmpSyncMqDTO, dmpSyncTaskEntity.getSourceId());
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
     }
 
 }

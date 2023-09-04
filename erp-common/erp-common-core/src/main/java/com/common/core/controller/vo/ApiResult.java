@@ -102,8 +102,8 @@ public class ApiResult<T>  implements Serializable {
     /**
      * 成功时候的调用
      */
-    public static ApiResult<Void> success() {
-        return new ApiResult<Void>(200, "操作成功");
+    public static ApiResult success() {
+        return new ApiResult(200, "操作成功");
     }
 
 

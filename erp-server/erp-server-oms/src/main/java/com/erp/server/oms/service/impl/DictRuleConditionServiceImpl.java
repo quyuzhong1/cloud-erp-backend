@@ -3,11 +3,10 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
-import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.DictRuleConditionEntity;
 import com.erp.server.oms.mapper.DictRuleConditionMapper;
 import com.erp.server.oms.service.DictRuleConditionService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
@@ -20,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.DictRuleConditionDTO;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;

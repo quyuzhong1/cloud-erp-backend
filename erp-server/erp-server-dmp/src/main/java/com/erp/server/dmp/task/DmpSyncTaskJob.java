@@ -1,6 +1,5 @@
 package com.erp.server.dmp.task;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -8,7 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.entity.DmpSyncTaskEntity;
 import com.erp.server.dmp.service.DmpSyncTaskService;
 import com.xxl.job.core.biz.model.ReturnT;

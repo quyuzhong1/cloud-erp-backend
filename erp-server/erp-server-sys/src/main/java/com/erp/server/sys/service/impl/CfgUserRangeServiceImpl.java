@@ -13,7 +13,7 @@ import com.erp.model.sys.enums.UserRangeTypeEnum;
 import com.erp.server.sys.config.UserRangeProperties;
 import com.erp.server.sys.mapper.CfgUserRangeMapper;
 import com.erp.server.sys.service.CfgUserRangeService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.sys.service.CommonService;
 import com.google.common.collect.Lists;
 import org.springframework.stereotype.Service;

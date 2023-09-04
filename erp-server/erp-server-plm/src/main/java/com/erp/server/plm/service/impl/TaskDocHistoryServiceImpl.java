@@ -1,7 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.plm.dto.DocHistoryDTO;
 import com.erp.model.plm.entity.TaskDocHistoryEntity;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;

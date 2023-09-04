@@ -2,7 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.plm.dto.TaskFollowerDTO;
 import com.erp.model.plm.entity.TaskFollowerEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;

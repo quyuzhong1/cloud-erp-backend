@@ -6,7 +6,7 @@ import cn.hutool.core.lang.Dict;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SyncKingdeeOmsStatusEnum;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.GoodcangDTO;
 import com.erp.model.dmp.entity.PlatformEntity;

@@ -34,7 +34,7 @@ import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.StocktakingTaskExcelListener;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;

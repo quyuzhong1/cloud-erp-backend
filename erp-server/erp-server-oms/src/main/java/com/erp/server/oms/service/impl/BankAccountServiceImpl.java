@@ -9,7 +9,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.listener.KingdeeBankAccountListener;
 import com.erp.server.oms.mapper.BankAccountMapper;
 import com.erp.server.oms.service.BankAccountService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;

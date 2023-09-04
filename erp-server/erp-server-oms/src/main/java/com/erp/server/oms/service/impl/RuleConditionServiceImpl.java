@@ -2,16 +2,14 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
-import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.DictRuleConditionEntity;
 import com.erp.model.oms.entity.RuleConditionEntity;
-import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleConditionMapper;
 import com.erp.server.oms.service.DictRuleConditionService;
 import com.erp.server.oms.service.RuleConditionService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;

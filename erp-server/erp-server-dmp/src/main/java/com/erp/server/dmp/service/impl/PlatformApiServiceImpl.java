@@ -1,6 +1,6 @@
 package com.erp.server.dmp.service.impl;
 
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.dmp.entity.PlatformApiEntity;
 import com.erp.server.dmp.mapper.PlatformApiMapper;
 import com.erp.server.dmp.service.PlatformApiService;

@@ -1,4 +1,4 @@
-package com.common.business.service;
+package com.common.business.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;

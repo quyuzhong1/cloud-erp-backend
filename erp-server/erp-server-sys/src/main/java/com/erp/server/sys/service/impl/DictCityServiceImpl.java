@@ -1,7 +1,7 @@
 package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.entity.DictCityEntity;

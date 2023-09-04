@@ -201,4 +201,9 @@ public class RocketMqConsumerGroup {
      * 金蝶汇率列表同步至ERP
      */
     public static final String SYNC_KINGDEE_EXCHANGE_RATE_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_exchange_rate_to_wms";
+
+    /**
+     * 亚马逊订单推送服务tag
+     */
+    public static final String SYNC_AMAZON_ORDER_FROM_OMS = "${spring.cloud.nacos.discovery.namespace}-sync_amazon_order_from_oms";
 }

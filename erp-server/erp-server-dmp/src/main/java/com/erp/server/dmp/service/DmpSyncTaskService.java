@@ -1,5 +1,6 @@
 package com.erp.server.dmp.service;
 
+import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.dmp.entity.DmpSyncTaskEntity;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
@@ -51,4 +52,10 @@ public interface DmpSyncTaskService extends SuperService<DmpSyncTaskEntity> {
      * @return 返回Mq_data中的金蝶列表
      */
     List<String> listKingdeeCode(Map<String, Object> conditon);
+
+    /**
+     * 统一发送MQ消息并保存任务
+     * @param dto
+     */
+    void sendMqAndSaveTask(DmpSyncTaskDTO dto);
 }

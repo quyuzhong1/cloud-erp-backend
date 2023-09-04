@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ModuleOperateLogFieldTypeEnum;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.OperationLogUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;

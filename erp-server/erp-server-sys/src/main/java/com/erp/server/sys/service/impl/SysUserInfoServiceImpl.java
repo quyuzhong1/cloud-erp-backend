@@ -17,7 +17,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.service.RedisService;
+import com.common.business.service.impl.RedisService;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;

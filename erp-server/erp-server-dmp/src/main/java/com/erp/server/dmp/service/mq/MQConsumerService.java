@@ -8,7 +8,7 @@ import com.common.business.dto.CleanBaseDTO;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.DmpExchangeRateDTO;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.DmpTransferInfoDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.*;

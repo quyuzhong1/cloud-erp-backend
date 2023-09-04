@@ -6,7 +6,7 @@ import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.DmpExchangeRateDTO;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.bi.rocketmq.sync.SyncExchangeRateService;
 import lombok.extern.slf4j.Slf4j;

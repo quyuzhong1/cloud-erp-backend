@@ -7,7 +7,7 @@ import com.erp.model.oms.entity.CfConditionEntity;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.server.oms.mapper.CfConditionMapper;
 import com.erp.server.oms.service.CfConditionService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.oms.service.DictRuleConditionService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.CfConditionDTO;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;

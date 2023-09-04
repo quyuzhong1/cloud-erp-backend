@@ -16,7 +16,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BaseStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.service.RedisService;
+import com.common.business.service.impl.RedisService;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
