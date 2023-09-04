@@ -133,4 +133,13 @@ public interface WarehouseLocationMoveInfoService extends SuperService<Warehouse
     */
     Boolean approveEnd(ApproveOneDTO dto, WarehouseLocationMoveInfoEntity entity);
 
+    /**
+     * 作废
+     * @Author Luo_WG
+     * @Date 2023/9/4 15:56
+     * @param ids
+     * @param remark
+     * @return java.lang.Boolean
+     **/
+    Boolean invalid(List<String> ids, String remark);
 }

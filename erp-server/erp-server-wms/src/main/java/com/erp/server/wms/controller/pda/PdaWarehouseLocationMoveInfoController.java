@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.pda;
 
 
+import com.erp.server.wms.service.TransferInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -296,6 +297,24 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
             resultDTOS.add(cancelResult);
         }
         return success(resultDTOS);
+    }
+
+    /**
+     * 作废
+     * @author Luo_WG
+     * @date: 2023/5/10 20:11
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:invalid",
+            serviceClass = TransferInfoService.class,
+            keyIdName = "ids")
+    public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        Boolean flag = warehouseLocationMoveInfoService.invalid(dto.getIds(),dto.getRemark());
+        return flag == true ? success() : failure();
     }
 
     /**

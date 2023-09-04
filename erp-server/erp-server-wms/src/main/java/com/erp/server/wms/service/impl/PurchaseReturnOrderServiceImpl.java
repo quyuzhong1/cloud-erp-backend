@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -12,6 +13,7 @@ import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
@@ -1750,6 +1752,60 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     throw new ServiceException(ApiError.PURCHASE_SKU_NOT_EXIST, updateDTO.getSkuNo());
                 }
             }
+
+            List<PurchaseReturnOrderDetailDTO.AddDTO> addDTOList = new ArrayList<>();
+            List<PurchaseReturnOrderDetailDTO.AddDTO> purchaseReturnOrderDetailList = dto.getPurchasePriceDetailList();
+            List<String> poDetailIds = purchaseReturnOrderDetailList.stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getPurchaseOrderDetailId).distinct().collect(Collectors.toList());
+            List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.listPurchaseOrderDetailById(poDetailIds);
+            List<PurchaseOrderDetailEntity> detailEntityListByPoId = scmTaskFeign.listByPurchaseOrderIds(Arrays.asList(dto.getPurchaseOrderId()));
+
+            List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(poDetailIds);
+            for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : purchaseReturnOrderDetailList) {
+                PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailEntityList.stream().filter(req -> req.getId().equals(addDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(detailEntity)) {
+                    throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST, addDTO.getSkuNo());
+                }
+
+                List<PurchaseOrderDetailEntity> detailEntityList = detailEntityListByPoId.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
+                //校验sku是否有重复，重复需要拆单
+                if (detailEntityList.size() > MathUtil.ONE) {
+                    List<String> podIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+                    List<PoInstockDetailEntity> poInstockDetailEntities = poInstockDetailService.listDetailByPodIds(podIds);
+                    List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
+                    Integer returnQty = addDTO.getReturnQty();
+                    for (PurchaseOrderDetailEntity entity : detailEntityList) {
+                        Integer stockInQty = poInstockDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                        //已退货
+                        Integer alreadyReturnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+
+                        if (alreadyReturnQty >= stockInQty) {
+                            continue;
+                        }
+                        PurchaseReturnOrderDetailDTO.AddDTO addSkuDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
+                        addSkuDTO.setPurchaseOrderDetailId(entity.getId());
+                        addSkuDTO.setRemark(addDTO.getRemark());
+                        addSkuDTO.setSkuId(addDTO.getSkuId());
+                        addSkuDTO.setSkuNo(addDTO.getSkuNo());
+                        addSkuDTO.setReplenishQty(addDTO.getReplenishQty());
+                        addSkuDTO.setDeductAmountQty(addDTO.getDeductAmountQty());
+                        addSkuDTO.setSkuNo(addDTO.getSkuNo());
+                        if (returnQty > (stockInQty - entity.getPurchaseQty() - alreadyReturnQty) && !detailEntityList.get(detailEntityList.size()-1).getId().equals(entity.getId())) {
+                            returnQty = returnQty - (stockInQty - entity.getPurchaseQty() - alreadyReturnQty);
+                            addSkuDTO.setReturnQty(stockInQty - entity.getPurchaseQty() - alreadyReturnQty);
+                            addDTOList.add(addSkuDTO);
+                        } else {
+                            addSkuDTO.setReturnQty(returnQty);
+                            addDTOList.add(addSkuDTO);
+                            break;
+                        }
+                        addDTO.setReplenishQty(0);
+                        addDTO.setDeductAmountQty(0);
+                    }
+                } else {
+                    addDTOList.add(addDTO);
+                }
+            }
+            dto.setPurchasePriceDetailList(addDTOList);
         }
         return this.add(dto);
     }
@@ -1767,6 +1823,59 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     throw new ServiceException(ApiError.PURCHASE_SKU_NOT_EXIST, updateDTO.getSkuNo());
                 }
             }
+            List<PurchaseReturnOrderDetailDTO.UpdateDTO> addDTOList = new ArrayList<>();
+            List<PurchaseReturnOrderDetailDTO.UpdateDTO> purchaseReturnOrderDetailList = dto.getPurchasePriceDetailList();
+            List<String> poDetailIds = purchaseReturnOrderDetailList.stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getPurchaseOrderDetailId).distinct().collect(Collectors.toList());
+            List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.listPurchaseOrderDetailById(poDetailIds);
+            List<PurchaseOrderDetailEntity> detailEntityListByPoId = scmTaskFeign.listByPurchaseOrderIds(Arrays.asList(dto.getPurchaseOrderId()));
+
+            List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(poDetailIds);
+            for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : purchaseReturnOrderDetailList) {
+                PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailEntityList.stream().filter(req -> req.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(detailEntity)) {
+                    throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST, updateDTO.getSkuNo());
+                }
+
+                List<PurchaseOrderDetailEntity> detailEntityList = detailEntityListByPoId.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
+                //校验sku是否有重复，重复需要拆单
+                if (detailEntityList.size() > MathUtil.ONE) {
+                    List<String> podIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+                    List<PoInstockDetailEntity> poInstockDetailEntities = poInstockDetailService.listDetailByPodIds(podIds);
+                    List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
+                    Integer returnQty = updateDTO.getReturnQty();
+                    for (PurchaseOrderDetailEntity entity : detailEntityList) {
+                        Integer stockInQty = poInstockDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                        //已退货
+                        Integer alreadyReturnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && !req.getMainId().equals(dto.getId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+
+                        if (alreadyReturnQty >= stockInQty) {
+                            continue;
+                        }
+                        PurchaseReturnOrderDetailDTO.UpdateDTO updateSkuDTO = new PurchaseReturnOrderDetailDTO.UpdateDTO();
+                        updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
+                        updateSkuDTO.setRemark(updateDTO.getRemark());
+                        updateSkuDTO.setSkuId(updateDTO.getSkuId());
+                        updateSkuDTO.setSkuNo(updateDTO.getSkuNo());
+                        updateSkuDTO.setReplenishQty(updateDTO.getReplenishQty());
+                        updateSkuDTO.setDeductAmountQty(updateDTO.getDeductAmountQty());
+                        updateSkuDTO.setSkuNo(updateDTO.getSkuNo());
+                        if (returnQty > (stockInQty - alreadyReturnQty) && !detailEntityList.get(detailEntityList.size()-1).getId().equals(entity.getId())) {
+                            returnQty = returnQty - (stockInQty - alreadyReturnQty);
+                            updateSkuDTO.setReturnQty(stockInQty - alreadyReturnQty);
+                            addDTOList.add(updateSkuDTO);
+                        } else {
+                            updateSkuDTO.setReturnQty(returnQty);
+                            addDTOList.add(updateSkuDTO);
+                            break;
+                        }
+                        updateDTO.setReplenishQty(0);
+                        updateDTO.setDeductAmountQty(0);
+                    }
+                } else {
+                    addDTOList.add(updateDTO);
+                }
+            }
+            dto.setPurchasePriceDetailList(addDTOList);
         }
         return this.update(dto);
     }
