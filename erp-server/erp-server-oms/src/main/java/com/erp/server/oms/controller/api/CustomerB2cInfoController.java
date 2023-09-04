@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * 销售管理-客户管理
+ * B2C销售管理-B2C客户管理
  *
  * @author lambda
  * @since 2023-05-10
