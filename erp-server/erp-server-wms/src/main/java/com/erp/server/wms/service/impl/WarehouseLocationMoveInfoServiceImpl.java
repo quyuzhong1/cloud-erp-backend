@@ -11,13 +11,13 @@ import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
-import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
-import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.WarehouseLocationMoveInfoMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
@@ -33,7 +33,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -92,6 +91,8 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private WarehouseLocationService warehouseLocationService;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -562,6 +563,16 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     private void handleData(WarehouseLocationMoveInfoEntity warehouseLocationMoveInfoEntity) {
         if (StringUtils.isBlank(warehouseLocationMoveInfoEntity.getId())) {
             warehouseLocationMoveInfoEntity.setBillDate(LocalDate.now());
+        }
+        warehouseLocationMoveInfoEntity.getWarehouseId();
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(warehouseLocationMoveInfoEntity.getWarehouseId()));
+        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(req -> req.getId().equals(warehouseLocationMoveInfoEntity.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+        warehouseLocationMoveInfoEntity.setWarehouseName(updateDTO.getName());
+        warehouseLocationMoveInfoEntity.setInventoryOrgId(updateDTO.getOrgId());
+        //获取核算公司
+        SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(updateDTO.getOrgId());
+        if (ObjectUtil.isNotEmpty(companyEntity)) {
+            warehouseLocationMoveInfoEntity.setInventoryOrgName(companyEntity.getCompanyName());
         }
     }
 }
