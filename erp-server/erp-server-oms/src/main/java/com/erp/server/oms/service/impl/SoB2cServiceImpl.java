@@ -25,7 +25,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
@@ -436,11 +435,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             deleteCategory(id);
             msg = "原分类：【{}】，删除分类。";
         }
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新订单分类");
         // 记录操作日志
         log.info("更新分类 开始记录B2C销售订单表日志数据，id：【{}】", id);
         operateLogService.addModuleOperateLog(StrUtil.format(msg,oldCategoryName,newCategoryName), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "修改订单备注");
-        return BatchResultDTO.success(entity.getCode(), "更新订单分类");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新订单分类");
     }
 
     @Override
