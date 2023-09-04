@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.*;
-import com.common.business.validator.ValidGroup;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
@@ -582,8 +581,8 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         }
         //审核不通过 待提交可以作废
         long count = infoEntityList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
+                && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT)
+                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT))
         ).count();
 
         if (count != infoEntityList.size()) {
