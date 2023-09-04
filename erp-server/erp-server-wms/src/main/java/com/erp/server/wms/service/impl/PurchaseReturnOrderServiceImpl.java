@@ -446,6 +446,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             viewDTO.setSourceType(ReturnOrderSourceEnum.QC.getCode());
             viewDTO.setSourceTypeName(ReturnOrderSourceEnum.QC.getName());
         } else {
+            viewDTO.setSourceType(ReturnOrderSourceEnum.OTHER.getCode());
             viewDTO.setSourceTypeName(ReturnOrderSourceEnum.OTHER.getName());
         }
         if (StringUtils.isNotBlank(viewDTO.getReturnMode())) {
