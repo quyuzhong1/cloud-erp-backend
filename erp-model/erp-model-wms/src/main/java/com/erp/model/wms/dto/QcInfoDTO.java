@@ -164,6 +164,11 @@ public class QcInfoDTO implements Serializable {
         private String purchaseOrderDetailId;
 
         /**
+         * 来源详情id
+         */
+        private String sourceDetailId;
+
+        /**
          * 是否新品
          */
         private Boolean isFirstMassProduct;

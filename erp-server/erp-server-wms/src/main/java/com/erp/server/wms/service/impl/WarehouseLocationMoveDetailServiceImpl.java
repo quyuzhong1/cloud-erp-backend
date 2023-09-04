@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseLocationMoveInfoDTO;
@@ -113,9 +114,10 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             paramDTO.setSkuId(warehouseLocationMoveDetailEntity.getSkuId());
             paramDTO.setWarehouseLocation(warehouseLocationMoveDetailEntity.getOutWarehouseLocation());
             InventoryDTO.PdaInventoryDTO inventoryByParam = inventoryService.getInventoryByParam(paramDTO);
-            if (warehouseLocationMoveDetailEntity.getQty() > inventoryByParam.getUsableQty()) {
-                throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR);
+            if (ObjectUtil.isEmpty(inventoryByParam) || warehouseLocationMoveDetailEntity.getQty() > inventoryByParam.getUsableQty()) {
+                throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, warehouseLocationMoveDetailEntity.getSkuNo());
             }
+            warehouseLocationMoveDetailEntity.setMainId(mainId);
         }
 
         //添加操作日志

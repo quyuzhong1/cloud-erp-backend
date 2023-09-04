@@ -412,7 +412,7 @@
             and it.warehouse_id = #{params.warehouseId}
         </if>
         <if test="params.orgId != null and params.orgId != ''">
-            and it.org_id in #{params.orgId}
+            and it.org_id = #{params.orgId}
         </if>
         <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
             and it.warehouse_location = #{params.warehouseLocation}

@@ -802,6 +802,11 @@ public class PoInstockDTO implements Serializable {
         private String sourceType;
 
         /**
+         * 采购单id
+         */
+        private String purchaseOrderId;
+
+        /**
          * 供应商名称
          */
         private String supplierName;

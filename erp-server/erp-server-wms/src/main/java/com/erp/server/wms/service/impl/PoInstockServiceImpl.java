@@ -1600,6 +1600,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         //主键id
         List<String> ids = records.stream().map(req -> req.getId()).collect(Collectors.toList());
+
+        //采购单id
+        List<String> purchaseOrderIds = records.stream().map(req -> req.getPurchaseOrderId()).collect(Collectors.toList());
         //查询详情
         List<PoInstockDetailEntity> poInstockDetailEntities = poInstockDetailService.listByMainIds(ids);
 
@@ -1607,9 +1610,10 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //存在收货单,且收货单下面的质检单未质检完成则不允许提交
         //收货信息
         List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
-        List<String> receiveDetailIds = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getId).collect(Collectors.toList());
+        List<String> receiveIds = receiveDetailList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+        receiveIds.addAll(purchaseOrderIds);
         //质检信息
-        List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceDetailIds(receiveDetailIds);
+        List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceIds(receiveIds);
         List<QcInfoEntity> resultList = qcInfoList.stream().filter(obj -> QcBillStatusEnum.EXEMPTION.equals(obj.getQcStatus())
                 || QcBillStatusEnum.FINISH_QC.equals(obj.getQcStatus())
         ).collect(Collectors.toList());

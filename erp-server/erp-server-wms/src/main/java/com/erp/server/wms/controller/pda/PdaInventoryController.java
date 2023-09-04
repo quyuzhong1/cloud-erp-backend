@@ -31,7 +31,7 @@ public class PdaInventoryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.lang.Integer>
      **/
     @GetMapping(value = "/getInventoryByWarehouseId")
-    public ApiResult<InventoryDTO.PdaHomeInventoryBalanceDTO> getInventoryByWarehouseId(@RequestParam("warehouseId") String warehouseId) {
+    public ApiResult<InventoryDTO.PdaHomeInventoryBalanceDTO> getInventoryByWarehouseId(@RequestParam("id") String warehouseId) {
         InventoryDTO.PdaHomeInventoryBalanceDTO inventory = inventoryService.getInventoryByWarehouseId(warehouseId);
         return success(inventory);
     }
