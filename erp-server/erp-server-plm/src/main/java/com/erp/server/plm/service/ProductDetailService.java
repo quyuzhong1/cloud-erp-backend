@@ -574,4 +574,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      */
     List<ProductDetailEntity> listByCreateTimeList(List<LocalDateTime> createTimeList);
+
+    /**
+     * PDA:产品查询
+     * @Author Luo_WG
+     * @Date 2023/9/4 18:48
+     * @param skuNo
+     * @return com.erp.model.plm.dto.PdaProductDetailDTO.View
+     **/
+    PdaProductDetailDTO.View pdaProductView(String skuNo);
 }

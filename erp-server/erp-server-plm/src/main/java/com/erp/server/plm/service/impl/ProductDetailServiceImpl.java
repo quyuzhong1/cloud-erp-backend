@@ -3774,4 +3774,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 ge(ProductDetailEntity::getCreateTime,createTimeList.get(0)).
                 le(ProductDetailEntity::getCreateTime,createTimeList.get(1)).list();
     }
+
+    @Override
+    public PdaProductDetailDTO.View pdaProductView(String skuNo) {
+        return baseMapper.pdaProductView(skuNo);
+    }
 }
