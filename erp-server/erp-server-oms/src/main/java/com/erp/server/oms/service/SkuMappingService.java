@@ -128,4 +128,14 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @return List<ListSkuDTO>
      */
     List<SkuMappingDTO.ListSkuDTO> listBySkuNoList(List<String> skuNoList);
+
+    
+    /**
+     * 根据平台sku noList 获取对应的数据
+     * @author yl
+     * @date 2023-09-04 17:11
+     * @param platformSkuNoList
+     * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.ListSkuDTO>
+     */
+    List<SkuMappingDTO.SkuDTO> listByPlatformSkuNoList(List<String> platformSkuNoList);
 }

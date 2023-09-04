@@ -654,4 +654,46 @@ public class SkuMappingDTO implements Serializable {
          */
         private String imageUrl;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuDTO {
+        /**
+         * 产品skuId
+         */
+        private String productSkuId;
+
+        /**
+         * 产品skuNo
+         */
+        private String productSkuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 库存sku
+         */
+        private String flagSkuNo;
+
+        /**
+         * 库存产品名称
+         */
+        private String flagProductName;
+
+        /**
+         * 平台sku no
+         */
+        private String platformSkuNo;
+
+        /**
+         * 平台产品名称
+         */
+        private String platformProductName;
+
+
+    }
 }

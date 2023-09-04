@@ -9,6 +9,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -253,4 +254,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.ReportDTO.ProductSalesPagingViewDTO>
      */
     PagingVO<ReportDTO.ProductSalesPagingViewDTO> productSalesPaging(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto);
+
+    /**
+     * 导出 销售统计
+     * @author yl
+     * @date 2023-09-04 16:39
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean productSalesExport(ReportDTO.ProductSalesPagingParamDTO dto, HttpServletResponse response);
 }

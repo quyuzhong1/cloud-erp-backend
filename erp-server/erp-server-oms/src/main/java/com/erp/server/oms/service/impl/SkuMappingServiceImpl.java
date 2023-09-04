@@ -151,7 +151,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             String key = DictBasicEnum.PLATFORM.getType();
             List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
             List<ShopInfoEntity> shopInfoList = shopInfoService.list();
-            SkuMappingExcelListener excelListenerUtil = new SkuMappingExcelListener(this, skuList, shopInfoList, skuMappingList, dictBasicList, list,listingInfoService);
+            SkuMappingExcelListener excelListenerUtil = new SkuMappingExcelListener(this, skuList, shopInfoList, skuMappingList, dictBasicList, list, listingInfoService);
             try {
                 EasyExcel.read(excelFile.getInputStream(), SkuMappingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             } catch (Exception e) {
@@ -168,7 +168,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         //仓库sku 对照
         if (warehouse.equals(type)) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
-            warehouseList=warehouseList.stream().filter(w->!w.getDisabled()).collect(Collectors.toList());
+            warehouseList = warehouseList.stream().filter(w -> !w.getDisabled()).collect(Collectors.toList());
             SkuMappingWarehouseExcelListener excelListenerUtil = new SkuMappingWarehouseExcelListener(this, skuList, skuMappingList, warehouseList, list, listingInfoService);
             try {
                 EasyExcel.read(excelFile.getInputStream(), SkuMappingWarehouseImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -506,7 +506,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (StringUtils.isBlank(listingId)) {
             throw new ServiceException(warehouseSkuNo + "未找到");
         }
-        checkWarehouseSkuExist(id, listingId, warehouseId,productSkuId);
+        checkWarehouseSkuExist(id, listingId, warehouseId, productSkuId);
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         if (CollectionUtils.isEmpty(warehouseList)) {
             throw new ServiceException("仓库不存在");
@@ -582,6 +582,22 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     /**
+     * 根据平台sku noList 获取对应的数据
+     *
+     * @param platformSkuNoList
+     * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.ListSkuDTO>
+     * @author yl
+     * @date 2023-09-04 17:11
+     */
+    @Override
+    public List<SkuMappingDTO.SkuDTO> listByPlatformSkuNoList(List<String> platformSkuNoList) {
+        if (CollectionUtils.isEmpty(platformSkuNoList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listByPlatformSkuNoList(platformSkuNoList);
+    }
+
+    /**
      * 库存sku 对照表分页
      *
      * @param dto
@@ -646,7 +662,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         LambdaQueryWrapper<SkuMappingEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SkuMappingEntity::getListingId, listingId);
         queryWrapper.eq(SkuMappingEntity::getIsExpire, Boolean.FALSE);
-        queryWrapper.eq(SkuMappingEntity::getType,TypeEnum.WAREHOUSE);
+        queryWrapper.eq(SkuMappingEntity::getType, TypeEnum.WAREHOUSE);
         queryWrapper.eq(SkuMappingEntity::getWarehouseId, warehouseId);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(SkuMappingEntity::getId, id);
@@ -659,7 +675,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<SkuMappingEntity> list = this.lambdaQuery().
                 eq(SkuMappingEntity::getWarehouseId, warehouseId).
                 eq(SkuMappingEntity::getProductSkuId, skuId).
-                eq(SkuMappingEntity::getType,TypeEnum.WAREHOUSE).list();
+                eq(SkuMappingEntity::getType, TypeEnum.WAREHOUSE).list();
         long skuCount = list.stream().map(SkuMappingEntity::getListingId).distinct().count();
         if (skuCount > 0) {
             throw new ServiceException("SKU在该仓库已关联其他库存SKU，请更换其他SKU");

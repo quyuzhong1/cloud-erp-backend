@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.oms.mapper.SkuMappingMapper">
 
-     <!--分页-->
+    <!--分页-->
     <select id="paging" resultType="com.erp.model.oms.dto.SkuMappingDTO$PagingViewDTO">
         SELECT
         sm.id,
@@ -146,14 +146,14 @@
     <!--统计-->
     <select id="listMatchCount" resultType="com.erp.model.oms.dto.SkuMappingDTO$MatchCountDTO">
         SELECT
-            li.match_result,
-            count(sm.*)
+        li.match_result,
+        count(sm.*)
         FROM sku_mapping sm
         INNER JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         WHERE sm.is_deleted=FALSE AND sm.is_expire = FALSE
         <if test="params.type!=null and params.type!=''">
-           AND sm.type=#{params.type}
+            AND sm.type=#{params.type}
         </if>
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${permissionSql}
@@ -326,6 +326,26 @@
             DAY' ) > sm.create_time
         </if>
         ORDER BY sm.id,sm.create_time DESC
+    </select>
+    <select id="listByPlatformSkuNoList" resultType="com.erp.model.oms.dto.SkuMappingDTO$SkuDTO">
+        SELECT li.id           AS listingId,
+               sm.product_sku_id,
+               sm.product_sku_no,
+               li.sku_no       AS flagSkuNo,
+               li.product_name AS flagProductName,
+               li.platform_sku_no,
+               li.platform_product_name
+        FROM sku_mapping sm
+                 INNER JOIN listing_info li
+                            ON sm.listing_id = li.id AND li.is_deleted = FALSE
+        WHERE sm.is_deleted = FALSE and sm.is_expire=FALSE
+        <if test="platformSkuNoList !=null and platformSkuNoList.size>0">
+            AND li.platform_sku_no IN
+            <foreach collection="platformSkuNoList" item="platformSkuNo" open="(" separator="," close=")">
+                #{platformSkuNo}
+            </foreach>
+
+        </if>
     </select>
 
 </mapper>

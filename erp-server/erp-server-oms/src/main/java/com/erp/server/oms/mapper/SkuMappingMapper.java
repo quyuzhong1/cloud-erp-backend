@@ -56,4 +56,13 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.PagingViewDTO>
      */
     List<SkuMappingDTO.WarehousePagingViewDTO> listWarehouseExport(@Param("params")SkuMappingDTO.ExportWarehouseSkuDTO dto,@Param("matchResult") Boolean matchResult);
+
+    /**
+     * 跟哭库存sku no list获取
+     * @author yl
+     * @date 2023-09-04 17:15
+     * @param platformSkuNoList
+     * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.ListSkuDTO>
+     */
+    List<SkuMappingDTO.SkuDTO> listByPlatformSkuNoList(@Param("platformSkuNoList") List<String> platformSkuNoList);
 }

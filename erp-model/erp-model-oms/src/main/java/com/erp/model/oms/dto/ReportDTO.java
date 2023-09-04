@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -57,6 +58,7 @@ public class ReportDTO implements Serializable {
          * 订单创建时间
          */
         @NotNull(message = "订单创建时间不能为空")
+        @Size(min = 2,message = "订单创建时间不能为空")
         private List<LocalDateTime> orderCreateTimeList;
 
 

@@ -23,52 +23,66 @@ import java.util.List;
 public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
 
     /**
-    * 分页查询
-    * @param query
-    * @param params
-    * @return
-    */
-    IPage<SoB2cDTO.ListDTO> paging(Page query, @Param("params") SoB2cDTO.PagingParamDTO params);
-
-    /**
-    * 状态数量
-    * @param params
-    * @return
-    */
-    Integer listCount(@Param("params") SoB2cDTO.PagingParamDTO params);
-    /**
-     * @description: 合并分页查询
-     * @author Will
-     * @date: 2023/8/22 16:10
-     * @param query
-     * @param params
-     * @return IPage<MergeListDTO>
-     */
-    IPage<SoB2cDTO.MergeListDTO> mergePaging(Page query, @Param("params")SoB2cDTO.MergePagingParamDTO params);
-
-    /**
-     * @description: 合并分页查询数量
-     * @author Will
-     * @date: 2023/8/22 16:10
-     * @param params
-     * @return IPage<MergeListDTO>
-     */
-    Integer mergePagingCount(@Param("params")SoB2cDTO.MergePagingParamDTO params);
-
-    /**
-     * @description: 合并数据查询
-     * @author Will
-     * @date: 2023/8/22 18:36
-     * @param mergeParamDTO
-     * @return List<MergeMainDTO>
-     */
-    List<SoB2cDTO.MergeMainDTO> listMerge(@Param("params")SoB2cDTO.MergeParamDTO mergeParamDTO);
-
-    /**
-     * 销售订单统计
+     * 分页查询
+     *
      * @param query
      * @param params
      * @return
      */
-    IPage<ReportDTO.ProductSalesPagingViewDTO> productSalesPaging(Page query,@Param("params") ReportDTO.ProductSalesPagingParamDTO params,List<String> skuIdList);
+    IPage<SoB2cDTO.ListDTO> paging(Page query, @Param("params") SoB2cDTO.PagingParamDTO params);
+
+    /**
+     * 状态数量
+     *
+     * @param params
+     * @return
+     */
+    Integer listCount(@Param("params") SoB2cDTO.PagingParamDTO params);
+
+    /**
+     * @param query
+     * @param params
+     * @return IPage<MergeListDTO>
+     * @description: 合并分页查询
+     * @author Will
+     * @date: 2023/8/22 16:10
+     */
+    IPage<SoB2cDTO.MergeListDTO> mergePaging(Page query, @Param("params") SoB2cDTO.MergePagingParamDTO params);
+
+    /**
+     * @param params
+     * @return IPage<MergeListDTO>
+     * @description: 合并分页查询数量
+     * @author Will
+     * @date: 2023/8/22 16:10
+     */
+    Integer mergePagingCount(@Param("params") SoB2cDTO.MergePagingParamDTO params);
+
+    /**
+     * @param mergeParamDTO
+     * @return List<MergeMainDTO>
+     * @description: 合并数据查询
+     * @author Will
+     * @date: 2023/8/22 18:36
+     */
+    List<SoB2cDTO.MergeMainDTO> listMerge(@Param("params") SoB2cDTO.MergeParamDTO mergeParamDTO);
+
+    /**
+     * 销售订单统计
+     *
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<ReportDTO.ProductSalesPagingViewDTO> productSalesPaging(Page query, @Param("params") ReportDTO.ProductSalesPagingParamDTO params, @Param("skuIdList") List<String> skuIdList);
+
+
+    /**
+     * 报表管理 导出销售订单统计数据
+     *
+     * @param params
+     * @param skuIdList
+     * @return
+     */
+    List<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(@Param("params") ReportDTO.ProductSalesPagingParamDTO params, @Param("skuIdList") List<String> skuIdList);
 }

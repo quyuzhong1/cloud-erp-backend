@@ -7,6 +7,7 @@ package com.common.core.rule;/**
  */
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @Description TODO
@@ -14,6 +15,7 @@ import lombok.Data;
  * @Date 2023-09-04 10:30
  */
 @Data
+
 public class ConditionElement {
 
     /**
@@ -23,7 +25,7 @@ public class ConditionElement {
     private String leftBracket;
 
     /**
-     *  对应字段
+     * 对应字段
      */
     private String field;
 
@@ -47,4 +49,18 @@ public class ConditionElement {
      * 逻辑关系 and 或者or
      */
     private String logic;
+
+    public ConditionElement(String leftBracket, String field, String operator,
+                            String value, String rightBracket, String logic) {
+        this.leftBracket = leftBracket;
+        this.field = field;
+        this.operator = operator;
+        this.value = value;
+        this.rightBracket = rightBracket;
+        this.logic = logic;
+
+    }
+
+
+
 }

@@ -104,10 +104,12 @@
         sb2cl.dict_logistics_method as dictLogisticsMethod,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
              else sb2cl.actual_shipping_cost
-        end as shippingCost,
+        end
+        as shippingCost,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency
              else sb2cl.actual_shipping_currency
-        end as shippingCostCurrency,
+        end
+        as shippingCostCurrency,
         sb2cl.code as logisticsCode,
         sb2cr.name as buyerName,
         sb2cr.country_id as countryId,
@@ -508,19 +510,71 @@
             ))
         </if>
         <if test="params.dictPlatformList!=null and params.dictPlatformList.size>0">
-           AND sb.dict_platform IN
+            AND sb.dict_platform IN
             <foreach collection="params.dictPlatformList" item="dictPlatform" open="(" separator="," close=")">
                 #{dictPlatform}
             </foreach>
         </if>
         <if test="skuIdList !=null and skuIdList.size>0">
-           AND sb.sku_id IN
-           <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
-             #{skuId}
-           </foreach>
+            AND sb.sku_id IN
+            <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
         </if>
         <if test="params.shopIdList!=null and params.shopIdList.size>0">
-           AND sb.shop_id IN
+            AND sb.shop_id IN
+            <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
+                #{shopId}
+            </foreach>
+        </if>
+        <if test="params.orderCreateTimeList!=null and params.orderCreateTimeList.size>0">
+            AND sb.platform_order_create_time >= #{params.orderCreateTimeList[0]}
+            AND sb. platform_order_create_time &lt;= #{params.orderCreateTimeList[1]}
+        </if>
+        GROUP BY
+        sb.dict_platform,
+        sb.shop_id,
+        sbd.platform_sku_no
+    </select>
+
+    <select id="listProductSalesExport" resultType="com.erp.model.oms.dto.ReportDTO$ProductSalesPagingViewDTO">
+        SELECT
+        sb.dict_platform,
+        sb.shop_id,
+        sbd.platform_sku_no,
+        COUNT ( sb.ID ) AS orderCount,
+        SUM ( sbd.qty ) AS qty,
+        ROUND( SUM ( sb.amount * sb.exchange_rate ), 2 ) AS amount
+        FROM
+        so_b2c sb
+        LEFT JOIN so_b2c_detail sbd ON sb.ID = sbd.main_id
+        AND sbd.is_deleted = FALSE
+        WHERE
+        sb.is_deleted = FALSE
+        <if test="params.skuNo!=null and params.skuNo!=''">
+            AND ((
+            sbd.sku_no ILIKE concat('%',#{params.skuNo},'%')
+            ) OR (
+            sbd.seller_sku_no ILIKE concat('%',#{params.skuNo},'%')
+            )
+            OR (
+            sbd.platform_sku_no ILIKE concat('%',#{params.skuNo},'%')
+            ))
+        </if>
+        <if test="params.dictPlatformList!=null and params.dictPlatformList.size>0">
+            AND sb.dict_platform IN
+            <foreach collection="params.dictPlatformList" item="dictPlatform" open="(" separator="," close=")">
+                #{dictPlatform}
+            </foreach>
+        </if>
+        <if test="skuIdList !=null and skuIdList.size>0">
+            AND sb.sku_id IN
+            <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+        <if test="params.shopIdList!=null and params.shopIdList.size>0">
+            AND sb.shop_id IN
             <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
                 #{shopId}
             </foreach>
