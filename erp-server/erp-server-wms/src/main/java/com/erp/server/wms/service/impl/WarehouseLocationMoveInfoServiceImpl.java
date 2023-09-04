@@ -8,15 +8,15 @@ import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.inventory.*;
-import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
-import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
-import com.erp.model.wms.entity.WarehouseLocationMoveInfoEntity;
-import com.erp.model.wms.entity.WarehouseReceiveEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.WarehouseLocationMoveInfoMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -78,6 +78,10 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     private InventoryTransCoreService inventoryTransCoreService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -417,12 +421,21 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         List<WarehouseLocationMoveDetailDTO.ViewDTO> detailList = BeanMapper.copyList(detailEntityList, WarehouseLocationMoveDetailDTO.ViewDTO.class);
         List<String> skuIds = detailList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(data.getWarehouseId()));
+
         for (WarehouseLocationMoveDetailDTO.ViewDTO viewDTO : detailList) {
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
             viewDTO.setUnitName(skuVO.getUnitName());
             viewDTO.setSkuImg(skuVO.getSkuImagesUrl());
             viewDTO.setProductName(skuVO.getSkuName());
+            WarehouseLocationEntity inWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(data.getWarehouseId()) && req.getCode().equals(viewDTO.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            viewDTO.setInWarehouseLocationName(inWarehouseLocationEntity.getName());
+            WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(data.getWarehouseId()) && req.getCode().equals(viewDTO.getOutWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            viewDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
+
         }
+
         data.setDetailList(detailList);
         return data;
     }
@@ -499,16 +512,26 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     */
     private void fillList(List<WarehouseLocationMoveInfoDTO.PdaListDTO> list) {
         if(CollUtil.isEmpty(list)) {
-           return;
+            return;
         }
+        //主键id
         List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        //查询详情
         List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(ids);
+        List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
+
         // 属性赋值
         for(WarehouseLocationMoveInfoDTO.PdaListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            List<WarehouseLocationMoveDetailEntity> entities = detailEntityList.stream().filter(obj -> obj.getMainId().equals(data.getId())).collect(Collectors.toList());
-            List<WarehouseLocationMoveInfoDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(entities, WarehouseLocationMoveInfoDTO.PdaItemDTO.class);
-            data.setDetailCount(itemDTOList.size());
+            List<WarehouseLocationMoveDetailEntity> detailEntities = detailEntityList.stream().filter(obj -> obj.getMainId().equals(data.getId())).collect(Collectors.toList());
+            List<WarehouseLocationMoveInfoDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, WarehouseLocationMoveInfoDTO.PdaItemDTO.class);
+            List<String> skuList = itemDTOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+            data.setDetailCount(skuList.size());
+            for (WarehouseLocationMoveInfoDTO.PdaItemDTO pdaItemDTO : itemDTOList) {
+                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(data.getWarehouseId()) && req.getCode().equals(pdaItemDTO.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+                pdaItemDTO.setInWarehouseLocationName(warehouseLocationEntity.getName());
+            }
             data.setItemList(itemDTOList);
         }
     }
@@ -530,6 +553,16 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         if (StringUtils.isBlank(warehouseLocationMoveInfoEntity.getId())) {
             warehouseLocationMoveInfoEntity.setBillDate(LocalDate.now());
         }
+        warehouseLocationMoveInfoEntity.getWarehouseId();
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(warehouseLocationMoveInfoEntity.getWarehouseId()));
+        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(req -> req.getId().equals(warehouseLocationMoveInfoEntity.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+        warehouseLocationMoveInfoEntity.setWarehouseName(updateDTO.getName());
+        warehouseLocationMoveInfoEntity.setInventoryOrgId(updateDTO.getOrgId());
+        //获取核算公司
+        SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(updateDTO.getOrgId());
+        if (ObjectUtil.isNotEmpty(companyEntity)) {
+            warehouseLocationMoveInfoEntity.setInventoryOrgName(companyEntity.getCompanyName());
+        }
     }
 
     @Override
@@ -540,8 +573,8 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         }
         //审核不通过 待提交可以作废
         long count = infoEntityList.stream().filter(entity -> entity.getInvalidStatus() == false
-                && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
+                && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT)
+                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT))
         ).count();
 
         if (count != infoEntityList.size()) {
