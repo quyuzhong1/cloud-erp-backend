@@ -106,6 +106,7 @@
             ID,
             purchase_order_id,
             purchase_date,
+            subcontract_type,
             sku_id,
             sku_no,
             product_name,
@@ -131,6 +132,7 @@
                 select
                 pod.purchase_order_id,
                 po.purchase_date,
+                po.subcontract_type,
                 pod.id,
                 pod.sku_id ,
                 pod.sku_no,
@@ -164,4 +166,68 @@
             ) m  WHERE m.rn = 1
     </select>
 
+    <select id="getLatestByCrtTime" resultType="com.erp.model.scm.entity.PurchaseOrderDetailEntity">
+        select
+        ID,
+        purchase_order_id,
+        purchase_date,
+        subcontract_type,
+        sku_id,
+        sku_no,
+        product_name,
+        declare_model,
+        declare_name,
+        tax_price,
+        currency,
+        currency_symbol,
+        purchase_qty,
+        purchase_amount,
+        plan_delivery_date,
+        is_gift,
+        remark,
+        arrival_status,
+        arrival_time,
+        tax_rate,
+        is_urgent,
+        variant_property,
+        is_end_receive,
+        warehouse_location,
+        source_detail_id
+        from (
+        select
+        pod.purchase_order_id,
+        po.purchase_date,
+        po.subcontract_type,
+        pod.id,
+        pod.sku_id ,
+        pod.sku_no,
+        pod.product_name,
+        pod.declare_model,
+        pod.declare_name,
+        pod.tax_price,
+        pod.currency,
+        pod.currency_symbol,
+        pod.purchase_qty,
+        pod.purchase_amount,
+        pod.plan_delivery_date,
+        pod.is_gift,
+        pod.remark,
+        pod.arrival_status,
+        pod.arrival_time,
+        pod.tax_rate,
+        pod.is_urgent,
+        pod.variant_property,
+        pod.is_end_receive,
+        pod.warehouse_location,
+        pod.source_detail_id,
+        row_number() over(partition by pod.sku_id order by po.create_time desc nulls last,po.update_time desc) as rn
+        from purchase_order_detail pod
+        inner join purchase_order po on pod.purchase_order_id = po.id and po.is_deleted = false
+        where po.approve_status = 'approve'
+        and pod.is_deleted = false  and pod.sku_id in
+        <foreach collection="skuIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ) m  WHERE m.rn = 1
+    </select>
 </mapper>

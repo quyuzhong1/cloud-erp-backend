@@ -83,6 +83,17 @@ public class MachineSubComponentsEntity extends BaseEntity<MachineSubComponentsE
     @TableField("is_child")
     private Boolean isChild;
 
+    /**
+     * 处理类型
+     */
+    @TableField("handle_type")
+    private String handleType;
+    /**
+     * 处理详情
+     */
+    @TableField("handle_detail")
+    private String handleDetail;
+
     @TableField(exist = false)
     private String warehouseCode;
 

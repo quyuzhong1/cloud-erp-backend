@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -171,6 +172,18 @@ public class SubcontractChangeDetailEntity extends BaseEntity<SubcontractChangeD
     */
     @TableField("is_generate_po")
     private Boolean isGeneratePo;
+
+    /**
+     * 预计交货日期
+     */
+    @TableField("plan_delivery_date")
+    private LocalDate planDeliveryDate;
+
+    /**
+     * 付款条件
+     */
+    @TableField("payment_condition")
+    private String paymentCondition;
 
     @TableField(exist = false)
     private Boolean isAdd;

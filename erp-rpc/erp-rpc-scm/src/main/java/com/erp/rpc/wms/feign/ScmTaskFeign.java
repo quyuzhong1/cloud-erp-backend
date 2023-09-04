@@ -307,7 +307,7 @@ public interface ScmTaskFeign {
     List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(@RequestBody List<String> ids);
 
     /**
-     * @description: 根据sku id获取审核通过的最新的采购订单
+     * @description: 根据sku id获取审核通过的最新的采购订单(采购日期倒序)
      * @author zhangchunlin
      * @date: 2023/6/26 10:20
      * @param skuIds
@@ -315,6 +315,16 @@ public interface ScmTaskFeign {
      */
     @PostMapping("/feign/purchaseOrder/getLatest")
     List<PurchaseOrderDetailEntity> getLatest(@RequestBody List<String> skuIds);
+
+    /**
+     * @description: 根据sku id获取审核通过的最新的采购订单(创建时间倒序)
+     * @author zhangchunlin
+     * @date: 2023/6/26 10:20
+     * @param skuIds
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    @PostMapping("/feign/purchaseOrder/getLatestByCrtTime")
+    List<PurchaseOrderDetailEntity> getLatestByCrtTime(@RequestBody List<String> skuIds);
 
     /**
      * 审核

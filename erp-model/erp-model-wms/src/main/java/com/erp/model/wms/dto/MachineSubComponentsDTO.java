@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -56,6 +57,14 @@ public class MachineSubComponentsDTO implements Serializable {
          * 是否是子件子级（作用用于前端判断）
          */
         private Boolean isChild;
+        /**
+         * 处理类型
+         */
+        private String handleType;
+        /**
+         * 处理详情
+         */
+        private String handleDetail;
 
     }
 
@@ -78,6 +87,11 @@ public class MachineSubComponentsDTO implements Serializable {
         private String productName;
 
         /**
+         * 供应商
+         */
+        private String childSupplierId;
+
+        /**
          * 单位
          */
         private String unit;
@@ -96,6 +110,15 @@ public class MachineSubComponentsDTO implements Serializable {
          * bom版本
          */
         private Integer bomVersion;
+
+        /**
+         * 子级SKU数量(前端需要的标识)
+         */
+        private Integer childLength;
+        /**
+         * 子级SKU是否显示(前端需要的标识)
+         */
+        private Boolean childHidden;
     }
 
     @Data
@@ -110,5 +133,39 @@ public class MachineSubComponentsDTO implements Serializable {
          * 集合
          */
         private List<ViewDTO> list;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class HandleDetailDTO  {
+
+        /**
+         * 子级SKU仓库id
+         */
+        private String childWarehouseId;
+        /**
+         * 子级SKU供应商id
+         */
+        private String childSupplierId;
+        /**
+         * 子级SKU仓位
+         */
+        private String childWarehouseLocation;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ViewBomParamDTO {
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+        /**
+         * bom版本
+         */
+        private Integer bomVersion;
     }
 }

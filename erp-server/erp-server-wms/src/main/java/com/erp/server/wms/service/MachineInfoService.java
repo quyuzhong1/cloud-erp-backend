@@ -144,10 +144,10 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @description: 通过SKU查询BOM子集
      * @author Will
      * @date: 2023/5/18 17:03
-     * @param skuId
+     * @param dto
      * @return List<ViewDTO>
      */
-    List<MachineSubComponentsDTO.ViewDTO> viewBomSubComponents(String skuId);
+    List<MachineSubComponentsDTO.ViewDTO> viewBomSubComponents(MachineSubComponentsDTO.ViewBomParamDTO dto);
 
     /**
      * @description: 更新金蝶状态等信息
