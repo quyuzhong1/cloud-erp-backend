@@ -46,6 +46,7 @@ import com.erp.model.wms.dto.inventory.InstockForcastDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryFinishDeliveryDetailDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
@@ -54,6 +55,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.WarehouseLocationFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchaseOrderService;
@@ -78,6 +80,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -151,6 +154,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+
+    @Autowired
+    private WarehouseLocationFeign warehouseLocationFeign;
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
@@ -2091,7 +2097,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             detail.setHasStockInQty(hasStockInQty);
         }
-        Map<String, PurchaseOrderDetailDTO.PdaViewDTO> collect = details.stream().collect(Collectors.groupingBy(n -> n.getSkuNo(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationFeign.listByWarehouseIds(Arrays.asList(entity.getDeliveryWarehouseId()));
+
+        AtomicReference<Integer> index = new AtomicReference<>(0);
+        Map<String, PurchaseOrderDetailDTO.PdaViewDTO> collect = details.stream().collect(Collectors.groupingBy(n -> n.getSkuNo()+"-"+n.getWarehouseLocation(), Collectors.collectingAndThen(Collectors.toList(), m -> {
             int purchaseQty = m.stream().mapToInt(PurchaseOrderDetailDTO.PdaViewDTO::getPurchaseQty).sum();
             int receiveQty = m.stream().mapToInt(PurchaseOrderDetailDTO.PdaViewDTO::getReceiveQty).sum();
             int unReceiveQty = m.stream().mapToInt(PurchaseOrderDetailDTO.PdaViewDTO::getUnReceiveQty).sum();
@@ -2104,6 +2113,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             updateDTO.setReceiveQty(receiveQty);
             updateDTO.setUnReceiveQty(unReceiveQty);
             updateDTO.setHasStockInQty(hasStockInQty);
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(m.get(index.get()).getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            updateDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
+            index.getAndSet(index.get() + 1);
             return updateDTO;
         })));
 

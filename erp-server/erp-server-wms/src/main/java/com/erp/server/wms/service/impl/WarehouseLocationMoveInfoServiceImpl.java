@@ -8,8 +8,10 @@ import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.inventory.*;
+import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveInfoEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
@@ -499,10 +501,15 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         if(CollUtil.isEmpty(list)) {
            return;
         }
-
+        List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(ids);
         // 属性赋值
         for(WarehouseLocationMoveInfoDTO.PdaListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+            List<WarehouseLocationMoveDetailEntity> entities = detailEntityList.stream().filter(obj -> obj.getMainId().equals(data.getId())).collect(Collectors.toList());
+            List<WarehouseLocationMoveInfoDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(entities, WarehouseLocationMoveInfoDTO.PdaItemDTO.class);
+            data.setDetailCount(itemDTOList.size());
+            data.setItemList(itemDTOList);
         }
     }
     /**
