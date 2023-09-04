@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.erp.model.dmp.entity.DmpWarehouseMappingEntity;
 import com.erp.server.dmp.mapper.DmpWarehouseMappingMapper;
 import com.erp.server.dmp.service.DmpWarehouseMappingService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.google.common.collect.Maps;
 import org.springframework.stereotype.Service;
 

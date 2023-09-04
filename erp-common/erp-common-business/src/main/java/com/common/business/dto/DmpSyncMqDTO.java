@@ -1,4 +1,4 @@
-package com.erp.model.dmp.dto;
+package com.common.business.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

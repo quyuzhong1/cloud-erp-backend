@@ -4,7 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity;
 import com.erp.server.dmp.mapper.DmpFbaDeliveryDetailMapper;
 import com.erp.server.dmp.service.DmpFbaDeliveryDetailService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

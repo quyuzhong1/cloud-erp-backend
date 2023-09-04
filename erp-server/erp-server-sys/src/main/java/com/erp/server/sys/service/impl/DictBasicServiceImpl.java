@@ -1,6 +1,6 @@
 package com.erp.server.sys.service.impl;
 
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.entity.DictBasicEntity;

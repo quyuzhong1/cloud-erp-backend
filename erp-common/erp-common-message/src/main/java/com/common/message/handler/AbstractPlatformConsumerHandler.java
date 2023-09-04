@@ -1,8 +1,7 @@
 package com.common.message.handler;
 
-import com.common.message.constant.RocketMqTopic;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
@@ -12,8 +11,6 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
-@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_data_consumer")
 public abstract class AbstractPlatformConsumerHandler<T> implements RocketMQListener<T> {
 
     @Override

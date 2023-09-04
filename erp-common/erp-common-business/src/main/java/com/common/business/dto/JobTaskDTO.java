@@ -1,7 +1,6 @@
 package com.common.business.dto;
 
 
-import com.common.business.enums.BusinessTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

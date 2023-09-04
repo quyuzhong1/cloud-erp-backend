@@ -6,7 +6,7 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.enums.TypeEnum;
 import com.erp.server.oms.mapper.ListingInfoMapper;
 import com.erp.server.oms.service.ListingInfoService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

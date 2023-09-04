@@ -3,10 +3,13 @@ package com.erp.model.dmp.entity;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.UniqueDto;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
@@ -22,6 +25,7 @@ import java.time.LocalDateTime;
  * @since 2023-06-29
 */
 @Data
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("dmp_sync_task")
@@ -128,8 +132,16 @@ public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
         this.sourceCode = item.getUniqueId();
     }
 
-    public DmpSyncTaskEntity() {
-
+    public DmpSyncTaskEntity(DmpSyncTaskDTO dto) {
+        this.targetPlatformName = dto.getTargetPlatformName();
+        this.mqTopic = dto.getMqTopic();
+        this.mqTag = dto.getMqTag();
+        this.mqData = dto.getMqData();
+        this.status = SyncKingdeeStatusEnum.IN_SYNC.getCode();
+        this.sourcePlatformName = dto.getSourcePlatformName();
+        this.sourceType = dto.getSourceType();
+        this.sourceId = dto.getSourceId();
+        this.sourceCode = dto.getSourceCode();
     }
 
     @Override

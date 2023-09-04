@@ -30,7 +30,7 @@ public class AmazonListingHandler extends AbstractOrderHandler<PlatformAmazonLis
     public List<PlatformAmazonListingDTO> download(JobTaskDTO data) {
 
         // TODO: 亚马逊订单下载
-
+        System.out.println("data = " + data);
         // 返回下载源数据
         return null;
     }
@@ -38,7 +38,7 @@ public class AmazonListingHandler extends AbstractOrderHandler<PlatformAmazonLis
 
     @Override
     public List<PlatformProductDTO> convert(List<PlatformAmazonListingDTO> sourceDataList) {
-
+        System.out.println("sourceDataList = " + sourceDataList);
         // TODO: 亚马逊订单转换为发送mq数据
         // 包含数据过滤数据 数据转换 数据合并拆分等操作
         return null;
@@ -46,6 +46,7 @@ public class AmazonListingHandler extends AbstractOrderHandler<PlatformAmazonLis
 
     @Override
     public List<?> pushDataPackage(JobTaskDTO data) {
+        System.out.println("data = " + data);
         // TODO: 亚马逊订单推送数据封装
         // 数据封装发送MQ
         return null;

@@ -2,7 +2,7 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.constant.RedisCacheConstants;
-import com.common.business.service.RedisService;
+import com.common.business.service.impl.RedisService;
 import com.common.business.vo.LoginUser;
 import com.common.core.utils.MathUtil;
 import com.erp.model.sys.dto.MessageDTO;
@@ -13,7 +13,7 @@ import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.server.sys.mapper.MessageMapper;
 import com.erp.server.sys.service.CommonService;
 import com.erp.server.sys.service.MessageService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.sys.service.MessageUserReadService;
 import com.erp.server.sys.service.SysUserInfoService;
 import org.apache.commons.collections4.CollectionUtils;

@@ -16,7 +16,7 @@ import com.erp.model.oms.entity.OrderCategoryEntity;
 import com.erp.server.oms.mapper.OrderCategoryMapper;
 import com.erp.server.oms.service.OrderCategoryDetailService;
 import com.erp.server.oms.service.OrderCategoryService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

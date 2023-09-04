@@ -1,11 +1,9 @@
 package com.common.business.utils;
 
 import cn.hutool.core.util.StrUtil;
-import com.common.business.service.RedisService;
+import com.common.business.service.impl.RedisService;
 import com.common.core.utils.date.DateUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.annotation.Resource;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 

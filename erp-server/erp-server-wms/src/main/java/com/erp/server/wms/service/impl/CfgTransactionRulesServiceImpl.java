@@ -1,7 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.wms.entity.CfgTransactionRulesEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;

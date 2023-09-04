@@ -5,7 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.server.oms.mapper.ShopAuthMapper;
 import com.erp.server.oms.service.ShopAuthService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;

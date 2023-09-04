@@ -12,7 +12,7 @@ import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.server.oms.mapper.RefundOrderMapper;
 import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.RefundOrderService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 

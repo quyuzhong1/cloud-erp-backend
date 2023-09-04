@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.erp.model.plm.entity.TemplateTaskFollowerEntity;
 import com.erp.server.plm.mapper.TemplateTaskFollowerMapper;
 import com.erp.server.plm.service.TemplateTaskFollowerService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;

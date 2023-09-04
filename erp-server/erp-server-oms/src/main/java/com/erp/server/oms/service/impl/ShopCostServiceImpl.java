@@ -9,7 +9,7 @@ import com.erp.model.oms.entity.ShopCostEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.mapper.ShopCostMapper;
 import com.erp.server.oms.service.ShopCostService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.oms.service.ShopInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
