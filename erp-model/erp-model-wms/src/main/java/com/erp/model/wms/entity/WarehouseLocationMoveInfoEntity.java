@@ -82,7 +82,11 @@ public class WarehouseLocationMoveInfoEntity extends BaseEntity<WarehouseLocatio
     */
     @TableField("invalid_status")
     private Boolean invalidStatus;
-
+    /**
+    * 作废原因
+    */
+    @TableField("invalid_remark")
+    private String invalidRemark;
 
     public static final String CODE = "code";
 

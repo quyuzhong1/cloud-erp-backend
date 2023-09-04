@@ -1328,6 +1328,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                         addDTOList.add(addSkuDTO);
                         break;
                     }
+                    addDTO.setExceedQty(0);
                 }
             } else {
                 addDTOList.add(addDTO);
@@ -1370,6 +1371,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     if (alreadyReceiveQty >= entity.getPurchaseQty() + returnQty) {
                         continue;
                     }
+
                     WarehouseReceiveDetailDTO.UpdateDTO updateSkuDTO = new WarehouseReceiveDetailDTO.UpdateDTO();
                     updateSkuDTO.setPurchaseOrderDetailId(entity.getId());
                     updateSkuDTO.setMainId(updateDTO.getMainId());
@@ -1385,6 +1387,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                         addDTOList.add(updateSkuDTO);
                         break;
                     }
+                    updateDTO.setExceedQty(0);
                 }
 
             } else {
@@ -1481,6 +1484,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             int receiveQty = m.stream().mapToInt(WarehouseReceiveDetailDTO.ViewDTO::getReceiveQty).sum();
             int unReceiveQty = m.stream().mapToInt(WarehouseReceiveDetailDTO.ViewDTO::getUnReceiveQty).sum();
             int exceedQty = m.stream().mapToInt(WarehouseReceiveDetailDTO.ViewDTO::getExceedQty).sum();
+            int unStockInQty = m.stream().mapToInt(WarehouseReceiveDetailDTO.ViewDTO::getUnStockInQty).sum();
             String podId = m.stream().max(Comparator.comparing(WarehouseReceiveDetailDTO.ViewDTO::getId)).map(WarehouseReceiveDetailDTO.ViewDTO::getId).get();
             WarehouseReceiveDetailDTO.ViewDTO updateDTO = new WarehouseReceiveDetailDTO.ViewDTO();
             BeanMapper.copy(m.get(MathUtil.ZERO), updateDTO);
@@ -1489,6 +1493,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             updateDTO.setReceiveQty(receiveQty);
             updateDTO.setUnReceiveQty(unReceiveQty);
             updateDTO.setExceedQty(exceedQty);
+            updateDTO.setUnStockInQty(unStockInQty);
             return updateDTO;
         })));
 

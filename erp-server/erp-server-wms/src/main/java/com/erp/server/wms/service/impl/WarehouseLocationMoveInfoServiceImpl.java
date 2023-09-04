@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveInfoEntity;
+import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.WarehouseLocationMoveInfoMapper;
@@ -21,7 +22,9 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -520,5 +523,32 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         if (StringUtils.isBlank(warehouseLocationMoveInfoEntity.getId())) {
             warehouseLocationMoveInfoEntity.setBillDate(LocalDate.now());
         }
+    }
+
+    @Override
+    public Boolean invalid(List<String> ids, String remark) {
+        List<WarehouseLocationMoveInfoEntity> infoEntityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //审核不通过 待提交可以作废
+        long count = infoEntityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
+        ).count();
+
+        if (count != infoEntityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+
+        //修改状态为待提交
+        lambdaUpdate().set(WarehouseLocationMoveInfoEntity::getInvalidStatus, Boolean.TRUE)
+                .set(WarehouseLocationMoveInfoEntity::getInvalidRemark, remark)
+                .in(WarehouseLocationMoveInfoEntity::getId, ids)
+                .update();
+        //操作日志
+        List<Pair<String, String>> pairList = infoEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("作废了一个收货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), pairList, "作废操作");
+        return Boolean.TRUE;
     }
 }
