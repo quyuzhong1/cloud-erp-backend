@@ -825,7 +825,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
-    public InventoryDTO.PdaInventoryDTO getInventoryByParam(InventoryDTO.PdaSearchParamDTO dto) {
+    public List<InventoryDTO.PdaInventoryDTO> getInventoryByParam(InventoryDTO.PdaSearchParamDTO dto) {
         return baseMapper.getInventoryByParam(dto);
     }
 

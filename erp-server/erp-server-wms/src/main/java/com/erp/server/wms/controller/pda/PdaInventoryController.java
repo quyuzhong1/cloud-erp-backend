@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.pda;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
@@ -44,9 +45,9 @@ public class PdaInventoryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.inventory.InventoryDTO.PdaSearchParamDTO>
      **/
     @PostMapping(value = "/getInventoryByParam")
-    public ApiResult<InventoryDTO.PdaInventoryDTO> getInventoryByParam(@RequestBody InventoryDTO.PdaSearchParamDTO dto) {
-        InventoryDTO.PdaInventoryDTO inventory = inventoryService.getInventoryByParam(dto);
-        return success(inventory);
+    public ApiResult<List<InventoryDTO.PdaInventoryDTO>> getInventoryByParam(@RequestBody InventoryDTO.PdaSearchParamDTO dto) {
+        List<InventoryDTO.PdaInventoryDTO> inventorys = inventoryService.getInventoryByParam(dto);
+        return success(inventorys);
     }
 
     /**
