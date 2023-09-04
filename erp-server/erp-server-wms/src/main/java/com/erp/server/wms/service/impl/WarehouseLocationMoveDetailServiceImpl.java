@@ -114,7 +114,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             paramDTO.setSkuIds(Arrays.asList(detailEntity.getSkuId()));
             paramDTO.setWarehouseLocations(Arrays.asList(detailEntity.getOutWarehouseLocation()));
             List<InventoryDTO.PdaInventoryDTO> inventoryByParams = inventoryService.getInventoryByParam(paramDTO);
-            InventoryDTO.PdaInventoryDTO inventoryByParam = inventoryByParams.stream().filter(req -> req.getWarehouseId().equals(detailEntity.getOutWarehouseLocation())
+            InventoryDTO.PdaInventoryDTO inventoryByParam = inventoryByParams.stream().filter(req -> req.getWarehouseId().equals(warehouseId)
                     && req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(inventoryByParam) || detailEntity.getQty() > inventoryByParam.getUsableQty()) {
                 throw new ServiceException(ApiError.LOCATION_MOVE_QTY_ERROR, detailEntity.getSkuNo());
