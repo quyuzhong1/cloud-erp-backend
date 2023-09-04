@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
@@ -215,4 +216,20 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return java.lang.Boolean
      **/
     Boolean saveKingdeeSoReturn(SoReturnInstockEntity instockEntity, List<SoReturnInstockDetailEntity> detailEntityList, List<String> ids);
+    /**
+     * @description: 下推加工单
+     * @author Will
+     * @date: 2023/8/28 14:13
+     * @param ids
+     * @return List<ViewGenerateMachineInfoDTO>
+     */
+    List<SoReturnInstockDTO.ViewGenerateMachineInfoDTO> viewGenerateMachineInfo(List<String> ids);
+    /**
+     * @description: 生成加工单
+     * @author Will
+     * @date: 2023/8/28 15:02
+     * @param list
+     * @return Boolean
+     */
+    Boolean generateMachineInfo(ValidList<SoReturnInstockDTO.GenerateMachineInfoDTO> list);
 }

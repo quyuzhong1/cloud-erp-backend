@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -15,7 +14,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
-import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -30,7 +28,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
@@ -110,8 +107,15 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Autowired
     private SyncMabangMachineService syncMabangMachineService;
+
     @Resource
     private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private TransferInfoService transferInfoService;
+
+    @Resource
+    private PurchaseReturnOrderService purchaseReturnOrderService;
 
 
     @Override
@@ -300,7 +304,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         List<String> skuIds = detailList.stream().map(MachineDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         Map<String, List<MachineSubComponentsDTO.ViewDTO>> bomSubMap = Maps.newHashMap();
-        skuIds.stream().forEach(skuId-> bomSubMap.put(skuId, viewBomSubComponents(skuId)));
+        detailList.stream().forEach(obj-> bomSubMap.put(obj.getSkuId(), viewBomSubComponents( new MachineSubComponentsDTO.ViewBomParamDTO(obj.getSkuId(),obj.getReferenceVersion()))));
         for (MachineDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
@@ -326,21 +330,44 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     }
 
     @Override
-    public List<MachineSubComponentsDTO.ViewDTO> viewBomSubComponents(String skuId) {
+    public List<MachineSubComponentsDTO.ViewDTO> viewBomSubComponents(MachineSubComponentsDTO.ViewBomParamDTO dto) {
         List<MachineSubComponentsDTO.ViewDTO> resultList = new ArrayList<>();
+        dto.setBomVersion(MathUtil.compareTo(dto.getBomVersion(),MathUtil.ZERO) == MathUtil.ZERO ? MathUtil.ONE : dto.getBomVersion());
         //查询BOM中SKU子集
-        List<BomChildrenSkuDTO> childrenList = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(skuId));
+        List<BomChildrenSkuDTO> childrenList = plmTaskFeign.listHistoryBomChildBySkuIds(Arrays.asList(dto.getSkuId()));
         if (CollectionUtils.isEmpty(childrenList)) {
             return resultList;
         }
-        for (BomChildrenSkuDTO bomChildrenSkuDTO : childrenList) {
+        //查询sku
+        List<String> skuIdList = childrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+
+        List<BomChildrenSkuDTO> versionChildList = childrenList.stream().filter(obj -> obj.getBomVersion().equals(dto.getBomVersion())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(versionChildList)) {
+            return resultList;
+        }
+        Boolean childHidden = Boolean.FALSE;
+        for (BomChildrenSkuDTO bomChildrenSkuDTO : versionChildList) {
+            //sku信息
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(skuVO)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
             MachineSubComponentsDTO.ViewDTO viewDTO = new MachineSubComponentsDTO.ViewDTO();
+            if (!childHidden) {
+                childHidden = Boolean.TRUE;
+                viewDTO.setChildHidden(Boolean.TRUE);
+            }
             viewDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
             viewDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
             viewDTO.setProductName(bomChildrenSkuDTO.getSkuName());
+            viewDTO.setChildSupplierId(skuVO.getSupplierId());
             viewDTO.setUnit(bomChildrenSkuDTO.getUnitName());
+            viewDTO.setItemQty(bomChildrenSkuDTO.getQuantity());
             viewDTO.setQty(bomChildrenSkuDTO.getQuantity());
             viewDTO.setBomVersion(bomChildrenSkuDTO.getBomVersion());
+            viewDTO.setChildLength(versionChildList.size());
             resultList.add(viewDTO);
         }
         return resultList;
@@ -506,6 +533,18 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
+        }
+        //已存在直接调拨单
+        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(transferInfoList)) {
+            List<String> codes = transferInfoList.stream().map(TransferInfoEntity::getSourceCode).collect(Collectors.toList());
+            throw new ServiceException(ApiError.ERROR_MACHINE_EXIST_TRANSFER_INFO,codes);
+        }
+        //已存在采购退货单
+        List<PurchaseReturnOrderEntity> purchaseReturnOrderList = purchaseReturnOrderService.listBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(purchaseReturnOrderList)) {
+            List<String> codes = transferInfoList.stream().map(TransferInfoEntity::getSourceCode).collect(Collectors.toList());
+            throw new ServiceException(ApiError.ERROR_MACHINE_EXIST_PURCHASE_RETURN,codes);
         }
 
         log.info("加工单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));

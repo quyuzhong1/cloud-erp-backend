@@ -1,9 +1,12 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -12,6 +15,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -23,24 +27,19 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.wms.dto.SoReturnInstockDTO;
-import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
-import com.erp.model.wms.dto.SoReturnReceiveDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.ReturnReasonEnum;
-import com.erp.model.wms.enums.ReturnTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -63,9 +62,11 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 退货入库单
@@ -91,7 +92,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     private SoReturnReceiveDetailService soReturnReceiveDetailService;
 
     @Resource
-    private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
+    private MachineInfoService machineInfoService;
 
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
@@ -125,6 +126,26 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Resource
     private SyncKingdeeSoReturnService syncKingdeeSoReturnService;
+
+    @Resource
+    private InventoryService inventoryService;
+
+    @Resource
+    private MachineDetailService machineDetailService;
+
+    @Resource
+    private MachineSubComponentsService machineSubComponentsService;
+
+
+    @Resource
+    private PurchaseReturnOrderService purchaseReturnOrderService;
+
+    @Resource
+    private TransferInfoService transferInfoService;
+
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
+    
 
     @Override
     public PagingVO<SoReturnInstockDTO.PagingView> paging(PagingDTO<SoReturnInstockDTO.PagingParam> pagingParamDTO) {
@@ -165,9 +186,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     obj.setType(null);
                     obj.setCustomerName(null);
                     obj.setInventoryOrgName(null);
-                    obj.setApproveStatus(null);
                     obj.setApproveStatusName(null);
-                    obj.setInvalidStatus(null);
                     obj.setInvalidStatusName(null);
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
@@ -931,4 +950,403 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         soReturnInstockDetailService.saveBatch(detailEntityList);
         return null;
     }
+
+    @Override
+    public List<SoReturnInstockDTO.ViewGenerateMachineInfoDTO> viewGenerateMachineInfo(List<String> ids) {
+        List<SoReturnInstockDetailEntity> list = soReturnInstockDetailService.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        List<SoReturnInstockDetailEntity> viewList = list.stream().filter(obj -> obj.getIsSubContract()).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(viewList)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        List<String> mainIds = viewList.stream().map(SoReturnInstockDetailEntity::getMainId).collect(Collectors.toList());
+        List<SoReturnInstockEntity> mainList = this.listByIds(mainIds);
+        if (CollectionUtils.isEmpty(mainList)) {
+            throw new ServiceException(ApiError.ERROR_99083);
+        }
+
+        List<String> skuIds = viewList.stream().map(SoReturnInstockDetailEntity::getSkuId).collect(Collectors.toList());
+        //bom信息
+        List<BomChildrenSkuDTO> bomList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        if (CollectionUtils.isEmpty(bomList)) {
+            throw new ServiceException(ApiError.ERROR_95163);
+        }
+        //sku信息
+        List<String> allSkuIdList = bomList.stream().flatMap(obj -> Stream.of(obj.getSkuId(), obj.getParentSkuId())).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(allSkuIdList);
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        //仓位信息
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = viewList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(mainList.stream().filter(e -> e.getId().equals(obj.getMainId())).findFirst().flatMap(e -> Optional.ofNullable(e.getWarehouseId())).orElse(""), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
+
+        //根据sku、仓库、仓位合并显示
+        Map<String, List<SoReturnInstockDetailEntity>> map = viewList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(mainList.stream().filter(e -> e.getId().equals(obj.getMainId())).findFirst().flatMap(e -> Optional.ofNullable(e.getWarehouseId())).orElse("")).concat(obj.getWarehouseLocation())));
+
+        List<SoReturnInstockDTO.ViewGenerateMachineInfoDTO> resultList = new ArrayList<>();
+        for (Map.Entry<String, List<SoReturnInstockDetailEntity>> entry : map.entrySet()) {
+            SoReturnInstockDetailEntity entity = entry.getValue().get(0);
+            SoReturnInstockDTO.ViewGenerateMachineInfoDTO viewDTO = new SoReturnInstockDTO.ViewGenerateMachineInfoDTO();
+
+            SoReturnInstockEntity soReturnInstockEntity = mainList.stream().filter(obj -> obj.getId().equals(entity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soReturnInstockEntity)) {
+                throw new ServiceException(ApiError.ERROR_99083);
+            }
+            if (!ApproveStatusEnum.APPROVE.getStatus().equals(soReturnInstockEntity.getApproveStatus())) {
+                throw new ServiceException(ApiError.ERROR_SO_RETURN_INSTOCK_NOT_GENERATE,soReturnInstockEntity.getCode());
+            }
+            //事务类型默认拆卸
+            viewDTO.setWorkType(WorkTypeEnum.DISASSEMBLE.getCode());
+            viewDTO.setSkuId(entity.getSkuId());
+            viewDTO.setSkuNo(entity.getSkuNo());
+            viewDTO.setWarehouseId(soReturnInstockEntity.getWarehouseId());
+            viewDTO.setWarehouseName(soReturnInstockEntity.getWarehouseName());
+            viewDTO.setWarehouseLocation(entity.getWarehouseLocation());
+            if (CollectionUtils.isNotEmpty(warehouseLocationList)) {
+                String warehouseLocationName = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(viewDTO.getWarehouseId()) && obj.getCode().equals(viewDTO.getWarehouseLocation())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                viewDTO.setWarehouseLocationName(warehouseLocationName);
+            }
+            //产品信息
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(skuVO)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            viewDTO.setProductName(skuVO.getSkuName());
+            viewDTO.setVariantProperty(skuVO.getVariantProperty());
+
+            //即时库存
+            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getWarehouseId(), viewDTO.getSkuId(), viewDTO.getWarehouseLocation());
+
+            List<BomChildrenSkuDTO> childList = bomList.stream().filter(obj -> obj.getParentSkuId().equals(entity.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(childList)) {
+                throw new ServiceException(ApiError.ERROR_95166);
+            }
+            viewDTO.setBomVersion(childList.get(0).getBomVersion());
+            viewDTO.setCurInventoryQty(curInventoryQty);
+            viewDTO.setQty(curInventoryQty);
+            viewDTO.setChildLength(childList.size());
+            Boolean childHidden = false;
+            //显示按明细维度显示数据
+            for (BomChildrenSkuDTO childrenSkuDTO : childList) {
+                //产品信息
+                SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(childrenSkuDTO.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(childSkuVO)) {
+                    throw new ServiceException(ApiError.ERROR_95084);
+                }
+                SoReturnInstockDTO.ViewGenerateMachineInfoDTO viewChildDTO = new SoReturnInstockDTO.ViewGenerateMachineInfoDTO();
+                BeanMapperUtils.copy(viewDTO,viewChildDTO);
+                if (!childHidden) {
+                    childHidden = Boolean.TRUE;
+                    viewChildDTO.setChildHidden(childHidden);
+                }
+                viewChildDTO.setChildSkuId(childrenSkuDTO.getSkuId());
+                viewChildDTO.setChildSkuNo(childrenSkuDTO.getSkuNo());
+                viewChildDTO.setQuantity(childrenSkuDTO.getQuantity());
+                viewChildDTO.setChildQty(curInventoryQty * childrenSkuDTO.getQuantity());
+                //默认退供应商
+                viewChildDTO.setHandleType(MachineHandleTypeEnum.RETURN_SUPPLIER.getCode());
+                viewChildDTO.setChildWarehouseId(viewDTO.getWarehouseId());
+                viewChildDTO.setChildWarehouseLocation(viewDTO.getWarehouseLocation());
+                viewChildDTO.setChildSupplierId(childSkuVO.getSupplierId());
+                resultList.add(viewChildDTO);
+            }
+
+        }
+        return resultList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean generateMachineInfo(ValidList<SoReturnInstockDTO.GenerateMachineInfoDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        /**
+         * 1、同一仓库生成一个加工单
+         * 2、同仓库、sku、仓位生成一个加工单明细
+         */
+        List<String> skuIds = list.stream().flatMap(obj -> Stream.of(obj.getSkuId(), obj.getChildSkuId())).collect(Collectors.toList());
+        //产品信息
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+
+        //bom信息
+        List<BomChildrenSkuDTO> bomList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        if (CollectionUtils.isEmpty(bomList)) {
+            throw new ServiceException(ApiError.ERROR_95163);
+        }
+        List<String> ids = new ArrayList<>();
+
+        Map<String, List<SoReturnInstockDTO.GenerateMachineInfoDTO>> map = list.getList().stream().collect(Collectors.groupingBy(SoReturnInstockDTO.GenerateMachineInfoDTO::getWarehouseId));
+        for (Map.Entry<String, List<SoReturnInstockDTO.GenerateMachineInfoDTO>> entry : map.entrySet()) {
+            List<SoReturnInstockDTO.GenerateMachineInfoDTO> value = entry.getValue();
+            MachineInfoDTO.AddDTO addDTO = new MachineInfoDTO.AddDTO();
+            addDTO.setBillDate(LocalDate.now());
+            //事务类型默认拆卸
+            addDTO.setWorkType(WorkTypeEnum.DISASSEMBLE.getCode());
+            addDTO.setWarehouseId(entry.getKey());
+            addDTO.setType(MachineTypeEnum.OUTSOURCING.getCode());
+            List<MachineDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+
+            Map<String, List<SoReturnInstockDTO.GenerateMachineInfoDTO>> detailMap = value.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseLocation())));
+            for (Map.Entry<String, List<SoReturnInstockDTO.GenerateMachineInfoDTO>> detailEntry : detailMap.entrySet()) {
+                List<SoReturnInstockDTO.GenerateMachineInfoDTO> detailValue = detailEntry.getValue();
+                MachineDetailDTO.AddDTO addDetailDTO = new MachineDetailDTO.AddDTO();
+                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailValue.get(0).getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(skuVO)) {
+                    throw new ServiceException(ApiError.ERROR_95084);
+                }
+                addDetailDTO.setSkuId(detailValue.get(0).getSkuId());
+                addDetailDTO.setSkuNo(skuVO.getSkuNo());
+                addDetailDTO.setWarehouseLocation(detailValue.get(0).getWarehouseLocation());
+                addDetailDTO.setQty(detailValue.get(0).getQty());
+                addDetailDTO.setReferenceVersion(detailValue.get(0).getBomVersion());
+                List<MachineSubComponentsDTO.AddDTO> subComponentsList = new ArrayList<>();
+                for (SoReturnInstockDTO.GenerateMachineInfoDTO subComponentsDTO : detailValue) {
+                    MachineSubComponentsDTO.AddDTO addSubComponentsDTO = new MachineSubComponentsDTO.AddDTO();
+                    //产品信息
+                    SkuVO child = skuList.stream().filter(obj -> obj.getSkuId().equals(subComponentsDTO.getChildSkuId())).findFirst().orElse(null);
+                    if (ObjectUtils.isEmpty(child)) {
+                        throw new ServiceException(ApiError.ERROR_95084);
+                    }
+                    //BOM信息
+                    BomChildrenSkuDTO bomChildrenSkuDTO = bomList.stream().filter(obj -> obj.getParentSkuId().equals(subComponentsDTO.getSkuId()) && obj.getSkuId().equals(subComponentsDTO.getChildSkuId())).findFirst().orElse(null);
+                    if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
+                        throw new ServiceException(ApiError.ERROR_95166);
+                    }
+
+                    addSubComponentsDTO.setSkuId(subComponentsDTO.getChildSkuId());
+                    addSubComponentsDTO.setSkuNo(child.getSkuNo());
+                    addSubComponentsDTO.setWarehouseId(subComponentsDTO.getWarehouseId());
+                    addSubComponentsDTO.setWarehouseLocation(subComponentsDTO.getWarehouseLocation());
+                    addSubComponentsDTO.setQty(addDetailDTO.getQty() * bomChildrenSkuDTO.getQuantity());
+                    //子SKU处理
+                    MachineSubComponentsDTO.HandleDetailDTO handleDetailDTO = new MachineSubComponentsDTO.HandleDetailDTO();
+                    BeanMapperUtils.copy(subComponentsDTO,handleDetailDTO);
+                    addSubComponentsDTO.setHandleType(subComponentsDTO.getHandleType());
+                    addSubComponentsDTO.setHandleDetail(JSONUtil.toJsonStr(handleDetailDTO));
+                    subComponentsList.add(addSubComponentsDTO);
+                }
+                addDetailDTO.setSubComponentsList(subComponentsList);
+                addDetailList.add(addDetailDTO);
+            }
+            addDTO.setDetailList(addDetailList);
+            String id = machineInfoService.add(addDTO);
+            ids.add(id);
+        }
+        //自动提交
+        Boolean submit = machineInfoService.submit(ids);
+        if (!submit) {
+            throw new ServiceException(ApiError.ERROR_1042);
+        }
+        //自动审核
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(ids);
+        baseApproveParamDTO.setType(ApproveType.PASS);
+        machineInfoService.approve(baseApproveParamDTO);
+
+        //自动生成直接调拨单或者采购退货单
+        generateSubordinateOrder(ids);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * @description: 生成下级单据
+     * @author Will
+     * @date: 2023/8/28 16:50
+     * @param ids
+     */
+    private void generateSubordinateOrder (List<String> ids) {
+
+        List<MachineInfoEntity> list = machineInfoService.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_99052);
+        }
+        List<MachineDetailEntity> detailList = machineDetailService.listByMainIds(ids);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99053);
+        }
+        List<String> detailIds = detailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
+        List<MachineSubComponentsEntity> subComponentsList = machineSubComponentsService.listByDetailIds(detailIds);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99056);
+        }
+        for (MachineInfoEntity entity : list) {
+            //明细
+            List<MachineDetailEntity> detailEntityList = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(detailList)) {
+                throw new ServiceException(ApiError.ERROR_99053);
+            }
+            //子件
+            List<String> detailIdList = detailEntityList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
+            List<MachineSubComponentsEntity> subList = subComponentsList.stream().filter(obj -> detailIdList.contains(obj.getDetailId())).collect(Collectors.toList());
+
+            Map<String, List<MachineSubComponentsEntity>> map = subList.stream().collect(Collectors.groupingBy(MachineSubComponentsEntity::getHandleType));
+            for (Map.Entry<String, List<MachineSubComponentsEntity>> entry : map.entrySet()) {
+                String handleType = entry.getKey();
+                List<MachineSubComponentsEntity> value = entry.getValue();
+                if (MachineHandleTypeEnum.RETURN_SUPPLIER.getCode().equals(handleType)) {
+                    //退供应商类型，同仓库、供应商生成采购退货单
+                    generatePoReturnOrder(entity,value);
+
+
+                }
+                if (MachineHandleTypeEnum.MOVE_WAREHOUSE.getCode().equals(handleType)) {
+                    //移仓，同调入、调出库存组织生成直接调拨单
+                    generateTransferInfo(entity,value);
+                }
+            }
+        }
+
+    }
+    /**
+     * @description: 生成直接调拨单
+     * @author Will
+     * @date: 2023/8/28 17:36
+     * @param entity
+     * @param list
+     */
+    private void generateTransferInfo(MachineInfoEntity entity,List<MachineSubComponentsEntity> list) {
+        /**
+         * 移仓，同调入、调出库存组织生成直接调拨单
+         */
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> warehouseIds = list.stream().map(obj -> JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildWarehouseId()).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(warehouseIds)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        /**
+         * 1、同一加工单下，相同调入、调出组织（仓库、库位可不同）数据生成同一个调拨单
+         * 2、基于1条件下，相同sku、调入、调出仓库和库位则可合并明细
+         */
+
+        //加工单同一单库存组织相同，根据调出组织分组
+        Map<String, List<MachineSubComponentsEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> warehouseList.stream().filter(e -> e.getId().equals(JSONUtil.toBean(obj.getHandleDetail(),
+                        MachineSubComponentsDTO.HandleDetailDTO.class).getChildWarehouseId()))
+                .findFirst().flatMap(e -> Optional.ofNullable(e.getOrgId())).orElse("")));
+        List<String> ids = new ArrayList<>();
+        for (Map.Entry<String, List<MachineSubComponentsEntity>> entry : map.entrySet()) {
+            List<MachineSubComponentsEntity> value = entry.getValue();
+            //调入仓库组织
+            MachineSubComponentsDTO.HandleDetailDTO handleDetailDTO = JSONUtil.toBean(value.get(0).getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class);
+            String orgId = warehouseList.stream().filter(obj -> obj.getId().equals(handleDetailDTO.getChildWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getOrgId())).orElse("");
+            TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
+            addDTO.setBillDate(LocalDate.now());
+            addDTO.setOutOrgId(entity.getInventoryOrgId());
+            addDTO.setInOrgId(orgId);
+            addDTO.setType(StrUtil.equals(addDTO.getInOrgId(),addDTO.getOutOrgId()) ? TransferTypeEnum.IN_ORG.getCode() : TransferTypeEnum.CROSS_ORG.getCode());
+            addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+            addDTO.setSourceId(entity.getId());
+            addDTO.setSourceCode(entity.getCode());
+            addDTO.setSourceType(SourceTypeEnum.MACHINE_INFO.getCode());
+            addDTO.setRemark(StrUtil.format("加工单（拆卸）【{}】自动生成直接调拨单",entity.getCode()));
+            //sku、仓库、仓位分组
+            Map<String, List<MachineSubComponentsEntity>> childMap = value.stream()
+                            .collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId().concat(StringUtils.isNotBlank(obj.getWarehouseLocation()) ? obj.getWarehouseLocation() : "")
+                            .concat(StringUtils.isNotBlank(JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildWarehouseLocation()) ? JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildWarehouseLocation() : "" ))));
+
+            List<TransferInfoDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+            for ( Map.Entry<String, List<MachineSubComponentsEntity>> childEntry : childMap.entrySet()) {
+                List<MachineSubComponentsEntity> childValue = childEntry.getValue();
+                MachineSubComponentsEntity subComponentsEntity = childValue.get(0);
+                //子件处理详情
+                MachineSubComponentsDTO.HandleDetailDTO subHandleDetailDTO = JSONUtil.toBean(subComponentsEntity.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class);
+                TransferInfoDetailDTO.AddDTO addDetailDTO = new TransferInfoDetailDTO.AddDTO();
+                BeanMapperUtils.copy(subComponentsEntity,addDetailDTO);
+                //相同仓库无需生成直接调拨单
+                if (subComponentsEntity.getWarehouseId().equals(subHandleDetailDTO.getChildWarehouseId())) {
+                    continue;
+                }
+                addDetailDTO.setOutWarehouseId(subComponentsEntity.getWarehouseId());
+                addDetailDTO.setOutWarehouseLocation(subComponentsEntity.getWarehouseLocation());
+                addDetailDTO.setInWarehouseId(subHandleDetailDTO.getChildWarehouseId());
+                addDetailDTO.setInWarehouseLocation(subHandleDetailDTO.getChildWarehouseLocation());
+                //数量
+                Integer qty = childValue.stream().map(MachineSubComponentsEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                addDetailDTO.setQty(qty);
+                //来源单据明细id
+                String sourceIds = childValue.stream().map(MachineSubComponentsEntity::getId).collect(Collectors.joining(","));
+                addDetailDTO.setSourceDetailId(sourceIds);
+                addDetailList.add(addDetailDTO);
+            }
+            //存在明细则新增
+            if (CollectionUtils.isNotEmpty(addDetailList)) {
+                addDTO.setDetailList(addDetailList);
+                String id = transferInfoService.add(addDTO);
+                ids.add(id);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(ids)) {
+            //提交
+            transferInfoService.submit(ids);
+        }
+    }
+
+    /**
+     * @description: 生成采购退货单
+     * @author Will
+     * @date: 2023/8/28 17:36
+     * @param entity
+     * @param list
+     */
+    private void generatePoReturnOrder (MachineInfoEntity entity,List<MachineSubComponentsEntity> list) {
+        /**
+         * 退供应商类型，同仓库、供应商生成采购退货单
+         */
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        /**
+         * 1、同一加工单下，相同仓库、供应商数据生成同一个采购退货单
+         * 2、基于1条件下，相同sku、库位则可合并明细
+         */
+        Map<String, List<MachineSubComponentsEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getWarehouseId().concat(JSONUtil.toBean(obj.getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class).getChildSupplierId())));
+        for (Map.Entry<String, List<MachineSubComponentsEntity>> entry : map.entrySet()) {
+            List<MachineSubComponentsEntity> value = entry.getValue();
+            MachineSubComponentsDTO.HandleDetailDTO handleDetailDTO = JSONUtil.toBean(value.get(0).getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class);
+            PurchaseReturnOrderDTO.AddDTO addDTO = new PurchaseReturnOrderDTO.AddDTO();
+            addDTO.setBillDate(LocalDate.now());
+            addDTO.setReturnMode(ReturnModeEnum.REPLENISHMENT.getCode());
+            addDTO.setReturnOrgId(entity.getInventoryOrgId());
+            addDTO.setReturnWarehouseId(value.get(0).getWarehouseId());
+            addDTO.setSourceId(entity.getId());
+            addDTO.setSourceType(SourceTypeEnum.MACHINE_INFO.getCode());
+            addDTO.setSupplierId(handleDetailDTO.getChildSupplierId());
+            addDTO.setReturnRemark(StrUtil.format("加工单（拆卸）【{}】自动生成采购退货单",entity.getCode()));
+            Map<String, List<MachineSubComponentsEntity>> childMap = value.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(StringUtils.isNotBlank(obj.getWarehouseLocation()) ? obj.getWarehouseLocation() : "" )));
+            List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+            for (Map.Entry<String, List<MachineSubComponentsEntity>> childEntry : childMap.entrySet()) {
+                List<MachineSubComponentsEntity> childValue = childEntry.getValue();
+                MachineSubComponentsEntity subComponentsEntity = childValue.get(0);
+                PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO ();
+                addDetailDTO.setSkuId(subComponentsEntity.getSkuId());
+                addDetailDTO.setSkuNo(subComponentsEntity.getSkuNo());
+                addDetailDTO.setWarehouseLocation(subComponentsEntity.getWarehouseLocation());
+                //数量
+                Integer qty = childValue.stream().map(MachineSubComponentsEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                addDetailDTO.setReturnQty(qty);
+                addDetailDTO.setReplenishQty(qty);
+                //来源单据明细id
+                String sourceIds = childValue.stream().map(MachineSubComponentsEntity::getId).collect(Collectors.joining(","));
+                addDetailDTO.setSourceDetailId(sourceIds);
+                addDetailList.add(addDetailDTO);
+            }
+            addDTO.setPurchasePriceDetailList(addDetailList);
+            purchaseReturnOrderService.add(addDTO);
+        }
+    }
+
+
 }

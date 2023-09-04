@@ -511,6 +511,8 @@ public enum ApiError implements Serializable {
     ERROR_INTERVAL_DIFFERENT(98048,"区间从,区间到 两个值不能相同"),
     ERROR_INTERVAL_SIZE(98050,"区间从值不能大于区间到值"),
     ERROR_PRICE_ZERO_SKUNO(98102,"以下SKU【{}】价格不能为零"),
+    ERROR_MACHINE_EXIST_TRANSFER_INFO(98102,"加工单【{}】已存在下推直接调拨单，不支持反审核"),
+    ERROR_MACHINE_EXIST_PURCHASE_RETURN(98102,"加工单【{}】已存在下推采购退货单，不支持反审核"),
 
 
     ERROR_98024(98024,"采购价目表不存在"),
@@ -711,6 +713,8 @@ public enum ApiError implements Serializable {
     ERROR_RETURN_ORDER_PUSHED(99089, "已下推退货入库单，不能反审核"),
 
     STOCKTAKING_TASK_EXIST(99090 , "仓库【{}】库位【{}】 SKU【{}】 已存在盘点任务"),
+    ERROR_99089(99089,"已下推退货入库单不能反审核"),
+    ERROR_SO_RETURN_INSTOCK_NOT_GENERATE(99090,"退货入库单【{}】未审核通过，不支持下推"),
 
 
 

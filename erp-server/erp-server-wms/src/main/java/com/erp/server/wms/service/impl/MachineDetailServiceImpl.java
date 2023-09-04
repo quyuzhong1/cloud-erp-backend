@@ -159,7 +159,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             throw new ServiceException(ApiError.ERROR_95084);
         }
         //bom信息
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
         if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
@@ -171,10 +171,6 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             //单位
             String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
             detail.setUnit(unit);
-            //版本
-            Integer version = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId())).map(SkuVO::getVersion).findFirst().orElse(MathUtil.ZERO);
-            detail.setReferenceVersion(version);
-
             detail.setMainId(mainId);
             //修改操作日志
             if (StringUtils.isNotBlank(detail.getId())) {
@@ -206,7 +202,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     private void checkBomChildrenSku (List<BomChildrenSkuDTO> bomChildrenSkuList,MachineDetailEntity detail) {
 
         //验证SKU及子件明细数量
-        List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(detail.getSkuId())).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(detail.getSkuId()) && obj.getBomVersion().equals(detail.getReferenceVersion())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(bomList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
