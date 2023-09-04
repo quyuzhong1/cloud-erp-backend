@@ -20,7 +20,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.RuleOrderApprovalDTO;
 
 /**
- * 订单审核规则
+ * 订单规则
  *
  * @author Lambda
  * @since 2023-08-28
@@ -35,7 +35,7 @@ public class RuleOrderApprovalController extends BaseController {
 
 
     /**
-     * 分页查询
+     * 订单审核规则分页查询
      *
      * @param dto
      * @return ApiResult<String>
@@ -49,7 +49,7 @@ public class RuleOrderApprovalController extends BaseController {
     }
 
     /**
-     * 新增
+     * 订单审核规则新增
      *
      * @param dto
      * @return ApiResult<String>
@@ -63,7 +63,7 @@ public class RuleOrderApprovalController extends BaseController {
 
 
     /**
-     * 详情
+     * 订单审核规则详情
      *
      * @param dto
      * @return ApiResult
@@ -77,7 +77,7 @@ public class RuleOrderApprovalController extends BaseController {
     }
 
     /**
-     * 修改
+     * 订单审核规则修改
      *
      * @param dto
      * @return ApiResult
@@ -91,7 +91,7 @@ public class RuleOrderApprovalController extends BaseController {
     }
 
     /**
-     * 更改启用禁用状态
+     * 订单审核规则更改启用禁用状态
      *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult

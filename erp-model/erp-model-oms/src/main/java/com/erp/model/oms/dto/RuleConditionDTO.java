@@ -39,7 +39,7 @@ public class RuleConditionDTO implements Serializable {
         /**
          * 字段逻辑名
          */
-        private String compareName;
+        private String operatorName;
 
         /**
          * 后面的逻辑名
@@ -94,11 +94,11 @@ public class RuleConditionDTO implements Serializable {
         private String field;
 
         /**
-        * 逻辑关系
+        * 下拉逻辑关系
         */
-        @NotBlank(message = "逻辑关系不能为空")
-        @Size(max = 30,message = "逻辑关系最大长度不能超过30位")
-        private String dictCompare;
+        @NotBlank(message = "下拉逻辑关系不能为空")
+        @Size(max = 30,message = "下拉逻辑关系最大长度不能超过30位")
+        private String operator;
 
         /**
         * 对应的值

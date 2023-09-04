@@ -141,10 +141,10 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
             String fieldName = dictRuleConditionList.stream().filter(d -> d.getKey().equals(field)).findFirst().
                     map(DictRuleConditionEntity::getValue).orElse("");
             item.setFieldName(fieldName);
-            String dictCompare = item.getDictCompare();
-            String compareName = dictRuleConditionList.stream().filter(d -> d.getKey().equals(dictCompare)).findFirst().
+            String operator = item.getOperator();
+            String compareName = dictRuleConditionList.stream().filter(d -> d.getKey().equals(operator)).findFirst().
                     map(DictRuleConditionEntity::getValue).orElse("");
-            item.setCompareName(compareName);
+            item.setOperatorName(compareName);
             String logic = item.getLogic();
             String logicName = "";
             if (StringUtils.isNotBlank(logic)) {

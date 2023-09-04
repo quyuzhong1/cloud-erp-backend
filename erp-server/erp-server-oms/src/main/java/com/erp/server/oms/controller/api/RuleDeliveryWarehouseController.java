@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 发货仓库规则表
+ * 订单规则
  *
  * @author Lambda
  * @since 2023-08-28
@@ -35,7 +35,7 @@ public class RuleDeliveryWarehouseController extends BaseController {
 
 
     /**
-     * 分页查询
+     * 发货仓库规则分页查询
      *
      * @param dto
      * @return ApiResult<String>
@@ -49,7 +49,7 @@ public class RuleDeliveryWarehouseController extends BaseController {
     }
 
     /**
-    * 新增
+    * 发货仓库规则新增
     * @author Lambda
     * @date:  2023-08-28
     * @param dto
@@ -61,7 +61,7 @@ public class RuleDeliveryWarehouseController extends BaseController {
     }
 
     /**
-    * 修改
+    * 发货仓库规则修改
     * @author Lambda
     * @date:  2023-08-28
     * @param dto
@@ -75,7 +75,7 @@ public class RuleDeliveryWarehouseController extends BaseController {
 
 
     /**
-     * 详情
+     * 发货仓库规则表详情
      *
      * @param dto
      * @return ApiResult
@@ -88,7 +88,7 @@ public class RuleDeliveryWarehouseController extends BaseController {
         return success(viewDTO);
     }
     /**
-     * 更改启用禁用状态
+     * 发货仓库规则表更改启用禁用状态
      *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult

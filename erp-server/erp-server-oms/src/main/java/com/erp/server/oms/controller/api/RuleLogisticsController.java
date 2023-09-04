@@ -20,7 +20,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.RuleLogisticsDTO;
 
 /**
- * 物流规则表
+ * 订单规则
  *
  * @author Lambda
  * @since 2023-08-28
@@ -35,7 +35,7 @@ public class RuleLogisticsController extends BaseController {
 
 
     /**
-     * 分页查询
+     * 物流规则分页查询
      *
      * @param dto
      * @return ApiResult<String>
@@ -49,7 +49,7 @@ public class RuleLogisticsController extends BaseController {
     }
 
     /**
-     * 新增
+     * 物流规则新增
      *
      * @param dto
      * @return ApiResult<String>
@@ -62,7 +62,7 @@ public class RuleLogisticsController extends BaseController {
     }
 
     /**
-     * 修改
+     * 物流规则修改
      *
      * @param dto
      * @return ApiResult
@@ -76,7 +76,7 @@ public class RuleLogisticsController extends BaseController {
     }
 
     /**
-     * 详情
+     * 物流规则详情
      *
      * @param dto
      * @return ApiResult
@@ -90,7 +90,7 @@ public class RuleLogisticsController extends BaseController {
     }
 
     /**
-     * 更改启用禁用状态
+     * 物流规则更改启用禁用状态
      *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult

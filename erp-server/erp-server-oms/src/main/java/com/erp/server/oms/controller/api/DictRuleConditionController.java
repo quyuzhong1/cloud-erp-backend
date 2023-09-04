@@ -19,7 +19,7 @@ import com.erp.model.oms.dto.DictRuleConditionDTO;
 import java.util.List;
 
 /**
- * 条件字典表
+ * 订单规则
  *
  * @author Lambda
  * @since 2023-08-30
@@ -72,7 +72,7 @@ public class DictRuleConditionController extends BaseController {
     }
 
     /**
-     * approvalCondition 订单审核条件下拉
+     * ruleCondition 规则条件下拉
      *
      * @param type
      * @return

@@ -1777,7 +1777,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     private void fillProductSalesList(List<ReportDTO.ProductSalesPagingViewDTO> list, long diffDays) {
         List<String> shopIdList = list.stream().map(ReportDTO.ProductSalesPagingViewDTO::getShopId).collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoList = shopInfoService.listByIds(shopIdList);
+        List<ShopInfoEntity> shopInfoList = CollectionUtils.isNotEmpty(shopIdList)?shopInfoService.listByIds(shopIdList):Collections.emptyList();
         for (ReportDTO.ProductSalesPagingViewDTO item : list) {
             String shopId = item.getShopId();
             String shopName = shopInfoList.stream().filter(s -> s.getId().equals(shopId)).

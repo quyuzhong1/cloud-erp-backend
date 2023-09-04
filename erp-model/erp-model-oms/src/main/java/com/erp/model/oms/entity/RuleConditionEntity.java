@@ -35,10 +35,10 @@ public class RuleConditionEntity extends BaseEntity<RuleConditionEntity> {
     @TableField("field")
     private String field;
     /**
-    * 逻辑关系
+    * 下拉选项值
     */
-    @TableField("dict_compare")
-    private String dictCompare;
+    @TableField("operator")
+    private String operator;
     /**
     * 对应的值
     */
