@@ -1462,6 +1462,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcInfo.setSourceId(item.getSourceId());
             qcInfo.setSourceType(item.getSourceType());
             qcInfo.setSourceCode(item.getSourceCode());
+            qcInfo.setSourceDetailId(item.getSourceDetailId());
             addQcList.add(qcInfo);
             //质检结果
             QcResultEntity qcResult = new QcResultEntity();

@@ -286,8 +286,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             if (!Objects.isNull(soReturn)) {
                 dto.setSoReturnId(soReturnId);
                 dto.setSoReturnCode(soReturn.getCode());
-                dto.setSourceId(soReturn.getId());
-                dto.setSourceCode(soReturn.getCode());
             }
 
         } else {

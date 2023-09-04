@@ -296,6 +296,7 @@
 
     <select id="getQcList" resultType="com.erp.model.wms.dto.QcInfoDTO$ReceiveToQcDTO">
        SELECT
+         wrd.id AS sourceDetailId,
          wrd.main_id AS sourceId,
          wr.code AS sourceCode,
          wrd.sku_id,
