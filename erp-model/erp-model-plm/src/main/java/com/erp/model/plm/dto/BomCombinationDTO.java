@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -123,11 +124,13 @@ public class BomCombinationDTO implements Serializable {
          * 组合产品编码
          */
         @NotBlank(message = "组合产品编码不能为空")
+        @Size(max = 50, message = "组合产品编码最大50个字符")
         private String skuNo;
         /**
          * 组合产品名称
          */
         @NotBlank(message = "组合产品名称不能为空")
+        @Size(max = 100, message = "组合产品名称最大100个字符")
         private String name;
 
     }

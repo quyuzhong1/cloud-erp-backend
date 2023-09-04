@@ -1,19 +1,23 @@
 package com.erp.server.oms.service.impl;
 
 
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.ShopSysUserAuthEntity;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.server.oms.mapper.ShopSysUserAuthMapper;
+import com.erp.server.oms.service.ShopInfoService;
 import com.erp.server.oms.service.ShopSysUserAuthService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +33,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuthMapper, ShopSysUserAuthEntity> implements ShopSysUserAuthService {
+
+    @Resource
+    private ShopInfoService shopInfoService;
 
     @Override
     public Boolean batchAuth(ShopSysUserAuthDTO.BatchAuthDTO dto) {
@@ -61,13 +68,35 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
         if (CollectionUtils.isEmpty(list)) {
             return new ShopSysUserAuthDTO.ViewDTO();
         }
-        /**
-         * 根据用户和权限类型分组
-         */
         ShopSysUserAuthDTO.ViewDTO viewDTO = new ShopSysUserAuthDTO.ViewDTO();
         viewDTO.setUserId(userId);
         viewDTO.setAuthType(list.get(0).getAuthType());
+        //全部指定则无需返回店铺信息
+        if (ShopAuthTypeEnum.ENUM_ALL.getCode().equals(list.get(0).getAuthType())) {
+            return viewDTO;
+        }
 
+        //店铺信息
+        List<String> shopIdList = list.stream().map(ShopSysUserAuthEntity::getShopId).collect(Collectors.toList());
+        List<ShopInfoEntity> shopList = shopInfoService.listByIds(shopIdList);
+        if (CollectionUtils.isEmpty(shopList)) {
+            throw new ServiceException(ApiError.ERROR_92058);
+        }
+        //平台信息
+        List<String> dictPlatformList = shopList.stream().map(ShopInfoEntity::getDictPlatform).collect(Collectors.toList());
+
+
+        for (ShopSysUserAuthEntity entity : list) {
+            //店铺
+            ShopInfoEntity shopInfoEntity = shopList.stream().filter(obj -> obj.getId().equals(entity.getShopId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(shopInfoEntity)) {
+                throw new ServiceException(ApiError.ERROR_92058);
+            }
+            ShopSysUserAuthDTO.ViewShopDTO viewShopDTO = new ShopSysUserAuthDTO.ViewShopDTO();
+            viewShopDTO.setShopId(entity.getShopId());
+            viewShopDTO.setShopName(shopInfoEntity.getName());
+            viewShopDTO.setDictPlatform(shopInfoEntity.getDictPlatform());
+        }
 
         return null;
     }

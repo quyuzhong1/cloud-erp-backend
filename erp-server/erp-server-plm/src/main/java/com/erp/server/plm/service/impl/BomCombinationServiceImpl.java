@@ -293,7 +293,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         //已存在则直接返回sku主键id
         if (ObjectUtils.isNotEmpty(productDetailDTO)) {
             log.info("已存在SKU【{}】",dto.getSkuNo());
-            return productDetailDTO.getId();
+           throw new ServiceException(ApiError.ERROR_BOM_COMBINATION_SKU,dto.getSkuNo());
         }
 
         List<BomCombinationDetailDTO.AddDTO> detailList = dto.getDetailList();
