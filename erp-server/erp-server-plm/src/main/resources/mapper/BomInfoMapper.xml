@@ -10,6 +10,7 @@
         <result column="updateTime" property="updateTime"></result>
         <collection property="childList" ofType="com.erp.model.plm.dto.BomCombinationDTO$ChildDTO">
             <id column="detailId" property="id"></id>
+            <result column="childSkuId" property="childSkuId"></result>
             <result column="childSkuNo" property="childSkuNo"></result>
             <result column="qty" property="qty"></result>
             <result column="actualTaxCost" property="actualTaxCost"></result>
@@ -216,8 +217,9 @@
             pbs.parent_sku_no as parentSkuNo,
             pd.name,
             pbs.quantity as qty,
+            pbs.sku_id as childSkuId,
             cpd.sku_no as childSkuNo,
-            COALESCE(pc.actual_tax_cost,0) as actualTaxCost,
+            0 as actualTaxCost,
             COALESCE(pc.target_tax_cost,0) as targetTaxCost,
             pbi.update_user_name as updateUserName,
             pbi.update_time as updateTime

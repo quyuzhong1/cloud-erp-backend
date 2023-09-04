@@ -141,6 +141,11 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                 if (CollectionUtils.isEmpty(shopInfoList)) {
                     continue;
                 }
+                //非禁用店铺
+                List<ShopInfoEntity> unDisableList = shopInfoList.stream().filter(obj -> !obj.getDisabled()).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(unDisableList)) {
+                    continue;
+                }
                 for (ShopInfoEntity shopInfoEntity : shopInfoList) {
                     ShopSysUserAuthDTO.ViewShopDTO viewShopDTO = new ShopSysUserAuthDTO.ViewShopDTO();
                     viewShopDTO.setShopId(shopInfoEntity.getId());
