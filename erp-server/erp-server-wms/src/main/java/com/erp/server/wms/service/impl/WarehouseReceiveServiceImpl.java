@@ -1442,12 +1442,14 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         //获取采购单详情的id集合
         List<String> detailId = detail.stream().map(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        //获取收货单详情的id集合
+        List<String> receiveIds = detail.stream().map(WarehouseReceiveDetailEntity::getId).collect(Collectors.toList());
         //获取收货数量
         List<WarehouseReceiveDetailEntity> detailEntitieList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(detailId);
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(detailId);
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
         //采购订单明细下所有入库数据
-        List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailByPodIds(detailId);
+        List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailBySourceDetailIds(receiveIds);
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(warehouseReceiveEntity.getDeliveryWarehouseId()));
 
         for (WarehouseReceiveDetailEntity warehouseReceiveDetailEntity : detail) {
@@ -1471,11 +1473,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             detailView.setWarehouseLocation(purchaseOrderDetailEntity.getWarehouseLocation());
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(purchaseOrderDetailEntity.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             detailView.setWarehouseLocationName(warehouseLocationEntity.getName());
-            if (CollectionUtils.isNotEmpty(poInstockDetailList)) {
-                Integer effectiveStockInQty = poInstockDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-                detailView.setEffectiveStockInQty(effectiveStockInQty);
-                detailView.setUnStockInQty(purchaseOrderDetailEntity.getPurchaseQty() - effectiveStockInQty + returnQty);
-            }
+            Integer effectiveStockInQty = poInstockDetailList.stream().filter(e -> e.getSourceDetailId().equals(warehouseReceiveDetailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            detailView.setEffectiveStockInQty(effectiveStockInQty);
+            detailView.setUnStockInQty(purchaseOrderDetailEntity.getPurchaseQty() - effectiveStockInQty + returnQty);
 
             detailViewDTOS.add(detailView);
         }
