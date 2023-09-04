@@ -1011,6 +1011,31 @@ public class InventoryDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class InventoryBySkuNoDTO {
+        /**
+         * 组织id
+         */
+        private String orgId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class PdaInventoryDTO {
         /**
          * 组织id

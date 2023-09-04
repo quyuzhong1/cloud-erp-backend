@@ -3,14 +3,12 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -566,4 +564,22 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      **/
     List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto);
+
+    /**
+     * 根据创建时间获取到对应实体
+     * @author yl
+     * @date 2023-09-01 12:21
+     * @param createTimeList
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     */
+    List<ProductDetailEntity> listByCreateTimeList(List<LocalDateTime> createTimeList);
+
+    /**
+     * PDA:产品查询
+     * @Author Luo_WG
+     * @Date 2023/9/4 18:48
+     * @param skuNo
+     * @return com.erp.model.plm.dto.PdaProductDetailDTO.View
+     **/
+    PdaProductDetailDTO.View pdaProductView(String skuNo);
 }

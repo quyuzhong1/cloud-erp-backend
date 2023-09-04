@@ -22,6 +22,7 @@ import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.StateEnumValue;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -538,6 +539,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return this.baseMapper.getNoInventorySku();
     }
 
+    @Override
+    public void updateName(String id, String name) {
+        lambdaUpdate().eq(ProductDetailEntity::getId, id)
+                .set(ProductDetailEntity::getName, name)
+                .update(new ProductDetailEntity());
+    }
+
+    @Override
+    public List<ProductDetailEntity> listBySkuNos(List<String> skuNos) {
+        if (CollectionUtils.isEmpty(skuNos)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(ProductDetailEntity::getSkuNo, skuNos).list();
+    }
+
     /**
      * @param productId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductManyDetailDTO>
@@ -913,7 +929,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             isAdd = true;
         }
         String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
-
+        //给对象赋值
+        productSkuBaseInfoDTO.setId(skuId);
         //SKU新增操作日志
         if (isAdd) {
             sysLogService.addSysLogBySave("生成了一个SKU：[" + productSkuBaseInfoDTO.getSkuNo() + "]", SKUCLASSPATH, skuId, id);
@@ -2264,7 +2281,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         Integer skuStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        return baseMapper.getSkuBySkuNos(skuNoList,skuStatus);
+        return baseMapper.getSkuBySkuNos(skuNoList, skuStatus);
     }
 
     /**
@@ -2309,8 +2326,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
 
-    public void checkRequiredField(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
+    public void checkRequiredField(List<String> ids, Boolean isCheck) {
+        if (CollectionUtils.isEmpty(ids) || !isCheck) {
             return;
         }
         List<ProductDetailEntity> detailEntityList = this.listByIds(ids);
@@ -2447,7 +2464,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95238);
         }*/
         //校验必填项
-        checkRequiredField(Arrays.asList(id));
+        checkRequiredField(Arrays.asList(id), Boolean.TRUE);
         ProductDetailEntity productDetailEntity = this.getById(id);
         if (ObjectUtils.isEmpty(productDetailEntity)) {
             throw new ServiceException(ApiError.ERROR_95084);
@@ -3392,9 +3409,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
+    public Boolean submit(List<String> ids, Boolean isCheck) {
         //校验必填项
-        checkRequiredField(ids);
+        checkRequiredField(ids, isCheck);
         List<ProductDetailEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.ERROR_95084);
@@ -3738,5 +3755,28 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95107);
         }
         return skuVOS;
+    }
+
+    /**
+     * 根据创建时间获取到对应实体
+     *
+     * @param createTimeList
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     * @author yl
+     * @date 2023-09-01 12:21
+     */
+    @Override
+    public List<ProductDetailEntity> listByCreateTimeList(List<LocalDateTime> createTimeList) {
+        if (CollectionUtils.isEmpty(createTimeList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(ProductDetailEntity::getStatus,ProductDetailStatusEnum.APPROVAL_PASS.getCode()).
+                ge(ProductDetailEntity::getCreateTime,createTimeList.get(0)).
+                le(ProductDetailEntity::getCreateTime,createTimeList.get(1)).list();
+    }
+
+    @Override
+    public PdaProductDetailDTO.View pdaProductView(String skuNo) {
+        return baseMapper.pdaProductView(skuNo);
     }
 }

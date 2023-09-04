@@ -788,7 +788,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public InventoryDTO.PdaInventorySearch getInventoryBySkuNo(String skuNo) {
-        InventoryDTO.PdaSearchParamDTO paramDTO = new InventoryDTO.PdaSearchParamDTO();
+        InventoryDTO.InventoryBySkuNoDTO paramDTO = new InventoryDTO.InventoryBySkuNoDTO();
         paramDTO.setSkuNo(skuNo);
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(skuNo));
         if (ObjectUtil.isEmpty(skuVOList)) {

@@ -16,7 +16,7 @@ public class PdaProductDetailDTO implements Serializable {
         /**
          * 条码
          */
-        private String goodsBarCode;
+        private String ean;
 
         /**
          * 毛重
@@ -51,7 +51,7 @@ public class PdaProductDetailDTO implements Serializable {
         /**
          * 产品等级
          */
-        private String productGrade;
+        private String grade;
 
         /**
          * 产品经理
