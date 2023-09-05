@@ -36,6 +36,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -108,6 +109,11 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
 
         // 异步推送到MQ
         entityToMqlist.stream().peek(msg ->{
+            if (ObjectUtil.isNotEmpty(msg.getBillDate())) {
+                if (msg.getBillDate().toLocalDate().compareTo(LocalDate.parse("2023-07-06")) <= 0) {
+                    return;
+                }
+            }
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_TRANSFER_DIRECT_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getSourceId(), msg.getCode()));
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
