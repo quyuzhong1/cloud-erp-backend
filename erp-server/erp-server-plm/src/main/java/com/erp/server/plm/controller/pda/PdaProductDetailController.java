@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 /**
- * 产品管理
+ * PDA:产品管理
  * @Author Luo_WG
  * @Date 2023/9/4 18:18
  **/
