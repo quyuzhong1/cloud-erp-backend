@@ -4,10 +4,7 @@ import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.entity.PoInstockDetailEntity;
-import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
@@ -229,4 +226,13 @@ public interface WmsTaskFeign {
      **/
     @PostMapping("feign/warehouse/listByKingdeeCodeList")
     List<WarehouseEntity> listByKingdeeCodeList(@RequestBody List<String> kingdeeWarehouseCodeList);
+    /**
+     * @description: 根据id查询采购退货单数据
+     * @author Will
+     * @date: 2023/9/5 14:24
+     * @param poReturnIdList
+     * @return List<PurchaseReturnOrderEntity>
+     */
+    @PostMapping("feign/purchaseReturnOrder/listPoReturnByIdList")
+    List<PurchaseReturnOrderEntity> listPoReturnByIdList(@RequestBody List<String> poReturnIdList);
 }
