@@ -43,7 +43,7 @@ public class PdaPoReceiveController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "receive_user_id",
             menuCode = "wms:pdaPoReceive:paging",
-            tableAlias = "wr"
+            tableAlias = "pr"
     )
     public ApiResult<PagingVO<WarehouseReceiveDTO.PdaPagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseReceiveDTO.PdaPagingParamDTO> dto) {
         PagingVO<WarehouseReceiveDTO.PdaPagingViewDTO> pagingVO = warehouseReceiveService.pdaPaging(dto);
