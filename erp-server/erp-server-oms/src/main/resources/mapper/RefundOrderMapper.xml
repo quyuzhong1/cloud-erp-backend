@@ -92,16 +92,13 @@
         </if>
         <!--创建时间-->
         <if test="params.createTimeList !=null and params.createTimeList.size>0">
-            AND create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > create_time
+            AND create_time  &gt;= #{params.createTimeList[0]}::TIMESTAMP
+            AND create_time  &lt;= #{params.createTimeList[1]}::TIMESTAMP
         </if>
         <if test="params.refundTimeList !=null and params.refundTimeList.size>0">
-            AND refund_time >= #{params.refundTimeList[0]} and (#{params.refundTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > refund_time
+            AND refund_time &gt;= #{params.refundTimeList[0]}::TIMESTAMP
+            AND refund_time &lt;= #{params.refundTimeList[1]}::TIMESTAMP
         </if>
-
-
-
     </select>
 
 </mapper>

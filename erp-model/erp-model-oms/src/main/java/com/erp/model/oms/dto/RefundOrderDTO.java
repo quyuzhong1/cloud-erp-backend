@@ -66,13 +66,13 @@ public class RefundOrderDTO implements Serializable {
         /**
          * 创建时间集合
          */
-        private List<LocalDate> createTimeList;
+        private List<LocalDateTime> createTimeList;
 
 
         /**
          * 退款时间
          */
-        private List<LocalDate> refundTimeList;
+        private List<LocalDateTime> refundTimeList;
 
     }
 
