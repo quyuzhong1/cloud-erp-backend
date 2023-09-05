@@ -82,7 +82,10 @@
             ${params.permissionSql}
         </if>
         ORDER BY
-        si.dict_platform,si.account,si.dict_area_code desc
+        si.dict_platform DESC,
+        si.account DESC,
+        si.dict_area_code DESC,
+        si.id DESC
     </select>
 
 </mapper>

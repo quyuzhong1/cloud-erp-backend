@@ -10,7 +10,7 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.ShopSysUserAuthEntity;
-import com.erp.model.oms.enums.DictBasicEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.server.oms.mapper.ShopSysUserAuthMapper;
 import com.erp.server.oms.service.DictBasicService;
@@ -89,7 +89,7 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
             throw new ServiceException(ApiError.ERROR_92058);
         }
         //平台信息
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicEnum.PLATFORM.getType());
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicTypeEnum.PLATFORM.getType());
         if (CollectionUtils.isEmpty(dictList)) {
             throw new ServiceException(ApiError.ERROR_92053);
         }

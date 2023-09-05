@@ -11,7 +11,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.DictBasicEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
@@ -213,12 +213,12 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //收货人
         resultMap.put("receiverName", entity.getReceiverName());
 
-        List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType(), DictBasicTypeEnum.COLLECTION_TERMS.getType());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
         Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
 
         // 收款方式
-        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicEnum.RECEIVE_METHOD.getType());
+        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicTypeEnum.RECEIVE_METHOD.getType());
         if (CollectionUtils.isNotEmpty(receiveMethodList) && StrUtils.isNotEmpty(entity.getReceiveMethod())) {
             DictBasicEntity dictBasicEntity = receiveMethodList.stream().filter(obj -> Objects.equals(obj.getValue(), entity.getReceiveMethod())).findFirst().orElse(null);
             if (Objects.nonNull(dictBasicEntity)) {
@@ -226,7 +226,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             }
         }
         // 收款条件
-        List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicEnum.COLLECTION_TERMS.getType());
+        List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicTypeEnum.COLLECTION_TERMS.getType());
         if (CollectionUtils.isNotEmpty(receiveConditionList) && StrUtils.isNotEmpty(entity.getReceiveCondition())) {
             DictBasicEntity dictBasicEntity = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getValue(), entity.getReceiveCondition())).findFirst().orElse(null);
             if (Objects.nonNull(dictBasicEntity)) {

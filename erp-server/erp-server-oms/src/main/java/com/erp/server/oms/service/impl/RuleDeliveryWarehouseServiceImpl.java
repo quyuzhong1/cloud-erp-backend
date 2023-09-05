@@ -9,7 +9,7 @@ import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.RuleDeliveryWarehouseEntity;
-import com.erp.model.oms.enums.DictBasicEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -136,7 +136,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         Optional.ofNullable(ruleDeliveryWarehouse).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单"));
         RuleDeliveryWarehouseDTO.ViewDTO view = new RuleDeliveryWarehouseDTO.ViewDTO();
         BeanMapper.copy(ruleDeliveryWarehouse, view);
-        String type = DictBasicEnum.RULE_CONDITION.getType();
+        String type = DictBasicTypeEnum.RULE_CONDITION.getType();
         List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);
         view.setConditionList(conditionList);
         return view;

@@ -4,7 +4,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.oms.entity.DictRuleConditionEntity;
 import com.erp.model.oms.entity.RuleConditionEntity;
-import com.erp.model.oms.enums.DictBasicEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleConditionMapper;
 import com.erp.server.oms.service.DictRuleConditionService;
@@ -132,7 +132,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
     public List<RuleConditionDTO.ViewDTO> listByRuleId(String ruleId, String type) {
         List<RuleConditionEntity> ruleConditionList = this.listDbByRuleId(ruleId);
         List<RuleConditionDTO.ViewDTO> viewList = BeanMapper.copyList(ruleConditionList, RuleConditionDTO.ViewDTO.class);
-        String logicType = DictBasicEnum.LOGIC.getType();
+        String logicType = DictBasicTypeEnum.LOGIC.getType();
         List<DictRuleConditionEntity> dictRuleConditionList = dictRuleConditionService.listDbByTypes(Arrays.asList(type, logicType));
         for (RuleConditionDTO.ViewDTO item : viewList) {
             String field = item.getField();
@@ -146,7 +146,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
             String logic = item.getLogic();
             String logicName = "";
             if (StringUtils.isNotBlank(logic)) {
-                logicName = DictBasicEnum.getName(logic);
+                logicName = DictBasicTypeEnum.getName(logic);
             }
             item.setLogicName(logicName);
 

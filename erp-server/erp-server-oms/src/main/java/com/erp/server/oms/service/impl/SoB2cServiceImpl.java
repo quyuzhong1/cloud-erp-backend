@@ -524,7 +524,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         this.updateById(entity);
 
         //物流方式
-        DictBasicEntity dictBasicEntity = dictBasicService.getByTypeAndValue(DictBasicEnum.LOGISTICS_METHOD.getDesc(), dto.getDictLogisticsMethod());
+        DictBasicEntity dictBasicEntity = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.LOGISTICS_METHOD.getDesc(), dto.getDictLogisticsMethod());
         if (ObjectUtils.isEmpty(dictBasicEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
         }
@@ -1293,7 +1293,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
 
         //物流方式
-        List<DictBasicDTO.ViewDTO> logisticsMethodList = dictBasicService.getByKey(DictBasicEnum.LOGISTICS_METHOD.getType());
+        List<DictBasicDTO.ViewDTO> logisticsMethodList = dictBasicService.getByKey(DictBasicTypeEnum.LOGISTICS_METHOD.getType());
 
         List<String> ids = list.stream().map(SoB2cDTO.ListDTO::getId).collect(Collectors.toList());
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listBySourceIdOrTargetId(ids);

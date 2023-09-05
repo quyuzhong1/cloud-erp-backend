@@ -9,8 +9,8 @@ import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.RuleLogisticsEntity;
-import com.erp.model.oms.enums.DictBasicEnum;
-import com.erp.model.oms.enums.TypeEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleLogisticsMapper;
 import com.erp.server.oms.service.RuleConditionService;
@@ -129,11 +129,11 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         Optional.ofNullable(ruleLogistics).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单"));
         RuleLogisticsDTO.ViewDTO view = new RuleLogisticsDTO.ViewDTO();
         BeanMapper.copy(ruleLogistics, view);
-        String type = DictBasicEnum.RULE_CONDITION.getType();
+        String type = DictBasicTypeEnum.RULE_CONDITION.getType();
         List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);
         view.setConditionList(conditionList);
         String modeType = view.getModeType();
-        String modeTypeName = TypeEnum.getName(modeType);
+        String modeTypeName = RuleTypeEnum.getName(modeType);
         view.setModeTypeName(modeTypeName);
         return view;
     }

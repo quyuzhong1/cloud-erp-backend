@@ -7,8 +7,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.RefundOrderDTO;
 import com.erp.model.oms.entity.RefundOrderEntity;
-import com.erp.model.oms.enums.CommonStatusTypeEnum;
-import com.erp.model.oms.enums.DictBasicEnum;
+import com.erp.model.oms.enums.RefundOrderStatusEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.oms.mapper.RefundOrderMapper;
 import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.RefundOrderService;
@@ -63,7 +63,7 @@ public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, 
      * @param list
      */
     private void fillDb(List<RefundOrderDTO.PagingViewDTO> list) {
-        String key = DictBasicEnum.PLATFORM.getType();
+        String key = DictBasicTypeEnum.PLATFORM.getType();
         List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
         for (RefundOrderDTO.PagingViewDTO item : list) {
             String dictPlatform = item.getDictPlatform();
@@ -71,7 +71,7 @@ public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, 
                     map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
             item.setPlatformName(platformName);
             String status = item.getStatus();
-            String name = CommonStatusTypeEnum.getName(status);
+            String name = RefundOrderStatusEnum.getName(status);
             item.setStatusName(name);
         }
     }

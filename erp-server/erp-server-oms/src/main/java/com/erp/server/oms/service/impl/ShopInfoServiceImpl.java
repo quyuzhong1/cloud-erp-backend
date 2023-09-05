@@ -19,7 +19,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
-import com.erp.model.oms.enums.DictBasicEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -91,12 +91,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         PlatformDictEnum amazon = PlatformDictEnum.AMAZON;
         //shopify
         PlatformDictEnum shopify = PlatformDictEnum.SHOPIFY;
+        //检查店铺是否存在
+        checkIsExist("", dto.getDictPlatform(), dto.getAccount(), dto.getDictAreaCode(), dto.getDictCountryCodeList());
         //如果是亚马逊
         if (amazon.getCode().equals(dictPlatform)) {
             Boolean result = handleAmazonShop(dto);
             return result;
         }
-
 
         if (shopify.getCode().equals(dictPlatform)) {
             if (StringUtils.isBlank(dto.getDomain())) {
@@ -104,7 +105,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
             checkDomain("", dto.getDomain());
         }
-
         BeanMapper.copy(dto, shop);
         String salesOrgId = dto.getSalesOrgId();
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
@@ -123,6 +123,27 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
         Boolean result = this.save(shop);
         return result;
+
+    }
+
+    /**
+     * 检查店铺是否存在
+     * @param id
+     * @param dictPlatform
+     * @param account
+     * @param dictAreaCode
+     * @param dictCountryCodeList
+     */
+    private void checkIsExist(String id, String dictPlatform, String account, String dictAreaCode, List<String> dictCountryCodeList) {
+        long count = this.lambdaQuery().ne(StringUtils.isNotBlank(id), ShopInfoEntity::getId, id).
+                eq(ShopInfoEntity::getDictPlatform, dictPlatform).
+                eq(ShopInfoEntity::getAccount,account).
+                eq(StringUtils.isNotBlank(dictAreaCode),ShopInfoEntity::getDictAreaCode,dictAreaCode).
+                in(CollectionUtils.isNotEmpty(dictCountryCodeList),ShopInfoEntity::getDictAreaCode).
+                last("LIMIT 1").count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_SHOP_EXIST,dictPlatform,account);
+        }
 
     }
 
@@ -178,7 +199,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             String countryName = countryList.stream().filter(c -> c.getId().equals(countryCode)).findFirst().
                     map(DictCountryEntity::getNameCn).orElse("");
             String shopName = name.concat(countryName);
-            checkName("", shopName);
             if (StringUtils.isNotBlank(countryName)) {
                 ShopInfoEntity shop = new ShopInfoEntity();
                 BeanMapper.copy(dto, shop);
@@ -199,19 +219,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     }
 
-    /**
-     * 检查店铺名称是否存在
-     *
-     * @param id
-     * @param name
-     */
-    private void checkName(String id, String name) {
-        long count = this.lambdaQuery().eq(StringUtils.isNotBlank(id), ShopInfoEntity::getId, id).
-                eq(ShopInfoEntity::getName, name).last("LIMIT 1").count();
-        if (count > 0) {
-            throw new ServiceException(name + "店铺名已存在");
-        }
-    }
 
     /**
      * 修改店铺
@@ -227,7 +234,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
-        checkName(dto.getId(), dto.getName());
         shopInfo.setName(dto.getName());
         String salesOrgId = dto.getSalesOrgId();
         //负责人
@@ -280,16 +286,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @param list
      */
     private void fillDb(List<ShopDTO.PagingViewDTO> list) {
-
-        //国家id
-        List<String> countryIdList = list.stream().map(ShopDTO.PagingViewDTO::getDictCountryCode).collect(Collectors.toList());
         for (ShopDTO.PagingViewDTO item : list) {
             //平台
             String dictPlatform = item.getDictPlatform();
             item.setDictPlatform(dictPlatform);
-            String areaId = item.getDictAreaCode();
             item.setAreaName(item.getDictAreaCode());
-            String countryId = item.getDictCountryCode();
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "禁用" : "启用";
             item.setDisabledName(disabledName);
@@ -355,7 +356,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         view.setAuthStatusName(AuthStatusEnum.getName(authStatus));
         //平台
         String dictPlatform = view.getDictPlatform();
-        String dictType = DictBasicEnum.PLATFORM.getType();
+        String dictType = DictBasicTypeEnum.PLATFORM.getType();
         DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(dictType, dictPlatform);
         String platformName = Objects.nonNull(dictBasic) ? dictBasic.getName() : "";
         view.setAreaName(shop.getDictAreaCode());

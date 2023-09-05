@@ -10,7 +10,7 @@ import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
-import com.erp.model.oms.enums.TypeEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
@@ -144,7 +144,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
 
         //平台标识
         String dictPlatform = platform.getValue();
-        TypeEnum platformType = TypeEnum.PLATFORM;
+        RuleTypeEnum platformType = RuleTypeEnum.PLATFORM;
         //已对应的平台sku
         String finalListingId = listingId;
         List<SkuMappingEntity> excelList = skuMappingList.stream().filter(s -> s.getListingId().equals(finalListingId)
@@ -171,7 +171,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             listingId = IdWorker.getIdStr();
             ListingInfoEntity addListingInfoEntity = new ListingInfoEntity();
             addListingInfoEntity.setId(listingId);
-            addListingInfoEntity.setType(TypeEnum.PLATFORM.getCode());
+            addListingInfoEntity.setType(RuleTypeEnum.PLATFORM.getCode());
             addListingInfoEntity.setPlatformSkuNo(platformSkuNo);
             addListingInfoEntity.setPlatformProductName(platformProductName);
             addListingInfoEntity.setMatchResult(Boolean.TRUE);

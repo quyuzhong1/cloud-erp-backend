@@ -3,7 +3,7 @@ package com.erp.model.oms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.erp.model.oms.enums.TypeEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -65,7 +65,7 @@ public class SkuMappingEntity extends BaseEntity<SkuMappingEntity> {
      * type
      */
     @TableField("type")
-    private TypeEnum type;
+    private RuleTypeEnum type;
 
     /**
      * listing_id

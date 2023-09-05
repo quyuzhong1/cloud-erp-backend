@@ -1,16 +1,17 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,11 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "oms:shop:paging",
+//            tableAlias = "si"
+//    )
     public ApiResult<PagingVO<ShopDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
         PagingVO<ShopDTO.PagingViewDTO> pagingVO = shopInfoService.paging(dto);
         return success(pagingVO);
@@ -71,6 +77,11 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:shop:update",
+            serviceClass = ShopInfoService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated ShopDTO.UpdateDTO dto) {
         String id = shopInfoService.updateShop(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
@@ -83,6 +94,11 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @PostMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:shop:view",
+            serviceClass = ShopInfoService.class,
+            keyIdName = "id")
     public ApiResult<ShopDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         ShopDTO.ViewDTO view = shopInfoService.view(dto.getId());
         return success(view);

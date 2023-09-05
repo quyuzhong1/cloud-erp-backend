@@ -3,7 +3,7 @@ package com.erp.server.oms.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
-import com.erp.model.oms.enums.TypeEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.server.oms.mapper.ListingInfoMapper;
 import com.erp.server.oms.service.ListingInfoService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -56,7 +56,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         listingInfoEntity.setId(id);
         listingInfoEntity.setSkuNo(skuNo);
         listingInfoEntity.setProductName(productName);
-        listingInfoEntity.setType(TypeEnum.WAREHOUSE.getCode());
+        listingInfoEntity.setType(RuleTypeEnum.WAREHOUSE.getCode());
         if (this.save(listingInfoEntity)) {
             return id;
         } else {

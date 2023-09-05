@@ -9,7 +9,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
-import com.erp.model.oms.enums.TypeEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.oms.service.ListingInfoService;
@@ -131,7 +131,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             listingId = listingInfoEntity.getId();
         }
 
-        TypeEnum warehouseType = TypeEnum.WAREHOUSE;
+        RuleTypeEnum warehouseType = RuleTypeEnum.WAREHOUSE;
         //已对应的平台sku
         String finalListingId = listingId;
         List<SkuMappingEntity> existList = skuMappingList.stream().filter(
@@ -178,7 +178,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
             listingId = IdWorker.getIdStr();
             ListingInfoEntity addListingInfoEntity = new ListingInfoEntity();
             addListingInfoEntity.setId(listingId);
-            addListingInfoEntity.setType(TypeEnum.WAREHOUSE.getCode());
+            addListingInfoEntity.setType(RuleTypeEnum.WAREHOUSE.getCode());
             addListingInfoEntity.setSkuNo(warehouseSkuNo);
             addListingInfoEntity.setProductName(importExcelDTO.getWarehouseProductName());
             addListingInfoEntity.setMatchResult(Boolean.TRUE);

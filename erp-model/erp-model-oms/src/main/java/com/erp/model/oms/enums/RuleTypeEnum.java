@@ -12,14 +12,14 @@ import org.apache.commons.lang3.StringUtils;
  * @Date 2023-08-18 11:00
  * @Created by yl
  */
-public enum TypeEnum  implements EnumMessage {
+public enum RuleTypeEnum implements EnumMessage {
     PLATFORM("platform","平台"),
     WAREHOUSE("warehouse","仓库"),
     ASSIGN("assign","指定物流"),
     MIN_FREIGHT("minFreight","最低运费")
     ;
 
-    TypeEnum(String code, String name) {
+    RuleTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -48,7 +48,7 @@ public enum TypeEnum  implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (TypeEnum typeEnum : TypeEnum.values()) {
+        for (RuleTypeEnum typeEnum : RuleTypeEnum.values()) {
             if (code.equals(typeEnum.getCode())) {
                 return typeEnum.getName();
             }

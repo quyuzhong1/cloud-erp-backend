@@ -9,7 +9,7 @@ import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.RuleOrderApprovalEntity;
-import com.erp.model.oms.enums.DictBasicEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleOrderApprovalMapper;
 import com.erp.server.oms.service.RuleConditionService;
@@ -147,7 +147,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         String operationType = ruleOrderApproval.getOperationType();
         List<String> operationTypeList = StringUtils.isNotBlank(operationType) ? Arrays.asList(operationType.split(",")) : Collections.emptyList();
         view.setOperationTypeList(operationTypeList);
-        String type = DictBasicEnum.RULE_CONDITION.getType();
+        String type = DictBasicTypeEnum.RULE_CONDITION.getType();
         List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);
         view.setConditionList(conditionList);
         return view;

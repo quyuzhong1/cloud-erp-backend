@@ -6,12 +6,14 @@ package com.common.core.rule;/**
  * @Created by yl
  */
 
+import cn.hutool.json.JSONObject;
 import com.common.core.enums.DictEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.TypedValue;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 
@@ -45,7 +47,7 @@ public class RuleUtils {
             //对应的值
             String value = element.getValue();
             if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(operator)) {
-                String content = new StringBuilder().append(field).append(" ").append(operator).append(" '").append(value).append("'").toString();
+                String content = new StringBuilder("['").append(field).append("'] ").append(operator).append(" '").append(value).append("'").toString();
                 DictEnum contentsEnum = DictEnum.getByStatus(operator);
                 if (Objects.nonNull(contentsEnum)) {
                     switch (contentsEnum) {
@@ -117,7 +119,7 @@ public class RuleUtils {
      * @return
      */
     public static String convertToContainsExpression(String content) {
-        return content.replace(" contains ", ".contains('") + "')";
+        return content.replace(" contains ", ".contains(") + ")";
     }
 
     /**
@@ -127,7 +129,7 @@ public class RuleUtils {
      * @return
      */
     public static String convertToNotContainsExpression(String content) {
-        return "!" + content.replace(" notContains ", ".contains('") + "')";
+        return "not " + content.replace(" notContains ", ".contains(") + ")";
     }
 
     /**
@@ -137,7 +139,12 @@ public class RuleUtils {
      * @return
      */
     public static String convertToIsNullExpression(String field) {
-        return field + " eq " + "null || " + field + " eq ''";
+        StringBuilder expression = new StringBuilder();
+        expression.append("['").append(field).append("']");
+        expression.append(" eq null || ");
+        expression.append("['").append(field).append("']");
+        expression.append(" eq ''");
+        return expression.toString();
     }
 
     /**
@@ -147,7 +154,12 @@ public class RuleUtils {
      * @return
      */
     public static String convertToNotNullExpression(String field) {
-        return field + " ne " + "null && " + field + " ne ''";
+        StringBuilder expression = new StringBuilder();
+        expression.append("['").append(field).append("']");
+        expression.append(" ne null  && ");
+        expression.append("['").append(field).append("']");
+        expression.append(" ne ''");
+        return expression.toString();
     }
 
     /**
@@ -172,25 +184,21 @@ public class RuleUtils {
 
 
     public static void main(String[] args) {
-        ConditionElement element1 = new ConditionElement("((", "skuNo", "isNull", "", "", "and");
+        ConditionElement element1 = new ConditionElement("((", "skuNo", "notContains", "1", "", "and");
         ConditionElement element2 = new ConditionElement("", "platform", "eq", "Amazon", "))", "");
 
         List<ConditionElement> elementList = new ArrayList<>();
         elementList.add(element1);
         elementList.add(element2);
-        String expression = RuleUtils.getConditionExpression(elementList);
+        String expression =RuleUtils.getConditionExpression(elementList);
         System.out.println(expression);
         ExpressionParser parser = new SpelExpressionParser();
         Expression expression1 = parser.parseExpression(expression);
-        Test test = new Test("24", "Amazon");
-        Map<String, Object> map = new HashMap<>();
-        map.put("skuNo","24");
-        map.put("platform","24");
-        EvaluationContext context = new StandardEvaluationContext(map);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.set("skuNo", "12");
+        jsonObject.set("platform", "Amazon");
+        EvaluationContext context = new StandardEvaluationContext(jsonObject);
         boolean result = expression1.getValue(context, Boolean.class);
-
         System.out.println("result====" + result);
-
-
     }
 }
