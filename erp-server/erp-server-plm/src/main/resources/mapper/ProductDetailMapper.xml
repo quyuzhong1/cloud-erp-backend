@@ -817,7 +817,7 @@
             pi.spu_no,
             pi.name AS spuName,
             pd.variant_property,
-            pi.image_url,
+            pd.images_url,
             pp.ean,
             ppk.gross_weight,
             ppk.net_weight,
