@@ -828,11 +828,13 @@
             pd.charge_name,
             pi.materials
         FROM product_detail pd
-        LEFT JOIN product_info pi ON pi.id = pd.product_id
-        LEFT JOIN product_purchase pp ON pd.id = pp.sku_id
-        LEFT JOIN product_pack ppk ON pd.id = ppk.sku_id
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN product_purchase pp ON pd.id = pp.sku_id AND pp.is_deleted = FALSE
+        LEFT JOIN product_pack ppk ON pd.id = ppk.sku_id AND ppk.is_deleted = FALSE
+        WHERE pd.is_deleted = FALSE
         <if test="skuNo != null and skuNo!=''">
             AND pd.sku_no = #{skuNo}
         </if>
+        LIMIT 1
     </select>
 </mapper>
