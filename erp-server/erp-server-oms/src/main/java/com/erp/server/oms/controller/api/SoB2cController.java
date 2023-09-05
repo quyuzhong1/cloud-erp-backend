@@ -683,4 +683,17 @@ public class SoB2cController extends BaseController {
         return success(resultDTOS);
     }
 
+    /**
+     * 根据客户id查询买家信息
+     * @author Will
+     * @date: 2023/9/5 19:12
+     * @param dto
+     * @return ApiResult<ViewReceiveDataDTO>
+     */
+    @PostMapping("/viewReceiveData")
+    public ApiResult<SoB2cDTO.ViewReceiveDataDTO> viewReceiveData(@RequestBody @Validated BaseIdDTO dto) {
+        return success(soB2cService.viewReceiveData(dto.getId()));
+    }
+
+
 }

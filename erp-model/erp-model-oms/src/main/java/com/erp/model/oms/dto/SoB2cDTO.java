@@ -1106,4 +1106,10 @@ public class SoB2cDTO implements Serializable {
         private String group;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ViewReceiveDataDTO {
+
+    }
+
 }
