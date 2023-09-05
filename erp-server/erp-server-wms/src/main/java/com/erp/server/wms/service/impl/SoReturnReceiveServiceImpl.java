@@ -26,6 +26,8 @@ import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -40,6 +42,7 @@ import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
+import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -117,6 +120,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Resource
     private SoReturnInstockService soReturnInstockService;
+
+    @Resource
+    private SoReturnInstockDetailService soReturnInstockDetailService;
 
     @Override
     public PagingVO<SoReturnReceiveDTO.PagingView> paging(PagingDTO<SoReturnReceiveDTO.PagingParam> pagingParamDTO) {
@@ -978,19 +984,43 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Override
     public List<SoReturnReceiveDTO.PdaSoReceive> pdaList(SoReturnReceiveDTO.PdaSoReceiveParam dto) {
         List<SoReturnReceiveDTO.PdaSoReceive> list = baseMapper.pdaList(dto);
-/*        List<String> sorIds = list.stream().map(req -> req.getId()).collect(Collectors.toList());
-        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailByMainIds(sorIds);
 
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        List<String> srrId = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<SoReturnReceiveDetailEntity> detailEntityList = soReturnReceiveDetailService.listDetailByMainIds(srrId);
+        List<String> detailIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<SoReturnInstockDetailEntity> returnInstockDetailEntities = soReturnInstockDetailService.listDetailBySourceDetailIds(detailIds);
+        //获取未全部入库的销售退货签收单详情id
+        List<String> soReturnReceiveDetailIds = new ArrayList<>();
 
-        //根据未入库采购收货单详情id获取未入库收货单id
-        List<WarehouseReceiveDetailEntity> receiveDetailEntities = warehouseReceiveDetailService.listByIds(receiveDetailIds);
-        List<String> notAllReceivePoReceiveId = receiveDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+        returnInstockDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getSourceDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+            int realQty = m.stream().mapToInt(SoReturnInstockDetailEntity::getRealQty).sum();
+            SoReturnReceiveDetailEntity detailEntity = detailEntityList.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(detailEntity)) {
+                if (realQty < detailEntity.getReceiveQty()) {
+                    soReturnReceiveDetailIds.add(m.get(MathUtil.ZERO).getSourceDetailId());
+                }
+            }
+            return m;
+        })));
+        List<String> collect = returnInstockDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
+        List<String> ids = detailIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
+        soReturnReceiveDetailIds.addAll(ids);
 
-        //获取到未入库采购收货单返回数据
-        List<WarehouseReceiveDTO.PdaPoReceive> poReceiveList = list.stream().filter(req -> notAllReceivePoReceiveId.contains(req.getId())).collect(Collectors.toList());
-        */
-        list.sort(Comparator.comparing(SoReturnReceiveDTO.PdaSoReceive::getCode).reversed());
-        list.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
-        return list;
+        if (CollectionUtils.isEmpty(soReturnReceiveDetailIds)) {
+            return new ArrayList<>();
+        }
+        //根据未全部入库的销售退货签收单详情id获取签收单id
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listByIds(soReturnReceiveDetailIds);
+        List<String> notAllReceivePoOrderId = soReturnReceiveDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+
+        //获取到未全部入库的销售退货签收单返回数据
+        List<SoReturnReceiveDTO.PdaSoReceive> soReceiveList = list.stream().filter(req -> notAllReceivePoOrderId.contains(req.getId())).collect(Collectors.toList());
+
+        soReceiveList.sort(Comparator.comparing(SoReturnReceiveDTO.PdaSoReceive::getCode).reversed());
+        soReceiveList.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
+        return soReceiveList;
     }
 }
