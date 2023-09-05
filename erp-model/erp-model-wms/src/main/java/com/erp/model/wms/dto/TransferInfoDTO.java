@@ -225,6 +225,8 @@ public class TransferInfoDTO implements Serializable {
         @StateEnumValue(clazz = TransferTypeEnum.class, message = "调拨类型输入值有误")
         private String type;
 
+        private String typeName;
+
         /**
          * 调拨日期
          */
@@ -426,6 +428,11 @@ public class TransferInfoDTO implements Serializable {
          * 主键id
          */
         private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
 
         /**
          * 调入仓库名称

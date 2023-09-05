@@ -238,6 +238,8 @@ public class OtherInstockDTO implements Serializable {
         @StateEnumValue(clazz = InstockTypeEnum.class, message = "入库类型输入值有误")
         private String type;
 
+        private String typeName;
+
     }
 
     @Data
