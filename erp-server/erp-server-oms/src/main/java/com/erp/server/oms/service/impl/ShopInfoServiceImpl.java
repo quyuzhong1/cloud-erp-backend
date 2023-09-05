@@ -5,7 +5,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -16,18 +18,21 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.ShopDTO;
+import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.erp.model.oms.enums.DictBasicValueEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.ShopInfoMapper;
+import com.erp.server.oms.service.CustomerB2cService;
 import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
@@ -74,6 +79,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Resource
     private ShopAuthService shopAuthService;
+
+    @Resource
+    private CustomerB2cService customerB2cService;
 
 
     /**
@@ -145,9 +153,39 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         //平台
         customer.setPlatformType(shop.getDictPlatform());
         String countryId = shop.getDictCountryCode();
+        String currency = "CNY";
+        if (StringUtils.isNotBlank(countryId)) {
+            //根据国家查询
+            List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Arrays.asList(countryId));
+            if (CollectionUtils.isNotEmpty(countryList)) {
+                currency = countryList.get(0).getCurrencyCode();
+            }
+        }
+
         if (StringUtils.isBlank(countryId)) {
             countryId = DictValueEnum.GL.getCode();
         }
+        customer.setName(shop.getName());
+        customer.setCountryId(countryId);
+        //币种
+        customer.setCurrency(currency);
+        customer.setSellerId(shop.getChargeId());
+        customer.setConditionDict(DictBasicValueEnum.ONLINE_STORE_PAYMENT.getCode());
+        customer.setSourceId(shop.getId());
+        customer.setSourceType(SourceTypeEnum.SHOP.getCode());
+        String id = customerB2cService.addAndSubmit(customer);
+        if (StringUtils.isNotBlank(id)) {
+            CustomerB2cEntity customerB2c = customerB2cService.getById(id);
+            if (Objects.nonNull(customerB2c)) {
+                shop.setCustomerId(customerB2c.getId());
+                shop.setCustomerCode(customerB2c.getCode());
+                this.updateById(shop);
+            }
+        }
+        BaseApproveParamDTO approveParamDTO = new BaseApproveParamDTO();
+        approveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
+        approveParamDTO.setIds(Arrays.asList(id));
+        customerB2cService.approve(approveParamDTO);
 
     }
 
@@ -161,14 +199,20 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @param dictCountryCodeList
      */
     private void checkIsExist(String id, String dictPlatform, String account, String dictAreaCode, List<String> dictCountryCodeList) {
-        long count = this.lambdaQuery().ne(StringUtils.isNotBlank(id), ShopInfoEntity::getId, id).
+        List<ShopInfoEntity> shopInfoList = this.lambdaQuery().ne(StringUtils.isNotBlank(id), ShopInfoEntity::getId, id).
                 eq(ShopInfoEntity::getDictPlatform, dictPlatform).
                 eq(ShopInfoEntity::getAccount, account).
                 eq(StringUtils.isNotBlank(dictAreaCode), ShopInfoEntity::getDictAreaCode, dictAreaCode).
-                in(CollectionUtils.isNotEmpty(dictCountryCodeList), ShopInfoEntity::getDictAreaCode).
-                last("LIMIT 1").count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_SHOP_EXIST, dictPlatform, account);
+                in(CollectionUtils.isNotEmpty(dictCountryCodeList), ShopInfoEntity::getDictCountryCode, dictCountryCodeList).
+                list();
+        if (CollectionUtils.isNotEmpty(shopInfoList)) {
+            if (StringUtils.isBlank(dictAreaCode)) {
+                throw new ServiceException(ApiError.ERROR_SHOP_EXIST, dictPlatform, account);
+            } else {
+                String countryName = shopInfoList.stream().map(ShopInfoEntity::getCountryName).distinct().
+                        collect(Collectors.joining(","));
+                throw new ServiceException(ApiError.ERROR_SHOP_COUNTRY_EXIST, dictPlatform, account, countryName);
+            }
         }
 
     }
@@ -312,10 +356,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @param list
      */
     private void fillDb(List<ShopDTO.PagingViewDTO> list) {
+        String key = DictBasicTypeEnum.SALES_PLATFORM.getType();
+        List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Arrays.asList(key));
         for (ShopDTO.PagingViewDTO item : list) {
             //平台
             String dictPlatform = item.getDictPlatform();
-            item.setDictPlatform(dictPlatform);
+            String platformName = dictList.stream().filter(d -> d.getValue().equals(dictPlatform)).
+                    findFirst().map(DictBasicEntity::getName).orElse("");
+            item.setPlatformName(platformName);
             item.setAreaName(item.getDictAreaCode());
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "禁用" : "启用";

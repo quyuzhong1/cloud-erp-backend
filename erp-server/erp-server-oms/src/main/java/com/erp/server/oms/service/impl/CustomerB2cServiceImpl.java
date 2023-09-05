@@ -192,7 +192,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         addEntity.setGroupName(groupName);
         //生成单号
         //生成单号
-        String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
         addEntity.setCode(code);
         //销售员
         String sellerId = dto.getSellerId();
@@ -418,13 +418,16 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean addAndSubmit(CustomerDTO.AddDTO dto) {
+    public String addAndSubmit(CustomerDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         Boolean result = this.submit(Arrays.asList(id));
-        return result;
+        if (result) {
+            return id;
+        }
+        return "";
 
     }
 
@@ -678,14 +681,10 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             throw new ServiceException(ApiError.ERROR_94006);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
+            String sourceType=SourceTypeEnum.SHOP.getCode();
             //审核通过发送金蝶
+            list=list.stream().filter(l->sourceType.equals(l.getSourceType())).collect(Collectors.toList());
             list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
-
-            /*for (CustomerB2cEntity customerInfoEntity : list) {
-                List<CustomerB2cContactEntity> contactEntities = customerB2cContactService.listEntityByMainId(customerInfoEntity.getId());
-                //审核通过发送金蝶
-                contactEntities.forEach(obj -> syncKingdeeCustomerB2cContactService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
-            }*/
             //批量保存销售员信息
             customerB2cSellerService.batchSellerHistory(list);
 

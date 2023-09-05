@@ -844,6 +844,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_SHOP_USER_AUTH_PART(92093,"指定店铺授权店铺不能为空"),
     ERROR_SO_OUTSTOCK_NOT_EXIST(99092 , "sku【{}】在发货通知单中不存在"),
     ERROR_SHOP_EXIST(99094 , "【{}】平台下【{}】账号已存在店铺"),
+    ERROR_SHOP_COUNTRY_EXIST(99095 , "【{}】平台下【{}】账号下【{}】已存在店铺"),
 
 
 

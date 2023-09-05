@@ -52,6 +52,7 @@ public enum SourceTypeEnum {
     CUSTOMER_INFO( "customerInfo", "客户表","customer_info"),
     SO_B2C( "soB2c", "B2C销售订单","so_b2c"),
     CUSTOMER_B2C( "customerB2c", "B2C客户表","customer_b2c"),
+    SHOP( "shop", "店铺","shop_info"),
 
     //Kingdee
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单",""),

@@ -208,6 +208,20 @@ public class CustomerB2cEntity extends BaseEntity<CustomerB2cEntity> {
     @TableField("sync_operate")
     private String syncOperate;
 
+    /**
+     * 来源id
+     */
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
+
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

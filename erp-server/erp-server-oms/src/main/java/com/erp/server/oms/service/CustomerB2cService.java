@@ -79,7 +79,7 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean addAndSubmit(CustomerDTO.AddDTO dto);
+    String addAndSubmit(CustomerDTO.AddDTO dto);
 
     /**
      * 客户详情

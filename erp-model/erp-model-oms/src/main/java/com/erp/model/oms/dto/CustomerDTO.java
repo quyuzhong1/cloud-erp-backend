@@ -322,6 +322,16 @@ public class CustomerDTO implements Serializable {
         private String sellerId;
 
         /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
          * 附件名集合
          */
         private List<String> attachNameList;
