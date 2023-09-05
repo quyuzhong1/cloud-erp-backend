@@ -59,7 +59,7 @@ public class PdaSoReturnInstockController extends BaseController {
      **/
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "receive_user_id",
+            tableField = "create_user_id",
             menuCode = "wms:pdaSoReturnInstock:paging",
             tableAlias = "wr"
     )
