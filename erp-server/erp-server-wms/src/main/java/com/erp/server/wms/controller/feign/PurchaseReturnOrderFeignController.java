@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.feign;
 import com.common.core.controller.BaseController;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
 import com.erp.server.wms.service.PurchaseReturnOrderService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -75,5 +77,23 @@ public class PurchaseReturnOrderFeignController extends BaseController {
     public List<PurchaseReturnOrderDTO.SupplierReturnDTO> getReturnInfo(@RequestBody PurchaseReturnOrderDTO.SupplierReturnParamDTO params) {
         return purchaseReturnOrderService.getReturnInfo(params);
     }
+
+    /**
+     * 根据id集合查询采购退货单
+     * @author Will
+     * @date: 2023/9/5 14:26
+     * @param poReturnIdList
+     * @return List<PurchaseReturnOrderEntity>
+     */
+    @PostMapping("/listPoReturnByIdList")
+    public List<PurchaseReturnOrderEntity> listPoReturnByIdList(@RequestBody List<String> poReturnIdList) {
+        if (CollectionUtils.isEmpty(poReturnIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<PurchaseReturnOrderEntity> list = purchaseReturnOrderService.listByIds(poReturnIdList);
+        return list;
+
+    }
+
 
 }
