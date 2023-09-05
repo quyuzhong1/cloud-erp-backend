@@ -1611,11 +1611,13 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         receiveIds.addAll(purchaseOrderIds);
         //质检信息
         List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceIds(receiveIds);
-        List<QcInfoEntity> resultList = qcInfoList.stream().filter(obj -> QcBillStatusEnum.EXEMPTION.equals(obj.getQcStatus())
-                || QcBillStatusEnum.FINISH_QC.equals(obj.getQcStatus())
-        ).collect(Collectors.toList());
+
 
         for (PoInstockDTO.PdaPagingView record : records) {
+            List<QcInfoEntity> resultList = qcInfoList.stream().filter(obj -> obj.getSourceId().equals(record.getSourceId())
+                    && (QcBillStatusEnum.EXEMPTION.equals(obj.getQcStatus()) || QcBillStatusEnum.FINISH_QC.equals(obj.getQcStatus()))
+            ).collect(Collectors.toList());
+
             record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
             List<PoInstockDetailEntity> detailEntities = poInstockDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
             List<PoInstockDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, PoInstockDTO.PdaItemDTO.class);
