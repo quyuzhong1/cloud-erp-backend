@@ -45,6 +45,7 @@ import com.erp.model.wms.dto.inventory.InstockForcastDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryFinishDeliveryDetailDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
@@ -150,6 +151,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+
+    @Autowired
+    private SubcontractOrderService subcontractOrderService;
+
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
@@ -1223,6 +1228,18 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         //关联信息
         List<PurchaseApplicationRefPoEntity> refList = purchaseApplicationRefPoService.listByPurchaseOrderIds(purchaseOrderIds);
+
+        //来源于委外的采购订单
+        List<String> subIdList = records.stream().filter(obj -> SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(obj.getSourceType())).map(PurchaseOrderDTO.ListDTO::getSourceId).collect(Collectors.toList());
+        List<SubcontractOrderEntity> subcontractOrderList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(subIdList)) {
+            subcontractOrderList  = subcontractOrderService.listByIds(subIdList);
+        }
+
+        //来源于采购退货的采购订单
+        List<String> poReturnIdList = records.stream().filter(obj -> SourceTypeEnum.PO_RETURN.getCode().equals(obj.getSourceType())).map(PurchaseOrderDTO.ListDTO::getSourceId).collect(Collectors.toList());
+        List<PurchaseReturnOrderEntity> purchaseReturnOrderList = wmsTaskFeign.listPoReturnByIdList(poReturnIdList);
+
         // 采购申请单id集合
         List<String> purchaseApplicationIds = Lists.newArrayList();
         for (PurchaseOrderDTO.ListDTO obj : records) {
@@ -1278,7 +1295,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setArrivalStatusName(ArrivalStatusEnum.getNameByCode(obj.getArrivalStatus()));
 
             // 采购申请单号
-            if(CollUtil.isNotEmpty(refList)) {
+            if(CollUtil.isNotEmpty(refList) && StringUtils.isBlank(obj.getSourceType())) {
                 // 采购申请单明细id和采购订单明细id是多对多，可能存在多条
                 List<PurchaseApplicationRefPoEntity> filterRefList = refList.stream().filter(r->{
                     if(Objects.equals(obj.getId(), r.getPurchaseOrderId())
@@ -1294,6 +1311,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 }
 
             }
+            //委外订单
+            if (CollectionUtils.isNotEmpty(subcontractOrderList) && SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(obj.getSourceType())) {
+                String subCode = subcontractOrderList.stream().filter(e -> e.getId().equals(obj.getSourceId())).findFirst().flatMap(e -> Optional.ofNullable(e.getCode())).orElse("");
+                obj.setSourceCode(subCode);
+            }
+            //采购退货
+            if (CollectionUtils.isNotEmpty(purchaseReturnOrderList) && SourceTypeEnum.PO_RETURN.getCode().equals(obj.getSourceType())) {
+                String subCode = purchaseReturnOrderList.stream().filter(e -> e.getId().equals(obj.getSourceId())).findFirst().flatMap(e -> Optional.ofNullable(e.getCode())).orElse("");
+                obj.setSourceCode(subCode);
+            }
+
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
@@ -1318,7 +1346,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     if(applicationCodes.toString().endsWith(",")) {
                         applicationCodes.deleteCharAt(applicationCodes.length() - 1);
                     }
-                    obj.setPurchaseApplicationCode(applicationCodes.toString());
+                    obj.setSourceCode(applicationCodes.toString());
                 }
             });
         }

@@ -225,14 +225,24 @@ public class PurchaseOrderDTO implements Serializable {
         private String sourceDetailId;
 
         /**
-         * 采购申请单号
-         */
-        private String purchaseApplicationCode;
-
-        /**
          * 是否结束交货
          */
         private Boolean isEndReceive;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
 
         /**
          * 采购申请单id集合
