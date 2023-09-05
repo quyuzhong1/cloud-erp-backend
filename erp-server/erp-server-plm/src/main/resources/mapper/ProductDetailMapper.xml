@@ -804,6 +804,11 @@
         left join product_pack pp on pd.id = pp.sku_id AND pp.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
         WHERE  pd.is_deleted = FALSE
+
+        <if test="status != null and status!=''">
+            AND pd.status = #{status}
+        </if>
+
         <if test="searchKeyword != null and searchKeyword!=''">
             AND
             (
@@ -815,5 +820,33 @@
         <if test="skuNo != null and skuNo!=''">
             AND pd.sku_no = #{skuNo}
         </if>
+    </select>
+
+    <select id="pdaProductView" resultType="com.erp.model.plm.dto.PdaProductDetailDTO$View">
+        SELECT
+            pd.sku_no,
+            pd.name AS skuName,
+            pi.spu_no,
+            pi.name AS spuName,
+            pi.image_url,
+            pp.ean,
+            ppk.gross_weight,
+            ppk.net_weight,
+            ppk.product_size,
+            ppk.box_size,
+            ppk.box_weight,
+            ppk.box_qty,
+            pi.grade,
+            pd.charge_name,
+            pi.materials
+        FROM product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN product_purchase pp ON pd.id = pp.sku_id AND pp.is_deleted = FALSE
+        LEFT JOIN product_pack ppk ON pd.id = ppk.sku_id AND ppk.is_deleted = FALSE
+        WHERE pd.is_deleted = FALSE
+        <if test="skuNo != null and skuNo!=''">
+            AND pd.sku_no = #{skuNo}
+        </if>
+        LIMIT 1
     </select>
 </mapper>

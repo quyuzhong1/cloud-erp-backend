@@ -1,11 +1,13 @@
 package com.erp.model.dmp.entity;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -111,8 +113,8 @@ public class PlatformApiTaskEntity extends BaseEntity<PlatformApiTaskEntity> {
     /**
      * 禁用
      */
-    @TableField(value = "disable")
-    private Boolean disable;
+    @TableField(value = "disabled")
+    private Boolean disabled;
 
     /**
      * 平台api表id
@@ -132,8 +134,8 @@ public class PlatformApiTaskEntity extends BaseEntity<PlatformApiTaskEntity> {
         this.apiCode = item.getApiCode();
         this.apiName = item.getApiName();
         this.intervalTime = item.getIntervalTime();
-        this.lastTime = LocalDateTime.now();
-        this.nextTime = LocalDateTime.now();
+        this.lastTime = LocalDateTimeUtil.beginOfDay(LocalDateTime.now());
+        this.nextTime = LocalDateTimeUtil.endOfDay(LocalDateTime.now());
         this.shopName = shopName;
         this.shopId = shopId;
         this.apiParam = item.getApiCommonParam();

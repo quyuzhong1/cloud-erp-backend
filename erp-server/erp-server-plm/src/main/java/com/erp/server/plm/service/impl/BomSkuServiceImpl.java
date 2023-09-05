@@ -221,5 +221,11 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         return this.list(queryWrapper);
     }
 
-
+    @Override
+    public List<BomChildrenSkuDTO> listBomBySkuIds(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listBomBySkuIds(skuIds);
+    }
 }

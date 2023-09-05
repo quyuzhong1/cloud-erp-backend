@@ -58,7 +58,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setPlatformApiId("8");
         jobTaskDTO.setApiName("管易云商品查询");
-        jobTaskDTO.setId(33L);
+        jobTaskDTO.setId("33");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(null);
         jobTaskDTO.setNextTime(null);

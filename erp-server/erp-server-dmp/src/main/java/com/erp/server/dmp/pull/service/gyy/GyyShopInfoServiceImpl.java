@@ -60,7 +60,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setPlatformApiId("12");
         jobTaskDTO.setApiName("管易云查询店铺列表");
-        jobTaskDTO.setId(36L);
+        jobTaskDTO.setId("36");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(null);
         jobTaskDTO.setNextTime(null);

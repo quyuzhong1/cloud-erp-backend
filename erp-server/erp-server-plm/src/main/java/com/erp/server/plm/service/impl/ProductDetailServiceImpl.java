@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -3750,6 +3751,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto) {
+        Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+        dto.setStatus(state);
         List<SkuVO> skuVOS = baseMapper.pdaSearchSku(dto);
         if (CollectionUtils.isEmpty(skuVOS)) {
             throw new ServiceException(ApiError.ERROR_95107);
@@ -3777,6 +3780,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public PdaProductDetailDTO.View pdaProductView(String skuNo) {
-        return baseMapper.pdaProductView(skuNo);
+        List<SkuVO> skuBySkuNos = this.getSkuBySkuNos(Arrays.asList(skuNo));
+        SkuVO skuVO = skuBySkuNos.stream().filter(req -> req.getSkuNo().equals(skuNo)).distinct().findFirst().orElse(new SkuVO());
+        if (ObjectUtil.isEmpty(skuVO)) {
+            throw new ServiceException("sku不存在");
+        }
+        PdaProductDetailDTO.View view = baseMapper.pdaProductView(skuNo);
+
+        List<PdaProductDetailDTO.ParentSkuDTO> parentSkuDTOList = new ArrayList<>();
+
+        //查询子sku
+        List<BomChildrenSkuDTO> sonSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(skuVO.getSkuId()));
+        PdaProductDetailDTO.ParentSkuDTO parentSkuDTO = new PdaProductDetailDTO.ParentSkuDTO();
+        parentSkuDTO.setSkuNo(skuVO.getSkuNo());
+        List<PdaProductDetailDTO.SonSkuDTO> sonSkuDTOS = BeanMapper.copyList(sonSkuList, PdaProductDetailDTO.SonSkuDTO.class);
+        parentSkuDTO.setChildSkuList(sonSkuDTOS);
+        parentSkuDTOList.add(parentSkuDTO);
+        return view;
     }
 }

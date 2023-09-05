@@ -67,8 +67,6 @@ public interface BomSkuService extends IService<BomSkuEntity> {
      */
     List<BomInfoEntity> listBomByParentSkuNos(List<String> parentSkuNos);
 
-
-
     /**
      * @description: 根据父级skuNos查询未作废BOM
      * @author Will
@@ -77,4 +75,13 @@ public interface BomSkuService extends IService<BomSkuEntity> {
      * @return List<BomInfoEntity>
      */
     List<BomInfoEntity> listAllBomByParentSkuNos(List<String> parentSkuNos);
+
+    /**
+     * 根据sku查询bom
+     * @Author Luo_WG
+     * @Date 2023/9/4 19:38
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.dto.BomChildrenSkuDTO>
+     **/
+    List<BomChildrenSkuDTO> listBomBySkuIds(List<String> skuIds);
 }

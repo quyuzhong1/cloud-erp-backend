@@ -71,7 +71,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setPlatformApiId("9");
         jobTaskDTO.setApiName("获取退货订单数据");
-        jobTaskDTO.setId(34L);
+        jobTaskDTO.setId("34");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(null);
         jobTaskDTO.setNextTime(null);

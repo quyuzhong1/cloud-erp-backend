@@ -74,7 +74,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setPlatformApiId("11");
         jobTaskDTO.setApiName("管易云退款列表");
-        jobTaskDTO.setId(35L);
+        jobTaskDTO.setId("35");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(null);
         jobTaskDTO.setNextTime(null);

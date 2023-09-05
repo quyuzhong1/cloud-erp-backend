@@ -14,6 +14,26 @@ public class PdaProductDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class View {
         /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * sku名称
+         */
+        private String skuName;
+        /**
+         * spu编号
+         */
+        private String spuNo;
+        /**
+         * spu名称
+         */
+        private String spuName;
+        /**
+         * 图片
+         */
+        private String imageUrl;
+        /**
          * 条码
          */
         private String ean;
@@ -71,7 +91,7 @@ public class PdaProductDetailDTO implements Serializable {
         /**
          * bom父级sku
          */
-        private ParentSkuDTO parentSkuDTO;
+        private List<ParentSkuDTO> parentSkuDTOList;
     }
 
 
@@ -79,15 +99,28 @@ public class PdaProductDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class ParentSkuDTO {
         /**
-         * sku编号
+         * 父sku编号
          */
         private String skuNo;
         /**
          *
          * 子sku集合
          */
-        private List<String> childSkuList;
+        private List<SonSkuDTO> childSkuList;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SonSkuDTO {
+        /**
+         * 父sku编号
+         */
+        private String skuNo;
+        /**
+         * 数量
+         */
+        private Integer quantity;
     }
 
 }

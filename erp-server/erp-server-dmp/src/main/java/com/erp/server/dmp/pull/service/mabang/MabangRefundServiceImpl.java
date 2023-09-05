@@ -68,7 +68,7 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setPlatformApiId("7");
         jobTaskDTO.setApiName("管易云查询订单列表");
-        jobTaskDTO.setId(32L);
+        jobTaskDTO.setId("32");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(null);
         jobTaskDTO.setNextTime(null);

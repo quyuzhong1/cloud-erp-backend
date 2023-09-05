@@ -236,6 +236,7 @@
         SELECT
         DISTINCT
         ti.id,
+        ti.code,
         ti.in_warehouse_name,
         ti.out_warehouse_name,
         ti.approve_status,

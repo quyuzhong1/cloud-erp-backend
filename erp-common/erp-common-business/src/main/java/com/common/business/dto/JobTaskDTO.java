@@ -16,7 +16,7 @@ public class JobTaskDTO {
     /**
      * 主键id
      */
-    private Long id;
+    private String id;
 
     /**
      * 平台分类 PlatformCategoryEnum
@@ -27,11 +27,6 @@ public class JobTaskDTO {
      * 平台表id PlatformDictEnum
      */
     private String dictPlatform;
-
-    /**
-     * 业务类型 BusinessTypeEnum
-     */
-    private String businessType;
 
     /**
      * 间隙时间
@@ -87,7 +82,7 @@ public class JobTaskDTO {
     private String shopId;
 
     /**
-     * 单据类型
+     * 业务类型 BusinessTypeEnum
      */
     private String billType;
 

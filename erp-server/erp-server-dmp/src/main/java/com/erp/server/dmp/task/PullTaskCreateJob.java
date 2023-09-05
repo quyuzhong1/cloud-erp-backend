@@ -80,11 +80,12 @@ public class PullTaskCreateJob {
             XxlJobHelper.log("addShopTask 需要添加任务的店铺为空");
             return ReturnT.SUCCESS;
         }
-        shopInfoList.stream().forEach(shopInfoEntity -> {
+        shopInfoList.forEach(shopInfoEntity -> {
             try {
                 tbTaskTypeService.addTask(shopInfoEntity);
             } catch (Exception e) {
                 log.error("addShopTask 添加任务失败,店铺id:{}",shopInfoEntity.getId(),e);
+                XxlJobHelper.log("addShopTask 添加任务失败,店铺id:{}",shopInfoEntity.getId());
             }
         });
         XxlJobHelper.log("addShopTask 任务开始完成");

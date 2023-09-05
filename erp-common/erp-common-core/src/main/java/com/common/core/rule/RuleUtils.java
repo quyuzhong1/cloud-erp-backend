@@ -178,12 +178,15 @@ public class RuleUtils {
         List<ConditionElement> elementList = new ArrayList<>();
         elementList.add(element1);
         elementList.add(element2);
-        String expression =RuleUtils.getConditionExpression(elementList);
+        String expression = RuleUtils.getConditionExpression(elementList);
         System.out.println(expression);
         ExpressionParser parser = new SpelExpressionParser();
         Expression expression1 = parser.parseExpression(expression);
         Test test = new Test("24", "Amazon");
-        EvaluationContext context = new StandardEvaluationContext(test);
+        Map<String, Object> map = new HashMap<>();
+        map.put("skuNo","24");
+        map.put("platform","24");
+        EvaluationContext context = new StandardEvaluationContext(map);
         boolean result = expression1.getValue(context, Boolean.class);
 
         System.out.println("result====" + result);
