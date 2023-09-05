@@ -1520,10 +1520,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     public SoReturnInstockDTO.View pdaView(String id) {
         SoReturnInstockDTO.View view = this.view(id);
-        if (SourceTypeEnum.SO_RETURN.getCode().equals(view.getSourceType())) {
-            List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveService.listBySourceIds(Arrays.asList(view.getSourceId()));
+        if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(view.getSourceType())) {
+            List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveService.listByIds(Arrays.asList(view.getSourceId()));
             if (CollectionUtils.isNotEmpty(soReturnReceiveEntities)) {
-                SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveEntities.stream().filter(req -> req.getSourceId().equals(view.getSourceId())).findFirst().orElse(null);
+                SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveEntities.stream().filter(req -> req.getId().equals(view.getSourceId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(soReturnReceiveEntity)) {
                     view.setSourceId(soReturnReceiveEntity.getId());
                     view.setSourceCode(soReturnReceiveEntity.getCode());
