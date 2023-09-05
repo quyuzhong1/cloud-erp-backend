@@ -467,7 +467,6 @@ public class ShopDTO implements Serializable {
     @NoArgsConstructor
     public static class SetCostDTO  {
 
-        @NotNull(message = "id不能为空")
         private String id;
 
         @NotNull(message = "店铺不能为空")

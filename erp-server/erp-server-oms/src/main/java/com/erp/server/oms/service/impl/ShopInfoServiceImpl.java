@@ -14,6 +14,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopAuthEntity;
@@ -22,6 +23,7 @@ import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -122,12 +124,36 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shop.setChargeName(chargeName);
 
         Boolean result = this.save(shop);
+        if (result) {
+            //店铺客户信息
+            autoCreateShopCustomer(shop);
+        }
         return result;
+
+    }
+
+
+    /**
+     * 店铺保存成功后 自动创建客户
+     *
+     * @param shop
+     */
+    public void autoCreateShopCustomer(ShopInfoEntity shop) {
+        CustomerDTO.AddDTO customer = new CustomerDTO.AddDTO();
+        customer.setUseOrgId(shop.getSalesOrgId());
+        customer.setInnerOrgId(shop.getSalesOrgId());
+        //平台
+        customer.setPlatformType(shop.getDictPlatform());
+        String countryId = shop.getDictCountryCode();
+        if (StringUtils.isBlank(countryId)) {
+            countryId = DictValueEnum.GL.getCode();
+        }
 
     }
 
     /**
      * 检查店铺是否存在
+     *
      * @param id
      * @param dictPlatform
      * @param account
@@ -137,12 +163,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     private void checkIsExist(String id, String dictPlatform, String account, String dictAreaCode, List<String> dictCountryCodeList) {
         long count = this.lambdaQuery().ne(StringUtils.isNotBlank(id), ShopInfoEntity::getId, id).
                 eq(ShopInfoEntity::getDictPlatform, dictPlatform).
-                eq(ShopInfoEntity::getAccount,account).
-                eq(StringUtils.isNotBlank(dictAreaCode),ShopInfoEntity::getDictAreaCode,dictAreaCode).
-                in(CollectionUtils.isNotEmpty(dictCountryCodeList),ShopInfoEntity::getDictAreaCode).
+                eq(ShopInfoEntity::getAccount, account).
+                eq(StringUtils.isNotBlank(dictAreaCode), ShopInfoEntity::getDictAreaCode, dictAreaCode).
+                in(CollectionUtils.isNotEmpty(dictCountryCodeList), ShopInfoEntity::getDictAreaCode).
                 last("LIMIT 1").count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_SHOP_EXIST,dictPlatform,account);
+            throw new ServiceException(ApiError.ERROR_SHOP_EXIST, dictPlatform, account);
         }
 
     }
