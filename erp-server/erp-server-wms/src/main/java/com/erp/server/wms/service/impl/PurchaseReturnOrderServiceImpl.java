@@ -1781,6 +1781,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                         if (alreadyReturnQty >= stockInQty) {
                             continue;
                         }
+
                         PurchaseReturnOrderDetailDTO.AddDTO addSkuDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
                         addSkuDTO.setPurchaseOrderDetailId(entity.getId());
                         addSkuDTO.setRemark(addDTO.getRemark());

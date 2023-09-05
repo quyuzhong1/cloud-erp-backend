@@ -111,7 +111,7 @@ public class PdaPoInStockController extends BaseController {
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult<PoInstockDTO.ViewDTO> view(@RequestParam("id") String id) {
-        PoInstockDTO.ViewDTO dto = poInstockService.view(id);
+        PoInstockDTO.ViewDTO dto = poInstockService.pdaView(id);
         return success(dto);
     }
 

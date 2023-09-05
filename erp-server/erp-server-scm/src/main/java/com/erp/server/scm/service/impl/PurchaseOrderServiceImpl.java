@@ -2143,8 +2143,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             updateDTO.setReceiveQty(receiveQty);
             updateDTO.setUnReceiveQty(unReceiveQty);
             updateDTO.setHasStockInQty(hasStockInQty);
-            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(m.get(index.get()).getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
-            updateDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
+            m.forEach(obj -> {
+                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+                updateDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
+            });
             index.getAndSet(index.get() + 1);
             return updateDTO;
         })));
