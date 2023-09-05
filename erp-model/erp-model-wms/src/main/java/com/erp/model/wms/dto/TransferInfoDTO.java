@@ -462,7 +462,7 @@ public class TransferInfoDTO implements Serializable {
         /**
          * 产品信息
          */
-        private List<SoReturnReceiveDTO.PdaItemDTO> itemList;
+        private List<TransferInfoDTO.PdaItemDTO> itemList;
     }
 
     /**
@@ -491,9 +491,9 @@ public class TransferInfoDTO implements Serializable {
         private String productName;
 
         /**
-         * 收货数量
+         * 数量
          */
-        private Integer receiveQty;
+        private Integer qty;
     }
 
     /**
