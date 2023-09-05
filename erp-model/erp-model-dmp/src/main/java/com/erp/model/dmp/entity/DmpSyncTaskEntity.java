@@ -122,11 +122,11 @@ public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
     public static final String SOURCE_CODE = "source_code";
 
     public <R extends UniqueDto> DmpSyncTaskEntity(String category, String platform, String business, String topic, String tag, R item) {
-        this.targetPlatformName = platform;
+        this.targetPlatformName = category;
         this.mqTopic = topic;
         this.mqTag = tag;
         this.mqData = JSONUtil.toJsonStr(item);
-        this.sourcePlatformName = category;
+        this.sourcePlatformName = platform;
         this.sourceType = business;
         this.sourceId = item.getUniqueId();
         this.sourceCode = item.getUniqueId();

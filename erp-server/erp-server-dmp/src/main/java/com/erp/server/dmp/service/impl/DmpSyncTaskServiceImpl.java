@@ -59,7 +59,7 @@ public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, 
     }
 
     @Override
-    public void saveOrUpdateDmpSyncTask(DmpSyncTaskEntity dmpSyncTaskEntity) {
+    public String saveOrUpdateDmpSyncTask(DmpSyncTaskEntity dmpSyncTaskEntity) {
         DmpSyncTaskEntity found = lambdaQuery()
                 .eq(DmpSyncTaskEntity::getSourceType, dmpSyncTaskEntity.getSourceType())
                 .eq(DmpSyncTaskEntity::getSourceId, dmpSyncTaskEntity.getSourceId())
@@ -74,6 +74,7 @@ public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, 
             dmpSyncTaskEntity.setId(found.getId());
         }
         this.saveOrUpdate(dmpSyncTaskEntity);
+        return dmpSyncTaskEntity.getId();
     }
 
     /**

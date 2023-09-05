@@ -33,7 +33,7 @@ public interface DmpSyncTaskService extends SuperService<DmpSyncTaskEntity> {
      * @date: 2023/6/30 15:40
      * @param dmpSyncTaskEntity
      */
-    void saveOrUpdateDmpSyncTask(DmpSyncTaskEntity dmpSyncTaskEntity);
+    String saveOrUpdateDmpSyncTask(DmpSyncTaskEntity dmpSyncTaskEntity);
 
     /**
      * 新增同步金蝶退货单到wms退货入库单的任务

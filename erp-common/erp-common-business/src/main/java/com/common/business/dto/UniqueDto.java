@@ -14,7 +14,7 @@ import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
-public class UniqueDto implements Serializable {
+public class UniqueDto extends DmpSyncTaskIdDTO implements Serializable {
 
     /**
      * 唯一标识 必填
@@ -24,5 +24,5 @@ public class UniqueDto implements Serializable {
     /**
      * 平台名称
      */
-    private String platformSign;
+    private String platform;
 }

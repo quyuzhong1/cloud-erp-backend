@@ -123,6 +123,12 @@ public class PlatformApiTaskEntity extends BaseEntity<PlatformApiTaskEntity> {
     private String platformApiId;
 
     /**
+     * 平台分类
+     */
+    @TableField(value = "platform_category")
+    private String platformCategory;
+
+    /**
      * api参数
      */
 

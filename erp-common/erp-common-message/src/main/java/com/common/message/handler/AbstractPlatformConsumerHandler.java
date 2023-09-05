@@ -1,6 +1,8 @@
 package com.common.message.handler;
 
+import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.core.controller.vo.ApiResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -11,21 +13,34 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
-public abstract class AbstractPlatformConsumerHandler<T> implements RocketMQListener<T> {
+public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO> implements RocketMQListener<T> {
 
     @Override
     public void onMessage(T ext) {
         try {
-            handle(ext);
+            ApiResult handle = handle(ext);
+            if (!handle.isSuccess()) {
+                updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncKingdeeStatusEnum.FAILED_SYNC, handle.getMsg());
+                return;
+            }
+            updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncKingdeeStatusEnum.SUCCESS_SYNC, SyncKingdeeStatusEnum.SUCCESS_SYNC.getName());
         }catch (Exception e) {
+            updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncKingdeeStatusEnum.FAILED_SYNC, e.getMessage() != null ? e.getMessage() : e.getCause().toString());
             log.error("平台数据消费异常", e);
         }
     }
 
     /**
+     * 更新同步任务状态
+     * @param syncTaskId
+     * @param code
+     */
+    public abstract void updateSyncTaskStatus(String syncTaskId, SyncKingdeeStatusEnum code, String msg);
+
+    /**
      * 处理平台数据
      * @param ext
      */
-    public abstract void handle(T ext);
+    public abstract ApiResult handle(T ext);
 
 }

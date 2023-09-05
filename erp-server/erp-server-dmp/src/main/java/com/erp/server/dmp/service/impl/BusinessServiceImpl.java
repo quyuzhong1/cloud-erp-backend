@@ -4,10 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.dto.CleanBaseDTO;
-import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformDataDTO;
-import com.common.business.dto.UniqueDto;
+import com.common.business.dto.*;
 import com.common.business.handler.BusinessHandlerRegistry;
 import com.common.business.handler.IBusinessHandler;
 import com.common.core.utils.MapUtil;
@@ -65,29 +62,28 @@ public class BusinessServiceImpl {
         if (handler != null) {
             PlatformDataDTO<T, R> platformData = handler.pullHandle(data);
             // 保存mongo 并发送mq
-            String tag = StrUtil.format("{}_{}_{}", category, platform, business);
-            List<R> toMqList = compareAndSaveMongo(platformData, RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,tag);
-            // 保存pgsql任务表
-            saveDmpTask(toMqList, category, platform, business, RocketMqTopic.PLATFORM_PULL_DATA_TOPIC);
+            List<R> toMqList = compareAndSaveMongo(category, platform, business, platformData, RocketMqTopic.PLATFORM_PULL_DATA_TOPIC);
         } else {
             // Handle the case when no handler is found
             throw new RuntimeException("No handler found for category: " + category + ", platform: " + platform + ", business: " + business);
         }
     }
 
-    private <R extends UniqueDto, T extends CleanBaseDTO> List<R> compareAndSaveMongo(PlatformDataDTO<T, R> platformData, String topic, String tag) {
+    private <R extends UniqueDto, T extends CleanBaseDTO> List compareAndSaveMongo(String category, String platform, String business, PlatformDataDTO<T, R> platformData, String topic) {
         // 保存数据到mongodb 并推送到mq
         List<T> sourceData = platformData.getSourceData();
         if(CollectionUtil.isEmpty(sourceData)){
             return Collections.EMPTY_LIST;
         }
         List<T> insertList = new ArrayList<>();
-        List<T> pushToMqList = new ArrayList<>();
+        List<R> pushToMqList = new ArrayList<>();
         Class<T> tClass = (Class<T>) sourceData.get(0).getClass();
         List<String> uniqueIds = new ArrayList<>();
+        String key = StrUtil.format("{}_{}_{}", category, platform, business);
+        String tag = key + "_tag";
         for (T item : sourceData) {
             OrderMongoDTO orderMongoDTO =  OrderMongoDTO.getUniqId(item.getUniqueId());
-            List<T> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, "", tClass);
+            List<T> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, key, tClass);
             item.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             item.setDownloadTime(LocalDateTime.now());
             if(CollectionUtil.isEmpty(mongoData)){
@@ -103,44 +99,48 @@ public class BusinessServiceImpl {
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(item), MapUtil.class);
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getUniqueId());
             mongoService.updateMongoData(updateDto, mapUtil, tag, tClass);
+            uniqueIds.add(item.getUniqueId());
         }
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, tag);
-        }
-        if (CollectionUtil.isEmpty(pushToMqList)){
-            log.warn("平台数据下载 tag =【{}】, 无需推送到MQ dto={}", tag, JSONUtil.toJsonStr(platformData));
-            return Collections.EMPTY_LIST;
         }
         List<R> targetData = platformData.getTargetData();
         for (R targetDatum : targetData) {
             uniqueIds.add(targetDatum.getUniqueId());
         }
-        targetData.stream().filter(item -> uniqueIds.contains(item.getUniqueId())).forEach(item -> {
-            pushToMqList.add((T) item);
-        });
+        targetData.stream().filter(item -> uniqueIds.contains(item.getUniqueId())).forEach(pushToMqList::add);
+        if (CollectionUtil.isEmpty(pushToMqList)){
+            log.warn("平台数据下载 tag =【{}】, 无需推送到MQ dto={}", tag, JSONUtil.toJsonStr(platformData));
+            return Collections.EMPTY_LIST;
+        }
         // 异步推送到MQ
         pushToMqList.stream().peek(msg ->{
+            String dmpTaskId = dmpSyncTaskService.saveOrUpdateDmpSyncTask(new DmpSyncTaskEntity(category, platform, business, RocketMqTopic.DMP_ERP_ORDER_TOPIC, tag+"_tag", msg));
+            msg.setDmpSyncTaskId(dmpTaskId);
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, tag, msg, msg.getUniqueId());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送中台 MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
+            String modelTaskId = dmpSyncTaskService.saveOrUpdateDmpSyncTask(new DmpSyncTaskEntity(category, platform, business, topic, tag+"_tag", msg));
+            msg.setDmpSyncTaskId(modelTaskId);
             SendResult cleanResult = mqProducerService.syncClassMsgByDelayLevel(topic, tag, msg, msg.getUniqueId());
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送业务模块 MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
-        return (List<R>) pushToMqList;
+
+        return pushToMqList;
     }
 
-    private <R extends UniqueDto> void saveDmpTask(List<R> taskList, String category, String platform, String business, String topic) {
-        if (CollectionUtil.isEmpty(taskList)){
-            return;
-        }
-        String tag = StrUtil.format("{}_{}_{}", category, platform, business);
-        taskList.stream().forEach(item -> {
-            dmpSyncTaskService.saveOrUpdateDmpSyncTask(new DmpSyncTaskEntity(category, platform, business, topic, tag, item));
-        });
-    }
+//    private <R extends UniqueDto> void saveDmpTask(List<R> taskList, String category, String platform, String business, String topic) {
+//        if (CollectionUtil.isEmpty(taskList)){
+//            return;
+//        }
+//        String tag = StrUtil.format("{}_{}_{}", category, platform, business);
+//        taskList.stream().forEach(item -> {
+//            dmpSyncTaskService.saveOrUpdateDmpSyncTask(new DmpSyncTaskEntity(category, platform, business, topic, tag+"_tag", item));
+//        });
+//    }
 
 
     public <T extends CleanBaseDTO,R extends UniqueDto> void pushProcessBusiness(String category, String platform, String business, JobTaskDTO data) {

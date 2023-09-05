@@ -20,7 +20,7 @@ import javax.annotation.Resource;
  * @Author Cloud
  * @Date 2023/9/4 10:19
  **/
-@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PUSH_DATA_TOPIC, selectorExpression = "oms_amazon_order_tag",
+@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PUSH_DATA_TOPIC, selectorExpression = "OMS_amazon_order_tag",
         consumerGroup = RocketMqConsumerGroup.SYNC_AMAZON_ORDER_FROM_OMS,
         consumeMode = ConsumeMode.ORDERLY)
 public class AmazonOrderPushConsumer extends AbstractPlatformConsumerHandler<DmpSyncMqDTO> {
@@ -32,11 +32,13 @@ public class AmazonOrderPushConsumer extends AbstractPlatformConsumerHandler<Dmp
 
 
     @Override
-    public void handle(DmpSyncMqDTO ext) {
+    public void updateSyncTaskStatus(String id, SyncKingdeeStatusEnum code, String msg) {
+        dmpSyncTaskService.updateSyncInfo(id, code.getCode(), msg);
+    }
+
+    @Override
+    public ApiResult handle(DmpSyncMqDTO ext) {
         // 调用亚马逊订单推送服务
-        ApiResult handle = pushOrderService.handle(ext);
-        // 根据返回结果更新任务状态
-        String status = (200 == handle.getCode() ? SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode() : SyncKingdeeStatusEnum.FAILED_SYNC.getCode());
-        dmpSyncTaskService.updateSyncInfo(ext.getDmpSyncTaskId(), status, handle.getMsg());
+        return pushOrderService.handle(ext);
     }
 }
