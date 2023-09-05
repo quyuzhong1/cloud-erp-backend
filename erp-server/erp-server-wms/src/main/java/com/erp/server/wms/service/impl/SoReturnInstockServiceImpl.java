@@ -1484,7 +1484,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 //数量
                 Integer qty = childValue.stream().map(MachineSubComponentsEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
                 addDetailDTO.setReturnQty(qty);
-                addDetailDTO.setReplenishQty(qty);
+                addDetailDTO.setDeductAmountQty(qty);
                 //来源单据明细id
                 String sourceIds = childValue.stream().map(MachineSubComponentsEntity::getId).collect(Collectors.joining(","));
                 addDetailDTO.setSourceDetailId(sourceIds);
