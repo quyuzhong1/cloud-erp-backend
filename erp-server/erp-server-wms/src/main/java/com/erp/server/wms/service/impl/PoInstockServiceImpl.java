@@ -1620,7 +1620,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             List<PoInstockDetailEntity> detailEntities = poInstockDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
             List<PoInstockDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, PoInstockDTO.PdaItemDTO.class);
             record.setDetailCount(itemDTOList.size());
-            if (CollectionUtils.isEmpty(qcInfoList)) {
+            if (CollectionUtils.isEmpty(qcInfoList) || CollectionUtils.isEmpty(resultList)) {
                 record.setQcStatus(PdaQclStatusEnum.WAIT_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.WAIT_QC.getName());
             } else if (resultList.size() == detailEntities.size()) {
