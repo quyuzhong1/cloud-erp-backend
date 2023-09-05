@@ -65,7 +65,6 @@ public class AssigneeStrategyTypeService {
         // 如果所选上级不存在, 则继续向上查找
         ChargeSuperiorEnum finalChargeSuperior = chargeSuperior;
         String userId = superList.stream()
-                .sorted(Comparator.comparing(UserSuperiorDTO::getLevel))
                 .filter(superior -> superior.getLevel() >= finalChargeSuperior.getCode())
                 .min(Comparator.comparing(UserSuperiorDTO::getLevel))
                 .map(UserSuperiorDTO::getUserId)
