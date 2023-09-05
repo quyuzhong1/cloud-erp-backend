@@ -2,11 +2,11 @@ package com.erp.server.oms.controller.feign;
 
 
 import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.server.oms.service.ShopSysUserAuthService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,9 +33,9 @@ public class ShopSysUserAuthFeignController extends BaseController {
      * @return
      */
     @PostMapping("/listShopSysUserAuthByUserIdList")
-    public ApiResult<List<ShopSysUserAuthDTO.ViewDTO>> listShopSysUserAuthByUserIdList(List<String> userIdList) {
+    public List<ShopSysUserAuthDTO.ViewDTO> listShopSysUserAuthByUserIdList(@RequestBody List<String> userIdList) {
         List<ShopSysUserAuthDTO.ViewDTO> list = shopSysUserAuthService.listShopSysUserAuthByUserIdList(userIdList);
-        return success(list);
+        return list;
     }
 
 }

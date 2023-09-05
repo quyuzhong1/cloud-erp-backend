@@ -3,6 +3,7 @@ package com.erp.rpc.oms.feign;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -14,5 +15,5 @@ public interface ShopSysUserAuthFeign {
      * @return
      */
     @PostMapping("feign/shopSysUserAuth/listShopSysUserAuthByUserIdList")
-    List<ShopSysUserAuthDTO.ViewDTO> listShopSysUserAuthByUserIdList(List<String> userIdList);
+    List<ShopSysUserAuthDTO.ViewDTO> listShopSysUserAuthByUserIdList(@RequestBody List<String> userIdList);
 }
