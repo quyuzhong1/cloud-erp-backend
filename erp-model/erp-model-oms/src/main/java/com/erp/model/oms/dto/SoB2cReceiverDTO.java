@@ -114,18 +114,18 @@ public class SoB2cReceiverDTO implements Serializable {
         private String secondAddress;
 
         /**
-        * 城市id
-        */
-        @NotBlank(message = "城市id不能为空")
-        @Size(max = 19,message = "城市id最大长度不能超过19位")
-        private String cityId;
+         * 城市名称
+         */
+        @NotBlank(message = "城市名称不能为空")
+        @Size(max = 50,message = "城市名称最大长度不能超过50位")
+        private String cityName;
 
         /**
-        * 国家id
-        */
-        @NotBlank(message = "国家id不能为空")
-        @Size(max = 19,message = "国家id最大长度不能超过19位")
-        private String countryId;
+         * 国家名称
+         */
+        @NotBlank(message = "国家名称不能为空")
+        @Size(max = 50,message = "国家名称最大长度不能超过50位")
+        private String countryName;
 
         /**
         * 收货人名称

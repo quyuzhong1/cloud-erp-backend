@@ -35,7 +35,6 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -1159,24 +1158,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         data.setApproveStatusName(data.getApproveStatus().getName());
         data.setBillStatusName(SoB2cBillStatusEnum.getName(data.getBillStatus()));
-        //城市、国家名称
-        SoB2cReceiverDTO.ViewDTO receiverDTO = data.getReceiverDTO();
-        if (ObjectUtils.isNotEmpty(receiverDTO)) {
-            if (ObjectUtils.isNotEmpty(receiverDTO.getCityId())) {
-                DictCityEntity dictCityEntity = sysUserFeign.getCityById(receiverDTO.getCityId());
-                if (ObjectUtils.isEmpty(dictCityEntity)) {
-                    throw new ServiceException(ApiError.ERROR_CITY_NOT_EXIST);
-                }
-                receiverDTO.setCityName(dictCityEntity.getName());
-            }
-            if (ObjectUtils.isNotEmpty(receiverDTO.getCountryId())) {
-                DictCountryEntity dictCountryEntity = sysUserFeign.getCountryById(receiverDTO.getCountryId());
-                if (ObjectUtils.isEmpty(dictCountryEntity)) {
-                    throw new ServiceException(ApiError.ERROR_COUNTRY_NOT_EXIST);
-                }
-                receiverDTO.setCountryName(dictCountryEntity.getNameCn());
-            }
-        }
     }
 
     /**

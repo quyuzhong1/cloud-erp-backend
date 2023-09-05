@@ -32,7 +32,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/customerB2c")
-public class CustomerB2cInfoController extends BaseController {
+public class CustomerB2cController extends BaseController {
 
     @Resource
     private CustomerB2cService customerB2cService;
