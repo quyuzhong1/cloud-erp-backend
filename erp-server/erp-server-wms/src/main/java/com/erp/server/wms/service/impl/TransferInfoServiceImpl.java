@@ -892,7 +892,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         for (TransferInfoDTO.PdaListDTO record : records) {
             record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
             List<TransferInfoDetailEntity> detailEntities = transferInfoDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
-            List<SoReturnReceiveDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, SoReturnReceiveDTO.PdaItemDTO.class);
+            List<TransferInfoDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, TransferInfoDTO.PdaItemDTO.class);
             record.setDetailCount(itemDTOList.size());
             record.setItemList(itemDTOList);
         }
