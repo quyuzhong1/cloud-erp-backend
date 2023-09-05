@@ -71,7 +71,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         jobTaskDTO.setApiCode(PlatformApiEnum.ORDER_GET_ORDER_LIST.getTaskName());
         jobTaskDTO.setPlatformApiId("5");
         jobTaskDTO.setApiName("获取订单列表");
-        jobTaskDTO.setId(30L);
+        jobTaskDTO.setId("30");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.now().minusHours(2));
         jobTaskDTO.setNextTime(LocalDateTime.now());

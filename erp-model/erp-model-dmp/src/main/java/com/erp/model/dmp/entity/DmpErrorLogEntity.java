@@ -28,7 +28,7 @@ public class DmpErrorLogEntity implements Serializable {
      * 任务表id
      */
     @TableField(value = "task_id")
-    private Long taskId;
+    private String taskId;
 
     /**
      * 请求参数
@@ -57,7 +57,7 @@ public class DmpErrorLogEntity implements Serializable {
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
-    public DmpErrorLogEntity(Long taskId, String params, String returnMsg, String errorMsg) {
+    public DmpErrorLogEntity(String taskId, String params, String returnMsg, String errorMsg) {
         this.taskId = taskId;
         this.params = params;
         this.returnMsg = returnMsg;

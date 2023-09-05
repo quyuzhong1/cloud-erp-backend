@@ -74,7 +74,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         jobTaskDTO.setApiCode(PlatformApiEnum.SAL_SALEORDER.getTaskName());
         jobTaskDTO.setPlatformApiId("5");
         jobTaskDTO.setApiName("获取订单列表");
-        jobTaskDTO.setId(30L);
+        jobTaskDTO.setId("30");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.now().minusDays(5));
         jobTaskDTO.setNextTime(LocalDateTime.now());

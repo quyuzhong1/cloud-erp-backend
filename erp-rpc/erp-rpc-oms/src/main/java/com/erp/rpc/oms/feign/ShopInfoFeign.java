@@ -28,5 +28,5 @@ public interface ShopInfoFeign {
      * @return
      */
     @PostMapping("feign/shop/updateShopInfoById")
-    Boolean updateShopInfoById(ShopInfoEntity shopInfoEntity);
+    Boolean updateShopInfoById(@RequestBody ShopInfoEntity shopInfoEntity);
 }

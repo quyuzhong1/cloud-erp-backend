@@ -61,7 +61,7 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeEccS
         jobTaskDTO.setApiCode(PlatformApiEnum.ECC_SHOP.getTaskName());
         jobTaskDTO.setPlatformApiId("5");
         jobTaskDTO.setApiName("获取订单列表");
-        jobTaskDTO.setId(30L);
+        jobTaskDTO.setId("30");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.parse("2021-01-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setNextTime(LocalDateTime.parse("2023-05-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));

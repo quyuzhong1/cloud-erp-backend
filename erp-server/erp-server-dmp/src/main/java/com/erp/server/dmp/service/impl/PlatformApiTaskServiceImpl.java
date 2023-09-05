@@ -64,7 +64,7 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
         List<PlatformApiTaskEntity> taskEntity = lambdaQuery()
                 .eq(PlatformApiTaskEntity::getShopId, dto.getShopId())
                 .eq(PlatformApiTaskEntity::getDictPlatform, dto.getDictPlatform())
-                .eq(PlatformApiTaskEntity::getDisable, Boolean.FALSE)
+                .eq(PlatformApiTaskEntity::getDisabled, Boolean.FALSE)
                 .list();
         // 如果存在任务，删除任务
         if(CollectionUtil.isNotEmpty(taskEntity)){
@@ -73,7 +73,7 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
         // 根据平台code查询需要添加的任务
         List<PlatformApiTaskEntity> taskList = lambdaQuery()
                 .eq(PlatformApiTaskEntity::getDictPlatform, dto.getDictPlatform())
-                .eq(PlatformApiTaskEntity::getDisable, Boolean.FALSE)
+                .eq(PlatformApiTaskEntity::getDisabled, Boolean.FALSE)
                 .list();
         // 添加平台任务记录，时间为当前时间，下次执行时间为当前时间加上间隔时间，状态为待执行
         if(CollectionUtil.isEmpty(taskList)){

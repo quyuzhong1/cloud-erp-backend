@@ -39,7 +39,7 @@ public class GyyPullServiceTest {
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setPlatformApiId("7");
         jobTaskDTO.setApiName("管易云查询订单列表");
-        jobTaskDTO.setId(32L);
+        jobTaskDTO.setId("32");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.now().minusHours(1));
         jobTaskDTO.setNextTime(LocalDateTime.now());
@@ -63,7 +63,7 @@ public class GyyPullServiceTest {
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setPlatformApiId("7");
         jobTaskDTO.setApiName("管易云查询订单列表");
-        jobTaskDTO.setId(32L);
+        jobTaskDTO.setId("32");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.of(2022, 4, 8, 8, 0));
         jobTaskDTO.setNextTime(LocalDateTime.of(2022, 4, 9, 8, 0));
@@ -87,7 +87,7 @@ public class GyyPullServiceTest {
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setPlatformApiId("7");
         jobTaskDTO.setApiName("管易云查询订单列表");
-        jobTaskDTO.setId(32L);
+        jobTaskDTO.setId("32");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.of(2023, 3, 26, 0, 0));
         jobTaskDTO.setNextTime(LocalDateTime.of(2023, 3, 26, 23, 0));
@@ -112,7 +112,7 @@ public class GyyPullServiceTest {
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setPlatformApiId("7");
         jobTaskDTO.setApiName("管易云查询订单列表");
-        jobTaskDTO.setId(32L);
+        jobTaskDTO.setId("32");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.of(2022, 4, 8, 8, 0));
         jobTaskDTO.setNextTime(LocalDateTime.of(2022, 4, 8, 10, 0));
@@ -136,7 +136,7 @@ public class GyyPullServiceTest {
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setPlatformApiId("7");
         jobTaskDTO.setApiName("管易云查询订单列表");
-        jobTaskDTO.setId(32L);
+        jobTaskDTO.setId("32");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.now().minusHours(1));
         jobTaskDTO.setNextTime(LocalDateTime.now());
@@ -159,7 +159,7 @@ public class GyyPullServiceTest {
         jobTaskDTO.setApiCode(PlatformApiEnum.ECC_SHOP.getTaskName());
         jobTaskDTO.setPlatformApiId("5");
         jobTaskDTO.setApiName("获取订单列表");
-        jobTaskDTO.setId(30L);
+        jobTaskDTO.setId("30");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.parse("2021-01-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setNextTime(LocalDateTime.parse("2023-05-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));

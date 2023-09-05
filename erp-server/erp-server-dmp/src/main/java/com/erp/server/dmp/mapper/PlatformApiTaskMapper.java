@@ -17,7 +17,7 @@ public interface PlatformApiTaskMapper extends BaseMapper<PlatformApiTaskEntity>
 
     List<JobTaskDTO> selectApiTask(@Param("localTime") LocalDateTime localTime);
 
-    void updateTaskTypeState(@Param("jobTaskDTOList") List<JobTaskDTO> jobTaskDTOList, @Param("state") int state);
+    void updateTaskTypeState(@Param("jobTaskDTOList") List<JobTaskDTO> jobTaskDTOList, @Param("status") Integer state);
 
     void batchInsert(@Param("taskEntityList") List<PlatformApiTaskEntity> taskEntityList);
 

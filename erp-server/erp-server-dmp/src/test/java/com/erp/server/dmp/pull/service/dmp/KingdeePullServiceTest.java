@@ -46,7 +46,7 @@ public class KingdeePullServiceTest {
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setPlatformApiId("7");
         jobTaskDTO.setApiName("管易云查询订单列表");
-        jobTaskDTO.setId(32L);
+        jobTaskDTO.setId("32");
         jobTaskDTO.setLastTime(LocalDateTime.parse("2022-12-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setNextTime(LocalDateTime.parse("2022-12-31 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setDictPlatform("1");
@@ -68,7 +68,7 @@ public class KingdeePullServiceTest {
         jobTaskDTO.setApiCode(PlatformApiEnum.ECC_SHOP.getTaskName());
         jobTaskDTO.setPlatformApiId("5");
         jobTaskDTO.setApiName("获取订单列表");
-        jobTaskDTO.setId(30L);
+        jobTaskDTO.setId("30");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.parse("2021-01-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setNextTime(LocalDateTime.parse("2023-05-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
@@ -92,7 +92,7 @@ public class KingdeePullServiceTest {
         jobTaskDTO.setApiCode(PlatformApiEnum.SAL_OUTSTOCK.getTaskName());
         jobTaskDTO.setPlatformApiId("5");
         jobTaskDTO.setApiName("获取订单列表");
-        jobTaskDTO.setId(30L);
+        jobTaskDTO.setId("30");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.parse("2023-07-13 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setNextTime(LocalDateTime.parse("2023-07-14 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
@@ -117,7 +117,7 @@ public class KingdeePullServiceTest {
         jobTaskDTO.setApiCode(PlatformApiEnum.SAL_RETURNSTOCK.getTaskName());
         jobTaskDTO.setPlatformApiId("5");
         jobTaskDTO.setApiName("获取订单列表");
-        jobTaskDTO.setId(30L);
+        jobTaskDTO.setId("30");
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.parse("2023-03-27 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setNextTime(LocalDateTime.parse("2023-03-28 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));

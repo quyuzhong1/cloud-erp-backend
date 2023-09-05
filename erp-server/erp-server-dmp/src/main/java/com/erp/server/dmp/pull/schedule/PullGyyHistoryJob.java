@@ -51,7 +51,7 @@ public class PullGyyHistoryJob {
 
     public static JobTaskDTO getJobTaskDTO(PlatformApiTaskEntity entity, String taskName) {
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setId(Long.parseLong(entity.getId()));
+        jobTaskDTO.setId(entity.getId());
         jobTaskDTO.setDictPlatform(entity.getDictPlatform());
         jobTaskDTO.setIntervalTime(entity.getIntervalTime());
         jobTaskDTO.setLastTime(entity.getLastTime());

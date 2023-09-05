@@ -47,7 +47,7 @@ public class PlatformDataThread {
         dto.setJobTaskDTO(jobTaskDTO);
         try {
             log.info("发起异步调用平台【{}】店铺【{}】任务【{}】", dto.getJobTaskDTO().getDictPlatform(),dto.getJobTaskDTO().getShopName(), dto.getJobTaskDTO().getApiName());
-            businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(),jobTaskDTO.getDictPlatform(),jobTaskDTO.getBusinessType(), jobTaskDTO);
+            businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(),jobTaskDTO.getBillType(), jobTaskDTO);
             Boolean aBoolean = platformApiTaskService.updateTaskStateById(jobTaskDTO, 0);
             if (!aBoolean) {
                 throw new RuntimeException("修改任务下次执行时间失败！");

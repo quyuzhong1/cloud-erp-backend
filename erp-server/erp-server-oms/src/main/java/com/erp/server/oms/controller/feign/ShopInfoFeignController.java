@@ -54,7 +54,7 @@ public class ShopInfoFeignController extends BaseController {
      * @return
      */
     @PostMapping("/updateShopInfoById")
-    Boolean updateShopInfoById(ShopInfoEntity shopInfoEntity){
+    Boolean updateShopInfoById(@RequestBody ShopInfoEntity shopInfoEntity){
         return shopInfoService.updateShopInfoById(shopInfoEntity);
     }
 
