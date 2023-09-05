@@ -40,7 +40,7 @@ public class PdaSoReturnReceiveController extends BaseController {
      **/
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "receive_user_id",
+            tableField = "create_user_id",
             menuCode = "wms:pdaSoReturnReceive:paging",
             tableAlias = "srr"
     )
@@ -58,7 +58,7 @@ public class PdaSoReturnReceiveController extends BaseController {
      **/
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "receive_user_id",
+            tableField = "create_user_id",
             menuCode = "wms:pdaSoReturnReceive:paging",
             tableAlias = "srr"
     )
