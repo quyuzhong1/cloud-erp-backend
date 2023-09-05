@@ -811,7 +811,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         for (InventoryDTO.PdaInventoryWarehouseDTO warehouseDTO : warehouseDTOList) {
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(req -> req.getId().equals(warehouseDTO.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             warehouseDTO.setWarehouseName(updateDTO.getName());
-            List<InventoryDTO.PdaInventoryWarehouseLocationDTO> locationDTOList = warehouseLocationDTOList.stream().filter(req -> req.getWarehouseId().equals(warehouseDTO.getWarehouseId())).collect(Collectors.toList());
+            List<InventoryDTO.PdaInventoryWarehouseLocationDTO> locationDTOList = warehouseLocationDTOList.stream().filter(req -> req.getWarehouseId().equals(warehouseDTO.getWarehouseId()) && req.getRealQty() > 0).collect(Collectors.toList());
             for (InventoryDTO.PdaInventoryWarehouseLocationDTO locationDTO : locationDTOList) {
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(locationDTO.getWarehouseId()) && req.getCode().equals(locationDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
                 locationDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
