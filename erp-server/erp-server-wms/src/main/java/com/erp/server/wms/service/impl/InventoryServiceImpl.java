@@ -844,12 +844,15 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         pdaInventorySearch.setSpuNo(skuVO.getSpuNo());
         pdaInventorySearch.setSpuName(skuVO.getSpuName());
         pdaInventorySearch.setVariantProperty(skuVO.getVariantProperty());
+        pdaInventorySearch.setImagesUrl(skuVO.getSkuImagesUrl());
         List<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOList = baseMapper.listInventoryWarehouseByParam(paramDTO);
         List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseLocationDTOList = baseMapper.listInventoryWarehouseLocationByParam(paramDTO);
-
         List<String> warehouseIds = warehouseDTOList.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
         for (InventoryDTO.PdaInventoryWarehouseDTO warehouseDTO : warehouseDTOList) {
+            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(req -> req.getId().equals(warehouseDTO.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+            warehouseDTO.setWarehouseName(updateDTO.getName());
             List<InventoryDTO.PdaInventoryWarehouseLocationDTO> locationDTOList = warehouseLocationDTOList.stream().filter(req -> req.getWarehouseId().equals(warehouseDTO.getWarehouseId())).collect(Collectors.toList());
             for (InventoryDTO.PdaInventoryWarehouseLocationDTO locationDTO : locationDTOList) {
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(locationDTO.getWarehouseId()) && req.getCode().equals(locationDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());

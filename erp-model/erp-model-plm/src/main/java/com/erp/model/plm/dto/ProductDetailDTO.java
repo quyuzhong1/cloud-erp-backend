@@ -196,5 +196,10 @@ public class ProductDetailDTO implements Serializable {
          */
         private String skuNo;
 
+        /**
+         * 状态
+         */
+        private Integer status;
+
     }
 }
