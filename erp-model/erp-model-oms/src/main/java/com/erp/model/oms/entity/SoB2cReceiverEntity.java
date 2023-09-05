@@ -1,13 +1,13 @@
 package com.erp.model.oms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -65,15 +65,15 @@ public class SoB2cReceiverEntity extends BaseEntity<SoB2cReceiverEntity> {
     @TableField("second_address")
         private String secondAddress;
     /**
-    * 城市id
+    * 城市名称
     */
-    @TableField("city_id")
-        private String cityId;
+    @TableField("city_name")
+        private String cityName;
     /**
-    * 国家id
+    * 国家名称
     */
-    @TableField("country_id")
-        private String countryId;
+    @TableField("country_name")
+        private String countryName;
     /**
     * 收货人名称
     */
