@@ -34,6 +34,10 @@ public class PdaProductDetailDTO implements Serializable {
          */
         private String imageUrl;
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+        /**
          * 条码
          */
         private String ean;
