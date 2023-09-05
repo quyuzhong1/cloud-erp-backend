@@ -706,7 +706,7 @@ public class SoReturnReceiveDTO {
         /**
          * 收货数量
          */
-        private Integer receiveQty;
+        private Integer qty;
     }
 
     /**
