@@ -215,6 +215,10 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
      * 解析订单数据
      **/
     public DmpTransferInfoDTO initOrderInfoEntity(KingdeeTransferDirectEntity entity) {
+        // 过滤小隼和优至胜的订单
+        if (StrUtil.isNotBlank(entity.getFSaleOrgIdFName()) && (entity.getFSaleOrgIdFName().contains("小隼") || entity.getFSaleOrgIdFName().contains("优至胜"))) {
+            return null;
+        }
         //此处不跳过订单，避免订单修改仓库编码后，数据无法同步
         DmpTransferInfoDTO resultEntity = new DmpTransferInfoDTO();
         resultEntity.setCode(entity.getFBillNo());
