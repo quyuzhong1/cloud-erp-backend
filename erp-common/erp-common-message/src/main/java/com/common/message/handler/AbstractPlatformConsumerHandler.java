@@ -13,10 +13,11 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
-public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO> implements RocketMQListener<T> {
+public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO> implements RocketMQListener<Object> {
 
     @Override
-    public void onMessage(T ext) {
+    public void onMessage(Object obj) {
+        T  ext = (T) obj;
         try {
             ApiResult handle = handle(ext);
             if (!handle.isSuccess()) {

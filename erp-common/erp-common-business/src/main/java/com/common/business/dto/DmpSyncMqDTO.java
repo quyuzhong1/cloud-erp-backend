@@ -28,6 +28,7 @@ public class DmpSyncMqDTO extends DmpSyncTaskIdDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class ParamDTO {
 
         /**
