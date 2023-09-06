@@ -56,10 +56,13 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
      */
     @Override
     public void checkIsDefault(List<CustomerContactDTO.AddDTO> contactList) {
-        long count = contactList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
-        if (count > 1) {
-            throw new ServiceException(ApiError.ERROR_92005);
+        if (CollectionUtils.isNotEmpty(contactList)) {
+            long count = contactList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
+            if (count > 1) {
+                throw new ServiceException(ApiError.ERROR_92005);
+            }
         }
+
     }
 
 
@@ -81,7 +84,7 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
         for (CustomerB2cContactEntity addDTO : addList) {
             addDTO.setMainId(mainId);
             //生成单号
-            String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHLXRC);
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHLXRC);
             addDTO.setCode(code);
         }
         this.saveBatch(addList);
@@ -117,11 +120,12 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
 
     /**
      * 修改联系人信息
-     * @author yl
-     * @date 2023-05-15 10:57
+     *
      * @param mainId
      * @param contactList
      * @return void
+     * @author yl
+     * @date 2023-05-15 10:57
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -137,7 +141,7 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
         List<CustomerB2cContactEntity> addEntityList = BeanMapper.copyList(addList, CustomerB2cContactEntity.class);
         addEntityList.forEach(req -> {
             //生成单号
-            String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHLXRC);
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHLXRC);
             req.setCode(code);
         });
         saveOrUpdateList.addAll(updateEntityList);
@@ -161,23 +165,24 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
         for (CustomerB2cContactEntity update : updateEntityList) {
             String id = update.getId();
             CustomerB2cContactEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
-            if(old!=null){
-                operateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.CUSTOMER_B2C.getCode(),mainId,"","");
+            if (old != null) {
+                operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.CUSTOMER_B2C.getCode(), mainId, "", "");
             }
         }
-        if(CollectionUtils.isNotEmpty(saveOrUpdateList)){
+        if (CollectionUtils.isNotEmpty(saveOrUpdateList)) {
             this.saveOrUpdateBatch(saveOrUpdateList);
         }
     }
 
-    
+
     /**
      * 获取删除字段的信息
-     * @author yl
-     * @date 2023-05-15 11:04
+     *
      * @param contactList
      * @param dbList
      * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-05-15 11:04
      */
     private List<String> getDeleteIds(List<CustomerContactDTO.ViewDTO> contactList, List<CustomerB2cContactEntity> dbList) {
         List<String> ids = contactList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).

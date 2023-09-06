@@ -10,10 +10,10 @@ import cn.hutool.json.JSONObject;
 import com.common.core.enums.DictEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.TypedValue;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 
@@ -25,7 +25,7 @@ import java.util.*;
  * @Date 2023-09-04 11:07
  */
 @Slf4j
-public class RuleUtils {
+public class SqELRuleUtils {
 
     /**
      * 获取到条件表达式
@@ -103,8 +103,10 @@ public class RuleUtils {
                 return content;
             case NOT_CONTAINS:
                 content = convertToNotContainsExpression(content);
+                return content;
             case IS_NULL:
                 content = convertToIsNullExpression(content);
+                return content;
             default:
                 return content;
         }
@@ -190,7 +192,7 @@ public class RuleUtils {
         List<ConditionElement> elementList = new ArrayList<>();
         elementList.add(element1);
         elementList.add(element2);
-        String expression =RuleUtils.getConditionExpression(elementList);
+        String expression = SqELRuleUtils.getConditionExpression(elementList);
         System.out.println(expression);
         ExpressionParser parser = new SpelExpressionParser();
         Expression expression1 = parser.parseExpression(expression);
@@ -198,7 +200,18 @@ public class RuleUtils {
         jsonObject.set("skuNo", "12");
         jsonObject.set("platform", "Amazon");
         EvaluationContext context = new StandardEvaluationContext(jsonObject);
-        boolean result = expression1.getValue(context, Boolean.class);
+        boolean result = Boolean.TRUE.equals(expression1.getValue(context, Boolean.class));
         System.out.println("result====" + result);
+    }
+
+    /**
+     * 检查表达式是否正确
+     *
+     * @param conditionElementList
+     * @return
+     */
+    public static Boolean checkExpressionIsEnabledByElementList(List<ConditionElement> conditionElementList) {
+        String expression = getConditionExpression(conditionElementList);
+        return checkExpressionIsEnabled(expression);
     }
 }

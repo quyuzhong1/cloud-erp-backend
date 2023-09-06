@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.rule.ConditionElement;
+import com.common.core.rule.SqELRuleUtils;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.RuleOrderApprovalEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -54,6 +56,16 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     @Override
     public String add(RuleOrderApprovalDTO.AddDTO addDTO) {
         RuleOrderApprovalEntity ruleOrderApprovalEntity = new RuleOrderApprovalEntity();
+        List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
+        List<ConditionElement> conditionElementList = conditionList.stream().
+                map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
+                        c.getOperator(), c.getValue(),
+                        c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
+
+        Boolean checkResult = SqELRuleUtils.checkExpressionIsEnabledByElementList(conditionElementList);
+        if(checkResult){
+          throw new ServiceException("条件表达式有误 ");
+        }
         BeanMapperUtils.copy(addDTO, ruleOrderApprovalEntity);
         List<String> operationTypeList = addDTO.getOperationTypeList();
         ruleOrderApprovalEntity.setOperationType(operationTypeList.stream().collect(Collectors.joining(",")));
@@ -62,7 +74,6 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
             throw new ServiceException("订单审核规则保存失败");
         }
         String id = ruleOrderApprovalEntity.getId();
-        List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
         //保存规则条件
         ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志

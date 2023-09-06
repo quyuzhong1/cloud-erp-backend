@@ -6,6 +6,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.RefundOrderDTO;
+import com.erp.server.oms.service.ShopInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -43,6 +44,11 @@ public class RuleOrderApprovalController extends BaseController {
      * @date: 2023-08-28
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:ruleOrderApproval:paging",
+            tableAlias = "roa"
+    )
     public ApiResult<PagingVO<RuleOrderApprovalDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<RuleOrderApprovalDTO.PagingParamDTO> dto) {
         PagingVO<RuleOrderApprovalDTO.PagingViewDTO> pagingVO = ruleOrderApprovalService.paging(dto);
         return success(pagingVO);
@@ -65,14 +71,19 @@ public class RuleOrderApprovalController extends BaseController {
     /**
      * 订单审核规则详情
      *
-     * @param dto
+     * @param id
      * @return ApiResult
      * @author Lambda
      * @date: 2023-08-28
      */
-    @PostMapping("/view")
-    public ApiResult<RuleOrderApprovalDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        RuleOrderApprovalDTO.ViewDTO viewDTO = ruleOrderApprovalService.view(dto.getId());
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:ruleOrderApproval:view",
+            serviceClass = RuleOrderApprovalService.class,
+            keyIdName = "id")
+    public ApiResult<RuleOrderApprovalDTO.ViewDTO> view(@RequestParam("id") String id) {
+        RuleOrderApprovalDTO.ViewDTO viewDTO = ruleOrderApprovalService.view(id);
         return success(viewDTO);
     }
 

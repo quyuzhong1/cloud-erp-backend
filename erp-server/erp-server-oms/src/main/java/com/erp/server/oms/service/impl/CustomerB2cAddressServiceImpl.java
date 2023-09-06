@@ -63,10 +63,13 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
      */
     @Override
     public void checkIsDefault(List<CustomerAddressDTO.AddDTO> addressList) {
-        long count = addressList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
-        if (count > 1) {
-            throw new ServiceException(ApiError.ERROR_92006);
+        if (CollectionUtils.isNotEmpty(addressList)) {
+            long count = addressList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
+            if (count > 1) {
+                throw new ServiceException(ApiError.ERROR_92006);
+            }
         }
+
     }
 
     /**
@@ -89,7 +92,7 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
         for (CustomerB2cAddressEntity addDTO : addList) {
             addDTO.setMainId(mainId);
             //生成单号
-            String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHDZC);
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHDZC);
             addDTO.setCode(code);
         }
         this.saveBatch(addList);
@@ -134,7 +137,7 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
         List<CustomerAddressDTO.ViewDTO> addList = addressList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
         for (CustomerAddressDTO.ViewDTO viewDTO : addList) {
             //生成单号
-            String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHDZC);
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHDZC);
             viewDTO.setCode(code);
         }
         //这个是要修改的实体
@@ -171,7 +174,7 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
                 operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.CUSTOMER_B2C.getCode(), mainId, "", "");
             }
         }
-        if(CollectionUtils.isNotEmpty(saveOrUpdateList)){
+        if (CollectionUtils.isNotEmpty(saveOrUpdateList)) {
             this.saveOrUpdateBatch(saveOrUpdateList);
         }
 
