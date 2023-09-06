@@ -7,7 +7,6 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.enums.CommonStatusTypeEnum;
-import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.server.oms.service.DictBasicService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,6 +42,7 @@ public class DropDownListController extends BaseController {
      *  soB2cAbnormalType  b2c销售订单异常信息
      *  soB2cLable  b2c销售订单标签
      *  logisticsMethod b2c销售订单物流方式
+     *  shopAuthType 店铺授权类型
      * @return
      */
     @GetMapping("/dict/list")
