@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -34,10 +35,12 @@ import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
+import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.constant.OmsConstant;
@@ -126,6 +129,8 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
+    @Resource
+    private SysDictFeign sysDictFeign;
 
     /**
      * 获取到分组的id 集合
@@ -1374,6 +1379,51 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
                 .in(CustomerB2cEntity::getCountryId, countryIdList)
                 .list();
         return list;
+    }
+
+    @Override
+    public SoB2cDTO.ViewReceiveDataDTO viewReceiveData(String id) {
+        //客户信息
+        CustomerB2cEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_B2C_CUSTOMER_NOT_EXIST);
+        }
+        SoB2cDTO.ViewReceiveDataDTO viewReceiveDataDTO = new SoB2cDTO.ViewReceiveDataDTO();
+        viewReceiveDataDTO.setCustomerId(id);
+        viewReceiveDataDTO.setName(entity.getName());
+
+        DictCityEntity dictCityEntity = sysUserFeign.getCityById(entity.getCityId());
+        if (ObjectUtils.isNotEmpty(dictCityEntity)) {
+            viewReceiveDataDTO.setCityName(dictCityEntity.getName());
+        }
+        DictCountryEntity dictCountryEntity = sysUserFeign.getCountryById(entity.getCountryId());
+        if (ObjectUtils.isNotEmpty(dictCountryEntity)) {
+            viewReceiveDataDTO.setCountryName(dictCountryEntity.getNameCn());
+        }
+
+        //客户地址
+        List<CustomerAddressDTO.ViewDTO> addressList = customerB2cAddressService.listByMainId(id);
+        if (CollectionUtils.isNotEmpty(addressList)) {
+            CustomerAddressDTO.ViewDTO viewDTO = addressList.stream().filter(obj -> obj.getIsDefault() && !obj.getDisabled()).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(viewDTO)) {
+                viewReceiveDataDTO.setEmail(viewDTO.getEmail());
+                viewReceiveDataDTO.setTelNumber(viewDTO.getTelNumber());
+                viewReceiveDataDTO.setFirstAddress(viewDTO.getAddress());
+                viewReceiveDataDTO.setSecondAddress(viewDTO.getAddress());
+
+            }
+        }
+        //联系人
+        List<CustomerContactDTO.ViewDTO> contactList = customerB2cContactService.listByMainId(id);
+        if (CollectionUtils.isNotEmpty(contactList)) {
+            CustomerContactDTO.ViewDTO viewDTO = contactList.stream().filter(obj -> obj.getIsDefault() && !obj.getDisabled()).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(viewDTO)) {
+                viewReceiveDataDTO.setReceiverName(viewDTO.getPerson());
+                viewReceiveDataDTO.setCountryName(viewDTO.getTelNumber());
+            }
+        }
+
+        return viewReceiveDataDTO;
     }
 
     /**

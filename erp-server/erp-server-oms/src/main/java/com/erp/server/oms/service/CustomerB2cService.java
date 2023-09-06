@@ -7,6 +7,7 @@ import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -268,4 +269,12 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      * @return List<CustomerInfoEntity>
      */
     List<CustomerB2cEntity> listByCountryIdList(List<String> countryIdList);
+    /**
+     * @description: 根据客户id查询买家信息
+     * @author Will
+     * @date: 2023/9/5 19:30
+     * @param id
+     * @return ViewReceiveDataDTO
+     */
+    SoB2cDTO.ViewReceiveDataDTO viewReceiveData(String id);
 }

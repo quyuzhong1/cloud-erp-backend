@@ -166,9 +166,9 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.countryIdList != null and params.countryIdList.size > 0">
-                and sb2c.country_id in
-                <foreach collection="params.countryIdList" item="item" open="(" separator="," close=")">
+            <if test="params.countryNameList != null and params.countryNameList.size > 0">
+                and sb2c.country_name in
+                <foreach collection="params.countryNameList" item="item" open="(" separator="," close=")">
                     #{item}
                 </foreach>
             </if>

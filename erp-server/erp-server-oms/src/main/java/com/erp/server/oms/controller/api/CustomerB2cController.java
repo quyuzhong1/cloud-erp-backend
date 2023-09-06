@@ -10,6 +10,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.server.oms.service.CustomerB2cAddressService;
 import com.erp.server.oms.service.CustomerB2cService;
@@ -367,5 +368,16 @@ public class CustomerB2cController extends BaseController {
         return success();
     }
 
+    /**
+     * 根据客户id查询买家信息
+     * @author Will
+     * @date: 2023/9/5 19:12
+     * @param dto
+     * @return ApiResult<ViewReceiveDataDTO>
+     */
+    @PostMapping("/viewReceiveData")
+    public ApiResult<SoB2cDTO.ViewReceiveDataDTO> viewReceiveData(@RequestBody @Validated BaseIdDTO dto) {
+        return success(customerB2cService.viewReceiveData(dto.getId()));
+    }
 
 }
