@@ -469,14 +469,14 @@
 
     <select id="waitInStockListCount"  resultType="java.lang.Integer">
         select
-            count(distinct wr.id)
+            count(distinct pr.id)
         FROM po_receive pr
         LEFT JOIN po_receive_detail prd ON pr.id = prd.main_id AND prd.is_deleted = FALSE AND prd.is_deleted = FALSE
         WHERE pr.is_deleted = FALSE
         AND pr.approve_status = 'approve'
         AND  EXISTS (
             SELECT
-                t.source_detail_id
+        t.source_id
             FROM (
                 SELECT
                     SUM(pid.stock_in_qty) as stock_in_qty,
@@ -493,30 +493,30 @@
 
         <if test="params.tabFlag == 'waitInStockQc'">
             AND EXISTS (
-                SELECT
-                    t.source_detail_id
-                FROM (
-                    SELECT
-                        qc.qc_status,
-                        qc.source_detail_id
-                    FROM qc_info qc
-                    GROUP BY qc.qc_status, qc.source_detail_id
-                ) t
-                WHERE t.source_detail_id = prd."id" AND t.qc_status = 'finishQc'
+            SELECT
+            t.source_detail_id
+            FROM (
+            SELECT
+            qc.qc_status,
+            qc.source_detail_id
+            FROM qc_info qc
+            GROUP BY qc.qc_status, qc.source_detail_id
+            ) t
+            WHERE t.source_detail_id = prd."id" AND t.qc_status = 'finishQc'
             )
         </if>
         <if test="params.tabFlag == 'waitInStockNotQc'">
             AND NOT EXISTS (
-                SELECT
-                    t.source_id
-                FROM (
-                    SELECT
-                        array_to_string(ARRAY(SELECT unnest(array_agg(qc.qc_status))),',') AS qc_status,
-                        qc.source_id
-                    FROM qc_info qc
-                    GROUP BY qc.source_id
-                ) t
-                WHERE t.source_id = prd."main_id" AND t.qc_status ILIKE 'finishQc'
+            SELECT
+            t.source_id
+            FROM (
+            SELECT
+            array_to_string(ARRAY(SELECT unnest(array_agg(qc.qc_status))),',') AS qc_status,
+            qc.source_id
+            FROM qc_info qc
+            GROUP BY qc.source_id
+            ) t
+            WHERE t.source_id = prd."main_id" AND t.qc_status ILIKE 'finishQc'
             )
         </if>
 
