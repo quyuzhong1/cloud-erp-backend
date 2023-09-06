@@ -488,7 +488,7 @@
             WHERE t.source_detail_id = prd."id" AND stock_in_qty &gt; prd.receive_qty
         )
         <if test="params.invalidStatus != null">
-            and wr.invalid_status = #{params.invalidStatus}
+            and pr.invalid_status = #{params.invalidStatus}
         </if>
 
         <if test="params.tabFlag == 'waitInStockQc'">
