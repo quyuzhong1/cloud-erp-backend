@@ -27,7 +27,7 @@
         <result column="shippingCostCurrency" property="shippingCostCurrency"/>
         <result column="logisticsCode" property="logisticsCode"/>
         <result column="buyerName" property="buyerName"/>
-        <result column="countryId" property="countryId"/>
+        <result column="countryName" property="countryName"/>
         <result column="label" property="label"/>
         <collection property="detailList" ofType="com.erp.model.oms.dto.SoB2cDetailDTO$ListDTO">
             <id column="detailId" property="id"/>
@@ -112,7 +112,7 @@
         as shippingCostCurrency,
         sb2cl.code as logisticsCode,
         sb2cr.name as buyerName,
-        sb2cr.country_id as countryId,
+        sb2cr.country_name as countryName,
         sb2cd.id as detailId,
         sb2cd.image_url as imageUrl,
         sb2cd.platform_sku_no as platformSkuNo,
