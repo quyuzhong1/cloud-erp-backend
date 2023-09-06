@@ -448,31 +448,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
 
     /**
-     * 获取到店铺授权utl
-     *
-     * @param id
-     * @return java.lang.String
-     * @author yl
-     * @date 2023-08-28 20:00
-     */
-    @Override
-    public String getShopAuthUrl(String id) {
-        ShopInfoEntity shop = this.getById(id);
-        if (Objects.isNull(shop)) {
-            throw new ServiceException("店铺不存在");
-        }
-        AppClientEnum appClient = AppClientEnum.SHOP_AUTHORIZE;
-        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        findDTO.setBusinessType(appClient.getBusinessType());
-        findDTO.setDictPlatform(appClient.getPlatform());
-        findDTO.setPlatformType(appClient.getPlatformType());
-        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
-        String url = shopSdkServer.getShopAuthorizeUrl(cfgAppClient, shop.getDomain(), shop.getId());
-        return url;
-    }
-
-
-    /**
      * 店铺授权
      *
      * @param code
@@ -582,7 +557,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
-    public String index(String hmac, String host, String shop, String timestamp) {
+    public String getShopifyAuthorizeUrl(String hmac, String host, String shop, String timestamp) {
         AppClientEnum appClient = AppClientEnum.SHOP_AUTHORIZE;
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         findDTO.setBusinessType(appClient.getBusinessType());
@@ -603,6 +578,25 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     public List<String> accountList() {
         return lambdaQuery().select(ShopInfoEntity::getAccount).
                 groupBy(ShopInfoEntity::getAccount).list().stream().map(ShopInfoEntity::getAccount).collect(Collectors.toList());
+    }
+
+
+    /**
+     * 获取到shopfily安装的url
+     * @author yl
+     * @date 2023-09-06 16:34
+     * @param
+     * @return java.lang.String
+     */
+    @Override
+    public String getShopifyInstallUrl() {
+        AppClientEnum appClient = AppClientEnum.SHOP_AUTHORIZE_INSTALL;
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        findDTO.setBusinessType(appClient.getBusinessType());
+        findDTO.setDictPlatform(appClient.getPlatform());
+        findDTO.setPlatformType(appClient.getPlatformType());
+        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        return cfgAppClient.getUrl();
     }
 
 
