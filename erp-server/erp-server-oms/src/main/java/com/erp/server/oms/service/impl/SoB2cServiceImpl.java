@@ -137,6 +137,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private SkuMappingService skuMappingService;
 
+    @Autowired
+    private ShopCostService shopCostService;
+
+
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -1118,14 +1122,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             data.setCategoryIdList(categoryIdList);
         }
         //财务信息
-        SoB2cDTO.FinancialInfoDTO financialInfoDTO = new SoB2cDTO.FinancialInfoDTO();
-        financialInfoDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
-        financialInfoDTO.setAmount(MathUtil.multiply(soB2cEntity.getAmount(),soB2cEntity.getExchangeRate()));
-        //运费收入,
-        financialInfoDTO.setShippingCost(BigDecimal.ZERO);
 
-
-        data.setFinancialInfoDTO(financialInfoDTO);
+        SoB2cDTO.FinancialParamDTO dto = new SoB2cDTO.FinancialParamDTO();
+        dto.setId(soB2cEntity.getId());
+        dto.setIsCny(Boolean.TRUE);
+        SoB2cDTO.FinancialInfoDTO financialInfo = this.getFinancialInfo(dto);
+        data.setFinancialInfoDTO(financialInfo);
         //明细
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
         if (CollectionUtils.isEmpty(soB2cDetailList)) {
@@ -1893,7 +1895,37 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtil.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        return null;
+        //明细信息
+        List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(dto.getId());
+        if (CollectionUtils.isEmpty(soB2cDetailList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
+        //店铺信息
+        ShopDTO.ViewCostDTO viewCostDTO = shopCostService.viewCost(soB2cEntity.getShopId());
+
+        SoB2cDTO.FinancialInfoDTO financialInfoDTO = new SoB2cDTO.FinancialInfoDTO();
+        financialInfoDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+        financialInfoDTO.setAmount(MathUtil.multiply(soB2cEntity.getAmount(),soB2cEntity.getExchangeRate()));
+        //运费收入,对接物流 TODO
+        financialInfoDTO.setShippingCost(BigDecimal.ZERO);
+        //商品成本,订单SKU*数量的含税成本价汇总
+        BigDecimal itemCost = soB2cDetailList.stream().map(SoB2cDetailEntity::getTaxCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        financialInfoDTO.setItemCost(itemCost);
+        //物流成本,TMS计算的物流成本 TODO
+        financialInfoDTO.setLogisticsCost(BigDecimal.ZERO);
+        //平台费,店铺计算
+        financialInfoDTO.setPlatformCost(BigDecimal.ZERO);
+        //转账费,店铺计算
+        financialInfoDTO.setPaypalCost(BigDecimal.ZERO);
+        //包装辅料费,包装辅料SKU*数量的成本价汇总
+        financialInfoDTO.setAccessoriesCost(BigDecimal.ZERO);
+        //VAT税费,店铺计算
+        financialInfoDTO.setVatCost(BigDecimal.ZERO);
+        //总利润,订单总金额+运费收入-商品成本-物流成本-平台费-转账费-包装辅料费-VAT税费
+        financialInfoDTO.setProfit(BigDecimal.ZERO);
+        //利润率,总利润/(订单总金额+运费收入)*100%
+        financialInfoDTO.setProfitRate(BigDecimal.ZERO);
+        return financialInfoDTO;
     }
 
     /**

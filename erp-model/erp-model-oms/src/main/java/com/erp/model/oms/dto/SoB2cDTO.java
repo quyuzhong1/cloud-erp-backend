@@ -494,6 +494,16 @@ public class SoB2cDTO implements Serializable {
          * VAT税费
          */
         private BigDecimal vatCost;
+
+        /**
+         * 总利润
+         */
+        private BigDecimal profit;
+
+        /**
+         * 总利润率
+         */
+        private BigDecimal profitRate;
     }
 
     /**
@@ -731,7 +741,7 @@ public class SoB2cDTO implements Serializable {
         private String dictLogisticsMethod;
 
         /**
-         * 仓库
+         * 仓库 http://172.16.100.11:3002/project/92/interface/api/22930
          */
         @NotBlank(message = "仓库不能为空")
         private String warehouseId;
