@@ -1601,13 +1601,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             List<String> skuList = itemDTOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
             record.setDetailCount(skuList.size());
             if (CollectionUtils.isEmpty(qcInfoList) || CollectionUtils.isEmpty(resultList)) {
-                record.setQcStatus(PdaQclStatusEnum.WAIT_QC.getName());
+                record.setQcStatus(PdaQclStatusEnum.WAIT_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.WAIT_QC.getName());
             } else if (resultList.size() >= detailEntities.size()) {
-                record.setQcStatus(PdaQclStatusEnum.FINISH_QC.getName());
+                record.setQcStatus(PdaQclStatusEnum.FINISH_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.FINISH_QC.getName());
             } else {
-                record.setQcStatus(PdaQclStatusEnum.PARTIAL_QC.getName());
+                record.setQcStatus(PdaQclStatusEnum.PARTIAL_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.PARTIAL_QC.getName());
 
             }
