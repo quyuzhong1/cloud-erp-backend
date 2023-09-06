@@ -84,6 +84,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public List<WarehouseDTO.UpdateDTO> listWarehouseByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
         List<WarehouseEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
