@@ -353,6 +353,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 SkuVO skuVO = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).findFirst().orElse(new SkuVO());
                 viewDetailDTO.setProductName(skuVO.getSkuName());
                 viewDetailDTO.setSpuNo(skuVO.getSpuNo());
+                viewDetailDTO.setVariantProperty(skuVO.getVariantProperty());
             }
             //根据组织、仓库、sku查询可用库存
             /*
