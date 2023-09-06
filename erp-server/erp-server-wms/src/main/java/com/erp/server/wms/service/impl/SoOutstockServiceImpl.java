@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -1483,5 +1484,49 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             list.add(resultDTO);
         }
         return list;
+    }
+
+    @Override
+    public String pdaAdd(SoOutstockDTO.AddDTO dto) {
+        List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailByMainId(dto.getSourceId());
+        for (SoOutstockDetailDTO.AddDTO addDTO : dto.getDetailList()) {
+            SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(addDTO.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soDeliveryNoticeDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_SOOUTSTOCK_DETAIL_SKU_NOT_EXIST, addDTO.getSkuNo());
+            }
+        }
+        return this.add(dto);
+    }
+
+    @Override
+    public String pdaUpdate(SoOutstockDTO.UpdateDTO dto) {
+        List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailByMainId(dto.getSourceId());
+        for (SoOutstockDetailDTO.UpdateDTO updateDTO : dto.getDetailList()) {
+            SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(updateDTO.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soDeliveryNoticeDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_SOOUTSTOCK_DETAIL_SKU_NOT_EXIST, updateDTO.getSkuNo());
+            }
+        }
+        return this.updateSoOutstock(dto);
+    }
+
+
+    @Override
+    public Boolean pdaAddAndSubmit(SoOutstockDTO.AddDTO dto) {
+        String id = this.pdaAdd(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        Boolean result = this.submit(Arrays.asList(id));
+        return result;
+    }
+
+    @Override
+    public Boolean pdaUpdateAndSubmit(SoOutstockDTO.UpdateDTO dto) {
+        String id = this.pdaUpdate(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1020);
+        }
+        return this.submit(Arrays.asList(id));
     }
 }
