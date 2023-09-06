@@ -55,7 +55,7 @@ public class TbTaskTypeService {
     public List<JobTaskDTO> getTask() {
         LocalDateTime localTime = LocalDateTime.now();
         // 查询任务列表
-        List<JobTaskDTO> jobTaskDTOList = platformApiTaskService.listApiTask(localTime);
+        List<JobTaskDTO> jobTaskDTOList = platformApiTaskService.listApiTask(localTime, "pull");
         // 任务量等于0，任务重新开始,分页设置成0
         if (CollectionUtil.isEmpty(jobTaskDTOList)) {
             return jobTaskDTOList;

@@ -2,23 +2,33 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.dmp.entity.PlatformApiEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.server.dmp.mapper.PlatformApiTaskMapper;
+import com.erp.server.dmp.service.PlatformApiService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * @author Cloud
+ */
 @Service
 public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTaskMapper, PlatformApiTaskEntity>
         implements PlatformApiTaskService {
 
+    @Resource
+    private PlatformApiService platformApiService;
     /**
      * 修改任务下次执行
      *
@@ -60,42 +70,59 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean createPlatformTask(PlatformTaskDTO.AddDTO dto) {
+        List<PlatformApiEntity> entityList = platformApiService.listByPlatform(dto.getDictPlatform());
+        if(CollectionUtil.isEmpty(entityList)){
+            return Boolean.TRUE;
+        }
         // 根据店铺id查询是否已经存在任务
         List<PlatformApiTaskEntity> taskEntity = lambdaQuery()
                 .eq(PlatformApiTaskEntity::getShopId, dto.getShopId())
                 .eq(PlatformApiTaskEntity::getDictPlatform, dto.getDictPlatform())
-                .eq(PlatformApiTaskEntity::getDisabled, Boolean.FALSE)
                 .list();
-        // 如果存在任务，删除任务
-        if(CollectionUtil.isNotEmpty(taskEntity)){
-            removeByIds(taskEntity.stream().map(PlatformApiTaskEntity::getId).collect(Collectors.toList()));
+        // 对比当前店铺不存在的任务
+        Set<String> existApiIds = taskEntity.stream().map(PlatformApiTaskEntity::getPlatformApiId).collect(Collectors.toSet());
+        // 需要添加的任务
+        List<PlatformApiEntity> notExistApiList = entityList
+                .stream()
+                .filter(item -> !existApiIds.contains(item.getId()))
+                .collect(Collectors.toList());
+        // 对比当前店铺不存在的任务
+        Set<String> allApiList = entityList.stream().map(PlatformApiEntity::getId).collect(Collectors.toSet());
+        // 需要删除的任务
+        List<String> taskIds = taskEntity
+                .stream()
+                .filter(item -> !allApiList.contains(item.getPlatformApiId()))
+                .map(PlatformApiTaskEntity::getId)
+                .collect(Collectors.toList());
+        List<PlatformApiTaskEntity> insertEntityList = notExistApiList.stream()
+                .map(task -> getPlatformApiTaskEntity(dto, task))
+                .collect(Collectors.toList());
+        if (CollectionUtil.isNotEmpty(insertEntityList)){
+            this.saveBatch(insertEntityList);
         }
-        // 根据平台code查询需要添加的任务
-        List<PlatformApiTaskEntity> taskList = lambdaQuery()
-                .eq(PlatformApiTaskEntity::getDictPlatform, dto.getDictPlatform())
-                .eq(PlatformApiTaskEntity::getDisabled, Boolean.FALSE)
-                .list();
-        // 添加平台任务记录，时间为当前时间，下次执行时间为当前时间加上间隔时间，状态为待执行
-        if(CollectionUtil.isEmpty(taskList)){
-            return Boolean.TRUE;
+        if (CollectionUtil.isNotEmpty(taskIds)){
+            this.removeByIds(taskIds);
         }
-        List<PlatformApiTaskEntity> collect = taskList.stream().map(task -> {
-            PlatformApiTaskEntity entity = new PlatformApiTaskEntity();
-            entity.setShopId(dto.getShopId());
-            entity.setDictPlatform(dto.getDictPlatform());
-            entity.setApiCode(task.getApiCode());
-            entity.setApiName(task.getApiName());
-            entity.setIntervalTime(task.getIntervalTime());
-            entity.setLastTime(LocalDateTime.now());
-            entity.setNextTime(LocalDateTime.now().plusSeconds(task.getIntervalTime()));
-            entity.setStatus(1);
-            entity.setRetryTimes(0);
-            entity.setCreateTime(LocalDateTime.now());
-            entity.setUpdateTime(LocalDateTime.now());
-            return entity;
-        }).collect(Collectors.toList());
+        return Boolean.TRUE;
+    }
 
-        return null;
+    private static PlatformApiTaskEntity getPlatformApiTaskEntity(PlatformTaskDTO.AddDTO dto, PlatformApiEntity task) {
+        PlatformApiTaskEntity entity = new PlatformApiTaskEntity();
+        entity.setShopId(dto.getShopId());
+        entity.setDictPlatform(dto.getDictPlatform());
+        entity.setApiCode(task.getApiCode());
+        entity.setApiName(task.getApiName());
+        entity.setIntervalTime(task.getIntervalTime());
+        entity.setLastTime(LocalDateTime.now());
+        entity.setNextTime(LocalDateTime.now().plusSeconds(task.getIntervalTime()));
+        entity.setStatus(1);
+        entity.setRetryTimes(0);
+        entity.setCreateTime(LocalDateTime.now());
+        entity.setUpdateTime(LocalDateTime.now());
+        entity.setPlatformApiId(task.getId());
+        entity.setPlatformCategory(PlatformCategoryEnum.THIRD_SYSTEM.getCode());
+        entity.setSyncOperate(task.getSyncOperate());
+        return entity;
     }
 
     @Override
@@ -107,8 +134,8 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
     }
 
     @Override
-    public List<JobTaskDTO> listApiTask(LocalDateTime localTime) {
-        return baseMapper.selectApiTask(localTime);
+    public List<JobTaskDTO> listApiTask(LocalDateTime localTime, String operateType) {
+        return baseMapper.selectApiTask(localTime,operateType);
     }
 
     @Override

@@ -34,6 +34,7 @@
         FROM platform_api_task pat
         WHERE (pat.next_time  &lt; #{localTime} and pat.next_time IS NOT NULL)
         and pat.is_deleted = false and pat.disabled = FALSE
+        and operate_type = #{operateType}
     </select>
 
     <insert id="batchInsert" parameterType="com.erp.model.dmp.entity.PlatformApiTaskEntity">

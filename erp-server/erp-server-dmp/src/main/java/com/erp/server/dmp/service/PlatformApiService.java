@@ -14,4 +14,11 @@ public interface PlatformApiService extends SuperService<PlatformApiEntity> {
      * @return java.util.List<com.erp.server.entity.PlatformApiEntity>
      **/
     List<PlatformApiEntity> listForDisabled(String dictPlatform);
+
+    /**
+     * 根据平台查询api
+     * @param dictPlatform
+     * @return
+     */
+    List<PlatformApiEntity> listByPlatform(String dictPlatform);
 }

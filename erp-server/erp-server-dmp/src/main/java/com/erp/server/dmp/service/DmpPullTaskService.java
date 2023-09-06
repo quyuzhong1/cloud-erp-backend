@@ -2,7 +2,7 @@ package com.erp.server.dmp.service;
 
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.service.SuperService;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.Map;
  * @author zhangchunlin
  * @since 2023-06-29
  */
-public interface DmpSyncTaskService extends SuperService<DmpSyncTaskEntity> {
+public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
 
 
     /**
@@ -31,9 +31,9 @@ public interface DmpSyncTaskService extends SuperService<DmpSyncTaskEntity> {
      * @description: 新增或修改任务数据
      * @author Will
      * @date: 2023/6/30 15:40
-     * @param dmpSyncTaskEntity
+     * @param dmpPullTaskEntity
      */
-    String saveOrUpdateDmpSyncTask(DmpSyncTaskEntity dmpSyncTaskEntity);
+    String saveOrUpdateDmpSyncTask(DmpPullTaskEntity dmpPullTaskEntity);
 
     /**
      * 新增同步金蝶退货单到wms退货入库单的任务

@@ -14,10 +14,10 @@ import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.service.DmpSyncTaskService;
+import com.erp.server.dmp.service.DmpPullTaskService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -46,7 +46,7 @@ public class BusinessServiceImpl {
     @Resource
     private MQProducerService mqProducerService;
     @Resource
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     /**
      * 业务处理
@@ -119,7 +119,7 @@ public class BusinessServiceImpl {
         }
         // 异步推送到MQ
         pushToMqList.stream().peek(msg ->{
-            String modelTaskId = dmpSyncTaskService.saveOrUpdateDmpSyncTask(new DmpSyncTaskEntity(platform, business, targetPlatform, topic, tag, msg));
+            String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, business, targetPlatform, topic, tag, msg));
             msg.setDmpSyncTaskId(modelTaskId);
             SendResult cleanResult = mqProducerService.syncClassMsgByDelayLevel(topic, tag, msg, msg.getUniqueId());
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){

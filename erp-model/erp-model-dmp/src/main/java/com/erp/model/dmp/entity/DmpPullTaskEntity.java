@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.UniqueDto;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,8 +28,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("dmp_sync_task")
-public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
+@TableName("dmp_pull_task")
+public class DmpPullTaskEntity extends BaseEntity<DmpPullTaskEntity> {
 
 
     /**
@@ -98,6 +98,12 @@ public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
     @TableField("source_code")
     private String sourceCode;
 
+    /**
+     * 重试次数
+     */
+    @TableField("retry_times")
+    private Integer retryTimes;
+
 
     public static final String TARGET_PLATFORM_NAME = "target_platform_name";
 
@@ -121,7 +127,7 @@ public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
 
     public static final String SOURCE_CODE = "source_code";
 
-    public <R extends UniqueDto> DmpSyncTaskEntity(String platform, String business,String targetPlatform, String topic, String tag, R item) {
+    public <R extends UniqueDto> DmpPullTaskEntity(String platform, String business, String targetPlatform, String topic, String tag, R item) {
         this.targetPlatformName = targetPlatform;
         this.mqTopic = topic;
         this.mqTag = tag;
@@ -130,14 +136,16 @@ public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
         this.sourceType = business;
         this.sourceId = item.getUniqueId();
         this.sourceCode = item.getUniqueId();
+        this.status = SyncStatusEnum.IN_SYNC.getCode();
+        this.retryTimes = 0;
     }
 
-    public DmpSyncTaskEntity(DmpSyncTaskDTO dto) {
+    public DmpPullTaskEntity(DmpSyncTaskDTO dto) {
         this.targetPlatformName = dto.getTargetPlatformName();
         this.mqTopic = dto.getMqTopic();
         this.mqTag = dto.getMqTag();
         this.mqData = dto.getMqData();
-        this.status = SyncKingdeeStatusEnum.IN_SYNC.getCode();
+        this.status = SyncStatusEnum.IN_SYNC.getCode();
         this.sourcePlatformName = dto.getSourcePlatformName();
         this.sourceType = dto.getSourceType();
         this.sourceId = dto.getSourceId();

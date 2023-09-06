@@ -48,7 +48,7 @@ public interface PlatformApiTaskService extends SuperService<PlatformApiTaskEnti
      * @param localTime
      * @return
      */
-    List<JobTaskDTO> listApiTask(LocalDateTime localTime);
+    List<JobTaskDTO> listApiTask(LocalDateTime localTime,String operateType);
 
     /**
      * 批量插入任务

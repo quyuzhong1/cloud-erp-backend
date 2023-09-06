@@ -2,8 +2,7 @@ package com.erp.server.oms.rocketmq;
 
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
-import com.common.business.dto.UniqueDto;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
@@ -28,7 +27,7 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     private DmpTaskFeign dmpTaskFeign;
 
     @Override
-    public void updateSyncTaskStatus(String id, SyncKingdeeStatusEnum code, String msg) {
+    public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
         dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
     }
 

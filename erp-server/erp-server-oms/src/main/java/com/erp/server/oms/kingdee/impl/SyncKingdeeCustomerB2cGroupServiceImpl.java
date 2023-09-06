@@ -1,7 +1,7 @@
 package com.erp.server.oms.kingdee.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -41,7 +41,7 @@ public class SyncKingdeeCustomerB2cGroupServiceImpl implements SyncKingdeeCustom
         Map<String, Object> resultMap = new HashMap<>();
 
         //更新同步状态为待同步
-        customerB2cGroupService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        customerB2cGroupService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
 
         //金蝶id
         if (StringUtils.isNotBlank(entity.getSyncKingdeeId())) {
@@ -57,7 +57,7 @@ public class SyncKingdeeCustomerB2cGroupServiceImpl implements SyncKingdeeCustom
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_CUSTOMER_GROUP_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return customerB2cGroupService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"", operate);
+                return customerB2cGroupService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(),"", operate);
             }
             return Boolean.TRUE;
         });

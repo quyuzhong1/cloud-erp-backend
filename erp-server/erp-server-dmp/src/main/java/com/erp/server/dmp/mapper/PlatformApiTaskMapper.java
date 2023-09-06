@@ -15,7 +15,7 @@ import java.util.List;
 @Mapper
 public interface PlatformApiTaskMapper extends BaseMapper<PlatformApiTaskEntity> {
 
-    List<JobTaskDTO> selectApiTask(@Param("localTime") LocalDateTime localTime);
+    List<JobTaskDTO> selectApiTask(@Param("localTime") LocalDateTime localTime,@Param("operateType") String operateType);
 
     void updateTaskTypeState(@Param("jobTaskDTOList") List<JobTaskDTO> jobTaskDTOList, @Param("status") Integer state);
 

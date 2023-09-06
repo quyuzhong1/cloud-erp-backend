@@ -1,11 +1,11 @@
 package com.erp.server.dmp.service.mq;
 
 import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.erp.server.dmp.service.DmpSyncTaskService;
+import com.erp.server.dmp.service.DmpPullTaskService;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,11 +25,11 @@ import javax.annotation.Resource;
 public class OmsAmazonOrderConsumerService extends AbstractPlatformConsumerHandler<PlatformOrderDTO> {
 
     @Resource
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     @Override
-    public void updateSyncTaskStatus(String id, SyncKingdeeStatusEnum code, String msg) {
-        dmpSyncTaskService.updateSyncInfo(id, code.getCode(), msg);
+    public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
+        dmpPullTaskService.updateSyncInfo(id, code.getCode(), msg);
     }
 
     @Override

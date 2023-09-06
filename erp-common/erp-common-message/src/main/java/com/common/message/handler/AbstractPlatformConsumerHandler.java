@@ -2,7 +2,7 @@ package com.common.message.handler;
 
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncTaskIdDTO;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -23,12 +23,12 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
             ApiResult handle = handle(ext);
             if (!handle.isSuccess()) {
                 log.error("平台数据消费异常 {}", JSONUtil.toJsonStr(handle));
-                updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncKingdeeStatusEnum.FAILED_SYNC, handle.getMsg());
+                updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncStatusEnum.FAILED_SYNC, handle.getMsg());
                 return;
             }
-            updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncKingdeeStatusEnum.SUCCESS_SYNC, SyncKingdeeStatusEnum.SUCCESS_SYNC.getName());
+            updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncStatusEnum.SUCCESS_SYNC, SyncStatusEnum.SUCCESS_SYNC.getName());
         }catch (Exception e) {
-            updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncKingdeeStatusEnum.FAILED_SYNC, e.getMessage() != null ? e.getMessage() : e.getStackTrace()[e.getStackTrace().length-1].toString());
+            updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncStatusEnum.FAILED_SYNC, e.getMessage() != null ? e.getMessage() : e.getStackTrace()[e.getStackTrace().length-1].toString());
             log.error("平台数据消费异常", e);
         }
     }
@@ -38,7 +38,7 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
      * @param syncTaskId
      * @param code
      */
-    public abstract void updateSyncTaskStatus(String syncTaskId, SyncKingdeeStatusEnum code, String msg);
+    public abstract void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg);
 
     /**
      * 处理平台数据

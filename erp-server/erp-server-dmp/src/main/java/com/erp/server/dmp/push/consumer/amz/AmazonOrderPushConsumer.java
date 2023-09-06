@@ -1,14 +1,14 @@
 package com.erp.server.dmp.push.consumer.amz;
 
 
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.sdk.oms.amz.spapi.service.PushOrderService;
-import com.erp.server.dmp.service.DmpSyncTaskService;
+import com.erp.server.dmp.service.DmpPullTaskService;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 
@@ -28,12 +28,12 @@ public class AmazonOrderPushConsumer extends AbstractPlatformConsumerHandler<Dmp
     @Resource
     private PushOrderService pushOrderService;
     @Resource
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
 
     @Override
-    public void updateSyncTaskStatus(String id, SyncKingdeeStatusEnum code, String msg) {
-        dmpSyncTaskService.updateSyncInfo(id, code.getCode(), msg);
+    public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
+        dmpPullTaskService.updateSyncInfo(id, code.getCode(), msg);
     }
 
     @Override

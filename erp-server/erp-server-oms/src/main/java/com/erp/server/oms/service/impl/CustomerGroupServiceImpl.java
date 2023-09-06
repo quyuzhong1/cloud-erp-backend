@@ -1,6 +1,6 @@
 package com.erp.server.oms.service.impl;
 
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.core.enums.ApiError;
@@ -75,7 +75,7 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
         }
         boolean flag = this.saveOrUpdateBatch(batchGroupList);
         //审核通过发送金蝶
-        batchGroupList.forEach(obj -> syncKingdeeCustomerGroupService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+        batchGroupList.forEach(obj -> syncKingdeeCustomerGroupService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
 
         return flag;
 

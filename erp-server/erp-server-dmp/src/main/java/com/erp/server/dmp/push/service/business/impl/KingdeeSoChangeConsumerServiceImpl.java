@@ -3,7 +3,7 @@ package com.erp.server.dmp.push.service.business.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -87,12 +87,12 @@ public class KingdeeSoChangeConsumerServiceImpl implements KingdeeSoChangeConsum
 
         //操作项
         String operate = (String) map.get("operate");
-        if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
             //作废
             kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
             return;
         }
-        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             //反审核
             kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
             return;

@@ -5,11 +5,11 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.common.business.dto.DmpSyncMqDTO;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
-import com.erp.server.dmp.service.DmpSyncTaskService;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.server.dmp.service.DmpPullTaskService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -35,7 +35,7 @@ import java.util.List;
 public class DmpSyncTaskJob {
 
     @Autowired
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     @Autowired
     private MQProducerService mqProducerService;
@@ -58,10 +58,10 @@ public class DmpSyncTaskJob {
         }
 
         // 查询DMP同步数据
-        List<DmpSyncTaskEntity> recordEntityList = dmpSyncTaskService.lambdaQuery()
-                .in(DmpSyncTaskEntity::getStatus, Arrays.asList(SyncKingdeeStatusEnum.FAILED_SYNC.getCode(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode()))
-                .le(DmpSyncTaskEntity::getUpdateTime, LocalDateTime.now().minusMinutes(diffMinute))
-                .orderByAsc(DmpSyncTaskEntity::getUpdateTime)
+        List<DmpPullTaskEntity> recordEntityList = dmpPullTaskService.lambdaQuery()
+                .in(DmpPullTaskEntity::getStatus, Arrays.asList(SyncStatusEnum.FAILED_SYNC.getCode(), SyncStatusEnum.TO_BE_SYNC.getCode()))
+                .le(DmpPullTaskEntity::getUpdateTime, LocalDateTime.now().minusMinutes(diffMinute))
+                .orderByAsc(DmpPullTaskEntity::getUpdateTime)
                 .last(null != size && size > 0, StrUtil.format("limit {}", size))
                 .list();
         XxlJobHelper.log("DmpSyncTaskJob 查询到{}条待推送数据", recordEntityList.size());
@@ -69,8 +69,8 @@ public class DmpSyncTaskJob {
         if(CollectionUtil.isEmpty(recordEntityList)) {
             return ReturnT.SUCCESS;
         }
-        recordEntityList.sort(Comparator.comparing(DmpSyncTaskEntity::getUpdateTime));
-        for (DmpSyncTaskEntity recordEntity : recordEntityList) {
+        recordEntityList.sort(Comparator.comparing(DmpPullTaskEntity::getUpdateTime));
+        for (DmpPullTaskEntity recordEntity : recordEntityList) {
             try {
                // 发送推送同步任务消息
                 DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(recordEntity.getId(), recordEntity.getMqData());
