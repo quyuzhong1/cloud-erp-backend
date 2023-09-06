@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.rule.ConditionElement;
+import com.common.core.rule.SqELRuleUtils;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.RuleLogisticsEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -27,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.RuleLogisticsDTO;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -53,6 +56,16 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(RuleLogisticsDTO.AddDTO addDTO) {
+        List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
+        List<ConditionElement> conditionElementList = conditionList.stream().
+                map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
+                        c.getOperator(), c.getValue(),
+                        c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
+        String expression = SqELRuleUtils.getConditionExpression(conditionElementList);
+        Boolean checkResult = SqELRuleUtils.checkExpressionIsEnabled(expression);
+        if (!checkResult) {
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
+        }
         RuleLogisticsEntity ruleLogisticsEntity = new RuleLogisticsEntity();
         BeanMapperUtils.copy(addDTO, ruleLogisticsEntity);
         // 数据处理
@@ -61,7 +74,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         if (!save) {
             throw new ServiceException("物流规则单保存失败");
         }
-        List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
+
         String id = ruleLogisticsEntity.getId();
         //保存规则条件
         ruleConditionService.saveRuleCondition(id, conditionList);
@@ -80,6 +93,16 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         String id = updateDTO.getId();
         RuleLogisticsEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单"));
+        List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
+        List<ConditionElement> conditionElementList = conditionList.stream().
+                map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
+                        c.getOperator(), c.getValue(),
+                        c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
+        String expression = SqELRuleUtils.getConditionExpression(conditionElementList);
+        Boolean checkResult = SqELRuleUtils.checkExpressionIsEnabled(expression);
+        if (!checkResult) {
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
+        }
         RuleLogisticsEntity ruleLogisticsEntity = BeanMapperUtils.map(RuleLogisticsEntity.class, updateDTO);
         // 数据处理
         handleData(ruleLogisticsEntity);
@@ -87,8 +110,6 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         if (!save) {
             throw new ServiceException("物流规则单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-        List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         ruleConditionService.updateRuleCondition(id, conditionList);
         // 记录主单操作日志
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ruleLogisticsEntity.getId(), "物流规则单");

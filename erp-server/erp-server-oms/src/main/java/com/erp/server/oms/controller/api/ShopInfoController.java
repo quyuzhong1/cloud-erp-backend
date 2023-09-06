@@ -147,8 +147,9 @@ public class ShopInfoController extends BaseController {
                 if (Objects.isNull(shop)) {
                     submit = BatchResultDTO.fail(id, id, "店铺不存在");
                 } else {
-                    submit = shopInfoService.updateStatus(shop, disabled);
                     flagCode = shop.getName();
+                    submit = shopInfoService.updateStatus(shop, disabled);
+
                 }
             } catch (Exception e) {
                 log.error("店铺更改状态失败>>>>{}", e);

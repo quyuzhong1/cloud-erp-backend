@@ -61,10 +61,10 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getOperator(), c.getValue(),
                         c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
-
-        Boolean checkResult = SqELRuleUtils.checkExpressionIsEnabledByElementList(conditionElementList);
-        if(checkResult){
-          throw new ServiceException("条件表达式有误 ");
+        String expression = SqELRuleUtils.getConditionExpression(conditionElementList);
+        Boolean checkResult = SqELRuleUtils.checkExpressionIsEnabled(expression);
+        if (!checkResult) {
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
         }
         BeanMapperUtils.copy(addDTO, ruleOrderApprovalEntity);
         List<String> operationTypeList = addDTO.getOperationTypeList();
@@ -93,6 +93,17 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         String id = updateDTO.getId();
         RuleOrderApprovalEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "订单审核规则"));
+        List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
+        List<ConditionElement> conditionElementList = conditionList.stream().
+                map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
+                        c.getOperator(), c.getValue(),
+                        c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
+        String expression = SqELRuleUtils.getConditionExpression(conditionElementList);
+        Boolean checkResult = SqELRuleUtils.checkExpressionIsEnabled(expression);
+        if (!checkResult) {
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
+        }
+
         RuleOrderApprovalEntity ruleOrderApprovalEntity = BeanMapperUtils.map(RuleOrderApprovalEntity.class, updateDTO);
         List<String> operationTypeList = updateDTO.getOperationTypeList();
         ruleOrderApprovalEntity.setOperationType(operationTypeList.stream().collect(Collectors.joining(",")));
@@ -101,7 +112,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
             throw new ServiceException("订单审核规则保存失败");
         }
 
-        List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
+
         ruleConditionService.updateRuleCondition(id, conditionList);
 
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ruleOrderApprovalEntity.getId(), "订单审核规则");

@@ -177,7 +177,7 @@ public class RuleOrderApprovalDTO implements Serializable {
 
         /**
          * 流向状态
-         * 来源 B2C销售订单的 订单状态
+         * 来源 http://172.16.100.11:3002/project/110/interface/api/13480   type=RuleOrderFlowStatus
          */
         private String flowStatus;
 
