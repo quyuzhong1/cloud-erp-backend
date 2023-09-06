@@ -367,6 +367,16 @@ public class OtherOutstockDTO implements Serializable {
         private String inventoryOrgName;
 
         /**
+         * 领料组织id
+         */
+        private String receiveOrgId;
+
+        /**
+         * 领料组织名称
+         */
+        private String receiveOrgName;
+
+        /**
          * 领料员
          */
         private String receiverName;

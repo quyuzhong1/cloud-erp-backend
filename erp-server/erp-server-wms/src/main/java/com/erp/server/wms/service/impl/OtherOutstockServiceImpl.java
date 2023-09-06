@@ -294,6 +294,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //库存方向
         viewDTO.setInventoryDirectionName(InventoryDirectionEnum.getName(viewDTO.getInventoryDirection()));
         viewDTO.setTypeName(OutstockTypeEnum.getByCode(entity.getType()));
+        viewDTO.setInventoryOrgName(OutstockTypeEnum.getByCode(entity.getType()));
 
         //客户信息
         OtherOutstockCustomerEntity customerEntity = otherOutstockCustomerService.getByMainId(id);

@@ -458,7 +458,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             }
 
             if (CollectionUtils.isNotEmpty(poInstockDetailList)) {
-                Integer effectiveStockInQty = poInstockDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer effectiveStockInQty = poInstockDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseOrderDetailId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                 obj.setEffectiveStockInQty(effectiveStockInQty);
                 obj.setUnStockInQty(obj.getPurchaseQty() - effectiveStockInQty + returnQty);
             }
