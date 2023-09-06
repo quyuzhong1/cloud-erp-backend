@@ -3791,11 +3791,34 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //查询子sku
         List<BomChildrenSkuDTO> sonSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(skuVO.getSkuId()));
-        PdaProductDetailDTO.ParentSkuDTO parentSkuDTO = new PdaProductDetailDTO.ParentSkuDTO();
-        parentSkuDTO.setSkuNo(skuVO.getSkuNo());
-        List<PdaProductDetailDTO.SonSkuDTO> sonSkuDTOS = BeanMapper.copyList(sonSkuList, PdaProductDetailDTO.SonSkuDTO.class);
-        parentSkuDTO.setChildSkuList(sonSkuDTOS);
-        parentSkuDTOList.add(parentSkuDTO);
+        if (CollectionUtils.isNotEmpty(sonSkuList)) {
+            PdaProductDetailDTO.ParentSkuDTO parentSkuDTO = new PdaProductDetailDTO.ParentSkuDTO();
+            parentSkuDTO.setSkuNo(skuVO.getSkuNo());
+            List<PdaProductDetailDTO.SonSkuDTO> sonSkuDTOS = BeanMapper.copyList(sonSkuList, PdaProductDetailDTO.SonSkuDTO.class);
+            parentSkuDTO.setChildSkuList(sonSkuDTOS);
+            parentSkuDTOList.add(parentSkuDTO);
+
+        } else {
+            //没有子集获取父级
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomBySkuIds(Arrays.asList(skuVO.getSkuId()));
+            List<String> skuIds = bomChildrenSkuDTOS.stream().map(req -> req.getParentSkuId()).distinct().collect(Collectors.toList());
+//            List<BomChildrenSkuDTO> bomChildrenSkuDTOS1 = bomSkuService.listBomChildBySkuIds(skuIds);
+            List<SkuVO> skuInfoBySkuIds = this.getSkuInfoBySkuIds(skuIds);
+            if (CollectionUtils.isNotEmpty(skuInfoBySkuIds)) {
+                List<String> parentSkuIds = skuInfoBySkuIds.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+                sonSkuList = bomSkuService.listBomChildBySkuIds(parentSkuIds);
+                for (SkuVO vo : skuInfoBySkuIds) {
+                    PdaProductDetailDTO.ParentSkuDTO parentSkuDTO = new PdaProductDetailDTO.ParentSkuDTO();
+                    parentSkuDTO.setSkuNo(vo.getSkuNo());
+                    List<BomChildrenSkuDTO> collect = sonSkuList.stream().filter(req -> req.getParentSkuId().equals(vo.getSkuId())).collect(Collectors.toList());
+                    List<PdaProductDetailDTO.SonSkuDTO> sonSkuDTOS = BeanMapper.copyList(collect, PdaProductDetailDTO.SonSkuDTO.class);
+                    parentSkuDTO.setChildSkuList(sonSkuDTOS);
+                    parentSkuDTOList.add(parentSkuDTO);
+                }
+            }
+
+        }
+        view.setParentSkuDTOList(parentSkuDTOList);
         return view;
     }
 }

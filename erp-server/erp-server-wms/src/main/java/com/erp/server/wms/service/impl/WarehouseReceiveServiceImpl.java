@@ -40,6 +40,8 @@ import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.PdaQclStatusEnum;
+import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -1572,5 +1574,73 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             throw new ServiceException(ApiError.ERROR_1020);
         }
         return this.submit(Arrays.asList(dto.getId()));
+    }
+
+    @Override
+    public PagingVO<List<WarehouseReceiveDTO.WaitInStockPaging>> waitInStockPaging(PagingDTO<WarehouseReceiveDTO.WaitInStockPagingParam> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        WarehouseReceiveDTO.WaitInStockPagingParam params = pagingParamDTO.getParams();
+
+        IPage<WarehouseReceiveDTO.WaitInStockPaging> pageData = this.baseMapper.pdaWaitInStockPaging(query, params);
+        if (CollectionUtils.isEmpty(pageData.getRecords())) {
+            return new PagingVO(new Page());
+        }
+        List<WarehouseReceiveDTO.WaitInStockPaging> records = pageData.getRecords();
+        //主键id
+        List<String> ids = records.stream().map(req -> req.getId()).collect(Collectors.toList());
+        //查询详情
+        List<WarehouseReceiveDetailEntity> detailEntityList = warehouseReceiveDetailService.listDetailByMainIds(ids);
+        List<String> receiveIds = records.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        //质检信息
+        List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceIds(receiveIds);
+        for (WarehouseReceiveDTO.WaitInStockPaging record : records) {
+            record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
+            List<QcInfoEntity> resultList = qcInfoList.stream().filter(obj -> obj.getSourceId().equals(record.getId())
+                    && (QcBillStatusEnum.EXEMPTION.equals(obj.getQcStatus()) || QcBillStatusEnum.FINISH_QC.equals(obj.getQcStatus()))
+            ).collect(Collectors.toList());
+            List<WarehouseReceiveDetailEntity> detailEntities = detailEntityList.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
+            List<WarehouseReceiveDTO.PdaWaitInStockItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, WarehouseReceiveDTO.PdaWaitInStockItemDTO.class);
+            List<String> skuList = itemDTOList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+            record.setDetailCount(skuList.size());
+            if (CollectionUtils.isEmpty(qcInfoList) || CollectionUtils.isEmpty(resultList)) {
+                record.setQcStatusName(PdaQclStatusEnum.WAIT_QC.getName());
+            } else if (resultList.size() >= detailEntities.size()) {
+                record.setQcStatusName(PdaQclStatusEnum.FINISH_QC.getName());
+            } else {
+                record.setQcStatusName(PdaQclStatusEnum.PARTIAL_QC.getName());
+
+            }
+            record.setItemList(itemDTOList);
+        }
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<WarehouseReceiveDTO.WaitInStockCountDTO> waitInStockListCount(PermissionsDTO dto) {
+        WaitInStockFlagEnum[] values = WaitInStockFlagEnum.values();
+        List<WarehouseReceiveDTO.WaitInStockCountDTO> list = new ArrayList<>();
+        for (WaitInStockFlagEnum item : values) {
+            WarehouseReceiveDTO.PagingParamDTO pagingParamDTO = new WarehouseReceiveDTO.PagingParamDTO();
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            pagingParamDTO.setInvalidStatus(Boolean.FALSE);
+            WarehouseReceiveDTO.WaitInStockCountDTO resultDTO = new WarehouseReceiveDTO.WaitInStockCountDTO();
+            Integer count = MathUtil.ZERO;
+            if (WaitInStockFlagEnum.WAIT_INSTOCK_QC.getCode().equals(item.getCode())) {
+                pagingParamDTO.setTabFlag(WaitInStockFlagEnum.WAIT_INSTOCK_QC.getCode());
+                count = this.baseMapper.waitInStockListCount(pagingParamDTO);
+            }
+            if (WaitInStockFlagEnum.WAIT_INSTOCK_NOT_QC.getCode().equals(item.getCode())) {
+                pagingParamDTO.setTabFlag(WaitInStockFlagEnum.WAIT_INSTOCK_NOT_QC.getCode());
+                count = this.baseMapper.waitInStockListCount(pagingParamDTO);
+            }
+            if (WaitInStockFlagEnum.ALL.getCode().equals(item.getCode())) {
+                count = this.baseMapper.waitInStockListCount(pagingParamDTO);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            list.add(resultDTO);
+        }
+        return list;
     }
 }

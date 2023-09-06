@@ -268,4 +268,30 @@ public class PdaPoReceiveController extends BaseController {
         List<WarehouseReceiveDTO.PdaPoReceive> list = warehouseReceiveService.pdaList(dto);
         return success(list);
     }
+
+    /**
+     * PDA:待入库查询
+     * @Author Luo_WG
+     * @Date 2023/8/18 11:07
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<WarehouseReceiveDTO.PdaPoReceive>>
+     **/
+    @PostMapping("/waitInStockPaging")
+    public ApiResult<PagingVO<List<WarehouseReceiveDTO.WaitInStockPaging>>> waitInStockPaging(@RequestBody PagingDTO<WarehouseReceiveDTO.WaitInStockPagingParam> dto) {
+        PagingVO<List<WarehouseReceiveDTO.WaitInStockPaging>> list = warehouseReceiveService.waitInStockPaging(dto);
+        return success(list);
+    }
+
+    /**
+     * PDA:待入库查询表头数量
+     * @Author Luo_WG
+     * @Date 2023/9/6 11:38
+     * @param dto
+     * @return com.common.business.vo.PagingVO<java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WaitInStockPaging>>
+     **/
+    @PostMapping("/waitInStockListCount")
+    public ApiResult<List<WarehouseReceiveDTO.WaitInStockCountDTO>> waitInStockListCount(@RequestBody PermissionsDTO dto) {
+        List<WarehouseReceiveDTO.WaitInStockCountDTO> waitInStockCountDTOS = warehouseReceiveService.waitInStockListCount(dto);
+        return success(waitInStockCountDTOS);
+    }
 }

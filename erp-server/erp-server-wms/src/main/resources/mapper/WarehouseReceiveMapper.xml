@@ -408,4 +408,120 @@
         </if>
         ORDER BY pr.create_time
     </select>
+
+    <select id="pdaWaitInStockPaging" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$WaitInStockPaging">
+        SELECT
+            DISTINCT
+            pr.id,
+            pr.code,
+            pr.approve_status,
+            pr.supplier_name,
+            pr.delivery_warehouse_name,
+            pr.subcontract_type as subcontractType,
+        FROM po_receive pr
+        LEFT JOIN po_receive_detail prd ON pr.id = prd.main_id AND prd.is_deleted = FALSE AND prd.is_deleted = FALSE
+        WHERE pr.is_deleted = FALSE
+        AND pr.invalid_status = FALSE
+        AND pr.approve_status = 'approve'
+        AND  EXISTS (
+            SELECT
+                t.source_detail_id
+            FROM (
+                SELECT
+                    SUM(pid.stock_in_qty) as stock_in_qty,
+                    pid.source_detail_id
+                FROM po_instock pik
+                INNER JOIN po_instock_detail pid on pik.id = pid.main_id
+                GROUP BY pid.source_detail_id
+            ) t
+            WHERE t.source_detail_id = prd."id" AND stock_in_qty &gt; prd.receive_qty
+        )
+        <if test="param2.tabFlag == 'waitInStockQc'">
+            AND EXISTS (
+                SELECT
+                    t.source_detail_id
+                FROM (
+                    SELECT
+                        qc.qc_status,
+                        qc.source_detail_id
+                    FROM qc_info qc
+                    GROUP BY qc.qc_status, qc.source_detail_id
+                ) t
+                WHERE t.source_detail_id = prd."id" AND t.qc_status = 'finishQc'
+            )
+        </if>
+        <if test="param2.tabFlag == 'waitInStockNotQc'">
+            AND NOT EXISTS (
+                SELECT
+                    t.source_id
+                FROM (
+                    SELECT
+                        array_to_string(ARRAY(SELECT unnest(array_agg(qc.qc_status))),',') AS qc_status,
+                        qc.source_id
+                    FROM qc_info qc
+                    GROUP BY qc.source_id
+                ) t
+                WHERE t.source_id = prd."main_id" AND t.qc_status ILIKE 'finishQc'
+            )
+        </if>
+        ORDER BY pr.code DESC
+    </select>
+
+    <select id="waitInStockListCount"  resultType="java.lang.Integer">
+        select
+            count(distinct wr.id)
+        FROM po_receive pr
+        LEFT JOIN po_receive_detail prd ON pr.id = prd.main_id AND prd.is_deleted = FALSE AND prd.is_deleted = FALSE
+        WHERE pr.is_deleted = FALSE
+        AND pr.approve_status = 'approve'
+        AND  EXISTS (
+            SELECT
+                t.source_detail_id
+            FROM (
+                SELECT
+                    SUM(pid.stock_in_qty) as stock_in_qty,
+                    pid.source_detail_id
+                FROM po_instock pik
+                INNER JOIN po_instock_detail pid on pik.id = pid.main_id
+                GROUP BY pid.source_detail_id
+            ) t
+            WHERE t.source_detail_id = prd."id" AND stock_in_qty &gt; prd.receive_qty
+        )
+        <if test="params.invalidStatus != null">
+            and wr.invalid_status = #{params.invalidStatus}
+        </if>
+
+        <if test="params.tabFlag == 'waitInStockQc'">
+            AND EXISTS (
+                SELECT
+                    t.source_detail_id
+                FROM (
+                    SELECT
+                        qc.qc_status,
+                        qc.source_detail_id
+                    FROM qc_info qc
+                    GROUP BY qc.qc_status, qc.source_detail_id
+                ) t
+                WHERE t.source_detail_id = prd."id" AND t.qc_status = 'finishQc'
+            )
+        </if>
+        <if test="params.tabFlag == 'waitInStockNotQc'">
+            AND NOT EXISTS (
+                SELECT
+                    t.source_id
+                FROM (
+                    SELECT
+                        array_to_string(ARRAY(SELECT unnest(array_agg(qc.qc_status))),',') AS qc_status,
+                        qc.source_id
+                    FROM qc_info qc
+                    GROUP BY qc.source_id
+                ) t
+                WHERE t.source_id = prd."main_id" AND t.qc_status ILIKE 'finishQc'
+            )
+        </if>
+
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
 </mapper>
