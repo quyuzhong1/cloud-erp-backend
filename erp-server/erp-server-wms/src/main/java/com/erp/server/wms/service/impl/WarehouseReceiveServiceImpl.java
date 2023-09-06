@@ -1474,9 +1474,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             detailView.setWarehouseLocation(purchaseOrderDetailEntity.getWarehouseLocation());
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(purchaseOrderDetailEntity.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             detailView.setWarehouseLocationName(warehouseLocationEntity.getName());
-            Integer effectiveStockInQty = poInstockDetailList.stream().filter(e -> e.getSourceDetailId().equals(warehouseReceiveDetailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer effectiveStockInQty = poInstockDetailList.stream().filter(e -> e.getSourceDetailId().equals(warehouseReceiveDetailEntity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             detailView.setEffectiveStockInQty(effectiveStockInQty);
-            detailView.setUnStockInQty(purchaseOrderDetailEntity.getPurchaseQty() - effectiveStockInQty + returnQty);
+            detailView.setUnStockInQty(receive - effectiveStockInQty + returnQty);
 
             detailViewDTOS.add(detailView);
         }
