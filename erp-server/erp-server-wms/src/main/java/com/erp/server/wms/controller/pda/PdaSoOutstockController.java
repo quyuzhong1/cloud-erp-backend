@@ -80,7 +80,7 @@ public class PdaSoOutstockController extends BaseController {
      **/
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SoOutstockDTO.AddDTO dto) {
-        String id = soOutstockService.add(dto);
+        String id = soOutstockService.pdaAdd(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
@@ -99,7 +99,7 @@ public class PdaSoOutstockController extends BaseController {
             keyIdName = "id"
     )
     public ApiResult update(@RequestBody @Validated SoOutstockDTO.UpdateDTO dto) {
-        String id = soOutstockService.updateSoOutstock(dto);
+        String id = soOutstockService.pdaUpdate(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
@@ -150,7 +150,7 @@ public class PdaSoOutstockController extends BaseController {
      **/
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated SoOutstockDTO.AddDTO dto) {
-        Boolean result = soOutstockService.addAndSubmit(dto);
+        Boolean result = soOutstockService.pdaAddAndSubmit(dto);
         return result ? success() : failure();
     }
 
@@ -169,7 +169,7 @@ public class PdaSoOutstockController extends BaseController {
             keyIdName = "id"
     )
     public ApiResult updateAndSubmit(@RequestBody @Validated SoOutstockDTO.UpdateDTO dto) {
-        Boolean result = soOutstockService.updateAndSubmit(dto);
+        Boolean result = soOutstockService.pdaUpdateAndSubmit(dto);
         return result ? success() : failure();
     }
 

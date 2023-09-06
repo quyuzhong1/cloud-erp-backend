@@ -284,11 +284,15 @@ public class SoOutstockDetailDTO implements Serializable {
         @NotBlank(message = "sku不能为空")
         private String skuId;
 
+        /**
+         * sku編號
+         */
+        private String skuNo;
+
 
         /**
          * 应发数量
          */
-        @NotNull(message = "应发数量不能为空")
         @DecimalMin(value = "1", message = "应发数量最小值为1")
         @DecimalMax(value = "999999999", message = "应发数量最大值")
         private Integer planQty;
@@ -296,7 +300,6 @@ public class SoOutstockDetailDTO implements Serializable {
         /**
          * 实发数量
          */
-        @NotNull(message = "实发数量不能为空")
         @DecimalMin(value = "1", message = "实发数量最小值为1")
         @DecimalMax(value = "999999999", message = "实发数量最大值")
         private Integer actualQty;
@@ -326,7 +329,6 @@ public class SoOutstockDetailDTO implements Serializable {
         /**
          * 来源明细id
          */
-        @NotBlank(message = "来源明细不能为空")
         private String sourceDetailId;
 
 
