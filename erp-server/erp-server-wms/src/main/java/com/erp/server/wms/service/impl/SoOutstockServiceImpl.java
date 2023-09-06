@@ -1490,7 +1490,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public String pdaAdd(SoOutstockDTO.AddDTO dto) {
         List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailByMainId(dto.getSourceId());
         for (SoOutstockDetailDTO.AddDTO addDTO : dto.getDetailList()) {
-            SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(addDTO.getSourceDetailId())).findFirst().orElse(null);
+            SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = noticeDetailEntities.stream().filter(req -> req.getId().equals(addDTO.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDeliveryNoticeDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_SOOUTSTOCK_DETAIL_SKU_NOT_EXIST, addDTO.getSkuNo());
             }
@@ -1502,7 +1502,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public String pdaUpdate(SoOutstockDTO.UpdateDTO dto) {
         List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailByMainId(dto.getSourceId());
         for (SoOutstockDetailDTO.UpdateDTO updateDTO : dto.getDetailList()) {
-            SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(updateDTO.getSourceDetailId())).findFirst().orElse(null);
+            SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = noticeDetailEntities.stream().filter(req -> req.getId().equals(updateDTO.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDeliveryNoticeDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_SOOUTSTOCK_DETAIL_SKU_NOT_EXIST, updateDTO.getSkuNo());
             }
