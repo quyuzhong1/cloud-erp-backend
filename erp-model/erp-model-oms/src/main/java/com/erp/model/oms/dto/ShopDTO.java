@@ -198,13 +198,13 @@ public class ShopDTO implements Serializable {
         /**
          * 创建时间集合
          */
-        private List<LocalDate> createTimeList;
+        private List<LocalDateTime> createTimeList;
 
 
         /**
          * 授权时间
          */
-        private List<LocalDate> authTimeList;
+        private List<LocalDateTime> authTimeList;
 
         /**
          * 修改人id 集合
@@ -214,7 +214,7 @@ public class ShopDTO implements Serializable {
         /**
          * 修改时间
          */
-        private List<LocalDate> updateTimeList;
+        private List<LocalDateTime> updateTimeList;
 
 
     }

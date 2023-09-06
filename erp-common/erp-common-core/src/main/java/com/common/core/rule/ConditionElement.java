@@ -1,11 +1,5 @@
-package com.common.core.rule;/**
- * @author Lambda
- * @Classname ConditionElement
- * @Description TODO
- * @Date 2023-09-04 10:30
- * @Created by yl
- */
-
+package com.common.core.rule;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -15,7 +9,8 @@ import lombok.NoArgsConstructor;
  * @Date 2023-09-04 10:30
  */
 @Data
-
+@NoArgsConstructor
+@AllArgsConstructor
 public class ConditionElement {
 
     /**
@@ -49,18 +44,6 @@ public class ConditionElement {
      * 逻辑关系 and 或者or
      */
     private String logic;
-
-    public ConditionElement(String leftBracket, String field, String operator,
-                            String value, String rightBracket, String logic) {
-        this.leftBracket = leftBracket;
-        this.field = field;
-        this.operator = operator;
-        this.value = value;
-        this.rightBracket = rightBracket;
-        this.logic = logic;
-
-    }
-
 
 
 }
