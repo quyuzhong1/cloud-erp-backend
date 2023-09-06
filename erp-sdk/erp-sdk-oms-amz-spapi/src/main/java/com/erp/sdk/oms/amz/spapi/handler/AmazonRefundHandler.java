@@ -45,10 +45,7 @@ public class AmazonRefundHandler extends AbstractOrderHandler<PlatformAmazonRefu
     }
 
     @Override
-    public List<?> pushDataPackage(JobTaskDTO data) {
-        // TODO: 亚马逊订单推送数据封装
-        // 数据封装发送MQ
-        return null;
+    public String getTargetPlatform() {
+        return PlatformDictEnum.AMAZON.getCode();
     }
-
 }

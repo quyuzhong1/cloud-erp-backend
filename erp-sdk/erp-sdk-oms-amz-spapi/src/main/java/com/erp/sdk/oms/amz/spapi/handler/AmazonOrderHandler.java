@@ -46,11 +46,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
     }
 
     @Override
-    public List<?> pushDataPackage(JobTaskDTO data) {
-        // TODO: 亚马逊订单推送数据封装
-        System.out.println("pushDataPackage = " + data);
-        // 数据封装发送MQ
-        return null;
+    public String getTargetPlatform() {
+        return PlatformDictEnum.AMAZON.getCode();
     }
-
 }

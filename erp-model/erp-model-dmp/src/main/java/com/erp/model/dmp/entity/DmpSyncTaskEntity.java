@@ -121,8 +121,8 @@ public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
 
     public static final String SOURCE_CODE = "source_code";
 
-    public <R extends UniqueDto> DmpSyncTaskEntity(String category, String platform, String business, String topic, String tag, R item) {
-        this.targetPlatformName = category;
+    public <R extends UniqueDto> DmpSyncTaskEntity(String platform, String business,String targetPlatform, String topic, String tag, R item) {
+        this.targetPlatformName = targetPlatform;
         this.mqTopic = topic;
         this.mqTag = tag;
         this.mqData = JSONUtil.toJsonStr(item);

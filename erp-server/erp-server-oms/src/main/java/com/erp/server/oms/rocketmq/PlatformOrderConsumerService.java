@@ -19,7 +19,7 @@ import javax.annotation.Resource;
  * @author Cloud
  */
 @RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
-        selectorExpression = "third_system_Amazon_order_tag||third_system_Shopify_listing_tag",
+        selectorExpression = "third_system_order_tag",
         consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_amazon_order_consumer",
         consumeMode = ConsumeMode.ORDERLY)
 public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {

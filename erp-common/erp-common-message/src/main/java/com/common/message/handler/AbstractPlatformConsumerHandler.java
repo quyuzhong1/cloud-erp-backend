@@ -1,5 +1,6 @@
 package com.common.message.handler;
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -21,12 +22,13 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
         try {
             ApiResult handle = handle(ext);
             if (!handle.isSuccess()) {
+                log.error("平台数据消费异常 {}", JSONUtil.toJsonStr(handle));
                 updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncKingdeeStatusEnum.FAILED_SYNC, handle.getMsg());
                 return;
             }
             updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncKingdeeStatusEnum.SUCCESS_SYNC, SyncKingdeeStatusEnum.SUCCESS_SYNC.getName());
         }catch (Exception e) {
-            updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncKingdeeStatusEnum.FAILED_SYNC, e.getMessage() != null ? e.getMessage() : e.getCause().toString());
+            updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncKingdeeStatusEnum.FAILED_SYNC, e.getMessage() != null ? e.getMessage() : e.getStackTrace()[e.getStackTrace().length-1].toString());
             log.error("平台数据消费异常", e);
         }
     }

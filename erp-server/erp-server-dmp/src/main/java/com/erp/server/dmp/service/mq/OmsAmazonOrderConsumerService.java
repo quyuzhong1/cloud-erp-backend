@@ -19,7 +19,7 @@ import javax.annotation.Resource;
  * @Date 2023/8/31 17:10
  **/
 @Service
-@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PUSH_DATA_TOPIC,
+@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
         selectorExpression = "demo",
         consumerGroup = "${spring.cloud.nacos.discovery.namespace}-oms_push_amazon_order_consumer")
 public class OmsAmazonOrderConsumerService extends AbstractPlatformConsumerHandler<PlatformOrderDTO> {

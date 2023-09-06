@@ -22,7 +22,7 @@ public class UniqueDto extends DmpSyncTaskIdDTO implements Serializable {
     private String uniqueId;
 
     /**
-     * 平台名称
+     * 平台code
      */
     private String platform;
 }
