@@ -263,4 +263,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return java.lang.Boolean
      */
     Boolean productSalesExport(ReportDTO.ProductSalesPagingParamDTO dto, HttpServletResponse response);
+    /**
+     * @description: 查看财务信息
+     * @author Will
+     * @date: 2023/9/6 15:44
+     * @param dto
+     * @return FinancialInfoDTO
+     */
+    SoB2cDTO.FinancialInfoDTO getFinancialInfo(SoB2cDTO.FinancialParamDTO dto);
 }
