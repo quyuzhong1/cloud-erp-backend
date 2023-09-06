@@ -1747,7 +1747,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return Boolean.TRUE;
         }
         //配货规则不匹配,标识异常
-        updateAbnormalTypeApprove(id, null, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
+        updateAbnormalTypeApprove(id, SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT);
         return Boolean.TRUE;
     }
 
@@ -1763,6 +1763,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private Boolean updateAbnormalTypeApprove(String id, ApproveStatusEnum approveStatusEnum, SoB2cAbnormalTypeEnum soB2cAbnormalTypeEnum) {
         return lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(ObjectUtils.isNotEmpty(approveStatusEnum), SoB2cEntity::getApproveStatus, approveStatusEnum.getCode())
+                .set(SoB2cEntity::getAbnormalType, soB2cAbnormalTypeEnum.getCode())
+                .update(new SoB2cEntity());
+    }
+
+    /**
+     * @param id
+     * @param soB2cAbnormalTypeEnum
+     * @return Boolean
+     * @description: 异常审核不通过
+     * @author Will
+     * @date: 2023/8/24 15:14
+     */
+    private Boolean updateAbnormalTypeApprove(String id, SoB2cAbnormalTypeEnum soB2cAbnormalTypeEnum) {
+        return lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(SoB2cEntity::getAbnormalType, soB2cAbnormalTypeEnum.getCode())
                 .update(new SoB2cEntity());
     }
