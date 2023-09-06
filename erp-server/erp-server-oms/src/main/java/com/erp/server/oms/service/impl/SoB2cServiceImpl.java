@@ -1250,10 +1250,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_92058);
         }
 
-        //国家
-        List<String> countryIds = list.stream().map(SoB2cDTO.ListDTO::getCountryId).collect(Collectors.toList());
-        List<DictCountryEntity> dictCountryList = sysDictFeign.listCountryByIds(countryIds);
-
         //产品信息
         List<String> skuIdList = list.stream().flatMap(obj -> Stream.of(obj.getDetailList().stream().map(SoB2cDetailDTO.ListDTO::getSkuId).toArray(String[]::new))).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
@@ -1285,12 +1281,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (CollectionUtils.isNotEmpty(logisticsMethodList)) {
                 String logisticsMethodName = logisticsMethodList.stream().filter(obj -> obj.getValue().equals(data.getDictLogisticsMethod())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 data.setDictLogisticsMethodName(logisticsMethodName);
-            }
-
-            //国家
-            if (CollectionUtils.isNotEmpty(dictCountryList)) {
-                String countryName = dictCountryList.stream().filter(obj -> obj.getId().equals(data.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-                data.setCountryName(countryName);
             }
             //店铺
             String shopName = shopInfoList.stream().filter(obj -> obj.getId().equals(data.getShopId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");

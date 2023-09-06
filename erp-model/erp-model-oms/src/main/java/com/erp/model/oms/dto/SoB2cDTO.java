@@ -173,11 +173,6 @@ public class SoB2cDTO implements Serializable {
         private Boolean invalidStatus;
 
         /**
-         * 国家id
-         */
-        private String countryId;
-
-        /**
          * 国家
          */
         private String countryName;
