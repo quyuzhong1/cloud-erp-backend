@@ -231,12 +231,8 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @GetMapping("/shopifyAuthorizeIndex")
-    public ApiResult getShopAuthUrl(@RequestParam("hmac") String hmac,
-                                    @RequestParam("host") String host,
-                                    @RequestParam("shop") String shop,
-                                    @RequestParam("timestamp") String timestamp) {
-        String resultUrl = shopInfoService.getShopifyAuthorizeUrl(hmac, host, shop, timestamp);
-
+    public ApiResult getShopAuthUrl(@RequestParam("shop") String shop) {
+        String resultUrl = shopInfoService.getShopifyAuthorizeUrl("", "", shop, "");
         return success(resultUrl);
     }
 

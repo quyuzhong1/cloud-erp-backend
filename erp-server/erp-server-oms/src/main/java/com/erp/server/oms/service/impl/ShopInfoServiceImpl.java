@@ -577,10 +577,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         findDTO.setPlatformType(appClient.getPlatformType());
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
         String params = "host=" + host + "&shop=" + shop + "&timestamp=" + timestamp;
-        Boolean checkResult = shopSdkServer.verifyShop(params, hmac, shop, cfgAppClient.getClientSecret());
-        if (!checkResult) {
-            throw new ServiceException("店铺授权检验未通过");
-        }
+//        Boolean checkResult = shopSdkServer.verifyShop(params, hmac, shop, cfgAppClient.getClientSecret());
+//        if (!checkResult) {
+//            throw new ServiceException("店铺授权检验未通过");
+//        }
         String grantOptions = "per-user";
         String path = String.format(cfgAppClient.getUrl(), shop, cfgAppClient.getClientId(), grantOptions, cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
         return path;
