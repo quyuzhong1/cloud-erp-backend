@@ -537,9 +537,19 @@ public class SoOutstockDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
          * 库位
          */
         private String warehouseLocation;
+
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
 
 
         /**
@@ -574,7 +584,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private LocalDate requireDate;
 
-
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
     }
 
     /**

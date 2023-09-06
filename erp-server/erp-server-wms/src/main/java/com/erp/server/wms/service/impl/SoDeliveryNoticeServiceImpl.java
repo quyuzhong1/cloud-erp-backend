@@ -20,6 +20,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
@@ -134,6 +135,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private WmsAttachmentService wmsAttachmentService;
+
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -994,5 +998,61 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(SoDeliveryNoticeEntity::getSourceId,sourceIds).list();
+    }
+
+    /**
+     * PDA:根据发货通知单获取详情
+     * @Author Luo_WG
+     * @Date 2023/9/6 18:10
+     * @param id
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public List<SoOutstockDTO.GenerateSoOutstockViewDTO> pdaDeliveryDetail(String id) {
+        SoDeliveryNoticeEntity entity = this.getById(id);
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98063);
+        }
+        //获取到销售退货单 下推列表
+        String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
+        List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList = baseMapper.listGenerateSoOutstockView(Arrays.asList(id), soDeliveryNotice);
+        long closeCount = resultList.stream().filter(s -> s.getIsClose()).count();
+        if (closeCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98068);
+        }
+
+        //详情id s
+        List<String> detailIds = resultList.stream().map(SoOutstockDTO.GenerateSoOutstockViewDTO::getSourceDetailId).distinct().collect(Collectors.toList());
+
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(entity.getWarehouseId()));
+        //附件信息
+        List<WmsAttachmentDTO.UpdateDTO> attachmentDbList = wmsAttachmentService.getByBusinessIds(detailIds);
+        List<String> skuIds = resultList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIds);
+        for (SoOutstockDTO.GenerateSoOutstockViewDTO item : resultList) {
+            item.setSourceType(soDeliveryNotice);
+            String detailId = item.getSourceDetailId();
+            SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
+            item.setVariantProperty(skuVO.getVariantProperty());
+            item.setDeliveryQty(item.getQty());
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(item.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            item.setWarehouseLocationName(warehouseLocationEntity.getName());
+            //附件信息
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentDbList.stream().filter(a -> a.getBusinessId().equals(detailId)).collect(Collectors.toList());
+            List<String> attachmentNameList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+            List<String> attachmentUrlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+            item.setAttachNameList(attachmentNameList);
+            item.setAttachUrlList(attachmentUrlList);
+        }
+        //销售出库单保存下推单据
+        return resultList;
+    }
+
+    @Override
+    public SoDeliveryNoticeDTO.View pdaView(String id) {
+        SoDeliveryNoticeDTO.View view = this.view(id);
+        List<SoDeliveryNoticeDetailDTO.View> soDeliveryNoticeDetailDTOS = BeanMapper.copyList(pdaDeliveryDetail(id), SoDeliveryNoticeDetailDTO.View.class);
+        view.setDetailList(soDeliveryNoticeDetailDTOS);
+        return view;
     }
 }
