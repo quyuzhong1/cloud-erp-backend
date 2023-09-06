@@ -837,11 +837,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         for (Map.Entry<String, List<WarehouseDTO.ListDTO>> entry : map.entrySet()) {
             WarehouseDTO.ListTreeDTO listTreeDTO = new WarehouseDTO.ListTreeDTO();
             String key = entry.getKey();
-            listTreeDTO.setTypeId(key);
+            listTreeDTO.setId(key);
             //类型id
             String typeName = dictBasicList.stream().filter(d -> d.getId().equals(key)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            listTreeDTO.setTypeName(typeName);
+            listTreeDTO.setName(typeName);
             listTreeDTO.setListDTO(entry.getValue());
             resultList.add(listTreeDTO);
         }

@@ -139,12 +139,12 @@ public class WarehouseDTO implements Serializable {
         /**
          * 仓库类型 对应dict 表id
          */
-        private String typeId;
+        private String id;
 
         /**
          * 仓库类型名称
          */
-        private String typeName;
+        private String name;
 
         /**
          * 仓库信息
