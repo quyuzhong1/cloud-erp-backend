@@ -224,4 +224,16 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return
      */
     PagingVO<WarehouseDTO.PagingProductViewDTO> pagingProduct(PagingDTO<WarehouseDTO.PagingProductDTO> dto);
+    /**
+     * 树状列表
+     */
+    List<WarehouseDTO.ListTreeDTO> listTree();
+    /**
+     * @description: 树状列表(有参)
+     * @author Will
+     * @date: 2023/9/6 15:56
+     * @param dto
+     * @return List<ListTreeDTO>
+     */
+    List<WarehouseDTO.ListTreeDTO> listTreeByParams(WarehouseDTO.ListParamDTO dto);
 }

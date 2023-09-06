@@ -1117,6 +1117,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             List<String> categoryIdList = soB2cRefCategoryList.stream().map(SoB2cRefCategoryEntity::getCategoryId).distinct().collect(Collectors.toList());
             data.setCategoryIdList(categoryIdList);
         }
+        //财务信息
+        SoB2cDTO.FinancialInfoDTO financialInfoDTO = new SoB2cDTO.FinancialInfoDTO();
+        financialInfoDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+        financialInfoDTO.setAmount(MathUtil.multiply(soB2cEntity.getAmount(),soB2cEntity.getExchangeRate()));
+        //运费收入,
+        financialInfoDTO.setShippingCost(BigDecimal.ZERO);
+
+
+        data.setFinancialInfoDTO(financialInfoDTO);
         //明细
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
         if (CollectionUtils.isEmpty(soB2cDetailList)) {
@@ -1876,6 +1885,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return Boolean.TRUE;
 
 
+    }
+
+    @Override
+    public SoB2cDTO.FinancialInfoDTO getFinancialInfo(SoB2cDTO.FinancialParamDTO dto) {
+        SoB2cEntity soB2cEntity = this.getById(dto.getId());
+        if (ObjectUtil.isEmpty(soB2cEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        return null;
     }
 
     /**

@@ -115,6 +115,27 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
     }
 
+    @Override
+    public List<WarehouseDTO.ListTreeDTO> listTree() {
+        List<WarehouseDTO.ListDTO> list = listApproveWarehouse();
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        List<WarehouseDTO.ListTreeDTO> resultList = handleWarehouseTree(list);
+        return resultList;
+    }
+
+    @Override
+    public List<WarehouseDTO.ListTreeDTO> listTreeByParams(WarehouseDTO.ListParamDTO dto) {
+        List<WarehouseDTO.ListDTO> list = listWarehouseByParams(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        List<WarehouseDTO.ListTreeDTO> resultList = handleWarehouseTree(list);
+        return resultList;
+    }
+
+
 
     /**
      * 添加仓库
@@ -653,6 +674,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     public List<WarehouseDTO.ListDTO> listWarehouseByParams(WarehouseDTO.ListParamDTO dto) {
         List<WarehouseEntity> list = lambdaQuery()
+                .eq(StringUtils.isNotBlank(dto.getWarehouseName()),WarehouseEntity::getName,dto.getWarehouseName())
                 .in(CollectionUtils.isNotEmpty(dto.getOrgIdList()),WarehouseEntity::getOrgId,dto.getOrgIdList())
                 .list();
         if (CollectionUtils.isEmpty(list)) {
@@ -725,6 +747,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         return new PagingVO<>(pageData);
     }
 
+
     /**
      * 更改状态
      *
@@ -795,5 +818,33 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         });
 
         redisService.deleteObject(redisKeys);
+    }
+
+    /**
+     * @description: 处理下拉数据
+     * @author Will
+     * @date: 2023/9/6 15:59
+     * @param list
+     * @return List<ListTreeDTO>
+     */
+    private List<WarehouseDTO.ListTreeDTO> handleWarehouseTree (List<WarehouseDTO.ListDTO> list) {
+
+        //获取到仓库类型
+        List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+
+        List<WarehouseDTO.ListTreeDTO> resultList = new ArrayList<>();
+        Map<String, List<WarehouseDTO.ListDTO>> map = list.stream().collect(Collectors.groupingBy(WarehouseDTO.ListDTO::getTypeId));
+        for (Map.Entry<String, List<WarehouseDTO.ListDTO>> entry : map.entrySet()) {
+            WarehouseDTO.ListTreeDTO listTreeDTO = new WarehouseDTO.ListTreeDTO();
+            String key = entry.getKey();
+            listTreeDTO.setTypeId(key);
+            //类型id
+            String typeName = dictBasicList.stream().filter(d -> d.getId().equals(key)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            listTreeDTO.setTypeName(typeName);
+            listTreeDTO.setListDTO(entry.getValue());
+            resultList.add(listTreeDTO);
+        }
+        return resultList;
     }
 }

@@ -256,6 +256,24 @@ public class SoB2cController extends BaseController {
     }
 
     /**
+     * 查看财务信息
+     * @author Will
+     * @date: 2023/9/6 15:43
+     * @param dto
+     * @return ApiResult<FinancialInfoDTO>
+     */
+    @PostMapping("/getFinancialInfo")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:getFinancialInfo",
+            serviceClass = SoB2cService.class,
+            keyIdName = "id")
+    public ApiResult<SoB2cDTO.FinancialInfoDTO> getFinancialInfo(@RequestBody @Validated SoB2cDTO.FinancialParamDTO dto) {
+        return success(soB2cService.getFinancialInfo(dto));
+    }
+
+
+    /**
      * 修改订单备注
      * @author Will
      * @date: 2023/8/18 15:37
@@ -324,7 +342,7 @@ public class SoB2cController extends BaseController {
     }
 
     /**
-     * 订单配货数据显示
+     * 订单配货数据显示（前端手动配货）
      * @author Will
      * @date: 2023/8/18 16:36
      * @param dto 
@@ -342,7 +360,7 @@ public class SoB2cController extends BaseController {
     }
 
     /**
-     * 订单配货保存
+     * 订单配货保存（前端手动配货）
      * @author Will
      * @date: 2023/8/18 16:43
      * @param dto

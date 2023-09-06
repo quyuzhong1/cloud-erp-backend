@@ -414,11 +414,86 @@ public class SoB2cDTO implements Serializable {
         private SoB2cReceiverDTO.ViewDTO receiverDTO;
 
         /**
+         * 财务信息
+         */
+        private FinancialInfoDTO financialInfoDTO;
+
+        /**
          * 明细信息
          */
         @NotNull(message = "明细信息不能为空")
         @Valid
         private List<SoB2cDetailDTO.ViewDTO> detailList;
+    }
+
+    /**
+     * 财务信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FinancialParamDTO {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 是否是人民币
+         */
+        private Boolean isCny;
+    }
+        /**
+     * 财务信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FinancialInfoDTO {
+
+        /**
+         * 币别
+         */
+       private String currency;
+
+        /**
+         * 订单总金额
+         */
+       private BigDecimal amount;
+
+       /**
+        * 运费收入
+        */
+       private BigDecimal shippingCost;
+
+        /**
+         * 商品成本
+         */
+        private BigDecimal itemCost;
+
+        /**
+         * 物流成本
+         */
+        private BigDecimal logisticsCost;
+
+        /**
+         * 平台费
+         */
+        private BigDecimal platformCost;
+
+        /**
+         * 转账费
+         */
+        private BigDecimal paypalCost;
+
+        /**
+         * 包装辅料费
+         */
+        private BigDecimal accessoriesCost;
+
+        /**
+         * VAT税费
+         */
+        private BigDecimal vatCost;
     }
 
     /**

@@ -3,7 +3,6 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -131,6 +130,29 @@ public class WarehouseDTO implements Serializable {
     }
 
     /**
+     * 仓库列表(树状)
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListTreeDTO {
+
+        /**
+         * 仓库类型 对应dict 表id
+         */
+        private String typeId;
+
+        /**
+         * 仓库类型名称
+         */
+        private String typeName;
+
+        /**
+         * 仓库信息
+         */
+        private List<ListDTO> listDTO;
+    }
+
+        /**
      * 仓库列表
      */
     @Data
@@ -147,6 +169,10 @@ public class WarehouseDTO implements Serializable {
          */
         private String name;
 
+        /**
+         * 仓库类型 对应dict 表id
+         */
+        private String typeId;
 
         /**
          * 组织id
@@ -171,6 +197,11 @@ public class WarehouseDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListParamDTO {
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
 
         /**
          * 组织id集合
