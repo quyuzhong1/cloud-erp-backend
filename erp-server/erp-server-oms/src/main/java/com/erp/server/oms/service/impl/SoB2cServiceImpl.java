@@ -1738,7 +1738,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         //进行配货规则匹配 TODO
-        Boolean distributionSuccess = "1".equals(entity.getInterceptRemark()) ? Boolean.FALSE : Boolean.TRUE;
+        Boolean distributionSuccess = "1".equals(entity.getInterceptRemark()) ? Boolean.TRUE : Boolean.FALSE;
         if (distributionSuccess) {
             //状态更新为配货中
             updateBillStatus(id, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION);

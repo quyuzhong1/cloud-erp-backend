@@ -222,12 +222,14 @@
             0 as actualTaxCost,
             COALESCE(pc.target_tax_cost,0) as targetTaxCost,
             pbi.update_user_name as updateUserName,
-            pbi.update_time as updateTime
+            pbi.update_time as updateTime,
+            pp.main_supplier as mainSupplierId
         from product_bom_info pbi
         inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
         left join product_detail pd on pbs.parent_sku_id = pd.id and pd.is_deleted = false
         left join product_detail cpd on pbs.sku_id = cpd.id and cpd.is_deleted = false
         left join product_cost pc on cpd.id = pc.sku_id and pc.is_deleted = false
+        left join product_purchase pp on cpd.id = pp.sku_id and pp.is_deleted = false
         <where>
             pbi.is_deleted = false and pbi.source_type = 'productCombination'
             <if test="params.skuNo != null and params.skuNo != ''">
