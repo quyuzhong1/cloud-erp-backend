@@ -417,7 +417,7 @@
             pr.approve_status,
             pr.supplier_name,
             pr.delivery_warehouse_name,
-            pr.subcontract_type as subcontractType,
+            pr.subcontract_type as subcontractType
         FROM po_receive pr
         LEFT JOIN po_receive_detail prd ON pr.id = prd.main_id AND prd.is_deleted = FALSE AND prd.is_deleted = FALSE
         WHERE pr.is_deleted = FALSE
