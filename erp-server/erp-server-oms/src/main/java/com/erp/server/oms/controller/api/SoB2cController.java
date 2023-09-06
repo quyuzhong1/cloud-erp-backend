@@ -682,5 +682,4 @@ public class SoB2cController extends BaseController {
         }
         return success(resultDTOS);
     }
-
 }

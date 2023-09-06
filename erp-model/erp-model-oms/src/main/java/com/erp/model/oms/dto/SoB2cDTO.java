@@ -81,7 +81,7 @@ public class SoB2cDTO implements Serializable {
          /**
           * 国家id集合 http://172.16.100.11:3002/project/36/interface/api/13390
           */
-         private List<String> countryIdList;
+         private List<String> countryNameList;
          /**
           * 平台sku
           */
@@ -1104,6 +1104,60 @@ public class SoB2cDTO implements Serializable {
          */
         @NotBlank(message = "分组信息不能为空")
         private String group;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewReceiveDataDTO {
+        /**
+         * 客户id
+         */
+        private String customerId;
+
+        /**
+         * 客户名称
+         */
+        private String name;
+
+        /**
+         * 邮箱
+         */
+        private String email;
+
+        /**
+         * 买家电话
+         */
+        private String telNumber;
+
+        /**
+         * 收货地址1
+         */
+        private String firstAddress;
+
+        /**
+         * 收货地址2
+         */
+        private String secondAddress;
+
+        /**
+         * 城市名称
+         */
+        private String cityName;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
+        /**
+         * 收货人名称
+         */
+        private String receiverName;
+
+        /**
+         * 收货人电话
+         */
+        private String receiverTelNumber;
     }
 
 }

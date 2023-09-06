@@ -91,7 +91,6 @@ public class SoB2cReceiverDTO implements Serializable {
         /**
         * 邮箱
         */
-        @NotBlank(message = "邮箱不能为空")
         @Size(max = 100,message = "邮箱最大长度不能超过100位")
         private String email;
 
