@@ -20,6 +20,9 @@ public enum DictBasicEnum {
     AND("and",  "且"),
     OR("or",  "或"),
     RULE_CONDITION("ruleCondition","审核规则"),
+    SHOP_PLATFORM_COST("shopPlatformCost","店铺平台费率选项"),
+    SHOP_VAT_COST("shopVATCost","店铺VAT费率选项"),
+    SHOP_TRANSFER_COST("shopTransferCost","店铺转账费率选项"),
 
     ;
 

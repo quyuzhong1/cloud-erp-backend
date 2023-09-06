@@ -407,6 +407,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         productInfoDTO.setChargeName(child.getChargeName());
         productInfoDTO.setCategory(productInfoEntity.getCategory());
         productInfoDTO.setCategoryId(productInfoEntity.getCategoryId());
+        productInfoDTO.setSaleMethod(productInfoEntity.getSaleMethod());
         productBaseInfoDTO.setProductSpuBaseInfoDTO(productInfoDTO);
         //sku信息
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = new ProductSkuBaseInfoDTO();

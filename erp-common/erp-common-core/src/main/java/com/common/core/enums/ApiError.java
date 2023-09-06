@@ -140,6 +140,7 @@ public enum ApiError implements Serializable {
     ERROR_CURRENCY_NOT_EXIST(9049, "币别[{}]不存在"),
     ERROR_CITY_NOT_EXIST(9050, "所选城市不存在"),
     ERROR_COUNTRY_NOT_EXIST(9051, "所选国家不存在"),
+    ERROR_DICT_NOT_EXIST(9051, "字典编码【{}】不存在"),
 
 
     /**

@@ -1900,8 +1900,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(soB2cDetailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
+
         //店铺信息
         ShopDTO.ViewCostDTO viewCostDTO = shopCostService.viewCost(soB2cEntity.getShopId());
+        //平台费
+        BigDecimal platformCost = BigDecimal.ZERO;
+        //avt 费
+        BigDecimal vatCost = BigDecimal.ZERO;
+        //转账费
+        BigDecimal paypalCost = BigDecimal.ZERO;
 
         SoB2cDTO.FinancialInfoDTO financialInfoDTO = new SoB2cDTO.FinancialInfoDTO();
         financialInfoDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
@@ -1913,18 +1920,63 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         financialInfoDTO.setItemCost(itemCost);
         //物流成本,TMS计算的物流成本 TODO
         financialInfoDTO.setLogisticsCost(BigDecimal.ZERO);
+
+        if (ObjectUtils.isNotEmpty(viewCostDTO)) {
+            BigDecimal  platformRate = viewCostDTO.getPlatformRate();
+            BigDecimal  vatRate = viewCostDTO.getVatRate();
+            BigDecimal transferRate = viewCostDTO.getTransferRate();
+
+            DictBasicEntity platformOption = dictBasicService.getByTypeAndValue(DictBasicEnum.SHOP_PLATFORM_COST.getType(), viewCostDTO.getDictPlatformOption());
+            if (ObjectUtils.isEmpty(platformOption)) {
+                throw new ServiceException(ApiError.ERROR_DICT_NOT_EXIST,viewCostDTO.getDictPlatformOption());
+            }
+            DictBasicEntity vatOption = dictBasicService.getByTypeAndValue(DictBasicEnum.SHOP_VAT_COST.getType(), viewCostDTO.getDictVatOption());
+            if (ObjectUtils.isEmpty(vatOption)) {
+                throw new ServiceException(ApiError.ERROR_DICT_NOT_EXIST,viewCostDTO.getDictVatOption());
+            }
+            DictBasicEntity transferOption = dictBasicService.getByTypeAndValue(DictBasicEnum.SHOP_TRANSFER_COST.getType(), viewCostDTO.getDictTransferOption());
+            if (ObjectUtils.isEmpty(transferOption)) {
+                throw new ServiceException(ApiError.ERROR_DICT_NOT_EXIST,viewCostDTO.getDictTransferOption());
+            }
+            //平台费
+            if (ShopPlatformCostEnum.MULTIPLY_PLATFORM_RATE.getCode().equals(platformOption.getValue())) {
+                platformCost = MathUtil.multiply(MathUtil.add(financialInfoDTO.getAmount(),financialInfoDTO.getShippingCost()),platformRate);
+            }
+            //转账费
+            if (ShopTransferCostEnum.MULTIPLY_TRANSFER_RATE.getCode().equals(transferOption.getValue())) {
+                paypalCost = MathUtil.multiply(MathUtil.add(financialInfoDTO.getAmount(),financialInfoDTO.getShippingCost()),transferRate);
+            }
+            //vat费
+            if (ShopVATCostEnum.MULTIPLY_VAT_RATE.getCode().equals(transferOption.getValue())) {
+                vatCost = MathUtil.multiply(MathUtil.add(financialInfoDTO.getAmount(),financialInfoDTO.getShippingCost()),vatRate);
+            } else if (ShopVATCostEnum.MULTIPLY_ADD_VAT_RATE.getCode().equals(transferOption.getValue())) {
+                vatCost =  MathUtil.multiply(MathUtil.add(financialInfoDTO.getAmount(),financialInfoDTO.getShippingCost()),MathUtil.add(BigDecimal.ONE,vatRate)).multiply(vatRate);
+            } else if (ShopVATCostEnum.DIVISION_ADD_MULTIPLY_VAT_RATE.getCode().equals(transferOption.getValue())) {
+                vatCost =  MathUtil.divide(MathUtil.add(financialInfoDTO.getAmount(),financialInfoDTO.getShippingCost()),MathUtil.add(BigDecimal.ONE,vatRate)).multiply(vatRate);
+            }
+        }
+
         //平台费,店铺计算
-        financialInfoDTO.setPlatformCost(BigDecimal.ZERO);
+        financialInfoDTO.setPlatformCost(platformCost);
         //转账费,店铺计算
-        financialInfoDTO.setPaypalCost(BigDecimal.ZERO);
+        financialInfoDTO.setPaypalCost(paypalCost);
         //包装辅料费,包装辅料SKU*数量的成本价汇总
         financialInfoDTO.setAccessoriesCost(BigDecimal.ZERO);
         //VAT税费,店铺计算
-        financialInfoDTO.setVatCost(BigDecimal.ZERO);
+        financialInfoDTO.setVatCost(vatCost);
         //总利润,订单总金额+运费收入-商品成本-物流成本-平台费-转账费-包装辅料费-VAT税费
-        financialInfoDTO.setProfit(BigDecimal.ZERO);
+        BigDecimal profit = financialInfoDTO.getAmount()
+                .add(financialInfoDTO.getShippingCost())
+                .subtract(financialInfoDTO.getItemCost())
+                .subtract(financialInfoDTO.getLogisticsCost())
+                .subtract(platformCost)
+                .subtract(paypalCost)
+                .subtract(financialInfoDTO.getAccessoriesCost())
+                .subtract(vatCost);
+        financialInfoDTO.setProfit(profit);
         //利润率,总利润/(订单总金额+运费收入)*100%
-        financialInfoDTO.setProfitRate(BigDecimal.ZERO);
+        BigDecimal profitRate = MathUtil.divide(profit, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
+        financialInfoDTO.setProfitRate(profitRate);
         return financialInfoDTO;
     }
 
