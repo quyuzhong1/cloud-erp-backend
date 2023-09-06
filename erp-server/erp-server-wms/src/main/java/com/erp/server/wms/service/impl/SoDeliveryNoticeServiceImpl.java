@@ -1053,7 +1053,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Override
     public SoDeliveryNoticeDTO.View pdaView(String id) {
         SoDeliveryNoticeDTO.View view = this.view(id);
-        List<SoDeliveryNoticeDetailDTO.View> soDeliveryNoticeDetailDTOS = BeanMapper.copyList(pdaDeliveryDetail(id), SoDeliveryNoticeDetailDTO.View.class);
+        List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateSoOutstockViewDTOS = pdaDeliveryDetail(id);
+        List<SoDeliveryNoticeDetailDTO.View> soDeliveryNoticeDetailDTOS = BeanMapper.copyList(generateSoOutstockViewDTOS, SoDeliveryNoticeDetailDTO.View.class);
         view.setDetailList(soDeliveryNoticeDetailDTOS);
         return view;
     }
