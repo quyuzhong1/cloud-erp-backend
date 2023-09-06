@@ -31,6 +31,7 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -970,14 +971,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
 
         //根据未发货的发货通知单详情id获取未入库收货单id
-        List<SoOutstockDetailEntity> soOutstockDetailEntitieList = soOutstockDetailService.listByIds(receiveDetailIds);
-        List<String> notAllsoOutstockDetailIds = soOutstockDetailEntitieList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> detailEntityList = soDeliveryNoticeDetailService.listByIds(receiveDetailIds);
+        List<String> notAllsoOutstockDetailIds = detailEntityList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
 
         //获取到未发货的发货通知单返回数据
         List<SoDeliveryNoticeDTO.PdaSoDeliveryNotice> soDeliveryNoticeList = list.stream().filter(req -> notAllsoOutstockDetailIds.contains(req.getId())).collect(Collectors.toList());
         soDeliveryNoticeList.sort(Comparator.comparing(SoDeliveryNoticeDTO.PdaSoDeliveryNotice::getCode).reversed());
-        list.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
-        return list;
+        soDeliveryNoticeList.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
+        return soDeliveryNoticeList;
     }
     /**
      * 根据来源ids 获取数据
