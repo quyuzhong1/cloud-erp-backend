@@ -2,6 +2,7 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.dto.JobTaskDTO;
@@ -139,7 +140,27 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateTaskTypeState(List<JobTaskDTO> timeoutList, int type) {
         baseMapper.updateTaskTypeState(timeoutList, type);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean removePlatformTask(PlatformTaskDTO.AddDTO dto) {
+        LambdaQueryChainWrapper<PlatformApiTaskEntity> eq = lambdaQuery()
+                .eq(PlatformApiTaskEntity::getDictPlatform, dto.getDictPlatform())
+                .eq(PlatformApiTaskEntity::getShopId, dto.getShopId());
+        return remove(eq);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean disabledPlatformTask(PlatformTaskDTO.DisabledDTO dto) {
+        return lambdaUpdate().eq(PlatformApiTaskEntity::getDictPlatform, dto.getDictPlatform())
+                .eq(PlatformApiTaskEntity::getShopId, dto.getShopId())
+                .ne(PlatformApiTaskEntity::getDisabled, dto.getDisabled())
+                .set(PlatformApiTaskEntity::getDisabled, dto.getDisabled())
+                .update(new PlatformApiTaskEntity());
     }
 }

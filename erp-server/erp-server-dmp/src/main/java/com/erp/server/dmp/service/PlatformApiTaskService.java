@@ -56,4 +56,18 @@ public interface PlatformApiTaskService extends SuperService<PlatformApiTaskEnti
      * @param type
      */
     void updateTaskTypeState(List<JobTaskDTO> timeoutList, int type);
+
+    /**
+     * 根据店铺和平台删除平台任务
+     * @param dto
+     * @return
+     */
+    Boolean removePlatformTask(PlatformTaskDTO.AddDTO dto);
+
+    /**
+     * 开启关闭平台任务
+     * @param disabledDTO
+     * @return
+     */
+    Boolean disabledPlatformTask(PlatformTaskDTO.DisabledDTO disabledDTO);
 }

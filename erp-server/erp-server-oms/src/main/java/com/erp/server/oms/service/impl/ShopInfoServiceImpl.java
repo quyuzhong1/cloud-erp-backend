@@ -14,6 +14,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.CustomerDTO;
@@ -38,6 +39,7 @@ import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.service.ShopSdkServer;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -401,8 +403,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
             shop.setDisabled(disabled);
             this.updateById(shop);
+            // 禁用启用任务
+            dmpTaskFeign.disabledPlatformTask(new PlatformTaskDTO.DisabledDTO(shop.getId(), shop.getDictPlatform(), disabled));
             return BatchResultDTO.success(shop.getId(), shop.getName(), OperationTypeEnum.DISABLED);
-
         }
         return BatchResultDTO.fail(shop.getId(), shop.getName(), "店铺不存在");
 
@@ -458,6 +461,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @return
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(String code, String hmac, String host, String shop, String timestamp) {
         String bodyStr = "";
@@ -507,8 +511,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopInfo.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
             shopInfo.setAuthTime(LocalDateTime.now());
             shopAuthService.saveOrUpdate(shopAuth);
-            return this.updateById(shopInfo);
-
+            boolean result = this.updateById(shopInfo);
+            // 授权后添加任务
+            dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getDictPlatform()));
+            shopInfo.setIsGenTask(Boolean.TRUE);
+            updateShopInfoById(shopInfo);
+            return result;
         } catch (Exception e) {
             log.error("店铺授权出错了===> bodyStr==>{} e==>{}", bodyStr, e);
         }
@@ -552,6 +560,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         Boolean result = this.updateById(shopInfo);
         if (result) {
             shopAuthService.removeByShopId(id);
+            // 删除授权
+            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getDictPlatform()));
+            shopInfo.setIsGenTask(Boolean.FALSE);
+            updateShopInfoById(shopInfo);
         }
         return result;
     }

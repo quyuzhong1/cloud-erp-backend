@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.constant.TaskConstant;
 import com.common.business.dto.JobTaskDTO;
+import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -98,29 +99,7 @@ public class TbTaskTypeService {
     @Transactional(rollbackFor = Exception.class)
     public void addTask(ShopInfoEntity entity) {
         // 查询需要当前平台需要增加的任务
-        List<PlatformApiEntity> entityList = platformApiService.listForDisabled(entity.getDictPlatform());
-        if (CollectionUtil.isEmpty(entityList)) {
-            log.info("当前平台{}没有需要增加的任务", entity.getDictPlatform());
-            XxlJobHelper.log("当前平台{}没有需要增加的任务", entity.getDictPlatform());
-            return;
-        }
-        // 对比当前店铺不存在的任务
-        List<PlatformApiTaskEntity> taskEntityList = platformApiTaskService.listByPlatformAndShop(entity.getDictPlatform(), entity.getId());
-        Set<String> existApiIds = taskEntityList.stream().map(PlatformApiTaskEntity::getPlatformApiId).collect(Collectors.toSet());
-        List<PlatformApiEntity> notExistApiList = entityList
-                .stream()
-                .filter(item -> !existApiIds.contains(item.getId()))
-                .collect(Collectors.toList());
-        if (CollectionUtil.isEmpty(notExistApiList)) {
-            log.info("当前平台{}没有需要增加的任务", entity.getDictPlatform());
-            XxlJobHelper.log("当前平台{}没有需要增加的任务", entity.getDictPlatform());
-            return;
-        }
-        // 保存任务
-        notExistApiList.stream().forEach(item -> {
-            taskEntityList.add(new PlatformApiTaskEntity(item,entity.getId(),entity.getName()));
-        });
-        platformApiTaskService.saveBatch(taskEntityList);
+        platformApiTaskService.createPlatformTask(new PlatformTaskDTO.AddDTO(entity.getId(),entity.getDictPlatform()));
         // 添加完成后，修改店铺生成任务状态
         Boolean result = shopInfoFeign.updateShopInfoById(new ShopInfoEntity(entity.getId(), Boolean.TRUE));
     }

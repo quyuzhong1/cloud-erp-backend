@@ -23,21 +23,23 @@ import javax.validation.Valid;
 @Slf4j
 @RestController
 @RequestMapping("feign/dmp/")
-public class DmpMqFeignController {
-    @Resource
-    private DmpPullTaskService dmpPullTaskService;
+public class DmpTaskFeignController {
     @Resource
     private PlatformApiTaskService platformApiTaskService;
 
-    /**
-     * 发送MQ消息并保存任务
-     * @param dto
-     * @return
-     */
-    @PostMapping("/send/mq/save/task")
-    public Boolean sendMqAndSaveTask(@RequestBody @Valid DmpSyncTaskDTO dto){
-        dmpPullTaskService.sendMqAndSaveTask(dto);
-        return Boolean.TRUE;
+    @PostMapping("/createPlatformTask")
+    public Boolean createPlatformTask(@RequestBody @Valid PlatformTaskDTO.AddDTO dto){
+        return platformApiTaskService.createPlatformTask(dto);
+    }
+
+    @PostMapping("/removePlatformTask")
+    public Boolean removePlatformTask(@RequestBody @Valid PlatformTaskDTO.AddDTO dto){
+        return platformApiTaskService.removePlatformTask(dto);
+    }
+
+    @PostMapping("/disabledPlatformTask")
+    public Boolean disabledPlatformTask(PlatformTaskDTO.DisabledDTO disabledDTO){
+        return platformApiTaskService.disabledPlatformTask(disabledDTO);
     }
 
 }
