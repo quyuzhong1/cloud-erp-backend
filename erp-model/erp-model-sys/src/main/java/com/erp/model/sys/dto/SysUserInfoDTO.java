@@ -61,6 +61,10 @@ public class SysUserInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ShopAuthPagingSearchDTO {
+        /**
+         * 用户名称
+         */
+        private String userName;
 
         /**
          * 真实名称

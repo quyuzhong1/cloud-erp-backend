@@ -352,6 +352,8 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         List<BomCombinationDetailDTO.UpdateDTO> detailList = dto.getDetailList();
         //新增产品信息
         String id = commonProductDetail(dto, detailList.get(0).getSkuId());
+        //提交并审核
+        skuSubmitApprove(id);
         return id;
     }
 
@@ -556,11 +558,17 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         }
         //子级SKU
         List<BomChildrenSkuDTO> children = new ArrayList<>();
+
+        List<String> skuIdList = new ArrayList<>();
+
         for (BomCombinationDetailDTO.UpdateDTO updateDTO : dto.getDetailList()) {
             BomChildrenSkuDTO childrenSkuDTO = new BomChildrenSkuDTO();
             ProductDetailEntity child = childList.stream().filter(obj -> obj.getId().equals(updateDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(child)) {
                 throw new ServiceException(ApiError.ERROR_95084);
+            }
+            if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(child.getStatus())) {
+                throw new ServiceException(ApiError.ERROR_BOM_COMBINATION_SKU_APPROVE_PASS);
             }
             childrenSkuDTO.setParentSkuId(skuId);
             childrenSkuDTO.setSkuId(updateDTO.getSkuId());
@@ -569,6 +577,10 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             childrenSkuDTO.setProductId(child.getProductId());
             childrenSkuDTO.setQuantity(updateDTO.getQty());
             children.add(childrenSkuDTO);
+            if (skuIdList.contains(updateDTO.getSkuId())) {
+                throw new ServiceException(ApiError.ERROR_BOM_COMBINATION_CHILD_SKU_REPEAT,child.getSkuNo());
+            }
+            skuIdList.add(updateDTO.getSkuId());
         }
         bomSkuDTO.setChildren(children);
         skuList.add(bomSkuDTO);

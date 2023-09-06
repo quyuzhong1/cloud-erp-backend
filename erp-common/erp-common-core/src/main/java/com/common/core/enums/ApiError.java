@@ -450,6 +450,8 @@ public enum ApiError implements Serializable {
     ERROR_BOM_COMBINATION_EXPORT(95247,"组合产品【{}】已存在不支持导入"),
     ERROR_BOM_COMBINATION_NOT_EXIST(95248,"组合产品不存在"),
     ERROR_BOM_COMBINATION_SKU_NOT_CHINESE(95249,"组合产品【{}】不能输入中文"),
+    ERROR_BOM_COMBINATION_SKU_APPROVE_PASS(95250,"组合产品SKU【{}】未审核成功"),
+    ERROR_BOM_COMBINATION_CHILD_SKU_REPEAT(95251,"组合产品子SKU【{}】不能重复"),
 
 
 
