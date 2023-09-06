@@ -1090,6 +1090,11 @@ public class WarehouseReceiveDTO {
         private Integer detailCount;
 
         /**
+         * 质检状态
+         */
+        private String qcStatus;
+
+        /**
          * 质检状态名称
          */
         private String qcStatusName;
