@@ -15,6 +15,7 @@
             <result column="qty" property="qty"></result>
             <result column="actualTaxCost" property="actualTaxCost"></result>
             <result column="targetTaxCost" property="targetTaxCost"></result>
+            <result column="mainSupplierId" property="mainSupplierId"></result>
         </collection>
     </resultMap>
 
