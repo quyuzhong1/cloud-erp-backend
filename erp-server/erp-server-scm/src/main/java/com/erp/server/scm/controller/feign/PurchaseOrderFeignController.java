@@ -1,6 +1,9 @@
 package com.erp.server.scm.controller.feign;
 
 
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.server.scm.service.*;
@@ -266,7 +269,12 @@ public class PurchaseOrderFeignController {
      */
     @PostMapping("/addPurchaseOrder")
     public String addPurchaseOrder(@RequestBody PurchaseOrderDTO.AddDTO addDTO) {
-        return purchaseOrderService.add(addDTO);
+        String id = purchaseOrderService.add(addDTO);
+        PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(id);
+        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        return purchaseOrderEntity.getCode();
     }
 
 

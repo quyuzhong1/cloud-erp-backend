@@ -1530,7 +1530,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             }
             addDTO.setDetails(addDetailList);
             //新增采购订单
-            scmTaskFeign.addPurchaseOrder(addDTO);
+            String code = scmTaskFeign.addPurchaseOrder(addDTO);
+            //操作日志
+            operateLogService.addModuleOperateLog(StrUtil.format("下推生成采购订单【{}】", code), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), entity.getId(), "下推采购订单");
         }
     }
 
