@@ -1,9 +1,13 @@
 package com.erp.server.oms.service;
+import cn.hutool.json.JSONObject;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.RuleOrderApprovalDTO;
 import com.erp.model.oms.entity.RuleDeliveryWarehouseEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.RuleDeliveryWarehouseDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -59,4 +63,11 @@ public interface RuleDeliveryWarehouseService extends SuperService<RuleDeliveryW
      * @return java.lang.Boolean
      */
     Boolean updateStatus(UpdateStateDTO dto);
+
+    /**
+     * 获取到订单审核匹配结果
+     * @param jsonObjectList
+     * @return
+     */
+    RuleDeliveryWarehouseDTO.RuleMatchResultDTO getRuleOrderMatchResult(List<JSONObject> jsonObjectList);
 }

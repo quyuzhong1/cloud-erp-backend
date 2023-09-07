@@ -1,4 +1,6 @@
-package com.common.core.server.impl;/**
+package com.common.core.server.impl;
+
+/**
  * @author Lambda
  * @Classname SpElServerImpl
  * @Description TODO
@@ -6,16 +8,19 @@ package com.common.core.server.impl;/**
  * @Created by yl
  */
 
+import com.common.core.entity.ConditionElement;
 import com.common.core.enums.RuleCompareEnum;
-import com.common.core.rule.ConditionElement;
 import com.common.core.server.rule.SpElServer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,7 +42,7 @@ public class SpElServerImpl implements SpElServer {
      */
     @Override
     public String getConditionExpression(List<ConditionElement> conditionElementList, Object obj) {
-        if (obj instanceof Map) {
+        if (Objects.isNull(obj) || obj instanceof Map) {
             return getConditionExpressionByMap(conditionElementList);
         } else {
             return getConditionExpressionByObj(conditionElementList);
@@ -69,15 +74,38 @@ public class SpElServerImpl implements SpElServer {
 
     /**
      * 匹配表达式结果
-     * @param expression
+     *
+     * @param expressionStr
      * @param obj
      * @return
      */
     @Override
-    public Boolean matchExpression(String expression, Object obj) {
-        ExpressionParser parser = new SpelExpressionParser();
-        Expression expression1 = parser.parseExpression(expression);
-        return null;
+    public Boolean matchExpression(String expressionStr, Object obj) {
+        try {
+            ExpressionParser parser = new SpelExpressionParser();
+            Expression expression = parser.parseExpression(expressionStr);
+            EvaluationContext context = new StandardEvaluationContext(obj);
+            Boolean result = expression.getValue(context, Boolean.class);
+            return result;
+        } catch (Exception e) {
+            log.error("匹配spEl 表达式有误{}", e);
+        }
+        return Boolean.FALSE;
+    }
+
+
+    /**
+     * 匹配表达式结果
+     *
+     * @param conditionList
+     * @param obj
+     * @return
+     */
+    @Override
+    public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, Object obj) {
+        String expression = getConditionExpression(conditionList, obj);
+        return matchExpression(expression, obj);
+
     }
 
 

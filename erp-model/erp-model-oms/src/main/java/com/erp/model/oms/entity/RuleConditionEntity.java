@@ -35,10 +35,10 @@ public class RuleConditionEntity extends BaseEntity<RuleConditionEntity> {
     @TableField("field")
     private String field;
     /**
-    * 下拉选项值
+    * 比较浮
     */
-    @TableField("operator")
-    private String operator;
+    @TableField("compare")
+    private String compare;
     /**
     * 对应的值
     */
@@ -57,6 +57,12 @@ public class RuleConditionEntity extends BaseEntity<RuleConditionEntity> {
 
     @TableField("rule_id")
     private String ruleId;
+
+    /**
+     * 顺序
+     */
+    @TableField("index")
+    private Integer index;
 
 
     public static final String LEFT_BRACKET = "left_bracket";

@@ -187,4 +187,23 @@ public class RuleOrderApprovalDTO implements Serializable {
         private Boolean disabled;
 
     }
+
+    /**
+     * 规则匹配结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class RuleMatchDTO{
+
+        /**
+         * 流转状态
+         */
+        private String flowStatus;
+
+        /**
+         * 分类明细id
+         */
+        private String categoryDetailId;
+
+    }
 }

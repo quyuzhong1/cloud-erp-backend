@@ -6,7 +6,7 @@ package com.common.core.server.rule;/**
  * @Created by yl
  */
 
-import com.common.core.rule.ConditionElement;
+import com.common.core.entity.ConditionElement;
 
 import java.util.List;
 
@@ -42,6 +42,15 @@ public interface SpElServer {
      * @return
      */
     Boolean matchExpression(String expression,Object obj);
+
+
+    /**
+     * 匹配表达式结果
+     * @param conditionList
+     * @param obj
+     * @return
+     */
+    Boolean matchExpressionByConditionList(List<ConditionElement> conditionList,Object obj);
 
 
 }

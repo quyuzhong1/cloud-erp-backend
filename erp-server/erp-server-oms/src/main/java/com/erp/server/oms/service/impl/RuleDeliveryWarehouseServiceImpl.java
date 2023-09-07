@@ -2,15 +2,18 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.rule.ConditionElement;
-import com.common.core.rule.SpELRuleUtils;
+import com.common.core.entity.ConditionElement;
+import com.common.core.server.rule.SpElServer;
 import com.erp.model.oms.dto.RuleConditionDTO;
+import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.entity.RuleDeliveryWarehouseEntity;
+import com.erp.model.oms.entity.RuleOrderApprovalEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -59,6 +62,9 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
     @Autowired
     private RuleConditionService ruleConditionService;
 
+    @Autowired
+    private SpElServer spElServer;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -66,12 +72,12 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
-                        c.getOperator(), c.getValue(),
+                        c.getCompare(), c.getValue(),
                         c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
-        String expression = SpELRuleUtils.getConditionExpression(conditionElementList);
-        Boolean checkResult = SpELRuleUtils.checkExpressionIsEnabled(expression);
+        String expression = spElServer.getConditionExpression(conditionElementList, Map.class);
+        Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
         }
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouseEntity = new RuleDeliveryWarehouseEntity();
         BeanMapperUtils.copy(addDTO, ruleDeliveryWarehouseEntity);
@@ -103,12 +109,12 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
-                        c.getOperator(), c.getValue(),
+                        c.getCompare(), c.getValue(),
                         c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
-        String expression = SpELRuleUtils.getConditionExpression(conditionElementList);
-        Boolean checkResult = SpELRuleUtils.checkExpressionIsEnabled(expression);
+        String expression = spElServer.getConditionExpression(conditionElementList, Map.class);
+        Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
         }
 
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouseEntity = BeanMapperUtils.map(RuleDeliveryWarehouseEntity.class, updateDTO);
@@ -185,6 +191,53 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         ruleDeliveryWarehouse.setDisabled(dto.getState());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.RULE_DELIVERY_WAREHOUSE.getCode(), dto.getId(), "状态变更");
         return this.updateById(ruleDeliveryWarehouse);
+    }
+
+
+    /**
+     * 获取到发货仓库匹配的结果
+     *
+     * @param jsonObjectList
+     * @return
+     */
+    @Override
+    public RuleDeliveryWarehouseDTO.RuleMatchResultDTO getRuleOrderMatchResult(List<JSONObject> jsonObjectList) {
+        RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = new RuleDeliveryWarehouseDTO.RuleMatchResultDTO();
+        if (CollectionUtils.isEmpty(jsonObjectList)) {
+            return ruleMatchResult;
+        }
+        //根据优先级获取规则列表
+        List<RuleDeliveryWarehouseEntity> ruleDeliveryWarehouselList = this.listOrderByPriority();
+        List<String> ruleIdList = ruleDeliveryWarehouselList.stream().map(RuleDeliveryWarehouseEntity::getId).collect(Collectors.toList());
+        //规则条件
+        List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
+        for (RuleDeliveryWarehouseEntity item : ruleDeliveryWarehouselList) {
+            String ruleId = item.getId();
+            List<RuleConditionEntity> ruleConditionList = allRuleConditionList.stream().
+                    filter(r -> r.getRuleId().equals(ruleId)).
+                    sorted(Comparator.comparing(RuleConditionEntity::getIndex)).collect(Collectors.toList());
+
+            List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
+            //获取到表达式
+            for (JSONObject jsonObject : jsonObjectList) {
+                Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject);
+                if (matchResult) {
+                    ruleMatchResult.setWarehouseId(item.getWarehouseId());
+                    return ruleMatchResult;
+                }
+            }
+
+        }
+        return ruleMatchResult;
+
+    }
+
+    /**
+     * 根据优先级获取规则列表
+     * @return
+     */
+    private List<RuleDeliveryWarehouseEntity> listOrderByPriority() {
+        return this.lambdaQuery().eq(RuleDeliveryWarehouseEntity::getDisabled, Boolean.FALSE).orderByDesc(RuleDeliveryWarehouseEntity::getPriority).list();
     }
 
 

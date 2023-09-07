@@ -1,4 +1,4 @@
-package com.common.core.rule;
+package com.common.core.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
