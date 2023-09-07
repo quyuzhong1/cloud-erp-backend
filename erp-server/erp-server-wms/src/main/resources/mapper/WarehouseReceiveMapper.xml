@@ -434,7 +434,7 @@
                 INNER JOIN po_instock_detail pid on pik.id = pid.main_id
                 GROUP BY pid.source_detail_id
             ) t
-            WHERE t.source_detail_id = prd."id" AND stock_in_qty &gt; prd.receive_qty
+            WHERE t.source_detail_id = prd."id" AND stock_in_qty &lt; prd.receive_qty
         )
         <if test="param2.tabFlag == 'waitInStockQc'">
             AND EXISTS (
@@ -485,7 +485,7 @@
                 INNER JOIN po_instock_detail pid on pik.id = pid.main_id
                 GROUP BY pid.source_detail_id
             ) t
-            WHERE t.source_detail_id = prd."id" AND stock_in_qty &gt; prd.receive_qty
+            WHERE t.source_detail_id = prd."id" AND stock_in_qty &lt; prd.receive_qty
         )
         <if test="params.invalidStatus != null">
             and pr.invalid_status = #{params.invalidStatus}
