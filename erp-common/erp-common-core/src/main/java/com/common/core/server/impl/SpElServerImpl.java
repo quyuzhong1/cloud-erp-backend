@@ -11,6 +11,9 @@ import com.common.core.rule.ConditionElement;
 import com.common.core.server.rule.SpElServer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -36,10 +39,45 @@ public class SpElServerImpl implements SpElServer {
     public String getConditionExpression(List<ConditionElement> conditionElementList, Object obj) {
         if (obj instanceof Map) {
             return getConditionExpressionByMap(conditionElementList);
-        }else{
+        } else {
             return getConditionExpressionByObj(conditionElementList);
         }
 
+    }
+
+
+    /**
+     * 检查表达式是否正确
+     *
+     * @param expression
+     * @return
+     */
+    @Override
+    public Boolean checkExpressionIsEnabled(String expression) {
+        if (StringUtils.isBlank(expression)) {
+            return Boolean.FALSE;
+        }
+        ExpressionParser parser = new SpelExpressionParser();
+        try {
+            parser.parseExpression(expression);
+            return Boolean.TRUE;
+        } catch (Exception e) {
+            log.error("{} 表达式出错>>>>>>", expression);
+            return Boolean.FALSE;
+        }
+    }
+
+    /**
+     * 匹配表达式结果
+     * @param expression
+     * @param obj
+     * @return
+     */
+    @Override
+    public Boolean matchExpression(String expression, Object obj) {
+        ExpressionParser parser = new SpelExpressionParser();
+        Expression expression1 = parser.parseExpression(expression);
+        return null;
     }
 
 

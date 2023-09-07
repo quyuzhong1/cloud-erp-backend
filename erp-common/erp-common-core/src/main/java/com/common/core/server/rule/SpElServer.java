@@ -20,11 +20,28 @@ public interface SpElServer {
 
     /**
      * 获取到sqe 表达式
+     *
      * @param conditionElementList
      * @param object
      * @return
      */
-    String getConditionExpression(List<ConditionElement> conditionElementList,Object object);
+    String getConditionExpression(List<ConditionElement> conditionElementList, Object object);
+
+    /**
+     * 检查表达式是否正确
+     * @param expression
+     * @return
+     */
+    Boolean checkExpressionIsEnabled(String expression);
+
+
+    /**
+     * 匹配表达式结果
+     * @param expression
+     * @param obj
+     * @return
+     */
+    Boolean matchExpression(String expression,Object obj);
 
 
 }
