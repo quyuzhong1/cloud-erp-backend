@@ -1300,6 +1300,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String shopName = shopInfoList.stream().filter(obj -> obj.getId().equals(data.getShopId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             data.setShopName(shopName);
 
+            //单据状态
+            data.setStatus(data.getBillStatus());
+            data.setStatusName(SoB2cBillStatusEnum.getName(data.getBillStatus()));
+
             //标签处理
             String label = data.getLabel();
             SoB2cDTO.LabelDTO labelDTO = new SoB2cDTO.LabelDTO();
