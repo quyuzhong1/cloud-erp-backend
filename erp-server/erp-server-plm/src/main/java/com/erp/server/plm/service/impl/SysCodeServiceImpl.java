@@ -6,11 +6,13 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.entity.BasicCategoryEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.BasicCategoryService;
+import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.SysCodeService;
 import org.apache.commons.lang3.StringUtils;
@@ -37,6 +39,9 @@ public class SysCodeServiceImpl implements SysCodeService {
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private ProductDetailService productDetailService;
 
     /**
      * @description: 根据产品id和颜色生产sku编号
@@ -66,7 +71,9 @@ public class SysCodeServiceImpl implements SysCodeService {
         dto.setCategory(bestEntity.getCode());
         dto.setType(BusinessNoTypeEnum.SKU_NO.getCode());
         String sysNo = sysUserFeign.getSkuNo(dto);
-        return sysNo;
+        //已存在则获取下一个
+        String existSKuNo = isExistSKuNo(sysNo, dto);
+        return existSKuNo;
     }
 
 
@@ -126,5 +133,18 @@ public class SysCodeServiceImpl implements SysCodeService {
         }
     }
 
-
+    /**
+     * 判断sku编号是否存在
+     */
+    private String isExistSKuNo(String sysNo,SysCodeSkuDTO dto) {
+        //判断spu编码系统中是否已经存在，存在则获取下一个编码
+        ProductDetailEntity productDetailEntity = productDetailService.getProductIdBySku(sysNo);
+        if (ObjectUtils.isNotEmpty(productDetailEntity)) {
+            sysNo = sysUserFeign.getSkuNo(dto);
+            //再次判断是否存在
+           return isExistSKuNo(sysNo,dto);
+        } else {
+            return sysNo;
+        }
+    }
 }

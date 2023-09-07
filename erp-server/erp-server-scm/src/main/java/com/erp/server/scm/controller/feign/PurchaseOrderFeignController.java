@@ -270,10 +270,9 @@ public class PurchaseOrderFeignController {
      */
     @PostMapping("/addPurchaseOrder")
     public String addPurchaseOrder(@RequestBody PurchaseOrderDTO.AddDTO addDTO) {
-        String id = purchaseOrderService.add(addDTO);
-        PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(id);
+        PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.add(addDTO);
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98025);
+            throw new ServiceException(ApiError.ERROR_1019);
         }
         return purchaseOrderEntity.getCode();
     }
