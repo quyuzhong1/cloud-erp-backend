@@ -556,6 +556,7 @@
         pi.name AS spuName,
         pi.sale_method AS saleMethod,
         pd.sku_no,
+        pi.spec_type,
         pd.images_url AS skuImagesUrl,
         pd.name AS skuName,
         pd.variant_property as variantProperty,
