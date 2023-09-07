@@ -1,5 +1,6 @@
 package com.erp.sdk.oms.amz.spapi.handler;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -9,6 +10,7 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractOrderHandler;
+import com.common.business.handler.AbstractProductHandler;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +26,7 @@ import java.util.List;
 @PlatformCategoryType(PlatformCategoryEnum.OMS)
 @PlatformType(PlatformDictEnum.AMAZON)
 @BusinessType(BusinessTypeEnum.ORDER)
-public class AmazonListingHandler extends AbstractOrderHandler<PlatformAmazonListingDTO, PlatformProductDTO> {
+public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonListingDTO, PlatformProductDTO> {
 
     @Override
     public List<PlatformAmazonListingDTO> download(JobTaskDTO data) {
