@@ -7,10 +7,9 @@ package com.common.core.rule;/**
  */
 
 import cn.hutool.json.JSONObject;
-import com.common.core.enums.DictEnum;
+import com.common.core.enums.RuleCompareEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
@@ -25,7 +24,7 @@ import java.util.*;
  * @Date 2023-09-04 11:07
  */
 @Slf4j
-public class SqELRuleUtils {
+public class SpELRuleUtils {
 
     /**
      * 获取到条件表达式
@@ -48,7 +47,7 @@ public class SqELRuleUtils {
             String value = element.getValue();
             if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(operator)) {
                 String content = new StringBuilder("['").append(field).append("'] ").append(operator).append(" '").append(value).append("'").toString();
-                DictEnum contentsEnum = DictEnum.getByStatus(operator);
+                RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(operator);
                 if (Objects.nonNull(contentsEnum)) {
                     switch (contentsEnum) {
                         case CONTAINS:
@@ -76,7 +75,7 @@ public class SqELRuleUtils {
             //逻辑关系
             String logic = element.getLogic();
             if (StringUtils.isNotBlank(logic)) {
-                expression.append(DictEnum.getDesc(logic)).append(" ");
+                expression.append(logic).append(" ");
             }
         }
 
@@ -92,7 +91,7 @@ public class SqELRuleUtils {
      * @return
      */
     public static String getConvertExpression(String operator, String content) {
-        DictEnum contentsEnum = DictEnum.getByStatus(operator);
+        RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(operator);
         if (Objects.isNull(contentsEnum)) {
             return content;
         }
@@ -186,13 +185,13 @@ public class SqELRuleUtils {
 
 
     public static void main(String[] args) {
-        ConditionElement element1 = new ConditionElement("((", "skuNo", "notContains", "1", "", "and");
-        ConditionElement element2 = new ConditionElement("", "platform", "eq", "Amazon", "))", "");
+        ConditionElement element1 = new ConditionElement("((", "skuNo", "contains", "1", "", "and");
+        ConditionElement element2 = new ConditionElement("", "platform", "==", "Amazon", "))", "");
 
         List<ConditionElement> elementList = new ArrayList<>();
         elementList.add(element1);
         elementList.add(element2);
-        String expression = SqELRuleUtils.getConditionExpression(elementList);
+        String expression = SpELRuleUtils.getConditionExpression(elementList);
         System.out.println(expression);
         ExpressionParser parser = new SpelExpressionParser();
         Expression expression1 = parser.parseExpression(expression);

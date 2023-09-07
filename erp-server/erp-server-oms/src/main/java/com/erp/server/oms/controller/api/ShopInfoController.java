@@ -219,20 +219,8 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @GetMapping("/getShopifyInstallUrl")
-    public ApiResult getShopAuthUrl() {
-        String resultUrl = shopInfoService.getShopifyInstallUrl();
-        return success(resultUrl);
-    }
-
-    /**
-     * shopifyInstall 安装url
-     * 后获取到对应数据
-     *
-     * @return
-     */
-    @GetMapping("/shopifyAuthorizeIndex")
-    public ApiResult getShopAuthUrl(@RequestParam("shop") String shop) {
-        String resultUrl = shopInfoService.getShopifyAuthorizeUrl("", "", shop, "");
+    public ApiResult getShopAuthUrl(@RequestParam("id") String id) {
+        String resultUrl = shopInfoService.getShopifyInstallUrl(id);
         return success(resultUrl);
     }
 

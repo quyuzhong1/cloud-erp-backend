@@ -117,7 +117,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param
      * @return java.lang.String
      */
-    String getShopifyInstallUrl();
+    String getShopifyInstallUrl(String id);
 
     
     /**

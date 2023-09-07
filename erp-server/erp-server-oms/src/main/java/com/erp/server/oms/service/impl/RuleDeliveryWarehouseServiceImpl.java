@@ -8,7 +8,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.rule.ConditionElement;
-import com.common.core.rule.SqELRuleUtils;
+import com.common.core.rule.SpELRuleUtils;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.RuleDeliveryWarehouseEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -68,8 +68,8 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getOperator(), c.getValue(),
                         c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
-        String expression = SqELRuleUtils.getConditionExpression(conditionElementList);
-        Boolean checkResult = SqELRuleUtils.checkExpressionIsEnabled(expression);
+        String expression = SpELRuleUtils.getConditionExpression(conditionElementList);
+        Boolean checkResult = SpELRuleUtils.checkExpressionIsEnabled(expression);
         if (!checkResult) {
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
         }
@@ -105,8 +105,8 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getOperator(), c.getValue(),
                         c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
-        String expression = SqELRuleUtils.getConditionExpression(conditionElementList);
-        Boolean checkResult = SqELRuleUtils.checkExpressionIsEnabled(expression);
+        String expression = SpELRuleUtils.getConditionExpression(conditionElementList);
+        Boolean checkResult = SpELRuleUtils.checkExpressionIsEnabled(expression);
         if (!checkResult) {
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
         }
