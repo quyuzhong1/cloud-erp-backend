@@ -1175,7 +1175,7 @@ public class SoB2cDTO implements Serializable {
          * 拆分数量
          */
         @NotNull(message = "拆分数量不能为空")
-        @Min(value = 0, message = "拆分数量最小值为1")
+        @Min(value = 1, message = "拆分数量最小值为1")
         @Max(value = 999999999, message = "拆分数量最大值为999999999")
         private Integer qty;
 

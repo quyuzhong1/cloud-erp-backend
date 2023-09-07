@@ -44,7 +44,6 @@ import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -925,6 +924,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal totalAmount = oldDetailList.stream().map(SoB2cDetailEntity::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         //拆分后数据
         List<SoB2cDTO.GroupSplitSaveDTO> splitList = dto.getGroupList();
+        if (MathUtil.ONE >= splitList.size()) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_SPLIT_SIZE);
+        }
         for (SoB2cDTO.GroupSplitSaveDTO groupSplitSaveDTO : splitList) {
             //新建拆分后数据
             SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();

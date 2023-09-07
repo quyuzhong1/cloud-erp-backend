@@ -828,6 +828,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_CHILD_SPLIT_NOT_SPLIT(92079,"订单【{}】属于拆分后子单不支持再次拆分"),
     ERROR_SO_B2C_SPLIT_QTY(92080,"订单【{}】SKU【{}】拆分数量【{}】不能大于原数量【{}】"),
     ERROR_SO_B2C_NOT_SPLIT(92081,"B2C销售订单【{}】非拆分后订单不支持取消拆分"),
+    ERROR_SO_B2C_NOT_SPLIT_SIZE(92081,"请录入需要拆分的订单"),
     ERROR_SO_B2C_NOT_SPLIT_EXIST(92082,"未找到拆分前B2C销售订单【{}】"),
     ERROR_SO_B2C_REF_CATEGORY_NOT_EXIST(92083,"未找到B2C销售订单分类信息"),
     ERROR_SO_B2C_NOT_INVALID(92084, "单据【{}】不支持【{}】"),
