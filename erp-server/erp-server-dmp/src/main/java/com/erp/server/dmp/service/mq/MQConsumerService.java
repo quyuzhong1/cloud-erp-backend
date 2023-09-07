@@ -18,6 +18,8 @@ import com.erp.model.dmp.gyy.*;
 import com.erp.model.dmp.kingdee.*;
 import com.erp.model.dmp.mabang.*;
 import com.erp.model.plm.dto.NewProductDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +52,12 @@ public class MQConsumerService {
     private DmpShopInfoService dmpShopInfoService;
     @Resource
     private DmpSkuInfoService dmpSkuInfoService;
+
+    @Resource
+    private ProductInfoService productInfoService;
+
+    @Resource
+    private ProductDetailService productDetailService;
 
     @Resource
     private DmpOrderItemService dmpOrderItemService;

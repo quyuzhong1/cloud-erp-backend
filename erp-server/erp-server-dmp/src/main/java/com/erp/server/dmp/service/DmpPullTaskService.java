@@ -3,7 +3,6 @@ package com.erp.server.dmp.service;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 
 import java.util.List;

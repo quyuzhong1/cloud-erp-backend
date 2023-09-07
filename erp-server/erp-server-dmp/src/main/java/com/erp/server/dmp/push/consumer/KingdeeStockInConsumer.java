@@ -11,7 +11,6 @@ import com.erp.server.dmp.push.service.business.KingdeeStockInConsumerService;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.kingdee.bos.webapi.entity.SaveResult;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;

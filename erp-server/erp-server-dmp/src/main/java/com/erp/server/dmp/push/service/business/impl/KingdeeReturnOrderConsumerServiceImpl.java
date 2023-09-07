@@ -166,26 +166,6 @@ public class KingdeeReturnOrderConsumerServiceImpl implements KingdeeReturnOrder
 
 
 
-    public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-        //业务编码
-        String code = (String) map.get("code");
-        //操作项
-        String operate = (String) map.get("operate");
-        //作废
-        kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
-        return;
-    }
-
-    public void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-        String syncKingdeeId = (String) map.get("syncKingdeeId");
-        if (StringUtils.isBlank(syncKingdeeId)) {
-            return;
-        }
-        //反审核
-        kingdeeCommonService.unAudit(platformEntity, map, apiUtils, syncKingdeeId, type);
-        return;
-    }
-
     public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map, JSONObject model, JSONObject json, Integer type) {
         SaveParam param = new SaveParam(json);
         //查找到数据后，判断其审核状态

@@ -291,12 +291,12 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
         //禁用
         if (CollectionUtils.isNotEmpty(disabledList)) {
             log.info("禁用价目数据 ids = {}", JSONUtil.toJsonStr(disabledList));
-            excuteOperation(platformEntity, apiUtils, disabledList, id, SyncOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getName());
+            excuteOperation(platformEntity, apiUtils, disabledList, id, SyncOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getKingdeeParam());
         }
         //启用
         if (CollectionUtils.isNotEmpty(unDisabledList)) {
             log.info("启用价目数据 ids = {}", JSONUtil.toJsonStr(unDisabledList));
-            excuteOperation(platformEntity, apiUtils, unDisabledList, id, SyncOperateEnum.OPERATE_SUB_EFFECTIVE.getName());
+            excuteOperation(platformEntity, apiUtils, unDisabledList, id, SyncOperateEnum.OPERATE_SUB_EFFECTIVE.getKingdeeParam());
         }
         return list;
     }

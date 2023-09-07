@@ -113,8 +113,6 @@ public enum PlatformApiEnum {
 
     BD_RATE(25,"BD_Rate", MongoTableNameContant.ORIGINAL_KINGDEE_EXCHANGE_RATE, TaskConstant.KINGDEE_PULL_DATA_TASK),
 
-
-    BD_RATE(25,"BD_Rate", MongoTableNameContant.ORIGINAL_KINGDEE_EXCHANGE_RATE, TaskConstant.KINGDEE_PULL_DATA_TASK),
     ;
 
     /** 状态码 */

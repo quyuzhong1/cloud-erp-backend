@@ -9,7 +9,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Data
-@NoArgsConstructor
 public class SplitSkuDTO implements Serializable {
     /**
      * 来源平台

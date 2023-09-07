@@ -19,7 +19,6 @@ import com.erp.server.dmp.service.DmpFbaDeliveryDetailService;
 import com.erp.server.dmp.service.DmpFbaDeliveryService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.dmp.service.DmpPullTaskService;
-import com.erp.server.dmp.service.DmpSyncTaskService;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;

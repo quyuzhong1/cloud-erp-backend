@@ -69,6 +69,15 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
      * @return java.util.List<com.erp.model.sys.entity.SysUserInfoEntity>
      **/
     List<SysDepartmentTreeDTO> listSonDeptAll(@Param("deptName") String deptName);
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/9/4 12:23
+     * @param query 
+     * @param params 
+     * @return IPage 
+     */
+    IPage<SysUserInfoDTO.ShopAuthPagingDTO> shopAuthPaging(Page query,@Param("params") SysUserInfoDTO.ShopAuthPagingSearchDTO params,@Param("userIdList") List<String> userIdList);
 
     /**
      * @description: 更新金蝶推送状态
