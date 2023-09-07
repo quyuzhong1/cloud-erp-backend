@@ -287,9 +287,12 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         for (OtherInstockDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
-                String productName = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
-                viewDetailDTO.setProductName(productName);
+                SkuVO skuVO = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).findFirst().orElse(null);
+                viewDetailDTO.setProductName(skuVO.getSkuName());
+                viewDetailDTO.setVariantProperty(skuVO.getVariantProperty());
             }
+
+
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(viewDetailDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             viewDetailDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
         }

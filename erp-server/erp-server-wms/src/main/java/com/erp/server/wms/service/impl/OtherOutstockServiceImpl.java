@@ -290,8 +290,6 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //库存方向
         viewDTO.setInventoryDirectionName(InventoryDirectionEnum.getName(viewDTO.getInventoryDirection()));
         viewDTO.setTypeName(OutstockTypeEnum.getByCode(entity.getType()));
-        viewDTO.setInventoryOrgName(OutstockTypeEnum.getByCode(entity.getType()));
-
         //客户信息
         OtherOutstockCustomerEntity customerEntity = otherOutstockCustomerService.getByMainId(id);
         if (ObjectUtils.isEmpty(customerEntity)) {
@@ -315,8 +313,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         for (OtherOutstockDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
-                String productName = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
-                viewDetailDTO.setProductName(productName);
+                SkuVO skuVO = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).findFirst().orElse(null);
+                viewDetailDTO.setProductName(skuVO.getSkuName());
+                viewDetailDTO.setVariantProperty(skuVO.getVariantProperty());
             }
             //根据组织、仓库、sku查询可用库存
             Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getWarehouseId(), viewDetailDTO.getSkuId());
