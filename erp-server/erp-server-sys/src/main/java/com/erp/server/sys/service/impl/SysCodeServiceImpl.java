@@ -64,13 +64,12 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             BeanMapperUtils.copy(dto,sysCodeDto);
             //生成单号
             getOrSaveSysCode(sysCodeDto);
+            if (MathUtil.compareTo(MathUtil.NUMBER_1000,sysCodeDto.getNum()) == MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_SERIAL_NUMBER_EXCEED);
+            }
             StringBuffer sysCode = new StringBuffer();
             sysCode.append(sysCodeDto.getCategory())
-                    .append(String.format("%03d",sysCodeDto.getNum()))
-                    .append(dto.getSalesChannel())
-                    .append(dto.getColorCode())
-                    .append(dto.getVersion())
-                    .append(dto.getCustomized());
+                    .append(String.format("%03d",sysCodeDto.getNum()));
             if (StringUtils.isBlank(sysCode)) {
                 throw new ServiceException(ApiError.ERROR_9027);
             }
