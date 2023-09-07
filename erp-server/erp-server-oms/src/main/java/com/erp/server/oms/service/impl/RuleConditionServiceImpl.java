@@ -115,6 +115,11 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         if (CollectionUtils.isEmpty(conditionList)) {
             return;
         }
+        int i = 1;
+        for (RuleConditionDTO.AddDTO item : conditionList) {
+            item.setIndex(i);
+            i++;
+        }
         List<RuleConditionEntity> RuleConditionList = BeanMapper.copyList(conditionList, RuleConditionEntity.class);
         RuleConditionList.forEach(r -> r.setRuleId(ruleId));
         this.saveBatch(RuleConditionList);
@@ -168,6 +173,11 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
     @Transactional(rollbackFor = Exception.class)
     public void updateRuleCondition(String ruleId, List<RuleConditionDTO.UpdateDTO> conditionList) {
         List<RuleConditionDTO.UpdateDTO> updateList = conditionList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
+        int i = 1;
+        for (RuleConditionDTO.UpdateDTO item : conditionList) {
+            item.setIndex(i);
+            i++;
+        }
         List<RuleConditionEntity> saveOrUpdateList = BeanMapper.copyList(conditionList, RuleConditionEntity.class);
         saveOrUpdateList.forEach(s -> s.setRuleId(ruleId));
         List<RuleConditionEntity> dbList = this.listDbByRuleId(ruleId);
@@ -196,7 +206,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         if (CollectionUtils.isEmpty(ruleIdList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(RuleConditionEntity::getRuleId,ruleIdList).orderByAsc(RuleConditionEntity::getIndex).list();
+        return this.lambdaQuery().in(RuleConditionEntity::getRuleId, ruleIdList).orderByAsc(RuleConditionEntity::getIndex).list();
     }
 
     /**

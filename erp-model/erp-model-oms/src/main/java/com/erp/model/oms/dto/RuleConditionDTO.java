@@ -4,6 +4,7 @@ import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -16,17 +17,15 @@ import javax.validation.constraints.Size;
  *
  * @author Lambda
  * @since 2023-08-28
-*/
+ */
 @Data
 @NoArgsConstructor
 public class RuleConditionDTO implements Serializable {
 
 
-
-
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO extends CommonDTO {
@@ -49,8 +48,8 @@ public class RuleConditionDTO implements Serializable {
     }
 
     /**
-    * 新增
-    */
+     * 新增
+     */
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
@@ -59,21 +58,19 @@ public class RuleConditionDTO implements Serializable {
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
-
-
 
 
     @Data
@@ -81,44 +78,48 @@ public class RuleConditionDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 左括号
-        */
-        @Size(max = 10,message = "左括号最大长度不能超过10位")
+         * 左括号
+         */
+        @Size(max = 10, message = "左括号最大长度不能超过10位")
         private String leftBracket;
 
         /**
-        * 条件的字段
-        */
+         * 条件的字段
+         */
         @NotBlank(message = "条件的字段不能为空")
-        @Size(max = 30,message = "条件的字段最大长度不能超过30位")
+        @Size(max = 30, message = "条件的字段最大长度不能超过30位")
         private String field;
 
         /**
-        * 下拉逻辑关系
-        */
+         * 下拉逻辑关系
+         */
         @NotBlank(message = "比较符不能为空")
-        @Size(max = 30,message = "比较符最大长度不能超过30位")
+        @Size(max = 30, message = "比较符最大长度不能超过30位")
         private String compare;
 
         /**
-        * 对应的值
-        */
+         * 对应的值
+         */
         @NotBlank(message = "对应的值不能为空")
-        @Size(max = 30,message = "对应的值最大长度不能超过30位")
+        @Size(max = 30, message = "对应的值最大长度不能超过30位")
         private String value;
 
         /**
-        * 右括号
-        */
-        @Size(max = 10,message = "右括号最大长度不能超过10位")
+         * 右括号
+         */
+        @Size(max = 10, message = "右括号最大长度不能超过10位")
         private String rightBracket;
 
         /**
-        * 逻辑关系 or 和 and
-        */
-        @StateEnumValue(strValues = {"or","and"},message = "逻辑关系有误")
+         * 逻辑关系 or 和 and
+         */
+        @StateEnumValue(strValues = {"or", "and"}, message = "逻辑关系有误")
         private String logic;
 
+        /**
+         * 序号
+         */
+        private Integer index;
 
     }
 

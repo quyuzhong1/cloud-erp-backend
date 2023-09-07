@@ -88,9 +88,14 @@ public class CfConditionDTO implements Serializable {
         /**
         * 条件字段 对应dict_rule_condition key
         */
-        @NotBlank(message = "条件字段 对应dict_rule_condition key不能为空")
+       // @NotBlank(message = "条件字段 对应dict_rule_condition key不能为空")
         @Size(max = 30,message = "条件字段 对应dict_rule_condition key最大长度不能超过30位")
         private String conditionField;
+
+        /**
+         * 字段名
+         */
+        private String conditionFieldName;
 
         /**
         * 逻辑关系 对应 dict_rule_condition key 多个逗号分割

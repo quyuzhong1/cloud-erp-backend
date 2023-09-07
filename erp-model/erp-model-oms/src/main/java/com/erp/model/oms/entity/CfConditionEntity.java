@@ -29,6 +29,13 @@ public class CfConditionEntity extends BaseEntity<CfConditionEntity> {
     */
     @TableField("condition_field")
     private String conditionField;
+
+
+    /**
+     * 条件字段名
+     */
+    @TableField("condition_field_name")
+    private String conditionFieldName;
     /**
     * 逻辑关系 对应 dict_rule_condition key 多个逗号分割
     */
