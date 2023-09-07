@@ -26,6 +26,11 @@ public class SkuVO implements Serializable {
     private String productId;
 
     /**
+     * 规格类型  1：无规格  2：多规格
+     */
+    private Integer specType;
+
+    /**
      * sku no
      */
     private String skuNo;
