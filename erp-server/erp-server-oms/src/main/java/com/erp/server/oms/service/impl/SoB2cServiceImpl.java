@@ -95,8 +95,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
-    private SysUserFeign sysUserFeign;
+
 
     @Autowired
     private InventoryFeign inventoryFeign;
@@ -1938,15 +1937,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             BigDecimal  vatRate = MathUtil.divide(viewCostDTO.getVatRate(),MathUtil.BigDecimal_100);
             BigDecimal transferRate = MathUtil.divide(viewCostDTO.getVatRate(),MathUtil.BigDecimal_100);
 
-            DictBasicEntity platformOption = dictBasicService.getByTypeAndValue(DictBasicEnum.SHOP_PLATFORM_COST.getType(), viewCostDTO.getDictPlatformOption());
+            DictBasicEntity platformOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_PLATFORM_COST.getType(), viewCostDTO.getDictPlatformOption());
             if (ObjectUtils.isEmpty(platformOption)) {
                 throw new ServiceException(ApiError.ERROR_DICT_NOT_EXIST,viewCostDTO.getDictPlatformOption());
             }
-            DictBasicEntity vatOption = dictBasicService.getByTypeAndValue(DictBasicEnum.SHOP_VAT_COST.getType(), viewCostDTO.getDictVatOption());
+            DictBasicEntity vatOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_VAT_COST.getType(), viewCostDTO.getDictVatOption());
             if (ObjectUtils.isEmpty(vatOption)) {
                 throw new ServiceException(ApiError.ERROR_DICT_NOT_EXIST,viewCostDTO.getDictVatOption());
             }
-            DictBasicEntity transferOption = dictBasicService.getByTypeAndValue(DictBasicEnum.SHOP_TRANSFER_COST.getType(), viewCostDTO.getDictTransferOption());
+            DictBasicEntity transferOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_TRANSFER_COST.getType(), viewCostDTO.getDictTransferOption());
             if (ObjectUtils.isEmpty(transferOption)) {
                 throw new ServiceException(ApiError.ERROR_DICT_NOT_EXIST,viewCostDTO.getDictTransferOption());
             }
