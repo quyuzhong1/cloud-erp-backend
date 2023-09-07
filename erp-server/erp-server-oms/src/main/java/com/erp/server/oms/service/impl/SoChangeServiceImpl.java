@@ -980,7 +980,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             //更新销售表数据
             soChangeDetailService.handleDb(list);
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeSoChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeSoChangeService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
         }
         return Boolean.TRUE;
     }

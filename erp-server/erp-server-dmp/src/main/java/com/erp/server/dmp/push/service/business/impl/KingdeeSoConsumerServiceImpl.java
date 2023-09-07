@@ -4,7 +4,7 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ErpServerModuleEnum;
-import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -95,13 +95,13 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
 
         //操作项
         String operate = (String) map.get("operate");
-        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+        if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
 
             //作废
             kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
             return;
         }
-        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             //审核中或已审核则要先反审
             if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
                 flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);

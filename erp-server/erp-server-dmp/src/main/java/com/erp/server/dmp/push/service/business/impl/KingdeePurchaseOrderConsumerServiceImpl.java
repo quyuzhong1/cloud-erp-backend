@@ -5,7 +5,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
@@ -104,15 +104,15 @@ public class KingdeePurchaseOrderConsumerServiceImpl implements KingdeePurchaseO
         //操作项
         String operate = (String) map.get("operate");
         //作废
-        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+        if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
             invalid(platformEntity,map,apiUtils,id,documentStatus);
         }
         //反审核
-        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             disApprove(platformEntity,map,apiUtils,id,documentStatus);
         }
         //审核
-        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate) && !isAdd) {
+        if (SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate) && !isAdd) {
             approve(platformEntity,map,apiUtils,id,documentStatus,json);
         }
     }

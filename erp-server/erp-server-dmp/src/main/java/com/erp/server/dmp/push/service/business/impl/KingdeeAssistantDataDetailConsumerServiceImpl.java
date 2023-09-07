@@ -4,7 +4,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -94,7 +94,7 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
         //创建状态则直接修改
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
             //删除
-            if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
                 String code = (String) map.get("code");
                 kingdeeCommonService.delete(apiUtils, platformEntity, map, type, code);
                 return;

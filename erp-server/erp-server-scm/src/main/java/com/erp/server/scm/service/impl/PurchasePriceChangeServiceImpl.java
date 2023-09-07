@@ -556,7 +556,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             //更新价目表数据
             purchasePriceChangeDetailService.updatePurchasePriceDetail(list);
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeePurchasePriceChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeePurchasePriceChangeService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
         }
         return Boolean.TRUE;
     }

@@ -6,7 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
@@ -92,7 +92,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
 
         //操作项，分录禁用
         String operate = (String) map.get("operate");
-        if (SyncOperateEnum.OPERATE_SUB_EFFECTIVE.getCode().equals(operate) || SyncOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getCode().equals(operate)) {
+        if (SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getCode().equals(operate)) {
             excuteOperation(platformEntity, apiUtils, map, operate);
             return;
         }
@@ -133,7 +133,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         String id = String.valueOf(model.get("Id"));
         Boolean flag = Boolean.FALSE;
 
-        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             //反审核
             kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
             return;
@@ -226,9 +226,9 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             if (ObjectUtils.isNotEmpty(disabled)) {
                 //禁用
                 if (disabled) {
-                    operate = SyncOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getCode();
+                    operate = SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getCode();
                 } else {
-                    operate = SyncOperateEnum.OPERATE_SUB_EFFECTIVE.getCode();
+                    operate = SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getCode();
                 }
             }
             if (StringUtils.isBlank(id)) {
@@ -256,11 +256,11 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
                 String disablerId = (String) queryMap.get("FDisablerId");
                 if (StringUtils.equals(skuNo, number) && MathUtil.compareTo(minQty, fMinQty) == MathUtil.ZERO && MathUtil.compareTo(maxQty, fMaxQty) == MathUtil.ZERO) {
                     //禁用
-                    if (SyncOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getCode().equals(operate) && StringUtils.equals("0", disablerId)) {
+                    if (SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getCode().equals(operate) && StringUtils.equals("0", disablerId)) {
                         disabledList.add(detailId);
                     }
                     //启用
-                    if (SyncOperateEnum.OPERATE_SUB_EFFECTIVE.getCode().equals(operate) && !StringUtils.equals("0", disablerId)) {
+                    if (SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getCode().equals(operate) && !StringUtils.equals("0", disablerId)) {
                         unDisabledList.add(detailId);
                     }
                     //金蝶明细id赋值
@@ -276,12 +276,12 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         //禁用
         if (CollectionUtils.isNotEmpty(disabledList)) {
             log.info("禁用价目数据 ids = {}", JSONUtil.toJsonStr(disabledList));
-            excuteOperation(platformEntity, apiUtils, disabledList, id, SyncOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getKingdeeParam());
+            excuteOperation(platformEntity, apiUtils, disabledList, id, SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getKingdeeParam());
         }
         //启用
         if (CollectionUtils.isNotEmpty(unDisabledList)) {
             log.info("启用价目数据 ids = {}", JSONUtil.toJsonStr(unDisabledList));
-            excuteOperation(platformEntity, apiUtils, unDisabledList, id, SyncOperateEnum.OPERATE_SUB_EFFECTIVE.getKingdeeParam());
+            excuteOperation(platformEntity, apiUtils, unDisabledList, id, SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getKingdeeParam());
         }
         return list;
     }
