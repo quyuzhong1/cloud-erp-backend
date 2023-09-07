@@ -861,6 +861,25 @@ public class SoB2cDTO implements Serializable {
          * 物流方式
          */
         private String dictLogisticsMethod;
+
+        /**
+         * 地址1
+         */
+        private String firstAddress;
+        /**
+         * 地址2
+         */
+        private String secondAddress;
+        /**
+         * 详细地址
+         */
+        private String fullAddress;
+
+        /**
+         * 出货仓库
+         */
+        private String warehouseId;
+
         /**
          * 主表信息
          */
