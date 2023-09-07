@@ -196,7 +196,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public String add(PurchaseOrderDTO.AddDTO dto) {
+    public PurchaseOrderEntity add(PurchaseOrderDTO.AddDTO dto) {
         PurchaseOrderEntity entity = new PurchaseOrderEntity();
         BeanMapperUtils.copy(dto, entity);
         //处理数据id
@@ -217,7 +217,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //同步到WMS
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(),Arrays.asList(entity), IdUtil.simpleUUID());
         }
-        return entity.getId();
+        return entity;
     }
 
     @Override
@@ -764,12 +764,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Transactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(PurchaseOrderDTO.AddDTO dto) {
         //新增
-        String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        PurchaseOrderEntity purchaseOrderEntity = this.add(dto);
+        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        return this.submit(Arrays.asList(id),Boolean.TRUE);
+        return this.submit(Arrays.asList(purchaseOrderEntity.getId()),Boolean.TRUE);
     }
 
     @Override
