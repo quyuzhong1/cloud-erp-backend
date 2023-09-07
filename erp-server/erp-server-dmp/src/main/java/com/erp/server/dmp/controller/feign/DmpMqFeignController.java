@@ -1,9 +1,7 @@
 package com.erp.server.dmp.controller.feign;
 
-import com.common.business.dto.DmpSyncTaskDTO;
-import com.erp.model.dmp.dto.PlatformTaskDTO;
-import com.erp.server.dmp.service.DmpPullTaskService;
-import com.erp.server.dmp.service.PlatformApiTaskService;
+import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,9 +23,7 @@ import javax.validation.Valid;
 @RequestMapping("feign/dmp/")
 public class DmpMqFeignController {
     @Resource
-    private DmpPullTaskService dmpPullTaskService;
-    @Resource
-    private PlatformApiTaskService platformApiTaskService;
+    private DmpPushTaskService dmpPushTaskService;
 
     /**
      * 发送MQ消息并保存任务
@@ -35,8 +31,8 @@ public class DmpMqFeignController {
      * @return
      */
     @PostMapping("/send/mq/save/task")
-    public Boolean sendMqAndSaveTask(@RequestBody @Valid DmpSyncTaskDTO dto){
-        dmpPullTaskService.sendMqAndSaveTask(dto);
+    public Boolean sendMqAndSaveTask(@RequestBody @Valid DmpPushTaskFeignDTO dto){
+        dmpPushTaskService.sendMqAndSaveTask(dto);
         return Boolean.TRUE;
     }
 

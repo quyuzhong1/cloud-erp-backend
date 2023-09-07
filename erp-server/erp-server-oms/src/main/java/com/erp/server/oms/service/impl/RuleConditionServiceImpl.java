@@ -139,10 +139,10 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
             String fieldName = dictRuleConditionList.stream().filter(d -> d.getKey().equals(field)).findFirst().
                     map(DictRuleConditionEntity::getValue).orElse("");
             item.setFieldName(fieldName);
-            String operator = item.getOperator();
-            String compareName = dictRuleConditionList.stream().filter(d -> d.getKey().equals(operator)).findFirst().
+            String compare = item.getCompare();
+            String compareName = dictRuleConditionList.stream().filter(d -> d.getKey().equals(compare)).findFirst().
                     map(DictRuleConditionEntity::getValue).orElse("");
-            item.setOperatorName(compareName);
+            item.setCompareName(compareName);
             String logic = item.getLogic();
             String logicName = "";
             if (StringUtils.isNotBlank(logic)) {
@@ -157,18 +157,19 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
 
     /**
      * 修改规则条件
-     * @author yl
-     * @date 2023-08-31 17:10
+     *
      * @param ruleId
      * @param conditionList
      * @return void
+     * @author yl
+     * @date 2023-08-31 17:10
      */
     @Override
-    @Transactional(rollbackFor =Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public void updateRuleCondition(String ruleId, List<RuleConditionDTO.UpdateDTO> conditionList) {
         List<RuleConditionDTO.UpdateDTO> updateList = conditionList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
         List<RuleConditionEntity> saveOrUpdateList = BeanMapper.copyList(conditionList, RuleConditionEntity.class);
-        saveOrUpdateList.forEach(s->s.setRuleId(ruleId));
+        saveOrUpdateList.forEach(s -> s.setRuleId(ruleId));
         List<RuleConditionEntity> dbList = this.listDbByRuleId(ruleId);
         List<Pair<String, String>> pairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
@@ -185,7 +186,22 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
     }
 
     /**
+     * 根据规则id 集合获取到规则条件
+     *
+     * @param ruleIdList
+     * @return
+     */
+    @Override
+    public List<RuleConditionEntity> listDbRuleIds(List<String> ruleIdList) {
+        if (CollectionUtils.isEmpty(ruleIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(RuleConditionEntity::getRuleId,ruleIdList).orderByAsc(RuleConditionEntity::getIndex).list();
+    }
+
+    /**
      * 获取到删除的ids
+     *
      * @param pairList
      * @param dbList
      * @return

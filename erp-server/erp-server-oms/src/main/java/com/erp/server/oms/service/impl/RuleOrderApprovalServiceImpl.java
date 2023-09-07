@@ -2,36 +2,39 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.rule.ConditionElement;
-import com.common.core.rule.SqELRuleUtils;
+import com.common.core.entity.ConditionElement;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.server.rule.SpElServer;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.RuleConditionDTO;
+import com.erp.model.oms.dto.RuleOrderApprovalDTO;
+import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.entity.RuleOrderApprovalEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleOrderApprovalMapper;
+import com.erp.server.oms.service.CommonService;
+import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.RuleConditionService;
 import com.erp.server.oms.service.RuleOrderApprovalService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.RuleOrderApprovalDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -52,6 +55,9 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     @Autowired
     private RuleConditionService ruleConditionService;
 
+    @Autowired
+    private SpElServer spElServer;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(RuleOrderApprovalDTO.AddDTO addDTO) {
@@ -59,12 +65,12 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
-                        c.getOperator(), c.getValue(),
+                        c.getCompare(), c.getValue(),
                         c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
-        String expression = SqELRuleUtils.getConditionExpression(conditionElementList);
-        Boolean checkResult = SqELRuleUtils.checkExpressionIsEnabled(expression);
+        String expression = spElServer.getConditionExpression(conditionElementList, Map.class);
+        Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
         }
         BeanMapperUtils.copy(addDTO, ruleOrderApprovalEntity);
         List<String> operationTypeList = addDTO.getOperationTypeList();
@@ -96,12 +102,12 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
-                        c.getOperator(), c.getValue(),
+                        c.getCompare(), c.getValue(),
                         c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
-        String expression = SqELRuleUtils.getConditionExpression(conditionElementList);
-        Boolean checkResult = SqELRuleUtils.checkExpressionIsEnabled(expression);
+        String expression = spElServer.getConditionExpression(conditionElementList, Map.class);
+        Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
         }
 
         RuleOrderApprovalEntity ruleOrderApprovalEntity = BeanMapperUtils.map(RuleOrderApprovalEntity.class, updateDTO);
@@ -173,6 +179,51 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);
         view.setConditionList(conditionList);
         return view;
+    }
+
+    /**
+     * 获取到订单审核匹配结果
+     *
+     * @param jsonObjectList
+     * @return
+     */
+    @Override
+    public RuleOrderApprovalDTO.RuleMatchDTO getRuleOrderMatchResult(List<JSONObject> jsonObjectList) {
+        RuleOrderApprovalDTO.RuleMatchDTO ruleMatch = new RuleOrderApprovalDTO.RuleMatchDTO();
+        if (CollectionUtils.isEmpty(jsonObjectList)) {
+            return ruleMatch;
+        }
+        List<RuleOrderApprovalEntity> ruleOrderApprovalList = this.listOrderByPriority();
+        List<String> ruleIdList = ruleOrderApprovalList.stream().map(RuleOrderApprovalEntity::getId).collect(Collectors.toList());
+        //规则条件
+        List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
+        for (RuleOrderApprovalEntity item : ruleOrderApprovalList) {
+            String ruleId = item.getId();
+            List<RuleConditionEntity> ruleConditionList = allRuleConditionList.stream().
+                    filter(r -> r.getRuleId().equals(ruleId)).
+                    sorted(Comparator.comparing(RuleConditionEntity::getIndex)).collect(Collectors.toList());
+
+            List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
+            //获取到表达式
+            for (JSONObject jsonObject : jsonObjectList) {
+                Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject);
+                if (matchResult) {
+                    ruleMatch.setFlowStatus(item.getFlowStatus());
+                    ruleMatch.setCategoryDetailId(item.getCategoryDetailId());
+                    return ruleMatch;
+                }
+            }
+        }
+        return ruleMatch;
+    }
+
+    /**
+     * 根据有限级获取到订单审核
+     *
+     * @return
+     */
+    private List<RuleOrderApprovalEntity> listOrderByPriority() {
+        return this.lambdaQuery().eq(RuleOrderApprovalEntity::getDisabled, Boolean.FALSE).orderByDesc(RuleOrderApprovalEntity::getPriority).list();
     }
 
 

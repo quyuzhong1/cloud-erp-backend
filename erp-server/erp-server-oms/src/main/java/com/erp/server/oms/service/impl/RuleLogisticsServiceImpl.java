@@ -2,15 +2,18 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.rule.ConditionElement;
-import com.common.core.rule.SqELRuleUtils;
+import com.common.core.entity.ConditionElement;
+import com.common.core.server.rule.SpElServer;
 import com.erp.model.oms.dto.RuleConditionDTO;
+import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.entity.RuleLogisticsEntity;
+import com.erp.model.oms.entity.RuleOrderApprovalEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -21,6 +24,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +56,9 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
     @Autowired
     private RuleConditionService ruleConditionService;
 
+    @Autowired
+    private SpElServer spElServer;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -59,12 +66,12 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
-                        c.getOperator(), c.getValue(),
+                        c.getCompare(), c.getValue(),
                         c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
-        String expression = SqELRuleUtils.getConditionExpression(conditionElementList);
-        Boolean checkResult = SqELRuleUtils.checkExpressionIsEnabled(expression);
+        String expression = spElServer.getConditionExpression(conditionElementList, Map.class);
+        Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
         }
         RuleLogisticsEntity ruleLogisticsEntity = new RuleLogisticsEntity();
         BeanMapperUtils.copy(addDTO, ruleLogisticsEntity);
@@ -96,12 +103,12 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
-                        c.getOperator(), c.getValue(),
+                        c.getCompare(), c.getValue(),
                         c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
-        String expression = SqELRuleUtils.getConditionExpression(conditionElementList);
-        Boolean checkResult = SqELRuleUtils.checkExpressionIsEnabled(expression);
+        String expression = spElServer.getConditionExpression(conditionElementList, Map.class);
+        Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
         if (!checkResult) {
-            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
         }
         RuleLogisticsEntity ruleLogisticsEntity = BeanMapperUtils.map(RuleLogisticsEntity.class, updateDTO);
         // 数据处理
@@ -179,6 +186,54 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         ruleLogistics.setDisabled(dto.getState());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode(), dto.getId(), "状态变更");
         return this.updateById(ruleLogistics);
+
+    }
+
+
+    /**
+     * 获取到物流匹配结果
+     *
+     * @param jsonObjectList
+     * @return
+     */
+    @Override
+    public RuleLogisticsDTO.RuleMatchResultDTO getRuleOrderMatchResult(List<JSONObject> jsonObjectList) {
+        RuleLogisticsDTO.RuleMatchResultDTO ruleMatchResult = new RuleLogisticsDTO.RuleMatchResultDTO();
+        if (CollectionUtils.isEmpty(jsonObjectList)) {
+            return ruleMatchResult;
+        }
+        List<RuleLogisticsEntity> ruleLogisticsList = this.listOrderByPriority();
+        List<String> ruleIdList = ruleLogisticsList.stream().map(RuleLogisticsEntity::getId).collect(Collectors.toList());
+        //规则条件
+        List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
+        for (RuleLogisticsEntity item : ruleLogisticsList) {
+            String ruleId = item.getId();
+            List<RuleConditionEntity> ruleConditionList = allRuleConditionList.stream().
+                    filter(r -> r.getRuleId().equals(ruleId)).
+                    sorted(Comparator.comparing(RuleConditionEntity::getIndex)).collect(Collectors.toList());
+
+            List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
+            //获取到表达式
+            for (JSONObject jsonObject : jsonObjectList) {
+                Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject);
+                if (matchResult) {
+                    ruleMatchResult.setLogisticsSupplier(item.getLogisticsSupplier());
+                    ruleMatchResult.setAutoGetTrackNo(item.getAutoGetTrackNo());
+                    return ruleMatchResult;
+                }
+            }
+        }
+        return ruleMatchResult;
+    }
+
+
+    /**
+     * 根据优先级 获取到对应物流的信息
+     *
+     * @return
+     */
+    private List<RuleLogisticsEntity> listOrderByPriority() {
+        return this.lambdaQuery().eq(RuleLogisticsEntity::getDisabled, Boolean.FALSE).orderByDesc(RuleLogisticsEntity::getPriority).list();
 
     }
 

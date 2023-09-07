@@ -138,7 +138,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void sendMqAndSaveTask(DmpSyncTaskDTO dto) {
-        // 保存任务表  // TODO: 2023/9/6 表拆分
+        // 保存任务表
         DmpPullTaskEntity dmpPullTaskEntity = new DmpPullTaskEntity(dto);
         this.saveOrUpdateDmpSyncTask(dmpPullTaskEntity);
         // 发送MQ消息

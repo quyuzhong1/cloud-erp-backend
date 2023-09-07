@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -51,18 +52,14 @@ public class SoB2cRefServiceImpl extends SuperServiceImpl<SoB2cRefMapper, SoB2cR
 
     @Override
     public List<SoB2cRefEntity> listByTargetId(String id, SoB2cOptionTypeEnum typeEnum) {
-        return lambdaQuery()
-                .eq(SoB2cRefEntity::getTargetId,id)
-                .eq(ObjectUtils.isEmpty(typeEnum),SoB2cRefEntity::getType,typeEnum.getCode())
-                .list();
+        LambdaQueryWrapper<SoB2cRefEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(SoB2cRefEntity::getTargetId,id);
+        if (ObjectUtils.isNotEmpty(typeEnum)) {
+            queryWrapper.eq(SoB2cRefEntity::getType,typeEnum.getCode());
+        }
+        return this.list(queryWrapper);
     }
-    @Override
-    public List<SoB2cRefEntity> listByTargetIds(List<String> ids, SoB2cOptionTypeEnum typeEnum) {
-        return lambdaQuery()
-                .in(SoB2cRefEntity::getTargetId,ids)
-                .eq(ObjectUtils.isEmpty(typeEnum),SoB2cRefEntity::getType,typeEnum.getCode())
-                .list();
-    }
+
 
     @Override
     public Boolean deleteByTargetIds(List<String> mainIds) {

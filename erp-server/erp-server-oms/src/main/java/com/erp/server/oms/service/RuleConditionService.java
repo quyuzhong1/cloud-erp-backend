@@ -64,4 +64,12 @@ public interface RuleConditionService extends SuperService<RuleConditionEntity> 
      * @return void
      */
     void updateRuleCondition(String ruleId, List<RuleConditionDTO.UpdateDTO> conditionList);
+
+
+    /**
+     * 根据规则id 集合获取到规则条件
+     * @param ruleIdList
+     * @return
+     */
+    List<RuleConditionEntity> listDbRuleIds(List<String> ruleIdList);
 }

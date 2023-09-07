@@ -92,6 +92,24 @@ public class RuleLogisticsDTO implements Serializable {
         private String name;
     }
 
+    /**
+     * 物流匹配结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class RuleMatchResultDTO  {
+
+        /**
+         * 物流供应商
+         */
+        private String logisticsSupplier;
+
+        /**
+         * 是否自动获取物流单号
+         */
+        private Boolean autoGetTrackNo;
+    }
+
 
     /**
      * 详情

@@ -1,4 +1,4 @@
-package com.common.core.rule;
+package com.common.core.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,7 +28,7 @@ public class ConditionElement {
     /**
      * 选项逻辑关系 大于 等于 等等
      */
-    private String operator;
+    private String compare;
 
     /**
      * 对应的值

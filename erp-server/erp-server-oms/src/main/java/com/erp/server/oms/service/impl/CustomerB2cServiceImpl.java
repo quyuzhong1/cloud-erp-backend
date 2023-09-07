@@ -689,7 +689,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             String sourceType=SourceTypeEnum.SHOP.getCode();
             //审核通过发送金蝶
             list=list.stream().filter(l->sourceType.equals(l.getSourceType())).collect(Collectors.toList());
-            list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
             //批量保存销售员信息
             customerB2cSellerService.batchSellerHistory(list);
 
@@ -737,7 +737,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER_B2C.getCode(), pairList, "状态变更");
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }
@@ -887,9 +887,9 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         customerList.forEach(req -> {
             //发送金蝶
             if (dto.getDisabled()) {
-                syncKingdeeCustomerB2cService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DISABLE.getCode());
+                syncKingdeeCustomerB2cService.syncDataToKingdee(req, SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode());
             } else {
-                syncKingdeeCustomerB2cService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_ENABLE.getCode());
+                syncKingdeeCustomerB2cService.syncDataToKingdee(req, SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode());
             }
         });
 
@@ -1361,7 +1361,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
                 continue;
             }
             lambdaUpdate().set(CustomerB2cEntity::getSyncKingdeeId, kingdeeId).set(CustomerB2cEntity::getSyncKingdeeTime, LocalDateTime.now())
-                    .set(CustomerB2cEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
+                    .set(CustomerB2cEntity::getSyncOperate, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode())
                     .set(CustomerB2cEntity::getSyncKingdeeStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
                     .eq(CustomerB2cEntity::getId, customerInfoEntity.getId())
                     .update();

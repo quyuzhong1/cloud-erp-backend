@@ -206,4 +206,16 @@ public class RuleDeliveryWarehouseDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class RuleMatchResultDTO {
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+    }
+
+
 }

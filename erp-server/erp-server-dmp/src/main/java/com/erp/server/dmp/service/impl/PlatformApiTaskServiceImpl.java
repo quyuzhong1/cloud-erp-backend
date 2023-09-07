@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.common.business.enums.PlatformCategoryEnum;
@@ -30,6 +31,7 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
 
     @Resource
     private PlatformApiService platformApiService;
+
     /**
      * 修改任务下次执行
      *
@@ -40,18 +42,18 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
      * @Date 2022/11/15 10:24
      **/
     @Override
-    public Boolean updateTaskStateById(JobTaskDTO jobTaskDTO, Integer type){
+    public Boolean updateTaskStateById(JobTaskDTO jobTaskDTO, Integer type) {
         LambdaUpdateWrapper<PlatformApiTaskEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        if (1 != type){
+        if (1 != type) {
             Integer interval = jobTaskDTO.getIntervalTime();
             LocalDateTime nextTime = jobTaskDTO.getNextTime();
             lambdaUpdateWrapper.set(PlatformApiTaskEntity::getLastTime, nextTime);
             lambdaUpdateWrapper.set(PlatformApiTaskEntity::getNextTime, nextTime.plusSeconds(interval));
             lambdaUpdateWrapper.set(PlatformApiTaskEntity::getRetryTimes, 0);
-        }else {
+        } else {
             lambdaUpdateWrapper.set(PlatformApiTaskEntity::getRetryTimes, jobTaskDTO.getRetryTimes() + 1);
         }
-        if(3 != type){
+        if (3 != type) {
             lambdaUpdateWrapper.set(PlatformApiTaskEntity::getStatus, 1);
         }
         lambdaUpdateWrapper.set(PlatformApiTaskEntity::getUpdateTime, LocalDateTime.now());
@@ -72,7 +74,7 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
     @Transactional(rollbackFor = Exception.class)
     public Boolean createPlatformTask(PlatformTaskDTO.AddDTO dto) {
         List<PlatformApiEntity> entityList = platformApiService.listByPlatform(dto.getDictPlatform());
-        if(CollectionUtil.isEmpty(entityList)){
+        if (CollectionUtil.isEmpty(entityList)) {
             return Boolean.TRUE;
         }
         // 根据店铺id查询是否已经存在任务
@@ -98,10 +100,10 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
         List<PlatformApiTaskEntity> insertEntityList = notExistApiList.stream()
                 .map(task -> getPlatformApiTaskEntity(dto, task))
                 .collect(Collectors.toList());
-        if (CollectionUtil.isNotEmpty(insertEntityList)){
+        if (CollectionUtil.isNotEmpty(insertEntityList)) {
             this.saveBatch(insertEntityList);
         }
-        if (CollectionUtil.isNotEmpty(taskIds)){
+        if (CollectionUtil.isNotEmpty(taskIds)) {
             this.removeByIds(taskIds);
         }
         return Boolean.TRUE;
@@ -136,7 +138,7 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
 
     @Override
     public List<JobTaskDTO> listApiTask(LocalDateTime localTime, String operateType) {
-        return baseMapper.selectApiTask(localTime,operateType);
+        return baseMapper.selectApiTask(localTime, operateType);
     }
 
     @Override
@@ -148,10 +150,10 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean removePlatformTask(PlatformTaskDTO.AddDTO dto) {
-        LambdaQueryChainWrapper<PlatformApiTaskEntity> eq = lambdaQuery()
-                .eq(PlatformApiTaskEntity::getDictPlatform, dto.getDictPlatform())
-                .eq(PlatformApiTaskEntity::getShopId, dto.getShopId());
-        return remove(eq);
+        LambdaQueryWrapper<PlatformApiTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(PlatformApiTaskEntity::getDictPlatform, dto.getDictPlatform());
+        queryWrapper.eq(PlatformApiTaskEntity::getShopId, dto.getShopId());
+        return this.remove(queryWrapper);
     }
 
     @Override

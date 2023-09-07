@@ -61,7 +61,7 @@ public class PdaSoReturnInstockController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:pdaSoReturnInstock:paging",
-            tableAlias = "wr"
+            tableAlias = "sri"
     )
     public ApiResult<List<SoReturnInstockDTO.PdaSoReturnInstockCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
         List<SoReturnInstockDTO.PdaSoReturnInstockCountDTO> soReturnInstockCountDTOs = soReturnInstockService.pdaListCount(dto);

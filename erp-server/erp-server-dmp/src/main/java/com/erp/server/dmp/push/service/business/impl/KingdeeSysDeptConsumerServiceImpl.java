@@ -3,7 +3,7 @@ package com.erp.server.dmp.push.service.business.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -94,7 +94,7 @@ public class KingdeeSysDeptConsumerServiceImpl implements KingdeeSysDeptConsumer
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
             //删除
-            if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
                 kingdeeCommonService.delete(apiUtils,platformEntity,map,type,code);
                 return;
             }

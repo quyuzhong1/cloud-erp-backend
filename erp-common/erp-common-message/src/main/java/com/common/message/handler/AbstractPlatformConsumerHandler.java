@@ -1,5 +1,7 @@
 package com.common.message.handler;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.SyncStatusEnum;
@@ -28,7 +30,7 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
             }
             updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncStatusEnum.SUCCESS_SYNC, SyncStatusEnum.SUCCESS_SYNC.getName());
         }catch (Exception e) {
-            updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncStatusEnum.FAILED_SYNC, e.getMessage() != null ? e.getMessage() : e.getStackTrace()[e.getStackTrace().length-1].toString());
+            updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncStatusEnum.FAILED_SYNC, StrUtil.isBlank(e.getMessage()) ? e.getMessage() : ExceptionUtil.stacktraceToString(e));
             log.error("平台数据消费异常", e);
         }
     }

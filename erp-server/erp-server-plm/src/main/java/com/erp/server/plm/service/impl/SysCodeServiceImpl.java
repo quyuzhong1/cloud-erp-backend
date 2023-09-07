@@ -2,16 +2,17 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.entity.BasicCategoryEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
-import com.common.business.enums.BusinessNoTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.service.BasicCategoryService;
+import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.SysCodeService;
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +40,9 @@ public class SysCodeServiceImpl implements SysCodeService {
     @Autowired
     private SysUserFeign sysUserFeign;
 
+    @Autowired
+    private ProductDetailService productDetailService;
+
     /**
      * @description: 根据产品id和颜色生产sku编号
      * @author Will
@@ -65,43 +69,11 @@ public class SysCodeServiceImpl implements SysCodeService {
         }
         //产品类目
         dto.setCategory(bestEntity.getCode());
-        //产品颜色
-        dto.setColorCode(variantColorProperty);
         dto.setType(BusinessNoTypeEnum.SKU_NO.getCode());
-        //产品销售渠道
-        if (StringUtils.isBlank(entity.getSalesChannel())) {
-            throw new ServiceException(ApiError.ERROR_95073);
-        }
-        dto.setSalesChannel(entity.getSalesChannel());
-        //产品是否是客户定制
-        if (entity.getIsCustomized().equals(IsConstant.YES)) {
-            dto.setCustomized("DZ");
-        } else {
-            dto.setCustomized("");
-        }
-        //产品的版本 1-9，A-Z
-        int version = entity.getProductVersion().intValue();
-        if (9 >= version ) {
-            dto.setVersion(entity.getProductVersion().toString());
-        } else {
-            //version为10以上时转换成大写英文字母
-            //大写字母A到Z的ascii码是从65到90
-            int j = version - 10;
-            char c = 65;
-            if ((65 + j) > 90) {
-                //如果版本超出字母范围则恒定为Z
-                c = (char)90;
-            } else {
-                c = (char) (65 + j);
-            }
-            if (String.valueOf(c).equals("I") || String.valueOf(c).equals("O")) {
-                c = (char) (65 + j + 1); //当版本为I或者O时取下一个字母
-            }
-            dto.setVersion(String.valueOf(c));
-        }
-
         String sysNo = sysUserFeign.getSkuNo(dto);
-        return sysNo;
+        //已存在则获取下一个
+        String existSKuNo = isExistSKuNo(sysNo, dto);
+        return existSKuNo;
     }
 
 
@@ -161,5 +133,18 @@ public class SysCodeServiceImpl implements SysCodeService {
         }
     }
 
-
+    /**
+     * 判断sku编号是否存在
+     */
+    private String isExistSKuNo(String sysNo,SysCodeSkuDTO dto) {
+        //判断spu编码系统中是否已经存在，存在则获取下一个编码
+        ProductDetailEntity productDetailEntity = productDetailService.getProductIdBySku(sysNo);
+        if (ObjectUtils.isNotEmpty(productDetailEntity)) {
+            sysNo = sysUserFeign.getSkuNo(dto);
+            //再次判断是否存在
+           return isExistSKuNo(sysNo,dto);
+        } else {
+            return sysNo;
+        }
+    }
 }
