@@ -346,8 +346,8 @@ public class SoB2cDTO implements Serializable {
          */
          private Boolean isIntercept;
         /**
-         * 1、拆分生成的子订单
-         * 2、合并生成的新订单
+         * 1、拆分生成的子订单 split
+         * 2、合并生成的新订单 merge
          */
         private String refType;
     }
@@ -1178,12 +1178,6 @@ public class SoB2cDTO implements Serializable {
         @Min(value = 1, message = "拆分数量最小值为1")
         @Max(value = 999999999, message = "拆分数量最大值为999999999")
         private Integer qty;
-
-        /**
-         * 分组信息不能为空
-         */
-        @NotBlank(message = "分组信息不能为空")
-        private String group;
     }
 
     @Data

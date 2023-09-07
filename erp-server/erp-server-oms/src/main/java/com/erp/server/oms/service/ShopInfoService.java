@@ -9,8 +9,6 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 
 import java.util.List;
 
-import java.util.List;
-
 /**
  * <p>
  * 店铺表 服务类
@@ -131,4 +129,11 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return java.lang.String
      */
     String getShopifyAuthorizeUrl(String hmac, String host, String shop, String timestamp);
+    /**
+     * @description: 获取店铺列表
+     * @author Will
+     * @date: 2023/9/7 16:31
+     * @return List<ListTreeDTO>
+     */
+    List<ShopDTO.ListTreeDTO> listTree();
 }

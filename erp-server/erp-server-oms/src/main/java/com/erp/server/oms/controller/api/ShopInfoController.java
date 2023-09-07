@@ -116,6 +116,15 @@ public class ShopInfoController extends BaseController {
     }
 
     /**
+     * 获取店铺列表(树状级联)
+     */
+    @GetMapping("/listTree")
+    public ApiResult<List<ShopDTO.ListTreeDTO>> listTree() {
+        List<ShopDTO.ListTreeDTO> list = shopInfoService.listTree();
+        return success(list);
+    }
+
+    /**
      * 店铺账号列表
      *
      * @return

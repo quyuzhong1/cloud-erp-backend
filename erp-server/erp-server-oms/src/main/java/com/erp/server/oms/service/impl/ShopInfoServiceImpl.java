@@ -7,6 +7,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -18,6 +19,7 @@ import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
@@ -25,7 +27,6 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.oms.enums.DictBasicValueEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
@@ -584,6 +585,57 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         String grantOptions = "per-user";
         String path = String.format(cfgAppClient.getUrl(), shop, cfgAppClient.getClientId(), grantOptions, cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
         return path;
+    }
+
+    @Override
+    public List<ShopDTO.ListTreeDTO> listTree() {
+        List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<String> platformList = list.stream().map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = this.listByPlatformList(platformList);
+
+        List<ShopDTO.ListTreeDTO> resultList = new ArrayList<>();
+        for (DictBasicDTO.ViewDTO viewDTO : list) {
+            //平台信息
+            ShopDTO.ListTreeDTO listTreeDTO = new ShopDTO.ListTreeDTO();
+            listTreeDTO.setId(viewDTO.getId());
+            listTreeDTO.setName(viewDTO.getName());
+
+            //店铺信息
+            List<ShopInfoEntity> shopList = shopInfoList.stream().filter(obj -> obj.getDictPlatform().equals(viewDTO.getValue())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(shopList)) {
+                resultList.add(listTreeDTO);
+               continue;
+            }
+            List<ShopDTO.ListChildTreeDTO> listChildList = new ArrayList<>();
+            for (ShopInfoEntity shopInfoEntity:shopList) {
+                ShopDTO.ListChildTreeDTO listChildTreeDTO = new ShopDTO.ListChildTreeDTO();
+                listChildTreeDTO.setId(shopInfoEntity.getId());
+                listChildTreeDTO.setName(shopInfoEntity.getName());
+                listChildTreeDTO.setDisabled(shopInfoEntity.getDisabled());
+                listChildList.add(listChildTreeDTO);
+            }
+            listTreeDTO.setListChildList(listChildList);
+            resultList.add(listTreeDTO);
+        }
+        return resultList;
+    }
+
+    /**
+     * @description: 根据平台集合查询
+     * @author Will
+     * @date: 2023/9/7 16:39
+     * @param platformList
+     * @return List<ShopInfoEntity>
+     */
+    private List<ShopInfoEntity> listByPlatformList (List<String> platformList) {
+        if (CollectionUtils.isEmpty(platformList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<ShopInfoEntity> list = lambdaQuery().in(ShopInfoEntity::getDictPlatform, platformList).list();
+        return list;
     }
 
     @Override

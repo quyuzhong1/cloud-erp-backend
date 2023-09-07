@@ -1,8 +1,6 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
-import com.fasterxml.jackson.annotation.JacksonInject;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,7 +10,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -395,8 +392,47 @@ public class ShopDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ListTreeDTO {
+
+        /**
+         * 平台id
+         */
+        private String id;
+
+        /**
+         * 平台名称
+         */
+        private String name;
+
+        /**
+         * 店铺信息
+         */
+        private List<ListChildTreeDTO> listChildList;
+    }
 
     @Data
+    @NoArgsConstructor
+    public static class ListChildTreeDTO {
+
+        /**
+         * 店铺id
+         */
+        private String id;
+
+        /**
+         * 店铺名称
+         */
+        private String name;
+
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
+    }
+
+        @Data
     @NoArgsConstructor
     public static class UpdateDTO  {
 

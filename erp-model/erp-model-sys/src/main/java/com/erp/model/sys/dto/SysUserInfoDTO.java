@@ -73,7 +73,7 @@ public class SysUserInfoDTO implements Serializable {
         private String realName;
 
         /**
-         * 店铺id集合
+         * 店铺id集合 http://172.16.100.11:3002/project/110/interface/api/22975
          */
         private List<String> shopIdList;
 
