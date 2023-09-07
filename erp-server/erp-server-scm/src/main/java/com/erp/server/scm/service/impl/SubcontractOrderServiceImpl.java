@@ -804,8 +804,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailList.add(poDetailAddDTO);
             }
             addDTO.setDetails(poDetailList);
-            String poId = purchaseOrderService.add(addDTO);
-            poIds.add(poId);
+            PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.add(addDTO);
+            if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+                throw new ServiceException(ApiError.ERROR_1019);
+            }
+            poIds.add(purchaseOrderEntity.getId());
         }
 
         //采购订单提交审核

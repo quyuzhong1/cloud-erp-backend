@@ -98,6 +98,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         //验证报价信息
         checkPurchasePrice(details,purchaseOrderId);
 
+        //验证明细信息
+        checkPurchaseOrderDetail(details,purchaseOrderId);
+
         List<PurchaseOrderDetailEntity> list = BeanMapperUtils.copyList(PurchaseOrderDetailEntity.class, details);
         //处理明细中的数据id
         doOpHandleDetails(list,purchaseOrderId,Boolean.TRUE);
@@ -154,8 +157,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             details = new ArrayList<>();
         }
         List<PurchaseOrderDetailDTO.AddDTO> addList = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.AddDTO.class, details);
-        //验证报价信息
-        checkPurchasePrice(addList,purchaseOrderId);
+        //验证明细信息
+        checkPurchaseOrderDetail(addList,purchaseOrderId);
 
         //原明细数据
         List<PurchaseOrderDetailEntity> oldList = this.listByPurchaseOrderId(purchaseOrderId);
@@ -333,21 +336,14 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     /**
      * 供应商报价验证
      */
-    private void checkPurchasePrice (List<PurchaseOrderDetailDTO.AddDTO> details,String purchaseOrderId) {
+    private void checkPurchaseOrderDetail (List<PurchaseOrderDetailDTO.AddDTO> details,String purchaseOrderId) {
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
-
         PurchaseOrderEntity entity = purchaseOrderService.getById(purchaseOrderId);
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
-
-        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderId);
-        if (ObjectUtils.isEmpty(supplierEntity)) {
-            throw new ServiceException(ApiError.ERROR_98036);
-        }
-
         //采购日期不能大于预计交货日期
         String skuNos = details.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getPlanDeliveryDate()) && entity.getPurchaseDate().isAfter(obj.getPlanDeliveryDate())).map(PurchaseOrderDetailDTO.AddDTO::getSkuNo).collect(Collectors.joining(","));
         if (StringUtils.isNotBlank(skuNos)) {
@@ -358,14 +354,32 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         if (StringUtils.isNotBlank(notGiftSkuNos)) {
             throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE,notGiftSkuNos);
         }
+    }
 
+    /**
+     * 补货采购订单获取报价信息
+     */
+    private void checkPurchasePrice (List<PurchaseOrderDetailDTO.AddDTO> details,String purchaseOrderId) {
+
+        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderId);
+        if (ObjectUtils.isEmpty(supplierEntity)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
         //验证录入的SKU明细报价信息是否正确
         List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = details.stream().filter(obj -> !Boolean.TRUE.equals(obj.getIsGift())).map(obj -> new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(obj.getPurchaseQty(), obj.getSkuId(), obj.getSkuNo(), supplierEntity.getSupplierId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(priceList)) {
             return;
         }
-        for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO: priceList) {
+        PurchaseOrderEntity entity = purchaseOrderService.getById(purchaseOrderId);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
 
+        for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO: priceList) {
+            PurchaseOrderDetailDTO.AddDTO addDTO = details.stream().filter(obj -> obj.getSkuId().equals(priceDTO.getSkuId()) && MathUtil.compareTo(priceDTO.getPurchaseQty(),obj.getPurchaseQty()) == MathUtil.ZERO).findFirst().orElse(null);
+            if (!PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())) {
+                continue;
+            }
             List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(priceDTO);
             PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
             //汇率
@@ -373,7 +387,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             //单价
             BigDecimal taxPrice = viewDTO.getTaxPrice();
 
-            PurchaseOrderDetailDTO.AddDTO addDTO = details.stream().filter(obj -> obj.getSkuId().equals(priceDTO.getSkuId()) && MathUtil.compareTo(priceDTO.getPurchaseQty(),obj.getPurchaseQty()) == MathUtil.ZERO).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(addDTO)) {
                 String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
                 throw new ServiceException(new ApiResult(1,error));
@@ -382,9 +395,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
                 throw new ServiceException(new ApiResult(1,error));
             }
-            if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())) {
-                addDTO.setTaxPrice(taxPrice);
-            }
+            addDTO.setTaxPrice(taxPrice);
             addDTO.setTaxRate(taxRate);
         }
     }

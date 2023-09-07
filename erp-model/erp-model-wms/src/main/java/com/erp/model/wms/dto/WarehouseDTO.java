@@ -314,6 +314,11 @@ public class WarehouseDTO implements Serializable {
          */
         private String address;
 
+        /**
+         * 是否虚拟仓 true 是 false 不是
+         */
+        private Boolean isVirtual;
+
 
         /**
          * 联系人

@@ -27,6 +27,9 @@
                 #{createUserId}
             </foreach>
         </if>
+        <if test="params.isVirtual != null ">
+            AND  is_virtual = #{params.isVirtual}
+        </if>
         <if test="params.isEnableLocation != null ">
             AND  is_enable_location = #{params.isEnableLocation}
         </if>

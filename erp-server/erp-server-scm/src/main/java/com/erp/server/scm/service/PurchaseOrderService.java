@@ -39,9 +39,9 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @author Will
      * @date: 2023/3/16 11:22
      * @param dto
-     * @return Boolean
+     * @return PurchaseOrderEntity
      */
-    String add(PurchaseOrderDTO.AddDTO dto);
+    PurchaseOrderEntity add(PurchaseOrderDTO.AddDTO dto);
     /**
      * @description: 修改
      * @author Will
