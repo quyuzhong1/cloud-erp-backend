@@ -6,7 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
@@ -65,19 +65,19 @@ public class KingdeeStockInConsumerServiceImpl implements KingdeeStockInConsumer
         /**
          * 作废
          */
-        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+        if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
             operateInvalid(apiUtils,platformEntity,map,type,code,operate);
         }
         /**
          * 反审核
          */
-        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             operateDisapprove(apiUtils,platformEntity, map,type);
         }
         /**
          * 审核
          */
-        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+        if (SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
             operateApprove(apiUtils,platformEntity, map,type);
         }
 

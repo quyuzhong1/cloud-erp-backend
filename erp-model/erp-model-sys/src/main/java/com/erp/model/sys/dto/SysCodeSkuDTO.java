@@ -32,26 +32,6 @@ public class SysCodeSkuDTO implements Serializable {
     private Integer num;
 
     /**
-     * 颜色编码
-     */
-    private String colorCode;
-
-    /**
-     * 销售渠道
-     */
-    private String salesChannel;
-
-    /**
-     * 迭代版本
-     */
-    private String version;
-
-    /**
-     * 客户定制
-     */
-    private String customized;
-
-    /**
      * 编码类型
      */
     @NotBlank(message = "编码类型不能为空")

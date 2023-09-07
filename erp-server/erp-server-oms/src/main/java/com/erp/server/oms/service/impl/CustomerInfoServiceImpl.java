@@ -674,7 +674,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
 
             /*for (CustomerInfoEntity customerInfoEntity : list) {
                 List<CustomerContactEntity> contactEntities = customerContactService.listEntityByMainId(customerInfoEntity.getId());
@@ -728,7 +728,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }
@@ -878,9 +878,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         customerList.forEach(req -> {
             //发送金蝶
             if (dto.getDisabled()) {
-                syncKingdeeCustomerService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DISABLE.getCode());
+                syncKingdeeCustomerService.syncDataToKingdee(req, SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode());
             } else {
-                syncKingdeeCustomerService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_ENABLE.getCode());
+                syncKingdeeCustomerService.syncDataToKingdee(req, SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode());
             }
         });
 
@@ -1352,7 +1352,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 continue;
             }
             lambdaUpdate().set(CustomerInfoEntity::getSyncKingdeeId, kingdeeId).set(CustomerInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
-                    .set(CustomerInfoEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
+                    .set(CustomerInfoEntity::getSyncOperate, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode())
                     .set(CustomerInfoEntity::getSyncKingdeeStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
                     .eq(CustomerInfoEntity::getId, customerInfoEntity.getId())
                     .update();

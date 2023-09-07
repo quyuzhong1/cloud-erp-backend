@@ -489,11 +489,11 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
                 //盘盈单同步金蝶
                 if (isProfit) {
-                    syncKingdeeStocktakingProfitService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                    syncKingdeeStocktakingProfitService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
                 }
                 //盘亏单同步金蝶
                 if (isLoss) {
-                    syncKingdeeStocktakingLossService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                    syncKingdeeStocktakingLossService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
                 }
             }
         }

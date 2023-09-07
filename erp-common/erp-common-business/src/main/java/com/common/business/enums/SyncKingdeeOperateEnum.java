@@ -6,7 +6,7 @@ package com.common.business.enums;
 
  * @date 2023/4/11 17:13
  */
-public enum SyncOperateEnum {
+public enum SyncKingdeeOperateEnum {
 
     OPERATE_ADD("operateAdd", "","新增"),
     OPERATE_UPDATE("operateUpdate", "","修改"),
@@ -20,46 +20,45 @@ public enum SyncOperateEnum {
     OPERATE_SUB_EFFECTIVE("operateSubEffective", "SubEffective","取消明细禁用"),
     OPERATE_SUB_UN_EFFECTIVE("operateSubUnEffective", "SubUnEffective","明细禁用"),
     OPERATE_UNDO_TO_PLAN_CONFIRM("operateUndoToPlanConfirm", "UndoToPlanConfirm","反执行至计划确认"),
-    OPERATE_DOWNLOAD("operate_download", "","数据下载"),
 
     ;
     private String code;
 
-    private String kingdeeParam;
-
     private String name;
 
-    SyncOperateEnum(String code, String kingdeeParam, String name) {
+    private String desc;
+
+    SyncKingdeeOperateEnum(String code, String name,String desc) {
         this.code = code;
-        this.kingdeeParam = kingdeeParam;
         this.name = name;
+        this.desc = desc;
     }
 
     public String getCode() {
         return code;
     }
-    public String getKingdeeParam() {
-        return kingdeeParam;
-    }
     public String getName() {
         return name;
     }
+    public String getDesc() {
+        return desc;
+    }
 
     public static String getNameByCode(String code) {
-        SyncOperateEnum[] enums = values();
-        for (SyncOperateEnum operateEnum : enums) {
+        SyncKingdeeOperateEnum[] enums = values();
+        for (SyncKingdeeOperateEnum operateEnum : enums) {
             if (operateEnum.getCode().equals(code)) {
-                return operateEnum.getKingdeeParam();
+                return operateEnum.getName();
             }
         }
         return null;
     }
 
     public static String getDescByCode(String code) {
-        SyncOperateEnum[] enums = values();
-        for (SyncOperateEnum operateEnum : enums) {
+        SyncKingdeeOperateEnum[] enums = values();
+        for (SyncKingdeeOperateEnum operateEnum : enums) {
             if (operateEnum.getCode().equals(code)) {
-                return operateEnum.getName();
+                return operateEnum.getDesc();
             }
         }
         return null;
