@@ -791,7 +791,7 @@
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_pack pp on pd.id = pp.sku_id AND pp.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
-        left join product_purchase pp on pd.id = pp.sku_id AND pp.is_deleted = FALSE
+        left join product_purchase ppu on pd.id = ppu.sku_id AND ppu.is_deleted = FALSE
         WHERE  pd.is_deleted = FALSE
 
         <if test="status != null and status!=''">
@@ -807,7 +807,7 @@
             )
         </if>
         <if test="skuNo != null and skuNo!=''">
-            AND (pd.sku_no = #{skuNo} OR pp.ean = #{skuNo})
+            AND (pd.sku_no = #{skuNo} OR ppu.ean = #{skuNo})
         </if>
     </select>
 
