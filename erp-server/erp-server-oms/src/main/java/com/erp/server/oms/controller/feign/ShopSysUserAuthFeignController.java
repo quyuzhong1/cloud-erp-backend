@@ -38,4 +38,14 @@ public class ShopSysUserAuthFeignController extends BaseController {
         return list;
     }
 
+    /**
+     * 根据店铺id查询已关联用户id
+     *
+     * @return
+     */
+    @PostMapping("/listUserIdByShopIdList")
+    public List<String> listUserIdByShopIdList(@RequestBody List<String> shopIdList) {
+        List<String> list = shopSysUserAuthService.listUserIdByShopIdList(shopIdList);
+        return list;
+    }
 }

@@ -76,5 +76,5 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
      * @param params 
      * @return IPage 
      */
-    IPage<SysUserInfoDTO.ShopAuthPagingDTO> shopAuthPaging(Page query,@Param("params") SysUserInfoDTO.ShopAuthPagingSearchDTO params);
+    IPage<SysUserInfoDTO.ShopAuthPagingDTO> shopAuthPaging(Page query,@Param("params") SysUserInfoDTO.ShopAuthPagingSearchDTO params,@Param("userIdList") List<String> userIdList);
 }

@@ -174,6 +174,22 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
         return resultList;
     }
 
+    @Override
+    public List<String> listUserIdByShopIdList(List<String> shopIdList) {
+        if (CollectionUtils.isEmpty(shopIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<ShopSysUserAuthEntity> list = lambdaQuery().in(ShopSysUserAuthEntity::getShopId, shopIdList)
+                .or()
+                .eq(ShopSysUserAuthEntity::getAuthType, ShopAuthTypeEnum.ENUM_ALL.getCode())
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<String> userIdList = list.stream().map(ShopSysUserAuthEntity::getUserId).distinct().collect(Collectors.toList());
+        return userIdList;
+    }
+
     /**
      * @description: 根据用户id查询权限设置数据
      * @author Will

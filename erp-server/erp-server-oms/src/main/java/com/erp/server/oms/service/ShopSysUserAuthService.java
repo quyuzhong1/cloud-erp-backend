@@ -40,4 +40,12 @@ public interface ShopSysUserAuthService extends SuperService<ShopSysUserAuthEnti
      * @return List<ViewDTO>
      */
     List<ShopSysUserAuthDTO.ViewDTO> listShopSysUserAuthByUserIdList(List<String> userIdList);
+    /**
+     * @description:根据店铺id查询已关联用户id
+     * @author Will
+     * @date: 2023/9/7 9:36
+     * @param shopIdList
+     * @return List<String>
+     */
+    List<String> listUserIdByShopIdList(List<String> shopIdList);
 }

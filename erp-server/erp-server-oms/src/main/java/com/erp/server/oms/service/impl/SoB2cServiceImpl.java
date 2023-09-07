@@ -1895,6 +1895,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtil.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
+        //物流信息
+        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(dto.getId());
+        if (ObjectUtils.isEmpty(soB2cLogisticsEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
+
         //明细信息
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(dto.getId());
         if (CollectionUtils.isEmpty(soB2cDetailList)) {
@@ -1911,8 +1917,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal paypalCost = BigDecimal.ZERO;
 
         SoB2cDTO.FinancialInfoDTO financialInfoDTO = new SoB2cDTO.FinancialInfoDTO();
-        financialInfoDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
-        financialInfoDTO.setAmount(MathUtil.multiply(soB2cEntity.getAmount(),soB2cEntity.getExchangeRate()));
+        //判断是否是人民币
+        if (ObjectUtils.isNotEmpty(dto.getIsCny()) && dto.getIsCny() ) {
+            financialInfoDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            financialInfoDTO.setAmount(MathUtil.multiply(soB2cEntity.getAmount(),soB2cEntity.getExchangeRate()));
+        } else {
+            financialInfoDTO.setCurrency(soB2cEntity.getCurrency());
+            financialInfoDTO.setAmount(soB2cEntity.getAmount());
+        }
         //运费收入,对接物流 TODO
         financialInfoDTO.setShippingCost(BigDecimal.ZERO);
         //商品成本,订单SKU*数量的含税成本价汇总
@@ -1922,9 +1934,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         financialInfoDTO.setLogisticsCost(BigDecimal.ZERO);
 
         if (ObjectUtils.isNotEmpty(viewCostDTO)) {
-            BigDecimal  platformRate = viewCostDTO.getPlatformRate();
-            BigDecimal  vatRate = viewCostDTO.getVatRate();
-            BigDecimal transferRate = viewCostDTO.getTransferRate();
+            BigDecimal  platformRate = MathUtil.divide(viewCostDTO.getPlatformRate(),MathUtil.BigDecimal_100);
+            BigDecimal  vatRate = MathUtil.divide(viewCostDTO.getVatRate(),MathUtil.BigDecimal_100);
+            BigDecimal transferRate = MathUtil.divide(viewCostDTO.getVatRate(),MathUtil.BigDecimal_100);
 
             DictBasicEntity platformOption = dictBasicService.getByTypeAndValue(DictBasicEnum.SHOP_PLATFORM_COST.getType(), viewCostDTO.getDictPlatformOption());
             if (ObjectUtils.isEmpty(platformOption)) {
@@ -1940,7 +1952,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             //平台费
             if (ShopPlatformCostEnum.MULTIPLY_PLATFORM_RATE.getCode().equals(platformOption.getValue())) {
-                platformCost = MathUtil.multiply(MathUtil.add(financialInfoDTO.getAmount(),financialInfoDTO.getShippingCost()),platformRate);
+                platformCost = MathUtil.multiply(MathUtil.add(financialInfoDTO.getAmount(),financialInfoDTO.getShippingCost()), platformRate);
             }
             //转账费
             if (ShopTransferCostEnum.MULTIPLY_TRANSFER_RATE.getCode().equals(transferOption.getValue())) {
