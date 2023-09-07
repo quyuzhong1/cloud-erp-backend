@@ -4,12 +4,14 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.server.scm.service.SubcontractOrderDetailService;
 import com.erp.server.scm.service.SubcontractOrderService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -36,6 +38,9 @@ public class SubcontractOrderFeignController {
      */
     @PostMapping("/listSubcontractDetailByIds")
     public List<SubcontractOrderDetailEntity> listSubcontractDetailByIds(@RequestBody List<String> sourceDetailIds) {
+        if (CollectionUtils.isEmpty(sourceDetailIds)) {
+            return Collections.EMPTY_LIST;
+        }
         return subcontractOrderDetailService.listByIds(sourceDetailIds);
     }
 
