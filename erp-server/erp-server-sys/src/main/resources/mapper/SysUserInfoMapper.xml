@@ -227,6 +227,12 @@
             <if test="params.userState != null ">
                 and sui.user_state = #{params.userState}
             </if>
+            <if test="userIdList != null and userIdList.size > 0">
+                and sui.uid in
+                <foreach collection="userIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
             <if test="params.roleIdList != null and params.roleIdList.size > 0">
                 and sui.id in (
                  select sru.user_id from sys_role_user sru

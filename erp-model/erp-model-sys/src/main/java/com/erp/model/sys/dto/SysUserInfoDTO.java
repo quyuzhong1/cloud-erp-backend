@@ -61,6 +61,7 @@ public class SysUserInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ShopAuthPagingSearchDTO {
+
         /**
          * 用户名称
          */
@@ -70,6 +71,11 @@ public class SysUserInfoDTO implements Serializable {
          * 真实名称
          */
         private String realName;
+
+        /**
+         * 店铺id集合
+         */
+        private List<String> shopIdList;
 
         /**
          * 状态

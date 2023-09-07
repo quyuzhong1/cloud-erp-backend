@@ -1301,7 +1301,14 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     public PagingVO shopAuthPaging(PagingDTO<SysUserInfoDTO.ShopAuthPagingSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         SysUserInfoDTO.ShopAuthPagingSearchDTO params = dto.getParams();
-        IPage<SysUserInfoDTO.ShopAuthPagingDTO> pageData = baseMapper.shopAuthPaging(query, params);
+        List<String> userIdList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(params.getShopIdList())) {
+             userIdList = shopSysUserAuthFeign.listUserIdByShopIdList(params.getShopIdList());
+             if (CollectionUtils.isEmpty(userIdList)) {
+                 return new PagingVO<>(new Page<>());
+             }
+        }
+        IPage<SysUserInfoDTO.ShopAuthPagingDTO> pageData = baseMapper.shopAuthPaging(query, params,userIdList);
         List<SysUserInfoDTO.ShopAuthPagingDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
             return new PagingVO<>(pageData);
