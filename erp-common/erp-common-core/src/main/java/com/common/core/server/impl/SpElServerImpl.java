@@ -39,7 +39,7 @@ public class SpElServerImpl implements SpElServer {
         }else{
             return getConditionExpressionByObj(conditionElementList);
         }
-        return null;
+
     }
 
 
