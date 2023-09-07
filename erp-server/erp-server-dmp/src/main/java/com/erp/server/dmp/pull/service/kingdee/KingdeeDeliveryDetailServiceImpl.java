@@ -7,30 +7,26 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.annotation.SaveData;
-import com.common.business.constant.MongoTableNameContant;
-import com.common.business.dto.RequestDTO;
-import com.common.business.enums.PlatformApiEnum;
-import com.common.business.service.IReportSaveService;
 import com.common.core.constant.CommonConstants;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.KingdeeOutStockDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
+import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
-import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
-import com.erp.model.dmp.enums.CleanStatusEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.dmp.enums.*;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
-import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
+import com.erp.server.dmp.pull.service.IReportSaveService;
+import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -118,7 +114,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
 
         // 异步推送B2C销售出库单到MQ
         wantToMqList.forEach(obj -> {
-            if (!Objects.isNull(obj.getFDate())) {
+           if (StringUtils.isNotBlank(obj.getFDate()) && !obj.getFDate().equals("null")) {
                 if (LocalDateTime.parse(obj.getFDate()).toLocalDate().compareTo(LocalDate.parse("2023-07-06")) > 0) {
                     mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_B2C_SO_OUTSTOCK_TAG.getName(), obj, obj.getFBillNo());
                 }
@@ -146,7 +142,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
      * 获取到想要同步的销售出库单的列表
      *
      * @param pushToMqList
-     * @return java.util.List<com.sdk.third.kingdee.dto.KingdeeDeliveryDetailEntity>
+     * @return java.util.List<com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity>
      * @author yl
      * @date 2023-06-28 16:52
      */

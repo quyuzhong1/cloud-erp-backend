@@ -65,11 +65,16 @@ public class AssigneeStrategyTypeService {
         // 如果所选上级不存在, 则继续向上查找
         ChargeSuperiorEnum finalChargeSuperior = chargeSuperior;
         String userId = superList.stream()
-                .sorted(Comparator.comparing(UserSuperiorDTO::getLevel))
                 .filter(superior -> superior.getLevel() >= finalChargeSuperior.getCode())
-                .findFirst()
+                .min(Comparator.comparing(UserSuperiorDTO::getLevel))
                 .map(UserSuperiorDTO::getUserId)
-                .orElse(null);
+                // 如果所选上级不存在,取最高级别的上级
+                .orElseGet(() ->
+                    superList.stream()
+                    .max(Comparator.comparing(UserSuperiorDTO::getLevel))
+                    .map(UserSuperiorDTO::getUserId)
+                    .orElse(null)
+                );
         // 发起人
         return null != userId ? Arrays.asList(userId) : Collections.EMPTY_LIST;
     }
