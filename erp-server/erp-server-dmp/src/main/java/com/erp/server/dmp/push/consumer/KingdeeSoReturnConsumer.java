@@ -62,59 +62,6 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
         String fieldKeys = "FBillNo,FID";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 2);
         System.out.println(queryList);
-       /* K3CloudApi client = new K3CloudApi();
-        JSONObject json = JSONUtil.parseObj("{ \"FBillTypeID\" :{ \"FNUMBER\" : \"XSTHD01_SYS\" },\n" +
-                "\"FStockOrgId\" :{ \"FNumber\" : \"113\" },\n" +
-                "\"FSaleOrgId\" :{ \"FNumber\" : \"112\" },\n" +
-                "\"FBillNo\" : \"XSTH23072800002\",\n" +
-                "\"FDate\" : \"2023-07-28\",\n" +
-                "\"FSaledeptid\" :{ \"FNumber\" : \"\" },\n" +
-                "\"FSalesManId\" :{ \"FNumber\" : \"zf_GW000117_1\" },\n" +
-                "\"FRetcustId\" :{ \"FNumber\" : \"CUST23070900002\" },\n" +
-                "\"FSettleOrgId\" :{ \"FNumber\" : \"112\" },\n" +
-                "\"FSettleCurrId\" :{ \"FNumber\" : \"PRE001\" },\n" +
-                "\"FReturnReason\" :{ \"FNumber\" : \"\" },\n" +
-                "\"SubHeadEntity\" :{ \"FExchangeTypeId\" :{ \"FNumber\" : \"HLTX01_SYS\" },\n" +
-                "\"FExchangeRate\" : \"1\" },\n" +
-                "\"F_ULZ_data_sources\" : \"UlanziERP\",\n" +
-                "\"FSettleTypeId\" :{ \"FNumber\" : \"JSFS01_SYS\" },\n" +
-                "\"FChageCondition\" :{ \"FNumber\" : \"\" },\n" +
-                "\"FStockerId\" :{ \"FNumber\" : \"00029\" },\n" +
-                "\"FEntity\" :[{ \"FMaterialId\" :{ \"FNumber\" : \"2109\" },\n" +
-                "\"FStockId\" :{ \"FNumber\" : \"jp-tmjdc\" },\n" +
-                "\"FIsFree\" : \"\",\n" +
-                "\"FReturnType\" :{ \"FNumber\" : \"THLX01_SYS\" },\n" +
-                "\"FOwnerTypeID\" : \"BD_OwnerOrg\",\n" +
-                "\"FOwnerId\" :{ \"FNumber\" : \"112\" },\n" +
-                "\"FDeliveryDate\" : \"2023-07-28\",\n" +
-                "\"FNote\" : \"\",\n" +
-                "\"FSrcBillTypeID\" : \"\",\n" +
-                "\"FSrcBillNo\" : \"\",\n" +
-                "\"FSalUnitID\" :{ \"FNumber\" : \"Pcs\" },\n" +
-                "\"FStockstatusId\" :{ \"FNumber\" : \"KCZT01_SYS\" },\n" +
-                "\"FUnitID\" :{ \"FNumber\" : \"Pcs\" },\n" +
-
-                "\"FPrice\" : \"\",\n" +
-                "\"FTaxPrice\" : 0,\n" +
-                "\"FMustqty\" : 4,\n" +
-                "\"FAmount\" : \"\",\n" +
-                "\"FSalUnitQty\" : 4,\n" +
-                "\"FPriceUnitQty\" : \"\",\n" +
-                "\"FRealQty\" : 4,\n" +
-                "\"FOrderNo\" : \"\",\n" +
-                "\"FStockLocId\" :{ \"FSTOCKLOCID__FF100014\" :{ \"FNumber\" : \"\" }}}]}");
-
-        //判断金蝶系统是否已存在该数据
-        SaveParam param = new SaveParam(json);
-        SaveResult result;
-        try {
-            result = client.save(KingdeePushModuleEnum.SAL_RETURNSTOCK.getCode(), param);
-            if (!result.isSuccessfully()) {
-                throw new RuntimeException("【保存】出错:" + JSONUtil.toJsonStr(result.getResult().getResponseStatus().getErrors()));
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }*/
     }
 
     @Override
