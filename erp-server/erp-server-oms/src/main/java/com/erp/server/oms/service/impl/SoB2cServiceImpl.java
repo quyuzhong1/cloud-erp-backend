@@ -1318,7 +1318,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //拆分
                 long splitCount = soB2cRefList.stream().filter(obj -> (obj.getTargetId().equals(data.getId()) || obj.getSourceId().equals(data.getId())) && SoB2cOptionTypeEnum.ENUM_SPLIT.getCode().equals(obj.getType())).count();
                 if (splitCount > 0) {
-                    labelDTO.setRefType(SoB2cOptionTypeEnum.ENUM_MERGE.getCode());
+                    labelDTO.setRefType(SoB2cOptionTypeEnum.ENUM_SPLIT.getCode());
 
                 }
             }

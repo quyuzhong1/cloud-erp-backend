@@ -222,7 +222,7 @@
                 sui.user_name  ilike concat('%',#{params.userName},'%')
             </if>
             <if test="params.realName != null and params.realName != ''">
-                sui.real_name  ilike concat('%',#{params.realName},'%')
+                and  sui.real_name  ilike concat('%',#{params.realName},'%')
             </if>
             <if test="params.userState != null ">
                 and sui.user_state = #{params.userState}
