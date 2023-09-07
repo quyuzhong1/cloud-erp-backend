@@ -42,7 +42,7 @@ public class SpELRuleUtils {
             //字段
             String field = element.getField();
             //下拉的选项
-            String operator = element.getOperator();
+            String operator = element.getCompare();
             //对应的值
             String value = element.getValue();
             if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(operator)) {

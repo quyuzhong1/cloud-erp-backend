@@ -1,0 +1,245 @@
+package com.common.core.server.impl;/**
+ * @author Lambda
+ * @Classname SpElServerImpl
+ * @Description TODO
+ * @Date 2023-09-07 10:35
+ * @Created by yl
+ */
+
+import com.common.core.enums.RuleCompareEnum;
+import com.common.core.rule.ConditionElement;
+import com.common.core.server.rule.SpElServer;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ * @Description TODO
+ * @Author yl
+ * @Date 2023-09-07 10:35
+ */
+@Service
+@Slf4j
+public class SpElServerImpl implements SpElServer {
+
+    /**
+     * 获取到条件表达式
+     *
+     * @param conditionElementList
+     * @return
+     */
+    @Override
+    public String getConditionExpression(List<ConditionElement> conditionElementList, Object obj) {
+        if (obj instanceof Map) {
+            return getConditionExpressionByMap(conditionElementList);
+        }else{
+            return getConditionExpressionByObj(conditionElementList);
+        }
+        return null;
+    }
+
+
+    /**
+     * 获取到 传值为map 的 表达式
+     *
+     * @param conditionElementList
+     * @return
+     */
+    private String getConditionExpressionByMap(List<ConditionElement> conditionElementList) {
+        StringBuilder expression = new StringBuilder();
+        for (ConditionElement element : conditionElementList) {
+            //左括号
+            String leftBracket = element.getLeftBracket();
+            if (StringUtils.isNotBlank(leftBracket)) {
+                expression.append(leftBracket).append(" ");
+            }
+            //字段
+            String field = element.getField();
+
+            //关系 大于 等于之类
+            String compare = element.getCompare();
+
+            //对应的值
+            String value = element.getValue();
+
+            if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(compare)) {
+                String content = new StringBuilder("['").append(field).append("'] ").append(compare).append(" '").append(value).append("'").toString();
+                RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(compare);
+                if (Objects.nonNull(contentsEnum)) {
+                    switch (contentsEnum) {
+                        case CONTAINS:
+                            content = convertToContainsExpression(content);
+                            break;
+                        case NOT_CONTAINS:
+                            content = convertToNotContainsExpression(content);
+                            break;
+                        case IS_NULL:
+                            content = convertToIsNullMapExpression(field);
+                            break;
+                        case NOT_NULL:
+                            content = convertToNotNullMapExpression(field);
+                            break;
+                    }
+                }
+                expression.append(content).append(" ");
+            }
+            //右括号
+            String rightBracket = element.getRightBracket();
+            if (StringUtils.isNotBlank(rightBracket)) {
+                expression.append(rightBracket).append(" ");
+            }
+            //逻辑关系
+            String logic = element.getLogic();
+            if (StringUtils.isNotBlank(logic)) {
+                expression.append(logic).append(" ");
+            }
+        }
+
+        return expression.toString();
+    }
+
+
+    /**
+     * 获取到 传值为对象的表达式
+     *
+     * @param conditionElementList
+     * @return
+     */
+    private String getConditionExpressionByObj(List<ConditionElement> conditionElementList) {
+        StringBuilder expression = new StringBuilder();
+        for (ConditionElement element : conditionElementList) {
+            //左括号
+            String leftBracket = element.getLeftBracket();
+            if (StringUtils.isNotBlank(leftBracket)) {
+                expression.append(leftBracket).append(" ");
+            }
+            //字段
+            String field = element.getField();
+
+            //关系 大于 等于之类
+            String compare = element.getCompare();
+
+            //对应的值
+            String value = element.getValue();
+
+            if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(compare)) {
+                String content = new StringBuilder().append(field).append(" ").append(compare).append(" '").append(value).append("'").toString();
+                RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(compare);
+                if (Objects.nonNull(contentsEnum)) {
+                    switch (contentsEnum) {
+                        case CONTAINS:
+                            content = convertToContainsExpression(content);
+                            break;
+                        case NOT_CONTAINS:
+                            content = convertToNotContainsExpression(content);
+                            break;
+                        case IS_NULL:
+                            content = convertToIsNullObjExpression(field);
+                            break;
+                        case NOT_NULL:
+                            content = convertToNotNullObjExpression(field);
+                            break;
+                    }
+                }
+                expression.append(content).append(" ");
+            }
+            //右括号
+            String rightBracket = element.getRightBracket();
+            if (StringUtils.isNotBlank(rightBracket)) {
+                expression.append(rightBracket).append(" ");
+            }
+            //逻辑关系
+            String logic = element.getLogic();
+            if (StringUtils.isNotBlank(logic)) {
+                expression.append(logic).append(" ");
+            }
+        }
+
+        return expression.toString();
+    }
+
+
+    /**
+     * 获取到转化成包含的
+     *
+     * @param content
+     * @return
+     */
+    private String convertToContainsExpression(String content) {
+        return content.replace(" contains ", ".contains(") + ")";
+    }
+
+    /**
+     * 获取到转化成包含的
+     *
+     * @param content
+     * @return
+     */
+    private String convertToNotContainsExpression(String content) {
+        return "not " + content.replace(" notContains ", ".contains(") + ")";
+    }
+
+    /**
+     * map对象表达式 转化为空
+     *
+     * @param field
+     * @return
+     */
+    private String convertToIsNullMapExpression(String field) {
+        StringBuilder expression = new StringBuilder();
+        expression.append("['").append(field).append("']");
+        expression.append(" == null || ");
+        expression.append("['").append(field).append("']");
+        expression.append(" == ''");
+        return expression.toString();
+    }
+
+    /**
+     * 对象表达式 转化为空
+     *
+     * @param field
+     * @return
+     */
+    private String convertToIsNullObjExpression(String field) {
+        StringBuilder expression = new StringBuilder();
+        expression.append("").append(field).append("");
+        expression.append(" == null || ");
+        expression.append("").append(field).append("");
+        expression.append(" == ''");
+        return expression.toString();
+    }
+
+    /**
+     * map对象表达式 转化成不为空
+     *
+     * @param field
+     * @return
+     */
+    private String convertToNotNullMapExpression(String field) {
+        StringBuilder expression = new StringBuilder();
+        expression.append("['").append(field).append("']");
+        expression.append(" != null  && ");
+        expression.append("['").append(field).append("']");
+        expression.append(" != ''");
+        return expression.toString();
+    }
+
+    /**
+     * 对象表达式 转化成不为空
+     *
+     * @param field
+     * @return
+     */
+    private String convertToNotNullObjExpression(String field) {
+        StringBuilder expression = new StringBuilder();
+        expression.append("['").append(field).append("']");
+        expression.append(" != null  && ");
+        expression.append("['").append(field).append("']");
+        expression.append(" != ''");
+        return expression.toString();
+    }
+}
