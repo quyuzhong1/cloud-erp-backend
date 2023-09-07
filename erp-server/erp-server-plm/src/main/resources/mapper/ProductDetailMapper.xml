@@ -807,7 +807,7 @@
             )
         </if>
         <if test="skuNo != null and skuNo!=''">
-            AND (pd.sku_no = #{skuNo} || pp.ean = #{skuNo})
+            AND (pd.sku_no = #{skuNo} OR pp.ean = #{skuNo})
         </if>
     </select>
 
