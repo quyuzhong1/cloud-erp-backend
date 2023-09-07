@@ -74,14 +74,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      */
     Boolean updateShopInfoById(ShopInfoEntity shopInfoEntity);
 
-    /**
-     * 方法说明
-     * @author yl
-     * @date 2023-08-28 20:00
-     * @param
-     * @return java.lang.String
-     */
-    String getShopAuthUrl(String id);
+
 
 
     /**
@@ -105,18 +98,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      */
     Boolean cancelAuthorize(String id);
 
-    /**
-     * 方法说明
-     * @author yl
-     * @date 2023-08-29 17:07
-     * @param code
-     * @param hmac
-     * @param host
-     * @param shop
-     * @param timestamp
-     * @return java.lang.String
-     */
-    String index( String hmac, String host, String shop, String timestamp);
+
 
     /**
      * 店铺账号下拉
@@ -126,4 +108,27 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return java.util.List<java.lang.String>
      */
     List<String> accountList();
+
+    
+    /**
+     * 获取到安装的url
+     * @author yl
+     * @date 2023-09-06 16:34
+     * @param
+     * @return java.lang.String
+     */
+    String getShopifyInstallUrl(String id);
+
+    
+    /**
+     * 获取到ShopifyAuthorizeUrl 授权的url
+     * @author yl
+     * @date 2023-09-06 16:54
+     * @param hmac
+     * @param host
+     * @param shop
+     * @param timestamp
+     * @return java.lang.String
+     */
+    String getShopifyAuthorizeUrl(String hmac, String host, String shop, String timestamp);
 }

@@ -67,6 +67,7 @@ public class PullGyyHistoryJob {
         jobTaskDTO.setOperateType(entity.getOperateType());
         jobTaskDTO.setApiParam(entity.getApiParam());
         jobTaskDTO.setPlatformApiId(entity.getPlatformApiId());
+        jobTaskDTO.setPlatformCategory(entity.getPlatformCategory());
         return jobTaskDTO;
     }
 

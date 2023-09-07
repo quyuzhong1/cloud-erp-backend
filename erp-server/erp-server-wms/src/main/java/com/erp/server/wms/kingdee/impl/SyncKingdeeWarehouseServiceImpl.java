@@ -6,8 +6,8 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -67,7 +67,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         Map<String, Object> resultMap = new HashMap<>();
 
         //更新同步状态为待同步
-        warehouseService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        warehouseService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
 
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
@@ -102,7 +102,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         resultMap.put("operate", operate);
 
         //审核未通过、非反审核不推送
-        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) && !SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) && !SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             return;
         }
 
@@ -159,7 +159,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_WAREHOUSE_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return warehouseService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"",operate);
+                return warehouseService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(),"",operate);
             }
             return Boolean.TRUE;
         });

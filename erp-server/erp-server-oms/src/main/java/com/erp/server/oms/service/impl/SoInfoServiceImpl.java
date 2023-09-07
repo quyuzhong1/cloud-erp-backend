@@ -434,18 +434,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         view.setAttachNameList(attachmentNameList);
 
         // 字典值获取
-        List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType(), DictBasicTypeEnum.COLLECTION_TERMS.getType());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
         Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
 
         // 收款方式
-        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicEnum.RECEIVE_METHOD.getType());
+        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicTypeEnum.RECEIVE_METHOD.getType());
         if (CollectionUtils.isNotEmpty(receiveMethodList)) {
             String receiveMethodName = receiveMethodList.stream().filter(obj -> Objects.equals(obj.getValue(), view.getReceiveMethod())).map(DictBasicEntity::getName).findFirst().orElse(null);
             view.setReceiveMethodName(receiveMethodName);
         }
         // 收款条件
-        List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicEnum.COLLECTION_TERMS.getType());
+        List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicTypeEnum.COLLECTION_TERMS.getType());
         if (CollectionUtils.isNotEmpty(receiveConditionList)) {
             String receiveConditionName = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getValue(), view.getReceiveCondition())).map(DictBasicEntity::getName).findFirst().orElse(null);
             view.setReceiveConditionName(receiveConditionName);
@@ -1003,7 +1003,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //审核通过
             approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -1056,7 +1056,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), rejectPairList, "状态变更");
             // TODO 收款字段需补
-            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }
@@ -1208,7 +1208,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         String content = "作废了一个销售订单【%s】,作废原因: ".concat(remark);
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "作废");
-        list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
+        list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
 
         return Boolean.TRUE;
     }
@@ -1273,14 +1273,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIdList) ? customerInfoService.listByIds(customerIdList) : Collections.emptyList();
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
-        List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType(), DictBasicTypeEnum.COLLECTION_TERMS.getType());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
         Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
 
         // 收款方式
-        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicEnum.RECEIVE_METHOD.getType());
+        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicTypeEnum.RECEIVE_METHOD.getType());
         // 收款条件
-        List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicEnum.COLLECTION_TERMS.getType());
+        List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicTypeEnum.COLLECTION_TERMS.getType());
         // 仓库
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
         // 仓库组织
@@ -1885,7 +1885,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 return Boolean.TRUE;
             }
             //同步成功
-            if (syncKingdeeStatus.equals(SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())) {
+            if (syncKingdeeStatus.equals(SyncStatusEnum.SUCCESS_SYNC.getCode())) {
                 KingdeeDTO dto = new KingdeeDTO();
                 dto.setId(syncKingdeeId);
                 dto.setNumber("");
@@ -2010,7 +2010,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
 
         //收款条件
-        String receiveMethodType = DictBasicEnum.RECEIVE_METHOD.getType();
+        String receiveMethodType = DictBasicTypeEnum.RECEIVE_METHOD.getType();
         DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(receiveMethodType, receiveCondition);
         if (Objects.isNull(dictBasic)) {
             soPi.setReceiveConditionStr("");
@@ -2255,18 +2255,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     private void checkDict(SoInfoEntity soInfoEntity) {
         // 字典值获取
-        List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType(), DictBasicTypeEnum.COLLECTION_TERMS.getType());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
         Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
 
         // 收款方式
-        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicEnum.RECEIVE_METHOD.getType());
+        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicTypeEnum.RECEIVE_METHOD.getType());
         if (CollectionUtils.isNotEmpty(receiveMethodList) && StrUtils.isNotEmpty(soInfoEntity.getReceiveMethod())) {
             DictBasicEntity dictBasicEntity = receiveMethodList.stream().filter(obj -> Objects.equals(obj.getValue(), soInfoEntity.getReceiveMethod())).findFirst().orElse(null);
             ValidatorUtil.isTrue(Objects.nonNull(dictBasicEntity), () -> new ServiceException("收款方式错误"));
         }
         // 收款条件
-        List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicEnum.COLLECTION_TERMS.getType());
+        List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicTypeEnum.COLLECTION_TERMS.getType());
         if (CollectionUtils.isNotEmpty(receiveConditionList) && StrUtils.isNotEmpty(soInfoEntity.getReceiveCondition())) {
             DictBasicEntity dictBasicEntity = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getValue(), soInfoEntity.getReceiveCondition())).findFirst().orElse(null);
             ValidatorUtil.isTrue(Objects.nonNull(dictBasicEntity), () -> new ServiceException("收款条件错误"));

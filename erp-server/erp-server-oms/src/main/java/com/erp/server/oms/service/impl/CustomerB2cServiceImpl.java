@@ -32,7 +32,7 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AddressTypeEnum;
-import com.erp.model.oms.enums.DictBasicEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCityEntity;
@@ -197,7 +197,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         addEntity.setGroupName(groupName);
         //生成单号
         //生成单号
-        String code =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
         addEntity.setCode(code);
         //销售员
         String sellerId = dto.getSellerId();
@@ -423,13 +423,16 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean addAndSubmit(CustomerDTO.AddDTO dto) {
+    public String addAndSubmit(CustomerDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         Boolean result = this.submit(Arrays.asList(id));
-        return result;
+        if (result) {
+            return id;
+        }
+        return "";
 
     }
 
@@ -683,14 +686,10 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             throw new ServiceException(ApiError.ERROR_94006);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
+            String sourceType=SourceTypeEnum.SHOP.getCode();
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
-
-            /*for (CustomerB2cEntity customerInfoEntity : list) {
-                List<CustomerB2cContactEntity> contactEntities = customerB2cContactService.listEntityByMainId(customerInfoEntity.getId());
-                //审核通过发送金蝶
-                contactEntities.forEach(obj -> syncKingdeeCustomerB2cContactService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
-            }*/
+            list=list.stream().filter(l->sourceType.equals(l.getSourceType())).collect(Collectors.toList());
+            list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             //批量保存销售员信息
             customerB2cSellerService.batchSellerHistory(list);
 
@@ -738,7 +737,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER_B2C.getCode(), pairList, "状态变更");
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeCustomerB2cService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }
@@ -888,9 +887,9 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         customerList.forEach(req -> {
             //发送金蝶
             if (dto.getDisabled()) {
-                syncKingdeeCustomerB2cService.syncDataToKingdee(req, SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode());
+                syncKingdeeCustomerB2cService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DISABLE.getCode());
             } else {
-                syncKingdeeCustomerB2cService.syncDataToKingdee(req, SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode());
+                syncKingdeeCustomerB2cService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_ENABLE.getCode());
             }
         });
 
@@ -1018,7 +1017,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 
         if (StrUtils.isNotEmpty(customer.getConditionDict())) {
             base.setReceiveCondition(customer.getConditionDict());
-            List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicEnum.COLLECTION_TERMS.getType());
+            List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicTypeEnum.COLLECTION_TERMS.getType());
             DictBasicDTO.ViewDTO viewDTO = dictList.stream().filter(req -> Objects.equals(req.getValue(), customer.getConditionDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
             base.setReceiveConditionName(viewDTO.getName());
         }
@@ -1109,7 +1108,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
     @Override
     public Boolean processData() {
         List<CustomerB2cEntity> list = this.list();
-        String type = DictBasicEnum.PLATFORM.getType();
+        String type = DictBasicTypeEnum.PLATFORM.getType();
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
         for (CustomerB2cEntity item : list) {
             String platformType = item.getPlatformType();
@@ -1139,7 +1138,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
         Map<String, List<DictCountryDTO.ListDTO>> countryNameMap = countryList.stream().collect(Collectors.groupingBy(DictCountryDTO.ListDTO::getNameCn));
         // 平台类型
-        List<DictBasicDTO.ViewDTO> platFormList = dictBasicService.getByKey(DictBasicEnum.PLATFORM.getType());
+        List<DictBasicDTO.ViewDTO> platFormList = dictBasicService.getByKey(DictBasicTypeEnum.PLATFORM.getType());
         Map<String, DictBasicDTO.ViewDTO> platformNameMap = platFormList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
         // 客户类别
         List<DictBasicDTO.ViewDTO> customerCategoryList = dictBasicService.getByKey("customerCompanyCategory");
@@ -1151,7 +1150,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
         Map<String, DictCurrencyEntity> currencyNameMap = currencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getName, Function.identity()));
         // 收款条件
-        List<DictBasicDTO.ViewDTO> collectionTermList = dictBasicService.getByKey(DictBasicEnum.COLLECTION_TERMS.getType());
+        List<DictBasicDTO.ViewDTO> collectionTermList = dictBasicService.getByKey(DictBasicTypeEnum.COLLECTION_TERMS.getType());
         Map<String, DictBasicDTO.ViewDTO> collectionTermNameMap = collectionTermList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
         // 部门
         List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
@@ -1362,8 +1361,8 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
                 continue;
             }
             lambdaUpdate().set(CustomerB2cEntity::getSyncKingdeeId, kingdeeId).set(CustomerB2cEntity::getSyncKingdeeTime, LocalDateTime.now())
-                    .set(CustomerB2cEntity::getSyncOperate, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode())
-                    .set(CustomerB2cEntity::getSyncKingdeeStatus, SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())
+                    .set(CustomerB2cEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
+                    .set(CustomerB2cEntity::getSyncKingdeeStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
                     .eq(CustomerB2cEntity::getId, customerInfoEntity.getId())
                     .update();
         }

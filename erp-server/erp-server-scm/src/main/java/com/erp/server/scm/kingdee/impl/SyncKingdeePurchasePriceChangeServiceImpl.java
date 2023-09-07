@@ -4,7 +4,7 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -64,7 +64,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
         Map<String, Object> resultMap = new HashMap<>();
 
         //更新同步状态为待同步
-        purchasePriceChangeService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        purchasePriceChangeService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
 
         //如果上游单据未发送成功则无需发送
         PurchasePriceEntity purchasePriceEntity = purchasePriceService.getById(entity.getPurchasePriceId());
@@ -73,7 +73,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             throw new ServiceException(ApiError.ERROR_98024);
         }
 
-        if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(purchasePriceEntity.getSyncKingdeeStatus()) && !SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode().equals(purchasePriceEntity.getSyncKingdeeStatus())) {
+        if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(purchasePriceEntity.getSyncKingdeeStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(purchasePriceEntity.getSyncKingdeeStatus())) {
             log.error("采购价目未推送成功，不支持推送采购调价，采购价目单号【{}】",purchasePriceEntity.getCode());
             return;
         }
@@ -161,7 +161,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_PRICE_CHANGE_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return purchasePriceChangeService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"",operate);
+                return purchasePriceChangeService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncStatusEnum.IN_SYNC.getCode(),"",operate);
             }
             return Boolean.TRUE;
         });

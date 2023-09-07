@@ -7,9 +7,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.rule.ConditionElement;
+import com.common.core.rule.SpELRuleUtils;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.RuleOrderApprovalEntity;
-import com.erp.model.oms.enums.DictBasicEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleOrderApprovalMapper;
 import com.erp.server.oms.service.RuleConditionService;
@@ -54,6 +56,16 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     @Override
     public String add(RuleOrderApprovalDTO.AddDTO addDTO) {
         RuleOrderApprovalEntity ruleOrderApprovalEntity = new RuleOrderApprovalEntity();
+        List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
+        List<ConditionElement> conditionElementList = conditionList.stream().
+                map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
+                        c.getOperator(), c.getValue(),
+                        c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
+        String expression = SpELRuleUtils.getConditionExpression(conditionElementList);
+        Boolean checkResult = SpELRuleUtils.checkExpressionIsEnabled(expression);
+        if (!checkResult) {
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
+        }
         BeanMapperUtils.copy(addDTO, ruleOrderApprovalEntity);
         List<String> operationTypeList = addDTO.getOperationTypeList();
         ruleOrderApprovalEntity.setOperationType(operationTypeList.stream().collect(Collectors.joining(",")));
@@ -62,7 +74,6 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
             throw new ServiceException("订单审核规则保存失败");
         }
         String id = ruleOrderApprovalEntity.getId();
-        List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
         //保存规则条件
         ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志
@@ -82,6 +93,17 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         String id = updateDTO.getId();
         RuleOrderApprovalEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "订单审核规则"));
+        List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
+        List<ConditionElement> conditionElementList = conditionList.stream().
+                map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
+                        c.getOperator(), c.getValue(),
+                        c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
+        String expression = SpELRuleUtils.getConditionExpression(conditionElementList);
+        Boolean checkResult = SpELRuleUtils.checkExpressionIsEnabled(expression);
+        if (!checkResult) {
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
+        }
+
         RuleOrderApprovalEntity ruleOrderApprovalEntity = BeanMapperUtils.map(RuleOrderApprovalEntity.class, updateDTO);
         List<String> operationTypeList = updateDTO.getOperationTypeList();
         ruleOrderApprovalEntity.setOperationType(operationTypeList.stream().collect(Collectors.joining(",")));
@@ -90,7 +112,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
             throw new ServiceException("订单审核规则保存失败");
         }
 
-        List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
+
         ruleConditionService.updateRuleCondition(id, conditionList);
 
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ruleOrderApprovalEntity.getId(), "订单审核规则");
@@ -147,7 +169,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         String operationType = ruleOrderApproval.getOperationType();
         List<String> operationTypeList = StringUtils.isNotBlank(operationType) ? Arrays.asList(operationType.split(",")) : Collections.emptyList();
         view.setOperationTypeList(operationTypeList);
-        String type = DictBasicEnum.RULE_CONDITION.getType();
+        String type = DictBasicTypeEnum.RULE_CONDITION.getType();
         List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);
         view.setConditionList(conditionList);
         return view;

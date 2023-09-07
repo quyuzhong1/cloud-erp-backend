@@ -272,4 +272,22 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return java.lang.Boolean
      **/
     Boolean pdaUpdateAndSubmit(WarehouseReceiveDTO.UpdateDTO dto);
+
+    /**
+     * pda:待入库查询
+     * @Author Luo_WG
+     * @Date 2023/9/6 10:33
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WaitInStockPaging>
+     **/
+    PagingVO<List<WarehouseReceiveDTO.WaitInStockPaging>> waitInStockPaging(PagingDTO<WarehouseReceiveDTO.WaitInStockPagingParam> dto);
+
+    /**
+     * PDA:待入库查询表头数量
+     * @Author Luo_WG
+     * @Date 2023/9/6 11:38
+     * @param dto
+     * @return com.common.business.vo.PagingVO<java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WaitInStockPaging>>
+     **/
+     List<WarehouseReceiveDTO.WaitInStockCountDTO> waitInStockListCount(PermissionsDTO dto);
 }

@@ -11,6 +11,8 @@ public enum AppClientEnum  {
 
     SHOP_AUTHORIZE("shopAuthorize","sales","Shopify"),
     SHOP_ACCESS_TOKEN("shopAccessToken","sales","Shopify"),
+    SHOP_AUTHORIZE_INSTALL("shopAuthorizeInstall","sales","Shopify"),
+
 
     ;
 

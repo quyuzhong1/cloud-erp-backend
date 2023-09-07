@@ -64,6 +64,12 @@ public class PlatformApiEntity extends BaseEntity<PlatformApiEntity> {
     @TableField(value = "interval_time")
     private Integer intervalTime;
 
+    /**
+     * 同步操作
+     */
+    @TableField(value = "sync_operate")
+    private String syncOperate;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

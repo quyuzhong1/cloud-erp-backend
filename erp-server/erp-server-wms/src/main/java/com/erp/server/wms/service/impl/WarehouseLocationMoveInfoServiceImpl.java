@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.constant.ApproveType;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
@@ -373,40 +374,42 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
         InventoryTransferRuleDTO ruleDTO = new InventoryTransferRuleDTO();
-
-        WarehouseLocationMoveInfoEntity infoEntity = this.getById(dto.getId());
-        List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(Arrays.asList(infoEntity.getId()));
-        List<TransferDTO> transferDTOList = new ArrayList<>();
-        for (WarehouseLocationMoveDetailEntity detailEntity : detailEntityList) {
-            TransferDTO transferDTO = new TransferDTO();
-            transferDTO.setSourceType(InventorySourceTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
-            transferDTO.setSourceId(infoEntity.getId());
-            transferDTO.setSourceCode(infoEntity.getCode());
-            transferDTO.setBillDate(infoEntity.getBillDate());
-            transferDTO.setSourceDetailId(detailEntity.getId());
-            transferDTO.setCurWarehouseId(infoEntity.getWarehouseId());
-            transferDTO.setCurWarehouseLocation(detailEntity.getOutWarehouseLocation());
-            transferDTO.setTargetWarehouseId(infoEntity.getWarehouseId());
-            transferDTO.setTargetWarehouseLocation(detailEntity.getInWarehouseLocation());
-            transferDTO.setQty(detailEntity.getQty());
-            transferDTO.setSkuId(detailEntity.getSkuId());
-            transferDTO.setSkuNo(detailEntity.getSkuNo());
-            transferDTO.setWarehouseId(infoEntity.getWarehouseId());
+        if (ApproveType.PASS.equals(dto.getType())) {
+            WarehouseLocationMoveInfoEntity infoEntity = this.getById(dto.getId());
+            List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(Arrays.asList(infoEntity.getId()));
+            List<TransferDTO> transferDTOList = new ArrayList<>();
+            for (WarehouseLocationMoveDetailEntity detailEntity : detailEntityList) {
+                TransferDTO transferDTO = new TransferDTO();
+                transferDTO.setSourceType(InventorySourceTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO);
+                transferDTO.setSourceId(infoEntity.getId());
+                transferDTO.setSourceCode(infoEntity.getCode());
+                transferDTO.setBillDate(infoEntity.getBillDate());
+                transferDTO.setSourceDetailId(detailEntity.getId());
+                transferDTO.setCurWarehouseId(infoEntity.getWarehouseId());
+                transferDTO.setCurWarehouseLocation(detailEntity.getOutWarehouseLocation());
+                transferDTO.setTargetWarehouseId(infoEntity.getWarehouseId());
+                transferDTO.setTargetWarehouseLocation(detailEntity.getInWarehouseLocation());
+                transferDTO.setQty(detailEntity.getQty());
+                transferDTO.setSkuId(detailEntity.getSkuId());
+                transferDTO.setSkuNo(detailEntity.getSkuNo());
+                transferDTO.setWarehouseId(infoEntity.getWarehouseId());
 //            transferDTO.setWarehouseLocation("");
-            transferDTO.setInventoryStatus(InventoryStatusEnum.USABLE);
-            transferDTOList.add(transferDTO);
-        }
+                transferDTO.setInventoryStatus(InventoryStatusEnum.USABLE);
+                transferDTOList.add(transferDTO);
+            }
 
-        List<TransactionRuleDTO> transactionRuleDTOList = new ArrayList<>(2);
-        transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK));
-        transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryStatusEnum.USABLE, InventoryModeEnum.IN_STOCK));
-        ruleDTO.setMembers(transferDTOList);
-        ruleDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
-        ruleDTO.setRules(transactionRuleDTOList);
-        inventoryTransCoreService.approveByRule(ruleDTO);
+            List<TransactionRuleDTO> transactionRuleDTOList = new ArrayList<>(2);
+            transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK));
+            transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryStatusEnum.USABLE, InventoryModeEnum.IN_STOCK));
+            ruleDTO.setMembers(transferDTOList);
+            ruleDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
+            ruleDTO.setRules(transactionRuleDTOList);
+            inventoryTransCoreService.approveByRule(ruleDTO);
+        }
 
         return Boolean.TRUE;
     }

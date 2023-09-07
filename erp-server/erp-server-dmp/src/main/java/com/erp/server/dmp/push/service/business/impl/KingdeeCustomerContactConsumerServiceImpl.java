@@ -3,7 +3,7 @@ package com.erp.server.dmp.push.service.business.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -142,11 +142,11 @@ public class KingdeeCustomerContactConsumerServiceImpl implements KingdeeCustome
         String operate = null;
         //启用
         if (!(Boolean) disabled) {
-            operate = SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
+            operate = SyncOperateEnum.OPERATE_ENABLE.getCode();
         }
         //禁用
         if ((Boolean) disabled) {
-            operate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
+            operate = SyncOperateEnum.OPERATE_DISABLE.getCode();
         }
         if (StringUtils.isNotBlank(operate)) {
             kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);

@@ -43,7 +43,7 @@ public class DmpFeignController extends BaseController {
     private KingdeeCommonService kingdeeCommonService;
 
     @Resource
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     @Resource
     private PlatformService platformService;
@@ -101,7 +101,7 @@ public class DmpFeignController extends BaseController {
      */
     @PostMapping("/updateSyncInfo")
     public void updateSyncInfo(@RequestBody DmpSyncMqDTO.ParamDTO paramDTO) {
-         dmpSyncTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
+         dmpPullTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
     }
     
     
@@ -139,14 +139,9 @@ public class DmpFeignController extends BaseController {
     public List<String> getKingdeeSourceCode(@RequestBody Map<String,Object> conditon){
         List<String> result=new ArrayList<>();
 
-        result = dmpSyncTaskService.listKingdeeCode(conditon);
+        result = dmpPullTaskService.listKingdeeCode(conditon);
 
         return result;
-    }
-
-    @PostMapping("/createPlatformTask")
-    public Boolean createPlatformTask(@RequestBody @Valid PlatformTaskDTO.AddDTO dto){
-        return platformApiTaskService.createPlatformTask(dto);
     }
 
     /**

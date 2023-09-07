@@ -2,8 +2,7 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SyncKingdeeStatusEnum;
-import com.common.core.utils.MathUtil;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -71,7 +70,7 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
             return;
         }
         //更新同步状态为待同步
-        stocktakingProfitLossService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), "", operate);
+        stocktakingProfitLossService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
@@ -125,7 +124,7 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_STOCKTAKING_LOSS_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return stocktakingProfitLossService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "", operate);
+                return stocktakingProfitLossService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(), "", operate);
             }
             return Boolean.TRUE;
         });

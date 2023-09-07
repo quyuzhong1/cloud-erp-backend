@@ -43,7 +43,7 @@ public class PdaSoDeliveryNoticeController extends BaseController {
      **/
     @GetMapping("/view")
     public ApiResult<SoDeliveryNoticeDTO.View> view(@Param("id") String id) {
-        SoDeliveryNoticeDTO.View view = soDeliveryNoticeService.view(id);
+        SoDeliveryNoticeDTO.View view = soDeliveryNoticeService.pdaView(id);
         return success(view);
     }
 }

@@ -34,6 +34,7 @@ public class CustomerB2cInvoiceServiceImpl extends SuperServiceImpl<CustomerB2cI
 
     @Resource
     private OperateLogService operateLogService;
+
     /**
      * 检查默认银行是否是多个
      *
@@ -44,10 +45,13 @@ public class CustomerB2cInvoiceServiceImpl extends SuperServiceImpl<CustomerB2cI
      */
     @Override
     public void checkIsDefault(List<InvoiceDTO.AddDTO> invoiceList) {
-        long count = invoiceList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
-        if (count > 1) {
-            throw new ServiceException(ApiError.ERROR_92007);
+        if (CollectionUtils.isNotEmpty(invoiceList)) {
+            long count = invoiceList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
+            if (count > 1) {
+                throw new ServiceException(ApiError.ERROR_92007);
+            }
         }
+
 
     }
 
@@ -88,11 +92,12 @@ public class CustomerB2cInvoiceServiceImpl extends SuperServiceImpl<CustomerB2cI
 
     /**
      * 批量修改发票信息
-     * @author yl
-     * @date 2023-05-15 11:16
+     *
      * @param mainId
      * @param invoiceList
      * @return void
+     * @author yl
+     * @date 2023-05-15 11:16
      */
     @Override
     public void updateBatchInvoice(String mainId, List<InvoiceDTO.ViewDTO> invoiceList) {
@@ -127,11 +132,11 @@ public class CustomerB2cInvoiceServiceImpl extends SuperServiceImpl<CustomerB2cI
         for (CustomerB2cInvoiceEntity update : updateEntityList) {
             String id = update.getId();
             CustomerB2cInvoiceEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
-            if(old!=null){
-                operateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.CUSTOMER_B2C.getCode(),mainId,"","");
+            if (old != null) {
+                operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.CUSTOMER_B2C.getCode(), mainId, "", "");
             }
         }
-        if(CollectionUtils.isNotEmpty(saveOrUpdateList)){
+        if (CollectionUtils.isNotEmpty(saveOrUpdateList)) {
             this.saveOrUpdateBatch(saveOrUpdateList);
         }
 
@@ -139,11 +144,12 @@ public class CustomerB2cInvoiceServiceImpl extends SuperServiceImpl<CustomerB2cI
 
     /**
      * 获取删除字段的信息
-     * @author yl
-     * @date 2023-05-15 11:04
+     *
      * @param invoiceList
      * @param dbList
      * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-05-15 11:04
      */
     private List<String> getDeleteIds(List<InvoiceDTO.ViewDTO> invoiceList, List<CustomerB2cInvoiceEntity> dbList) {
         List<String> ids = invoiceList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).

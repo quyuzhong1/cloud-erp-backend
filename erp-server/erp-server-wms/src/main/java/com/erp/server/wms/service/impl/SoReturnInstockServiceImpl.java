@@ -562,7 +562,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             inventoryTransCore(entityList);
 
             //审核通过发送金蝶
-            entityList.forEach(obj -> syncKingdeeSoReturnService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            entityList.forEach(obj -> syncKingdeeSoReturnService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -609,7 +609,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
         //反审核发送金蝶
         if (isPushKingDee) {
-            entityList.forEach(obj -> syncKingdeeSoReturnService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            entityList.forEach(obj -> syncKingdeeSoReturnService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -668,7 +668,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .update();
 
         //作废发送金蝶
-        entityList.forEach(obj -> syncKingdeeSoReturnService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
+        entityList.forEach(obj -> syncKingdeeSoReturnService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
 
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -1453,6 +1453,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        LoginUser userInfo = commonService.getUserInfo();
         /**
          * 1、同一加工单下，相同仓库、供应商数据生成同一个采购退货单
          * 2、基于1条件下，相同sku、库位则可合并明细
@@ -1463,12 +1464,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             MachineSubComponentsDTO.HandleDetailDTO handleDetailDTO = JSONUtil.toBean(value.get(0).getHandleDetail(), MachineSubComponentsDTO.HandleDetailDTO.class);
             PurchaseReturnOrderDTO.AddDTO addDTO = new PurchaseReturnOrderDTO.AddDTO();
             addDTO.setBillDate(LocalDate.now());
-            addDTO.setReturnMode(ReturnModeEnum.REPLENISHMENT.getCode());
+            addDTO.setReturnMode(ReturnModeEnum.DEDUCTION.getCode());
             addDTO.setReturnOrgId(entity.getInventoryOrgId());
             addDTO.setReturnWarehouseId(value.get(0).getWarehouseId());
             addDTO.setSourceId(entity.getId());
             addDTO.setSourceType(SourceTypeEnum.MACHINE_INFO.getCode());
             addDTO.setSupplierId(handleDetailDTO.getChildSupplierId());
+            addDTO.setReturnUserId(userInfo.getUid());
             addDTO.setReturnRemark(StrUtil.format("加工单（拆卸）【{}】自动生成采购退货单",entity.getCode()));
             Map<String, List<MachineSubComponentsEntity>> childMap = value.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(StringUtils.isNotBlank(obj.getWarehouseLocation()) ? obj.getWarehouseLocation() : "" )));
             List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
@@ -1482,7 +1484,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 //数量
                 Integer qty = childValue.stream().map(MachineSubComponentsEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
                 addDetailDTO.setReturnQty(qty);
-                addDetailDTO.setReplenishQty(qty);
+                addDetailDTO.setDeductAmountQty(qty);
                 //来源单据明细id
                 String sourceIds = childValue.stream().map(MachineSubComponentsEntity::getId).collect(Collectors.joining(","));
                 addDetailDTO.setSourceDetailId(sourceIds);

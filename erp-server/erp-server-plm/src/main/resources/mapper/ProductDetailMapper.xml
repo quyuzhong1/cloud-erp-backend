@@ -803,6 +803,7 @@
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_pack pp on pd.id = pp.sku_id AND pp.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
+        left join product_purchase ppu on pd.id = ppu.sku_id AND ppu.is_deleted = FALSE
         WHERE  pd.is_deleted = FALSE
 
         <if test="status != null and status!=''">
@@ -818,7 +819,7 @@
             )
         </if>
         <if test="skuNo != null and skuNo!=''">
-            AND pd.sku_no = #{skuNo}
+            AND (pd.sku_no = #{skuNo} OR ppu.ean = #{skuNo})
         </if>
     </select>
 
@@ -828,7 +829,8 @@
             pd.name AS skuName,
             pi.spu_no,
             pi.name AS spuName,
-            pi.image_url,
+            pd.variant_property,
+            pd.images_url,
             pp.ean,
             ppk.gross_weight,
             ppk.net_weight,
@@ -838,11 +840,20 @@
             ppk.box_qty,
             pi.grade,
             pd.charge_name,
-            pi.materials
+            pi.materials,
+            t.accessories
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pd.id = pp.sku_id AND pp.is_deleted = FALSE
         LEFT JOIN product_pack ppk ON pd.id = ppk.sku_id AND ppk.is_deleted = FALSE
+        LEFT JOIN (
+            SELECT
+                pa.parent_sku_id,
+                array_to_string(ARRAY(SELECT unnest(array_agg(pd.sku_no))),',') AS accessories
+            FROM product_accessories pa
+            LEFT JOIN product_detail pd ON pa.accessories_sku_id = pd.id
+            GROUP BY pa.parent_sku_id
+        )t ON t.parent_sku_id = pd.id
         WHERE pd.is_deleted = FALSE
         <if test="skuNo != null and skuNo!=''">
             AND pd.sku_no = #{skuNo}

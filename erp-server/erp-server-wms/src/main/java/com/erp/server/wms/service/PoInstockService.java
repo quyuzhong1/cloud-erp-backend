@@ -310,4 +310,13 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * @return java.lang.String
      **/
     Boolean pdaUpdateAndSubmit(PoInstockDTO.UpdateDTO dto);
+
+    /**
+     * PDA:详情
+     * @Author Luo_WG
+     * @Date 2023/9/5 15:56
+     * @param id
+     * @return com.erp.model.wms.dto.PoInstockDTO.ViewDTO
+     **/
+    PoInstockDTO.ViewDTO pdaView(String id);
 }

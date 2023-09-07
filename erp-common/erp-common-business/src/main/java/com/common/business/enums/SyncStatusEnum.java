@@ -10,7 +10,7 @@ import java.util.Optional;
 
  * @date 2023/3/9 8:59
  */
-public enum SyncKingdeeStatusEnum {
+public enum SyncStatusEnum {
 
     NO_NEED_SYNC("0", "无需同步"),
     TO_BE_SYNC("1", "待同步"),
@@ -23,19 +23,19 @@ public enum SyncKingdeeStatusEnum {
     private String name;
 
 
-    SyncKingdeeStatusEnum(String code, String name) {
+    SyncStatusEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
 
     public static String getCodeBySendStatus(Integer status) {
         if( 0 == status){
-            return SyncKingdeeStatusEnum.FAILED_SYNC.getCode();
+            return SyncStatusEnum.FAILED_SYNC.getCode();
         }
         if (1== status) {
-            return SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode();
+            return SyncStatusEnum.SUCCESS_SYNC.getCode();
         }
-        return SyncKingdeeStatusEnum.FAILED_SYNC.getCode();
+        return SyncStatusEnum.FAILED_SYNC.getCode();
     }
 
     public String getCode() {
@@ -51,8 +51,8 @@ public enum SyncKingdeeStatusEnum {
      * @return
      */
     public static String getNameByCode(String code) {
-        SyncKingdeeStatusEnum syncKingdeeStatusEnum = Arrays.stream(SyncKingdeeStatusEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
-        return Optional.ofNullable(syncKingdeeStatusEnum).map(SyncKingdeeStatusEnum::getName).orElse("");
+        SyncStatusEnum syncStatusEnum = Arrays.stream(SyncStatusEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
+        return Optional.ofNullable(syncStatusEnum).map(SyncStatusEnum::getName).orElse("");
     }
 
 }

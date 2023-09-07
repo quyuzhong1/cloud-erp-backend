@@ -137,5 +137,6 @@ public class JobTaskDTO {
         this.billType = tbTask.getBillType();
         this.operateType = tbTask.getOperateType();
         this.apiParam = tbTask.getApiParam();
+        this.platformCategory = tbTask.getPlatformCategory();
     }
 }

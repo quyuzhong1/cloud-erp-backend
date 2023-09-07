@@ -6,7 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -97,7 +97,7 @@ public class KingdeeSupplierConsumerServiceImpl implements KingdeeSupplierConsum
 
         //操作项
         String operate = (String) map.get("operate");
-        if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
             // 判断禁用状态是否与金蝶系统一致 A启用 B禁用
             if (erpForbidStatus.equals(kingdeeForbidStatus)) {
                 log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}], 无需{}，跳过{}操作", forbidStatus, map.get("disabled"), operate, operate);
@@ -113,7 +113,7 @@ public class KingdeeSupplierConsumerServiceImpl implements KingdeeSupplierConsum
             kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(map), "金蝶状态与ERP数据都为禁用状态数据不需要修改", type, ApiSendStatusEnum.SUCCESS.getCode());
             return;
         }
-        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             //反审核
             kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
             return;
@@ -195,11 +195,11 @@ public class KingdeeSupplierConsumerServiceImpl implements KingdeeSupplierConsum
         String operate = null;
         //启用
         if (!(Boolean) disabled && !StringUtils.equals("0", disablerId)) {
-            operate = SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
+            operate = SyncOperateEnum.OPERATE_ENABLE.getCode();
         }
         //禁用
         if ((Boolean) disabled && StringUtils.equals("0", disablerId)) {
-            operate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
+            operate = SyncOperateEnum.OPERATE_DISABLE.getCode();
         }
         if (StringUtils.isNotBlank(operate)) {
             kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);

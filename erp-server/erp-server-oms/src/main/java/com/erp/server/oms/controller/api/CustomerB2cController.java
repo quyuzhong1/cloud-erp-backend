@@ -113,8 +113,8 @@ public class CustomerB2cController extends BaseController {
      */
     @PostMapping("/addAndSubmit")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated CustomerDTO.AddDTO dto) {
-        Boolean result = customerB2cService.addAndSubmit(dto);
-        return result ? success() : failure();
+        String id = customerB2cService.addAndSubmit(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
 
@@ -324,10 +324,11 @@ public class CustomerB2cController extends BaseController {
 
     /**
      * 根据id查询客户地址
-     * @author Will
-     * @date: 2023/7/13 12:08
+     *
      * @param customerAddressId
      * @return ApiResult<ViewDTO>
+     * @author Will
+     * @date: 2023/7/13 12:08
      */
     @GetMapping("/getCustomerAddressById")
     public ApiResult<CustomerAddressDTO.ViewDTO> getCustomerAddressById(@RequestParam("customerAddressId") String customerAddressId) {
@@ -348,6 +349,7 @@ public class CustomerB2cController extends BaseController {
 
     /**
      * 导入客户
+     *
      * @param file
      * @return
      */
@@ -359,6 +361,7 @@ public class CustomerB2cController extends BaseController {
 
     /**
      * 导入客户关联金蝶信息
+     *
      * @param file
      * @return
      */

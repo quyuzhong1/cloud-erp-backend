@@ -1,6 +1,6 @@
 package com.erp.server.oms.kingdee.impl;
 
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -46,7 +46,7 @@ public class SyncKingdeeCustomerContactServiceImpl implements SyncKingdeeCustome
     public void syncDataToKingdee(CustomerContactEntity entity, String operate) {
 
         //更新同步状态为待同步
-        customerContactService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        customerContactService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
 
         //客户地址信息
         List<CustomerAddressDTO.ViewDTO> viewDTOS = customerAddressService.listByMainId(entity.getMainId());
@@ -83,7 +83,7 @@ public class SyncKingdeeCustomerContactServiceImpl implements SyncKingdeeCustome
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_CUSTOMER_CONTACT_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return customerContactService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"", operate);
+                return customerContactService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(),"", operate);
             }
             return Boolean.TRUE;
         });

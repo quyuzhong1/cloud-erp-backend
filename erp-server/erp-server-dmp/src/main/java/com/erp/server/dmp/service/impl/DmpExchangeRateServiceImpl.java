@@ -4,16 +4,16 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpExchangeRateDTO;
 import com.common.business.dto.DmpSyncMqDTO;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.service.DmpExchangeRateService;
-import com.erp.server.dmp.service.DmpSyncTaskService;
+import com.erp.server.dmp.service.DmpPullTaskService;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ import javax.annotation.Resource;
 public class DmpExchangeRateServiceImpl implements DmpExchangeRateService {
 
     @Resource
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     @Resource
     private MQProducerService mqProducerService;
@@ -40,20 +40,20 @@ public class DmpExchangeRateServiceImpl implements DmpExchangeRateService {
     @Transactional(rollbackFor = Exception.class)
     public void sendSyncTask(DmpExchangeRateDTO ext) {
         //新增发送任务
-        DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
-        dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
-        dmpSyncTaskEntity.setSourceType(SourceTypeEnum.BD_RATE.getCode());
-        dmpSyncTaskEntity.setSourceId(ext.getSourceId());
-        dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
-        dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
-        dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_KINGDEE_EXCHANGE_RATE_TO_WMS_TAG.getName());
+        DmpPullTaskEntity dmpPullTaskEntity = new DmpPullTaskEntity();
+        dmpPullTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
+        dmpPullTaskEntity.setSourceType(SourceTypeEnum.BD_RATE.getCode());
+        dmpPullTaskEntity.setSourceId(ext.getSourceId());
+        dmpPullTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
+        dmpPullTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
+        dmpPullTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
+        dmpPullTaskEntity.setMqTag(RocketMqTagEnum.SYNC_KINGDEE_EXCHANGE_RATE_TO_WMS_TAG.getName());
         String mqData = JSONObject.toJSONString(ext);
-        dmpSyncTaskEntity.setMqData(mqData);
-        dmpSyncTaskService.saveOrUpdateDmpSyncTask(dmpSyncTaskEntity);
+        dmpPullTaskEntity.setMqData(mqData);
+        dmpPullTaskService.saveOrUpdateDmpSyncTask(dmpPullTaskEntity);
 
         //汇率列表消息推送
-        DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
+        DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpPullTaskEntity.getId(), mqData);
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_KINGDEE_EXCHANGE_RATE_TO_WMS_TAG.getName(),
                 dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {

@@ -17,7 +17,7 @@ import com.erp.model.oms.dto.CfConditionDTO;
 import java.util.List;
 
 /**
- * 条件配置表
+ * 规则下拉
  *
  * @author Lambda
  * @since 2023-08-30

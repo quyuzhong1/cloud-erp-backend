@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -93,8 +94,8 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
 
         //同步到OMS销售退货单
         pushToMqList.forEach(req -> {
-            if (StringUtils.isNotBlank(req.getFApproveDate()) && !req.getFApproveDate().equals("null")) {
-                if (LocalDateTime.parse(req.getFApproveDate()).compareTo(LocalDateTime.parse("2023-07-06T21:00:00")) > 0) {
+            if (StringUtils.isNotBlank(req.getFDate()) && !req.getFDate().equals("null")) {
+                if (LocalDateTime.parse(req.getFDate()).toLocalDate().compareTo(LocalDate.parse("2023-07-06")) > 0) {
                     mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_REFUND_ORDER_TO_TASK_TAG.getName(), req, req.getFBillNo());
                 }
             }

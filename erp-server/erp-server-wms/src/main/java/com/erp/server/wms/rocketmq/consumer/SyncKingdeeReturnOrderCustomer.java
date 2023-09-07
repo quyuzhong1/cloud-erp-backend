@@ -1,7 +1,7 @@
 package com.erp.server.wms.rocketmq.consumer;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -38,12 +38,12 @@ public class SyncKingdeeReturnOrderCustomer implements RocketMQListener<DmpSyncM
         } catch (Exception e){
             log.error("金蝶销售退货单同步失败，msg = {}",e.getMessage());
             //同步失败
-            paramDTO.setSyncStatus(SyncKingdeeStatusEnum.FAILED_SYNC.getCode());
+            paramDTO.setSyncStatus(SyncStatusEnum.FAILED_SYNC.getCode());
             paramDTO.setResponseMsg(e.getMessage());
             dmpTaskFeign.updateSyncInfo(paramDTO);
         }
         //同步成功
-        paramDTO.setSyncStatus(SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode());
+        paramDTO.setSyncStatus(SyncStatusEnum.SUCCESS_SYNC.getCode());
         paramDTO.setResponseMsg("同步成功");
         dmpTaskFeign.updateSyncInfo(paramDTO);
     }

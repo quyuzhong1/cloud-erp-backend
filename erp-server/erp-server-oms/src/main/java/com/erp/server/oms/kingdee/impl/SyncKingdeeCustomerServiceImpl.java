@@ -4,8 +4,8 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SyncKingdeeOperateEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -13,15 +13,13 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.InvoiceDTO;
-import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerContactEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.oms.enums.DictBasicEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
@@ -87,7 +85,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         Map<String, Object> resultMap = new HashMap<>();
 
         //更新同步状态为待同步
-        customerInfoService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        customerInfoService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
 
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -224,7 +222,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         }
         resultMap.put("customerAddressList", customerAddressList);
         String platformType = entity.getPlatformType();
-        DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(DictBasicEnum.PLATFORM.getType(), platformType);
+        DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.PLATFORM.getType(), platformType);
         String platformTypeKingdeeCode = "";
         if (dictBasic != null) {
             platformTypeKingdeeCode = dictBasic.getRemark();
@@ -247,9 +245,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_CUSTOMER_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //审核通过发送金蝶
-                contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+                contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
                 //mq发送成更新业务表状态及时间
-                return customerInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "", operate);
+                return customerInfoService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(), "", operate);
             }
             return Boolean.TRUE;
         });

@@ -2,40 +2,23 @@ package com.erp.server.wms.schedule;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
-import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.vo.LoginUser;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.SoReturnInstockService;
 import com.erp.server.wms.service.TransferInfoService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * 数据修复任务临时使用

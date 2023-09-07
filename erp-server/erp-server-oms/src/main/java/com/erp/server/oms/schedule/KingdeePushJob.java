@@ -1,7 +1,7 @@
 package com.erp.server.oms.schedule;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.erp.model.oms.entity.*;
 import com.erp.server.oms.kingdee.*;
 import com.erp.server.oms.service.*;
@@ -52,8 +52,8 @@ public class KingdeePushJob {
     @XxlJob("kingdeePushCustomerContact")
     public void kingdeePushCustomerContact() {
         List<CustomerContactEntity> list = customerContactService.lambdaQuery()
-                .in(CustomerContactEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
-                .or(obj -> obj.eq(CustomerContactEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(CustomerContactEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
+                .in(CustomerContactEntity::getSyncKingdeeStatus, Arrays.asList(SyncStatusEnum.TO_BE_SYNC.getCode(), SyncStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(CustomerContactEntity::getSyncKingdeeStatus, SyncStatusEnum.IN_SYNC.getCode()).le(CustomerContactEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的客户联系人信息");
@@ -75,8 +75,8 @@ public class KingdeePushJob {
     @XxlJob("kingdeePushCustomerGroup")
     public void kingdeePushCustomerGroup() {
         List<CustomerGroupEntity> list = customerGroupService.lambdaQuery()
-                .in(CustomerGroupEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
-                .or(obj -> obj.eq(CustomerGroupEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(CustomerGroupEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
+                .in(CustomerGroupEntity::getSyncKingdeeStatus, Arrays.asList(SyncStatusEnum.TO_BE_SYNC.getCode(), SyncStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(CustomerGroupEntity::getSyncKingdeeStatus, SyncStatusEnum.IN_SYNC.getCode()).le(CustomerGroupEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的客户分组");
@@ -98,8 +98,8 @@ public class KingdeePushJob {
     @XxlJob("kingdeePushCustomerInfo")
     public void kingdeePushCustomerInfo() {
         List<CustomerInfoEntity> list = customerInfoService.lambdaQuery()
-                .in(CustomerInfoEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
-                .or(obj -> obj.eq(CustomerInfoEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(CustomerInfoEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
+                .in(CustomerInfoEntity::getSyncKingdeeStatus, Arrays.asList(SyncStatusEnum.TO_BE_SYNC.getCode(), SyncStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(CustomerInfoEntity::getSyncKingdeeStatus, SyncStatusEnum.IN_SYNC.getCode()).le(CustomerInfoEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的客户列表");
@@ -121,8 +121,8 @@ public class KingdeePushJob {
     @XxlJob("kingdeePushSoChange")
     public void kingdeePushSoChange() {
         List<SoChangeEntity> list = soChangeService.lambdaQuery()
-                .in(SoChangeEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
-                .or(obj -> obj.eq(SoChangeEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(SoChangeEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
+                .in(SoChangeEntity::getSyncKingdeeStatus, Arrays.asList(SyncStatusEnum.TO_BE_SYNC.getCode(), SyncStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(SoChangeEntity::getSyncKingdeeStatus, SyncStatusEnum.IN_SYNC.getCode()).le(SoChangeEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的销售变更");
@@ -144,8 +144,8 @@ public class KingdeePushJob {
     @XxlJob("kingdeePushSoInfo")
     public void kingdeePushSoInfo() {
         List<SoInfoEntity> list = soInfoService.lambdaQuery()
-                .in(SoInfoEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
-                .or(obj -> obj.eq(SoInfoEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(SoInfoEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
+                .in(SoInfoEntity::getSyncKingdeeStatus, Arrays.asList(SyncStatusEnum.TO_BE_SYNC.getCode(), SyncStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(SoInfoEntity::getSyncKingdeeStatus, SyncStatusEnum.IN_SYNC.getCode()).le(SoInfoEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的销售订单");

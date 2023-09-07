@@ -18,4 +18,11 @@ public class PlatformApiServiceImpl extends SuperServiceImpl<PlatformApiMapper, 
                 .eq(PlatformApiEntity::getDisabled, Boolean.FALSE)
                 .list();
     }
+
+    @Override
+    public List<PlatformApiEntity> listByPlatform(String dictPlatform) {
+        return lambdaQuery()
+                .eq(PlatformApiEntity::getDictPlatform, dictPlatform)
+                .list();
+    }
 }

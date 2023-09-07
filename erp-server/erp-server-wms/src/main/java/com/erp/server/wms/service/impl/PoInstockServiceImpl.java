@@ -176,6 +176,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
             PoInstockDTO.ListStatusCountDTO resultDTO = new PoInstockDTO.ListStatusCountDTO();
             Integer count = MathUtil.ZERO;
+            searchParamDTO.setInvalidStatus(Boolean.FALSE);
             if (PageListTypeEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
                 searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
@@ -455,7 +456,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             }
 
             if (CollectionUtils.isNotEmpty(poInstockDetailList)) {
-                Integer effectiveStockInQty = poInstockDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer effectiveStockInQty = poInstockDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseOrderDetailId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                 obj.setEffectiveStockInQty(effectiveStockInQty);
                 obj.setUnStockInQty(obj.getPurchaseQty() - effectiveStockInQty + returnQty);
             }
@@ -541,7 +542,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个采购入库单【%s】，作废原因：".concat(reason), ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "作废操作");
         //审核通过发送金蝶
-        list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
+        list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
         return Boolean.TRUE;
     }
 
@@ -576,7 +577,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             updateInventoryTransCore(list);
 
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             //中止当前审核流程
 
@@ -623,7 +624,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个采购入库单【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "反审核操作");
         //审核通过发送金蝶
-        list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
 
         return Boolean.TRUE;
     }
@@ -1611,11 +1612,13 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         receiveIds.addAll(purchaseOrderIds);
         //质检信息
         List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceIds(receiveIds);
-        List<QcInfoEntity> resultList = qcInfoList.stream().filter(obj -> QcBillStatusEnum.EXEMPTION.equals(obj.getQcStatus())
-                || QcBillStatusEnum.FINISH_QC.equals(obj.getQcStatus())
-        ).collect(Collectors.toList());
+
 
         for (PoInstockDTO.PdaPagingView record : records) {
+            List<QcInfoEntity> resultList = qcInfoList.stream().filter(obj -> obj.getSourceId().equals(record.getSourceId())
+                    && (QcBillStatusEnum.EXEMPTION.equals(obj.getQcStatus()) || QcBillStatusEnum.FINISH_QC.equals(obj.getQcStatus()))
+            ).collect(Collectors.toList());
+
             record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
             List<PoInstockDetailEntity> detailEntities = poInstockDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
             List<PoInstockDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, PoInstockDTO.PdaItemDTO.class);
@@ -1686,10 +1689,10 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             if (ObjectUtils.isEmpty(detailEntity)) {
                 throw new ServiceException(ApiError.ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST, addDTO.getSkuNo());
             }
-
+            List<PoInstockDetailDTO.AddDTO> addList = detailList.stream().filter(req -> req.getSkuNo().equals(detailEntity.getSkuId())).collect(Collectors.toList());
             List<WarehouseReceiveDetailEntity> detailEntityList = detailEntityListByMainId.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
             //校验sku是否有重复，重复需要拆单
-            if (detailEntityList.size() > MathUtil.ONE) {
+            if (detailEntityList.size() > addList.size()) {
                 List<String> pordIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
                 List<PoInstockDetailEntity> poInstockDetailEntities = poInstockDetailService.listDetailBySourceDetailIds(pordIds);
                 Integer stockInQty = addDTO.getStockInQty();
@@ -1697,7 +1700,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     //收货数量
                     Integer receiveQty = detailEntityList.stream().map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     //已签收数量
-                    Integer alreadyStockInQty = poInstockDetailEntities.stream().filter(obj -> obj.getSourceDetailId().equals(entity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                    Integer alreadyStockInQty = poInstockDetailEntities.stream().filter(obj -> obj.getSourceDetailId().equals(entity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (stockInQty > receiveQty - alreadyStockInQty) {
                         throw new ServiceException(new ApiResult(MathUtil.ONE,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + receiveQty));
 
@@ -1721,6 +1724,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                         addDTOList.add(addSkuDTO);
                         break;
                     }
+                    addDTO.setExceedQty(0);
                 }
             } else {
                 addDTOList.add(addDTO);
@@ -1757,7 +1761,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     Integer alreadyStockInQty = poInstockDetailEntities.stream().filter(obj -> obj.getSourceDetailId().equals(entity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (stockInQty > receiveQty - alreadyStockInQty) {
                         throw new ServiceException(new ApiResult(MathUtil.ONE,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + receiveQty));
-
                     }
                     if (alreadyStockInQty >= entity.getReceiveQty()) {
                         continue;
@@ -1778,6 +1781,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                         updateDTOList.add(updateSkuDTO);
                         break;
                     }
+                    updateSkuDTO.setExceedQty(0);
                 }
             } else {
                 updateDTOList.add(updateDTO);
@@ -1807,5 +1811,46 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         this.pdaUpdate(dto);
         //提交
         return this.submit(Arrays.asList(dto.getId()));
+    }
+
+    @Override
+    public PoInstockDTO.ViewDTO pdaView(String id) {
+        PoInstockDTO.ViewDTO viewDTO = this.view(id);
+        //明细信息
+        List<PoInstockDetailEntity> entityDetails = poInstockDetailService.listByMainId(id);
+
+        //采购订单明细
+        List<String> podIds = entityDetails.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+
+        Map<String, PoInstockDetailDTO.ViewDTO> collect = viewDTO.getDetails().stream().collect(Collectors.groupingBy(n -> n.getSkuNo()+"-"+n.getWarehouseLocation(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+            Integer purchaseQty = purchaseOrderDetailList.stream().filter(obj -> obj.getSkuNo().equals(m.get(0).getSkuNo())).map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+
+//            int purchaseQty = m.stream().mapToInt(PoInstockDetailDTO.ViewDTO::getPurchaseQty).sum();
+            int receiveQty = m.stream().mapToInt(PoInstockDetailDTO.ViewDTO::getReceiveQty).sum();
+            int exceedQty = m.stream().mapToInt(PoInstockDetailDTO.ViewDTO::getExceedQty).sum();
+            int stockInQty = m.stream().mapToInt(PoInstockDetailDTO.ViewDTO::getStockInQty).sum();
+            int unStockInQty = m.stream().mapToInt(PoInstockDetailDTO.ViewDTO::getUnStockInQty).sum();
+            String podId = m.stream().max(Comparator.comparing(PoInstockDetailDTO.ViewDTO::getId)).map(PoInstockDetailDTO.ViewDTO::getId).get();
+            PoInstockDetailDTO.ViewDTO updateDTO = new PoInstockDetailDTO.ViewDTO();
+            BeanMapper.copy(m.get(MathUtil.ZERO), updateDTO);
+            updateDTO.setId(podId);
+            updateDTO.setPurchaseQty(purchaseQty);
+            updateDTO.setReceiveQty(receiveQty);
+            updateDTO.setStockInQty(stockInQty);
+            updateDTO.setExceedQty(exceedQty);
+            updateDTO.setUnStockInQty(unStockInQty);
+            return updateDTO;
+        })));
+
+        List<PoInstockDetailDTO.ViewDTO> viewDTOS = new ArrayList<>();
+        for (Map.Entry<String, PoInstockDetailDTO.ViewDTO> stringUpdateDTOEntry : collect.entrySet()) {
+            viewDTOS.add(stringUpdateDTOEntry.getValue());
+        }
+        viewDTO.setDetails(viewDTOS);
+        return viewDTO;
     }
 }

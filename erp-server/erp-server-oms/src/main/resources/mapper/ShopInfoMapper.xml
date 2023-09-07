@@ -3,34 +3,33 @@
 <mapper namespace="com.erp.server.oms.mapper.ShopInfoMapper">
 
 
-
     <!--店铺分页查询-->
     <select id="paging" resultType="com.erp.model.oms.dto.ShopDTO$PagingViewDTO">
         SELECT
-            id,
-            account,
-            name,
-            charge_id,
-            charge_name,
-            sales_org_id,
-            sales_org_name,
-            dict_area_code,
-            dict_country_code,
-            dict_country_code,
-            auth_status,
-            disabled,
-            auth_time,
-            domain,
-            country_name,
-            dict_platform,
-            create_user_name,
-            create_time,
-            update_user_name,
-            update_time
+        id,
+        account,
+        name,
+        charge_id,
+        charge_name,
+        sales_org_id,
+        sales_org_name,
+        dict_area_code,
+        dict_country_code,
+        dict_country_code,
+        auth_status,
+        disabled,
+        auth_time,
+        domain,
+        country_name,
+        dict_platform,
+        create_user_name,
+        create_time,
+        update_user_name,
+        update_time
         FROM shop_info si
         WHERE si.is_deleted=FALSE
         <if test="params.name!=null and params.name!='' ">
-           AND si.name ILIKE concat('%',#{params.name},'%')
+            AND si.name ILIKE concat('%',#{params.name},'%')
         </if>
         <if test="params.dictPlatform!=null and params.dictPlatform!='' ">
             AND si.dict_platform =#{params.dictPlatform}
@@ -44,7 +43,7 @@
         <if test="params.disabledList!=null and params.disabledList.size>0 ">
             AND si.disabled IN
             <foreach collection="params.disabledList" item="disabled" open="(" separator="," close=")">
-                 #{disabled}
+                #{disabled}
             </foreach>
         </if>
         <if test="params.authStatusList!=null and params.authStatusList.size>0 ">
@@ -66,23 +65,27 @@
             </foreach>
         </if>
         <if test="params.createTimeList !=null and params.createTimeList.size>0">
-            AND si.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > si.create_time
+            AND si.create_time >= #{params.createTimeList[0]}
+            AND si.create_time &lt;= #{params.createTimeList[1]}
+
         </if>
         <if test="params.updateTimeList !=null and params.updateTimeList.size>0">
-            AND si.update_time >= #{params.updateTimeList[0]} and (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > si.update_time
+            AND si.update_time >= #{params.updateTimeList[0]}
+            AND si.update_time &lt;= #{params.updateTimeList[1]}
         </if>
         <if test="params.authTimeList !=null and params.authTimeList.size>0">
-            AND si.auth_time >= #{params.authTimeList[0]} and (#{params.authTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > si.auth_time
+            AND si.auth_time >= #{params.authTimeList[0]}
+            AND si.auth_time &lt;= #{params.authTimeList[1]}
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
         ORDER BY
-        si.dict_platform,si.account,si.dict_area_code desc
+        si.dict_platform DESC,
+        si.account DESC,
+        si.dict_area_code DESC,
+        si.id DESC
     </select>
 
 </mapper>

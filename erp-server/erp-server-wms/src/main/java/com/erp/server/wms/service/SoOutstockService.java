@@ -287,4 +287,41 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.PdaPoReceiveCountDTO>
      **/
     List<SoOutstockDTO.PdaCountDTO> pdaListCount(PermissionsDTO dto);
+
+    /**
+     * PDA:新增
+     * @Author Luo_WG
+     * @Date 2023/9/6 17:45
+     * @param dto
+     * @return java.lang.String
+     **/
+    String pdaAdd(SoOutstockDTO.AddDTO dto);
+
+    /**
+     * PDA:修改
+     * @Author Luo_WG
+     * @Date 2023/9/6 17:55
+     * @param dto
+     * @return java.lang.String
+     **/
+    String pdaUpdate(SoOutstockDTO.UpdateDTO dto);
+
+
+    /**
+     * PDA:新增并提交
+     * @Author Luo_WG
+     * @Date 2023/9/6 17:57
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaAddAndSubmit(SoOutstockDTO.AddDTO dto);
+
+    /**
+     * PDA:修改并提交
+     * @Author Luo_WG
+     * @Date 2023/9/6 17:58
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaUpdateAndSubmit(SoOutstockDTO.UpdateDTO dto);
 }

@@ -7,9 +7,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.rule.ConditionElement;
+import com.common.core.rule.SpELRuleUtils;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.RuleDeliveryWarehouseEntity;
-import com.erp.model.oms.enums.DictBasicEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -30,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.RuleDeliveryWarehouseDTO;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -60,6 +63,16 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(RuleDeliveryWarehouseDTO.AddDTO addDTO) {
+        List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
+        List<ConditionElement> conditionElementList = conditionList.stream().
+                map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
+                        c.getOperator(), c.getValue(),
+                        c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
+        String expression = SpELRuleUtils.getConditionExpression(conditionElementList);
+        Boolean checkResult = SpELRuleUtils.checkExpressionIsEnabled(expression);
+        if (!checkResult) {
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
+        }
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouseEntity = new RuleDeliveryWarehouseEntity();
         BeanMapperUtils.copy(addDTO, ruleDeliveryWarehouseEntity);
         // 数据处理
@@ -69,7 +82,6 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
             throw new ServiceException("发货仓库规则单保存失败");
         }
         String id = ruleDeliveryWarehouseEntity.getId();
-        List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
         //保存规则条件
         ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志
@@ -88,6 +100,17 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         String id = updateDTO.getId();
         RuleDeliveryWarehouseEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单"));
+        List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
+        List<ConditionElement> conditionElementList = conditionList.stream().
+                map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
+                        c.getOperator(), c.getValue(),
+                        c.getRightBracket(), c.getLogic())).collect(Collectors.toList());
+        String expression = SpELRuleUtils.getConditionExpression(conditionElementList);
+        Boolean checkResult = SpELRuleUtils.checkExpressionIsEnabled(expression);
+        if (!checkResult) {
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR,expression);
+        }
+
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouseEntity = BeanMapperUtils.map(RuleDeliveryWarehouseEntity.class, updateDTO);
         // 数据处理
         handleData(ruleDeliveryWarehouseEntity);
@@ -95,7 +118,6 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         if (!save) {
             throw new ServiceException("发货仓库规则单保存失败");
         }
-        List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         ruleConditionService.updateRuleCondition(id, conditionList);
         // 记录主单操作日志
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), ruleDeliveryWarehouseEntity.getId(), "发货仓库规则单");
@@ -136,7 +158,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         Optional.ofNullable(ruleDeliveryWarehouse).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单"));
         RuleDeliveryWarehouseDTO.ViewDTO view = new RuleDeliveryWarehouseDTO.ViewDTO();
         BeanMapper.copy(ruleDeliveryWarehouse, view);
-        String type = DictBasicEnum.RULE_CONDITION.getType();
+        String type = DictBasicTypeEnum.RULE_CONDITION.getType();
         List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);
         view.setConditionList(conditionList);
         return view;

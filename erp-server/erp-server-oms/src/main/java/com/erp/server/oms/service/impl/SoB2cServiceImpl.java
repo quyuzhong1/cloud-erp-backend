@@ -95,8 +95,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
-    private SysUserFeign sysUserFeign;
+
 
     @Autowired
     private InventoryFeign inventoryFeign;
@@ -529,7 +528,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         this.updateById(entity);
 
         //物流方式
-        DictBasicEntity dictBasicEntity = dictBasicService.getByTypeAndValue(DictBasicEnum.LOGISTICS_METHOD.getDesc(), dto.getDictLogisticsMethod());
+        DictBasicEntity dictBasicEntity = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.LOGISTICS_METHOD.getDesc(), dto.getDictLogisticsMethod());
         if (ObjectUtils.isEmpty(dictBasicEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_METHOD_NOT_EXIST);
         }
@@ -1283,7 +1282,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
 
         //物流方式
-        List<DictBasicDTO.ViewDTO> logisticsMethodList = dictBasicService.getByKey(DictBasicEnum.LOGISTICS_METHOD.getType());
+        List<DictBasicDTO.ViewDTO> logisticsMethodList = dictBasicService.getByKey(DictBasicTypeEnum.LOGISTICS_METHOD.getType());
 
         List<String> ids = list.stream().map(SoB2cDTO.ListDTO::getId).collect(Collectors.toList());
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listBySourceIdOrTargetId(ids);
@@ -1938,15 +1937,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             BigDecimal  vatRate = MathUtil.divide(viewCostDTO.getVatRate(),MathUtil.BigDecimal_100);
             BigDecimal transferRate = MathUtil.divide(viewCostDTO.getVatRate(),MathUtil.BigDecimal_100);
 
-            DictBasicEntity platformOption = dictBasicService.getByTypeAndValue(DictBasicEnum.SHOP_PLATFORM_COST.getType(), viewCostDTO.getDictPlatformOption());
+            DictBasicEntity platformOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_PLATFORM_COST.getType(), viewCostDTO.getDictPlatformOption());
             if (ObjectUtils.isEmpty(platformOption)) {
                 throw new ServiceException(ApiError.ERROR_DICT_NOT_EXIST,viewCostDTO.getDictPlatformOption());
             }
-            DictBasicEntity vatOption = dictBasicService.getByTypeAndValue(DictBasicEnum.SHOP_VAT_COST.getType(), viewCostDTO.getDictVatOption());
+            DictBasicEntity vatOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_VAT_COST.getType(), viewCostDTO.getDictVatOption());
             if (ObjectUtils.isEmpty(vatOption)) {
                 throw new ServiceException(ApiError.ERROR_DICT_NOT_EXIST,viewCostDTO.getDictVatOption());
             }
-            DictBasicEntity transferOption = dictBasicService.getByTypeAndValue(DictBasicEnum.SHOP_TRANSFER_COST.getType(), viewCostDTO.getDictTransferOption());
+            DictBasicEntity transferOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_TRANSFER_COST.getType(), viewCostDTO.getDictTransferOption());
             if (ObjectUtils.isEmpty(transferOption)) {
                 throw new ServiceException(ApiError.ERROR_DICT_NOT_EXIST,viewCostDTO.getDictTransferOption());
             }

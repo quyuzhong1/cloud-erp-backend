@@ -4,7 +4,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.erp.model.oms.entity.CfConditionEntity;
-import com.erp.model.oms.enums.DictBasicEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.oms.mapper.CfConditionMapper;
 import com.erp.server.oms.service.CfConditionService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -103,7 +103,7 @@ public class CfConditionServiceImpl extends SuperServiceImpl<CfConditionMapper, 
     @Override
     public List<CfConditionDTO.CommonDTO> listByConditionCode(String conditionCode) {
         List<CfConditionDTO.CommonDTO> list = baseMapper.listByConditionCode(conditionCode);
-        String type = DictBasicEnum.LOGIC.getType();
+        String type = DictBasicTypeEnum.LOGIC.getType();
         List<BaseDropDownDTO.CommonDTO> dictRuleConditionList = dictRuleConditionService.listByType(type);
         for (CfConditionDTO.CommonDTO item : list) {
             String logic = item.getLogic();

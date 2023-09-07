@@ -32,12 +32,12 @@ public enum PlatformCategoryEnum implements EnumMessage {
 
     @Override
     public String getCode() {
-        return this.name();
+        return this.code;
     }
 
     @Override
     public String getName() {
-        return this.name();
+        return this.name;
     }
 
     public static PlatformCategoryEnum getByCode(String code) {

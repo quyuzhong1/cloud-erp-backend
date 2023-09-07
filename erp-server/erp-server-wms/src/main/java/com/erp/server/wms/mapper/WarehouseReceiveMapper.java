@@ -70,4 +70,23 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
      * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.PdaPoReceive>
      **/
     List<WarehouseReceiveDTO.PdaPoReceive> pdaList(WarehouseReceiveDTO.PdaPoReceiveParam dto);
+
+    /**
+     * PDA:待入库查询
+     * @Author Luo_WG
+     * @Date 2023/9/6 11:09
+     * @param query
+     * @param params
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.WarehouseReceiveDTO.WaitInStockPaging>
+     **/
+    IPage<WarehouseReceiveDTO.WaitInStockPaging> pdaWaitInStockPaging(Page query, WarehouseReceiveDTO.WaitInStockPagingParam params);
+
+    /**
+     * PDA:待入库查询表头数量
+     * @Author Luo_WG
+     * @Date 2023/9/6 14:56
+     * @param params
+     * @return java.lang.Integer
+     **/
+    Integer waitInStockListCount(@Param("params") WarehouseReceiveDTO.PagingParamDTO params);
 }

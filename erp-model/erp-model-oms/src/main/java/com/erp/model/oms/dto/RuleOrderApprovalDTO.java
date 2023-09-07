@@ -100,6 +100,7 @@ public class RuleOrderApprovalDTO implements Serializable {
 
         private String id;
 
+
         private List<RuleConditionDTO.ViewDTO> conditionList;
     }
 
@@ -161,7 +162,7 @@ public class RuleOrderApprovalDTO implements Serializable {
         private String remark;
 
         /**
-         * 分类明细id
+         * 分类明细id 来源  http://172.16.100.11:3002/project/110/interface/api/21652
          */
         private String categoryDetailId;
 
@@ -176,9 +177,14 @@ public class RuleOrderApprovalDTO implements Serializable {
 
         /**
          * 流向状态
+         * 来源 http://172.16.100.11:3002/project/110/interface/api/13480   type=RuleOrderFlowStatus
          */
         private String flowStatus;
 
+        /**
+         * true 禁用  false 启用
+         */
+        private Boolean disabled;
 
     }
 }

@@ -72,7 +72,7 @@ public class DictRuleConditionController extends BaseController {
     }
 
     /**
-     * ruleCondition 规则条件下拉
+     * 规则条件下拉
      *
      * @param type
      * @return

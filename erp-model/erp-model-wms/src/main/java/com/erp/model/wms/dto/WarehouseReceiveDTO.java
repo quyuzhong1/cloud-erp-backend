@@ -529,6 +529,11 @@ public class WarehouseReceiveDTO {
          * 创建时间
          */
         private List<LocalDate> createTime;
+
+        /**
+         * PDA用表头状态
+         */
+        private String tabFlag;
     }
 
 
@@ -1006,10 +1011,6 @@ public class WarehouseReceiveDTO {
          */
         private String supplierName;
         /**
-         * 仓库id
-         */
-        private String warehouseId;
-        /**
          * 仓库名称
          */
         private String warehouseName;
@@ -1038,5 +1039,119 @@ public class WarehouseReceiveDTO {
          * 采购收货单号
          */
         private String code;
+    }
+
+
+    /**
+     * PDA:待入库查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WaitInStockPaging {
+
+        /**
+         * 表id
+         */
+        private String id;
+
+        /**
+         * 收货单号
+         */
+        private String code;
+
+        /**
+         * 单据状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 供应商名
+         */
+        private String supplierName;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 委外订单类型(child子级，parent父级)
+         */
+        private String subcontractType;
+
+        /**
+         * 详情产品数量
+         */
+        private Integer detailCount;
+
+        /**
+         * 质检状态
+         */
+        private String qcStatus;
+
+        /**
+         * 质检状态名称
+         */
+        private String qcStatusName;
+
+        /**
+         * 产品信息
+         */
+        private List<PdaWaitInStockItemDTO> itemList;
+    }
+    /**
+     * PDA:待入库查询产品信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaWaitInStockItemDTO {
+        /**
+         * 明细id
+         */
+        private String id;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 收货数量
+         */
+        private String receiveQty;
+    }
+
+    /**
+     *  PDA:待入库查询查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WaitInStockPagingParam extends SortDTO {
+        /**
+         * 获取枚举接口：wms/common/enumDropDown?type=WaitInStockFlag
+         * 内容描述：类型(waitInStockQc 待入库-已质检，waitInStockNotQc 待入库-待质检，all 全部待入库)
+         */
+        private String tabFlag;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class WaitInStockCountDTO {
+        /**
+         * 获取枚举接口：wms/common/enumDropDown?type=WaitInStockFlag
+         * 内容描述：类型(waitInStockQc 待入库-已质检，waitInStockNotQc 待入库-待质检，all 全部待入库)
+         */
+        private String tabFlag;
+        /**
+         * 数量
+         */
+        private Integer count;
     }
 }

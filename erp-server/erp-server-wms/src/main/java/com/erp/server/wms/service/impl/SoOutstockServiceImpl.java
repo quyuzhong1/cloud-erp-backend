@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -383,7 +384,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //审核通过
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
 
         } else {
             //审核不通过
@@ -581,7 +582,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.SO_OUT_STOCK.getCode(), rejectPairList, "状态变更");
             if (isPushKingDee) {
                 //审核通过发送金蝶
-                list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+                list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
             }
         }
         return result;
@@ -681,7 +682,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "作废");
 
         //作废发送金蝶
-        list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
+        list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
         return Boolean.TRUE;
 
     }
@@ -1483,5 +1484,49 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             list.add(resultDTO);
         }
         return list;
+    }
+
+    @Override
+    public String pdaAdd(SoOutstockDTO.AddDTO dto) {
+        List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailByMainId(dto.getSourceId());
+        for (SoOutstockDetailDTO.AddDTO addDTO : dto.getDetailList()) {
+            SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = noticeDetailEntities.stream().filter(req -> req.getId().equals(addDTO.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soDeliveryNoticeDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_SOOUTSTOCK_DETAIL_SKU_NOT_EXIST, addDTO.getSkuNo());
+            }
+        }
+        return this.add(dto);
+    }
+
+    @Override
+    public String pdaUpdate(SoOutstockDTO.UpdateDTO dto) {
+        List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailByMainId(dto.getSourceId());
+        for (SoOutstockDetailDTO.UpdateDTO updateDTO : dto.getDetailList()) {
+            SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = noticeDetailEntities.stream().filter(req -> req.getId().equals(updateDTO.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soDeliveryNoticeDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_SOOUTSTOCK_DETAIL_SKU_NOT_EXIST, updateDTO.getSkuNo());
+            }
+        }
+        return this.updateSoOutstock(dto);
+    }
+
+
+    @Override
+    public Boolean pdaAddAndSubmit(SoOutstockDTO.AddDTO dto) {
+        String id = this.pdaAdd(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        Boolean result = this.submit(Arrays.asList(id));
+        return result;
+    }
+
+    @Override
+    public Boolean pdaUpdateAndSubmit(SoOutstockDTO.UpdateDTO dto) {
+        String id = this.pdaUpdate(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1020);
+        }
+        return this.submit(Arrays.asList(id));
     }
 }

@@ -503,7 +503,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
         //审核通过发送金蝶
         if (dto.getType().equals(ScmConstant.PASS)) {
-            list.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         }
         return Boolean.TRUE;
     }
@@ -755,7 +755,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 obj.setApproveStatus(statusEnum);
                 //审核通过更新金蝶推送状态为待同步
                 if (ApproveStatusEnum.APPROVE.equals(statusEnum)) {
-                    obj.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+                    obj.setSyncKingdeeStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
                 }
             });
             return this.updateBatchById(list);
@@ -936,7 +936,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
             //发送金蝶
-            list.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            list.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }

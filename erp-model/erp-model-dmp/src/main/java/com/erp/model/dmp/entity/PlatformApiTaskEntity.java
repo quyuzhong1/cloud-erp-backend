@@ -123,6 +123,18 @@ public class PlatformApiTaskEntity extends BaseEntity<PlatformApiTaskEntity> {
     private String platformApiId;
 
     /**
+     * 平台分类
+     */
+    @TableField(value = "platform_category")
+    private String platformCategory;
+
+    /**
+     * 同步操作
+     */
+    @TableField(value = "sync_operate")
+    private String syncOperate;
+
+    /**
      * api参数
      */
 
@@ -142,5 +154,6 @@ public class PlatformApiTaskEntity extends BaseEntity<PlatformApiTaskEntity> {
         this.billType = item.getBillType();
         this.operateType = item.getOperateType();
         this.platformApiId = item.getId();
+        this.syncOperate = item.getSyncOperate();
     }
 }

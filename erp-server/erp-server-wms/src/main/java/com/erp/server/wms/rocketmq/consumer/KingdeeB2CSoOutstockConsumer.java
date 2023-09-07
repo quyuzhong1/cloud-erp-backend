@@ -2,7 +2,7 @@ package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import com.alibaba.fastjson2.JSONObject;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -46,13 +46,13 @@ public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<DmpSyncMqD
             KingdeeDeliveryDetailEntity entity= JSONObject.parseObject(dataJson,KingdeeDeliveryDetailEntity.class);
             syncB2CSoOutstockService.syncKingdeeSoOutstock(entity);
             //同步成功
-            paramDTO.setSyncStatus(SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode());
+            paramDTO.setSyncStatus(SyncStatusEnum.SUCCESS_SYNC.getCode());
             paramDTO.setResponseMsg("同步成功");
             dmpTaskFeign.updateSyncInfo(paramDTO);
         }catch (Exception e){
             log.error("金蝶B2C销售出库单同步失败，msg = {}",StringUtils.isBlank(e.getMessage())?e:e.getMessage());
             //同步失败
-            paramDTO.setSyncStatus(SyncKingdeeStatusEnum.FAILED_SYNC.getCode());
+            paramDTO.setSyncStatus(SyncStatusEnum.FAILED_SYNC.getCode());
             paramDTO.setResponseMsg(StringUtils.isBlank(e.getMessage())? ExceptionUtil.stacktraceToOneLineString(e,10):e.getMessage());
             dmpTaskFeign.updateSyncInfo(paramDTO);
         }

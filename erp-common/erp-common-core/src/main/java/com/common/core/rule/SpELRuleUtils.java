@@ -6,7 +6,8 @@ package com.common.core.rule;/**
  * @Created by yl
  */
 
-import com.common.core.enums.DictEnum;
+import cn.hutool.json.JSONObject;
+import com.common.core.enums.RuleCompareEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.EvaluationContext;
@@ -23,7 +24,7 @@ import java.util.*;
  * @Date 2023-09-04 11:07
  */
 @Slf4j
-public class RuleUtils {
+public class SpELRuleUtils {
 
     /**
      * 获取到条件表达式
@@ -45,8 +46,8 @@ public class RuleUtils {
             //对应的值
             String value = element.getValue();
             if (StringUtils.isNotBlank(field) && StringUtils.isNotBlank(operator)) {
-                String content = new StringBuilder().append(field).append(" ").append(operator).append(" '").append(value).append("'").toString();
-                DictEnum contentsEnum = DictEnum.getByStatus(operator);
+                String content = new StringBuilder("['").append(field).append("'] ").append(operator).append(" '").append(value).append("'").toString();
+                RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(operator);
                 if (Objects.nonNull(contentsEnum)) {
                     switch (contentsEnum) {
                         case CONTAINS:
@@ -74,7 +75,7 @@ public class RuleUtils {
             //逻辑关系
             String logic = element.getLogic();
             if (StringUtils.isNotBlank(logic)) {
-                expression.append(DictEnum.getDesc(logic)).append(" ");
+                expression.append(logic).append(" ");
             }
         }
 
@@ -90,7 +91,7 @@ public class RuleUtils {
      * @return
      */
     public static String getConvertExpression(String operator, String content) {
-        DictEnum contentsEnum = DictEnum.getByStatus(operator);
+        RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(operator);
         if (Objects.isNull(contentsEnum)) {
             return content;
         }
@@ -101,8 +102,10 @@ public class RuleUtils {
                 return content;
             case NOT_CONTAINS:
                 content = convertToNotContainsExpression(content);
+                return content;
             case IS_NULL:
                 content = convertToIsNullExpression(content);
+                return content;
             default:
                 return content;
         }
@@ -117,7 +120,7 @@ public class RuleUtils {
      * @return
      */
     public static String convertToContainsExpression(String content) {
-        return content.replace(" contains ", ".contains('") + "')";
+        return content.replace(" contains ", ".contains(") + ")";
     }
 
     /**
@@ -127,7 +130,7 @@ public class RuleUtils {
      * @return
      */
     public static String convertToNotContainsExpression(String content) {
-        return "!" + content.replace(" notContains ", ".contains('") + "')";
+        return "not " + content.replace(" notContains ", ".contains(") + ")";
     }
 
     /**
@@ -137,7 +140,12 @@ public class RuleUtils {
      * @return
      */
     public static String convertToIsNullExpression(String field) {
-        return field + " eq " + "null || " + field + " eq ''";
+        StringBuilder expression = new StringBuilder();
+        expression.append("['").append(field).append("']");
+        expression.append(" eq null || ");
+        expression.append("['").append(field).append("']");
+        expression.append(" eq ''");
+        return expression.toString();
     }
 
     /**
@@ -147,7 +155,12 @@ public class RuleUtils {
      * @return
      */
     public static String convertToNotNullExpression(String field) {
-        return field + " ne " + "null && " + field + " ne ''";
+        StringBuilder expression = new StringBuilder();
+        expression.append("['").append(field).append("']");
+        expression.append(" ne null  && ");
+        expression.append("['").append(field).append("']");
+        expression.append(" ne ''");
+        return expression.toString();
     }
 
     /**
@@ -172,25 +185,32 @@ public class RuleUtils {
 
 
     public static void main(String[] args) {
-        ConditionElement element1 = new ConditionElement("((", "skuNo", "isNull", "", "", "and");
-        ConditionElement element2 = new ConditionElement("", "platform", "eq", "Amazon", "))", "");
+        ConditionElement element1 = new ConditionElement("((", "skuNo", "contains", "1", "", "and");
+        ConditionElement element2 = new ConditionElement("", "platform", "==", "Amazon", "))", "");
 
         List<ConditionElement> elementList = new ArrayList<>();
         elementList.add(element1);
         elementList.add(element2);
-        String expression = RuleUtils.getConditionExpression(elementList);
+        String expression = SpELRuleUtils.getConditionExpression(elementList);
         System.out.println(expression);
         ExpressionParser parser = new SpelExpressionParser();
         Expression expression1 = parser.parseExpression(expression);
-        Test test = new Test("24", "Amazon");
-        Map<String, Object> map = new HashMap<>();
-        map.put("skuNo","24");
-        map.put("platform","24");
-        EvaluationContext context = new StandardEvaluationContext(map);
-        boolean result = expression1.getValue(context, Boolean.class);
-
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.set("skuNo", "12");
+        jsonObject.set("platform", "Amazon");
+        EvaluationContext context = new StandardEvaluationContext(jsonObject);
+        boolean result = Boolean.TRUE.equals(expression1.getValue(context, Boolean.class));
         System.out.println("result====" + result);
+    }
 
-
+    /**
+     * 检查表达式是否正确
+     *
+     * @param conditionElementList
+     * @return
+     */
+    public static Boolean checkExpressionIsEnabledByElementList(List<ConditionElement> conditionElementList) {
+        String expression = getConditionExpression(conditionElementList);
+        return checkExpressionIsEnabled(expression);
     }
 }
