@@ -448,7 +448,7 @@
                     FROM qc_info qc
                     GROUP BY qc.source_id
                 ) t
-                WHERE t.source_id = prd."main_id" AND t.qc_status NOT ILIKE concat('%', 'finishQc' ,'%')
+                WHERE t.source_id = prd."main_id" AND t.qc_status ILIKE concat('%', 'finishQc' ,'%')
             )
         </if>
         <if test="param2.tabFlag == 'waitInStockNotQc'">
