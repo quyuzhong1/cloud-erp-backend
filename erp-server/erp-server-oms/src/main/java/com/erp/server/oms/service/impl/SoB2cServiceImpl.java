@@ -142,6 +142,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private RuleOrderApprovalService ruleOrderApprovalService;
 
+    @Autowired
+    private RuleDeliveryWarehouseService ruleDeliveryWarehouseService;
+
+
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -217,10 +221,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", commonService.getUserInfo().getUserName(), "B2C销售订单表", soB2cEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "新增操作");
 
+        //明细信息
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(soB2cEntity.getId());
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
+
         //自动匹配订单规则
-        approveRule(soB2cEntity.getId());
+        approveRule(soB2cEntity.getId(),detailList);
         //自动匹配配货规则
-        distributionRule(soB2cEntity.getId());
+        distributionRule(soB2cEntity.getId(),detailList);
 
         return soB2cEntity.getId();
     }
@@ -1050,7 +1060,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //关联关系
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listBySourceIds(Arrays.asList(id), SoB2cOptionTypeEnum.ENUM_SPLIT);
         if (CollectionUtils.isEmpty(soB2cRefList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_PARENT_NOT_SPLIT);
+            throw new ServiceException(ApiError.ERROR_SO_B2C_PARENT_NOT_SPLIT, entity.getCode());
         }
         List<String> targetIdList = soB2cRefList.stream().map(SoB2cRefEntity::getTargetId).collect(Collectors.toList());
         List<SoB2cEntity> targetList = this.listByIds(targetIdList);
@@ -1448,39 +1458,47 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         // 待付款
         if (SoB2cTabEnum.ENUM_PAYMENT.getCode().equals(params.getTabFlag())) {
             payStatusList.add(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            params.setInvalidStatus(Boolean.FALSE);
         }
         //待处理
         if (SoB2cTabEnum.ENUM_PENDING.getCode().equals(params.getTabFlag())) {
             approveStatusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
             approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
+            params.setInvalidStatus(Boolean.FALSE);
         }
         //审核中
         if (SoB2cTabEnum.ENUM_APPROVE_ING.getCode().equals(params.getTabFlag())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+            params.setInvalidStatus(Boolean.FALSE);
         }
         //待配货
         if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(params.getTabFlag())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+            params.setInvalidStatus(Boolean.FALSE);
         }
         //配货中
         if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(params.getTabFlag())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
+            params.setInvalidStatus(Boolean.FALSE);
         }
         //待发货
         if (SoB2cTabEnum.ENUM_WAIT_SHIPPED.getCode().equals(params.getTabFlag())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+            params.setInvalidStatus(Boolean.FALSE);
         }
         //已发货
         if (SoB2cTabEnum.ENUM_SHIPPED.getCode().equals(params.getTabFlag())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            params.setInvalidStatus(Boolean.FALSE);
         }
         //冻结中
         if (SoB2cTabEnum.ENUM_FROZEN.getCode().equals(params.getTabFlag())) {
             billStatusList.add(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
+            params.setInvalidStatus(Boolean.FALSE);
         }
         //已作废
         if (SoB2cTabEnum.ENUM_INVALID.getCode().equals(params.getTabFlag())) {
@@ -1705,21 +1723,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @author Will
      * @date: 2023/8/24 15:18
      */
-    private Boolean approveRule(String id) {
+    private Boolean approveRule(String id,List<SoB2cDetailEntity> detailList) {
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         //匹配审核规则 TODO
-        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
-        if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
-        }
         List<JSONObject> jsonList = detailList.stream().map(obj -> JSONUtil.parseObj(obj)).collect(Collectors.toList());
         RuleOrderApprovalDTO.RuleMatchDTO ruleOrderMatchResult = ruleOrderApprovalService.getRuleOrderMatchResult(jsonList);
-
-        Boolean approveSuccess = StringUtils.isBlank(entity.getInterceptRemark()) ? Boolean.FALSE : Boolean.TRUE;
-
+        //审核规则是否通过
+        Boolean approveSuccess = ObjectUtils.isEmpty(ruleOrderMatchResult) ? Boolean.FALSE : Boolean.TRUE;
         //匹配审核规则通过,自动提交并审核
         if (approveSuccess) {
+            //更新流转状态和分类信息
+
             //自动提交
             BatchResultDTO submit = this.submit(id, Boolean.FALSE);
             if (!submit.getSuccess()) {
@@ -1758,12 +1773,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @author Will
      * @date: 2023/8/24 15:19
      */
-    private Boolean distributionRule(String id) {
+    private Boolean distributionRule(String id,List<SoB2cDetailEntity> detailList) {
         SoB2cEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         //进行配货规则匹配 TODO
-        Boolean distributionSuccess = "1".equals(entity.getInterceptRemark()) ? Boolean.TRUE : Boolean.FALSE;
+        List<JSONObject> jsonList = detailList.stream().map(obj -> JSONUtil.parseObj(obj)).collect(Collectors.toList());
+        RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResultDTO = ruleDeliveryWarehouseService.getRuleOrderMatchResult(jsonList);
+        //配货规则是否通过
+        Boolean distributionSuccess = ObjectUtils.isEmpty(ruleMatchResultDTO) ? Boolean.FALSE : Boolean.TRUE;
         if (distributionSuccess) {
+            //更新明细仓库信息
+
             //状态更新为配货中
             updateBillStatus(id, SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION);
             //自动发货(物流规则有设置则自动发货) TODO
