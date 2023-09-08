@@ -201,11 +201,8 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
      * @return
      */
     @Override
-    public RuleDeliveryWarehouseDTO.RuleMatchResultDTO getRuleOrderMatchResult(List<JSONObject> jsonObjectList) {
-        RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = new RuleDeliveryWarehouseDTO.RuleMatchResultDTO();
-        if (CollectionUtils.isEmpty(jsonObjectList)) {
-            return ruleMatchResult;
-        }
+    public List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> getRuleOrderMatchResult(List<JSONObject> jsonObjectList) {
+        List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> ruleMatchResultList = new ArrayList<>(10);
         //根据优先级获取规则列表
         List<RuleDeliveryWarehouseEntity> ruleDeliveryWarehouselList = this.listOrderByPriority();
         List<String> ruleIdList = ruleDeliveryWarehouselList.stream().map(RuleDeliveryWarehouseEntity::getId).collect(Collectors.toList());
@@ -222,18 +219,21 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
             for (JSONObject jsonObject : jsonObjectList) {
                 Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject);
                 if (matchResult) {
+                    RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResult = new RuleDeliveryWarehouseDTO.RuleMatchResultDTO();
                     ruleMatchResult.setWarehouseId(item.getWarehouseId());
-                    return ruleMatchResult;
+                    ruleMatchResult.setJsonObject(jsonObject);
+                    ruleMatchResultList.add(ruleMatchResult);
                 }
             }
 
         }
-        return ruleMatchResult;
+        return ruleMatchResultList;
 
     }
 
     /**
      * 根据优先级获取规则列表
+     *
      * @return
      */
     private List<RuleDeliveryWarehouseEntity> listOrderByPriority() {

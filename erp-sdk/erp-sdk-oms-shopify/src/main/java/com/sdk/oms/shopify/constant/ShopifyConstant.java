@@ -13,8 +13,9 @@ public interface ShopifyConstant {
     /**
      * 店铺授权的范围
      */
-//    String SHOP_SCOPE = "read_orders,read_products";
     String SHOP_SCOPE = "read_orders,read_products,write_products,write_orders";
+
+    String DOMAIN = ".myshopify.com";
 
 
 }

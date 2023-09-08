@@ -69,5 +69,5 @@ public interface RuleDeliveryWarehouseService extends SuperService<RuleDeliveryW
      * @param jsonObjectList
      * @return
      */
-    RuleDeliveryWarehouseDTO.RuleMatchResultDTO getRuleOrderMatchResult(List<JSONObject> jsonObjectList);
+    List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> getRuleOrderMatchResult(List<JSONObject> jsonObjectList);
 }

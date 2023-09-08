@@ -73,6 +73,9 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR, expression);
         }
         BeanMapperUtils.copy(addDTO, ruleOrderApprovalEntity);
+        List<String> categoryDetailIdList = addDTO.getCategoryDetailIdList();
+        String categoryDetailId = CollectionUtils.isNotEmpty(categoryDetailIdList) ? categoryDetailIdList.stream().collect(Collectors.joining(",")) : "";
+        ruleOrderApprovalEntity.setCategoryDetailId(categoryDetailId);
         List<String> operationTypeList = addDTO.getOperationTypeList();
         ruleOrderApprovalEntity.setOperationType(operationTypeList.stream().collect(Collectors.joining(",")));
         Boolean save = super.save(ruleOrderApprovalEntity);
@@ -111,6 +114,9 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         }
 
         RuleOrderApprovalEntity ruleOrderApprovalEntity = BeanMapperUtils.map(RuleOrderApprovalEntity.class, updateDTO);
+        List<String> categoryDetailIdList = updateDTO.getCategoryDetailIdList();
+        String categoryDetailId = CollectionUtils.isNotEmpty(categoryDetailIdList) ? categoryDetailIdList.stream().collect(Collectors.joining(",")) : "";
+        ruleOrderApprovalEntity.setCategoryDetailId(categoryDetailId);
         List<String> operationTypeList = updateDTO.getOperationTypeList();
         ruleOrderApprovalEntity.setOperationType(operationTypeList.stream().collect(Collectors.joining(",")));
         Boolean save = super.updateById(ruleOrderApprovalEntity);
@@ -172,6 +178,8 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         Optional.ofNullable(ruleOrderApproval).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "订单审核规则"));
         RuleOrderApprovalDTO.ViewDTO view = new RuleOrderApprovalDTO.ViewDTO();
         BeanMapper.copy(ruleOrderApproval, view);
+        String categoryDetailId = ruleOrderApproval.getCategoryDetailId();
+        view.setCategoryDetailIdList(Arrays.asList(categoryDetailId.split(",")));
         String operationType = ruleOrderApproval.getOperationType();
         List<String> operationTypeList = StringUtils.isNotBlank(operationType) ? Arrays.asList(operationType.split(",")) : Collections.emptyList();
         view.setOperationTypeList(operationTypeList);
@@ -209,7 +217,8 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
                 Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, jsonObject);
                 if (matchResult) {
                     ruleMatch.setFlowStatus(item.getFlowStatus());
-                    ruleMatch.setCategoryDetailId(item.getCategoryDetailId());
+                    String categoryDetailId = item.getCategoryDetailId();
+                    ruleMatch.setCategoryDetailIdList(Arrays.asList(categoryDetailId.split(",")));
                     return ruleMatch;
                 }
             }

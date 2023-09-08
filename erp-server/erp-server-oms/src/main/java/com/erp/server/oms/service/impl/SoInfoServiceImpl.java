@@ -1885,7 +1885,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 return Boolean.TRUE;
             }
             //同步成功
-            if (syncKingdeeStatus.equals(SyncStatusEnum.SUCCESS_SYNC.getCode())) {
+            if (syncKingdeeStatus.equals(SyncStatusEnum.SUCCESS_SYNC.getCode())&&StringUtils.isNotBlank(syncKingdeeId)) {
                 KingdeeDTO dto = new KingdeeDTO();
                 dto.setId(syncKingdeeId);
                 dto.setNumber("");

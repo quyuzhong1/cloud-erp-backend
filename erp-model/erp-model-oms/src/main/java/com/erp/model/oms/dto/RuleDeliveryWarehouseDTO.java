@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import cn.hutool.json.JSONObject;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -214,6 +215,8 @@ public class RuleDeliveryWarehouseDTO implements Serializable {
          * 仓库id
          */
         private String warehouseId;
+
+        private JSONObject jsonObject;
 
     }
 

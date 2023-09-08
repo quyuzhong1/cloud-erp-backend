@@ -164,7 +164,7 @@ public class RuleOrderApprovalDTO implements Serializable {
         /**
          * 分类明细id 来源  http://172.16.100.11:3002/project/110/interface/api/21652
          */
-        private String categoryDetailId;
+        private List<String> categoryDetailIdList;
 
         /**
          * 设定操作
@@ -201,9 +201,9 @@ public class RuleOrderApprovalDTO implements Serializable {
         private String flowStatus;
 
         /**
-         * 分类明细id
+         * 分类明细id list
          */
-        private String categoryDetailId;
+        private  List<String> categoryDetailIdList;
 
     }
 }
