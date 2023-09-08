@@ -145,6 +145,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private RuleDeliveryWarehouseService ruleDeliveryWarehouseService;
 
+    @Autowired
+    private SoB2cFinanceService soB2cFinanceService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -209,6 +211,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cLogisticsService.add(addDTO.getLogisticsDTO(), soB2cEntity.getId());
         //新增买家信息
         soB2cReceiverService.add(addDTO.getReceiverDTO(), soB2cEntity.getId());
+        //新增财务信息
+        addSoB2cFinance(soB2cEntity);
         //新增明细
         soB2cDetailService.add(addDTO.getDetailList(), soB2cEntity.getId());
         //新增订单分类
@@ -228,10 +232,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         //自动匹配订单规则
-        approveRule(soB2cEntity.getId(),detailList);
-        //自动匹配配货规则
-        distributionRule(soB2cEntity.getId(),detailList);
-
+        Boolean isSuccess = approveRule(soB2cEntity.getId(), detailList);
+        if (isSuccess) {
+            //自动匹配配货规则
+            distributionRule(soB2cEntity.getId(),detailList);
+        }
         return soB2cEntity.getId();
     }
 
@@ -1429,6 +1434,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         soB2cEntity.setBillDate(LocalDate.now());
         BigDecimal exchangeRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+        if (MathUtil.compareTo(exchangeRate,MathUtil.ZERO) == MathUtil.ZERO) {
+            throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST,LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),soB2cEntity.getCurrency());
+        }
         soB2cEntity.setExchangeRate(exchangeRate);
 
         //店铺
@@ -1462,8 +1470,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //待处理
         if (SoB2cTabEnum.ENUM_PENDING.getCode().equals(params.getTabFlag())) {
-            approveStatusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-            approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
+            params.setAbnormalTypeList(Arrays.stream(SoB2cAbnormalTypeEnum.values()).map(SoB2cAbnormalTypeEnum::getCode).collect(Collectors.toList()));
             params.setInvalidStatus(Boolean.FALSE);
         }
         //审核中
@@ -1537,27 +1544,27 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<DictCountryEntity> dictCountryList = sysDictFeign.listCountryByIds(countryIdList);
 
         //平台
-        List<String> platformList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getDictPlatform())).map(SoB2cDTO.MergeListDTO::getDictPlatform)
+        List<String> platformList = records.stream().map(SoB2cDTO.MergeListDTO::getDictPlatform)
                 .distinct().collect(Collectors.toList());
         //币别
-        List<String> currencyList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getCurrency())).map(SoB2cDTO.MergeListDTO::getCurrency)
+        List<String> currencyList = records.stream().map(SoB2cDTO.MergeListDTO::getSourceCurrency)
                 .distinct().collect(Collectors.toList());
         //买家名称
-        List<String> buyerNameList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getBuyerName())).map(SoB2cDTO.MergeListDTO::getBuyerName)
+        List<String> buyerNameList = records.stream().map(SoB2cDTO.MergeListDTO::getBuyerName)
                 .distinct().collect(Collectors.toList());
         //平台
-        List<String> receiverNameList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getReceiverName())).map(SoB2cDTO.MergeListDTO::getReceiverName)
+        List<String> receiverNameList = records.stream().map(SoB2cDTO.MergeListDTO::getReceiverName)
                 .distinct().collect(Collectors.toList());
         //地址1
-        List<String> firstAddressList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getFirstAddress())).map(SoB2cDTO.MergeListDTO::getFirstAddress).distinct().collect(Collectors.toList());
+        List<String> firstAddressList = records.stream().map(SoB2cDTO.MergeListDTO::getFirstAddress).distinct().collect(Collectors.toList());
         //地址2
-        List<String> secondAddressList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getSecondAddress())).map(SoB2cDTO.MergeListDTO::getSecondAddress).distinct().collect(Collectors.toList());
+        List<String> secondAddressList = records.stream().map(SoB2cDTO.MergeListDTO::getSecondAddress).distinct().collect(Collectors.toList());
         //详细地址
-        List<String> fullAddressList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getFullAddress())).map(SoB2cDTO.MergeListDTO::getFullAddress).distinct().collect(Collectors.toList());
+        List<String> fullAddressList = records.stream().map(SoB2cDTO.MergeListDTO::getFullAddress).distinct().collect(Collectors.toList());
         //仓库
-        List<String> warehouseIdList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getWarehouseId())).map(SoB2cDTO.MergeListDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        List<String> warehouseIdList = records.stream().map(SoB2cDTO.MergeListDTO::getWarehouseId).distinct().collect(Collectors.toList());
         //物流方式
-        List<String> dictLogisticsMethodList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getDictLogisticsMethod())).map(SoB2cDTO.MergeListDTO::getDictLogisticsMethod).distinct().collect(Collectors.toList());
+        List<String> dictLogisticsMethodList = records.stream().map(SoB2cDTO.MergeListDTO::getDictLogisticsMethod).distinct().collect(Collectors.toList());
 
         SoB2cDTO.MergeParamDTO mergeParamDTO = new SoB2cDTO.MergeParamDTO();
         mergeParamDTO.setPlatformList(platformList);
@@ -1576,8 +1583,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return;
         }
         //产品详细
-        List<String> skuIdList = mergeMainList.stream().flatMap(obj -> Stream.of(obj.getDetailList().stream().map(SoB2cDTO.MergeDetailDTO::getSkuId).toArray(String[]::new)))
-                .distinct().collect(Collectors.toList());
+        List<String> skuIdList = mergeMainList.stream().map(SoB2cDTO.MergeMainDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         if (CollectionUtils.isEmpty(skuList)) {
             log.error("未发现产品详细，skuIdList = {}", skuIdList);
@@ -1601,36 +1607,27 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //主表数据
             if (CollectionUtils.isNotEmpty(mergeMainList)) {
                 for (SoB2cDTO.MergeMainDTO mergeMainDTO : mergeMainList) {
-                    List<SoB2cDTO.MergeDetailDTO> detailList = mergeMainDTO.getDetailList();
-                    if (CollectionUtils.isEmpty(detailList)) {
-                        continue;
-                    }
-                    //明细数据
-                    for (SoB2cDTO.MergeDetailDTO mergeDetailDTO : detailList) {
-                        //产品名称
-                        String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(mergeDetailDTO.getSkuId())).findFirst()
-                                .flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
-                        mergeDetailDTO.setProductName(productName);
-                        //本位币金额
-                        mergeDetailDTO.setAmount(MathUtil.multiply(mergeDetailDTO.getSourceAmount(), mergeDetailDTO.getExchangeRate()));
-                        mergeDetailDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
-                    }
+
+                    //产品名称
+                    String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(mergeMainDTO.getSkuId())).findFirst()
+                            .flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+                    mergeMainDTO.setProductName(productName);
+                    //本位币金额
+                    mergeMainDTO.setAmount(MathUtil.multiply(mergeMainDTO.getSourceAmount(), mergeMainDTO.getExchangeRate()));
+                    mergeMainDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 }
                 mergeListDTO.setMainList(mergeMainList);
                 //总原币金额
-                BigDecimal totalSourceAmount = mergeMainList.stream().filter(obj -> CollectionUtils.isNotEmpty(obj.getDetailList()))
-                        .flatMap(obj -> Stream.of(obj.getDetailList().stream().map(SoB2cDTO.MergeDetailDTO::getSourceAmount).reduce(BigDecimal.ZERO, BigDecimal::add)))
+                BigDecimal totalSourceAmount = mergeMainList.stream().map(SoB2cDTO.MergeMainDTO::getSourceAmount)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 mergeListDTO.setSourceAmount(totalSourceAmount);
                 //总本位币金额
-                BigDecimal totalAmount = mergeMainList.stream().filter(obj -> CollectionUtils.isNotEmpty(obj.getDetailList()))
-                        .flatMap(obj -> Stream.of(obj.getDetailList().stream().map(SoB2cDTO.MergeDetailDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add)))
+                BigDecimal totalAmount = mergeMainList.stream().map(SoB2cDTO.MergeMainDTO::getSourceAmount)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 mergeListDTO.setAmount(totalAmount);
                 mergeListDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 //总重量
-                BigDecimal totalWeight = mergeMainList.stream().filter(obj -> CollectionUtils.isNotEmpty(obj.getDetailList()))
-                        .flatMap(obj -> Stream.of(obj.getDetailList().stream().map(SoB2cDTO.MergeDetailDTO::getWeight).reduce(BigDecimal.ZERO, BigDecimal::add)))
+                BigDecimal totalWeight = mergeMainList.stream().map(SoB2cDTO.MergeMainDTO::getSourceAmount)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 mergeListDTO.setWeight(totalWeight);
             }
@@ -1759,11 +1756,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (!submit.getSuccess()) {
                 throw new ServiceException(ApiError.ERROR_1042);
             }
-            return Boolean.TRUE;
+            return Boolean.FALSE;
         }
         //标识异常并且审核不通过
         updateAbnormalTypeApprove(id, ApproveStatusEnum.REJECT, SoB2cAbnormalTypeEnum.ENUM_APPROVE_REJECT);
-        return Boolean.TRUE;
+        return Boolean.FALSE;
     }
 
     /**
@@ -1939,7 +1936,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         //店铺信息
-        ShopDTO.ViewCostDTO viewCostDTO = shopCostService.viewCost(soB2cEntity.getShopId());
+        ShopCostEntity shopCostEntity = shopCostService.getByShopId(soB2cEntity.getShopId());
         //平台费
         BigDecimal platformCost = BigDecimal.ZERO;
         //avt 费
@@ -1962,24 +1959,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal itemCost = soB2cDetailList.stream().map(SoB2cDetailEntity::getTaxCost).reduce(BigDecimal.ZERO, BigDecimal::add);
         financialInfoDTO.setItemCost(itemCost);
         //物流成本,TMS计算的物流成本 TODO
-        financialInfoDTO.setLogisticsCost(BigDecimal.ZERO);
+        BigDecimal logisticsCost = BigDecimal.ZERO;
+        financialInfoDTO.setLogisticsCost(logisticsCost);
 
-        if (ObjectUtils.isNotEmpty(viewCostDTO)) {
-            BigDecimal  platformRate = MathUtil.divide(viewCostDTO.getPlatformRate(),MathUtil.BigDecimal_100);
-            BigDecimal  vatRate = MathUtil.divide(viewCostDTO.getVatRate(),MathUtil.BigDecimal_100);
-            BigDecimal transferRate = MathUtil.divide(viewCostDTO.getVatRate(),MathUtil.BigDecimal_100);
+        if (ObjectUtils.isNotEmpty(shopCostEntity)) {
+            BigDecimal  platformRate = MathUtil.divide(shopCostEntity.getPlatformRate(),MathUtil.BigDecimal_100);
+            BigDecimal  vatRate = MathUtil.divide(shopCostEntity.getVatRate(),MathUtil.BigDecimal_100);
+            BigDecimal transferRate = MathUtil.divide(shopCostEntity.getVatRate(),MathUtil.BigDecimal_100);
 
-            DictBasicEntity platformOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_PLATFORM_COST.getType(), viewCostDTO.getDictPlatformOption());
+            DictBasicEntity platformOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_PLATFORM_COST.getType(), shopCostEntity.getDictPlatformOption());
             if (ObjectUtils.isEmpty(platformOption)) {
-                throw new ServiceException(ApiError.ERROR_DICT_NOT_EXIST,viewCostDTO.getDictPlatformOption());
+                throw new ServiceException(ApiError.ERROR_DICT_NOT_EXIST,shopCostEntity.getDictPlatformOption());
             }
-            DictBasicEntity vatOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_VAT_COST.getType(), viewCostDTO.getDictVatOption());
+            DictBasicEntity vatOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_VAT_COST.getType(), shopCostEntity.getDictVatOption());
             if (ObjectUtils.isEmpty(vatOption)) {
-                throw new ServiceException(ApiError.ERROR_DICT_NOT_EXIST,viewCostDTO.getDictVatOption());
+                throw new ServiceException(ApiError.ERROR_DICT_NOT_EXIST,shopCostEntity.getDictVatOption());
             }
-            DictBasicEntity transferOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_TRANSFER_COST.getType(), viewCostDTO.getDictTransferOption());
+            DictBasicEntity transferOption = dictBasicService.getByTypeAndValue(DictBasicTypeEnum.SHOP_TRANSFER_COST.getType(), shopCostEntity.getDictTransferOption());
             if (ObjectUtils.isEmpty(transferOption)) {
-                throw new ServiceException(ApiError.ERROR_DICT_NOT_EXIST,viewCostDTO.getDictTransferOption());
+                throw new ServiceException(ApiError.ERROR_DICT_NOT_EXIST,shopCostEntity.getDictTransferOption());
             }
             //平台费
             if (ShopPlatformCostEnum.MULTIPLY_PLATFORM_RATE.getCode().equals(platformOption.getValue())) {
@@ -2001,10 +1999,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //平台费,店铺计算
         financialInfoDTO.setPlatformCost(platformCost);
+
         //转账费,店铺计算
         financialInfoDTO.setPaypalCost(paypalCost);
         //包装辅料费,包装辅料SKU*数量的成本价汇总
-        financialInfoDTO.setAccessoriesCost(BigDecimal.ZERO);
+        BigDecimal accessoriesCost = BigDecimal.ZERO;
+        financialInfoDTO.setAccessoriesCost(accessoriesCost);
         //VAT税费,店铺计算
         financialInfoDTO.setVatCost(vatCost);
         //总利润,订单总金额+运费收入-商品成本-物流成本-平台费-转账费-包装辅料费-VAT税费
@@ -2018,9 +2018,43 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .subtract(vatCost);
         financialInfoDTO.setProfit(profit);
         //利润率,总利润/(订单总金额+运费收入)*100%
+        BigDecimal itemCostProfitRate = MathUtil.divide(itemCost, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
+        financialInfoDTO.setItemCostProfitRate(MathUtil.compareTo(itemCostProfitRate,MathUtil.ZERO) == MathUtil.ZERO ? "0%" : itemCostProfitRate + "%");
+
+        BigDecimal logisticsCostProfitRate = MathUtil.divide(logisticsCost, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
+        financialInfoDTO.setLogisticsCostProfitRate(MathUtil.compareTo(logisticsCostProfitRate,MathUtil.ZERO) == MathUtil.ZERO ? "0%" : logisticsCostProfitRate + "%");
+
+        BigDecimal paypalCostProfitRate = MathUtil.divide(paypalCost, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
+        financialInfoDTO.setPaypalCostProfitRate(MathUtil.compareTo(paypalCostProfitRate,MathUtil.ZERO) == MathUtil.ZERO ? "0%" : paypalCostProfitRate+ "%");
+
+        BigDecimal platformCostProfitRate = MathUtil.divide(platformCost, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
+        financialInfoDTO.setPlatformCostProfitRate(MathUtil.compareTo(platformCostProfitRate,MathUtil.ZERO) == MathUtil.ZERO ? "0%" : platformCostProfitRate+ "%");
+
+        BigDecimal accessoriesCostProfitRate = MathUtil.divide(accessoriesCost, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
+        financialInfoDTO.setAccessoriesCostProfitRate(MathUtil.compareTo(accessoriesCostProfitRate,MathUtil.ZERO) == MathUtil.ZERO ? "0%" : accessoriesCostProfitRate+ "%");
+
+        BigDecimal vatCostProfitRate = MathUtil.divide(vatCost, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
+        financialInfoDTO.setVatCostProfitRate(MathUtil.compareTo(vatCostProfitRate,MathUtil.ZERO) == MathUtil.ZERO ? "0%" : vatCostProfitRate+ "%");
+
         BigDecimal profitRate = MathUtil.divide(profit, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
-        financialInfoDTO.setProfitRate(profitRate);
+        financialInfoDTO.setProfitRate(MathUtil.compareTo(profitRate,MathUtil.ZERO) == MathUtil.ZERO ? "0%" : profitRate + "%");
         return financialInfoDTO;
+    }
+
+    /**
+     * @description: 新增财务信息
+     * @author Will
+     * @date: 2023/9/8 12:26
+     * @param soB2cEntity
+     */
+    private void addSoB2cFinance (SoB2cEntity soB2cEntity) {
+        SoB2cDTO.FinancialParamDTO dto = new SoB2cDTO.FinancialParamDTO();
+        dto.setId(soB2cEntity.getId());
+        dto.setIsCny(Boolean.FALSE);
+        SoB2cDTO.FinancialInfoDTO financialInfoDTO = getFinancialInfo(dto);
+        SoB2cFinanceDTO.AddDTO addDTO = BeanMapperUtils.map(SoB2cFinanceDTO.AddDTO.class, financialInfoDTO);
+        addDTO.setMainId(soB2cEntity.getId());
+        soB2cFinanceService.add(addDTO);
     }
 
     /**

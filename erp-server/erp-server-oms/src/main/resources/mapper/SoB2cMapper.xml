@@ -57,23 +57,21 @@
         <result column="first_address" property="firstAddress"/>
         <result column="second_address" property="secondAddress"/>
         <result column="full_address" property="fullAddress"/>
-        <collection property="detailList" ofType="com.erp.model.oms.dto.SoB2cDTO$MergeDetailDTO">
-            <id column="detailId" property="id"/>
-            <result column="image_url" property="imageUrl"/>
-            <result column="sku_id" property="skuId"/>
-            <result column="sku_no" property="skuNo"/>
-            <result column="platform_sku_no" property="platformSkuNo"/>
-            <result column="seller_sku_no" property="sellerSkuNo"/>
-            <result column="weight" property="weight"/>
-            <result column="tax_cost" property="taxCost"/>
-            <result column="sourceAmount" property="sourceAmount"/>
-            <result column="sourceCurrency" property="sourceCurrency"/>
-            <result column="qty" property="qty"/>
-            <result column="exchange_rate" property="exchangeRate"/>
-            <result column="warehouse_id" property="warehouseId"/>
-            <result column="warehouse_name" property="warehouseName"/>
-            <result column="warehouse_location" property="warehouseLocation"/>
-        </collection>
+        <result column="detailId" property="detailId"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="sku_id" property="skuId"/>
+        <result column="sku_no" property="skuNo"/>
+        <result column="platform_sku_no" property="platformSkuNo"/>
+        <result column="seller_sku_no" property="sellerSkuNo"/>
+        <result column="weight" property="weight"/>
+        <result column="tax_cost" property="taxCost"/>
+        <result column="sourceAmount" property="sourceAmount"/>
+        <result column="sourceCurrency" property="sourceCurrency"/>
+        <result column="qty" property="qty"/>
+        <result column="exchange_rate" property="exchangeRate"/>
+        <result column="warehouse_id" property="warehouseId"/>
+        <result column="warehouse_name" property="warehouseName"/>
+        <result column="warehouse_location" property="warehouseLocation"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->

@@ -471,9 +471,19 @@ public class SoB2cDTO implements Serializable {
         private BigDecimal itemCost;
 
         /**
+         * 商品成本利润率
+         */
+        private String itemCostProfitRate;
+
+        /**
          * 物流成本
          */
         private BigDecimal logisticsCost;
+
+        /**
+         * 物流成本利润率
+         */
+        private String logisticsCostProfitRate;
 
         /**
          * 平台费
@@ -481,9 +491,19 @@ public class SoB2cDTO implements Serializable {
         private BigDecimal platformCost;
 
         /**
+         * 平台费利润率
+         */
+        private String platformCostProfitRate;
+
+        /**
          * 转账费
          */
         private BigDecimal paypalCost;
+
+        /**
+         * 转账费
+         */
+        private String paypalCostProfitRate;
 
         /**
          * 包装辅料费
@@ -491,9 +511,19 @@ public class SoB2cDTO implements Serializable {
         private BigDecimal accessoriesCost;
 
         /**
+         * 包装辅料费利润率
+         */
+        private String accessoriesCostProfitRate;
+
+        /**
          * VAT税费
          */
         private BigDecimal vatCost;
+
+        /**
+         * VAT税费利润率
+         */
+        private String vatCostProfitRate;
 
         /**
          * 总利润
@@ -503,7 +533,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 总利润率
          */
-        private BigDecimal profitRate;
+        private String profitRate;
     }
 
     /**
@@ -660,7 +690,7 @@ public class SoB2cDTO implements Serializable {
         private List<String> ids;
 
         /**
-         * 编辑分类类型
+         * 编辑分类类型 字典 categoryType类型
          */
         @NotBlank(message = "类型不能为空")
         private SoB2cCategoryTypeEnum typeEnum;
@@ -974,22 +1004,9 @@ public class SoB2cDTO implements Serializable {
          */
         private String fullAddress;
         /**
-         * 合并明细信息
+         * 明细主键id
          */
-        private List<MergeDetailDTO> detailList;
-    }
-
-    /**
-     * 合并明细信息
-     */
-    @Data
-    @NoArgsConstructor
-    public static class MergeDetailDTO {
-
-        /**
-         * 主键id
-         */
-        private String id;
+        private String detailId;
         /**
          * 图片Url
          */
@@ -1059,6 +1076,16 @@ public class SoB2cDTO implements Serializable {
          * 库位
          */
         private String warehouseLocation;
+    }
+
+    /**
+     * 合并明细信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MergeDetailDTO {
+
+
     }
 
 

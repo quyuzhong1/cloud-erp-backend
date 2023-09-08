@@ -1,9 +1,9 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopCostEntity;
-import com.common.business.service.SuperService;
 import com.erp.model.oms.entity.ShopInfoEntity;
 
 /**
@@ -42,4 +42,12 @@ public interface ShopCostService extends SuperService<ShopCostEntity> {
      * @return com.erp.model.oms.dto.ShopDTO.ViewCostDTO
      */
     ShopDTO.ViewCostDTO viewCost(String shopId);
+    /**
+     * @description: 根据店铺id查询
+     * @author Will
+     * @date: 2023/9/8 11:56
+     * @param shopId
+     * @return ShopCostEntity
+     */
+    ShopCostEntity getByShopId(String shopId);
 }
