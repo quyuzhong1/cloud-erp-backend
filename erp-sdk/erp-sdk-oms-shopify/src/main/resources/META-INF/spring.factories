@@ -1,3 +1,4 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-   com.sdk.oms.shopify.service.ShopSdkServer
-
+   com.sdk.oms.shopify.service.ShopSdkServer,\
+   com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClientService,\
+   com.sdk.oms.shopify.api.rest.ShopifyRestClientService
