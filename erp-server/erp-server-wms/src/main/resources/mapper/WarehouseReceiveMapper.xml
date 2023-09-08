@@ -448,7 +448,11 @@
                     FROM qc_info qc
                     GROUP BY qc.source_id
                 ) t
-                WHERE t.source_id = prd."main_id" AND t.qc_status ILIKE 'finishQc'
+                WHERE t.source_id = prd."main_id"
+                AND t.qc_status NOT ILIKE concat('%', 'draft' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'waitQc' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'cancel' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'waitReQc' ,'%')
             )
         </if>
         <if test="param2.tabFlag == 'waitInStockNotQc'">
@@ -462,7 +466,11 @@
                     FROM qc_info qc
                     GROUP BY qc.source_id
                 ) t
-                WHERE t.source_id = prd."main_id" AND t.qc_status ILIKE 'finishQc'
+                WHERE t.source_id = prd."main_id"
+                AND (t.qc_status ILIKE concat('%', 'draft' ,'%')
+                OR t.qc_status ILIKE concat('%', 'waitQc' ,'%')
+                OR t.qc_status ILIKE concat('%', 'cancel' ,'%')
+                OR t.qc_status ILIKE concat('%', 'waitReQc' ,'%'))
             )
         </if>
         ORDER BY pr.code DESC
@@ -504,7 +512,11 @@
                     FROM qc_info qc
                     GROUP BY qc.source_id
                 ) t
-                WHERE t.source_id = prd."main_id" AND t.qc_status ILIKE 'finishQc'
+                WHERE t.source_id = prd."main_id"
+                AND (t.qc_status ILIKE concat('%', 'draft' ,'%')
+                OR t.qc_status ILIKE concat('%', 'waitQc' ,'%')
+                OR t.qc_status ILIKE concat('%', 'cancel' ,'%')
+                OR t.qc_status ILIKE concat('%', 'waitReQc' ,'%'))
             )
         </if>
         <if test="params.tabFlag == 'waitInStockNotQc'">
@@ -518,7 +530,11 @@
                     FROM qc_info qc
                     GROUP BY qc.source_id
                 ) t
-                WHERE t.source_id = prd."main_id" AND t.qc_status ILIKE 'finishQc'
+                WHERE t.source_id = prd."main_id"
+                AND (t.qc_status ILIKE concat('%', 'draft' ,'%')
+                OR t.qc_status ILIKE concat('%', 'waitQc' ,'%')
+                OR t.qc_status ILIKE concat('%', 'cancel' ,'%')
+                OR t.qc_status ILIKE concat('%', 'waitReQc' ,'%'))
             )
         </if>
 
