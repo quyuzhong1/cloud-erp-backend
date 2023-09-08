@@ -1434,6 +1434,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         soB2cEntity.setBillDate(LocalDate.now());
         BigDecimal exchangeRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+        if (MathUtil.compareTo(exchangeRate,MathUtil.ZERO) == MathUtil.ZERO) {
+            throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST,LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),soB2cEntity.getCurrency());
+        }
         soB2cEntity.setExchangeRate(exchangeRate);
 
         //店铺
@@ -1956,7 +1959,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal itemCost = soB2cDetailList.stream().map(SoB2cDetailEntity::getTaxCost).reduce(BigDecimal.ZERO, BigDecimal::add);
         financialInfoDTO.setItemCost(itemCost);
         //物流成本,TMS计算的物流成本 TODO
-        financialInfoDTO.setLogisticsCost(BigDecimal.ZERO);
+        BigDecimal logisticsCost = BigDecimal.ZERO;
+        financialInfoDTO.setLogisticsCost(logisticsCost);
 
         if (ObjectUtils.isNotEmpty(shopCostEntity)) {
             BigDecimal  platformRate = MathUtil.divide(shopCostEntity.getPlatformRate(),MathUtil.BigDecimal_100);
@@ -1995,10 +1999,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //平台费,店铺计算
         financialInfoDTO.setPlatformCost(platformCost);
+
         //转账费,店铺计算
         financialInfoDTO.setPaypalCost(paypalCost);
         //包装辅料费,包装辅料SKU*数量的成本价汇总
-        financialInfoDTO.setAccessoriesCost(BigDecimal.ZERO);
+        BigDecimal accessoriesCost = BigDecimal.ZERO;
+        financialInfoDTO.setAccessoriesCost(accessoriesCost);
         //VAT税费,店铺计算
         financialInfoDTO.setVatCost(vatCost);
         //总利润,订单总金额+运费收入-商品成本-物流成本-平台费-转账费-包装辅料费-VAT税费
@@ -2012,8 +2018,26 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .subtract(vatCost);
         financialInfoDTO.setProfit(profit);
         //利润率,总利润/(订单总金额+运费收入)*100%
+        BigDecimal itemCostProfitRate = MathUtil.divide(itemCost, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
+        financialInfoDTO.setItemCostProfitRate(MathUtil.compareTo(itemCostProfitRate,MathUtil.ZERO) == MathUtil.ZERO ? "0%" : itemCostProfitRate + "%");
+
+        BigDecimal logisticsCostProfitRate = MathUtil.divide(logisticsCost, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
+        financialInfoDTO.setLogisticsCostProfitRate(MathUtil.compareTo(logisticsCostProfitRate,MathUtil.ZERO) == MathUtil.ZERO ? "0%" : logisticsCostProfitRate + "%");
+
+        BigDecimal paypalCostProfitRate = MathUtil.divide(paypalCost, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
+        financialInfoDTO.setPaypalCostProfitRate(MathUtil.compareTo(paypalCostProfitRate,MathUtil.ZERO) == MathUtil.ZERO ? "0%" : paypalCostProfitRate+ "%");
+
+        BigDecimal platformCostProfitRate = MathUtil.divide(platformCost, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
+        financialInfoDTO.setPlatformCostProfitRate(MathUtil.compareTo(platformCostProfitRate,MathUtil.ZERO) == MathUtil.ZERO ? "0%" : platformCostProfitRate+ "%");
+
+        BigDecimal accessoriesCostProfitRate = MathUtil.divide(accessoriesCost, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
+        financialInfoDTO.setAccessoriesCostProfitRate(MathUtil.compareTo(accessoriesCostProfitRate,MathUtil.ZERO) == MathUtil.ZERO ? "0%" : accessoriesCostProfitRate+ "%");
+
+        BigDecimal vatCostProfitRate = MathUtil.divide(vatCost, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
+        financialInfoDTO.setVatCostProfitRate(MathUtil.compareTo(vatCostProfitRate,MathUtil.ZERO) == MathUtil.ZERO ? "0%" : vatCostProfitRate+ "%");
+
         BigDecimal profitRate = MathUtil.divide(profit, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
-        financialInfoDTO.setProfitRate(profitRate);
+        financialInfoDTO.setProfitRate(MathUtil.compareTo(profitRate,MathUtil.ZERO) == MathUtil.ZERO ? "0%" : profitRate + "%");
         return financialInfoDTO;
     }
 
@@ -2029,6 +2053,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setIsCny(Boolean.FALSE);
         SoB2cDTO.FinancialInfoDTO financialInfoDTO = getFinancialInfo(dto);
         SoB2cFinanceDTO.AddDTO addDTO = BeanMapperUtils.map(SoB2cFinanceDTO.AddDTO.class, financialInfoDTO);
+        addDTO.setMainId(soB2cEntity.getId());
         soB2cFinanceService.add(addDTO);
     }
 
