@@ -81,5 +81,15 @@ public class ProductBomSkuHistoryServiceImpl extends ServiceImpl<ProductBomSkuHi
         return baseMapper.listHistoryBomChildBySkuIds(skuIds);
     }
 
+    @Override
+    public void removeByHistoryBomIdList(List<String> historyBomIdList) {
+        if (CollectionUtils.isEmpty(historyBomIdList)) {
+            return;
+        }
+        lambdaUpdate()
+                .in(ProductBomSkuHistoryEntity::getBomHistoryId,historyBomIdList)
+                .remove();
+    }
+
 
 }
