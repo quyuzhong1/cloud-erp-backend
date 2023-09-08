@@ -1391,15 +1391,18 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         viewReceiveDataDTO.setCustomerId(id);
         viewReceiveDataDTO.setName(entity.getName());
 
-        DictCityEntity dictCityEntity = sysUserFeign.getCityById(entity.getCityId());
-        if (ObjectUtils.isNotEmpty(dictCityEntity)) {
-            viewReceiveDataDTO.setCityName(dictCityEntity.getName());
+        if (StringUtils.isNotBlank(entity.getCityId())) {
+            DictCityEntity dictCityEntity = sysUserFeign.getCityById(entity.getCityId());
+            if (ObjectUtils.isNotEmpty(dictCityEntity)) {
+                viewReceiveDataDTO.setCityName(dictCityEntity.getName());
+            }
         }
-        DictCountryEntity dictCountryEntity = sysUserFeign.getCountryById(entity.getCountryId());
-        if (ObjectUtils.isNotEmpty(dictCountryEntity)) {
-            viewReceiveDataDTO.setCountryName(dictCountryEntity.getNameCn());
+        if (StringUtils.isNotBlank(entity.getCountryId())) {
+            DictCountryEntity dictCountryEntity = sysUserFeign.getCountryById(entity.getCountryId());
+            if (ObjectUtils.isNotEmpty(dictCountryEntity)) {
+                viewReceiveDataDTO.setCountryName(dictCountryEntity.getNameCn());
+            }
         }
-
         //客户地址
         List<CustomerAddressDTO.ViewDTO> addressList = customerB2cAddressService.listByMainId(id);
         if (CollectionUtils.isNotEmpty(addressList)) {
