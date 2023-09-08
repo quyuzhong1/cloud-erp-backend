@@ -145,6 +145,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private RuleDeliveryWarehouseService ruleDeliveryWarehouseService;
 
+    @Autowired
+    private SoB2cFinanceService soB2cFinanceService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -230,16 +232,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         //自动匹配订单规则
-        approveRule(soB2cEntity.getId(),detailList);
-        //自动匹配配货规则
-        distributionRule(soB2cEntity.getId(),detailList);
-
+        Boolean isSuccess = approveRule(soB2cEntity.getId(), detailList);
+        if (isSuccess) {
+            //自动匹配配货规则
+            distributionRule(soB2cEntity.getId(),detailList);
+        }
         return soB2cEntity.getId();
-    }
-
-    private void addSoB2cFinance (SoB2cEntity soB2cEntity) {
-
-
     }
 
     /**
@@ -1469,8 +1467,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //待处理
         if (SoB2cTabEnum.ENUM_PENDING.getCode().equals(params.getTabFlag())) {
-            approveStatusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-            approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
+            params.setAbnormalTypeList(Arrays.stream(SoB2cAbnormalTypeEnum.values()).map(SoB2cAbnormalTypeEnum::getCode).collect(Collectors.toList()));
             params.setInvalidStatus(Boolean.FALSE);
         }
         //审核中
@@ -1756,11 +1753,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (!submit.getSuccess()) {
                 throw new ServiceException(ApiError.ERROR_1042);
             }
-            return Boolean.TRUE;
+            return Boolean.FALSE;
         }
         //标识异常并且审核不通过
         updateAbnormalTypeApprove(id, ApproveStatusEnum.REJECT, SoB2cAbnormalTypeEnum.ENUM_APPROVE_REJECT);
-        return Boolean.TRUE;
+        return Boolean.FALSE;
     }
 
     /**
@@ -2018,6 +2015,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal profitRate = MathUtil.divide(profit, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
         financialInfoDTO.setProfitRate(profitRate);
         return financialInfoDTO;
+    }
+
+    /**
+     * @description: 新增财务信息
+     * @author Will
+     * @date: 2023/9/8 12:26
+     * @param soB2cEntity
+     */
+    private void addSoB2cFinance (SoB2cEntity soB2cEntity) {
+        SoB2cDTO.FinancialParamDTO dto = new SoB2cDTO.FinancialParamDTO();
+        dto.setId(soB2cEntity.getId());
+        dto.setIsCny(Boolean.FALSE);
+        SoB2cDTO.FinancialInfoDTO financialInfoDTO = getFinancialInfo(dto);
+        SoB2cFinanceDTO.AddDTO addDTO = BeanMapperUtils.map(SoB2cFinanceDTO.AddDTO.class, financialInfoDTO);
+        soB2cFinanceService.add(addDTO);
     }
 
     /**
