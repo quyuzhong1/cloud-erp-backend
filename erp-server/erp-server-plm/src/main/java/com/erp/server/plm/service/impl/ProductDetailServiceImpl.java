@@ -3779,27 +3779,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public PdaProductDetailDTO.View pdaProductView(String skuNo) {
-        List<SkuVO> skuBySkuNos = this.getSkuBySkuNos(Arrays.asList(skuNo));
-        SkuVO skuVO = skuBySkuNos.stream().filter(req -> req.getSkuNo().equals(skuNo)).distinct().findFirst().orElse(new SkuVO());
-        if (ObjectUtil.isEmpty(skuVO)) {
+        ProductDetailEntity productIdBySku = getProductIdBySku(skuNo);
+        if (ObjectUtil.isEmpty(productIdBySku)) {
             throw new ServiceException("sku不存在");
         }
         PdaProductDetailDTO.View view = baseMapper.pdaProductView(skuNo);
-
         List<PdaProductDetailDTO.ParentSkuDTO> parentSkuDTOList = new ArrayList<>();
 
         //查询子sku
-        List<BomChildrenSkuDTO> sonSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(skuVO.getSkuId()));
+        List<BomChildrenSkuDTO> sonSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(productIdBySku.getId()));
         if (CollectionUtils.isNotEmpty(sonSkuList)) {
             PdaProductDetailDTO.ParentSkuDTO parentSkuDTO = new PdaProductDetailDTO.ParentSkuDTO();
-            parentSkuDTO.setSkuNo(skuVO.getSkuNo());
+            parentSkuDTO.setSkuNo(productIdBySku.getSkuNo());
             List<PdaProductDetailDTO.SonSkuDTO> sonSkuDTOS = BeanMapper.copyList(sonSkuList, PdaProductDetailDTO.SonSkuDTO.class);
             parentSkuDTO.setChildSkuList(sonSkuDTOS);
             parentSkuDTOList.add(parentSkuDTO);
 
         } else {
             //没有子集获取父级
-            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomBySkuIds(Arrays.asList(skuVO.getSkuId()));
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomBySkuIds(Arrays.asList(productIdBySku.getId()));
             List<String> skuIds = bomChildrenSkuDTOS.stream().map(req -> req.getParentSkuId()).distinct().collect(Collectors.toList());
 //            List<BomChildrenSkuDTO> bomChildrenSkuDTOS1 = bomSkuService.listBomChildBySkuIds(skuIds);
             List<SkuVO> skuInfoBySkuIds = this.getSkuInfoBySkuIds(skuIds);
