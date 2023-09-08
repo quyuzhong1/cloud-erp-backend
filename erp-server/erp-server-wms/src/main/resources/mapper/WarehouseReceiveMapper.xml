@@ -428,81 +428,87 @@
                 t.id
             FROM (
                 SELECT
-                    SUM(pid.stock_in_qty) as stock_in_qty,
-                    prdt."id"
+                    prdt."id",
+                    SUM(tabp.stock_in_qty) as stock_in_qty
                 FROM po_receive_detail prdt
-                LEFT JOIN po_instock_detail pid ON pid.source_detail_id = prdt."id"
-                LEFT JOIN po_instock pik ON pik.id = pid.main_id
+                LEFT JOIN (
+                    SELECT
+                        pid.source_detail_id,
+                        pid.stock_in_qty
+                    FROM po_instock_detail pid
+                    INNER JOIN po_instock pik ON pik.id = pid.main_id AND pik.is_deleted = FALSE
+                    WHERE pid.is_deleted = FALSE
+                    AND pik.invalid_status = FALSE
+                ) tabp ON tabp.source_detail_id = prdt.id
+                WHERE prdt.is_deleted = FALSE
                 GROUP BY prdt."id"
             ) t
             WHERE t.id = prd."id" AND (stock_in_qty &lt; prd.receive_qty OR stock_in_qty IS NULL)
         )
         <if test="param2.tabFlag == 'waitInStockQc'">
             AND EXISTS (
-            SELECT
-            t.id
-            FROM (
-            SELECT
-            tab.id,
-            array_to_string(ARRAY(SELECT unnest(array_agg(tab.qc_status))),',') AS qc_status
-
-            FROM (
-            SELECT
-            DISTINCT
-            pr.id,
-            prdt.id AS detailId,
-            qc.code,
-            qp.sku_no,
-            CASE WHEN qp.sku_no is null THEN 'notQc' ELSE  qc.qc_status END qc_status
-            FROM po_receive_detail prdt
-            LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
-            LEFT JOIN qc_info qc ON qc.source_id = pr.id AND qc.is_deleted = FALSE
-            LEFT JOIN qc_product qp ON qc.id = qp.main_id AND qp.sku_id = prdt.sku_id AND qp.is_deleted = FALSE
-            WHERE prdt.is_deleted = FALSE
-            AND pr.approve_status = 'approve'
-            ) tab
-            GROUP BY tab.id
-            ) t
-            WHERE t.id = prd."main_id"
-            AND t.qc_status NOT ILIKE concat('%', 'notQc' ,'%')
-            AND t.qc_status NOT ILIKE concat('%', 'draft' ,'%')
-            AND t.qc_status NOT ILIKE concat('%', 'waitQc' ,'%')
-            AND t.qc_status NOT ILIKE concat('%', 'cancel' ,'%')
-            AND t.qc_status NOT ILIKE concat('%', 'waitReQc' ,'%')
+                SELECT
+                    t.id
+                FROM (
+                    SELECT
+                        tab.id,
+                        array_to_string(ARRAY(SELECT unnest(array_agg(tab.qc_status))),',') AS qc_status
+                    FROM (
+                        SELECT
+                            DISTINCT
+                            pr.id,
+                            prdt.id AS detailId,
+                            qc.code,
+                            qp.sku_no,
+                            CASE WHEN qp.sku_no is null THEN 'notQc' ELSE  qc.qc_status END qc_status
+                        FROM po_receive_detail prdt
+                        LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
+                        LEFT JOIN qc_info qc ON qc.source_id = pr.id AND qc.is_deleted = FALSE
+                        LEFT JOIN qc_product qp ON qc.id = qp.main_id AND qp.sku_id = prdt.sku_id AND qp.is_deleted = FALSE
+                        WHERE prdt.is_deleted = FALSE
+                        AND pr.approve_status = 'approve'
+                    ) tab
+                    GROUP BY tab.id
+                ) t
+                WHERE t.id = prd."main_id"
+                AND t.qc_status NOT ILIKE concat('%', 'notQc' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'draft' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'waitQc' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'cancel' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'waitReQc' ,'%')
             )
         </if>
         <if test="param2.tabFlag == 'waitInStockNotQc'">
             AND EXISTS (
-            SELECT
-            t.id
-            FROM (
-            SELECT
-            tab.id,
-            array_to_string(ARRAY(SELECT unnest(array_agg(tab.qc_status))),',') AS qc_status
-
-            FROM (
-            SELECT
-            DISTINCT
-            pr.id,
-            prdt.id AS detailId,
-            qc.code,
-            qp.sku_no,
-            CASE WHEN qp.sku_no is null THEN 'notQc' ELSE  qc.qc_status END qc_status
-            FROM po_receive_detail prdt
-            LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
-            LEFT JOIN qc_info qc ON qc.source_id = pr.id AND qc.is_deleted = FALSE
-            LEFT JOIN qc_product qp ON qc.id = qp.main_id AND qp.sku_id = prdt.sku_id AND qp.is_deleted = FALSE
-            WHERE prdt.is_deleted = FALSE
-            AND pr.approve_status = 'approve'
-            ) tab
-            GROUP BY tab.id
-            ) t
-            WHERE t.id = prd."main_id"
-            AND (t.qc_status ILIKE concat('%', 'notQc' ,'%')
-            OR t.qc_status ILIKE concat('%', 'draft' ,'%')
-            OR t.qc_status ILIKE concat('%', 'waitQc' ,'%')
-            OR t.qc_status ILIKE concat('%', 'cancel' ,'%')
-            OR t.qc_status ILIKE concat('%', 'waitReQc' ,'%'))
+                SELECT
+                    t.id
+                FROM (
+                    SELECT
+                        tab.id,
+                        array_to_string(ARRAY(SELECT unnest(array_agg(tab.qc_status))),',') AS qc_status
+                    FROM (
+                        SELECT
+                            DISTINCT
+                            pr.id,
+                            prdt.id AS detailId,
+                            qc.code,
+                            qp.sku_no,
+                            CASE WHEN qp.sku_no is null THEN 'notQc' ELSE  qc.qc_status END qc_status
+                        FROM po_receive_detail prdt
+                        LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
+                        LEFT JOIN qc_info qc ON qc.source_id = pr.id AND qc.is_deleted = FALSE
+                        LEFT JOIN qc_product qp ON qc.id = qp.main_id AND qp.sku_id = prdt.sku_id AND qp.is_deleted = FALSE
+                        WHERE prdt.is_deleted = FALSE
+                        AND pr.approve_status = 'approve'
+                    ) tab
+                    GROUP BY tab.id
+                ) t
+                WHERE t.id = prd."main_id"
+                AND (t.qc_status ILIKE concat('%', 'notQc' ,'%')
+                OR t.qc_status ILIKE concat('%', 'draft' ,'%')
+                OR t.qc_status ILIKE concat('%', 'waitQc' ,'%')
+                OR t.qc_status ILIKE concat('%', 'cancel' ,'%')
+                OR t.qc_status ILIKE concat('%', 'waitReQc' ,'%'))
             )
         </if>
         ORDER BY pr.code DESC
@@ -515,19 +521,27 @@
         LEFT JOIN po_receive_detail prd ON pr.id = prd.main_id AND prd.is_deleted = FALSE AND prd.is_deleted = FALSE
         WHERE pr.is_deleted = FALSE
         AND pr.approve_status = 'approve'
-        AND  EXISTS (
-        SELECT
-        t.id
-        FROM (
-        SELECT
-        SUM(pid.stock_in_qty) as stock_in_qty,
-        prdt."id"
-        FROM po_receive_detail prdt
-        LEFT JOIN po_instock_detail pid ON pid.source_detail_id = prdt."id"
-        LEFT JOIN po_instock pik ON pik.id = pid.main_id
-        GROUP BY prdt."id"
-        ) t
-        WHERE t.id = prd."id" AND (stock_in_qty &lt; prd.receive_qty OR stock_in_qty IS NULL)
+        AND EXISTS (
+            SELECT
+                t.id
+            FROM (
+                SELECT
+                    prdt."id",
+                    SUM(tabp.stock_in_qty) as stock_in_qty
+                FROM po_receive_detail prdt
+                LEFT JOIN (
+                    SELECT
+                        pid.source_detail_id,
+                        pid.stock_in_qty
+                    FROM po_instock_detail pid
+                    INNER JOIN po_instock pik ON pik.id = pid.main_id AND pik.is_deleted = FALSE
+                    WHERE pid.is_deleted = FALSE
+                    AND pik.invalid_status = FALSE
+                ) tabp ON tabp.source_detail_id = prdt.id
+                WHERE prdt.is_deleted = FALSE
+                GROUP BY prdt."id"
+            ) t
+            WHERE t.id = prd."id" AND (stock_in_qty &lt; prd.receive_qty OR stock_in_qty IS NULL)
         )
         <if test="params.invalidStatus != null">
             and pr.invalid_status = #{params.invalidStatus}
@@ -535,70 +549,68 @@
 
         <if test="params.tabFlag == 'waitInStockQc'">
             AND EXISTS (
-            SELECT
-            t.id
-            FROM (
-            SELECT
-            tab.id,
-            array_to_string(ARRAY(SELECT unnest(array_agg(tab.qc_status))),',') AS qc_status
-
-            FROM (
-            SELECT
-            DISTINCT
-            pr.id,
-            prdt.id AS detailId,
-            qc.code,
-            qp.sku_no,
-            CASE WHEN qp.sku_no is null THEN 'notQc' ELSE  qc.qc_status END qc_status
-            FROM po_receive_detail prdt
-            LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
-            LEFT JOIN qc_info qc ON qc.source_id = pr.id AND qc.is_deleted = FALSE
-            LEFT JOIN qc_product qp ON qc.id = qp.main_id AND qp.sku_id = prdt.sku_id AND qp.is_deleted = FALSE
-            WHERE prdt.is_deleted = FALSE
-            AND pr.approve_status = 'approve'
-            ) tab
-            GROUP BY tab.id
-            ) t
-            WHERE t.id = prd."main_id"
-            AND t.qc_status NOT ILIKE concat('%', 'notQc' ,'%')
-            AND t.qc_status NOT ILIKE concat('%', 'draft' ,'%')
-            AND t.qc_status NOT ILIKE concat('%', 'waitQc' ,'%')
-            AND t.qc_status NOT ILIKE concat('%', 'cancel' ,'%')
-            AND t.qc_status NOT ILIKE concat('%', 'waitReQc' ,'%')
+                SELECT
+                    t.id
+                FROM (
+                    SELECT
+                        tab.id,
+                        array_to_string(ARRAY(SELECT unnest(array_agg(tab.qc_status))),',') AS qc_status
+                    FROM (
+                        SELECT
+                            DISTINCT
+                            pr.id,
+                            prdt.id AS detailId,
+                            qc.code,
+                            qp.sku_no,
+                            CASE WHEN qp.sku_no is null THEN 'notQc' ELSE  qc.qc_status END qc_status
+                        FROM po_receive_detail prdt
+                        LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
+                        LEFT JOIN qc_info qc ON qc.source_id = pr.id AND qc.is_deleted = FALSE
+                        LEFT JOIN qc_product qp ON qc.id = qp.main_id AND qp.sku_id = prdt.sku_id AND qp.is_deleted = FALSE
+                        WHERE prdt.is_deleted = FALSE
+                        AND pr.approve_status = 'approve'
+                    ) tab
+                    GROUP BY tab.id
+                ) t
+                WHERE t.id = prd."main_id"
+                AND t.qc_status NOT ILIKE concat('%', 'notQc' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'draft' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'waitQc' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'cancel' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'waitReQc' ,'%')
             )
         </if>
         <if test="params.tabFlag == 'waitInStockNotQc'">
             AND EXISTS (
-            SELECT
-            t.id
-            FROM (
-            SELECT
-            tab.id,
-            array_to_string(ARRAY(SELECT unnest(array_agg(tab.qc_status))),',') AS qc_status
-
-            FROM (
-            SELECT
-            DISTINCT
-            pr.id,
-            prdt.id AS detailId,
-            qc.code,
-            qp.sku_no,
-            CASE WHEN qp.sku_no is null THEN 'notQc' ELSE  qc.qc_status END qc_status
-            FROM po_receive_detail prdt
-            LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
-            LEFT JOIN qc_info qc ON qc.source_id = pr.id AND qc.is_deleted = FALSE
-            LEFT JOIN qc_product qp ON qc.id = qp.main_id AND qp.sku_id = prdt.sku_id AND qp.is_deleted = FALSE
-            WHERE prdt.is_deleted = FALSE
-            AND pr.approve_status = 'approve'
-            ) tab
-            GROUP BY tab.id
-            ) t
-            WHERE t.id = prd."main_id"
-            AND (t.qc_status ILIKE concat('%', 'notQc' ,'%')
-            OR t.qc_status ILIKE concat('%', 'draft' ,'%')
-            OR t.qc_status ILIKE concat('%', 'waitQc' ,'%')
-            OR t.qc_status ILIKE concat('%', 'cancel' ,'%')
-            OR t.qc_status ILIKE concat('%', 'waitReQc' ,'%'))
+                SELECT
+                    t.id
+                FROM (
+                    SELECT
+                        tab.id,
+                        array_to_string(ARRAY(SELECT unnest(array_agg(tab.qc_status))),',') AS qc_status
+                    FROM (
+                        SELECT
+                            DISTINCT
+                            pr.id,
+                            prdt.id AS detailId,
+                            qc.code,
+                            qp.sku_no,
+                            CASE WHEN qp.sku_no is null THEN 'notQc' ELSE  qc.qc_status END qc_status
+                        FROM po_receive_detail prdt
+                        LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
+                        LEFT JOIN qc_info qc ON qc.source_id = pr.id AND qc.is_deleted = FALSE
+                        LEFT JOIN qc_product qp ON qc.id = qp.main_id AND qp.sku_id = prdt.sku_id AND qp.is_deleted = FALSE
+                        WHERE prdt.is_deleted = FALSE
+                        AND pr.approve_status = 'approve'
+                    ) tab
+                    GROUP BY tab.id
+                ) t
+                WHERE t.id = prd."main_id"
+                AND (t.qc_status ILIKE concat('%', 'notQc' ,'%')
+                OR t.qc_status ILIKE concat('%', 'draft' ,'%')
+                OR t.qc_status ILIKE concat('%', 'waitQc' ,'%')
+                OR t.qc_status ILIKE concat('%', 'cancel' ,'%')
+                OR t.qc_status ILIKE concat('%', 'waitReQc' ,'%'))
             )
         </if>
 

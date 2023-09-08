@@ -1479,7 +1479,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             detailView.setWarehouseLocationName(warehouseLocationEntity.getName());
             Integer effectiveStockInQty = poInstockDetailList.stream().filter(e -> e.getSourceDetailId().equals(warehouseReceiveDetailEntity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             detailView.setEffectiveStockInQty(effectiveStockInQty);
-            detailView.setUnStockInQty(receive - effectiveStockInQty + returnQty);
+            detailView.setUnStockInQty(detailView.getReceiveQty() - effectiveStockInQty + returnQty);
 
             detailViewDTOS.add(detailView);
         }
