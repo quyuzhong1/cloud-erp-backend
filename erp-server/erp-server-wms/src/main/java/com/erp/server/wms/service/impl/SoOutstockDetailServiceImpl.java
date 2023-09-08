@@ -164,9 +164,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             item.setAttachNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
             item.setAttachUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
             String warehouseLocation = item.getWarehouseLocation();
-            String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
-            item.setProductName(skuName);
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
+            item.setProductName(skuVO.getSkuName());
+            item.setVariantProperty(skuVO.getVariantProperty());
 
             String unit = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getUnitName())).orElse("");

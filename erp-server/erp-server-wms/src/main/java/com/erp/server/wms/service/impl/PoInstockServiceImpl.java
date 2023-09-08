@@ -1746,7 +1746,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<String> poReceiveDetailIds = detailList.stream().map(PoInstockDetailDTO.UpdateDTO::getSourceDetailId).distinct().collect(Collectors.toList());
         List<WarehouseReceiveDetailEntity> receiveDetailEntities = warehouseReceiveDetailService.listByIds(poReceiveDetailIds);
         List<WarehouseReceiveDetailEntity> detailEntityListByMainId = warehouseReceiveDetailService.listDetailByMainIds(Arrays.asList(dto.getSourceId()));
-
+        List<PoInstockDetailEntity> instockDetailEntities = poInstockDetailService.listByMainId(dto.getId());
+        List<String> poInstockIds = instockDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
         for (PoInstockDetailDTO.UpdateDTO updateDTO : detailList) {
             WarehouseReceiveDetailEntity detailEntity = receiveDetailEntities.stream().filter(req -> req.getId().equals(updateDTO.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
@@ -1763,7 +1764,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     //收货数量
                     Integer receiveQty = detailEntityList.stream().map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     //已签收数量
-                    Integer alreadyStockInQty = poInstockDetailEntities.stream().filter(obj -> obj.getSourceDetailId().equals(entity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                    Integer alreadyStockInQty = poInstockDetailEntities.stream().filter(obj -> obj.getSourceDetailId().equals(entity.getId()) && !poInstockIds.contains(obj.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (stockInQty > receiveQty - alreadyStockInQty) {
                         throw new ServiceException(new ApiResult(MathUtil.ONE,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + receiveQty));
                     }
