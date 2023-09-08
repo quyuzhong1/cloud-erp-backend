@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.ShopDTO;
@@ -9,7 +10,6 @@ import com.erp.model.oms.entity.ShopCostEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.mapper.ShopCostMapper;
 import com.erp.server.oms.service.ShopCostService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.oms.service.ShopInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -109,7 +109,8 @@ public class ShopCostServiceImpl extends SuperServiceImpl<ShopCostMapper, ShopCo
         return viewCost;
     }
 
-    private ShopCostEntity getByShopId(String shopId) {
+    @Override
+    public ShopCostEntity getByShopId(String shopId) {
         return this.lambdaQuery().eq(ShopCostEntity::getShopId, shopId).last("LIMIT 1").one();
     }
 

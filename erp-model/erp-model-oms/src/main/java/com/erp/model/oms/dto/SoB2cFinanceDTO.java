@@ -1,14 +1,13 @@
 package com.erp.model.oms.dto;
 
-import java.math.BigDecimal;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
+
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -117,63 +116,54 @@ public class SoB2cFinanceDTO implements Serializable {
         /**
         * 主表id
         */
-        @NotBlank(message = "主表id不能为空")
         @Size(max = 19,message = "主表id最大长度不能超过19位")
         private String mainId;
 
         /**
         * 币别
         */
-        @NotBlank(message = "币别不能为空")
         @Size(max = 32,message = "币别最大长度不能超过32位")
         private String currency;
 
         /**
         * 运费收入
         */
-        @NotNull(message = "运费收入不能为空")
         @Digits(integer = 12, fraction = 4, message = "运费收入整数位不能超过12位，小数位不能超过4位")
         private BigDecimal shippingCost;
 
         /**
         * 商品成本
         */
-        @NotNull(message = "商品成本不能为空")
         @Digits(integer = 12, fraction = 4, message = "商品成本整数位不能超过12位，小数位不能超过4位")
         private BigDecimal itemCost;
 
         /**
         * 物流成本
         */
-        @NotNull(message = "物流成本不能为空")
         @Digits(integer = 12, fraction = 4, message = "物流成本整数位不能超过12位，小数位不能超过4位")
         private BigDecimal logisticsCost;
 
         /**
         * 平台费
         */
-        @NotNull(message = "平台费不能为空")
         @Digits(integer = 12, fraction = 4, message = "平台费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal platformCost;
 
         /**
         * 转账费
         */
-        @NotNull(message = "转账费不能为空")
         @Digits(integer = 12, fraction = 4, message = "转账费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal transferCost;
 
         /**
         * 包装辅料费
         */
-        @NotNull(message = "包装辅料费不能为空")
         @Digits(integer = 12, fraction = 4, message = "包装辅料费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal accessoriesCost;
 
         /**
         * VAT税费
         */
-        @NotNull(message = "VAT税费不能为空")
         @Digits(integer = 12, fraction = 4, message = "VAT税费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal vatCost;
 
