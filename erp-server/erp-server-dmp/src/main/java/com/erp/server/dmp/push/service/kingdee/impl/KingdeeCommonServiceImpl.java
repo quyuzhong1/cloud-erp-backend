@@ -769,8 +769,10 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         repoResult.getId();
         String url = KingdeeUtils.SO_CHANGE_URL;
         String paramStr = JSONUtil.toJsonStr(paramMap);
-        log.info("createkingdeeSoChange  paramStr==={}", paramStr);
+        log.warn("KingdeeCommonServiceImpl.createkingdeeSoChange  paramStr==={}", paramStr);
         String result = client.execute(url, new Object[]{paramStr});
+        log.warn("KingdeeCommonServiceImpl.createkingdeeSoChange  result>>>>>>{}", result);
+
         return result;
     }
 
