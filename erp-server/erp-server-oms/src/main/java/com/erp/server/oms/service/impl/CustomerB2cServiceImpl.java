@@ -1421,7 +1421,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             CustomerContactDTO.ViewDTO viewDTO = contactList.stream().filter(obj -> obj.getIsDefault() && !obj.getDisabled()).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(viewDTO)) {
                 viewReceiveDataDTO.setReceiverName(viewDTO.getPerson());
-                viewReceiveDataDTO.setCountryName(viewDTO.getTelNumber());
+                viewReceiveDataDTO.setReceiverTelNumber(viewDTO.getTelNumber());
             }
         }
 
