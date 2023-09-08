@@ -1775,9 +1775,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
         //进行配货规则匹配 TODO
         List<JSONObject> jsonList = detailList.stream().map(obj -> JSONUtil.parseObj(obj)).collect(Collectors.toList());
-        RuleDeliveryWarehouseDTO.RuleMatchResultDTO ruleMatchResultDTO = ruleDeliveryWarehouseService.getRuleOrderMatchResult(jsonList);
+        List<RuleDeliveryWarehouseDTO.RuleMatchResultDTO> list = ruleDeliveryWarehouseService.getRuleOrderMatchResult(jsonList);
         //配货规则是否通过
-        Boolean distributionSuccess = ObjectUtils.isEmpty(ruleMatchResultDTO) ? Boolean.FALSE : Boolean.TRUE;
+        Boolean distributionSuccess = CollectionUtils.isEmpty(list) ? Boolean.FALSE : Boolean.TRUE;
         if (distributionSuccess) {
             //更新明细仓库信息
 
