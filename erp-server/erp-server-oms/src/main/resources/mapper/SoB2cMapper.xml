@@ -438,7 +438,7 @@
                 </foreach>
             </if>
             <if test="params.buyerNameList != null and params.buyerNameList.size > 0">
-                and sb2cr.buyer_name in
+                and sb2cr.name in
                 <foreach collection="params.buyerNameList" item="item" open="(" separator="," close=")">
                     #{item}
                 </foreach>

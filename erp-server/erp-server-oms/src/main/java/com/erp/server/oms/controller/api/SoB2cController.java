@@ -41,7 +41,7 @@ public class SoB2cController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:soB2c:paging",
-            tableAlias = ""
+            tableAlias = "sb2c"
     )
     public ApiResult<List<SoB2cDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(soB2cService.tabList(dto));
@@ -58,7 +58,7 @@ public class SoB2cController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:soB2c:paging",
-            tableAlias = ""
+            tableAlias = "sb2c"
     )
     public ApiResult<PagingVO<SoB2cDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDTO.PagingParamDTO> dto) {
         return success(soB2cService.paging(dto));
@@ -114,12 +114,15 @@ public class SoB2cController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Boolean success = Boolean.TRUE;
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
                 submit = soB2cService.submit(id,Boolean.TRUE);
             } catch (Exception e){
                 log.error("B2C销售订单 提交审核失败",e);
+
+                success = Boolean.FALSE;
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 提交失败");
@@ -130,7 +133,7 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(submit);
         }
-        return success(resultDTOS);
+        return  success ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -149,12 +152,14 @@ public class SoB2cController extends BaseController {
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Boolean success = Boolean.TRUE;
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
                 approveResult = soB2cService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             } catch (Exception e){
                 log.error("B2C销售订单审核失败",e);
+                success = Boolean.FALSE;
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     approveResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 审核失败");
@@ -165,7 +170,7 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(approveResult);
         }
-        return success(resultDTOS);
+        return  success ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -183,12 +188,14 @@ public class SoB2cController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Boolean success = Boolean.TRUE;
         for (String id : dto.getIds()) {
             BatchResultDTO invalidResult;
             try {
                 invalidResult = soB2cService.invalid(id,dto.getRemark(), SoB2cInvalidTypeEnum.ENUM_MANUAL);
             } catch (Exception e){
                 log.error("B2C销售订单作废失败",e);
+                success = Boolean.FALSE;
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     invalidResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 作废失败");
@@ -199,7 +206,7 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(invalidResult);
         }
-        return success(resultDTOS);
+        return  success ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -217,12 +224,14 @@ public class SoB2cController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> unInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Boolean success = Boolean.TRUE;
         for (String id : dto.getIds()) {
             BatchResultDTO unInvalidResult;
             try {
                 unInvalidResult = soB2cService.unInvalid(id, SoB2cInvalidTypeEnum.ENUM_MANUAL);
             } catch (Exception e){
                 log.error("B2C销售订单取消作废失败",e);
+                success = Boolean.FALSE;
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     unInvalidResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 取消作废失败");
@@ -233,7 +242,7 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(unInvalidResult);
         }
-        return success(resultDTOS);
+        return  success ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -288,12 +297,14 @@ public class SoB2cController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Boolean success = Boolean.TRUE;
         for (String id : dto.getIds()) {
             BatchResultDTO updateRemarkResult;
             try {
                 updateRemarkResult = soB2cService.updateRemark(id,dto.getRemark());
             } catch (Exception e){
                 log.error("B2C销售订单修改订单备注失败",e);
+                success = Boolean.FALSE;
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     updateRemarkResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 修改订单备注失败");
@@ -304,7 +315,7 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(updateRemarkResult);
         }
-        return success(resultDTOS);
+        return  success ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -322,12 +333,14 @@ public class SoB2cController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateCategory(@RequestBody @Validated SoB2cDTO.SoB2cAddCategoryDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Boolean success = Boolean.TRUE;
         for (String id : dto.getIds()) {
             BatchResultDTO updateRemarkResult;
             try {
                 updateRemarkResult = soB2cService.updateCategory(id,dto.getTypeEnum(),dto.getCategoryIdList());
             } catch (Exception e){
                 log.error("B2C销售订单修改分类失败",e);
+                success = Boolean.FALSE;
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     updateRemarkResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 修改分类失败");
@@ -338,7 +351,7 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(updateRemarkResult);
         }
-        return success(resultDTOS);
+        return  success ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -374,12 +387,14 @@ public class SoB2cController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> saveSoB2cDistribution(@RequestBody @Validated SoB2cDTO.SaveSoB2cDistributionDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Boolean success = Boolean.TRUE;
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
                 result = soB2cService.saveSoB2cDistribution(id,dto);
             } catch (Exception e){
                 log.error("B2C销售订单配货失败",e);
+                success = Boolean.FALSE;
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 配货失败");
@@ -390,7 +405,7 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(result);
         }
-        return success(resultDTOS);
+        return  success ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -408,12 +423,14 @@ public class SoB2cController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> getLogisticsCode(@RequestBody @Validated SoB2cDTO.GetLogisticsCode dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Boolean success = Boolean.TRUE;
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
                 result = soB2cService.getLogisticsCode(id,dto.getIsDelivery());
             } catch (Exception e){
                 log.error("B2C销售订单获取物流单号失败",e);
+                success = Boolean.FALSE;
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 获取物流单号失败");
@@ -424,7 +441,7 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(result);
         }
-        return success(resultDTOS);
+        return  success ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -442,12 +459,14 @@ public class SoB2cController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Boolean success = Boolean.TRUE;
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
                 result = soB2cService.submitDelivery(id);
             } catch (Exception e){
                 log.error("B2C销售订单提交发货失败",e);
+                success = Boolean.FALSE;
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 提交发货失败");
@@ -458,7 +477,7 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(result);
         }
-        return success(resultDTOS);
+        return  success ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -476,12 +495,14 @@ public class SoB2cController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> deliveryIntercept(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Boolean success = Boolean.TRUE;
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
                 result = soB2cService.deliveryIntercept(id,dto.getRemark());
             } catch (Exception e){
                 log.error("B2C销售订单发货拦截失败",e);
+                success = Boolean.FALSE;
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 发货拦截失败");
@@ -492,7 +513,7 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(result);
         }
-        return success(resultDTOS);
+        return  success ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -510,12 +531,14 @@ public class SoB2cController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelDeliveryIntercept(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Boolean success = Boolean.TRUE;
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
                 result = soB2cService.cancelDeliveryIntercept(id);
             } catch (Exception e){
                 log.error("B2C销售订单取消发货拦截失败",e);
+                success = Boolean.FALSE;
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 取消发货拦截失败");
@@ -526,7 +549,7 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(result);
         }
-        return success(resultDTOS);
+        return  success ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -540,7 +563,7 @@ public class SoB2cController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:soB2c:mergePaging",
-            tableAlias = ""
+            tableAlias = "sb2c"
     )
     public ApiResult<PagingVO<SoB2cDTO.MergeListDTO>> mergePaging(@RequestBody @Validated PagingDTO<SoB2cDTO.MergePagingParamDTO> dto) {
         return success(soB2cService.mergePaging(dto));
@@ -557,7 +580,7 @@ public class SoB2cController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:soB2c:mergePaging",
-            tableAlias = ""
+            tableAlias = "sb2c"
     )
     public ApiResult<Integer> mergePagingCount(@RequestBody @Validated SoB2cDTO.MergePagingParamDTO dto) {
         return success(soB2cService.mergePagingCount(dto));
@@ -596,12 +619,14 @@ public class SoB2cController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelMerge(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Boolean success = Boolean.TRUE;
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
                 result = soB2cService.cancelMerge(id);
             } catch (Exception e){
                 log.error("B2C销售订单取消合并失败",e);
+                success = Boolean.FALSE;
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 取消合并失败");
@@ -612,7 +637,7 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(result);
         }
-        return success(resultDTOS);
+        return  success ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -682,12 +707,14 @@ public class SoB2cController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelSplit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Boolean success = Boolean.TRUE;
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
                 result = soB2cService.cancelSplit(id);
             } catch (Exception e){
                 log.error("B2C销售订单取消拆分失败",e);
+                success = Boolean.FALSE;
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 取消拆分失败");
@@ -698,6 +725,6 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(result);
         }
-        return success(resultDTOS);
+        return  success ? success(resultDTOS) : failure(resultDTOS);
     }
 }

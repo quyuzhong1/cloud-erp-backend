@@ -931,7 +931,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //新建拆分后数据
             SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();
             BeanMapperUtils.copy(entity, addDTO);
-            addDTO.setSourceId(entity.getSourceId());
+            addDTO.setSourceId(entity.getId());
             addDTO.setSourceCode(entity.getCode());
             addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
             if (CollectionUtils.isNotEmpty(soB2cRefCategoryList)) {
@@ -1516,31 +1516,27 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<DictCountryEntity> dictCountryList = sysDictFeign.listCountryByIds(countryIdList);
 
         //平台
-        List<String> platformList = records.stream().map(SoB2cDTO.MergeListDTO::getDictPlatform)
+        List<String> platformList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getDictPlatform())).map(SoB2cDTO.MergeListDTO::getDictPlatform)
                 .distinct().collect(Collectors.toList());
         //币别
-        List<String> currencyList = records.stream().map(SoB2cDTO.MergeListDTO::getCurrency)
+        List<String> currencyList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getCurrency())).map(SoB2cDTO.MergeListDTO::getCurrency)
                 .distinct().collect(Collectors.toList());
         //买家名称
-        List<String> buyerNameList = records.stream().map(SoB2cDTO.MergeListDTO::getBuyerName)
+        List<String> buyerNameList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getBuyerName())).map(SoB2cDTO.MergeListDTO::getBuyerName)
                 .distinct().collect(Collectors.toList());
         //平台
-        List<String> receiverNameList = records.stream().map(SoB2cDTO.MergeListDTO::getReceiverName)
+        List<String> receiverNameList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getReceiverName())).map(SoB2cDTO.MergeListDTO::getReceiverName)
                 .distinct().collect(Collectors.toList());
         //地址1
-        List<String> firstAddressList = records.stream().flatMap(obj -> Stream.of(obj.getMainList().stream().map(SoB2cDTO.MergeMainDTO::getFirstAddress).toArray(String[]::new)))
-                .distinct().collect(Collectors.toList());
+        List<String> firstAddressList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getFirstAddress())).map(SoB2cDTO.MergeListDTO::getFirstAddress).distinct().collect(Collectors.toList());
         //地址2
-        List<String> secondAddressList = records.stream().flatMap(obj -> Stream.of(obj.getMainList().stream().map(SoB2cDTO.MergeMainDTO::getSecondAddress).toArray(String[]::new)))
-                .distinct().collect(Collectors.toList());
+        List<String> secondAddressList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getSecondAddress())).map(SoB2cDTO.MergeListDTO::getSecondAddress).distinct().collect(Collectors.toList());
         //详细地址
-        List<String> fullAddressList = records.stream().flatMap(obj -> Stream.of(obj.getMainList().stream()
-                .map(SoB2cDTO.MergeMainDTO::getFullAddress).toArray(String[]::new))).distinct().collect(Collectors.toList());
+        List<String> fullAddressList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getFullAddress())).map(SoB2cDTO.MergeListDTO::getFullAddress).distinct().collect(Collectors.toList());
         //仓库
-        List<String> warehouseIdList = records.stream().flatMap(obj -> Stream.of(obj.getMainList().stream().flatMap(e -> Stream.of(e.getDetailList().stream().map(SoB2cDTO.MergeDetailDTO::getWarehouseId).toArray(String[]::new))).toArray(String[]::new)))
-                .distinct().collect(Collectors.toList());
+        List<String> warehouseIdList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getWarehouseId())).map(SoB2cDTO.MergeListDTO::getWarehouseId).distinct().collect(Collectors.toList());
         //物流方式
-        List<String> dictLogisticsMethodList = records.stream().map(SoB2cDTO.MergeListDTO::getDictLogisticsMethod).collect(Collectors.toList());
+        List<String> dictLogisticsMethodList = records.stream().filter(obj -> StringUtils.isNotBlank(obj.getDictLogisticsMethod())).map(SoB2cDTO.MergeListDTO::getDictLogisticsMethod).distinct().collect(Collectors.toList());
 
         SoB2cDTO.MergeParamDTO mergeParamDTO = new SoB2cDTO.MergeParamDTO();
         mergeParamDTO.setPlatformList(platformList);
@@ -1571,7 +1567,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             //店铺信息
             ShopInfoEntity shopInfoEntity = shopList.stream().filter(obj -> obj.getId().equals(mergeListDTO.getShopId())).findFirst().orElse(null);
-            if (CollectionUtils.isEmpty(shopList)) {
+            if (ObjectUtils.isEmpty(shopInfoEntity)) {
                 throw new ServiceException(ApiError.ERROR_92058);
             }
             mergeListDTO.setShopName(shopInfoEntity.getName());

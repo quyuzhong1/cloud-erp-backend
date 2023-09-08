@@ -60,6 +60,16 @@ public class SoB2cRefServiceImpl extends SuperServiceImpl<SoB2cRefMapper, SoB2cR
         return this.list(queryWrapper);
     }
 
+    @Override
+    public List<SoB2cRefEntity> listByTargetIds(List<String> targetIdList, SoB2cOptionTypeEnum typeEnum) {
+        LambdaQueryWrapper<SoB2cRefEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.in(SoB2cRefEntity::getTargetId,targetIdList);
+        if (ObjectUtils.isNotEmpty(typeEnum)) {
+            queryWrapper.eq(SoB2cRefEntity::getType,typeEnum.getCode());
+        }
+        return this.list(queryWrapper);
+    }
+
 
     @Override
     public Boolean deleteByTargetIds(List<String> mainIds) {
