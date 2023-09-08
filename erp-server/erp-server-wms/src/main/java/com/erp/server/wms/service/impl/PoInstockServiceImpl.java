@@ -542,7 +542,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个采购入库单【%s】，作废原因：".concat(reason), ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "作废操作");
         //审核通过发送金蝶
-        list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
+        list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
         return Boolean.TRUE;
     }
 
@@ -577,7 +577,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             updateInventoryTransCore(list);
 
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             //中止当前审核流程
 
@@ -624,7 +624,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个采购入库单【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "反审核操作");
         //审核通过发送金蝶
-        list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
 
         return Boolean.TRUE;
     }

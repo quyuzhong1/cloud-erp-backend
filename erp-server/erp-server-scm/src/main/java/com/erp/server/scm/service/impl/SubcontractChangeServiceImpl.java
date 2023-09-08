@@ -352,7 +352,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             handleSubcontractOrder(ids,list);
 
             //审核通过发送金蝶(防止数据先删除导致查不到，需要先发送金蝶)
-            list.forEach(obj -> syncKingdeeSubcontractChangeService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeSubcontractChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
 
         } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) {
            // TODO 终止审批流程

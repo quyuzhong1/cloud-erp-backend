@@ -374,7 +374,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 .update();
 
         //发送金蝶
-        list.forEach(obj -> syncKingdeeOtherOutstockService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
+        list.forEach(obj -> syncKingdeeOtherOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
 
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -408,7 +408,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             //更新库存
             updateInventoryTransCore(list);
             //发送金蝶
-            list.forEach(obj -> syncKingdeeOtherOutstockService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeOtherOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("其他出库单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //中止当前审核流程
@@ -444,7 +444,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         //发送金蝶
-        list.forEach(obj -> syncKingdeeOtherOutstockService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        list.forEach(obj -> syncKingdeeOtherOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
 
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());

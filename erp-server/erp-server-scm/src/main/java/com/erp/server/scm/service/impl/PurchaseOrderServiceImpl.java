@@ -447,7 +447,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             // 更新库存信息（生成入库预报）
             updateInventoryTransCore(list);
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             //同步到WMS
             List<PurchaseOrderEntity> toWmsList = this.getList(ids);
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
@@ -494,7 +494,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("反审核了一个采购订单【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "反审核操作");
         //审核通过发送金蝶
-        list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         //同步到WMS
         List<PurchaseOrderEntity> toWmsList = this.getList(ids);
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
@@ -836,7 +836,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("作废了一个采购订单【%s】，作废原因：".concat(reason), ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "作废操作");
         //审核通过发送金蝶
-        list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
+        list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
         //同步到WMS
         List<PurchaseOrderEntity> toWmsList = this.getList(ids);
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
