@@ -82,8 +82,15 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
      */
     @Override
     public void deleteByBomId(String bomId) {
-
-
+        List<ProductBomHistoryEntity> list = this.listByBomId(bomId);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> historyBomIdList = list.stream().map(ProductBomHistoryEntity::getId).collect(Collectors.toList());
+        //删除历史明细表数据
+        productBomSkuHistoryService.removeByHistoryBomIdList(historyBomIdList);
+        //删除历史主表数据
+        this.removeByIds(historyBomIdList);
     }
 
     @Override
