@@ -48,6 +48,7 @@
             ood.unit,
             oo.warehouse_name as warehouseName,
             ood.warehouse_location as warehouseLocation,
+            oo.process_apply_code as processApplyCode,
             oo.approve_user_name as approveUserName,
             oo.create_user_name as createUserName,
             oo.create_time as createTime
@@ -67,6 +68,9 @@
             </if>
             <if test="params.inventoryDirection != null ">
                 and oo.inventory_direction = #{params.inventoryDirection}
+            </if>
+            <if test="params.processApplyCode != null and params.processApplyCode != ''">
+                and oo.process_apply_code like concat('%',#{params.processApplyCode},'%')
             </if>
             <if test="params.skuNoList != null and params.skuNoList.size > 0">
                 and ood.sku_no in
@@ -152,6 +156,7 @@
             ood.unit,
             oo.warehouse_name as warehouseName,
             ood.warehouse_location as warehouseLocation,
+            oo.process_apply_code as processApplyCode,
             oo.approve_user_name as approveUserName,
             oo.create_user_name as createUserName,
             oo.create_time as createTime
@@ -178,6 +183,9 @@
                 </if>
                 <if test="params.inventoryDirection != null ">
                     and oo.inventory_direction = #{params.inventoryDirection}
+                </if>
+                <if test="params.processApplyCode != null and params.processApplyCode != ''">
+                    and oo.process_apply_code like concat('%',#{params.processApplyCode},'%')
                 </if>
                 <if test="params.skuNoList != null and params.skuNoList.size > 0">
                     and ood.sku_no in

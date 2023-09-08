@@ -128,6 +128,11 @@ public class OtherOutstockDTO implements Serializable {
         private String warehouseLocation;
 
         /**
+         * 流程申请单号
+         */
+        private String processApplyCode;
+
+        /**
          * 审核人名称
          */
         private String approveUserName;
@@ -177,6 +182,10 @@ public class OtherOutstockDTO implements Serializable {
          * 库存方向
          */
         private String  inventoryDirection;
+        /**
+         * 流程申请单号
+         */
+        private String  processApplyCode;
         /**
          * 入库日期集合
          */
@@ -265,6 +274,10 @@ public class OtherOutstockDTO implements Serializable {
         @NotBlank(message = "领料部门不能为空")
         private String deptId;
 
+        /**
+         * 流程申请单号
+         */
+        private String processApplyCode;
     }
 
     @Data

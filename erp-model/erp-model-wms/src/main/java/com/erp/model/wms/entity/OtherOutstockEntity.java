@@ -158,6 +158,13 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
     private String approveUserId;
 
     /**
+     * 流程申请单号
+     */
+    @TableField("process_apply_code")
+    private String processApplyCode;
+
+
+    /**
      * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
      */
     @TableField("sync_kingdee_status")
