@@ -1,5 +1,6 @@
 package com.sdk.oms.shopify.api.rest.model;
 
+import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -10,9 +11,11 @@ import com.sdk.oms.shopify.api.rest.model.serializer.InventoryPolicySerializer;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 @Slf4j
 @Data
@@ -56,7 +59,7 @@ public class ShopifyVariant {
 	public Long grams;
 	@JsonProperty("image_id")
 	public String imageId;
-	public double weight;
+	public String weight;
 	@JsonProperty("weight_unit")
 	public String weightUnit;
 	@JsonProperty("inventory_item_id")
@@ -79,6 +82,35 @@ public class ShopifyVariant {
 	@JsonAnySetter
 	public void ignored(String name, Object value) {
 		log.debug("ShopifyRestAPI Ignored Property: {} = {}", name, value);
+	}
+
+
+	private static final String OPTION_DESC = "{}:{}\n";
+
+	/**
+	 * 检查和获取规则信息
+	 */
+	public String checkAndGetOptions(List<Option> options) {
+		String resultOption= "";
+		if (StringUtils.isNotBlank(this.option1)){
+			Option option1 = options.stream().findFirst().orElse(null);
+			if (null != option1){
+				resultOption = resultOption.concat(StrUtil.format(OPTION_DESC, option1.getName(), this.option1));
+			}
+		}
+		if (StringUtils.isNotBlank(this.option2)){
+			Option option2 = options.get(1);
+			if (null != option2){
+				resultOption = resultOption.concat(StrUtil.format(OPTION_DESC, option2.getName(), this.option2));
+			}
+		}
+		if (StringUtils.isNotBlank(this.option3)){
+			Option option3 = options.get(2);
+			if (null != option3){
+				resultOption = resultOption.concat(StrUtil.format(OPTION_DESC, option3.getName(), this.option3));
+			}
+		}
+		return resultOption;
 	}
 
 }

@@ -28,4 +28,11 @@ public class RedisKeyConstant {
      */
     public static String INVENTORY_LOCK_CODE="INVENTORY_LOCK:{}_*";
 
+    /**
+     * 平台token
+     * platform-token:平台名称:店铺ID
+     */
+    public final static String REDIS_PLATFORM_TOKEN = "platform-token:{}:{}";
+
+
 }

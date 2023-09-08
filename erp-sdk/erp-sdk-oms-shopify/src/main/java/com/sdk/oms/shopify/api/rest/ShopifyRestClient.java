@@ -97,6 +97,8 @@ public class ShopifyRestClient {
 	private static final String AUTHORIZATION_CODE = "code";
 
 	private static final int DEFAULT_REQUEST_LIMIT = 50;
+
+	private static final int MAX_REQUEST_LIMIT = 250;
 	private static final int TOO_MANY_REQUESTS_STATUS_CODE = 429;
 	private static final int UNPROCESSABLE_ENTITY_STATUS_CODE = 422;
 	private static final int LOCKED_STATUS_CODE = 423;
@@ -417,11 +419,11 @@ public class ShopifyRestClient {
 	public ShopifyProducts getProducts() {
 		final List<ShopifyProduct> shopifyProducts = new LinkedList<>();
 
-		ShopifyPage<ShopifyProduct> shopifyProductsPage = getProducts(DEFAULT_REQUEST_LIMIT);
+		ShopifyPage<ShopifyProduct> shopifyProductsPage = getProducts(MAX_REQUEST_LIMIT);
 		log.info("Retrieved {} products from first page", shopifyProductsPage.size());
 		shopifyProducts.addAll(shopifyProductsPage);
 		while (shopifyProductsPage.getNextPageInfo() != null) {
-			shopifyProductsPage = getProducts(shopifyProductsPage.getNextPageInfo(), DEFAULT_REQUEST_LIMIT);
+			shopifyProductsPage = getProducts(shopifyProductsPage.getNextPageInfo(), MAX_REQUEST_LIMIT);
 			log.info("Retrieved {} products from page {}", shopifyProductsPage.size(), shopifyProductsPage.getNextPageInfo());
 			shopifyProducts.addAll(shopifyProductsPage);
 		}
