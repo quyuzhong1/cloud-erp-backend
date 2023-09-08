@@ -322,6 +322,7 @@
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND sod.is_deleted=FALSE
         WHERE so.is_deleted = false
+        AND so.invalid_status = false
         AND so.source_type NOT IN ('SAL_OUTSTOCK')
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
 

@@ -425,16 +425,17 @@
         AND pr.approve_status = 'approve'
         AND  EXISTS (
             SELECT
-                t.source_detail_id
+                t.id
             FROM (
                 SELECT
                     SUM(pid.stock_in_qty) as stock_in_qty,
-                    pid.source_detail_id
-                FROM po_instock pik
-                INNER JOIN po_instock_detail pid on pik.id = pid.main_id
-                GROUP BY pid.source_detail_id
+                    prdt."id"
+                FROM po_receive_detail prdt
+                LEFT JOIN po_instock_detail pid ON pid.source_detail_id = prdt."id"
+                LEFT JOIN po_instock pik ON pik.id = pid.main_id
+                GROUP BY prdt."id"
             ) t
-            WHERE t.source_detail_id = prd."id" AND stock_in_qty &lt; prd.receive_qty
+            WHERE t.id = prd."id" AND (stock_in_qty &lt; prd.receive_qty OR stock_in_qty IS NULL)
         )
         <if test="param2.tabFlag == 'waitInStockQc'">
             AND EXISTS (
@@ -475,17 +476,18 @@
         WHERE pr.is_deleted = FALSE
         AND pr.approve_status = 'approve'
         AND  EXISTS (
-            SELECT
-                t.source_detail_id
-            FROM (
-                SELECT
-                    SUM(pid.stock_in_qty) as stock_in_qty,
-                    pid.source_detail_id
-                FROM po_instock pik
-                INNER JOIN po_instock_detail pid on pik.id = pid.main_id
-                GROUP BY pid.source_detail_id
-            ) t
-            WHERE t.source_detail_id = prd."id" AND stock_in_qty &lt; prd.receive_qty
+        SELECT
+        t.id
+        FROM (
+        SELECT
+        SUM(pid.stock_in_qty) as stock_in_qty,
+        prdt."id"
+        FROM po_receive_detail prdt
+        LEFT JOIN po_instock_detail pid ON pid.source_detail_id = prdt."id"
+        LEFT JOIN po_instock pik ON pik.id = pid.main_id
+        GROUP BY prdt."id"
+        ) t
+        WHERE t.id = prd."id" AND (stock_in_qty &lt; prd.receive_qty OR stock_in_qty IS NULL)
         )
         <if test="params.invalidStatus != null">
             and pr.invalid_status = #{params.invalidStatus}
