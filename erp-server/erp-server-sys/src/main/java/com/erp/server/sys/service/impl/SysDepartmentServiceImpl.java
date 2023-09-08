@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -362,7 +362,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
                 continue;
             }
             lambdaUpdate().set(SysDepartmentEntity::getSyncKingdeeId, kingdeeId).set(SysDepartmentEntity::getSyncKingdeeTime, LocalDateTime.now())
-                    .set(SysDepartmentEntity::getSyncOperate, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode())
+                    .set(SysDepartmentEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
                     .set(SysDepartmentEntity::getSyncKingdeeStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
                     .set(SysDepartmentEntity::getCode, code)
                     .eq(SysDepartmentEntity::getId, sysDepartmentEntity.getId())

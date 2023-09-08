@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
@@ -94,7 +94,7 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
         resultMap.put("disabled",entity.getDisabled());
 
         //审核未通过、非反审核不推送
-        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) && !SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) && !SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             return;
         }
 

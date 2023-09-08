@@ -6,7 +6,7 @@ package com.common.business.enums;
 
  * @date 2023/4/11 17:13
  */
-public enum SyncKingdeeOperateEnum {
+public enum SyncOperateEnum {
 
     OPERATE_ADD("operateAdd", "","新增"),
     OPERATE_UPDATE("operateUpdate", "","修改"),
@@ -24,39 +24,39 @@ public enum SyncKingdeeOperateEnum {
     ;
     private String code;
 
-    private String name;
+    private String kingdeeParam;
 
     private String desc;
 
-    SyncKingdeeOperateEnum(String code, String name,String desc) {
+    SyncOperateEnum(String code, String kingdeeParam, String desc) {
         this.code = code;
-        this.name = name;
+        this.kingdeeParam = kingdeeParam;
         this.desc = desc;
     }
 
     public String getCode() {
         return code;
     }
-    public String getName() {
-        return name;
+    public String getKingdeeParam() {
+        return kingdeeParam;
     }
     public String getDesc() {
         return desc;
     }
 
     public static String getNameByCode(String code) {
-        SyncKingdeeOperateEnum[] enums = values();
-        for (SyncKingdeeOperateEnum operateEnum : enums) {
+        SyncOperateEnum[] enums = values();
+        for (SyncOperateEnum operateEnum : enums) {
             if (operateEnum.getCode().equals(code)) {
-                return operateEnum.getName();
+                return operateEnum.getKingdeeParam();
             }
         }
         return null;
     }
 
     public static String getDescByCode(String code) {
-        SyncKingdeeOperateEnum[] enums = values();
-        for (SyncKingdeeOperateEnum operateEnum : enums) {
+        SyncOperateEnum[] enums = values();
+        for (SyncOperateEnum operateEnum : enums) {
             if (operateEnum.getCode().equals(code)) {
                 return operateEnum.getDesc();
             }

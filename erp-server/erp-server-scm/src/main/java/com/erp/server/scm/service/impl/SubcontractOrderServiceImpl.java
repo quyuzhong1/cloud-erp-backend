@@ -410,7 +410,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //自动生成采购订单
             autoGeneratePo(ids);
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         }
         return Boolean.TRUE;
     }
@@ -454,7 +454,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         updateForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //审核通过发送金蝶
-        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
 
         // 操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -1001,7 +1001,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         updateInvalidStatus(ids, remark);
 
         //审核通过发送金蝶
-        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
+        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
 
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());

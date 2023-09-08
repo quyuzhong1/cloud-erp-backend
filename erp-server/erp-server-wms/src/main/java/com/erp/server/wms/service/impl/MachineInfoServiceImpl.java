@@ -471,7 +471,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                 .set(MachineInfoEntity::getInvalidRemark, reason)
                 .update();
         //金蝶推送
-        list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
+        list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个加工单【%s】，作废原因：".concat(reason), ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "作废操作");
@@ -504,12 +504,12 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             //更新库存
             updateInventoryTransCore(list);
             //金蝶推送
-            list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             // 发送马帮
             list.forEach(obj->{
                 // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤，后面会限制同步过来的不允许新增或移除SKU
                 if(Objects.equals(obj.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
-                    syncMabangMachineService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                    syncMabangMachineService.syncDataToMabang(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
                 }
             });
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
@@ -557,12 +557,12 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.MACHINE_INFO,ids);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
         //金蝶推送
-        list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         // 发送马帮
         list.forEach(obj->{
             // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤
             if(Objects.equals(obj.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
-                syncMabangMachineService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode());
+                syncMabangMachineService.syncDataToMabang(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
             }
         });
         //操作日志

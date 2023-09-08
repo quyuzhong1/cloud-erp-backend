@@ -635,7 +635,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             // 更新库存信息
             updateInventoryTransCore(purchaseReturnOrderEntityList);
             //审核通过发送金蝶
-            purchaseReturnOrderEntityList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            purchaseReturnOrderEntityList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
 
         } else {
             //审核不通过
@@ -716,7 +716,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "反审核操作");
         //审核通过发送金蝶
-        purchaseReturnOrderEntityList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        purchaseReturnOrderEntityList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         return Boolean.TRUE;
     }
 
@@ -796,7 +796,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         operateLogService.batchAddModuleOperateLog("作废了一个采购退货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "作废操作");
 
         //作废发送金蝶
-        warehouseReceiveList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
+        warehouseReceiveList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
         return Boolean.TRUE;
     }
 

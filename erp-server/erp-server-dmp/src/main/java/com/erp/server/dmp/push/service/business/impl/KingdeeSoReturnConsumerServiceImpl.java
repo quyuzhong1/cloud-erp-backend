@@ -4,7 +4,7 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -93,11 +93,11 @@ public class KingdeeSoReturnConsumerServiceImpl implements KingdeeSoReturnConsum
         String documentStatus = (String)model.get("DocumentStatus");
         //操作项
         String operate = (String) map.get("operate");
-        if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
             operateInvalid(apiUtils, platformEntity, map, type);
         }
         //反审核
-        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             //审核中或已审核则要先反审
             if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
                 //反审核
@@ -105,7 +105,7 @@ public class KingdeeSoReturnConsumerServiceImpl implements KingdeeSoReturnConsum
             }
         }
         //审核
-        if (SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
             operateApprove(apiUtils, platformEntity, map, model, json, type);
         }
     }

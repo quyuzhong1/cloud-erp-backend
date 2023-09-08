@@ -1,7 +1,7 @@
 package com.erp.server.plm.schedule;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -58,7 +58,7 @@ public class KingdeePushJob {
         }
         list.forEach(obj->{
             try {
-                syncKingdeeProductDetailService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                syncKingdeeProductDetailService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
             } catch (Exception e) {
                 XxlJobHelper.log("SKU【{}】推送金蝶失败,error = {}",obj.getSkuNo(),e);
                 log.error("SKU【{}】推送金蝶失败",obj.getSkuNo(),e);
@@ -81,7 +81,7 @@ public class KingdeePushJob {
         }
         list.forEach(obj->{
             try {
-                syncKingdeeBomInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                syncKingdeeBomInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
             } catch (Exception e) {
                 XxlJobHelper.log("BOM【{}】推送金蝶失败,error = {}",obj.getParentSkuNo(),e);
                 log.error("BOM【{}】推送金蝶失败",obj.getParentSkuNo(),e);

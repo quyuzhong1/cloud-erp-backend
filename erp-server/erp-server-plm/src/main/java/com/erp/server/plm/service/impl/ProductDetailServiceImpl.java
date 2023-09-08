@@ -18,7 +18,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SkuApproveConfigureEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
@@ -2067,7 +2067,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //workflowFeign.taskPass(approveProcess);
         //审核通过后发送到金蝶系统
-        syncKingdeeProductDetailService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+        syncKingdeeProductDetailService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         return true;
     }
 
@@ -2550,7 +2550,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productDetailEntity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95126);
         }
-        syncKingdeeProductDetailService.syncDataToKingdee(productDetailEntity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+        syncKingdeeProductDetailService.syncDataToKingdee(productDetailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         return Boolean.TRUE;
     }
 
@@ -3035,7 +3035,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //编辑通过后发送金蝶
-        syncKingdeeProductDetailService.syncDataToKingdee(detailEntity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+        syncKingdeeProductDetailService.syncDataToKingdee(detailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
     }
 
 
@@ -3505,7 +3505,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
                         .setBusinessId(obj.getId()).setOperation("状态变更").setContent("审核SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]，审批意见：" + baseApproveParamDTO.getComment()));
                 //审核通过发送金蝶
-                syncKingdeeProductDetailService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                syncKingdeeProductDetailService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
             });
         } else {
             approveStatus = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
@@ -3750,8 +3750,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto) {
-        Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        dto.setStatus(state);
+       /* Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+        dto.setStatus(state);*/
         List<SkuVO> skuVOS = baseMapper.pdaSearchSku(dto);
         if (CollectionUtils.isEmpty(skuVOS)) {
             throw new ServiceException(ApiError.ERROR_95107);
@@ -3779,27 +3779,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public PdaProductDetailDTO.View pdaProductView(String skuNo) {
-        List<SkuVO> skuBySkuNos = this.getSkuBySkuNos(Arrays.asList(skuNo));
-        SkuVO skuVO = skuBySkuNos.stream().filter(req -> req.getSkuNo().equals(skuNo)).distinct().findFirst().orElse(new SkuVO());
-        if (ObjectUtil.isEmpty(skuVO)) {
+        ProductDetailEntity productIdBySku = getProductIdBySku(skuNo);
+        if (ObjectUtil.isEmpty(productIdBySku)) {
             throw new ServiceException("sku不存在");
         }
         PdaProductDetailDTO.View view = baseMapper.pdaProductView(skuNo);
-
         List<PdaProductDetailDTO.ParentSkuDTO> parentSkuDTOList = new ArrayList<>();
 
         //查询子sku
-        List<BomChildrenSkuDTO> sonSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(skuVO.getSkuId()));
+        List<BomChildrenSkuDTO> sonSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(productIdBySku.getId()));
         if (CollectionUtils.isNotEmpty(sonSkuList)) {
             PdaProductDetailDTO.ParentSkuDTO parentSkuDTO = new PdaProductDetailDTO.ParentSkuDTO();
-            parentSkuDTO.setSkuNo(skuVO.getSkuNo());
+            parentSkuDTO.setSkuNo(productIdBySku.getSkuNo());
             List<PdaProductDetailDTO.SonSkuDTO> sonSkuDTOS = BeanMapper.copyList(sonSkuList, PdaProductDetailDTO.SonSkuDTO.class);
             parentSkuDTO.setChildSkuList(sonSkuDTOS);
             parentSkuDTOList.add(parentSkuDTO);
 
         } else {
             //没有子集获取父级
-            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomBySkuIds(Arrays.asList(skuVO.getSkuId()));
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomBySkuIds(Arrays.asList(productIdBySku.getId()));
             List<String> skuIds = bomChildrenSkuDTOS.stream().map(req -> req.getParentSkuId()).distinct().collect(Collectors.toList());
 //            List<BomChildrenSkuDTO> bomChildrenSkuDTOS1 = bomSkuService.listBomChildBySkuIds(skuIds);
             List<SkuVO> skuInfoBySkuIds = this.getSkuInfoBySkuIds(skuIds);

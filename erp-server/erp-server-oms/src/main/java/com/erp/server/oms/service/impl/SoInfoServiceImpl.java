@@ -1003,7 +1003,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //审核通过
             approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -1056,7 +1056,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), rejectPairList, "状态变更");
             // TODO 收款字段需补
-            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }
@@ -1208,7 +1208,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         String content = "作废了一个销售订单【%s】,作废原因: ".concat(remark);
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "作废");
-        list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
+        list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
 
         return Boolean.TRUE;
     }
