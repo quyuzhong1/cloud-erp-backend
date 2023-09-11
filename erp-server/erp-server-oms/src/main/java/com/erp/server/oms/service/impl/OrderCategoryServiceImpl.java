@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseChildDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -13,16 +14,18 @@ import com.erp.model.oms.dto.OrderCategoryDTO;
 import com.erp.model.oms.dto.OrderCategoryDetailDTO;
 import com.erp.model.oms.entity.OrderCategoryDetailEntity;
 import com.erp.model.oms.entity.OrderCategoryEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.server.oms.mapper.OrderCategoryMapper;
 import com.erp.server.oms.service.OrderCategoryDetailService;
 import com.erp.server.oms.service.OrderCategoryService;
 import com.common.business.service.impl.SuperServiceImpl;
+import org.apache.commons.collections4.ListUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -127,11 +130,12 @@ public class OrderCategoryServiceImpl extends SuperServiceImpl<OrderCategoryMapp
 
     /**
      * 更改订单分类
-     * @author yl
-     * @date 2023-08-25 16:01
+     *
      * @param orderCategory
      * @param disabled
      * @return com.common.business.dto.base.BatchResultDTO
+     * @author yl
+     * @date 2023-08-25 16:01
      */
     @Override
     public BatchResultDTO updateStatus(OrderCategoryEntity orderCategory, Boolean disabled) {
@@ -147,6 +151,33 @@ public class OrderCategoryServiceImpl extends SuperServiceImpl<OrderCategoryMapp
 
         }
         return BatchResultDTO.fail(orderCategory.getId(), orderCategory.getGroupName(), "订单分类不存在");
+    }
+
+
+    /**
+     * 订单分类的树结构
+     *
+     * @return
+     */
+    @Override
+    public List<BaseChildDTO.ListChildTreeDTO> tree() {
+        List<OrderCategoryDTO.ListDTO> list = baseMapper.listDetail();
+        Map<String, List<OrderCategoryDTO.ListDTO>> map = list.stream().collect(Collectors.groupingBy(OrderCategoryDTO.ListDTO::getId));
+        List<BaseChildDTO.ListChildTreeDTO> resultList = new ArrayList<>(map.size());
+        for (Map.Entry<String, List<OrderCategoryDTO.ListDTO>> item : map.entrySet()) {
+            BaseChildDTO.ListChildTreeDTO treeDTO = new BaseChildDTO.ListChildTreeDTO();
+            treeDTO.setId(item.getKey());
+            List<OrderCategoryDTO.ListDTO> detailList = item.getValue();
+            treeDTO.setName(detailList.get(0).getGroupName());
+            treeDTO.setDisabled(detailList.get(0).getDisabled());
+            List<BaseChildDTO.ListChildTreeDTO> childList = detailList.stream().
+                    map(d -> new BaseChildDTO.ListChildTreeDTO(d.getDetailId(), d.getDetailName(), d.getDisabled(), Collections.emptyList())).
+                    collect(Collectors.toList());
+            treeDTO.setChildren(childList);
+            resultList.add(treeDTO);
+
+        }
+        return resultList;
     }
 
 

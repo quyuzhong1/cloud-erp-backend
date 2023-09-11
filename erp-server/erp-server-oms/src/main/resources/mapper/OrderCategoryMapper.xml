@@ -36,5 +36,18 @@
             #{params.name} ,'%') ) ))
         </if>
     </select>
+    <select id="listDetail" resultType="com.erp.model.oms.dto.OrderCategoryDTO$ListDTO">
+        SELECT
+            oc.id,
+            oc.group_name,
+            oc.disabled,
+            ocd.id AS  detailId,
+            ocd.name AS detailName
+        FROM  order_category oc
+        LEFT JOIN order_category_detail ocd
+        ON oc.id=ocd.main_id and ocd.is_deleted=false
+        WHERE oc.is_deleted=false
+
+    </select>
 
 </mapper>
