@@ -195,6 +195,11 @@ public class PdaVersionDTO implements Serializable {
         @NotBlank(message = "升级包地址不能为空")
         private String url;
 
+        /**
+        * 升级类型
+        */
+        @NotBlank(message = "类型不能为空")
+        private String type;
 
     }
 
