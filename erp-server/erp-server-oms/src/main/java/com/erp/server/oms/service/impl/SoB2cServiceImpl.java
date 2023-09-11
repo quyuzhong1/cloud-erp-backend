@@ -1618,7 +1618,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             //主表数据
             if (CollectionUtils.isNotEmpty(mergeMainList)) {
-                for (SoB2cDTO.MergeMainDTO mergeMainDTO : mergeMainList) {
+                List<SoB2cDTO.MergeMainDTO> mainList = mergeMainList.stream().filter(obj -> mergeListDTO.getDictPlatform().equals(obj.getDictPlatform())
+                        && mergeListDTO.getShopId().equals(obj.getShopId())
+                        && mergeListDTO.getBuyerName().equals(obj.getBuyerName())
+                        && mergeListDTO.getSourceCurrency().equals(obj.getSourceCurrency())
+                        && mergeListDTO.getReceiverName().equals(obj.getReceiverName())
+                        && mergeListDTO.getFirstAddress().equals(obj.getFirstAddress())
+                        && mergeListDTO.getSecondAddress().equals(obj.getSecondAddress())
+                        && mergeListDTO.getFullAddress().equals(obj.getFullAddress())
+                        && mergeListDTO.getWarehouseId().equals(obj.getWarehouseId())
+                        && StrUtil.equals(mergeListDTO.getDictLogisticsMethod(),obj.getDictLogisticsMethod())
+                ).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(mainList)) {
+                    continue;
+                }
+                for (SoB2cDTO.MergeMainDTO mergeMainDTO : mainList) {
 
                     //产品名称
                     String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(mergeMainDTO.getSkuId())).findFirst()
@@ -1628,22 +1642,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     mergeMainDTO.setAmount(MathUtil.multiply(mergeMainDTO.getSourceAmount(), mergeMainDTO.getExchangeRate()));
                     mergeMainDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 }
-                mergeListDTO.setMainList(mergeMainList);
+                mergeListDTO.setMainList(mainList);
                 //总原币金额
-                BigDecimal totalSourceAmount = mergeMainList.stream().map(SoB2cDTO.MergeMainDTO::getSourceAmount)
+                BigDecimal totalSourceAmount = mainList.stream().map(SoB2cDTO.MergeMainDTO::getSourceAmount)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 mergeListDTO.setSourceAmount(totalSourceAmount);
                 //总本位币金额
-                BigDecimal totalAmount = mergeMainList.stream().map(SoB2cDTO.MergeMainDTO::getSourceAmount)
+                BigDecimal totalAmount = mainList.stream().map(SoB2cDTO.MergeMainDTO::getSourceAmount)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 mergeListDTO.setAmount(totalAmount);
                 mergeListDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 //总重量
-                BigDecimal totalWeight = mergeMainList.stream().map(SoB2cDTO.MergeMainDTO::getSourceAmount)
+                BigDecimal totalWeight = mainList.stream().map(SoB2cDTO.MergeMainDTO::getSourceAmount)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 mergeListDTO.setWeight(totalWeight);
             }
-            mergeListDTO.setMainList(mergeMainList);
         }
     }
 
