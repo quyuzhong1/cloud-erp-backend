@@ -73,6 +73,11 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
         return Boolean.TRUE;
     }
 
+    @Override
+    public SoB2cFinanceEntity getByMainId(String mainId) {
+        return  lambdaQuery().eq(SoB2cFinanceEntity::getMainId,mainId).one();
+    }
+
 
     /**
     * 新增修改处理数据

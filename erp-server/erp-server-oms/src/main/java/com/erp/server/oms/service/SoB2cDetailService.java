@@ -70,4 +70,12 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @return Boolean
      */
     Boolean deleteByMainIds(List<String> mainIds);
+    /**
+     * @description: 更新仓库信息
+     * @author Will
+     * @date: 2023/9/11 10:02
+     * @param detailList
+     * @return Boolean
+     */
+    Boolean updateWarehouse(List<SoB2cDetailEntity> detailList);
 }

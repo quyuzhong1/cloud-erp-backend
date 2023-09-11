@@ -270,5 +270,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param dto
      * @return FinancialInfoDTO
      */
-    SoB2cDTO.FinancialInfoDTO getFinancialInfo(SoB2cDTO.FinancialParamDTO dto);
+    SoB2cDTO.FinancialInfoDTO getFinancialInfo(SoB2cDTO.FinancialParamDTO dto,Boolean isAdd);
+    /**
+     * @description: 标记不合并
+     * @author Will
+     * @date: 2023/9/11 9:26
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO isNotNeedMerge(String id);
 }
