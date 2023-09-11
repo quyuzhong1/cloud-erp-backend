@@ -597,14 +597,12 @@ public class SoB2cController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> isNotNeedMerge(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        Boolean success = Boolean.TRUE;
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
                 result = soB2cService.isNotNeedMerge(id);
             } catch (Exception e){
                 log.error("B2C销售订单无需合并标记失败",e);
-                success = Boolean.FALSE;
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 无需合并标记失败");
@@ -615,7 +613,7 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(result);
         }
-        return  success ? success(resultDTOS) : failure(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
