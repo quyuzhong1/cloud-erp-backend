@@ -138,6 +138,36 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         return lambdaUpdate().in(SoB2cDetailEntity::getMainId,mainIds).remove();
     }
 
+    @Override
+    public Boolean updateWarehouse(List<SoB2cDetailEntity> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        List<String> warehouseIdList = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).collect(Collectors.toList());
+        //仓库信息
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        List<String> orgIdList = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
+        //组织信息
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
+        if (CollectionUtils.isEmpty(accountingCompanyList)) {
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NOT_EXIST_ORG,warehouseList.stream().map(WarehouseDTO.UpdateDTO::getName).collect(Collectors.joining(",")));
+        }
+        for (SoB2cDetailEntity entity : detailList) {
+            WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(warehouseDTO)) {
+                throw new ServiceException(ApiError.ERROR_99002);
+            }
+            entity.setWarehouseName(warehouseDTO.getName());
+            entity.setWarehouseOrgId(warehouseDTO.getOrgId());
+            BaseIdDTO.CodeDTO codeDTO = accountingCompanyList.stream().filter(obj -> obj.getId().equals(warehouseDTO.getOrgId())).findFirst().orElse(null);
+            entity.setWarehouseOrgName(codeDTO.getName());
+        }
+        return this.updateBatchById(detailList);
+    }
+
 
     /**
      * 查询需要删除的数据

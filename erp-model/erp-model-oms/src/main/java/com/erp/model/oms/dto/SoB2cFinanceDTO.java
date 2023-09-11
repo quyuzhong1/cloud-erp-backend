@@ -167,7 +167,20 @@ public class SoB2cFinanceDTO implements Serializable {
         @Digits(integer = 12, fraction = 4, message = "VAT税费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal vatCost;
 
+        /**
+         * 平台费类型
+         */
+        private String platformCostType;
 
+        /**
+         * 转账费类型
+         */
+        private String transferCostType;
+
+        /**
+         * VAT税费类型
+         */
+        private String vatCostType;
     }
 
 

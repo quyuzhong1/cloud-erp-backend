@@ -1,14 +1,14 @@
 package com.erp.model.oms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -50,26 +50,48 @@ public class SoB2cFinanceEntity extends BaseEntity<SoB2cFinanceEntity> {
     */
     @TableField("logistics_cost")
     private BigDecimal logisticsCost;
-    /**
-    * 平台费
-    */
-    @TableField("platform_cost")
-    private BigDecimal platformCost;
-    /**
-    * 转账费
-    */
-    @TableField("transfer_cost")
-    private BigDecimal transferCost;
+
     /**
     * 包装辅料费
     */
     @TableField("accessories_cost")
     private BigDecimal accessoriesCost;
+
     /**
-    * VAT税费
-    */
-    @TableField("vat_cost")
-    private BigDecimal vatCost;
+     * 平台费率
+     */
+    @TableField("platform_rate")
+    private BigDecimal platformRate;
+
+    /**
+     * vat 费率
+     */
+    @TableField("vat_rate")
+    private BigDecimal vatRate;
+
+    /**
+     * 转账费率
+     */
+    @TableField("transfer_rate")
+    private BigDecimal transferRate;
+
+    /**
+     * 平台费类型
+     */
+    @TableField("platform_cost_type")
+    private String platformCostType;
+
+    /**
+     * 转账费类型
+     */
+    @TableField("transfer_cost_type")
+    private String transferCostType;
+
+    /**
+     * VAT税费类型
+     */
+    @TableField("vat_cost_type")
+    private String vatCostType;
 
 
     public static final String MAIN_ID = "main_id";
