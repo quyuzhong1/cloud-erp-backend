@@ -1606,7 +1606,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if (CollectionUtils.isEmpty(qcInfoList) || CollectionUtils.isEmpty(resultList)) {
                 record.setQcStatus(PdaQclStatusEnum.WAIT_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.WAIT_QC.getName());
-            } else if (resultList.size() >= detailEntities.size()) {
+            } else if (qcInfoList.size() > resultList.size()) {
+                record.setQcStatus(PdaQclStatusEnum.PARTIAL_QC.getCode());
+                record.setQcStatusName(PdaQclStatusEnum.PARTIAL_QC.getName());
+            }else if (resultList.size() >= detailEntities.size()) {
                 record.setQcStatus(PdaQclStatusEnum.FINISH_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.FINISH_QC.getName());
             } else {
