@@ -1,4 +1,6 @@
 package com.erp.server.sys.service;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.entity.PdaVersionEntity;
 import com.common.business.service.SuperService;
@@ -13,6 +15,15 @@ import com.common.business.service.SuperService;
  * @since 2023-08-14
  */
 public interface PdaVersionService extends SuperService<PdaVersionEntity> {
+
+    /**
+     * 发版信息列表分页查询
+     * @Author Luo_WG
+     * @Date 2023/9/11 16:01
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.sys.dto.PdaVersionDTO.PagingDTO>
+     **/
+    PagingVO<PdaVersionDTO.PagingDTO> paging(PagingDTO<PdaVersionDTO.PagingParamDTO> dto);
 
     /**
      * 获取pda最新版本

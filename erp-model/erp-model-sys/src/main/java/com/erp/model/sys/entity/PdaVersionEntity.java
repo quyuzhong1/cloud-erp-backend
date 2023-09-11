@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -22,6 +24,13 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @TableName("pda_version")
 public class PdaVersionEntity extends BaseEntity<PdaVersionEntity> {
+
+    /**
+    * 下拉获取地址：sys/common/enumDropDown?type=SysType
+    * 发版类型：PC PDA
+    */
+    @TableField("type")
+    private String type;
 
     /**
     * pda版本
@@ -47,6 +56,11 @@ public class PdaVersionEntity extends BaseEntity<PdaVersionEntity> {
     @TableField("url")
     private String url;
 
+    /**
+    * 升级时间
+    */
+    @TableField("upgrade_time")
+    private LocalDateTime upgradeTime;
 
     public static final String PDA_VERSION = "pda_version";
 
