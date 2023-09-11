@@ -83,7 +83,6 @@ public class OrderCategoryDTO implements Serializable {
 
     }
 
-
     @Data
     @NoArgsConstructor
     public static class AddDTO {
@@ -102,6 +101,34 @@ public class OrderCategoryDTO implements Serializable {
 
         private List<OrderCategoryDetailDTO.AddDTO> detailList;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 组名
+         */
+        private String groupName;
+
+
+        /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
+         * 明细名
+         */
+        private String detailName;
+
+        private Boolean disabled;
     }
 
     @Data

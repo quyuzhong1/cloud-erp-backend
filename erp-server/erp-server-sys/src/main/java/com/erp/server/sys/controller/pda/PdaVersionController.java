@@ -1,6 +1,9 @@
 package com.erp.server.sys.controller.pda;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.MessageDTO;
+import com.erp.model.sys.dto.NoticeDTO;
 import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.entity.PdaVersionEntity;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +29,19 @@ public class PdaVersionController extends BaseController {
 
     @Autowired
     private PdaVersionService pdaVersionService;
+
+    /**
+     * 发版信息列表分页查询
+     * @Author Luo_WG
+     * @Date 2023/9/11 16:01
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.sys.dto.PdaVersionDTO.PagingDTO>>
+     **/
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<PdaVersionDTO.PagingDTO>> paging(@RequestBody @Validated PagingDTO<PdaVersionDTO.PagingParamDTO> dto) {
+        PagingVO<PdaVersionDTO.PagingDTO> pagingVO = pdaVersionService.paging(dto);
+        return success(pagingVO);
+    }
 
     /**
      * 获取pda最新版本

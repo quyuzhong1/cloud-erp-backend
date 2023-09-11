@@ -1,8 +1,8 @@
 package com.erp.server.oms.service;
-import com.erp.model.oms.entity.SoB2cFinanceEntity;
+
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.SoB2cFinanceDTO;
+import com.erp.model.oms.entity.SoB2cFinanceEntity;
 
 /**
  * <p>
@@ -32,5 +32,8 @@ public interface SoB2cFinanceService extends SuperService<SoB2cFinanceEntity> {
     */
     Boolean update(SoB2cFinanceDTO.UpdateDTO dto);
 
-
+    /**
+     * 根据父级id查询
+     */
+    SoB2cFinanceEntity getByMainId(String mainId);
 }

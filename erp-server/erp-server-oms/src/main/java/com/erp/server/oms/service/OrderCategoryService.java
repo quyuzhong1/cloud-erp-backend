@@ -1,11 +1,14 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.BaseChildDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.OrderCategoryDTO;
 import com.erp.model.oms.entity.OrderCategoryEntity;
 import com.common.business.service.SuperService;
+
+import java.util.List;
 
 /**
  * <p>
@@ -64,4 +67,10 @@ public interface OrderCategoryService extends SuperService<OrderCategoryEntity> 
      * @return com.common.business.dto.base.BatchResultDTO
      */
     BatchResultDTO updateStatus(OrderCategoryEntity orderCategory, Boolean disabled);
+
+    /**
+     * 订单分类的树结构
+     * @return
+     */
+    List<BaseChildDTO.ListChildTreeDTO> tree();
 }

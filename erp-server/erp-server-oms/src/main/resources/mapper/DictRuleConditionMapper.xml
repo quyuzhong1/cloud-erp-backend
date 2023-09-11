@@ -33,11 +33,10 @@
     </sql>
     <select id="listByType" resultType="com.common.business.dto.base.BaseDropDownDTO$CommonDTO">
         SELECT
-            key AS code,
-            value
-        FROM dict_rule_condition
+            condition_field AS code,
+            condition_field_name AS value
+        FROM cf_condition
         WHERE is_deleted=FALSE
-        AND type=#{type}
     </select>
 
 

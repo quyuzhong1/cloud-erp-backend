@@ -36,12 +36,14 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.mapper.ProductDetailMapper;
@@ -193,6 +195,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Autowired
     private BomSkuService bomSkuService;
+
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
+
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -2648,10 +2654,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (CollUtil.isNotEmpty(productPackList)) {
                 productPackMap = productPackList.stream().collect(Collectors.groupingBy(ProductPackEntity::getSkuId));
             }
+
+            List<String> supplierIdList = skuList.stream().map(SkuVO::getSupplierId).collect(Collectors.toList());
+            List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+
             for (SkuVO skuVO : skuList) {
                 if (productPackMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPackMap.get(skuVO.getSkuId()))) {
                     ProductPackEntity packEntity = productPackMap.get(skuVO.getSkuId()).get(0);
                     skuVO.setUnitQty(Objects.nonNull(packEntity.getBoxQty()) ? packEntity.getBoxQty().intValue() : null);
+                }
+                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(skuVO.getSupplierId()) && req.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
+                    //含税价
+                    skuVO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
                 }
             }
         }
@@ -3785,7 +3800,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         PdaProductDetailDTO.View view = baseMapper.pdaProductView(skuNo);
         List<PdaProductDetailDTO.ParentSkuDTO> parentSkuDTOList = new ArrayList<>();
-
+        if (StringUtils.isBlank(view.getSpuNo())) {
+            view.setSpuNo("");
+            view.setSpuName("");
+        }
         //查询子sku
         List<BomChildrenSkuDTO> sonSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(productIdBySku.getId()));
         if (CollectionUtils.isNotEmpty(sonSkuList)) {

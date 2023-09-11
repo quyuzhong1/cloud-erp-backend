@@ -1,9 +1,14 @@
 package com.erp.model.sys.dto;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -19,6 +24,86 @@ import javax.validation.constraints.Size;
 @Data
 @NoArgsConstructor
 public class PdaVersionDTO implements Serializable {
+
+
+    /**
+    * 列表查询
+    */
+    @Data
+    @NoArgsConstructor
+    public static class PagingDTO {
+        /**
+         * 主键
+         */
+        private String id;
+
+        /**
+         * 下拉获取地址：sys/common/enumDropDown?type=SysType
+         * 发版类型：PC PDA
+         */
+        private String type;
+
+        /**
+         * 类型名称
+         **/
+        private String typeName;
+
+        /**
+         * pda版本
+         */
+        private String pdaVersion;
+
+        /**
+         * 升级内容描述
+         */
+        private String remark;
+
+        /**
+         * 是否强制更新
+         */
+        private Boolean force;
+
+        /**
+         * 升级包地址
+         */
+        private String url;
+
+        /**
+         * 升级时间
+         */
+        private LocalDateTime upgradeTime;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+    }
+
+
+
+    /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO {
+
+    }
 
 
     /**
@@ -110,8 +195,12 @@ public class PdaVersionDTO implements Serializable {
         @NotBlank(message = "升级包地址不能为空")
         private String url;
 
+        /**
+        * 升级类型
+        */
+        @NotBlank(message = "类型不能为空")
+        private String type;
 
     }
-
 
 }

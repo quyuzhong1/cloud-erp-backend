@@ -29,22 +29,6 @@
         <result column="buyerName" property="buyerName"/>
         <result column="countryName" property="countryName"/>
         <result column="label" property="label"/>
-        <collection property="detailList" ofType="com.erp.model.oms.dto.SoB2cDetailDTO$ListDTO">
-            <id column="detailId" property="id"/>
-            <result column="imageUrl" property="imageUrl"/>
-            <result column="platformSkuNo" property="platformSkuNo"/>
-            <result column="sellerSkuNo" property="sellerSkuNo"/>
-            <result column="skuId" property="skuId"/>
-            <result column="skuNo" property="skuNo"/>
-            <result column="taxCost" property="taxCost"/>
-            <result column="sourceAmount" property="sourceAmount"/>
-            <result column="sourceCurrency" property="sourceCurrency"/>
-            <result column="qty" property="qty"/>
-            <result column="warehouseId" property="warehouseId"/>
-            <result column="warehouseName" property="warehouseName"/>
-            <result column="warehouseLocation" property="warehouseLocation"/>
-            <result column="detailLabel" property="label"/>
-        </collection>
     </resultMap>
 
 
@@ -72,10 +56,15 @@
         <result column="warehouse_id" property="warehouseId"/>
         <result column="warehouse_name" property="warehouseName"/>
         <result column="warehouse_location" property="warehouseLocation"/>
+        <result column="dict_platform" property="dictPlatform"/>
+        <result column="shop_id" property="shopId"/>
+        <result column="buyerName" property="buyerName"/>
+        <result column="dict_logistics_method" property="dictLogisticsMethod"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
+        distinct
         sb2c.id,
         sb2c.code,
         sb2c.dict_platform as dictPlatform,
@@ -107,21 +96,7 @@
         as shippingCostCurrency,
         sb2cl.code as logisticsCode,
         sb2cr.name as buyerName,
-        sb2cr.country_name as countryName,
-        sb2cd.id as detailId,
-        sb2cd.image_url as imageUrl,
-        sb2cd.platform_sku_no as platformSkuNo,
-        sb2cd.seller_sku_no as sellerSkuNo,
-        sb2cd.sku_id as skuId,
-        sb2cd.sku_no as skuNo,
-        sb2cd.tax_cost as taxCost,
-        sb2cd.amount as sourceAmount,
-        sb2cd.currency as sourceCurrency,
-        sb2cd.qty as qty,
-        sb2cd.warehouse_id as warehouseId,
-        sb2cd.warehouse_name as warehouseName,
-        sb2cd.warehouse_location as warehouseLocation,
-        sb2cd.label_json as detailLabel
+        sb2cr.country_name as countryName
     </sql>
 
     <!-- 列表分页查询 -->
@@ -288,7 +263,7 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         <where>
-            sb2c.is_deleted = false and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
+            sb2c.is_deleted = false and sb2c.is_not_merge = false and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
             and not exists (select * from so_b2c_ref sbr where sbr.is_deleted = false and (sbr.source_id = sb2c.id or
             sbr.target_id = sb2c.id))
@@ -334,13 +309,13 @@
     <!-- 合并列表数量查询 -->
     <select id="mergePagingCount" resultType="java.lang.Integer">
         select
-        count(0)
+        count(distinct sb2c.id)
         from so_b2c sb2c
         inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         <where>
-            sb2c.is_deleted = false and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
+            sb2c.is_deleted = false and sb2c.is_not_merge = false and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
             and not exists (select * from so_b2c_ref sbr where sbr.is_deleted = false and (sbr.source_id = sb2c.id or
             sbr.target_id = sb2c.id))
@@ -379,8 +354,6 @@
                 ${params.permissionSql}
             </if>
         </where>
-        group by
-        sb2c.dict_platform,sb2c.shop_id,sb2cr.name,sb2c.currency,sb2cr.receiver_name,sb2cr.first_address,sb2cr.second_address,sb2cr.full_address,sb2cd.warehouse_id,sb2cl.dict_logistics_method
     </select>
 
     <!-- 合并列表合并数据查询 -->
@@ -402,18 +375,22 @@
         sb2cl.weight,
         sb2cd.tax_cost,
         sb2cd.amount as sourceAmount,
-        sb2cd.currency as sourceCurrency,
+        sb2c.currency as sourceCurrency,
         sb2cd.exchange_rate,
         sb2cd.qty,
         sb2cd.warehouse_id,
         sb2cd.warehouse_name,
-        sb2cd.warehouse_location
+        sb2cd.warehouse_location,
+        sb2c.dict_platform,
+        sb2c.shop_id ,
+        sb2cr.name as buyerName,
+        sb2cl.dict_logistics_method
         from so_b2c sb2c
         left outer join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         left outer join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         left outer join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         <where>
-            sb2c.is_deleted = false and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
+            sb2c.is_deleted = false and sb2c.is_not_merge = false and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
             and not exists (select sbr.id from so_b2c_ref sbr where sbr.is_deleted = false and (sbr.source_id = sb2c.id
             or sbr.target_id = sb2c.id))

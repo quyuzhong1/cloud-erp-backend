@@ -1,10 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -41,6 +38,7 @@ public class OrderCategoryController extends BaseController {
 
     @Resource
     private OrderCategoryDetailService orderCategoryDetailService;
+
     /**
      * 订单分类分页
      *
@@ -73,7 +71,7 @@ public class OrderCategoryController extends BaseController {
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated OrderCategoryDTO.AddDTO dto) {
         Boolean result = orderCategoryService.add(dto);
-        return result?success():failure();
+        return result ? success() : failure();
     }
 
 
@@ -85,7 +83,7 @@ public class OrderCategoryController extends BaseController {
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated OrderCategoryDTO.UpdateDTO dto) {
         Boolean result = orderCategoryService.updateCategory(dto);
-        return result?success():failure();
+        return result ? success() : failure();
     }
 
     /**
@@ -130,6 +128,17 @@ public class OrderCategoryController extends BaseController {
             resultDTOS.add(submit);
         }
         return success(resultDTOS);
+    }
+
+    /**
+     * 分类的树结构
+     * @return
+     */
+    @GetMapping("/tree")
+    public ApiResult<List<BaseChildDTO.ListChildTreeDTO>> tree() {
+        List<BaseChildDTO.ListChildTreeDTO> list=orderCategoryService.tree();
+        return success(list);
+
     }
 
 }

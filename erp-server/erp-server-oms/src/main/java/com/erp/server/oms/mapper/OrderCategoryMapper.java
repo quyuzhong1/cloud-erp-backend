@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  * 订单分类表 Mapper 接口
@@ -28,4 +30,10 @@ public interface OrderCategoryMapper extends BaseMapper<OrderCategoryEntity> {
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.oms.dto.OrderCategoryDTO.PagingViewDTO>
      */
     IPage<OrderCategoryDTO.PagingViewDTO> paging(Page query, @Param("params") OrderCategoryDTO.PagingParamDTO params);
+
+    /**
+     * 获取明细
+     * @return
+     */
+    List<OrderCategoryDTO.ListDTO> listDetail();
 }

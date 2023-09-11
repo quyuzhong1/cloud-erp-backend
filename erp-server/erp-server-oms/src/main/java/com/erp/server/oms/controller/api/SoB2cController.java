@@ -278,7 +278,7 @@ public class SoB2cController extends BaseController {
             serviceClass = SoB2cService.class,
             keyIdName = "id")
     public ApiResult<SoB2cDTO.FinancialInfoDTO> getFinancialInfo(@RequestBody @Validated SoB2cDTO.FinancialParamDTO dto) {
-        return success(soB2cService.getFinancialInfo(dto));
+        return success(soB2cService.getFinancialInfo(dto,Boolean.FALSE));
     }
 
 
@@ -602,6 +602,42 @@ public class SoB2cController extends BaseController {
     public ApiResult<List<BatchResultDTO>> mergeSave(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = soB2cService.mergeSave(dto.getIds());
         return flag.equals(Boolean.TRUE) ? success() : failure();
+    }
+
+    /**
+     * 不合并
+     * @author Will
+     * @date: 2023/9/11 9:23
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/isNotNeedMerge")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soB2c:isNotNeedMerge",
+            serviceClass = SoB2cService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> isNotNeedMerge(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Boolean success = Boolean.TRUE;
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cService.isNotNeedMerge(id);
+            } catch (Exception e){
+                log.error("B2C销售订单无需合并标记失败",e);
+                success = Boolean.FALSE;
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 无需合并标记失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return  success ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
