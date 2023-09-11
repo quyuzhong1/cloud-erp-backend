@@ -44,6 +44,11 @@ public class PdaVersionDTO implements Serializable {
         private String type;
 
         /**
+         * 类型名称
+         **/
+        private String typeName;
+
+        /**
          * pda版本
          */
         private String pdaVersion;

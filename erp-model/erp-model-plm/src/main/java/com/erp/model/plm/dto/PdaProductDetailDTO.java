@@ -70,7 +70,7 @@ public class PdaProductDetailDTO implements Serializable {
         /**
          * 单箱数量
          */
-        private String boxQty;
+        private Integer boxQty;
 
         /**
          * 产品等级
