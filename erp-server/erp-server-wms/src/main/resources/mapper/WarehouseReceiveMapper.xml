@@ -511,6 +511,7 @@
                 OR t.qc_status ILIKE concat('%', 'waitReQc' ,'%'))
             )
         </if>
+
         ORDER BY pr.code DESC
     </select>
 

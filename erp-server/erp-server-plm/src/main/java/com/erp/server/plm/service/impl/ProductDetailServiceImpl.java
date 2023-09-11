@@ -3800,7 +3800,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         PdaProductDetailDTO.View view = baseMapper.pdaProductView(skuNo);
         List<PdaProductDetailDTO.ParentSkuDTO> parentSkuDTOList = new ArrayList<>();
-
+        if (StringUtils.isBlank(view.getSpuNo())) {
+            view.setSpuNo("");
+            view.setSpuName("");
+        }
         //查询子sku
         List<BomChildrenSkuDTO> sonSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(productIdBySku.getId()));
         if (CollectionUtils.isNotEmpty(sonSkuList)) {
