@@ -1094,6 +1094,11 @@ public class SoB2cDTO implements Serializable {
          * 物流方式
          */
         private String dictLogisticsMethod;
+
+        /**
+         * 是否是组数据（第一条标记，前端有用）
+         */
+        private Boolean isMain;
     }
 
     /**

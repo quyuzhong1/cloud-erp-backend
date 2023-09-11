@@ -1632,8 +1632,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (CollectionUtils.isEmpty(mainList)) {
                     continue;
                 }
-                for (SoB2cDTO.MergeMainDTO mergeMainDTO : mainList) {
 
+                List<String> ids = new ArrayList<>();
+                for (SoB2cDTO.MergeMainDTO mergeMainDTO : mainList) {
+                    if (!ids.contains(mergeMainDTO.getId())) {
+                        mergeMainDTO.setIsMain(Boolean.TRUE);
+                    }
+                    ids.add(mergeMainDTO.getId());
                     //产品名称
                     String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(mergeMainDTO.getSkuId())).findFirst()
                             .flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
