@@ -170,7 +170,7 @@ public class StocktakingPlanController extends BaseController {
             }
             resultDTOS.add(submit);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -208,7 +208,7 @@ public class StocktakingPlanController extends BaseController {
             }
             resultDTOS.add(approveResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -245,7 +245,7 @@ public class StocktakingPlanController extends BaseController {
             }
             resultDTOS.add(disApproveResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -280,7 +280,7 @@ public class StocktakingPlanController extends BaseController {
             }
             resultDTOS.add(deleteResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -314,7 +314,7 @@ public class StocktakingPlanController extends BaseController {
             }
             resultDTOS.add(deleteResult);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
