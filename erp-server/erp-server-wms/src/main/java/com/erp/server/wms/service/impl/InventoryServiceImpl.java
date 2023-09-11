@@ -799,7 +799,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(skuNo)).findFirst().orElse(new SkuVO());
         pdaInventorySearch.setSkuNo(skuVO.getSkuNo());
         pdaInventorySearch.setSkuName(skuVO.getSkuName());
+        pdaInventorySearch.setSpuNo(skuVO.getSpuNo());
+        pdaInventorySearch.setSpuName(skuVO.getSpuName());
         if (StringUtils.isBlank(skuVO.getSpuNo())) {
+            pdaInventorySearch.setSpuNo("");
             pdaInventorySearch.setSpuName("");
         }
         pdaInventorySearch.setVariantProperty(skuVO.getVariantProperty());
