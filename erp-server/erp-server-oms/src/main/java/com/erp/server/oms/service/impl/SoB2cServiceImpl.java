@@ -61,6 +61,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -2157,7 +2158,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Integer avgQty = Math.toIntExact(qty / diffDays);
             item.setAvgQty(avgQty);
             BigDecimal amount = item.getAmount();
-            BigDecimal avgAmount = amount.divide(new BigDecimal(diffDays));
+            BigDecimal avgAmount = amount.divide(new BigDecimal(diffDays),4, RoundingMode.HALF_UP);
             item.setAvgAmount(avgAmount);
 
         }
