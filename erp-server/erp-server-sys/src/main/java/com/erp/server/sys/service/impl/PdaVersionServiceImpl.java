@@ -1,10 +1,16 @@
 package com.erp.server.sys.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.sys.dto.NoticeDTO;
 import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
+import com.erp.model.sys.entity.NoticeReceiverEntity;
 import com.erp.model.sys.entity.PdaVersionEntity;
 import com.erp.model.sys.enums.MessageTypeEnum;
 import com.erp.server.sys.mapper.PdaVersionMapper;
@@ -13,6 +19,7 @@ import com.erp.server.sys.service.MessageUserReadService;
 import com.erp.server.sys.service.PdaVersionService;
 import com.common.business.service.SuperServiceImpl;
 import com.erp.server.sys.service.SysUserInfoService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +31,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -44,6 +52,19 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
 
     @Resource
     private MessageUserReadService messageUserReadService;
+
+    @Override
+    public PagingVO<PdaVersionDTO.PagingDTO> paging(PagingDTO<PdaVersionDTO.PagingParamDTO> dto) {
+        PdaVersionDTO.PagingParamDTO params = dto.getParams();
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<PdaVersionDTO.PagingDTO> pageData = baseMapper.paging(query, params);
+        List<PdaVersionDTO.PagingDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO(pageData);
+        }
+
+        return new PagingVO(pageData);
+    }
 
     @Override
     public PdaVersionEntity getPdaVersion() {
