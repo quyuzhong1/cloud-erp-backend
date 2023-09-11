@@ -175,6 +175,13 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     */
     @TableField("abnormal_type")
     private String abnormalType;
+
+    /**
+     * 是否不需要合并
+     */
+    @TableField("is_not_merge")
+    private Boolean isNotMerge;
+
     /**
     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
     */
