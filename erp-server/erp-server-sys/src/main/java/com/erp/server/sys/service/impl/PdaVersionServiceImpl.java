@@ -13,6 +13,7 @@ import com.erp.model.sys.entity.MessageUserReadEntity;
 import com.erp.model.sys.entity.NoticeReceiverEntity;
 import com.erp.model.sys.entity.PdaVersionEntity;
 import com.erp.model.sys.enums.MessageTypeEnum;
+import com.erp.model.sys.enums.SysTypeEnum;
 import com.erp.server.sys.mapper.PdaVersionMapper;
 import com.erp.server.sys.service.MessageService;
 import com.erp.server.sys.service.MessageUserReadService;
@@ -62,7 +63,7 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
         }
-
+        list.forEach(req -> req.setTypeName(SysTypeEnum.getName(req.getType())));
         return new PagingVO(pageData);
     }
 
