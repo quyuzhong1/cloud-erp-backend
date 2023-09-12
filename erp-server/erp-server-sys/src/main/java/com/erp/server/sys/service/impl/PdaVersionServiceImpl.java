@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -69,7 +70,11 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
 
     @Override
     public PdaVersionEntity getPdaVersion() {
-        return lambdaQuery().orderByDesc(PdaVersionEntity::getUpdateTime).last("LIMIT 1").one();
+        return lambdaQuery()
+                .le(PdaVersionEntity::getUpgradeTime, LocalDateTime.now())
+                .orderByDesc(PdaVersionEntity::getUpgradeTime)
+                .last("LIMIT 1")
+                .one();
     }
 
     @Override
