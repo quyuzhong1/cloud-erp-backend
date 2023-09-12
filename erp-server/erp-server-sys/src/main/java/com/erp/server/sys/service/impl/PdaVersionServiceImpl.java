@@ -4,22 +4,17 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.NoticeDTO;
 import com.erp.model.sys.dto.PdaVersionDTO;
-import com.erp.model.sys.entity.MessageEntity;
-import com.erp.model.sys.entity.MessageUserReadEntity;
-import com.erp.model.sys.entity.NoticeReceiverEntity;
-import com.erp.model.sys.entity.PdaVersionEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.MessageTypeEnum;
 import com.erp.model.sys.enums.SysTypeEnum;
 import com.erp.server.sys.mapper.PdaVersionMapper;
-import com.erp.server.sys.service.MessageService;
-import com.erp.server.sys.service.MessageUserReadService;
-import com.erp.server.sys.service.PdaVersionService;
+import com.erp.server.sys.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.sys.service.SysUserInfoService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
@@ -52,6 +47,12 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
     @Resource
     private MessageUserReadService messageUserReadService;
 
+    @Resource
+    private PdaUserSkipVersionService pdaUserSkipVersionService;
+
+    @Resource
+    private CommonServiceImpl commonService;
+
     @Override
     public PagingVO<PdaVersionDTO.PagingDTO> paging(PagingDTO<PdaVersionDTO.PagingParamDTO> dto) {
         PdaVersionDTO.PagingParamDTO params = dto.getParams();
@@ -67,11 +68,8 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
 
     @Override
     public PdaVersionEntity getPdaVersion() {
-        return lambdaQuery()
-                .ge(PdaVersionEntity::getUpgradeTime, LocalDateTime.now())
-                .orderByDesc(PdaVersionEntity::getUpgradeTime, PdaVersionEntity::getCreateTime)
-                .last("LIMIT 1")
-                .one();
+        LoginUser userInfo = commonService.getUserInfo();
+        return baseMapper.getPdaVersion(userInfo.getUid());
     }
 
     @Override
@@ -100,5 +98,15 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
             messageUserReadService.saveBatch(readEntityList);
         }
         return flag;
+    }
+
+    @Override
+    public Boolean skipVersion(String versionId) {
+        LoginUser userInfo = commonService.getUserInfo();
+        PdaUserSkipVersionEntity entity = new PdaUserSkipVersionEntity();
+        entity.setUserId(userInfo.getUid());
+        entity.setUserName(userInfo.getUserName());
+        entity.setVersionId(versionId);
+        return pdaUserSkipVersionService.save(entity);
     }
 }

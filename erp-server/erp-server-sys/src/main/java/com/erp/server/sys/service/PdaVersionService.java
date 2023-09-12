@@ -41,4 +41,14 @@ public interface PdaVersionService extends SuperService<PdaVersionEntity> {
      * @return java.lang.Boolean
      **/
     Boolean release(PdaVersionDTO.AddDTO dto);
+
+    /**
+     * 跳过版本
+     * @Author Luo_WG
+     * @Date 2023/9/12 12:15
+     * @param versionId
+     * @return java.lang.Boolean
+     **/
+    Boolean skipVersion(String versionId);
+
 }
