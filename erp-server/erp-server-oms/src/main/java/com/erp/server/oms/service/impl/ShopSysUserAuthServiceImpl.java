@@ -89,7 +89,7 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
             throw new ServiceException(ApiError.ERROR_92058);
         }
         //平台信息
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicTypeEnum.PLATFORM.getType());
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
         if (CollectionUtils.isEmpty(dictList)) {
             throw new ServiceException(ApiError.ERROR_92053);
         }
