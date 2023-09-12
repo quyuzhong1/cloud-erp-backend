@@ -77,7 +77,7 @@
 			AND pusv.is_deleted = FALSE
 			AND pusv.user_id = #{userId}
 		)
-        ORDER BY pv.upgrade_time, pv.create_time DESC
+        ORDER BY pv.create_time DESC
         LIMIT 1
     </select>
 </mapper>
