@@ -72,7 +72,7 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
     public PdaVersionEntity getPdaVersion() {
         return lambdaQuery()
                 .le(PdaVersionEntity::getUpgradeTime, LocalDateTime.now())
-                .orderByDesc(PdaVersionEntity::getUpgradeTime)
+                .orderByDesc(PdaVersionEntity::getUpgradeTime, PdaVersionEntity::getCreateTime)
                 .last("LIMIT 1")
                 .one();
     }
