@@ -43,11 +43,6 @@ public class PlatformProductDTO extends UniqueDto {
     private String platformProductName;
 
     /**
-     * 平台
-     */
-    private String platform;
-
-    /**
      * 类型 platform 平台  warehouse 仓库
      */
     private String type;
