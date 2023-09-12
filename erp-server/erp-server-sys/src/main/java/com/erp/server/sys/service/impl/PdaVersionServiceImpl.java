@@ -21,6 +21,7 @@ import com.erp.server.sys.service.PdaVersionService;
 import com.common.business.service.SuperServiceImpl;
 import com.erp.server.sys.service.SysUserInfoService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,8 +59,8 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
     @Resource
     private PdaUserSkipVersionService pdaUserSkipVersionService;
 
-    @Resource
-    private CommonServiceImpl commonService;
+    @Autowired
+    private CommonService commonService;
 
     @Override
     public PagingVO<PdaVersionDTO.PagingDTO> paging(PagingDTO<PdaVersionDTO.PagingParamDTO> dto) {
