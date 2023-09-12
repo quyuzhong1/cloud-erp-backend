@@ -66,4 +66,17 @@ public class PdaVersionController extends BaseController {
         Boolean flag = pdaVersionService.release(dto);
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 用户跳过此版本升级
+     * @Author Luo_WG
+     * @Date 2023/9/12 12:15
+     * @param versionId
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping(value = "/skipVersion")
+    public ApiResult skipVersion(@RequestParam("versionId") String versionId) {
+        Boolean flag = pdaVersionService.skipVersion(versionId);
+        return flag == true ? success() : failure();
+    }
 }

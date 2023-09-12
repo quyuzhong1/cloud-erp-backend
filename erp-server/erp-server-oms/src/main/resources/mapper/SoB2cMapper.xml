@@ -26,6 +26,7 @@
         <result column="shippingCost" property="shippingCost"/>
         <result column="shippingCostCurrency" property="shippingCostCurrency"/>
         <result column="logisticsCode" property="logisticsCode"/>
+        <result column="buyerId" property="buyerId"/>
         <result column="buyerName" property="buyerName"/>
         <result column="countryName" property="countryName"/>
         <result column="label" property="label"/>
@@ -95,6 +96,7 @@
         end
         as shippingCostCurrency,
         sb2cl.code as logisticsCode,
+        sb2cr.customer_id as buyerId,
         sb2cr.name as buyerName,
         sb2cr.country_name as countryName
     </sql>
@@ -265,8 +267,9 @@
         <where>
             sb2c.is_deleted = false and sb2c.is_not_merge = false and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
-            and not exists (select * from so_b2c_ref sbr where sbr.is_deleted = false and (sbr.source_id = sb2c.id or
+            and not exists (select sbr.id from so_b2c_ref sbr where sbr.is_deleted = false and (sbr.source_id = sb2c.id or
             sbr.target_id = sb2c.id))
+            and 1 = (select count(DISTINCT sbd.warehouse_id) from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id)
             <if test="params.code != null and params.code != '' ">
                 and sb2c.code ilike concat('%',#{params.code},'%')
             </if>
@@ -319,6 +322,7 @@
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse'
             and not exists (select * from so_b2c_ref sbr where sbr.is_deleted = false and (sbr.source_id = sb2c.id or
             sbr.target_id = sb2c.id))
+            and 1 = (select count(DISTINCT sbd.warehouse_id) from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id)
             <if test="params.code != null and params.code != '' ">
                 and sb2c.code ilike concat('%',#{params.code},'%')
             </if>

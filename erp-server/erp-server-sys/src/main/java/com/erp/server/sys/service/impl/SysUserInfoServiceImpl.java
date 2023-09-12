@@ -1331,7 +1331,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         for (SysUserInfoDTO.ShopAuthPagingDTO shopAuthPagingDTO : records) {
             ShopSysUserAuthDTO.ViewDTO viewDTO = viewList.stream().filter(obj -> obj.getUserId().equals(shopAuthPagingDTO.getUserId())).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(viewDTO) || CollectionUtils.isEmpty(viewDTO.getDetailList())) {
+            if (ObjectUtils.isEmpty(viewDTO) || CollectionUtils.isEmpty(viewDTO.getDetailList())) {
                 continue;
             }
             String shopNames = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopName).collect(Collectors.joining(","));
