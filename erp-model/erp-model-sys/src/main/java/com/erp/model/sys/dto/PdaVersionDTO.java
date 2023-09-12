@@ -201,6 +201,11 @@ public class PdaVersionDTO implements Serializable {
         @NotBlank(message = "类型不能为空")
         private String type;
 
+        /**
+        * 升级时间
+        */
+        private LocalDateTime upgradeTime;
+
     }
 
 }
