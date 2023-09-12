@@ -75,6 +75,5 @@ public class PdaUserSkipVersionServiceImpl extends SuperServiceImpl<PdaUserSkipV
     * 新增修改处理数据
     */
     private void handleData(PdaUserSkipVersionEntity pdaUserSkipVersionEntity) {
-    // TODO 验证数据 & 数据赋值
     }
 }
