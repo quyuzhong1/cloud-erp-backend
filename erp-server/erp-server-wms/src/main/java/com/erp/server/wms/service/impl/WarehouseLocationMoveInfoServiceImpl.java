@@ -96,7 +96,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
 
         log.info("开始新增仓位移动主单");
         // 生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CYYD);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CWYD);
         warehouseLocationMoveInfoEntity.setCode(code);
         boolean save = super.save(warehouseLocationMoveInfoEntity);
         if(!save) {
