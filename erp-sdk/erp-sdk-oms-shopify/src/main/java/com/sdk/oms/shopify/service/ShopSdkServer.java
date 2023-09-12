@@ -1,16 +1,20 @@
 package com.sdk.oms.shopify.service;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.HMac;
 import cn.hutool.crypto.digest.HmacAlgorithm;
-import com.alibaba.fastjson2.JSONObject;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.utils.RedisUtil;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.common.business.dto.base.AuthorizeDTO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +31,12 @@ import java.util.Objects;
 @Component
 public class ShopSdkServer {
 
+    private static RedisUtil redisUtil;
+
+    @Resource
+    public void setRedisUtil(RedisUtil redisUtil){
+        ShopSdkServer.redisUtil = redisUtil;
+    }
 
     /**
      * 获取授权的url
@@ -91,6 +101,25 @@ public class ShopSdkServer {
             log.info("shop[{}], digest[{}], verify[{}]", shop, digest, verify);
         }
         return verify;
+    }
+
+    /**
+     * 缓存获取Token
+     */
+    public static ShopifyShopInfoDTO getTokenAndDomainByShopId(String shopId) {
+        // 转移common?
+        // platform-token:平台名称:店铺ID
+        String REDIS_PLATFORM_SHOP_TOKEN = "platform-shop-token:{}:{}";
+        String tokenKey = StrUtil.format(REDIS_PLATFORM_SHOP_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopId);
+        // 缓存获取
+        Object tokenObj = redisUtil.get(tokenKey);
+        if (null != tokenObj) {
+            if (tokenObj instanceof ShopifyShopInfoDTO) {
+                return (ShopifyShopInfoDTO) tokenObj;
+            }
+        }
+        // 查询？
+        return null;
     }
 
 }

@@ -1,18 +1,16 @@
 package com.sdk.oms.shopify.dto;
 
-import com.common.business.dto.CleanBaseDTO;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
- * 平台Shopify token DTO
+ * 平台Shopify 店铺 DTO
  *
  * @Author Jim
  **/
 @Data
 @NoArgsConstructor
-public class ShopifyTokenDTO {
+public class ShopifyShopInfoDTO {
 
     /**
      * 店铺域名

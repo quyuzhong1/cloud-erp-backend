@@ -19,6 +19,13 @@ public class ShopifyShippingLine {
 	private String source;
 
 
+	public BigDecimal getPrice() {
+		if (null == price){
+			return BigDecimal.ZERO;
+		}
+		return price;
+	}
+
 	/**
 	 * @param name
 	 * @param value

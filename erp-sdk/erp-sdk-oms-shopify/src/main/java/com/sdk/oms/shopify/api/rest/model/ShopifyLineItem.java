@@ -19,9 +19,9 @@ public class ShopifyLineItem {
 	@JsonProperty("variant_id")
 	private String variantId;
 	private String title;
-	private long quantity;
+	private Long quantity;
 	private BigDecimal price;
-	private long grams;
+	private Long grams;
 	private String sku;
 	@JsonProperty("variant_title")
 	private String variantTitle;
@@ -37,7 +37,7 @@ public class ShopifyLineItem {
 	@JsonProperty("variant_inventory_management")
 	private String variantInventoryManagement;
 	@JsonProperty("fulfillable_quantity")
-	private long fulfillableQuantity;
+	private Long fulfillableQuantity;
 	@JsonProperty("total_discount")
 	private BigDecimal totalDiscount;
 	@JsonProperty("fulfillment_status")
