@@ -3,6 +3,7 @@ package com.sdk.oms.shopify.service;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.HMac;
 import cn.hutool.crypto.digest.HmacAlgorithm;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
@@ -107,10 +108,8 @@ public class ShopSdkServer {
      * 缓存获取Token
      */
     public static ShopifyShopInfoDTO getTokenAndDomainByShopId(String shopId) {
-        // 转移common?
         // platform-token:平台名称:店铺ID
-        String REDIS_PLATFORM_SHOP_TOKEN = "platform-shop-token:{}:{}";
-        String tokenKey = StrUtil.format(REDIS_PLATFORM_SHOP_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopId);
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopId);
         // 缓存获取
         Object tokenObj = redisUtil.get(tokenKey);
         if (null != tokenObj) {
@@ -118,7 +117,6 @@ public class ShopSdkServer {
                 return (ShopifyShopInfoDTO) tokenObj;
             }
         }
-        // 查询？
         return null;
     }
 

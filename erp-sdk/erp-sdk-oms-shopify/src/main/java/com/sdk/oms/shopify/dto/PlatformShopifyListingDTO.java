@@ -1,5 +1,6 @@
 package com.sdk.oms.shopify.dto;
 
+import cn.hutool.core.util.ReflectUtil;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
@@ -78,7 +79,7 @@ public class PlatformShopifyListingDTO extends CleanBaseDTO {
         // 包装信息
         String packing = "包装重量:".concat(variant.getWeight()).concat(variant.getWeightUnit());
 
-        return new PlatformProductDTO()
+        PlatformProductDTO resultDto = new PlatformProductDTO()
                 // 平台spu no
                 .setPlatformProductNo(variant.getProductId())
                 // 平台sku no
@@ -92,7 +93,10 @@ public class PlatformShopifyListingDTO extends CleanBaseDTO {
                 // 产品规格信息
                 .setProductSpec(productSpec)
                 // 产品包装信息
-                .setProductPacking(packing)
-                ;
+                .setProductPacking(packing);
+
+        // 平台
+        resultDto.setPlatform(dto.getPlatform());
+        return resultDto;
     }
 }

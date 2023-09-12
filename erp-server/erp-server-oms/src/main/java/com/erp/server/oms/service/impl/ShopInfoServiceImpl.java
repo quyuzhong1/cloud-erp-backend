@@ -1,8 +1,10 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveTypeEnum;
@@ -40,6 +42,7 @@ import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
+import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.service.ShopSdkServer;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -86,6 +89,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Resource
     private CustomerB2cService customerB2cService;
+
+    @Resource
+    private RedisUtil redisUtil;
 
 
     /**
@@ -523,12 +529,38 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             dmpTaskFeign.createPlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getDictPlatform()));
             shopInfo.setIsGenTask(Boolean.TRUE);
             updateShopInfoById(shopInfo);
+            // 添加到缓存redis
+            ShopifyShopInfoDTO shopInfoDTO = initShopInfoDTO(shopInfo, accessToken);
+            // platform-token:平台名称:店铺ID
+            String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopId);
+            redisUtil.set(tokenKey, shopInfoDTO);
             return result;
         } catch (Exception e) {
             log.error("店铺授权出错了===> bodyStr==>{} e==>{}", bodyStr, e);
         }
 
         return Boolean.FALSE;
+    }
+
+    /**
+     * shopInfo Entity 转换DTO
+     */
+    private ShopifyShopInfoDTO initShopInfoDTO(ShopInfoEntity shopInfo, String accessToken) {
+        return new ShopifyShopInfoDTO()
+                // 店铺ID
+                .setId(shopInfo.getId())
+                // 访问token
+                .setAccessToken(accessToken)
+                // 店铺名称
+                .setName(shopInfo.getName())
+                // 区域id
+                .setDictAreaCode(shopInfo.getDictAreaCode())
+                // 国家id
+                .setDictCountryCode(shopInfo.getDictCountryCode())
+                // 负责人id
+                .setChargeId(shopInfo.getChargeId())
+                // 店铺全域名: SHOP_NAME.myshopify.com
+                .setShopDomain(shopInfo.getDomain().concat(ShopifyConstant.DOMAIN));
     }
 
     /**
@@ -552,6 +584,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @author yl
      * @date 2023-08-29 16:41
      */
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean cancelAuthorize(String id) {
         ShopInfoEntity shopInfo = this.getById(id);
@@ -571,6 +605,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getDictPlatform()));
             shopInfo.setIsGenTask(Boolean.FALSE);
             updateShopInfoById(shopInfo);
+        }
+        // 移除缓存
+        // platform-token:平台名称:店铺ID
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopInfo.getId());
+        Object shopInfoObj = redisUtil.get(tokenKey);
+        if (null != shopInfoObj){
+            redisUtil.del(tokenKey);
         }
         return result;
     }
