@@ -85,10 +85,8 @@ public class PlatformShopifyListingDTO extends CleanBaseDTO {
                 .setPlatformSkuNo(variant.getId())
                 // 平台产品名称
                 .setPlatformProductName(sourceProduct.getHandle())
-                // 平台
-                .setPlatform(dto.getPlatform())
                 // 类型 platform 平台  warehouse 仓库
-                .setPlatform("platform")
+                .setPlatformType("platform")
                 // 产品图片 url
                 .setProductImageUrl(imageUrl)
                 // 产品规格信息
