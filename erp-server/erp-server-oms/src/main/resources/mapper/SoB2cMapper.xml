@@ -26,6 +26,7 @@
         <result column="shippingCost" property="shippingCost"/>
         <result column="shippingCostCurrency" property="shippingCostCurrency"/>
         <result column="logisticsCode" property="logisticsCode"/>
+        <result column="buyerId" property="buyerId"/>
         <result column="buyerName" property="buyerName"/>
         <result column="countryName" property="countryName"/>
         <result column="label" property="label"/>
@@ -95,6 +96,7 @@
         end
         as shippingCostCurrency,
         sb2cl.code as logisticsCode,
+        sb2cr.customer_id as buyerId,
         sb2cr.name as buyerName,
         sb2cr.country_name as countryName
     </sql>

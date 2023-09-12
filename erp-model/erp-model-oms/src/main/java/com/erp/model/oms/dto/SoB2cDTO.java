@@ -222,6 +222,10 @@ public class SoB2cDTO implements Serializable {
          * 订单状态名称
          */
         private String statusName;
+        /**
+         * 买家id
+         */
+        private String buyerId;
 
         /**
          * 买家名称
