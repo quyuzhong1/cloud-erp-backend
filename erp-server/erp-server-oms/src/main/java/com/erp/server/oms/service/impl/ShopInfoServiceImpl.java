@@ -10,6 +10,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -467,7 +468,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     public Boolean shopAuthorize(String code, String hmac, String host, String shop, String timestamp) {
         String bodyStr = "";
         try {
-            ShopInfoEntity shopInfo = this.getByDomain(shop);
+            // 二级域名
+            String secondDomain = shop;
+            if (shop.contains(ShopifyConstant.DOMAIN)){
+                secondDomain = shop.replace(ShopifyConstant.DOMAIN, "");
+            }
+            ShopInfoEntity shopInfo = this.getByDomain(secondDomain);
             if (Objects.isNull(shopInfo)) {
                 throw new ServiceException("店铺不存在");
             }
@@ -582,7 +588,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 //        if (!checkResult) {
 //            throw new ServiceException("店铺授权检验未通过");
 //        }
-        String grantOptions = "per-user";
+//        String grantOptions = "per-user";
+        // 离线模式：token无过期
+        String grantOptions = "offline-access";
         String path = String.format(cfgAppClient.getUrl(), shop, cfgAppClient.getClientId(), grantOptions, cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
         return path;
     }
@@ -665,9 +673,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         findDTO.setDictPlatform(appClient.getPlatform());
         findDTO.setPlatformType(appClient.getPlatformType());
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
-        String domain = shopInfo.getDomain();
-        String grantOptions = "per-user";
-        String path = String.format(cfgAppClient.getUrl(), domain, cfgAppClient.getClientId(), grantOptions, cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
+        // 全域名：SHOP_NAME.myshopify.com
+        String fullDomain = shopInfo.getDomain().concat(ShopifyConstant.DOMAIN);
+//        String grantOptions = "per-user";
+        // 离线模式：token无过期
+        String grantOptions = "offline-access";
+        String path = String.format(cfgAppClient.getUrl(), fullDomain, cfgAppClient.getClientId(), grantOptions, cfgAppClient.getRedirectUrl(), ShopifyConstant.SHOP_SCOPE);
         return path;
 
     }
