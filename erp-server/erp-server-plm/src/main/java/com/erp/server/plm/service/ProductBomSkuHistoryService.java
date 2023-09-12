@@ -25,4 +25,11 @@ public interface ProductBomSkuHistoryService  extends IService<ProductBomSkuHist
     void removeByBomSku(BomSkuEntity bomSkuEntity);
 
     List<BomChildrenSkuDTO> listHistoryBomChildBySkuIds(List<String> skuIds);
+    /**
+     * @description: 根据历史BOMId集合删除
+     * @author Will
+     * @date: 2023/9/8 14:02
+     * @param historyBomIdList
+     */
+    void removeByHistoryBomIdList(List<String> historyBomIdList);
 }

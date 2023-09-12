@@ -482,6 +482,10 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             }
             addDTO.setPurchaseOrderSupplierDTO(supplierDTO);
 
+            //验证录入的SKU明细报价信息是否正确
+            List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = value.stream().filter(obj -> !Boolean.TRUE.equals(obj.getIsGift())).map(obj -> new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(obj.getPurchaseQty(), obj.getSkuId(), obj.getSkuId(), supplierDTO.getSupplierId())).collect(Collectors.toList());
+
+
             //采购订单明细信息
             List<PurchaseOrderDetailDTO.AddDTO> details = new ArrayList<>();
             for (PurchaseApplicationDTO.GeneratePurchaseOrderDTO generatePurchaseOrderDTO : value) {
@@ -499,7 +503,16 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                         throw new ServiceException(new ApiResult(ApiError.ERROR_98089.code,StrUtil.format(ApiError.ERROR_98089.msg,entity.getCode(),skuVO.getSkuNo())));
                     }
                 }
-
+                //查询税率
+                if (CollectionUtils.isNotEmpty(priceList)) {
+                    PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO = priceList.stream().filter(obj -> obj.getSkuId().equals(generatePurchaseOrderDTO.getSkuId()) && MathUtil.compareTo(generatePurchaseOrderDTO.getPurchaseQty(),obj.getPurchaseQty()) == MathUtil.ZERO).findFirst().orElse(null);
+                    if (ObjectUtils.isNotEmpty(priceDTO)) {
+                        priceDTO.setSkuNo(skuVO.getSkuNo());
+                        List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(priceDTO);
+                        PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
+                        addDetailDTO.setTaxRate(viewDTO.getTaxRate());
+                    }
+                }
                 addDetailDTO.setCurrency(generatePurchaseOrderDTO.getCurrency());
                 addDetailDTO.setCurrencySymbol(generatePurchaseOrderDTO.getCurrencySymbol());
                 addDetailDTO.setPlanDeliveryDate(generatePurchaseOrderDTO.getPlanDeliveryDate());
