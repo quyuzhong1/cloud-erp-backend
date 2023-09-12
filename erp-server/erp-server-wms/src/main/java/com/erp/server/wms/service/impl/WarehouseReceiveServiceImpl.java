@@ -1594,10 +1594,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> receiveIds = records.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
         //质检信息
         List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceIds(receiveIds);
+        qcInfoList = qcInfoList.stream().filter(req -> StringUtils.isNotBlank(req.getSourceDetailId())).collect(Collectors.toList());
         for (WarehouseReceiveDTO.WaitInStockPaging record : records) {
             record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
-            List<QcInfoEntity> resultList = qcInfoList.stream().filter(obj -> obj.getSourceId().equals(record.getId())
-                    && (QcBillStatusEnum.EXEMPTION.equals(obj.getQcStatus()) || QcBillStatusEnum.FINISH_QC.equals(obj.getQcStatus()))
+            List<QcInfoEntity> resultList = qcInfoList.stream().filter(obj -> obj.getSourceId().equals(record.getId())).collect(Collectors.toList());
+            List<QcInfoEntity> qcFinishList = resultList.stream().filter(obj ->(QcBillStatusEnum.EXEMPTION.equals(obj.getQcStatus()) || QcBillStatusEnum.FINISH_QC.equals(obj.getQcStatus()))
             ).collect(Collectors.toList());
             List<WarehouseReceiveDetailEntity> detailEntities = detailEntityList.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
             List<WarehouseReceiveDTO.PdaWaitInStockItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, WarehouseReceiveDTO.PdaWaitInStockItemDTO.class);
@@ -1606,10 +1607,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if (CollectionUtils.isEmpty(qcInfoList) || CollectionUtils.isEmpty(resultList)) {
                 record.setQcStatus(PdaQclStatusEnum.WAIT_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.WAIT_QC.getName());
-            } else if (qcInfoList.size() > resultList.size()) {
+            } else if (resultList.size() > qcFinishList.size()) {
                 record.setQcStatus(PdaQclStatusEnum.PARTIAL_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.PARTIAL_QC.getName());
-            }else if (resultList.size() >= detailEntities.size()) {
+            } else if (qcFinishList.size() >= detailEntities.size()) {
                 record.setQcStatus(PdaQclStatusEnum.FINISH_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.FINISH_QC.getName());
             } else {

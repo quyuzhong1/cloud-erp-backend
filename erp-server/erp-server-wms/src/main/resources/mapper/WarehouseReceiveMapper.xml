@@ -459,12 +459,10 @@
                             pr.id,
                             prdt.id AS detailId,
                             qc.code,
-                            qp.sku_no,
-                            CASE WHEN qp.sku_no is null THEN 'notQc' ELSE  qc.qc_status END qc_status
+                            CASE WHEN qc.code is null THEN 'notQc' ELSE  qc.qc_status END qc_status
                         FROM po_receive_detail prdt
                         LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
-                        LEFT JOIN qc_info qc ON qc.source_id = pr.id AND qc.is_deleted = FALSE
-                        LEFT JOIN qc_product qp ON qc.id = qp.main_id AND qp.sku_id = prdt.sku_id AND qp.is_deleted = FALSE
+                        LEFT JOIN qc_info qc ON qc.source_detail_id = prdt.id AND qc.is_deleted = FALSE
                         WHERE prdt.is_deleted = FALSE
                         AND pr.approve_status = 'approve'
                     ) tab
@@ -492,12 +490,10 @@
                             pr.id,
                             prdt.id AS detailId,
                             qc.code,
-                            qp.sku_no,
-                            CASE WHEN qp.sku_no is null THEN 'notQc' ELSE  qc.qc_status END qc_status
+                            CASE WHEN qc.code is null THEN 'notQc' ELSE  qc.qc_status END qc_status
                         FROM po_receive_detail prdt
                         LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
-                        LEFT JOIN qc_info qc ON qc.source_id = pr.id AND qc.is_deleted = FALSE
-                        LEFT JOIN qc_product qp ON qc.id = qp.main_id AND qp.sku_id = prdt.sku_id AND qp.is_deleted = FALSE
+                        LEFT JOIN qc_info qc ON qc.source_detail_id = prdt.id AND qc.is_deleted = FALSE
                         WHERE prdt.is_deleted = FALSE
                         AND pr.approve_status = 'approve'
                     ) tab
@@ -562,12 +558,10 @@
                             pr.id,
                             prdt.id AS detailId,
                             qc.code,
-                            qp.sku_no,
-                            CASE WHEN qp.sku_no is null THEN 'notQc' ELSE  qc.qc_status END qc_status
+                            CASE WHEN qc.code is null THEN 'notQc' ELSE  qc.qc_status END qc_status
                         FROM po_receive_detail prdt
                         LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
-                        LEFT JOIN qc_info qc ON qc.source_id = pr.id AND qc.is_deleted = FALSE
-                        LEFT JOIN qc_product qp ON qc.id = qp.main_id AND qp.sku_id = prdt.sku_id AND qp.is_deleted = FALSE
+                        LEFT JOIN qc_info qc ON qc.source_detail_id = prdt.id AND qc.is_deleted = FALSE
                         WHERE prdt.is_deleted = FALSE
                         AND pr.approve_status = 'approve'
                     ) tab
@@ -595,12 +589,10 @@
                             pr.id,
                             prdt.id AS detailId,
                             qc.code,
-                            qp.sku_no,
-                            CASE WHEN qp.sku_no is null THEN 'notQc' ELSE  qc.qc_status END qc_status
+                            CASE WHEN qc.code is null THEN 'notQc' ELSE  qc.qc_status END qc_status
                         FROM po_receive_detail prdt
                         LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
-                        LEFT JOIN qc_info qc ON qc.source_id = pr.id AND qc.is_deleted = FALSE
-                        LEFT JOIN qc_product qp ON qc.id = qp.main_id AND qp.sku_id = prdt.sku_id AND qp.is_deleted = FALSE
+                        LEFT JOIN qc_info qc ON qc.source_detail_id = prdt.id AND qc.is_deleted = FALSE
                         WHERE prdt.is_deleted = FALSE
                         AND pr.approve_status = 'approve'
                     ) tab
