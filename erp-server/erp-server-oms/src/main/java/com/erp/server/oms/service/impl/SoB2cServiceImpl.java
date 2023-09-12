@@ -1378,6 +1378,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     }
                 }
                 //订单本位币金额
+                detailDTO.setSourceAmount(detailDTO.getAmount());
+                detailDTO.setSourceCurrency(detailDTO.getCurrency());
+
                 BigDecimal amount = MathUtil.multiply(detailDTO.getSourceAmount(), detailDTO.getExchangeRate());
                 detailDTO.setAmount(amount);
                 detailDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
