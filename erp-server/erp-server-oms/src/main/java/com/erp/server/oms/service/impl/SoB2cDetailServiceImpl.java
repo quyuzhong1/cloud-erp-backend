@@ -11,6 +11,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -21,6 +22,7 @@ import com.erp.server.oms.mapper.SoB2cDetailMapper;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingService;
 import com.erp.server.oms.service.SoB2cDetailService;
+import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -60,6 +62,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Resource
     private SkuMappingService skuMappingService;
 
+    @Resource
+    private SoB2cService soB2cService;
 
     @Override
     public Boolean add(List<SoB2cDetailDTO.AddDTO> detailList, String mainId) {
@@ -189,6 +193,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
      */
     private void handleDetailList (List<SoB2cDetailEntity> list,String mainId,Boolean isAdd) {
 
+        //主表信息
+        SoB2cEntity soB2cEntity = soB2cService.getById(mainId);
+        if (ObjectUtils.isEmpty(soB2cEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+
         //产品信息
         List<String> skuIds = list.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
@@ -226,6 +236,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             }
             detailEntity.setMainId(mainId);
             detailEntity.setSkuNo(skuVO.getSkuNo());
+            detailEntity.setCurrency(soB2cEntity.getCurrency());
+            detailEntity.setExchangeRate(soB2cEntity.getExchangeRate());
             //建议售价
             detailEntity.setAdvicePrice(skuVO.getRetailPrice());
             //含税单价
