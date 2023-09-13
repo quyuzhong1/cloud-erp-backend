@@ -145,6 +145,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                         ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
                 record.setReturnOrderSource(returnOrderSourceEnum.getCode());
                 record.setReturnOrderSourceName(returnOrderSourceEnum.getName());
+                record.setDeductAmountAmount(MathUtil.multiply(record.getReturnPrice(),record.getDeductAmountQty()));
             });
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
@@ -826,7 +827,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
             obj.setReturnModeName(ReturnModeEnum.getName(obj.getReturnMode()));
-
+            obj.setDeductAmountAmount(MathUtil.multiply(obj.getReturnPrice(),obj.getDeductAmountQty()));
         });
 
         List<ReturnOrderExportExcelDTO> returnOrderExportExcelDTOList = BeanMapperUtils.copyList(ReturnOrderExportExcelDTO.class, returnOrderExcelDTOS);

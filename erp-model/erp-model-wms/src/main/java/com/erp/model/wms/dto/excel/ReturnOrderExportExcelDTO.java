@@ -7,6 +7,7 @@ import com.common.business.service.LocalDateStringConverter;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -89,51 +90,65 @@ public class ReturnOrderExportExcelDTO {
     private Integer returnQty;
 
     /**
+     * 退款单价
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "退款单价", index = 10)
+    private BigDecimal returnPrice;
+
+    /**
+     * 退款金额
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "退款金额", index = 11)
+    private BigDecimal deductAmountAmount;
+
+    /**
      * 退货原因
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "退货原因", index = 10)
+    @ExcelProperty(value = "退货原因", index = 12)
     private String returnRemark;
 
     /**
      * 退货方式
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "退货方式", index = 11)
+    @ExcelProperty(value = "退货方式", index = 13)
     private String returnModeName;
 
     /**
      * 退货员
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "退货员", index = 12)
+    @ExcelProperty(value = "退货员", index = 14)
     private String returnUserName;
 
     /**
      * 退货备注
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "退货备注", index = 13)
+    @ExcelProperty(value = "退货备注", index = 15)
     private String remark;
 
     /**
      * 审核人
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "审核人", index = 14)
+    @ExcelProperty(value = "审核人", index = 16)
     private String approveUserName;
 
     /**
      * 创建人
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建人", index = 15)
+    @ExcelProperty(value = "创建人", index = 17)
     private String createUserName;
 
     /**
      * 创建时间
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建时间", index = 16, converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 18, converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 }
