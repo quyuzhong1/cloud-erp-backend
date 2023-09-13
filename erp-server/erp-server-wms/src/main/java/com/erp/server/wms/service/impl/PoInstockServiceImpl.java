@@ -1614,20 +1614,21 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //质检信息
         List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceIds(receiveIds);
 
-
         for (PoInstockDTO.PdaPagingView record : records) {
-            List<QcInfoEntity> resultList = qcInfoList.stream().filter(obj -> obj.getSourceId().equals(record.getSourceId())
-                    && (QcBillStatusEnum.EXEMPTION.equals(obj.getQcStatus()) || QcBillStatusEnum.FINISH_QC.equals(obj.getQcStatus()))
-            ).collect(Collectors.toList());
 
             record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
             List<PoInstockDetailEntity> detailEntities = poInstockDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
             List<PoInstockDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, PoInstockDTO.PdaItemDTO.class);
             record.setDetailCount(itemDTOList.size());
+            List<QcInfoEntity> resultList = qcInfoList.stream().filter(obj -> obj.getSourceId().equals(record.getSourceId())).collect(Collectors.toList());
+            List<QcInfoEntity> qcFinishList = resultList.stream().filter(obj ->(QcBillStatusEnum.EXEMPTION.equals(obj.getQcStatus()) || QcBillStatusEnum.FINISH_QC.equals(obj.getQcStatus()))).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(qcInfoList) || CollectionUtils.isEmpty(resultList)) {
                 record.setQcStatus(PdaQclStatusEnum.WAIT_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.WAIT_QC.getName());
-            } else if (resultList.size() == detailEntities.size()) {
+            } else if (resultList.size() > qcFinishList.size()) {
+                record.setQcStatus(PdaQclStatusEnum.PARTIAL_QC.getCode());
+                record.setQcStatusName(PdaQclStatusEnum.PARTIAL_QC.getName());
+            } else if (qcFinishList.size() >= detailEntities.size()) {
                 record.setQcStatus(PdaQclStatusEnum.FINISH_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.FINISH_QC.getName());
             } else {
@@ -1635,7 +1636,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 record.setQcStatusName(PdaQclStatusEnum.PARTIAL_QC.getName());
 
             }
-
             record.setItemList(itemDTOList);
         }
         return new PagingVO(pageData);
