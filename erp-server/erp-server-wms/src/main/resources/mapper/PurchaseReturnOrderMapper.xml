@@ -17,6 +17,8 @@
         prod.return_qty,
         prod.return_price,
         prod.deduct_amount_qty,
+        prod.currency,
+        prod.currency_symbol,
         pro.return_remark,
         pro.return_mode,
         pro.purchase_user_id,

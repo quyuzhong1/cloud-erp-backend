@@ -142,11 +142,13 @@ public class PurchasePriceChangeDTO implements Serializable {
         /**
          * 资质附件url
          */
+        @NotEmpty(message = "上传附件不能为空")
         private List<String> attachmentUrlList;
 
         /**
          * 附件名
          */
+        @NotEmpty(message = "上传附件不能为空")
         private List<String> attachmentNameList;
 
         /**

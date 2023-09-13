@@ -1,15 +1,12 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.common.business.validator.AddGroup;
-import com.common.business.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.Date;
 
 /**
  * 收货明细DTO
@@ -291,6 +288,15 @@ public class PurchaseReturnOrderDetailDTO {
          */
         private Integer curInventoryQty;
 
+        /**
+         * 一级供应商id
+         */
+        private String mainSupplierId;
+
+        /**
+         * 一级供应商名称
+         */
+        private String mainSupplierName;
     }
 
 }

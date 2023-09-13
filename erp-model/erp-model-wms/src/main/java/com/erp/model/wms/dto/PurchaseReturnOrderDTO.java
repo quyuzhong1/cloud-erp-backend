@@ -511,6 +511,16 @@ public class PurchaseReturnOrderDTO {
         private BigDecimal deductAmountAmount;
 
         /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
          * 退货原因
          */
         private String returnRemark;

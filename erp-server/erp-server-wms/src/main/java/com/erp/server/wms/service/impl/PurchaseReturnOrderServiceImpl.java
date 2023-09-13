@@ -189,6 +189,13 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         if (ObjectUtils.isNotEmpty(dto.getReturnUserId())) {
             userDTO =  sysUserFeign.getSysUserById(dto.getReturnUserId());
         }
+        //验证单价必填
+        if (ReturnModeEnum.DEDUCTION.getCode().equals(dto.getReturnMode())) {
+            long count = dto.getPurchasePriceDetailList().stream().filter(obj -> MathUtil.compareTo(obj.getReturnPrice(), MathUtil.ZERO) == MathUtil.ZERO).count();
+            if (count > MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL);
+            }
+        }
 
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getReturnOrgId());
@@ -289,6 +296,15 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
 
+
+        //验证单价必填
+        if (ReturnModeEnum.DEDUCTION.getCode().equals(dto.getReturnMode())) {
+            long count = dto.getPurchasePriceDetailList().stream().filter(obj -> MathUtil.compareTo(obj.getReturnPrice(), MathUtil.ZERO) == MathUtil.ZERO).count();
+            if (count > MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL);
+            }
+        }
+
         // 产品属性为费用或服务的sku忽略库存计算
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = Lists.newArrayList();
@@ -369,9 +385,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         PurchaseReturnOrderDTO.ViewDTO viewDTO = new PurchaseReturnOrderDTO.ViewDTO();
         PurchaseReturnOrderEntity purchaseReturnOrderEntity = this.getById(id);
         BeanMapperUtils.copy(purchaseReturnOrderEntity, viewDTO);
-        //查询供应商信息
-        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(purchaseReturnOrderEntity.getSupplierId());
-        viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
+
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         if (StringUtils.isNotBlank(purchaseReturnOrderEntity.getPurchaseOrderId())) {
             //获取采购订单主表信息
@@ -398,7 +412,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             viewDTO.setReturnModeName(ReturnModeEnum.getName(viewDTO.getReturnMode()));
         }
 
-
         //创库保存详情表的集合
         List<PurchaseReturnOrderDetailDTO.ViewDTO> detailViewDTOS = new ArrayList<>();
         //根据收货单主表id获取详情信息
@@ -421,6 +434,19 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         skuInventoryDTO.setWarehouseIdList(Lists.newArrayList(purchaseReturnOrderEntity.getReturnWarehouseId()));
         skuInventoryDTO.setWarehouseLocationIdList(warehouseLocationCodeList);
         skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+
+        //查询供应商信息
+        List<String> supplierIdList = new ArrayList<>();
+        supplierIdList.add(purchaseReturnOrderEntity.getSupplierId());
+        List<String> mainSupplierIdList = detail.stream().filter(obj -> StringUtils.isNotBlank(obj.getMainSupplierId())).map(PurchaseReturnOrderDetailEntity::getMainSupplierId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(mainSupplierIdList)) {
+            supplierIdList.addAll(mainSupplierIdList);
+        }
+        List<SupplierEntity>  supplierList = scmTaskFeign.getSupplierByIdList(mainSupplierIdList);
+
+        //主表供应商
+        SupplierEntity supplierEntity = supplierList.stream().filter(obj -> obj.getId().equals(purchaseReturnOrderEntity.getSupplierId())).findFirst().orElse(new SupplierEntity());
+        viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
         //可用数量
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
 
@@ -444,6 +470,10 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             detailView.setSpuNo(productDetailEntity.getSpuNo());
             detailView.setUnit(productDetailEntity.getUnitName());
             detailView.setVariantProperty(productDetailEntity.getVariantProperty());
+
+            //参考供应商
+            SupplierEntity mainSupplierEntity = supplierList.stream().filter(obj -> obj.getId().equals(purchaseReturnOrderDetailEntity.getMainSupplierId())).findFirst().orElse(new SupplierEntity());
+            detailView.setMainSupplierName(mainSupplierEntity.getName());
 
             //根据组织、仓库、sku查询可用库存
             /*

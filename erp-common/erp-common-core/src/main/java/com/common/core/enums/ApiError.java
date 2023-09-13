@@ -715,6 +715,7 @@ public enum ApiError implements Serializable {
 
     STOCKTAKING_TASK_EXIST(99090 , "仓库【{}】库位【{}】 SKU【{}】 已存在盘点任务"),
     ERROR_SO_RETURN_INSTOCK_NOT_GENERATE(99090,"退货入库单【{}】未审核通过，不支持下推"),
+    ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL(99091,"采购退货单退货扣款类型退款单价必填"),
 
 
 
