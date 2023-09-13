@@ -103,7 +103,7 @@ public class CfConditionServiceImpl extends SuperServiceImpl<CfConditionMapper, 
     @Override
     public List<CfConditionDTO.CommonDTO> listByConditionCode(String conditionCode) {
         List<CfConditionDTO.CommonDTO> list = baseMapper.listByConditionCode(conditionCode);
-        String type = DictBasicTypeEnum.LOGIC.getType();
+        String type = DictBasicTypeEnum.COMPARE.getType();
         List<BaseDropDownDTO.CommonDTO> dictRuleConditionList = dictRuleConditionService.listByType(type);
         for (CfConditionDTO.CommonDTO item : list) {
             String logic = item.getLogic();

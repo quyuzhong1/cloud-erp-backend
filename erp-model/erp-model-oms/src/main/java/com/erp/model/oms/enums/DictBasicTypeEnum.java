@@ -17,7 +17,7 @@ public enum DictBasicTypeEnum {
     RECEIVE_METHOD("receiveMethod",  "收款方式"),
     COLLECTION_TERMS("collectionTerms",  "收款条件"),
     LOGISTICS_METHOD("logisticsMethod",  "b2c销售订单物流方式"),
-    LOGIC("logic",  "订单规则的逻辑关系"),
+    COMPARE("compare",  "订单规则的匹配"),
     RULE_CONDITION("ruleCondition","审核规则"),
     SHOP_PLATFORM_COST("shopPlatformCost","店铺平台费率选项"),
     SHOP_VAT_COST("shopVATCost","店铺VAT费率选项"),
