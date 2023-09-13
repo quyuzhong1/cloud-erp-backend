@@ -296,9 +296,9 @@
           SELECT
             approve_status,
 	        count(*)
-	     FROM   so_outstock
+	     FROM so_outstock
 	     WHERE is_deleted=FALSE
-         AND so.source_type!='SAL_OUTSTOCK'
+         AND source_type!='SAL_OUTSTOCK'
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
