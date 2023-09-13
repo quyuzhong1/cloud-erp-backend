@@ -9,6 +9,8 @@ import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.erp.server.bi.mapper.BiTargetStaffSettingMapper;
 import com.erp.server.bi.service.BiTargetStaffSettingService;
 import com.erp.server.bi.service.BiTargetYearService;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -36,24 +39,33 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
     @Autowired
     private BiTargetYearService biTargetYearService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(BiTargetStaffSettingDTO.AddDTO addDTO) {
         BiTargetYearEntity targetYear = new BiTargetYearEntity();
         BeanMapperUtils.copy(addDTO, targetYear);
         List<BiTargetStaffSettingDTO.CommonDTO> detailList = addDTO.getDetailList();
-
         // 数据处理
         handleData(targetYear.getYear(), detailList);
-
-        log.info("开始新增人员目标设置单");
-        boolean save = biTargetYearService.save(targetYear);
+        Boolean save = biTargetYearService.save(targetYear);
         if (!save) {
             throw new ServiceException("人员目标设置单保存失败");
         }
+        //添加明细
+        this.batchAdd(targetYear.getId(), detailList);
+        return targetYear.getId();
+    }
 
-        return biTargetStaffSettingEntity.getId();
+    /**
+     * 添加明细的
+     *
+     * @param mainId
+     * @param detailList
+     */
+    public void batchAdd(String mainId, List<BiTargetStaffSettingDTO.CommonDTO> detailList) {
+        List<BiTargetStaffSettingEntity> entityList = BeanMapperUtils.copyList(BiTargetStaffSettingEntity.class, detailList);
+        entityList.forEach(e -> e.setMainId(mainId));
+        this.saveBatch(entityList);
     }
 
     /**
@@ -62,6 +74,8 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(BiTargetStaffSettingDTO.UpdateDTO updateDTO) {
+        BiTargetYearEntity targetYear = new BiTargetYearEntity();
+
         BiTargetStaffSettingEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "人员目标设置单"));
         BiTargetStaffSettingEntity biTargetStaffSettingEntity = BeanMapperUtils.map(BiTargetStaffSettingEntity.class, updateDTO);
@@ -82,11 +96,21 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
      */
     private void handleData(String year, List<BiTargetStaffSettingDTO.CommonDTO> detailList) {
         List<BiTargetStaffSettingDTO.ListDetailDTO> existList = baseMapper.listByYear(year);
-        for(BiTargetStaffSettingDTO.CommonDTO item : detailList){
-            //existList.stream().filter(e->)
+        List<String> existStaff = Lists.newArrayList();
+        for (BiTargetStaffSettingDTO.CommonDTO item : detailList) {
+            BiTargetStaffSettingDTO.ListDetailDTO existDb = existList.stream().filter(e -> !e.getId().equals(item.getId()) &&
+                    e.getStaffId().equals(item.getStaffId()) &&
+                    e.getMetrics().equals(item.getMetrics()) &&
+                    e.getMonth().equals(item.getMonth())).findFirst().orElse(null);
+            if (existDb != null) {
+                existStaff.add(existDb.getStaffName());
+            }
+        }
+        if (CollectionUtils.isNotEmpty(existStaff)) {
+            String existStaffName = existStaff.stream().collect(Collectors.joining(",");
+            throw new ServiceException(ApiError.YEAR_METRICS_EXIST, existStaffName);
         }
 
-        // TODO 验证数据 & 数据赋值
 
     }
 }

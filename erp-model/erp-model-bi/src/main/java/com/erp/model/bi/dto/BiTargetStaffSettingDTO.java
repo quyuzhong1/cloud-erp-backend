@@ -152,11 +152,16 @@ public class BiTargetStaffSettingDTO implements Serializable {
          */
         private String staffId;
 
+        /**
+         * 员工id
+         */
+        private String staffName;
+
 
         /**
          * 月
          */
-        @NotNull(message = "月不能为空")
+
         private Integer month;
 
 
