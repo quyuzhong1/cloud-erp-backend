@@ -206,7 +206,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 obj.setReturnTypeDict(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
                 if (StringUtils.isNotBlank(soDetailEntity.getMainId())) {
                     //获取退货数量
-                    Integer returnQty = returnDetailEntityList.stream().filter(req -> req.getId().equals(obj.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                    Integer returnQty = returnDetailEntityList.stream().filter(req -> req.getId().equals(obj.getSoReturnDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     obj.setMustQty(returnQty);
                     Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(obj.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                     obj.setDeliveryQty(actualQty);
@@ -232,6 +232,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         for (SOReturnChangeListTypeEnum item : values) {
             SoReturnInstockDTO.PagingParam pagingParam = new SoReturnInstockDTO.PagingParam();
             pagingParam.setPermissionSql(dto.getPermissionSql());
+            pagingParam.setInvalidStatus(Boolean.FALSE);
             SoReturnInstockDTO.StatusCountDTO resultDTO = new SoReturnInstockDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (SOReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
@@ -425,7 +426,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(soIds);
         //获取退货单id
         List<String> returnMainIds = returnEntityList.stream().map(SoReturnEntity::getId).distinct().collect(Collectors.toList());
-        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailBySourceIds(returnMainIds);
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(entity.getWarehouseId()));
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntitieList = soReturnReceiveDetailService.listDetailByMainIds(Arrays.asList(viewDTO.getSourceId()));
         for (SoReturnInstockDetailEntity detailEntity : detailEntityList) {
@@ -438,19 +438,19 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             detailView.setUnitName(productDetailEntity.getUnitName());
             detailView.setVariantProperty(productDetailEntity.getVariantProperty());
             detailView.setWarehouseLocation(detailEntity.getWarehouseLocation());
-            SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
+            SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(detailEntity.getSoReturnDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             if (StringUtils.isNotBlank(viewDTO.getSoReturnId())) {
                 //销售单信息
                 SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
                 detailView.setSalesQty(soDetailEntity.getQty());
                 Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSoId().equals(soDetailEntity.getMainId()) && detail.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setDeliveryQty(actualQty);
+
                 //获取退货数量
-                Integer returnQty = returnDetailEntityList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer returnQty = returnDetailEntityList.stream().filter(req -> req.getId().equals(detailEntity.getSoReturnDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setMustQty(returnQty);
-                Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> detailEntity.getSourceDetailId().equals(req.getSourceDetailId()) && req.getSkuId().equals(detailEntity.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer receiveQty = soReturnReceiveDetailEntitieList.stream().filter(req -> detailEntity.getSourceDetailId().equals(req.getSourceDetailId()) && req.getSkuId().equals(detailEntity.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setReceiveQty(receiveQty);
-                detailView.setSalesQty(soDetailEntity.getQty());
             } else {
                 Integer receiveQty = soReturnReceiveDetailEntitieList.stream().filter(req -> detailEntity.getSourceDetailId().equals(req.getId()) && req.getSkuId().equals(detailEntity.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setReceiveQty(receiveQty);
@@ -735,7 +735,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             obj.setSalesQty(soDetailEntity.getQty());
             if (StringUtils.isNotBlank(soDetailEntity.getMainId())) {
                 //获取退货数量
-                Integer returnQty = returnDetailEntityList.stream().filter(req -> req.getId().equals(obj.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer returnQty = returnDetailEntityList.stream().filter(req -> req.getId().equals(obj.getSoReturnDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 obj.setMustQty(returnQty);
                 Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(obj.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                 obj.setDeliveryQty(actualQty);

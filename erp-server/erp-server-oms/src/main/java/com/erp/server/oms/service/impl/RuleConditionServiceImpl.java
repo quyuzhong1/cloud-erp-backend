@@ -2,32 +2,35 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.entity.DictRuleConditionEntity;
 import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleConditionMapper;
-import com.erp.server.oms.service.DictRuleConditionService;
-import com.erp.server.oms.service.RuleConditionService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
-import com.common.core.exception.ServiceException;
+import com.erp.server.oms.service.DictRuleConditionService;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.RuleConditionService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.RuleConditionDTO;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -137,7 +140,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
     public List<RuleConditionDTO.ViewDTO> listByRuleId(String ruleId, String type) {
         List<RuleConditionEntity> ruleConditionList = this.listDbByRuleId(ruleId);
         List<RuleConditionDTO.ViewDTO> viewList = BeanMapper.copyList(ruleConditionList, RuleConditionDTO.ViewDTO.class);
-        String logicType = DictBasicTypeEnum.LOGIC.getType();
+        String logicType = DictBasicTypeEnum.COMPARE.getType();
         List<DictRuleConditionEntity> dictRuleConditionList = dictRuleConditionService.listDbByTypes(Arrays.asList(type, logicType));
         for (RuleConditionDTO.ViewDTO item : viewList) {
             String field = item.getField();
