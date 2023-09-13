@@ -14,6 +14,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.server.dmp.pull.mapper.DmpOrderItemMapper;
+import com.erp.server.dmp.service.DmpBomService;
 import com.erp.server.dmp.service.DmpOrderItemService;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +40,9 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
 
     @Resource
     private RedisUtil redisUtil;
+
+    @Resource
+    private DmpBomService dmpBomService;
 
     /**
      * 添加订单商品详细信息
@@ -259,6 +263,23 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             }
         }
 
+    }
+
+
+    /**
+     * sku拆分
+     * @Author Luo_WG
+     * @Date 2023/9/13 14:01
+     * @param itemEntityList
+     * @return java.util.List<com.erp.model.dmp.entity.DmpOrderItemEntity>
+     **/
+    public static List<DmpOrderItemEntity> splitOrderItem(List<DmpOrderItemEntity> itemEntityList) {
+
+        for (DmpOrderItemEntity dmpOrderItemEntity : itemEntityList) {
+
+
+        }
+        return itemEntityList;
     }
 }
 
