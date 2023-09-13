@@ -139,6 +139,11 @@ public class DictRuleConditionServiceImpl extends SuperServiceImpl<DictRuleCondi
         return this.lambdaQuery().in(DictRuleConditionEntity::getType, typeList).list();
     }
 
+    @Override
+    public List<BaseDropDownDTO.CommonDTO> listRuleField() {
+        return baseMapper.listRuleField();
+    }
+
     /**
      * 新增修改处理数据
      */

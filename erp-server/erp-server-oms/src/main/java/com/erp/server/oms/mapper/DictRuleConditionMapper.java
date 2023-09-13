@@ -28,4 +28,6 @@ public interface DictRuleConditionMapper extends BaseMapper<DictRuleConditionEnt
      * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.CommonDTO>
      */
     List<BaseDropDownDTO.CommonDTO> listByType(@Param("type") String type);
+
+    List<BaseDropDownDTO.CommonDTO> listRuleField();
 }

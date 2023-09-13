@@ -446,18 +446,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //添加分类
         String newCategoryName = "";
+        List<OrderCategoryDetailEntity> categoryList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(categoryIdList)) {
-            List<OrderCategoryDetailEntity> categoryList = orderCategoryDetailService.listByIds(categoryIdList);
+             categoryList = orderCategoryDetailService.listByIds(categoryIdList);
             newCategoryName = categoryList.stream().map(obj -> obj.getName()).collect(Collectors.joining(","));
         }
 
         String msg = "";
         if (SoB2cCategoryTypeEnum.ENUM_ADD.equals(typeEnum)) {
-            addCategory(categoryIdList, id);
+            addCategory(categoryIdList, id,categoryList);
             msg = "原分类：【{}】，新增分类：【{}】。";
         }
         if (SoB2cCategoryTypeEnum.ENUM_UPDATE.equals(typeEnum)) {
-            updateCategory(categoryIdList, id);
+            updateCategory(categoryIdList, id,categoryList);
             msg = "原分类：【{}】，更新分类：【{}】。";
         }
         if (SoB2cCategoryTypeEnum.ENUM_DELETE.equals(typeEnum)) {
@@ -1228,7 +1229,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @author Will
      * @date: 2023/8/22 14:22
      */
-    private void addCategory(List<String> categoryIdList, String mainId) {
+    private void addCategory(List<String> categoryIdList, String mainId,List<OrderCategoryDetailEntity> categoryList) {
         List<SoB2cRefCategoryEntity> list = soB2cRefCategoryService.listByMainIds(Arrays.asList(mainId));
         List<SoB2cRefCategoryEntity> addList = new ArrayList<>();
         for (String categoryId : categoryIdList) {
@@ -1240,8 +1241,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     continue;
                 }
             }
+            String name = categoryList.stream().filter(obj -> obj.getId().equals(categoryId)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             SoB2cRefCategoryEntity entry = new SoB2cRefCategoryEntity();
             entry.setCategoryId(categoryId);
+            entry.setCategoryName(name);
             entry.setSoB2cId(mainId);
             addList.add(entry);
         }
@@ -1255,11 +1258,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @author Will
      * @date: 2023/8/22 14:36
      */
-    private void updateCategory(List<String> categoryIdList, String mainId) {
+    private void updateCategory(List<String> categoryIdList, String mainId,List<OrderCategoryDetailEntity> categoryList) {
         //删除原有分类
         deleteCategory(mainId);
         //新增分类
-        addCategory(categoryIdList, mainId);
+        addCategory(categoryIdList, mainId,categoryList);
     }
 
     /**
@@ -1379,6 +1382,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     }
                 }
                 //订单本位币金额
+                detailDTO.setSourceAmount(detailDTO.getAmount());
+                detailDTO.setSourceCurrency(detailDTO.getCurrency());
+
                 BigDecimal amount = MathUtil.multiply(detailDTO.getSourceAmount(), detailDTO.getExchangeRate());
                 detailDTO.setAmount(amount);
                 detailDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());

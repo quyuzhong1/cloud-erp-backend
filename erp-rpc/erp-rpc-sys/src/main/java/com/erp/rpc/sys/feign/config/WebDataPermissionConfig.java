@@ -3,6 +3,7 @@ package com.erp.rpc.sys.feign.config;
 
 import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
 import com.erp.rpc.sys.feign.aspect.RequestPermissionsAspect;
+import com.erp.rpc.sys.feign.aspect.SysLoggingAspect;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -22,5 +23,9 @@ public class WebDataPermissionConfig implements WebMvcConfigurer {
     @Bean
     public RequestPermissionsAspect getRequestPermissionsAspect(){
         return new RequestPermissionsAspect();
+    }
+    @Bean
+    public SysLoggingAspect getSysLoggingAspect(){
+        return new SysLoggingAspect();
     }
 }

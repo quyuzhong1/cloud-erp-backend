@@ -60,6 +60,9 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                 addList.addAll(list);
             }
         }
+        //删除
+        this.removeByUserIdList(userIdList);
+        //新增
         if (CollectionUtils.isNotEmpty(addList)) {
             List<ShopSysUserAuthEntity> resultList = BeanMapperUtils.copyList(ShopSysUserAuthEntity.class, addList);
             this.saveBatch(resultList);
@@ -136,7 +139,7 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
             //店铺
             List<ShopSysUserAuthDTO.ViewShopDTO> detailList = new ArrayList<>();
             //全部指定则返回全部店铺信息
-            if (ShopAuthTypeEnum.ENUM_ALL.getCode().equals(list.get(0).getAuthType())) {
+            if (ShopAuthTypeEnum.ENUM_ALL.getCode().equals(value.get(0).getAuthType())) {
                 //全部指定
                 if (CollectionUtils.isEmpty(shopInfoList)) {
                     continue;
@@ -155,7 +158,7 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                 }
             } else {
                 //选择指定
-                for (ShopSysUserAuthEntity shopSysUserAuthEntity : list) {
+                for (ShopSysUserAuthEntity shopSysUserAuthEntity : value) {
                     //店铺信息
                     ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(shopSysUserAuthEntity.getShopId())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(shopInfoEntity)) {
@@ -210,5 +213,12 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
      */
     private List<ShopSysUserAuthEntity> listByUserIdList(List<String> userIdList) {
         return  lambdaQuery().in(ShopSysUserAuthEntity::getUserId,userIdList).list();
+    }
+
+    /**
+     * 根据用户id集合删除
+     */
+    private  Boolean removeByUserIdList (List<String> userIdList) {
+        return lambdaUpdate().in(ShopSysUserAuthEntity::getUserId,userIdList).remove();
     }
 }

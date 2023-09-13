@@ -15,6 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 <#if restControllerStyle>
 import org.springframework.web.bind.annotation.RestController;
 <#else>
@@ -54,6 +58,7 @@ import ${package.Entity}.${entity};
 <#else>
 @Controller
 </#if>
+@LogSystemModule("${table.comment!}")
 @RequestMapping("<#if package.ModuleName??>/${package.ModuleName}</#if>/<#if controllerMappingHyphenStyle??>${controllerMappingHyphen}<#else>${table.entityPath}</#if>")
 <#if kotlin>
 class ${table.controllerName}<#if superControllerClass??> : ${superControllerClass}()</#if>
@@ -75,6 +80,7 @@ public class ${table.controllerName} {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "${table.comment!}新增")
     public ApiResult<String> add(@RequestBody @Validated ${table.dtoName}.AddDTO dto) {
         return success(${serviceBean}.add(dto));
     }
@@ -183,6 +189,7 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "${table.comment!}提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -219,6 +226,7 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
+    @LogAction(value = LogActionEnum.APPROVE, desc = "${table.comment!}审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -256,6 +264,7 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "${table.comment!}反审核")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -293,6 +302,7 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
+    @LogAction(value = LogActionEnum.DELETE, desc = "${table.comment!}删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -329,6 +339,7 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
+    @LogAction(value = LogActionEnum.INVALID, desc = "${table.comment!}作废")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -366,6 +377,7 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
+    @LogAction(value = LogActionEnum.CANCEL, desc = "${table.comment!}撤销")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -402,6 +414,7 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "id")
     </#if>
+    @LogViewService
     public ApiResult<${table.dtoName}.ViewDTO> view(@RequestParam("id") String id) {
         return success(${serviceBean}.view(id));
     }
@@ -422,6 +435,7 @@ public class ${table.controllerName} {
             tableAlias = ""
     )
     </#if>
+    @LogAction(value = LogActionEnum.EXPORT, desc = "${table.comment!}导出Excel数据")
     public void exportList(@RequestBody @Validated ${table.dtoName}.ExportDTO dto, HttpServletResponse response) {
         ${serviceBean}.exportList(dto, response);
     }
