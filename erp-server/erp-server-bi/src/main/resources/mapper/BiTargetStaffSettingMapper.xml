@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.dmp.mapper.BiTargetStaffSettingMapper">
+<mapper namespace="com.erp.server.bi.mapper.BiTargetStaffSettingMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.bi.entity.BiTargetStaffSettingEntity">
        <result column="id" property="id" />
@@ -33,6 +33,22 @@
         is_deleted,
         main_id, staff_id, staff_name, month, value, metrics
     </sql>
+
+    <select id="listByYear" resultType="com.erp.model.bi.dto.BiTargetStaffSettingDTO$ListDetailDTO">
+        SELECT
+            tss.id,
+            tss.main_id,
+            ty.year,
+            tss.staff_id,
+            tss.month,
+            tss.value,
+            tss.metrics
+        FROM bi_target_staff_setting tss
+        LEFT JOIN bi_target_year ty
+        ON tss.main_id=ty.id and ty.is_deleted=false
+        WHERE tss.is_deleted=false
+        AND ty.year=#{year}
+    </select>
 
 
 </mapper>

@@ -16,7 +16,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 
 /**
- * 人员目标设置表
+ * 目标管理-人员
  *
  * @author Lambda
  * @since 2023-09-13

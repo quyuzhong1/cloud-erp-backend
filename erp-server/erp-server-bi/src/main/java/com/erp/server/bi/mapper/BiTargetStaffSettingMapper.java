@@ -1,8 +1,12 @@
 package com.erp.server.bi.mapper;
+import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +20,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface BiTargetStaffSettingMapper extends BaseMapper<BiTargetStaffSettingEntity> {
 
+    List<BiTargetStaffSettingDTO.ListDetailDTO> listByYear(@Param("year") String year);
 }
