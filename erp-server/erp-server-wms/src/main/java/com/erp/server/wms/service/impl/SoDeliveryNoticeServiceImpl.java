@@ -731,7 +731,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(warehouseIds);
         List<String> orgIdList = warehouseEntityList.stream().map(WarehouseEntity::getOrgId).distinct().collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
-
+        //获取sku的id集合
+        List<String> skuIdList = detailList.stream().map(SoDeliveryNoticeDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        // 忽略库存计算SKU
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         //拣货明细集合
         List<PickingDetailDTO.CommonDTO> addList = new ArrayList<>();
         for (SoDeliveryNoticeEntity entity : list) {
@@ -739,13 +744,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             //获取仓库信息
             WarehouseEntity warehouseEntity = warehouseEntityList.stream().filter(req -> req.getId().equals(entity.getWarehouseId())).findFirst().orElse(new WarehouseEntity());
 
-            //获取sku的id集合
-            List<String> skuIdList = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).map(SoDeliveryNoticeDetailEntity::getSkuId).collect(Collectors.toList());
-            //根据ids查询sku信息
-            List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-
-            // 忽略库存计算SKU
-            List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
             List<String> ignoreInventorySkuIds = Lists.newArrayList();
             if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
                 ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
