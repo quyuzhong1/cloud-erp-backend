@@ -2167,4 +2167,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         list.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
         return list;
     }
+
+    @Override
+    public List<SkuCostDTO> listPurchaseOrderByPurchaseDate(List<LocalDate> purchaseDateList) {
+        List<SkuCostDTO> list = baseMapper.listPurchaseOrderByPurchaseDate(purchaseDateList);
+        return list;
+    }
 }

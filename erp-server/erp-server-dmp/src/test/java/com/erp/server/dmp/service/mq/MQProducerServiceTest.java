@@ -30,6 +30,8 @@ public  class MQProducerServiceTest {
     @Test
     public void syncSendMsg() {
 //        mQProducerService.syncSendMsg("testId2", RocketMqTopic.DMP_ERP_ORDER_TOPIC, "tag2", "{'key':'value2'}","dmp jindie");
+
+
     }
 
     @Test
