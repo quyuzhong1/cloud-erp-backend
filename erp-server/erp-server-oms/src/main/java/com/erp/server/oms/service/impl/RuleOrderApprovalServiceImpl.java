@@ -183,7 +183,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         String operationType = ruleOrderApproval.getOperationType();
         List<String> operationTypeList = StringUtils.isNotBlank(operationType) ? Arrays.asList(operationType.split(",")) : Collections.emptyList();
         view.setOperationTypeList(operationTypeList);
-        String type = DictBasicTypeEnum.RULE_CONDITION.getType();
+        String type = DictBasicTypeEnum.FIELD.getType();
         List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);
         view.setConditionList(conditionList);
         return view;
