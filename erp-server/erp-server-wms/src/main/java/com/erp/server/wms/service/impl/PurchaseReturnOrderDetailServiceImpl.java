@@ -19,6 +19,7 @@ import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -33,10 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -99,6 +97,10 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
         Integer returnQty = 0;
         //创建保存详情的集合
         List<PurchaseReturnOrderDetailEntity> listDetail = new ArrayList<>();
+        //退货仓库
+        String returnWarehouseId = dto.getReturnWarehouseId();
+        WarehouseEntity warehouse = warehouseService.getById(returnWarehouseId);
+        String warehouseOrgId = Objects.nonNull(warehouse) ? warehouse.getOrgId() : "";
         if (StringUtils.isNotBlank(dto.getPurchaseOrderId())) {
             //获取界面传过来的采购单详情表id集合
             List<String> orderDetailIds = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
@@ -130,8 +132,8 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                         if (addDTO.getReturnQty() > receiveQty) {
                             throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
-                    }  else if (dto.getSourceType().equals(ReturnOrderSourceEnum.QC.getCode())) {
-                        Integer inventoryTotal = inventoryService.getInventoryTotal(dto.getReturnOrgId(), dto.getReturnWarehouseId(), addDTO.getSkuId(), addDTO.getWarehouseLocation(), InventoryStatusEnum.WAIT_QC.getCode());
+                    } else if (dto.getSourceType().equals(ReturnOrderSourceEnum.QC.getCode())) {
+                        Integer inventoryTotal = inventoryService.getInventoryTotal(warehouseOrgId, dto.getReturnWarehouseId(), addDTO.getSkuId(), addDTO.getWarehouseLocation(), InventoryStatusEnum.WAIT_QC.getCode());
                         if (addDTO.getReturnQty() > inventoryTotal) {
                             throw new ServiceException(ApiError.ERROR_99079, JSONUtil.toJsonStr(purchaseOrderDetailEntity.getSkuNo()));
                         }
