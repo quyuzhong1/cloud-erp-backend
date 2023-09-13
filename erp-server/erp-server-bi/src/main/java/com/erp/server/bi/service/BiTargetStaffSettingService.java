@@ -32,4 +32,12 @@ public interface BiTargetStaffSettingService extends SuperService<BiTargetStaffS
     Boolean update(BiTargetStaffSettingDTO.UpdateDTO dto);
 
 
+    /**
+     * 获取到详情信息
+     * @author yl
+     * @date 2023-09-13 15:17
+     * @param id
+     * @return com.erp.model.bi.dto.BiTargetStaffSettingDTO.ViewDTO
+     */
+    BiTargetStaffSettingDTO.ViewDTO view(String id);
 }

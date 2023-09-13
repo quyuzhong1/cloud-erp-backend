@@ -28,6 +28,13 @@ public class BiTargetYearEntity extends BaseEntity<BiTargetYearEntity> {
     */
     @TableField("year")
     private String year;
+
+    /**
+     * 考核字标多个逗号分割
+     */
+    @TableField("metrics")
+    private String metrics;
+
     /**
     * 货币
     */

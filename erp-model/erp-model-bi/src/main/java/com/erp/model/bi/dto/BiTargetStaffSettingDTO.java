@@ -33,43 +33,35 @@ public class BiTargetStaffSettingDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ViewDTO extends BiTargetYearDTO.ViewDTO {
+
+        List<BiTargetStaffSettingDTO.DetailDTO> detailList;
+
+    }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DetailDTO {
 
         /**
-         * 主键id
+         * 考核指标
          */
-        private String id;
+        private MetricsEnum metrics;
+
 
         /**
-         * 主表id 对应 target_year 表id
+         * 考核指标名
          */
-        private String mainId;
+        private String metricsName;
 
         /**
-         * 员工id
+         * 人员设置列表
          */
-        private String staffId;
-
-        /**
-         * 员工名
-         */
-        private String staffName;
-
-        /**
-         * 月
-         */
-        private Integer month;
-
-        /**
-         * 对应值
-         */
-        private BigDecimal value;
-
-        /**
-         * 指标维度
-         */
-        private String metrics;
-
+        private List<CommonDTO> staffSettingList;
 
     }
 
@@ -79,7 +71,7 @@ public class BiTargetStaffSettingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends BiTargetYearDTO.AddDTO {
-        @Size(min = 1,message = "目标设置不能为空")
+        @Size(min = 1, message = "目标设置不能为空")
         @NotNull(message = "目标设置不能为空")
         private List<CommonDTO> detailList;
 
@@ -90,20 +82,17 @@ public class BiTargetStaffSettingDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO extends BiTargetYearDTO.UpdateDTO {
 
-        /**
-         * 主键id
-         */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
+        @Size(min = 1, message = "目标设置不能为空")
+        @NotNull(message = "目标设置不能为空")
+        private List<CommonDTO> detailList;
 
     }
 
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-
 
 
         private String id;
@@ -115,6 +104,7 @@ public class BiTargetStaffSettingDTO implements Serializable {
         @NotBlank(message = "员工不能为空")
         private String staffId;
 
+        private String staffName;
 
         /**
          * 月

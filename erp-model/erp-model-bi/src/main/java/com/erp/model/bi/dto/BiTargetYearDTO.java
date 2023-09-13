@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -38,6 +39,8 @@ public class BiTargetYearDTO implements Serializable {
          * 年
          */
         private String year;
+
+        private List<String> metricsList;
 
         /**
          * 货币
@@ -88,6 +91,10 @@ public class BiTargetYearDTO implements Serializable {
         @NotBlank(message = "部门不能为空")
         private String deptId;
 
+        @NotNull(message = "考核指标不能为空")
+        @Size(min = 1,message = "考核指标不能为空")
+        private List<String> metricsList;
+
     }
 
     /**
@@ -100,7 +107,7 @@ public class BiTargetYearDTO implements Serializable {
         /**
          * 主键id
          */
-        @NotBlank(message = "主键id不能为空")
+        @NotBlank(message = "目标不能为空")
         private String id;
 
 
@@ -124,6 +131,8 @@ public class BiTargetYearDTO implements Serializable {
         @NotBlank(message = "部门不能为空")
         private String deptId;
 
+        @Size(min = 1,message = "考核指标不能为空")
+        private List<String> metricsList;
     }
 
 
