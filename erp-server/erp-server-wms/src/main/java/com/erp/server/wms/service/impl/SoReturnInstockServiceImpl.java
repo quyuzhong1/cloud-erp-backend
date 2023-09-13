@@ -234,6 +234,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         for (SOReturnChangeListTypeEnum item : values) {
             SoReturnInstockDTO.PagingParam pagingParam = new SoReturnInstockDTO.PagingParam();
             pagingParam.setPermissionSql(dto.getPermissionSql());
+            pagingParam.setInvalidStatus(Boolean.FALSE);
             SoReturnInstockDTO.StatusCountDTO resultDTO = new SoReturnInstockDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (SOReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
