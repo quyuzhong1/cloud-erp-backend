@@ -696,7 +696,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 编辑分类类型 字典 categoryType类型
          */
-        @NotBlank(message = "类型不能为空")
+        @NotNull(message = "类型不能为空")
         private SoB2cCategoryTypeEnum typeEnum;
 
         /**
