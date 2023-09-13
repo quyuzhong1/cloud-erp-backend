@@ -16,6 +16,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
@@ -29,10 +30,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
 import com.erp.server.scm.listener.PurchasePriceDetailExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
-import com.erp.server.scm.service.ModuleOperateLogService;
-import com.erp.server.scm.service.PurchasePriceDetailService;
-import com.erp.server.scm.service.PurchasePriceHistoryService;
-import com.erp.server.scm.service.PurchasePriceService;
+import com.erp.server.scm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -84,6 +82,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private SyncKingdeePurchasePriceService syncKingdeePurchasePriceService;
+
+    @Resource
+    private AttachmentService attachmentService;
 
     /**
      * 检查sku 区间报价
@@ -582,6 +583,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
         List<String> skuIds = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        //附件信息
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(priceEntity.getId());
+        List<String> attachmentUrlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+        List<String> attachmentNameList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+        viewDTO.setAttachmentNameList(attachmentNameList);
+        viewDTO.setAttachmentUrlList(attachmentUrlList);
 
         List<PurchasePriceChangeDetailDTO.ViewDTO> resultList = new ArrayList<>(viewList.size());
         for (PurchasePriceDetailDTO.ViewDTO item : viewList) {

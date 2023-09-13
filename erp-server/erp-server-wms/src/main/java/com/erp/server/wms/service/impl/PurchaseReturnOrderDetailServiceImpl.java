@@ -11,7 +11,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
@@ -108,6 +108,12 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             List<String> orderDetailIds = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
             //根据ids查询采购单详情
             List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
+            if (CollectionUtils.isEmpty(purchaseOrderDetailEntities)) {
+                throw new ServiceException(ApiError.ERROR_98026);
+            }
+            List<String> skuIdList = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
+            List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
             // 关闭SKU重复检查
             // checkAddDetailsRepeatSku(purchaseOrderDetailEntities);
             //遍历需要保存的采购收货单详情信息，并赋值采购单信息
@@ -143,6 +149,9 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                             throw new ServiceException(ApiError.ERROR_99031.code, String.format(ApiError.ERROR_99031.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
                     }
+                    SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(purchaseReturnOrderDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
+                    purchaseReturnOrderDetailEntity.setMainSupplierId(skuVO.getSupplierId());
+
                     purchaseReturnOrderDetailEntity.setReturnQty(addDTO.getReturnQty());
                     purchaseReturnOrderDetailEntity.setReplenishQty(addDTO.getReplenishQty());
                     purchaseReturnOrderDetailEntity.setDeductAmountQty(addDTO.getDeductAmountQty());
@@ -181,7 +190,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
         // checkAddDetailsRepeat(detailList);
 
         List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<SkuVO> detailEntityList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
             PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
@@ -189,8 +198,9 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             purchaseReturnOrderDetailEntity.setMainId(id);
             purchaseReturnOrderDetailEntity.setReturnQty(addDTO.getReturnQty());
             //获取sku信息
-            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(addDTO.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-            purchaseReturnOrderDetailEntity.setSkuNo(productDetailEntity.getSkuNo());
+            SkuVO skuVO = detailEntityList.stream().filter(entityClass -> entityClass.getSkuId().equals(addDTO.getSkuId())).findFirst().orElse(new SkuVO());
+            purchaseReturnOrderDetailEntity.setSkuNo(skuVO.getSkuNo());
+            purchaseReturnOrderDetailEntity.setMainSupplierId(skuVO.getSupplierId());
             listDetail.add(purchaseReturnOrderDetailEntity);
         }
         return listDetail;
@@ -259,6 +269,12 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             List<String> orderDetailIds = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
             //根据ids查询采购单详情
             List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
+            if (CollectionUtils.isEmpty(purchaseOrderDetailEntities)) {
+                throw new ServiceException(ApiError.ERROR_98026);
+            }
+            List<String> skuIdList = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
+            List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
             //遍历需要保存的采购收货单详情信息，并赋值采购单信息
             List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
             List<PoInstockDetailEntity> stockInDetailEntityList = poInstockDetailService.listDetailByPodIds(orderDetailIds);
@@ -272,6 +288,9 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                 if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
                     purchaseReturnOrderDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
                     purchaseReturnOrderDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
+                    //参考供应商赋值
+                    SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(purchaseReturnOrderDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
+                    purchaseReturnOrderDetailEntity.setMainSupplierId(skuVO.getSupplierId());
 
                     if (entity.getSourceType().equals(SourceTypeEnum.PO_RECEIVE.getCode())) {
                         Integer receiveQty = detailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -338,15 +357,16 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
         List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
         List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<SkuVO> detailEntityList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
             PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
             BeanMapperUtils.copy(updateDTO, purchaseReturnOrderDetailEntity);
             purchaseReturnOrderDetailEntity.setMainId(id);
             purchaseReturnOrderDetailEntity.setReturnQty(updateDTO.getReturnQty());
             //获取sku信息
-            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(updateDTO.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-            purchaseReturnOrderDetailEntity.setSkuNo(productDetailEntity.getSkuNo());
+            SkuVO skuVO = detailEntityList.stream().filter(entityClass -> entityClass.getSkuId().equals(updateDTO.getSkuId())).findFirst().orElse(new SkuVO());
+            purchaseReturnOrderDetailEntity.setSkuNo(skuVO.getSkuNo());
+            purchaseReturnOrderDetailEntity.setMainSupplierId(skuVO.getSupplierId());
             listDetail.add(purchaseReturnOrderDetailEntity);
             //修改操作日志
             if (StringUtils.isNotBlank(purchaseReturnOrderDetailEntity.getId())) {

@@ -547,7 +547,7 @@ public enum ApiError implements Serializable {
     ERROR_98032(98032,"只有待提交或审核不通过数据支持提交"),
     ERROR_98033(98033,"已审核数据才能生成采购单"),
     ERROR_98034(98034,"供应商名称不能重复"),
-    ERROR_98035(98035,"只有部分交货的采购订单能结束交货"),
+    ERROR_98035(98035,"只有未交货或者部分交货的采购订单能结束交货"),
     ERROR_98036(98036,"未找到采购订单供应商信息"),
     ERROR_98037(98037,"资质有效起不能大于资质有效止"),
     ERROR_98038(98038,"待提交和审核不通过采购订单不支持导出采购合同"),
@@ -736,6 +736,7 @@ public enum ApiError implements Serializable {
     ERROR_RETURN_ORDER_PUSHED(99089, "已下推退货入库单，不能反审核"),
     ERROR_WAREHOUSE_NOT_EXIST_ORG(99090, "仓库【{}】下未发现库存组织"),
     ERROR_SO_RETURN_INSTOCK_NOT_GENERATE(99090,"退货入库单【{}】未审核通过，不支持下推"),
+    ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL(99091,"采购退货单退货扣款类型退款单价必填"),
 
     STOCKTAKING_TASK_EXIST(99090 , "仓库【{}】库位【{}】 SKU【{}】 已存在盘点任务"),
     LOCATION_MOVE_DETAIL_ADD(99091 , "仓位移动明细单保存失败"),
