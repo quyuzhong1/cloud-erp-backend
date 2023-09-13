@@ -2,15 +2,19 @@ package com.erp.server.bi.service.impl;
 
 
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.model.bi.entity.BiProductInfoEntity;
 import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 
 import com.common.core.exception.ServiceException;
 import com.erp.model.bi.entity.BiTargetYearEntity;
+import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.server.bi.mapper.BiTargetStaffSettingMapper;
 import com.erp.server.bi.service.BiTargetStaffSettingService;
 import com.erp.server.bi.service.BiTargetYearService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,26 +72,110 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         this.saveBatch(entityList);
     }
 
+
+    /**
+     * 修改人员目标设置
+     *
+     * @param mainId
+     * @param detailList
+     */
+    public void batchUpdate(String mainId, List<BiTargetStaffSettingDTO.CommonDTO> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        List<BiTargetStaffSettingEntity> dbList = this.listBaseByMainId(mainId);
+        List<Pair<String, String>> pairList = detailList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+        List<String> deleteIdList = getDeleteIds(pairList, dbList);
+        if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            this.removeByIds(deleteIdList);
+        }
+        List<BiTargetStaffSettingEntity> saveOrUpdateList = BeanMapperUtils.copyList(BiTargetStaffSettingEntity.class, detailList);
+        saveOrUpdateList.stream().forEach(s -> s.setMainId(mainId));
+        this.saveOrUpdateBatch(saveOrUpdateList);
+    }
+
+    /**
+     * 获取到删除的id
+     *
+     * @param pairList
+     * @param dbList
+     * @return
+     */
+    private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<BiTargetStaffSettingEntity> dbList) {
+        List<String> ids = pairList.stream().filter(g -> StringUtils.isNotBlank(g.getKey())).
+                map(obj -> obj.getKey()).collect(Collectors.toList());
+        List<String> dbIds = dbList.stream().map(BiTargetStaffSettingEntity::getId).collect(Collectors.toList());
+        return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
+    }
+
+
+    /**
+     * 根据主表id获取对应信息
+     *
+     * @param mainId
+     * @return
+     */
+    public List<BiTargetStaffSettingEntity> listBaseByMainId(String mainId) {
+        return this.lambdaQuery().eq(BiTargetStaffSettingEntity::getMainId, mainId).
+                orderByDesc(BiTargetStaffSettingEntity::getId).list();
+    }
+
     /**
      * 修改
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(BiTargetStaffSettingDTO.UpdateDTO updateDTO) {
-        BiTargetYearEntity targetYear = new BiTargetYearEntity();
-
-        BiTargetStaffSettingEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "人员目标设置单"));
-        BiTargetStaffSettingEntity biTargetStaffSettingEntity = BeanMapperUtils.map(BiTargetStaffSettingEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(biTargetStaffSettingEntity);
-        log.info("编辑 开始修改人员目标设置单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(biTargetStaffSettingEntity);
-        if (!save) {
+        String id = updateDTO.getId();
+        BiTargetYearEntity oldTargetYear = biTargetYearService.getById(id);
+        Optional.ofNullable(oldTargetYear).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "人员目标设置"));
+        List<BiTargetStaffSettingDTO.CommonDTO> detailList = updateDTO.getDetailList();
+        handleData(updateDTO.getYear(), detailList);
+        BiTargetYearEntity targetYear = BeanMapperUtils.map(BiTargetYearEntity.class, updateDTO);
+        Boolean result = biTargetYearService.updateById(targetYear);
+        if (!result) {
             throw new ServiceException("人员目标设置单保存失败");
         }
+        this.batchUpdate(id, detailList);
         return Boolean.TRUE;
+    }
+
+    /**
+     * 获取到详情信息
+     *
+     * @param id
+     * @return com.erp.model.bi.dto.BiTargetStaffSettingDTO.ViewDTO
+     * @author yl
+     * @date 2023-09-13 15:17
+     */
+    @Override
+    public BiTargetStaffSettingDTO.ViewDTO view(String id) {
+        BiTargetStaffSettingDTO.ViewDTO view = new BiTargetStaffSettingDTO.ViewDTO();
+        BiTargetYearEntity targetYear = biTargetYearService.getById(id);
+        if (Objects.isNull(targetYear)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "人员目标设置");
+        }
+        BeanMapperUtils.copy(targetYear, view);
+        List<BiTargetStaffSettingEntity> staffSettingDbList = this.listBaseByMainId(id);
+        //根据指标分组
+        Map<MetricsEnum, List<BiTargetStaffSettingEntity>> map = staffSettingDbList.stream().
+                collect(Collectors.groupingBy(BiTargetStaffSettingEntity::getMetrics));
+        //详情
+        List<BiTargetStaffSettingDTO.DetailDTO> detailList = new ArrayList<>(map.size());
+        for (Map.Entry<MetricsEnum, List<BiTargetStaffSettingEntity>> item : map.entrySet()) {
+            BiTargetStaffSettingDTO.DetailDTO detail = new BiTargetStaffSettingDTO.DetailDTO();
+            MetricsEnum metricsEnum = item.getKey();
+            detail.setMetrics(metricsEnum);
+            detail.setMetricsName(metricsEnum.getName());
+            List<BiTargetStaffSettingEntity> staffSettingList = item.getValue();
+            List<BiTargetStaffSettingDTO.CommonDTO> staffSettingResultList = new ArrayList<>(staffSettingList.size());
+            for (BiTargetStaffSettingEntity staffSetting : staffSettingList) {
+
+
+            }
+
+        }
+        return null;
     }
 
 
@@ -107,7 +195,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
             }
         }
         if (CollectionUtils.isNotEmpty(existStaff)) {
-            String existStaffName = existStaff.stream().collect(Collectors.joining(",");
+            String existStaffName = existStaff.stream().collect(Collectors.joining(","));
             throw new ServiceException(ApiError.YEAR_METRICS_EXIST, existStaffName);
         }
 
