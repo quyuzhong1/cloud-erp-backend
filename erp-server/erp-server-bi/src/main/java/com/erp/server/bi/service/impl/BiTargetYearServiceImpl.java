@@ -1,0 +1,79 @@
+package com.erp.server.bi.service.impl;
+
+
+import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.model.bi.entity.BiTargetYearEntity;
+import com.common.core.exception.ServiceException;
+import com.erp.server.bi.mapper.BiTargetYearMapper;
+import com.erp.server.bi.service.BiTargetYearService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import com.erp.model.bi.dto.BiTargetYearDTO;
+import java.util.*;
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
+/**
+ * <p>
+ * 年度目标表 服务实现类
+ * </p>
+ *
+ * @author Lambda
+ * @since 2023-09-13
+ */
+@Slf4j
+@Service
+public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper, BiTargetYearEntity> implements BiTargetYearService {
+
+
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public String add(BiTargetYearDTO.AddDTO addDTO) {
+        BiTargetYearEntity biTargetYearEntity = new BiTargetYearEntity();
+        BeanMapperUtils.copy(addDTO, biTargetYearEntity);
+
+        // 数据处理
+        handleData(biTargetYearEntity);
+
+        log.info("开始新增年度目标单");
+        boolean save = super.save(biTargetYearEntity);
+        if(!save) {
+            throw new ServiceException("年度目标单保存失败");
+        }
+
+        return biTargetYearEntity.getId();
+    }
+
+    /**
+    * 修改
+    */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean update(BiTargetYearDTO.UpdateDTO updateDTO) {
+        BiTargetYearEntity old = super.getById(updateDTO.getId());
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "年度目标单"));
+        BiTargetYearEntity biTargetYearEntity =  BeanMapperUtils.map(BiTargetYearEntity.class, updateDTO);
+
+        // 数据处理
+        handleData(biTargetYearEntity);
+        log.info("编辑 开始修改年度目标单数据，id：【{}】", old.getId());
+        boolean save = super.updateById(biTargetYearEntity);
+        if(!save) {
+            throw new ServiceException("年度目标单保存失败");
+        }
+        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+
+        return Boolean.TRUE;
+    }
+
+
+    /**
+    * 新增修改处理数据
+    */
+    private void handleData(BiTargetYearEntity biTargetYearEntity) {
+    // TODO 验证数据 & 数据赋值
+    }
+}
