@@ -1317,6 +1317,15 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         return new PagingVO(pageData);
     }
 
+    @Override
+    public void updateSysUserTime(List<String> userIdList) {
+        if (CollectionUtils.isEmpty(userIdList)) {
+            return;
+        }
+        lambdaUpdate().in(SysUserInfoEntity::getUid,userIdList)
+                .update(new SysUserInfoEntity());
+    }
+
     /**
      * 处理数据
      */
