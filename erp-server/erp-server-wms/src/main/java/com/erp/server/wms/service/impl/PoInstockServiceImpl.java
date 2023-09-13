@@ -1622,7 +1622,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             record.setDetailCount(itemDTOList.size());
             List<QcInfoEntity> resultList = qcInfoList.stream().filter(obj -> obj.getSourceId().equals(record.getSourceId())).collect(Collectors.toList());
             List<QcInfoEntity> qcFinishList = resultList.stream().filter(obj ->(QcBillStatusEnum.EXEMPTION.equals(obj.getQcStatus()) || QcBillStatusEnum.FINISH_QC.equals(obj.getQcStatus()))).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(qcInfoList) || CollectionUtils.isEmpty(resultList)) {
+            if (CollectionUtils.isEmpty(qcFinishList) || CollectionUtils.isEmpty(resultList)) {
                 record.setQcStatus(PdaQclStatusEnum.WAIT_QC.getCode());
                 record.setQcStatusName(PdaQclStatusEnum.WAIT_QC.getName());
             } else if (resultList.size() > qcFinishList.size()) {
