@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -142,10 +143,12 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         List<RuleConditionDTO.ViewDTO> viewList = BeanMapper.copyList(ruleConditionList, RuleConditionDTO.ViewDTO.class);
         String logicType = DictBasicTypeEnum.COMPARE.getType();
         List<DictRuleConditionEntity> dictRuleConditionList = dictRuleConditionService.listDbByTypes(Arrays.asList(type, logicType));
+
+        List<BaseDropDownDTO.CommonDTO> fieldList = dictRuleConditionService.listRuleField();
         for (RuleConditionDTO.ViewDTO item : viewList) {
             String field = item.getField();
-            String fieldName = dictRuleConditionList.stream().filter(d -> d.getKey().equals(field)).findFirst().
-                    map(DictRuleConditionEntity::getValue).orElse("");
+            String fieldName = fieldList.stream().filter(d -> d.getCode().equals(field)).findFirst().
+                    map(BaseDropDownDTO.CommonDTO::getValue).orElse("");
             item.setFieldName(fieldName);
             String compare = item.getCompare();
             String compareName = dictRuleConditionList.stream().filter(d -> d.getKey().equals(compare)).findFirst().

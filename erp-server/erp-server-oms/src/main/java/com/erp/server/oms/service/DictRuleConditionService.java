@@ -62,4 +62,6 @@ public interface DictRuleConditionService extends SuperService<DictRuleCondition
      * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.CommonDTO>
      */
     List<DictRuleConditionEntity> listDbByTypes(List<String> typeList);
+
+    List<BaseDropDownDTO.CommonDTO> listRuleField();
 }

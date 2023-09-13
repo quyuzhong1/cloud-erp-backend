@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -79,7 +80,13 @@ public class DictRuleConditionController extends BaseController {
      */
     @GetMapping("/list")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> listByKey(@RequestParam("type") String type) {
-        return success(dictRuleConditionService.listByType(type));
+        String field = DictBasicTypeEnum.FIELD.getType();
+        if (field.equals(type)) {
+            return success(dictRuleConditionService.listRuleField());
+        } else {
+            return success(dictRuleConditionService.listByType(type));
+        }
+
     }
 
 
