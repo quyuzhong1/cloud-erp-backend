@@ -492,6 +492,7 @@ public enum ApiError implements Serializable {
     ERROR_97027(97027,"模块说明最大200字符"),
     ERROR_KINGDEE_SAVE(97028,"调用金蝶保存接口失败"),
     MABANG_SKU_NOT_EXIST(97029, "马帮财务编码：{}不存在"),
+    YEAR_METRICS_EXIST(97030, "{}已设置,不可重复设置"),
 
 
 
