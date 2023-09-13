@@ -59,3 +59,6 @@ seata:
   service:
     vgroupMapping: # 事务组与cluster的映射关系
       workflow_seata_tx_group: default
+  client:
+    tm:
+      default-global-transaction-timeout: 180000

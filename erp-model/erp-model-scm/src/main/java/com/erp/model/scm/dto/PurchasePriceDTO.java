@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -68,13 +67,11 @@ public class PurchasePriceDTO implements Serializable {
         /**
          * 附件地址
          */
-        @NotEmpty(message = "上传附件不能为空")
         private List<String> attachmentUrlList;
 
         /**
          * 附件名
          */
-        @NotEmpty(message = "上传附件不能为空")
         private List<String> attachmentNameList;
         /**
          * 报价明细
@@ -206,13 +203,11 @@ public class PurchasePriceDTO implements Serializable {
         /**
          * 附件地址
          */
-        @NotEmpty(message = "上传附件不能为空")
         private List<String> attachmentUrlList;
 
         /**
          * 附件名称
          */
-        @NotEmpty(message = "上传附件不能为空")
         private List<String> attachmentNameList;
 
 
