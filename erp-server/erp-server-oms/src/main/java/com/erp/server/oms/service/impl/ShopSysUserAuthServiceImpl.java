@@ -12,13 +12,16 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.ShopSysUserAuthEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.ShopSysUserAuthMapper;
 import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.erp.server.oms.service.ShopSysUserAuthService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -42,8 +45,12 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
     @Resource
     private DictBasicService dictBasicService;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean batchAuth(ShopSysUserAuthDTO.BatchAuthDTO dto) {
         String authType = dto.getAuthType();
         List<String> userIdList = dto.getUserIdList();
@@ -67,6 +74,8 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
             List<ShopSysUserAuthEntity> resultList = BeanMapperUtils.copyList(ShopSysUserAuthEntity.class, addList);
             this.saveBatch(resultList);
         }
+        //更新用户管理的更新人和时间
+        sysUserFeign.updateSysUserTime(userIdList);
         return Boolean.TRUE;
     }
 
