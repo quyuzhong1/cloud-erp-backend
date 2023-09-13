@@ -440,6 +440,11 @@ public enum RocketMqTagEnum {
      */
     DMP_SYNC_TASK_CALLBACK_TAG(9003,RocketMqTagEnum.SYNC_DMP,"dmp_sync_task_callback_tag"),
 
+    /**
+     * 同步系统操作日志
+     */
+    SYNC_ERP_LOG_TO_SYS_TAG(9004, RocketMqTagEnum.SYS_LOG,"sync_erp_log_to_sys_tag"),
+
     ;
     public static final String SALES_ORDER = "sales";
     public static final String DELIVERY_ORDER = "delivery";
@@ -472,6 +477,8 @@ public enum RocketMqTagEnum {
     public static final String SHIPMENT = "shipment";
 
     public static final String FBA_DELIVERY = "fba_delivery";
+
+    public static final String SYS_LOG = "sys_log";
 
     private Integer code;
 

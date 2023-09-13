@@ -164,7 +164,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         Optional.ofNullable(ruleDeliveryWarehouse).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单"));
         RuleDeliveryWarehouseDTO.ViewDTO view = new RuleDeliveryWarehouseDTO.ViewDTO();
         BeanMapper.copy(ruleDeliveryWarehouse, view);
-        String type = DictBasicTypeEnum.RULE_CONDITION.getType();
+        String type = DictBasicTypeEnum.FIELD.getType();
         List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);
         view.setConditionList(conditionList);
         return view;
