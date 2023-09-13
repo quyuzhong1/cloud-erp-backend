@@ -206,4 +206,9 @@ public class RocketMqConsumerGroup {
      * 亚马逊订单推送服务tag
      */
     public static final String SYNC_AMAZON_ORDER_FROM_OMS = "${spring.cloud.nacos.discovery.namespace}-sync_amazon_order_from_oms";
+
+    /**
+     * 添加系统操作日志
+     */
+    public static final String SYNC_ERP_LOG_TO_SYS = "${spring.cloud.nacos.discovery.namespace}-sync_erp_log_to_sys";
 }

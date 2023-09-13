@@ -84,7 +84,8 @@ public enum ApiError implements Serializable {
     SAVE_BILL_FAIL(1044, "保存{}单据失败"),
     START_GE_END_ERROR(1045, "{}不能大于等于{}"),
     ERROR_EXCHANGE_RATE_NOT_EXIST(1046, "日期【{}】币别【{}】下未找到汇率"),
-
+    GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR(1047, "全局异常解析失败：【{}】"),
+    GLOBAL_EXCEPTION_UN_KNOW(1048, "未知异常：【{}】"),
 
 
     /**
@@ -142,6 +143,8 @@ public enum ApiError implements Serializable {
     ERROR_COUNTRY_NOT_EXIST(9051, "所选国家不存在"),
     ERROR_DICT_NOT_EXIST(9051, "字典编码【{}】不存在"),
     ERROR_SERIAL_NUMBER_EXCEED(9049, "流水号已经超出999"),
+    SYS_LOG_NOT_FIND_VIEW(9052,"系统日志未找到查看的view方式或view注解或查询异常:[{}]"),
+    SYS_LOG_VIEW_ERROR(9053,"系统日志未找到查询view异常:[{}]"),
 
 
 
