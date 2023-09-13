@@ -206,7 +206,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 obj.setReturnTypeDict(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
                 if (StringUtils.isNotBlank(soDetailEntity.getMainId())) {
                     //获取退货数量
-                    Integer returnQty = returnDetailEntityList.stream().filter(req -> req.getId().equals(obj.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                    Integer returnQty = returnDetailEntityList.stream().filter(req -> req.getId().equals(obj.getSoReturnDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     obj.setMustQty(returnQty);
                     Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(obj.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                     obj.setDeliveryQty(actualQty);
