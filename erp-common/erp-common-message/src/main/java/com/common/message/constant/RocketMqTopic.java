@@ -8,6 +8,10 @@ package com.common.message.constant;
  **/
 public class RocketMqTopic {
 
+    /**
+     * 推送系统日志数据
+     */
+    public static final String SYNC_ERP_LOG_TO_SYS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_erp_log_to_sys_topic";
 
     /**
      * dmp 拉取第三方ERP订单topic
