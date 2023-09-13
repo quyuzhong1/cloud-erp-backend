@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -76,13 +75,11 @@ public class PurchasePriceChangeDTO implements Serializable {
         /**
          * 资质附件url
          */
-        @NotEmpty(message = "上传附件不能为空")
         private List<String> attachmentUrlList;
 
         /**
          * 附件名
          */
-        @NotEmpty(message = "上传附件不能为空")
         private List<String> attachmentNameList;
 
         /**
@@ -142,13 +139,11 @@ public class PurchasePriceChangeDTO implements Serializable {
         /**
          * 资质附件url
          */
-        @NotEmpty(message = "上传附件不能为空")
         private List<String> attachmentUrlList;
 
         /**
          * 附件名
          */
-        @NotEmpty(message = "上传附件不能为空")
         private List<String> attachmentNameList;
 
         /**
