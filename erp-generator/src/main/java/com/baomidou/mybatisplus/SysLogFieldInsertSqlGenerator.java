@@ -7,10 +7,10 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.sys.entity.SysLogRecordFieldEntity;
 import com.google.common.collect.Lists;
-import com.sun.javadoc.ClassDoc;
-import com.sun.javadoc.FieldDoc;
-import com.sun.javadoc.RootDoc;
-import com.sun.tools.javadoc.Main;
+//import com.sun.javadoc.ClassDoc;
+//import com.sun.javadoc.FieldDoc;
+//import com.sun.javadoc.RootDoc;
+//import com.sun.tools.javadoc.Main;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Field;
@@ -28,7 +28,7 @@ public class SysLogFieldInsertSqlGenerator {
     /**
      * 指定需要生成配置的class类(可修改)
      */
-    public final static Class<?> targetClass = ShopDTO.ViewDTO.class;
+    public final static Class<?> targetClass = null;
 
     /**
      * 主类忽略记录的字段名(可修改)
@@ -88,19 +88,19 @@ public class SysLogFieldInsertSqlGenerator {
     }
 
 
-    public static void main(String[] args) {
-        String beanFilePath="D:\\Project\\weiji\\cloud-erp\\erp-model\\erp-model-wms\\src\\main\\java\\com\\erp\\model\\wms\\dto\\inventory\\InitStockDTO.java";
-        Main.execute(new String[]{"-doclet", SysLogFieldInsertSqlGenerator.class.getName(), "-docletpath",
-                SysLogFieldInsertSqlGenerator.class.getResource("/").getPath(), "-encoding", "utf-8", beanFilePath});
-        ClassDoc[] classes = root.classes();
-        for (ClassDoc classDoc : classes) {
-            for (FieldDoc field : classDoc.fields()) {
-                System.out.println("Field: " + field.name());
-                System.out.println("Comment: " + field.commentText());
-            }
-        }
-
-    }
+//    public static void main(String[] args) {
+//        String beanFilePath="D:\\Project\\weiji\\cloud-erp\\erp-model\\erp-model-wms\\src\\main\\java\\com\\erp\\model\\wms\\dto\\inventory\\InitStockDTO.java";
+//        Main.execute(new String[]{"-doclet", SysLogFieldInsertSqlGenerator.class.getName(), "-docletpath",
+//                SysLogFieldInsertSqlGenerator.class.getResource("/").getPath(), "-encoding", "utf-8", beanFilePath});
+//        ClassDoc[] classes = root.classes();
+//        for (ClassDoc classDoc : classes) {
+//            for (FieldDoc field : classDoc.fields()) {
+//                System.out.println("Field: " + field.name());
+//                System.out.println("Comment: " + field.commentText());
+//            }
+//        }
+//
+//    }
 
     private static List<Map<String, String>> createParamsMap(Class<?> aClass, String[] targetDtoExcludesFields, String[] targetDetailDtoExcludesFields) {
         List<Map<String, String>> result = new LinkedList<>();
@@ -274,15 +274,15 @@ public class SysLogFieldInsertSqlGenerator {
     /**
      * 文档根节点
      */
-    private static RootDoc root;
+//    private static RootDoc root;
 
     /**
      * javadoc调用入口
      *
      */
-    public static boolean start(RootDoc root) {
-        SysLogFieldInsertSqlGenerator.root = root;
-        return true;
-    }
+//    public static boolean start(RootDoc root) {
+//        SysLogFieldInsertSqlGenerator.root = root;
+//        return true;
+//    }
 
 }
