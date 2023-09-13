@@ -234,7 +234,7 @@
                 </foreach>
             </if>
             <if test="params.roleIdList != null and params.roleIdList.size > 0">
-                and sui.id in (
+                and sui.uid in (
                  select sru.user_id from sys_role_user sru
                  <where>
                      sru.role_id in
@@ -245,7 +245,7 @@
                 )
             </if>
             <if test="params.deptIdList != null and params.deptIdList.size > 0">
-                and sui.id in (
+                and sui.uid in (
                 select sdu.user_id from sys_department_user sdu
                 <where>
                     sdu.department_id in
