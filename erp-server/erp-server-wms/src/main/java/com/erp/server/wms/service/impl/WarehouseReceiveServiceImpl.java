@@ -949,7 +949,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<PoInstockDetailEntity> stockInDetailEntityListBySource = poInstockDetailService.listDetailBySourceDetailIds(ids);
 
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listBySourceDetailIds(ids);
-
+        List<String> poInIds = generateStockInViewDTOS.stream().map(WarehouseReceiveDTO.GenerateStockInViewDTO::getId).collect(Collectors.toList());
+        //入库数据
+        List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailBySourceDetailIds(poInIds);
         List<String> list = new ArrayList<>();
         generateStockInViewDTOS.forEach(req -> {
             boolean contains = list.contains(req.getId());
@@ -978,9 +980,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 req.setStockInQty(0);
             } else {
                 req.setStockInQty(req.getReceiveQty() - (reduce - returnQty));
-                req.setUnStockInQty(req.getReceiveQty() - (reduce - returnQty));
+                Integer effectiveStockInQty = poInstockDetailList.stream().filter(e -> e.getSourceDetailId().equals(req.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                req.setUnStockInQty(req.getReceiveQty() - effectiveStockInQty + returnQty);
             }
-
             req.setReceiveQty(req.getReceiveQty());
             req.setExceedQty(req.getExceedQty());
 
@@ -1537,8 +1539,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             return m;
         })));
 
+
         //根据未入库采购收货单详情id获取未入库收货单id
-        List<String> collect = poInstockDetailEntities.stream().map(req -> req.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
+        List<String> collect = poInstockDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
         List<String> ids = pordIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
         receiveDetailIds.addAll(ids);
 
