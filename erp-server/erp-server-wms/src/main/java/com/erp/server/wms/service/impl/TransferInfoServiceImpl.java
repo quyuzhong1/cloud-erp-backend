@@ -168,6 +168,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         for (PageListTypeEnum item : values) {
             TransferInfoDTO.SearchParamDTO searchParamDTO = new TransferInfoDTO.SearchParamDTO();
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
+            searchParamDTO.setInvalidStatus(Boolean.FALSE);
             TransferInfoDTO.ListStatusCountDTO resultDTO = new TransferInfoDTO.ListStatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (PageListTypeEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
