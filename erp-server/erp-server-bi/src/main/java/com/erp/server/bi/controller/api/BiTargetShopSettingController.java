@@ -1,6 +1,13 @@
 package com.erp.server.bi.controller.api;
 
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.server.bi.service.BiTargetShopSettingService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,6 +36,27 @@ public class BiTargetShopSettingController extends BaseController {
     @Resource
     private BiTargetShopSettingService biTargetShopSettingService;
 
+
+    /**
+     * 分页
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-09-13
+     */
+    @PostMapping("/paging")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "bi:biTargetStaffSetting:paging",
+//            tableAlias = ""
+//    )
+    public ApiResult<PagingVO<BiTargetShopSettingDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<BiTargetYearDTO.PagingParamDTO> dto) {
+        PagingVO<BiTargetShopSettingDTO.PagingViewDTO> pagingVO = biTargetShopSettingService.paging(dto);
+        return success(pagingVO);
+    }
+
+
     /**
     * 新增
     * @author Lambda
@@ -37,8 +65,23 @@ public class BiTargetShopSettingController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "店铺目标设置添加")
     public ApiResult<String> add(@RequestBody @Validated BiTargetShopSettingDTO.AddDTO dto) {
         return success(biTargetShopSettingService.add(dto));
+    }
+
+
+    /**
+     * 详情
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("/view")
+    @LogViewService
+    public ApiResult<BiTargetShopSettingDTO.ViewDTO> view(@RequestParam(value = "id") String id) {
+        BiTargetShopSettingDTO.ViewDTO view = biTargetShopSettingService.view(id);
+        return success(view);
     }
 
     /**
@@ -49,11 +92,11 @@ public class BiTargetShopSettingController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "dmp:biTargetShopSetting:update",
-        serviceClass = BiTargetShopSettingService.class,
-        keyIdName = "id")
+//        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//        tableField = "create_user_id",
+//        menuCode = "dmp:biTargetShopSetting:update",
+//        serviceClass = BiTargetShopSettingService.class,
+//        keyIdName = "id")
     public ApiResult update(@RequestBody @Validated BiTargetShopSettingDTO.UpdateDTO dto) {
         biTargetShopSettingService.update(dto);
         return success();

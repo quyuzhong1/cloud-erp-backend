@@ -48,6 +48,11 @@ public class BiTargetStaffSettingDTO implements Serializable {
         private String deptId;
 
         /**
+         * 部门id
+         */
+        private String deptName;
+
+        /**
          * 详情信息
          */
         private List<CommonDTO> detailList;
