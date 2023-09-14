@@ -21,15 +21,21 @@ public class PagingDTO<T> extends PermissionsDTO {
     @NotNull(message = "当前页码 不能为空")
     private Integer currPage = 1;
 
-    //每页数量
+    /**
+     * 每页数量
+     */
     private Integer pageSize = 10;
 
-    //查询参数
+    /**
+     * 查询参数
+     */
     @NotNull(message = "参数不能为空")
     @Valid
     private T params;
 
-    //排序字符
+    /**
+     * 排序字符
+     */
     private String orderBy;
 
     /**

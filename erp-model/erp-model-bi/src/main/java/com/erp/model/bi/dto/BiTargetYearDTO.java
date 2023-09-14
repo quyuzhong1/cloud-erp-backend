@@ -1,10 +1,14 @@
 package com.erp.model.bi.dto;
 
+import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.bi.enums.MetricsEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -21,6 +25,29 @@ import javax.validation.constraints.Size;
 @Data
 @NoArgsConstructor
 public class BiTargetYearDTO implements Serializable {
+
+
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        private String name;
+
+        /**
+         * 年
+         */
+        private List<String> yearList;
+
+        /**
+         * 考核指标
+         */
+        private List<String> metricsList;
+
+
+    }
 
 
     /**
@@ -66,6 +93,93 @@ public class BiTargetYearDTO implements Serializable {
     }
 
     /**
+     * 月
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MonthDTO {
+
+
+        /**
+         * 指标维度
+         */
+        @NotBlank(message = "指标维度不能为空")
+        @StateEnumValue(clazz = MetricsEnum.class, message = "指标维度有误")
+        private MetricsEnum metrics;
+
+        private String metricsName;
+
+
+        /**
+         * 一月值
+         */
+        private BigDecimal january;
+
+        /**
+         * 二月值
+         */
+        private BigDecimal february;
+
+        /**
+         * 三月
+         */
+        private BigDecimal march;
+
+
+        /**
+         * 四月值
+         */
+        private BigDecimal april;
+
+        /**
+         * 五月值
+         */
+        private BigDecimal may;
+
+
+        /**
+         * 六月值
+         */
+        private BigDecimal june;
+
+
+        /**
+         * 七月值
+         */
+        private BigDecimal july;
+
+
+        /**
+         * 八月值
+         */
+        private BigDecimal august;
+
+
+        /**
+         * 九月值
+         */
+        private BigDecimal september;
+
+
+        /**
+         * 十月值
+         */
+        private BigDecimal october;
+
+        /**
+         * 十一月值
+         */
+        private BigDecimal november;
+
+        /**
+         * 十二月值
+         */
+        private BigDecimal december;
+
+
+    }
+
+    /**
      * 新增
      */
     @Data
@@ -92,7 +206,7 @@ public class BiTargetYearDTO implements Serializable {
         private String deptId;
 
         @NotNull(message = "考核指标不能为空")
-        @Size(min = 1,message = "考核指标不能为空")
+        @Size(min = 1, message = "考核指标不能为空")
         private List<String> metricsList;
 
     }
@@ -131,7 +245,7 @@ public class BiTargetYearDTO implements Serializable {
         @NotBlank(message = "部门不能为空")
         private String deptId;
 
-        @Size(min = 1,message = "考核指标不能为空")
+        @Size(min = 1, message = "考核指标不能为空")
         private List<String> metricsList;
     }
 

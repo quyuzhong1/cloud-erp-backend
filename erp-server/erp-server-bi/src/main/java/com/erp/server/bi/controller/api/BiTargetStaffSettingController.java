@@ -1,10 +1,13 @@
 package com.erp.server.bi.controller.api;
 
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.server.bi.service.BiTargetStaffSettingService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,6 +37,27 @@ public class BiTargetStaffSettingController extends BaseController {
 
     @Resource
     private BiTargetStaffSettingService biTargetStaffSettingService;
+
+
+
+    /**
+     * 分页
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-09-13
+     */
+    @PostMapping("/paging")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "bi:biTargetStaffSetting:paging",
+//            tableAlias = ""
+//    )
+    public ApiResult<PagingVO<BiTargetStaffSettingDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<BiTargetYearDTO.PagingParamDTO> dto) {
+        PagingVO<BiTargetStaffSettingDTO.PagingViewDTO> pagingVO = biTargetStaffSettingService.paging(dto);
+        return success(pagingVO);
+    }
 
     /**
      * 新增

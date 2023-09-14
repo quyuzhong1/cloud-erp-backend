@@ -1,5 +1,8 @@
 package com.erp.server.bi.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -21,4 +24,6 @@ import java.util.List;
 public interface BiTargetStaffSettingMapper extends BaseMapper<BiTargetStaffSettingEntity> {
 
     List<BiTargetStaffSettingDTO.ListDetailDTO> listByYear(@Param("year") String year);
+
+    IPage<BiTargetStaffSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params);
 }
