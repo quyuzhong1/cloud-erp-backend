@@ -309,7 +309,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
                 Integer november = MonthEnum.NOVEMBER.getValue();
                 common.setNovember(pullView(metrics, november, dbList));
 
-                //十月
+                //十二月
                 Integer december = MonthEnum.DECEMBER.getValue();
                 common.setDecember(pullView(metrics, december, dbList));
                 shopList.add(common);
