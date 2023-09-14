@@ -4,10 +4,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.dto.ProductBomHistoryDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
-import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
 import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
 import com.erp.model.plm.vo.BomVersionVO;
@@ -20,6 +20,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -135,11 +136,11 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
 
     @Override
     public List<ProductBomHistoryDTO.VersionDTO> listHistoryVersion(ProductBomHistoryDTO.ParamDTO dto) {
-        List<BomSkuEntity> bomList = bomSkuService.getByParentSkuId(dto.getSkuId());
-        if (CollectionUtils.isEmpty(bomList)) {
+        List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(dto.getSkuId()));
+        if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
-        List<ProductBomHistoryEntity> list = lambdaQuery().eq(ProductBomHistoryEntity::getBomId, bomList.get(0).getBomId())
+        List<ProductBomHistoryEntity> list = lambdaQuery().eq(ProductBomHistoryEntity::getBomId, bomChildrenSkuList.get(0).getBomId())
                 .select(ProductBomHistoryEntity::getVersion)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
