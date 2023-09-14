@@ -17,7 +17,14 @@ import java.util.List;
  */
 @Mapper
 public interface BomRefSkuMapper extends BaseMapper<BomSkuEntity> {
-
+    /**
+     * @description: 根据父SKU查询所有子集SKU
+     * @author Will
+     * @date: 2023/5/17 9:43
+     * @param parentSkuIds
+     * @return List<BomChildrenSkuDTO>
+     */
+    List<BomChildrenSkuDTO> listAllBomChildBySkuIds(@Param("parentSkuIds") List<String> parentSkuIds);
     /**
      * @description: 根据父SKU查询子集SKU
      * @author Will
