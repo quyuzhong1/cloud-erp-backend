@@ -13,6 +13,7 @@ import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.server.wms.service.SoReturnInstockService;
+import com.erp.server.wms.service.SoReturnReceiveService;
 import com.erp.server.wms.service.WarehouseReceiveService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -251,6 +252,11 @@ public class PdaPoReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,receive_user_id",
+            menuCode = "wms:pdaPoReceive:delete",
+            serviceClass = WarehouseReceiveService.class,
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
         Boolean flag = warehouseReceiveService.delete(idsDTO.getIds());
         return flag == true ? success() : failure();
