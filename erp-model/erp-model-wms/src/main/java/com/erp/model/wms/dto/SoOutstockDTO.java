@@ -1104,6 +1104,11 @@ public class SoOutstockDTO implements Serializable {
          * 数量
          */
         private Integer count;
+
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
     }
 
     /**
