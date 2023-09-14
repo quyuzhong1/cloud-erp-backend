@@ -3,6 +3,7 @@ package com.erp.server.scm.service;
 import cn.hutool.json.JSONArray;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
@@ -190,4 +191,12 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return
      */
     void updateDetail(PurchasePriceDetailEntity purchasePriceDetailEntity, PurchasePriceDetailEntity old);
+    /**
+     * @description: 批量查询报价
+     * @author Will
+     * @date: 2023/9/14 14:10
+     * @param list
+     * @return List<PurchaseTaxPriceBatchViewDTO>
+     */
+    List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(ValidList<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list);
 }

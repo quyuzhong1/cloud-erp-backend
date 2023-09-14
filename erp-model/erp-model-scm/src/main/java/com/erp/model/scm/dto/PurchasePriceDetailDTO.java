@@ -125,6 +125,27 @@ public class PurchasePriceDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PurchaseTaxPriceBatchSearchDTO {
+
+
+        /**
+         * skuid集合
+         */
+        private List<String> skuIdList;
+        /**
+         * 供应商id集合
+         */
+        private List<String> supplierIdList;
+        /**
+         * 数量集合
+         */
+        private List<Integer> purchaseQtyList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class UpdateDTO extends AddDTO {
 
         private String id;
@@ -133,7 +154,28 @@ public class PurchasePriceDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class PurchaseTaxPriceBatchViewDTO extends  PurchaseTaxPriceViewDTO{
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+    }
+
+        @Data
+    @NoArgsConstructor
     public static class PurchaseTaxPriceViewDTO {
+
+
 
         /**
          * 供应商表id

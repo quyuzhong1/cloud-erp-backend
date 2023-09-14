@@ -3,6 +3,7 @@ package com.erp.server.scm.controller.api;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.ExcelImportDTO;
@@ -87,6 +88,19 @@ public class PurchasePriceDetailController extends BaseController {
     public ApiResult< List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> getTaxPrice(@RequestBody @Validated PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
         List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> list = purchasePriceDetailService.getTaxPrice(dto);
         return success(list);
+    }
+
+    /**
+     * 批量查询含税单价
+     * @author Will
+     * @date: 2023/9/14 14:09
+     * @param list
+     * @return ApiResult<List<PurchaseTaxPriceBatchViewDTO>>
+     */
+    @PostMapping("/batchGetTaxPrice")
+    public ApiResult< List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO>> batchGetTaxPrice(@RequestBody @Validated ValidList<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list) {
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> resultList = purchasePriceDetailService.batchGetTaxPrice(list);
+        return success(resultList);
     }
 
 }

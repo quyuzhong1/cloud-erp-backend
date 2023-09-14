@@ -379,9 +379,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO: priceList) {
             PurchaseOrderDetailDTO.AddDTO addDTO = details.stream().filter(obj -> obj.getSkuId().equals(priceDTO.getSkuId()) && MathUtil.compareTo(priceDTO.getPurchaseQty(),obj.getPurchaseQty()) == MathUtil.ZERO).findFirst().orElse(null);
-            if (!PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())) {
-                continue;
-            }
+
             List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(priceDTO);
             PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
             //汇率
@@ -397,7 +395,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
                 throw new ServiceException(new ApiResult(1,error));
             }
-            addDTO.setTaxPrice(taxPrice);
+            if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())) {
+                addDTO.setTaxPrice(taxPrice);
+            }
             addDTO.setTaxRate(taxRate);
         }
     }
