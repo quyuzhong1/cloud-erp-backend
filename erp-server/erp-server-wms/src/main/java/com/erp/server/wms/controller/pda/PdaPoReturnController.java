@@ -107,8 +107,8 @@ public class PdaPoReturnController extends BaseController {
      **/
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "return_user_id",
-            menuCode = "wms:purchaseReturnOrder:view",
+            tableField = "purchase_user_id,return_user_id",
+            menuCode = "wms:pdaPoReturn:view",
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "id")
     public ApiResult<PurchaseReturnOrderDTO.ViewDTO> view(@Param("id") String id) {
@@ -126,7 +126,7 @@ public class PdaPoReturnController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
-            menuCode = "wms:purchaseReturnOrder:submit",
+            menuCode = "wms:pdaPoReturn:submit",
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -144,7 +144,7 @@ public class PdaPoReturnController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
-            menuCode = "wms:purchaseReturnOrder:add",
+            menuCode = "wms:pdaPoReturn:add",
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
@@ -162,7 +162,7 @@ public class PdaPoReturnController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
-            menuCode = "wms:purchaseReturnOrder:update",
+            menuCode = "wms:pdaPoReturn:update",
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
@@ -180,7 +180,7 @@ public class PdaPoReturnController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
-            menuCode = "wms:purchaseReturnOrder:approve",
+            menuCode = "wms:pdaPoReturn:approve",
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
@@ -198,7 +198,7 @@ public class PdaPoReturnController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
-            menuCode = "wms:purchaseReturnOrder:disApprove",
+            menuCode = "wms:pdaPoReturn:disApprove",
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -216,7 +216,7 @@ public class PdaPoReturnController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
-            menuCode = "wms:purchaseReturnOrder:cancelProcess",
+            menuCode = "wms:pdaPoReturn:cancelProcess",
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -234,7 +234,7 @@ public class PdaPoReturnController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
-            menuCode = "wms:purchaseReturnOrder:invalid",
+            menuCode = "wms:pdaPoReturn:invalid",
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO remarkDTO) {
@@ -252,7 +252,7 @@ public class PdaPoReturnController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
-            menuCode = "wms:purchaseReturnOrder:delete",
+            menuCode = "wms:pdaPoReturn:delete",
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
