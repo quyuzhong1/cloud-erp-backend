@@ -140,4 +140,8 @@ public class ReturnOrderExcelDTO {
      */
     private LocalDateTime createTime;
 
+    /**
+     * 采购订单详情表id
+     */
+    private String purchaseOrderDetailId;
 }

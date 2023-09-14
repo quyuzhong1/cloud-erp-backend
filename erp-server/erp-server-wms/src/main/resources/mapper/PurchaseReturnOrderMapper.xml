@@ -29,7 +29,8 @@
         pro.create_time,
         prod.remark,
         prod.warehouse_location,
-        pro.source_type
+        pro.source_type,
+        prod.purchase_order_detail_id
         FROM po_return_detail prod
         INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
@@ -189,7 +190,8 @@
         pro.approve_user_name,
         pro.create_user_name,
         pro.create_time,
-        pro.source_type
+        pro.source_type,
+        prod.purchase_order_detail_id
         FROM po_return_detail prod
         LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE

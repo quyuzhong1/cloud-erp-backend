@@ -593,6 +593,11 @@ public class PurchaseReturnOrderDTO {
          */
         private String returnOrderSourceName;
 
+        /**
+         * 采购订单详情表id
+         */
+        private String purchaseOrderDetailId;
+
     }
 
     /**
