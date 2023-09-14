@@ -227,5 +227,12 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return PagingVO
      */
     PagingVO shopAuthPaging(PagingDTO<SysUserInfoDTO.ShopAuthPagingSearchDTO> dto);
+    /**
+     * @description: 更新用户更新时间
+     * @author Will
+     * @date: 2023/9/13 16:59
+     * @param userIdList
+     */
+    void updateSysUserTime(List<String> userIdList);
 }
 

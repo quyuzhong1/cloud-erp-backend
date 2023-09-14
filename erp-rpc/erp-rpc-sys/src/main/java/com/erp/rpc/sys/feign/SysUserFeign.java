@@ -66,6 +66,12 @@ public interface SysUserFeign {
     List<FindUserDTO> getUserList();
 
     /**
+     * 更新用户管理更新时间
+     */
+    @PostMapping("feign/user/updateSysUserTime")
+    void updateSysUserTime(@RequestBody List<String> userIdList);
+
+    /**
      * 获取部门的用户
      */
     @GetMapping("feign/user/getDepUserList")
@@ -474,6 +480,4 @@ public interface SysUserFeign {
      **/
     @PostMapping("feign/user/listUserByDept")
     List<SysUserInfoEntity> listUserByDept(@RequestBody String deptName);
-
-
 }

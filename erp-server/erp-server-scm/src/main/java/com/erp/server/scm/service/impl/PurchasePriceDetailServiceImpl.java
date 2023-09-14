@@ -29,10 +29,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
 import com.erp.server.scm.listener.PurchasePriceDetailExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
-import com.erp.server.scm.service.ModuleOperateLogService;
-import com.erp.server.scm.service.PurchasePriceDetailService;
-import com.erp.server.scm.service.PurchasePriceHistoryService;
-import com.erp.server.scm.service.PurchasePriceService;
+import com.erp.server.scm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -84,6 +81,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private SyncKingdeePurchasePriceService syncKingdeePurchasePriceService;
+
+    @Resource
+    private AttachmentService attachmentService;
 
     /**
      * 检查sku 区间报价

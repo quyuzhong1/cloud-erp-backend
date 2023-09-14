@@ -545,7 +545,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
-        long count = purchaseOrderDetailList.stream().filter(obj -> !ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode().equals(obj.getArrivalStatus())).count();
+        long count = purchaseOrderDetailList.stream().filter(obj -> !ArrivalStatusEnum.NON_ARRIVAL.getCode().equals(obj.getArrivalStatus()) && !ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode().equals(obj.getArrivalStatus())).count();
         if (count > 0 && isValid) {
             throw new ServiceException(ApiError.ERROR_98035);
         }
@@ -2163,6 +2163,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
+        list.sort(Comparator.comparing(PurchaseOrderDTO.PdaPurchaseOrder::getCode).reversed());
+        list.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
+        return list;
+    }
+
+    @Override
+    public List<SkuCostDTO> listPurchaseOrderByPurchaseDate(List<LocalDate> purchaseDateList) {
+        List<SkuCostDTO> list = baseMapper.listPurchaseOrderByPurchaseDate(purchaseDateList);
         return list;
     }
 }

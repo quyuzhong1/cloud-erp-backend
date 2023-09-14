@@ -335,7 +335,7 @@
             psi.subcontract_type as subcontractType,
             psi.create_time
         FROM po_instock psi
-        inner join po_instock_detail psid on psi.id = psid.main_id and psid.is_deleted = false
+        left join po_instock_detail psid on psi.id = psid.main_id and psid.is_deleted = false
         WHERE psi.is_deleted = false
         AND psi.invalid_status = false
 

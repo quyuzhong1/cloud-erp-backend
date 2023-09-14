@@ -197,7 +197,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         addEntity.setGroupName(groupName);
         //生成单号
         //生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CUSTC);
         addEntity.setCode(code);
         //销售员
         String sellerId = dto.getSellerId();

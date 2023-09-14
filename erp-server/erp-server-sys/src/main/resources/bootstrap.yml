@@ -44,9 +44,8 @@ seata:
     vgroupMapping: # 事务组与cluster的映射关系
       sys_seata_tx_group: default
   client:
-    rm:
-      branch-execution-timeout-x-a: 60000
-      connection-two-phase-hold-timeout-x-a: 60000
+    tm:
+      default-global-transaction-timeout: 180000
 
 
 

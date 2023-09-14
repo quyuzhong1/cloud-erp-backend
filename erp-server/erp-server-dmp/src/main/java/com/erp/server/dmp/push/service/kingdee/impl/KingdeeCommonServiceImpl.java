@@ -212,7 +212,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
 
         String syncKingdeeId = (String) map.get("syncKingdeeId");
-        Integer createOrgId = (Integer) map.get("createOrgId");
+        Integer createOrgId = Integer.valueOf((String) map.get("createOrgId"));
 
         if (StringUtils.isNotBlank(syncKingdeeId)) {
             viewMap.put("ids", syncKingdeeId);
