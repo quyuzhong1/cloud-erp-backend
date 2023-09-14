@@ -218,6 +218,16 @@ public interface PlmTaskFeign {
     List<BomChildrenSkuDTO> listBomChildBySkuIds(@RequestBody List<String> skuIds);
 
     /**
+     * 查询bom子件信息
+     * @Author Luo_WG
+     * @Date 2023/9/14 12:12
+     * @param skuNos
+     * @return java.util.List<com.erp.model.plm.dto.BomChildrenSkuDTO>
+     **/
+    @PostMapping("feign/bom/listBomChildBySkuNos")
+    List<BomChildrenSkuDTO> listBomChildBySkuNos(@RequestBody List<String> skuNos);
+
+    /**
      * @description: 查询历史子件信息
      * @author Will
      * @date: 2023/8/21 10:36

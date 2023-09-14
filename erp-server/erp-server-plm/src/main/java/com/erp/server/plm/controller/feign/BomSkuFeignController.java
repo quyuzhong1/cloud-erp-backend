@@ -47,6 +47,18 @@ public class BomSkuFeignController {
     }
 
     /**
+     * 根据父级skuIds查询子集sku
+     * @Author Luo_WG
+     * @Date 2023/9/14 12:13
+     * @param skuNos
+     * @return java.util.List<com.erp.model.plm.dto.BomChildrenSkuDTO>
+     **/
+    @PostMapping("/listBomChildBySkuNos")
+    public List<BomChildrenSkuDTO> listBomChildBySkuNos(@RequestBody List<String> skuNos) {
+        return bomSkuService.listBomChildBySkuNos(skuNos);
+    }
+
+    /**
      * @description: 根据父级skuIds查询历史bom子集sku
      * @author Will
      * @date: 2023/8/21 10:38
