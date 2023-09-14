@@ -1,7 +1,17 @@
 package com.erp.server.bi.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.erp.model.bi.dto.TargetFinishDTO;
+import com.erp.model.bi.enums.TargetSearchTypeEnum;
 import com.erp.server.bi.service.BiTargetReportService;
+import com.erp.server.bi.service.BiTargetStaffSettingService;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.LinkedHashMap;
 
 /**
  * @author Will
@@ -12,4 +22,26 @@ import org.springframework.stereotype.Service;
 @Service
 public class BiTargetReportServiceImpl implements BiTargetReportService {
 
+    private BiTargetStaffSettingService biTargetStaffSettingService;
+
+    @Override
+    public LinkedHashMap<String, Object> targetFinish(TargetFinishDTO.ParamDTO dto) {
+        if (ObjectUtils.isEmpty(dto.getDate())) {
+            dto.setDate(LocalDate.now());
+        }
+        // 获取月度开始时间和结束时间
+        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getDate().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getDate().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
+
+        if (TargetSearchTypeEnum.DEPT.equals(dto.getSearchType()) || TargetSearchTypeEnum.USER.equals(dto.getSearchType())) {
+            //根据指标查询人员目标值
+            //biTargetStaffSettingService.listTargetFinish(dto);
+        }
+        if (TargetSearchTypeEnum.SHOP.equals(dto.getSearchType())) {
+            //根据指标查询店铺目标值
+           // biTargetStaffSettingService.listTargetFinish(dto);
+        }
+
+        return null;
+    }
 }

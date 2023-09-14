@@ -1,5 +1,9 @@
 package com.erp.server.bi.service;
 
+import com.erp.model.bi.dto.TargetFinishDTO;
+
+import java.util.LinkedHashMap;
+
 /**
  * @author Will
  * @version 1.0
@@ -7,4 +11,12 @@ package com.erp.server.bi.service;
  * @date 2023/9/14 12:22
  */
 public interface BiTargetReportService {
+    /**
+     * @description: 业绩目标完成
+     * @author Will
+     * @date: 2023/9/14 16:20
+     * @param dto
+     * @return LinkedHashMap<Object>
+     */
+    LinkedHashMap<String, Object> targetFinish(TargetFinishDTO.ParamDTO dto);
 }
