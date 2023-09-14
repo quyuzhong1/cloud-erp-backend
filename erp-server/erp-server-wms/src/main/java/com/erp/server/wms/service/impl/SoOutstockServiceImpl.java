@@ -709,7 +709,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //待提交
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         SoOutstockDTO.TabListDTO waitSubmit = new SoOutstockDTO.TabListDTO();
-        int waitSubmitCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(waitSubmitStatus)).findFirst().
+        int waitSubmitCount = approveCountList.stream().filter(a -> a.getInvalidStatus().equals(Boolean.FALSE) && a.getApproveStatus().equals(waitSubmitStatus)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         waitSubmit.setCount(waitSubmitCount);
         waitSubmit.setSearchType(SearchType.WAIT_SUBMIT);
@@ -718,7 +718,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //待审核
         String ing = ApproveStatusEnum.APPROVE_ING.getStatus();
         SoOutstockDTO.TabListDTO waitApprove = new SoOutstockDTO.TabListDTO();
-        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ing)).findFirst().
+        int waitApproveCount = approveCountList.stream().filter(a -> a.getInvalidStatus().equals(Boolean.FALSE) && a.getApproveStatus().equals(ing)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         waitApprove.setCount(waitApproveCount);
         waitApprove.setSearchType(SearchType.WAIT_APPROVE);
@@ -727,7 +727,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //已审核
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         SoOutstockDTO.TabListDTO approve = new SoOutstockDTO.TabListDTO();
-        int approveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(approveStatus)).findFirst().
+        int approveCount = approveCountList.stream().filter(a -> a.getInvalidStatus().equals(Boolean.FALSE) && a.getApproveStatus().equals(approveStatus)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         approve.setCount(approveCount);
         approve.setSearchType(approveStatus);
@@ -735,7 +735,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //审核不通过
         String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
         SoOutstockDTO.TabListDTO reject = new SoOutstockDTO.TabListDTO();
-        int rejectCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(rejectStatus)).findFirst().
+        int rejectCount = approveCountList.stream().filter(a -> a.getInvalidStatus().equals(Boolean.FALSE) && a.getApproveStatus().equals(rejectStatus)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         reject.setCount(rejectCount);
         reject.setSearchType(rejectStatus);
@@ -762,7 +762,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         //根据搜索类型获取到审核状态
         List<String> approveList = listBySearchType(searchType);
-        if (CollectionUtils.isNotEmpty(params.getApproveStatusList())) {
+        if (CollectionUtils.isNotEmpty(approveList)) {
             params.setInvalidStatus(Boolean.FALSE);
         }
         //处理国家数据
