@@ -110,7 +110,7 @@ public class PdaSoReturnInstockController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnInstock:view",
+            menuCode = "wms:pdaSoReturnInstock:view",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
     public ApiResult<SoReturnInstockDTO.View> view(@RequestParam("id") String id) {
@@ -128,7 +128,7 @@ public class PdaSoReturnInstockController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnInstock:submit",
+            menuCode = "wms:pdaSoReturnInstock:submit",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -146,7 +146,7 @@ public class PdaSoReturnInstockController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnInstock:add",
+            menuCode = "wms:pdaSoReturnInstock:add",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated SoReturnInstockDTO.Add dto) {
@@ -164,7 +164,7 @@ public class PdaSoReturnInstockController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnInstock:update",
+            menuCode = "wms:pdaSoReturnInstock:update",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated SoReturnInstockDTO.Update dto) {
@@ -182,7 +182,7 @@ public class PdaSoReturnInstockController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnInstock:approve",
+            menuCode = "wms:pdaSoReturnInstock:approve",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
@@ -200,7 +200,7 @@ public class PdaSoReturnInstockController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnInstock:disApprove",
+            menuCode = "wms:pdaSoReturnInstock:disApprove",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -218,7 +218,7 @@ public class PdaSoReturnInstockController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnInstock:cancelProcess",
+            menuCode = "wms:pdaSoReturnInstock:cancelProcess",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -236,7 +236,7 @@ public class PdaSoReturnInstockController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnInstock:invalid",
+            menuCode = "wms:pdaSoReturnInstock:invalid",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO remarkDTO) {
@@ -254,7 +254,7 @@ public class PdaSoReturnInstockController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnInstock:delete",
+            menuCode = "wms:pdaSoReturnInstock:delete",
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {

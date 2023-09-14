@@ -94,7 +94,7 @@ public class PdaSoOutstockController extends BaseController {
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:so:pdaSoOutstock:update",
+            menuCode = "wms:pdaSoOutstock:update",
             serviceClass = SoOutstockService.class,
             keyIdName = "id"
     )
