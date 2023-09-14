@@ -1,10 +1,9 @@
 package com.erp.model.wms.dto;
 
-import com.alibaba.excel.annotation.ExcelProperty;
-import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -79,7 +78,22 @@ public class ReturnOrderExcelDTO {
     /**
      * 退货数量
      */
-    private String returnQty;
+    private Integer returnQty;
+
+    /**
+     * 退款单价
+     */
+    private BigDecimal returnPrice;
+
+    /**
+     * 扣款数量
+     */
+    private Integer deductAmountQty;
+
+    /**
+     * 退款金额
+     */
+    private BigDecimal deductAmountAmount;
 
     /**
      * 退货原因
@@ -126,4 +140,8 @@ public class ReturnOrderExcelDTO {
      */
     private LocalDateTime createTime;
 
+    /**
+     * 采购订单详情表id
+     */
+    private String purchaseOrderDetailId;
 }

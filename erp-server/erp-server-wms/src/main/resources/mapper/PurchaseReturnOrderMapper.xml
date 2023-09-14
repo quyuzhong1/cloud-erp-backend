@@ -15,6 +15,10 @@
         pro.bill_date,
         pro.return_warehouse_name,
         prod.return_qty,
+        prod.return_price,
+        prod.deduct_amount_qty,
+        prod.currency,
+        prod.currency_symbol,
         pro.return_remark,
         pro.return_mode,
         pro.purchase_user_id,
@@ -25,7 +29,8 @@
         pro.create_time,
         prod.remark,
         prod.warehouse_location,
-        pro.source_type
+        pro.source_type,
+        prod.purchase_order_detail_id
         FROM po_return_detail prod
         LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
@@ -175,6 +180,8 @@
         pro.bill_date,
         pro.return_warehouse_name,
         prod.return_qty,
+        prod.return_price,
+        prod.deduct_amount_qty,
         pro.return_remark,
         pro.return_mode,
         pro.purchase_user_id,
@@ -183,7 +190,8 @@
         pro.approve_user_name,
         pro.create_user_name,
         pro.create_time,
-        pro.source_type
+        pro.source_type,
+        prod.purchase_order_detail_id
         FROM po_return_detail prod
         LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE

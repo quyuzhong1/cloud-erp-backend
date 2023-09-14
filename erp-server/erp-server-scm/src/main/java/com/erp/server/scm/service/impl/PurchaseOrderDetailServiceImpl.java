@@ -88,6 +88,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     @Resource
     private SubcontractOrderDetailService subcontractOrderDetailService;
 
+    @Resource
+    private SupplierService supplierService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -448,6 +450,14 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         //查询入库数据
         List<PoInstockDetailEntity> stockInDetails = wmsTaskFeign.listPurchaseStockInDetailByPodIds(purchaseDetailIds);
 
+        List<String> skuIdList = list.stream().map(PurchaseOrderDetailDTO.ViewProductDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+        List<String> supplierIdList = skuList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSupplierId())).map(SkuVO::getSupplierId).collect(Collectors.toList());
+        List<SupplierEntity> supplierList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(supplierList)) {
+            supplierList = supplierService.listByIds(supplierIdList);
+        }
 
         for (PurchaseOrderDetailDTO.ViewProductDTO viewProductDTO : list) {
 
@@ -463,6 +473,13 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             //未收货数量
             viewProductDTO.setUnReceiveQty(viewProductDTO.getPurchaseQty() + returnQty - receiveQty);
 
+            //参考供应商
+            String supplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(viewProductDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
+            if (CollectionUtils.isNotEmpty(supplierIdList)) {
+                String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(supplierId)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                viewProductDTO.setMainSupplierId(supplierId);
+                viewProductDTO.setMainSupplierName(supplierName);
+            }
 
             //超收数量
             Integer exceedQty = MathUtil.ZERO;

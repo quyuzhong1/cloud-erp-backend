@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -495,6 +494,32 @@ public class PurchaseReturnOrderDTO {
          */
         private Integer returnQty;
 
+
+        /**
+         * 退款单价
+         */
+        private BigDecimal returnPrice;
+
+        /**
+         * 扣款数量
+         */
+        private Integer deductAmountQty;
+
+        /**
+         * 退款金额
+         */
+        private BigDecimal deductAmountAmount;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
         /**
          * 退货原因
          */
@@ -560,6 +585,11 @@ public class PurchaseReturnOrderDTO {
          * 退货来源名称
          */
         private String returnOrderSourceName;
+
+        /**
+         * 采购订单详情表id
+         */
+        private String purchaseOrderDetailId;
 
     }
 

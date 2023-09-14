@@ -86,6 +86,12 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
     private String remark;
 
     /**
+     * 一级供应商id
+     */
+    @TableField("main_supplier_id")
+    private String mainSupplierId;
+
+    /**
      * 单据来源详情表id
      */
     @TableField("source_detail_id")

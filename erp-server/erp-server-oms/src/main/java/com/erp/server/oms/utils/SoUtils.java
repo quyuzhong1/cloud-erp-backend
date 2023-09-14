@@ -3,22 +3,17 @@ package com.erp.server.oms.utils;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -332,36 +327,10 @@ public class SoUtils {
         for(LinkedHashMap<String, Object> data : dataList) {
             String id = StrUtils.null2EmptyWithTrim(data.get("id"));
             if (mainIds.contains(id)) {
-                data.put("code", "");
-                data.put("orderTypeName", "");
-                data.put("billDate", "");
-                data.put("approveStatusName", "");
-                data.put("invalidStatusName", "");
-                data.put("customerName", "");
-                data.put("countryName", "");
-                data.put("salesOrgName", "");
-                data.put("sellerName", "");
-                data.put("salesDeptName", "");
-                data.put("warehouseName", "");
-                data.put("warehouseOrgName", "");
                 data.put("bankServiceFee", "");
                 data.put("shippingFee", "");
-                data.put("receiveAccountName", "");
-                data.put("receiveMethodName", "");
-                data.put("receiveDate", "");
                 data.put("receiveAmount", "");
-                data.put("tradeTermName", "");
                 data.put("discountAmount", "");
-                data.put("receiverName", "");
-                data.put("telNumber", "");
-                data.put("receiveAddress", "");
-                data.put("deliveryModeName", "");
-                data.put("addressTypeName", "");
-                data.put("receiveConditionName", "");
-                data.put("approveUserName", "");
-                data.put("createUserName", "");
-                data.put("createTime", "");
-                data.put("remark", "");
                 continue;
             }
             mainIds.add(id);

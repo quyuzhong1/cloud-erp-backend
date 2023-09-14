@@ -743,6 +743,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 BeanMapperUtils.copy(detail, addDetailDTO);
                 addDetailDTO.setPurchaseOrderDetailId(detail.getPurchaseOrderDetailId());
                 addDetailDTO.setReturnQty(detail.getRealityReturnQty());
+                addDetailDTO.setReturnPrice(detail.getTaxPrice());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setReturnMode(purchaseReturnOrderDTO.getReturnMode());

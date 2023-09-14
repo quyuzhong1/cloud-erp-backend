@@ -140,11 +140,28 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         if (CollectionUtils.isNotEmpty(records)) {
+            //获取采购单详情的id集合
+            List<String> detailId = records.stream().map(PurchaseReturnOrderDTO.PagingViewDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+            List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(detailId);
             records.stream().forEach(record->{
+
+                //获取采购单详情
+                PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailList.stream().filter(entityClass -> entityClass.getId().equals(record.getPurchaseOrderDetailId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
+                    record.setReturnPrice(purchaseOrderDetailEntity.getTaxPrice());
+                }
+
                 ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(record.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
                         ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
                 record.setReturnOrderSource(returnOrderSourceEnum.getCode());
                 record.setReturnOrderSourceName(returnOrderSourceEnum.getName());
+                BigDecimal deductAmountAmount ;
+                if (ReturnModeEnum.DEDUCTION.getCode().equals(record.getReturnMode())) {
+                    deductAmountAmount = MathUtil.multiply(record.getReturnPrice(),record.getDeductAmountQty());
+                } else {
+                    deductAmountAmount = MathUtil.multiply(record.getReturnPrice(),record.getReturnQty());
+                }
+                record.setDeductAmountAmount(deductAmountAmount);
             });
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
@@ -187,6 +204,13 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //获取用户信息
         if (ObjectUtils.isNotEmpty(dto.getReturnUserId())) {
             userDTO =  sysUserFeign.getSysUserById(dto.getReturnUserId());
+        }
+        //验证单价必填
+        if (ReturnModeEnum.DEDUCTION.getCode().equals(dto.getReturnMode())) {
+            long count = dto.getPurchasePriceDetailList().stream().filter(obj -> MathUtil.compareTo(obj.getReturnPrice(), MathUtil.ZERO) == MathUtil.ZERO).count();
+            if (count > MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL);
+            }
         }
 
         //获取核算公司
@@ -288,6 +312,15 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
 
+
+        //验证单价必填
+        if (ReturnModeEnum.DEDUCTION.getCode().equals(dto.getReturnMode())) {
+            long count = dto.getPurchasePriceDetailList().stream().filter(obj -> MathUtil.compareTo(obj.getReturnPrice(), MathUtil.ZERO) == MathUtil.ZERO).count();
+            if (count > MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL);
+            }
+        }
+
         // 产品属性为费用或服务的sku忽略库存计算
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = Lists.newArrayList();
@@ -368,9 +401,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         PurchaseReturnOrderDTO.ViewDTO viewDTO = new PurchaseReturnOrderDTO.ViewDTO();
         PurchaseReturnOrderEntity purchaseReturnOrderEntity = this.getById(id);
         BeanMapperUtils.copy(purchaseReturnOrderEntity, viewDTO);
-        //查询供应商信息
-        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(purchaseReturnOrderEntity.getSupplierId());
-        viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
+
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         if (StringUtils.isNotBlank(purchaseReturnOrderEntity.getPurchaseOrderId())) {
             //获取采购订单主表信息
@@ -397,7 +428,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             viewDTO.setReturnModeName(ReturnModeEnum.getName(viewDTO.getReturnMode()));
         }
 
-
         //创库保存详情表的集合
         List<PurchaseReturnOrderDetailDTO.ViewDTO> detailViewDTOS = new ArrayList<>();
         //根据收货单主表id获取详情信息
@@ -420,6 +450,19 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         skuInventoryDTO.setWarehouseIdList(Lists.newArrayList(purchaseReturnOrderEntity.getReturnWarehouseId()));
         skuInventoryDTO.setWarehouseLocationIdList(warehouseLocationCodeList);
         skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+
+        //查询供应商信息
+        List<String> supplierIdList = new ArrayList<>();
+        supplierIdList.add(purchaseReturnOrderEntity.getSupplierId());
+        List<String> mainSupplierIdList = detail.stream().filter(obj -> StringUtils.isNotBlank(obj.getMainSupplierId())).map(PurchaseReturnOrderDetailEntity::getMainSupplierId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(mainSupplierIdList)) {
+            supplierIdList.addAll(mainSupplierIdList);
+        }
+        List<SupplierEntity>  supplierList = scmTaskFeign.getSupplierByIdList(mainSupplierIdList);
+
+        //主表供应商
+        SupplierEntity supplierEntity = supplierList.stream().filter(obj -> obj.getId().equals(purchaseReturnOrderEntity.getSupplierId())).findFirst().orElse(new SupplierEntity());
+        viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
         //可用数量
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
 
@@ -436,13 +479,23 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 detailView.setCurrencySymbol(purchaseOrderDetailEntity.getCurrencySymbol());
             }
             detailView.setHasStockInQty(stockInQty);
-            detailView.setTotalPrice(purchaseReturnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(purchaseReturnOrderDetailEntity.getReturnQty()))));
+            BigDecimal deductAmountAmount;
+            if (ReturnModeEnum.DEDUCTION.getCode().equals(purchaseReturnOrderEntity.getReturnMode())) {
+                deductAmountAmount = MathUtil.multiply(purchaseReturnOrderDetailEntity.getReturnPrice(),purchaseReturnOrderDetailEntity.getDeductAmountQty());
+            } else {
+                deductAmountAmount = MathUtil.multiply(purchaseReturnOrderDetailEntity.getReturnPrice(),purchaseReturnOrderDetailEntity.getReturnQty());
+            }
+            detailView.setTotalPrice(deductAmountAmount);
             //获取sku信息
             SkuVO productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getSkuNo().equals(detailView.getSkuNo())).findFirst().orElse(new SkuVO());
             detailView.setProductName(productDetailEntity.getSkuName());
             detailView.setSpuNo(productDetailEntity.getSpuNo());
             detailView.setUnit(productDetailEntity.getUnitName());
             detailView.setVariantProperty(productDetailEntity.getVariantProperty());
+
+            //参考供应商
+            SupplierEntity mainSupplierEntity = supplierList.stream().filter(obj -> obj.getId().equals(purchaseReturnOrderDetailEntity.getMainSupplierId())).findFirst().orElse(new SupplierEntity());
+            detailView.setMainSupplierName(mainSupplierEntity.getName());
 
             //根据组织、仓库、sku查询可用库存
             /*
@@ -819,14 +872,29 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<String> skuIdList = returnOrderExcelDTOS.stream().map(ReturnOrderExcelDTO::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        returnOrderExcelDTOS.forEach(obj -> {
 
+        //获取采购单详情的id集合
+        List<String> detailId = returnOrderExcelDTOS.stream().map(ReturnOrderExcelDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(detailId);
+
+        returnOrderExcelDTOS.forEach(obj -> {
+            //获取采购单详情
+            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailList.stream().filter(entityClass -> entityClass.getId().equals(obj.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
+                obj.setReturnPrice(purchaseOrderDetailEntity.getTaxPrice());
+            }
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             obj.setProductName(productDetailEntity.getName());
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
             obj.setReturnModeName(ReturnModeEnum.getName(obj.getReturnMode()));
-
+            BigDecimal deductAmountAmount ;
+            if (ReturnModeEnum.DEDUCTION.getCode().equals(obj.getReturnMode())) {
+                deductAmountAmount = MathUtil.multiply(obj.getReturnPrice(),obj.getDeductAmountQty());
+            } else {
+                deductAmountAmount = MathUtil.multiply(obj.getReturnPrice(),obj.getReturnQty());
+            }
+            obj.setDeductAmountAmount(deductAmountAmount);
         });
 
         List<ReturnOrderExportExcelDTO> returnOrderExportExcelDTOList = BeanMapperUtils.copyList(ReturnOrderExportExcelDTO.class, returnOrderExcelDTOS);
@@ -1103,6 +1171,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 BeanMapperUtils.copy(detail, addDetailDTO);
                 addDetailDTO.setReturnQty(detail.getRealityReturnQty());
                 addDetailDTO.setWarehouseLocation(detail.getWarehouseLocation());
+                addDetailDTO.setReturnPrice(detail.getTaxPrice());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setPurchasePriceDetailList(addDetailList);

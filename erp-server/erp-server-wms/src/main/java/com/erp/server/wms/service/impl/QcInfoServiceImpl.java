@@ -1370,6 +1370,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 addDetailDTO.setPurchaseOrderDetailId(detail.getPurchaseOrderDetailId());
                 addDetailDTO.setReturnQty(detail.getRealityReturnQty());
                 addDetailDTO.setWarehouseLocation(detail.getWarehouseLocation());
+                addDetailDTO.setReturnPrice(detail.getTaxPrice());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setReturnMode(purchaseReturnOrderDTO.getReturnMode());
