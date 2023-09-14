@@ -78,7 +78,7 @@ public class ReturnOrderExcelDTO {
     /**
      * 退货数量
      */
-    private String returnQty;
+    private Integer returnQty;
 
     /**
      * 退款单价

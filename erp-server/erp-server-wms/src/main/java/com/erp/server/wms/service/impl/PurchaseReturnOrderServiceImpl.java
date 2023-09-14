@@ -917,7 +917,13 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
             obj.setReturnModeName(ReturnModeEnum.getName(obj.getReturnMode()));
-            obj.setDeductAmountAmount(MathUtil.multiply(obj.getReturnPrice(),obj.getDeductAmountQty()));
+            BigDecimal deductAmountAmount ;
+            if (ReturnModeEnum.DEDUCTION.getCode().equals(obj.getReturnMode())) {
+                deductAmountAmount = MathUtil.multiply(obj.getReturnPrice(),obj.getDeductAmountQty());
+            } else {
+                deductAmountAmount = MathUtil.multiply(obj.getReturnPrice(),obj.getReturnQty());
+            }
+            obj.setDeductAmountAmount(deductAmountAmount);
         });
 
         List<ReturnOrderExportExcelDTO> returnOrderExportExcelDTOList = BeanMapperUtils.copyList(ReturnOrderExportExcelDTO.class, returnOrderExcelDTOS);
