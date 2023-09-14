@@ -73,6 +73,16 @@ public class DmpBomServiceImpl extends SuperServiceImpl<DmpBomMapper, DmpBomEnti
         return bomList;
     }
 
+    @Override
+    public List<DmpBomEntity> listFindBomBySkuList(List<String> skuList, String platformSign, String relationType) {
+        List<DmpBomEntity> bomList = lambdaQuery()
+                .in(DmpBomEntity::getParentSku, skuList)
+                .eq(DmpBomEntity::getPlatformSign, platformSign)
+                .eq(DmpBomEntity::getRelationType, relationType)
+                .list();
+        return bomList;
+    }
+
     private static WarnMsgInfoDTO getWarnMsgInfoDTO(ComboSkuInfoEntity ext, List<DmpBomEntity> bomList) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setTitle(StrUtil.format("加工SKU变更:sku:【{}】", ext.getComboSku()));

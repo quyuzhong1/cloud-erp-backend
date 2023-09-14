@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.mq;
 import cn.hutool.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.constant.MongoTableNameContant;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
@@ -17,6 +18,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -55,6 +58,11 @@ public  class MQProducerServiceTest {
 
     @Test
     public void testSendBatch() {
+        List<DmpOrderItemEntity> itemEntityList = dmpOrderItemService.listByIds(Arrays.asList("1679163638713159686"));
+        List<DmpOrderItemEntity> itemEntityList1 = dmpOrderItemService.splitOrderItem(itemEntityList);
+        System.out.println(itemEntityList1);
+
+//
 
 //        List<CfgApiFieldMapController.TestMq> list = IntStream.rangeClosed(1, 10)
 //                .mapToObj(x -> new CfgApiFieldMapController.TestMq(String.valueOf(x), LocalDateTime.now(), Arrays.asList(String.valueOf(x)), "tag2"))

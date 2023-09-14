@@ -31,4 +31,15 @@ public interface DmpBomService extends SuperService<DmpBomEntity> {
      * @return
      */
     List<DmpBomEntity> findBom(String sku, String platformSign, String relationType);
+
+    /**
+     * 批量查询sku对应的bom
+     * @Author Luo_WG
+     * @Date 2023/9/14 10:25
+     * @param skuList
+     * @param platformSign
+     * @param relationType
+     * @return java.util.List<com.erp.model.dmp.entity.DmpBomEntity>
+     **/
+    List<DmpBomEntity> listFindBomBySkuList(List<String> skuList, String platformSign, String relationType);
 }

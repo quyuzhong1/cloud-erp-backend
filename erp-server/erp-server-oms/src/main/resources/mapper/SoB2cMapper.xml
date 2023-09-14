@@ -492,7 +492,7 @@
             </foreach>
         </if>
         <if test="skuIdList !=null and skuIdList.size>0">
-            AND sb.sku_id IN
+            AND sbd.sku_id IN
             <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
                 #{skuId}
             </foreach>
@@ -544,7 +544,7 @@
             </foreach>
         </if>
         <if test="skuIdList !=null and skuIdList.size>0">
-            AND sb.sku_id IN
+            AND sbd.sku_id IN
             <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
                 #{skuId}
             </foreach>
