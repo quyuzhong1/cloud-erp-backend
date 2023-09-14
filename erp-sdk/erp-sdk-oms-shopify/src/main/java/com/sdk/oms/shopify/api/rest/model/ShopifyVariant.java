@@ -5,15 +5,14 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.sdk.oms.shopify.api.rest.model.serializer.EscapedStringSerializer;
-import com.sdk.oms.shopify.api.rest.model.serializer.InventoryPolicyDeserializer;
-import com.sdk.oms.shopify.api.rest.model.serializer.InventoryPolicySerializer;
+import com.sdk.oms.shopify.api.rest.model.serializer.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -51,9 +50,13 @@ public class ShopifyVariant {
 	@JsonSerialize(using = EscapedStringSerializer.class)
 	public String option3;
 	@JsonProperty("created_at")
-	public Date createdAt;
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
+	private LocalDateTime createdAt;
 	@JsonProperty("updated_at")
-	public Date updatedAt;
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
+	private LocalDateTime updatedAt;
 	public boolean taxable;
 	public String barcode;
 	public Long grams;

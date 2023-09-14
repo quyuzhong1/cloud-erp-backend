@@ -59,6 +59,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String saveOrUpdateDmpSyncTask(DmpPullTaskEntity dmpPullTaskEntity) {
         DmpPullTaskEntity found = lambdaQuery()
                 .eq(DmpPullTaskEntity::getSourceType, dmpPullTaskEntity.getSourceType())

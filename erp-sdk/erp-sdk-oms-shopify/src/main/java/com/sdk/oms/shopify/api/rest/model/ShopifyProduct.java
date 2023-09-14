@@ -4,14 +4,13 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.sdk.oms.shopify.api.rest.model.serializer.EscapedStringSerializer;
-import com.sdk.oms.shopify.api.rest.model.serializer.TagsDeserializer;
-import com.sdk.oms.shopify.api.rest.model.serializer.TagsSerializer;
+import com.sdk.oms.shopify.api.rest.model.serializer.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,9 +48,13 @@ public class ShopifyProduct {
     private String publishedAt;
     private Boolean published;
     @JsonProperty("created_at")
-    private Date createdAt;
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    private LocalDateTime createdAt;
     @JsonProperty("updated_at")
-    private Date updatedAt;
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    private LocalDateTime updatedAt;
     @JsonProperty("published_scope")
     private String publishedScope;
     private String handle;

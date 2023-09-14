@@ -3,12 +3,14 @@ package com.sdk.oms.shopify.handler;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
+import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractProductHandler;
+import com.erp.model.dmp.gyy.GyyShopInfoEntity;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
 import com.sdk.oms.shopify.api.rest.model.ShopifyProducts;
 import com.sdk.oms.shopify.dto.PlatformShopifyListingDTO;
@@ -30,7 +32,7 @@ import java.util.stream.Collectors;
  **/
 @Slf4j
 @Component
-@PlatformCategoryType(PlatformCategoryEnum.OMS)
+@PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.SHOPIFY)
 @BusinessType(BusinessTypeEnum.PRODUCT)
 public class ShopifyListingHandler extends AbstractProductHandler<PlatformShopifyListingDTO, PlatformProductDTO> {
@@ -67,7 +69,7 @@ public class ShopifyListingHandler extends AbstractProductHandler<PlatformShopif
         // 包含数据过滤数据 数据转换 数据合并拆分等操作
         return sourceDataList.stream()
                 // 已发布并售卖中
-                .filter(e -> e.getShopifyProduct().getPublished() && "active".equalsIgnoreCase(e.getShopifyProduct().getStatus()))
+                .filter(e -> e.getShopifyProduct().isPublished() && "active".equalsIgnoreCase(e.getShopifyProduct().getStatus()))
                 // 组装
                 .map(PlatformShopifyListingDTO::convertDTO)
                 .flatMap(List::stream).collect(Collectors.toList());

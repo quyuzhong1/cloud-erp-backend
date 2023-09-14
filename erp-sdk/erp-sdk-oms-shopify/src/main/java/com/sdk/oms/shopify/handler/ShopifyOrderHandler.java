@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  **/
 @Slf4j
 @Component
-@PlatformCategoryType(PlatformCategoryEnum.OMS)
+@PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.SHOPIFY)
 @BusinessType(BusinessTypeEnum.ORDER)
 public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrderDTO, PlatformOrderDTO> {
@@ -44,14 +44,13 @@ public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrd
     @Override
     public List<PlatformShopifyOrderDTO> download(JobTaskDTO data) {
         // Shopify订单下载
-        ShopifyShopInfoDTO tokenDTO = ShopSdkServer.getTokenAndDomainByShopId(data.getShopId());
-        if (null == tokenDTO) {
+        ShopifyShopInfoDTO shopInfoDTO = ShopSdkServer.getTokenAndDomainByShopId(data.getShopId());
+        if (null == shopInfoDTO) {
             log.error("[Shopify订单下载]从缓存中获取shopify token 失败: shopId={}", data.getShopId());
             return Collections.emptyList();
         }
-        String shopifyShopDomain = tokenDTO.getShopDomain();
-        String accessToken = tokenDTO.getAccessToken();
-
+        String shopifyShopDomain = shopInfoDTO.getShopDomain();
+        String accessToken = shopInfoDTO.getAccessToken();
 
         ZoneOffset zoneOffset = ZoneOffset.systemDefault().getRules().getOffset(Instant.now());
         // 上次执行时间
@@ -60,7 +59,6 @@ public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrd
         OffsetDateTime nextOffSetTime = data.getNextTime().atOffset(zoneOffset);
         // 当前时间
         OffsetDateTime nowOffSetTime = OffsetDateTime.now(ZoneId.systemDefault());
-
 
         // Shopify产品下载所有(SDK已分页查询所有)
         List<ShopifyOrder> orders = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
@@ -71,7 +69,7 @@ public class ShopifyOrderHandler extends AbstractOrderHandler<PlatformShopifyOrd
         }
         // 返回下载源数据
         return orders.stream()
-                .map(e -> new PlatformShopifyOrderDTO(data, e))
+                .map(e -> new PlatformShopifyOrderDTO(data, e, shopInfoDTO))
                 .collect(Collectors.toList());
     }
 

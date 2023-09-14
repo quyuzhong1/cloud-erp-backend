@@ -34,7 +34,7 @@ public class OmsAmazonOrderConsumerService extends AbstractPlatformConsumerHandl
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ApiResult handle(PlatformOrderDTO ext) {
+    public ApiResult<?> handle(Object ext) {
 
         return null;
     }

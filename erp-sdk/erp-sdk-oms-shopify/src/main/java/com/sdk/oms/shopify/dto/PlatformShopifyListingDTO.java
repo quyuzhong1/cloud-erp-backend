@@ -93,10 +93,14 @@ public class PlatformShopifyListingDTO extends CleanBaseDTO {
                 // 产品规格信息
                 .setProductSpec(productSpec)
                 // 产品包装信息
-                .setProductPacking(packing);
+                .setProductPacking(packing)
+                // 平台最后修改时间
+                .setPlatformUpdateTime(variant.getCreatedAt())
+                ;
 
         // 平台
         resultDto.setPlatform(dto.getPlatform());
+        resultDto.setUniqueId(variant.getId());
         return resultDto;
     }
 }

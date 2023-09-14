@@ -34,14 +34,20 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
      */
     private ShopifyOrder shopifyOrder;
 
+    /**
+     * Shopify SDK 订单信息
+     */
+    private ShopifyShopInfoDTO shopInfoDTO;
 
-    public PlatformShopifyOrderDTO(JobTaskDTO dto, ShopifyOrder shopifyOrder) {
+
+    public PlatformShopifyOrderDTO(JobTaskDTO dto, ShopifyOrder shopifyOrder, ShopifyShopInfoDTO shopInfoDTO) {
         this.shopifyOrder = shopifyOrder;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
         this.setUniqueId(shopifyOrder.getId());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()));
-        this.setLastPushTime(dto.getNextTime());
+//        this.setLastPushTime(dto.getNextTime());
+        this.shopInfoDTO = shopInfoDTO;
     }
 
     /**
@@ -50,6 +56,8 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
     public static PlatformOrderDTO convertDTO(PlatformShopifyOrderDTO dto) {
         // 原订单信息
         ShopifyOrder sourceOrder = dto.getShopifyOrder();
+        // 本ERP店铺信息
+        ShopifyShopInfoDTO shopInfoDTO = dto.getShopInfoDTO();
 
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
         // 订单日期
@@ -58,38 +66,38 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         orderDTO.setPlatformCode(sourceOrder.getId());
         // 销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.SHOPIFY.getCode());
-        // TODO 店铺？
-        orderDTO.setShopId("");
+        // 店铺ID
+        orderDTO.setShopId(shopInfoDTO.getId());
         // 作废状态（false未作废，true已作废）
         orderDTO.setInvalidStatus(false);
         // 作废类型（manual手动作废，automatic自动作废）
         orderDTO.setInvalidType("");
         // 作废原因
         orderDTO.setInvalidRemark("");
-        // TODO 订单状态
-        // SoB2cBillStatusEnum
-        orderDTO.setBillStatus("");
+        // 订单状态
+        // （soB2cBillStatus字典类型）
+        orderDTO.setBillStatus(sourceOrder.convertBillStatus());
         // 付款状态（待付款、已付款）
-        // TODO
-        orderDTO.setPayStatus(sourceOrder.getFinancialStatus());
+        // （soB2cPayStatus字典类型）
+        orderDTO.setPayStatus(sourceOrder.convertPayStatus());
         // 订单金额
         orderDTO.setAmount(sourceOrder.getTotalPrice());
         // 币别（原币）
         orderDTO.setCurrency(sourceOrder.getCurrency().getCurrencyCode());
-        // TODO 汇率
-        orderDTO.setExchangeRate(BigDecimal.ZERO);
+        // 汇率
+        orderDTO.setExchangeRate(BigDecimal.ONE);
         // 运费收入
         BigDecimal shippingFee = sourceOrder.getShippingLines().stream()
                 .map(ShopifyShippingLine::getPrice)
                 .reduce(BigDecimal::add)
                 .orElse(BigDecimal.ZERO);
         orderDTO.setShippingFee(shippingFee);
-        // TODO 付款时间?
-        orderDTO.setPayTime(null);
+        // 付款时间
+        orderDTO.setPayTime(sourceOrder.convertPayTime());
         // 付款金额
         orderDTO.setPayAmount(sourceOrder.getSubtotalPrice());
         // 付款方式
-        orderDTO.setDictPayMethod("?");
+        orderDTO.setDictPayMethod(sourceOrder.convertPayMethod());
         // 买家备注
         orderDTO.setBuyerRemark("");
         // 订单备注
@@ -104,7 +112,7 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         orderDTO.setInterceptRemark("");
         // 来源类型
         orderDTO.setSourceType("soB2c");
-        // TODO 来源id ?
+        // 来源id
         orderDTO.setSourceId(sourceOrder.getId());
         // 来源编码
         orderDTO.setSourceCode("");
@@ -141,14 +149,14 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         detailDTO.setSkuId("");
         // skuNo
         detailDTO.setSkuNo("");
-        // TODO 卖家sku编号?
+        // 卖家sku编号
         detailDTO.setSellerSkuNo("");
         // 平台sku编号
         detailDTO.setPlatformSkuNo(item.getVariantId());
         // 库存sku编号
         detailDTO.setWarehouseName("");
         // 仓库名称
-        // TODO 库存是否扣除？
+        // 库存是否扣除
         detailDTO.setWarehouseId("");
         // 数量
         detailDTO.setQty(item.getQuantity().intValue());
@@ -159,8 +167,8 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         detailDTO.setAmount(amount);
         // 币别（原币）
         detailDTO.setCurrency(sourceOrder.getCurrency().getCurrencyCode());
-        // TODO 汇率
-        detailDTO.setExchangeRate(BigDecimal.ZERO);
+        // 汇率
+        detailDTO.setExchangeRate(BigDecimal.ONE);
         // 建议售价（本位币）
         detailDTO.setAdvicePrice(BigDecimal.ZERO);
         // 含税成本（本位币）

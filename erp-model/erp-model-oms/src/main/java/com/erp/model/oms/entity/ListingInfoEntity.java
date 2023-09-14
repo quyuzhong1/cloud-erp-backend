@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -89,6 +90,12 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
      */
     @TableField("product_packing")
     private String productPacking;
+
+    /**
+     * 平台最后修改时间
+     */
+    @TableField(value = "platform_update_time")
+    private LocalDateTime platformUpdateTime;
 
 
     public static final String SKU_NO = "sku_no";
