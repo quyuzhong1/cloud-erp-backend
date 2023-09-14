@@ -764,11 +764,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                         .findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(viewDTO)) {
                     BeanMapperUtils.copy(viewDTO,purchaseTaxPriceViewDTO);
-                }
-                //币种符号
-                if (CollectionUtils.isNotEmpty(currencyViewList)) {
-                    CurrencyDTO.ViewDTO currencyDTO = currencyViewList.stream().filter(obj -> obj.getId().equals(viewDTO.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
-                    purchaseTaxPriceViewDTO.setCurrencySymbol(currencyDTO.getSymbol());
+                    //币种符号
+                    if (CollectionUtils.isNotEmpty(currencyViewList)) {
+                        CurrencyDTO.ViewDTO currencyDTO = currencyViewList.stream().filter(obj -> obj.getId().equals(viewDTO.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
+                        purchaseTaxPriceViewDTO.setCurrencySymbol(currencyDTO.getSymbol());
+                    }
                 }
             }
             purchaseTaxPriceViewDTO.setSkuId(searchDTO.getSkuId());
