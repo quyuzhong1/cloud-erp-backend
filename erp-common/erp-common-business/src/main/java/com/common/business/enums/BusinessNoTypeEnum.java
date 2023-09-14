@@ -55,6 +55,8 @@ public enum BusinessNoTypeEnum {
     CODE_CYYD(45, "cyyd","仓位移动","CYYD"),
     CODE_KHDZC(46, "khdzc","b2c客户地址编号","KHDZC"),
     CODE_KHLXRC(47, "khlxrc","b2c客户联系人编号","KHLXRC"),
+    CODE_CUSTC(48, "custc","客户","CUSTC"),
+
     ;
 
 
