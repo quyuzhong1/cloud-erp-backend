@@ -275,7 +275,7 @@ public class PdaWarehouseLocationMoveInfoController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:pdaWarehouseLocationMoveInfo:cancel",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:cancelProcess",
             serviceClass = WarehouseLocationMoveInfoService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
