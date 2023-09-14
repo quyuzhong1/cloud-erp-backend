@@ -1,11 +1,17 @@
 package com.erp.server.bi.controller.api;
 
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.server.bi.service.BiTargetReportService;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.LinkedHashMap;
 
 /**
  * 目标相关报表控制层
@@ -19,5 +25,18 @@ public class BiTargetReportController extends BaseController {
 
     @Resource
     private BiTargetReportService biTargetReportService;
+
+    /**
+     * 业绩目标完成
+     * @author Will
+     * @date: 2023/9/14 16:19
+     * @param dto
+     * @return ApiResult<LinkedHashMap<Object>>
+     */
+    @PostMapping("/listTargetFinish")
+    public ApiResult<LinkedHashMap<String,Object>> targetFinish(@RequestBody @Validated TargetFinishDTO.ParamDTO dto){
+        LinkedHashMap<String,Object> map = biTargetReportService.targetFinish(dto);
+        return success(map);
+    }
 
 }

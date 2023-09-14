@@ -5,26 +5,22 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * 考核维度
- * @author Lambda
- * @Classname MetricsEnums
- * @Description TODO
- * @Date 2023-09-13 10:38
- * @Created by yl
+ * @author Will
+ * @version 1.0
+ * @description: 目标完成查看类型
+ * @date 2023/9/14 17:36
  */
-public enum MetricsEnum implements EnumMessage {
+public enum TargetSearchTypeEnum implements EnumMessage {
 
-
-    SALES_AMOUNT("salesAmount","销售额"),
-    FINANCE_SALES_AMOUNT("financeSalesAmount","财务销售额"),
-    NET_SALES_AMOUNT("netSalesAmount","净销售额"),
-    SALES_QTY("salesQty","销量"),
-    GROSS_PROFIT("grossProfit","毛利润"),
-    GROSS_PROFIT_RATE("grossProfitRate","毛利率")
+    DEPT("dept","二级部门"),
+    USER("user","人员"),
+    SHOP("shop","店铺"),
+    CATEGORY("category","品类"),
+    SKU("sku","SKU"),
     ;
 
 
-    MetricsEnum(String code, String name) {
+    TargetSearchTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
