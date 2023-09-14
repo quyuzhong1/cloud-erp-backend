@@ -145,7 +145,13 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                         ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
                 record.setReturnOrderSource(returnOrderSourceEnum.getCode());
                 record.setReturnOrderSourceName(returnOrderSourceEnum.getName());
-                record.setDeductAmountAmount(MathUtil.multiply(record.getReturnPrice(),record.getDeductAmountQty()));
+                BigDecimal deductAmountAmount ;
+                if (ReturnModeEnum.DEDUCTION.getCode().equals(record.getReturnMode())) {
+                    deductAmountAmount = MathUtil.multiply(record.getReturnPrice(),record.getDeductAmountQty());
+                } else {
+                    deductAmountAmount = MathUtil.multiply(record.getReturnPrice(),record.getReturnQty());
+                }
+                record.setDeductAmountAmount(deductAmountAmount);
             });
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
@@ -463,7 +469,13 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 detailView.setCurrencySymbol(purchaseOrderDetailEntity.getCurrencySymbol());
             }
             detailView.setHasStockInQty(stockInQty);
-            detailView.setTotalPrice(purchaseReturnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(purchaseReturnOrderDetailEntity.getDeductAmountQty()))));
+            BigDecimal deductAmountAmount;
+            if (ReturnModeEnum.DEDUCTION.getCode().equals(purchaseReturnOrderDetailEntity.getReturnMode())) {
+                deductAmountAmount = MathUtil.multiply(purchaseReturnOrderDetailEntity.getReturnPrice(),purchaseReturnOrderDetailEntity.getDeductAmountQty());
+            } else {
+                deductAmountAmount = MathUtil.multiply(purchaseReturnOrderDetailEntity.getReturnPrice(),purchaseReturnOrderDetailEntity.getReturnQty());
+            }
+            detailView.setTotalPrice(deductAmountAmount);
             //获取sku信息
             SkuVO productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getSkuNo().equals(detailView.getSkuNo())).findFirst().orElse(new SkuVO());
             detailView.setProductName(productDetailEntity.getSkuName());
