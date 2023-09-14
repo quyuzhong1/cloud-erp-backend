@@ -1,4 +1,7 @@
 package com.erp.server.bi.service;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
@@ -40,4 +43,14 @@ public interface BiTargetStaffSettingService extends SuperService<BiTargetStaffS
      * @return com.erp.model.bi.dto.BiTargetStaffSettingDTO.ViewDTO
      */
     BiTargetStaffSettingDTO.ViewDTO view(String id);
+
+    
+    /**
+     * 分页展示数据
+     * @author yl
+     * @date 2023-09-14 14:11
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.bi.dto.BiTargetStaffSettingDTO.PagingViewDTO>
+     */
+    PagingVO<BiTargetStaffSettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto);
 }

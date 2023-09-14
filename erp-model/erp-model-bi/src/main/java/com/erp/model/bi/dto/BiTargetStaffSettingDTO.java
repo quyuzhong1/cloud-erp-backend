@@ -29,6 +29,34 @@ public class BiTargetStaffSettingDTO implements Serializable {
 
 
     /**
+     * 分页详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO {
+
+        private String id;
+
+        /**
+         * 年
+         */
+        private String year;
+
+        /**
+         * 部门id
+         */
+        private String deptId;
+
+        /**
+         * 详情信息
+         */
+        private List<CommonDTO> detailList;
+
+
+    }
+
+
+    /**
      * 详情
      */
     @Data
@@ -65,6 +93,7 @@ public class BiTargetStaffSettingDTO implements Serializable {
 
     }
 
+
     /**
      * 新增
      */
@@ -92,7 +121,7 @@ public class BiTargetStaffSettingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class CommonDTO  extends BiTargetYearDTO.MonthDTO {
+    public static class CommonDTO extends BiTargetYearDTO.MonthDTO {
 
         /**
          * 员工id

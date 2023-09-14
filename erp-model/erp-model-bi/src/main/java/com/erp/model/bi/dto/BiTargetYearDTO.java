@@ -1,5 +1,6 @@
 package com.erp.model.bi.dto;
 
+import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.bi.enums.MetricsEnum;
 import lombok.Data;
@@ -24,6 +25,29 @@ import javax.validation.constraints.Size;
 @Data
 @NoArgsConstructor
 public class BiTargetYearDTO implements Serializable {
+
+
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        private String name;
+
+        /**
+         * 年
+         */
+        private List<String> yearList;
+
+        /**
+         * 考核指标
+         */
+        private List<String> metricsList;
+
+
+    }
 
 
     /**
@@ -82,6 +106,8 @@ public class BiTargetYearDTO implements Serializable {
         @NotBlank(message = "指标维度不能为空")
         @StateEnumValue(clazz = MetricsEnum.class, message = "指标维度有误")
         private MetricsEnum metrics;
+
+        private String metricsName;
 
 
         /**
@@ -180,7 +206,7 @@ public class BiTargetYearDTO implements Serializable {
         private String deptId;
 
         @NotNull(message = "考核指标不能为空")
-        @Size(min = 1,message = "考核指标不能为空")
+        @Size(min = 1, message = "考核指标不能为空")
         private List<String> metricsList;
 
     }
@@ -219,7 +245,7 @@ public class BiTargetYearDTO implements Serializable {
         @NotBlank(message = "部门不能为空")
         private String deptId;
 
-        @Size(min = 1,message = "考核指标不能为空")
+        @Size(min = 1, message = "考核指标不能为空")
         private List<String> metricsList;
     }
 

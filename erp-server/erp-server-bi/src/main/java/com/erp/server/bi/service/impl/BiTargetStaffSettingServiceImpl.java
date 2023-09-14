@@ -1,8 +1,13 @@
 package com.erp.server.bi.service.impl;
 
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.entity.BiProductInfoEntity;
 import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 
@@ -205,29 +210,19 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
-//        List<BiTargetStaffSettingEntity> dbList = this.listBaseByMainId(mainId);
-//        List<Pair<String, String>> pairList = detailList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-//        List<String> deleteIdList = getDeleteIds(pairList, dbList);
-//        if (CollectionUtils.isNotEmpty(deleteIdList)) {
-//            this.removeByIds(deleteIdList);
-//        }
-//        List<BiTargetStaffSettingEntity> saveOrUpdateList = BeanMapperUtils.copyList(BiTargetStaffSettingEntity.class, detailList);
-//        saveOrUpdateList.stream().forEach(s -> s.setMainId(mainId));
-//        this.saveOrUpdateBatch(saveOrUpdateList);
+        this.removeByMainId(mainId);
+        this.batchAdd(mainId, detailList);
+
+
     }
 
     /**
-     * 获取到删除的id
+     * 删除
      *
-     * @param pairList
-     * @param dbList
-     * @return
+     * @param mainId
      */
-    private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<BiTargetStaffSettingEntity> dbList) {
-        List<String> ids = pairList.stream().filter(g -> StringUtils.isNotBlank(g.getKey())).
-                map(obj -> obj.getKey()).collect(Collectors.toList());
-        List<String> dbIds = dbList.stream().map(BiTargetStaffSettingEntity::getId).collect(Collectors.toList());
-        return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
+    public void removeByMainId(String mainId) {
+        this.lambdaUpdate().eq(BiTargetStaffSettingEntity::getMainId, mainId).remove();
     }
 
 
@@ -251,9 +246,11 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         String id = updateDTO.getId();
         BiTargetYearEntity oldTargetYear = biTargetYearService.getById(id);
         Optional.ofNullable(oldTargetYear).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "人员目标设置"));
-        List<BiTargetStaffSettingDTO.CommonDTO> detailList = updateDTO.getDetailList();
-        //    handleData(updateDTO.getYear(), detailList);
         BiTargetYearEntity targetYear = BeanMapperUtils.map(BiTargetYearEntity.class, updateDTO);
+        List<String> metricsList = updateDTO.getMetricsList();
+        targetYear.setMetrics(metricsList.stream().collect(Collectors.joining(",")));
+        List<BiTargetStaffSettingDTO.CommonDTO> detailList = updateDTO.getDetailList();
+        handleData(targetYear, detailList);
         Boolean result = biTargetYearService.updateById(targetYear);
         if (!result) {
             throw new ServiceException("人员目标设置单保存失败");
@@ -305,12 +302,161 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
                 //一月
                 Integer january = MonthEnum.JANUARY.getValue();
                 common.setJanuary(pullView(metrics, january, dbList));
-            }
+                //二月
+                Integer february = MonthEnum.FEBRUARY.getValue();
+                common.setFebruary(pullView(metrics, february, dbList));
+                //三月
+                Integer march = MonthEnum.MARCH.getValue();
+                common.setMarch(pullView(metrics, march, dbList));
+                //四月
+                Integer april = MonthEnum.APRIL.getValue();
+                common.setApril(pullView(metrics, april, dbList));
+                //五月
+                Integer may = MonthEnum.MAY.getValue();
+                common.setMay(pullView(metrics, may, dbList));
+                //六月
+                Integer june = MonthEnum.JUNE.getValue();
+                common.setJune(pullView(metrics, june, dbList));
+                //七月
+                Integer july = MonthEnum.JULY.getValue();
+                common.setJuly(pullView(metrics, july, dbList));
+                //八月
+                Integer august = MonthEnum.AUGUST.getValue();
+                common.setAugust(pullView(metrics, august, dbList));
+                //九月
+                Integer september = MonthEnum.SEPTEMBER.getValue();
+                common.setSeptember(pullView(metrics, september, dbList));
+                //十月
+                Integer october = MonthEnum.OCTOBER.getValue();
+                common.setOctober(pullView(metrics, october, dbList));
 
+                //十一月
+                Integer november = MonthEnum.NOVEMBER.getValue();
+                common.setNovember(pullView(metrics, november, dbList));
+
+                //十月
+                Integer december = MonthEnum.DECEMBER.getValue();
+                common.setDecember(pullView(metrics, december, dbList));
+                staffList.add(common);
+
+            }
+            detail.setStaffSettingList(staffList);
+            detailList.add(detail);
 
         }
-        return null;
+        view.setDetailList(detailList);
+        return view;
     }
+
+    /**
+     * 分页显示
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public PagingVO<BiTargetStaffSettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto) {
+        BiTargetYearDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+        List<BiTargetStaffSettingDTO.PagingViewDTO> list = pageData.getRecords();
+        pullPaging(list);
+        return new PagingVO<>(pageData);
+    }
+
+
+    /**
+     * 填充分页的数据
+     *
+     * @param list
+     */
+    private void pullPaging(List<BiTargetStaffSettingDTO.PagingViewDTO> list) {
+        List<String> mainIdList = list.stream().map(BiTargetStaffSettingDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        List<BiTargetStaffSettingEntity> staffSettingDbList = this.listBaseByMainIdList(mainIdList);
+        for (BiTargetStaffSettingDTO.PagingViewDTO item : list) {
+            List<BiTargetStaffSettingEntity> dbList = staffSettingDbList.stream().
+                    filter(s -> s.getMainId().equals(item.getId())).collect(Collectors.toList());
+            List<BiTargetStaffSettingDTO.CommonDTO> commonList = getCommon(dbList);
+            item.setDetailList(commonList);
+        }
+
+    }
+
+    private List<BiTargetStaffSettingDTO.CommonDTO> getCommon(List<BiTargetStaffSettingEntity> dbList) {
+        List<BiTargetStaffSettingDTO.CommonDTO> resultList = new ArrayList<>(10);
+        //根据指标分组
+        Map<MetricsEnum, List<BiTargetStaffSettingEntity>> map = dbList.stream().
+                collect(Collectors.groupingBy(BiTargetStaffSettingEntity::getMetrics));
+
+        for (Map.Entry<MetricsEnum, List<BiTargetStaffSettingEntity>> item : map.entrySet()) {
+            MetricsEnum metricsEnum = item.getKey();
+            String metrics = metricsEnum.getCode();
+            List<BiTargetStaffSettingEntity> staffSettingList = item.getValue();
+            //根据人分组
+            Map<String, List<BiTargetStaffSettingEntity>> staffMap = staffSettingList.stream().
+                    collect(Collectors.groupingBy(BiTargetStaffSettingEntity::getStaffId));
+            for (Map.Entry<String, List<BiTargetStaffSettingEntity>> staff : staffMap.entrySet()) {
+                String staffId = staff.getKey();
+                List<BiTargetStaffSettingEntity> staffDbList = staff.getValue();
+                BiTargetStaffSettingDTO.CommonDTO common = new BiTargetStaffSettingDTO.CommonDTO();
+                common.setStaffId(staffId);
+                common.setStaffName(dbList.get(0).getStaffName());
+                //一月
+                Integer january = MonthEnum.JANUARY.getValue();
+                common.setJanuary(pullView(metrics, january, dbList));
+                //二月
+                Integer february = MonthEnum.FEBRUARY.getValue();
+                common.setFebruary(pullView(metrics, february, dbList));
+                //三月
+                Integer march = MonthEnum.MARCH.getValue();
+                common.setMarch(pullView(metrics, march, dbList));
+                //四月
+                Integer april = MonthEnum.APRIL.getValue();
+                common.setApril(pullView(metrics, april, dbList));
+                //五月
+                Integer may = MonthEnum.MAY.getValue();
+                common.setMay(pullView(metrics, may, dbList));
+                //六月
+                Integer june = MonthEnum.JUNE.getValue();
+                common.setJune(pullView(metrics, june, dbList));
+                //七月
+                Integer july = MonthEnum.JULY.getValue();
+                common.setJuly(pullView(metrics, july, dbList));
+                //八月
+                Integer august = MonthEnum.AUGUST.getValue();
+                common.setAugust(pullView(metrics, august, dbList));
+                //九月
+                Integer september = MonthEnum.SEPTEMBER.getValue();
+                common.setSeptember(pullView(metrics, september, dbList));
+                //十月
+                Integer october = MonthEnum.OCTOBER.getValue();
+                common.setOctober(pullView(metrics, october, dbList));
+
+                //十一月
+                Integer november = MonthEnum.NOVEMBER.getValue();
+                common.setNovember(pullView(metrics, november, dbList));
+
+                //十月
+                Integer december = MonthEnum.DECEMBER.getValue();
+                common.setDecember(pullView(metrics, december, dbList));
+                common.setMetrics(metricsEnum);
+                common.setMetricsName(metricsEnum.getName());
+                resultList.add(common);
+            }
+
+        }
+
+        return resultList;
+    }
+
+    private List<BiTargetStaffSettingEntity> listBaseByMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(BiTargetStaffSettingEntity::getMainId, mainIdList).list();
+    }
+
 
     /**
      * 填充显示的数据
