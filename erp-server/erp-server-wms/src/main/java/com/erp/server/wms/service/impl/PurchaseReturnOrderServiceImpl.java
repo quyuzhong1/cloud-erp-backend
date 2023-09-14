@@ -489,7 +489,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 detailView.setCurrencySymbol(purchaseOrderDetailEntity.getCurrencySymbol());
             }
             detailView.setHasStockInQty(stockInQty);
-            detailView.setTotalPrice(detailView.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(purchaseReturnOrderDetailEntity.getReturnQty()))));
+            detailView.setTotalPrice(detailView.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(purchaseReturnOrderDetailEntity.getDeductAmountQty()))));
             //获取sku信息
             SkuVO productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getSkuNo().equals(detailView.getSkuNo())).findFirst().orElse(new SkuVO());
             detailView.setProductName(productDetailEntity.getSkuName());
