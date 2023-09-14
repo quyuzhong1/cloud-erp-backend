@@ -92,11 +92,7 @@ public class BiTargetStaffSettingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class CommonDTO {
-
-
-        private String id;
-
+    public static class CommonDTO  extends BiTargetYearDTO.MonthDTO {
 
         /**
          * 员工id
@@ -105,23 +101,6 @@ public class BiTargetStaffSettingDTO implements Serializable {
         private String staffId;
 
         private String staffName;
-
-        /**
-         * 月
-         */
-        @NotNull(message = "月不能为空")
-        private Integer month;
-
-
-        private BigDecimal value;
-
-        /**
-         * 指标维度
-         */
-        @NotBlank(message = "指标维度不能为空")
-        @StateEnumValue(clazz = MetricsEnum.class, message = "指标维度有误")
-        private MetricsEnum metrics;
-
 
     }
 

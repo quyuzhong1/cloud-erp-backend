@@ -1,10 +1,13 @@
 package com.erp.model.bi.dto;
 
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.bi.enums.MetricsEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -61,6 +64,91 @@ public class BiTargetYearDTO implements Serializable {
          * 部门名称
          */
         private String deptName;
+
+
+    }
+
+    /**
+     * 月
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MonthDTO {
+
+
+        /**
+         * 指标维度
+         */
+        @NotBlank(message = "指标维度不能为空")
+        @StateEnumValue(clazz = MetricsEnum.class, message = "指标维度有误")
+        private MetricsEnum metrics;
+
+
+        /**
+         * 一月值
+         */
+        private BigDecimal january;
+
+        /**
+         * 二月值
+         */
+        private BigDecimal february;
+
+        /**
+         * 三月
+         */
+        private BigDecimal march;
+
+
+        /**
+         * 四月值
+         */
+        private BigDecimal april;
+
+        /**
+         * 五月值
+         */
+        private BigDecimal may;
+
+
+        /**
+         * 六月值
+         */
+        private BigDecimal june;
+
+
+        /**
+         * 七月值
+         */
+        private BigDecimal july;
+
+
+        /**
+         * 八月值
+         */
+        private BigDecimal august;
+
+
+        /**
+         * 九月值
+         */
+        private BigDecimal september;
+
+
+        /**
+         * 十月值
+         */
+        private BigDecimal october;
+
+        /**
+         * 十一月值
+         */
+        private BigDecimal november;
+
+        /**
+         * 十二月值
+         */
+        private BigDecimal december;
 
 
     }
