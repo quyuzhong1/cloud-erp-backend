@@ -1,6 +1,8 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.server.dmp.service.DmpOrderItemService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -13,6 +15,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * 中台同步任务表
@@ -27,6 +32,18 @@ public class DmpPushTaskController extends BaseController {
 
     @Autowired
     private DmpPushTaskService dmpPushTaskService;
+
+    @Autowired
+    private DmpOrderItemService dmpOrderItemService;
+
+
+
+    @PostMapping("/test")
+    public void test(){
+        List<DmpOrderItemEntity> itemEntityList = dmpOrderItemService.listByIds(Arrays.asList("1679163638713159686"));
+        List<DmpOrderItemEntity> itemEntityList1 = dmpOrderItemService.splitOrderItem(itemEntityList);
+        System.out.println(itemEntityList1);
+    }
 
 
 }

@@ -81,4 +81,13 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      * @return void
      **/
     void getProductListing(Map<String,List<NewProductDTO>> dto);
+
+    /**
+     * sku拆分
+     * @Author Luo_WG
+     * @Date 2023/9/13 14:01
+     * @param itemEntityList
+     * @return java.util.List<com.erp.model.dmp.entity.DmpOrderItemEntity>
+     **/
+    List<DmpOrderItemEntity> splitOrderItem(List<DmpOrderItemEntity> itemEntityList);
 }

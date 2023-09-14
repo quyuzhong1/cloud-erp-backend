@@ -202,6 +202,19 @@ public class DmpOrderItemEntity implements Serializable {
     @TableField(value = "refresh_status")
     private Boolean refreshStatus;
 
+    /**
+     * 原始sku
+     */
+    @TableField(value = "original_sku_no")
+    private String originalSkuNo;
+
+    /**
+     * 清洗后成本价
+     */
+    @TableField(value = "clean_cost_price")
+    private BigDecimal cleanCostPrice;
+
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 

@@ -495,6 +495,9 @@ public enum ApiError implements Serializable {
     ERROR_97027(97027,"模块说明最大200字符"),
     ERROR_KINGDEE_SAVE(97028,"调用金蝶保存接口失败"),
     MABANG_SKU_NOT_EXIST(97029, "马帮财务编码：{}不存在"),
+    CLEAN_SPLIT_FINANCIAL_EXIST(97030, "sku{【%s】}的财务编码不存在！"),
+    ERP_BOM_EXIST(97031, "sku{【%s】}在ERP的BOM中不存在！"),
+    MABANG_BOM_EXIST(97032, "sku{【%s】}在马帮的BOM中不存在！"),
     YEAR_METRICS_EXIST(97030, "{}已设置,不可重复设置"),
 
 
