@@ -1,4 +1,7 @@
 package com.erp.server.bi.service;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.entity.BiTargetShopSettingEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.bi.dto.BiTargetShopSettingDTO;
@@ -31,5 +34,21 @@ public interface BiTargetShopSettingService extends SuperService<BiTargetShopSet
     */
     Boolean update(BiTargetShopSettingDTO.UpdateDTO dto);
 
+    /**
+     * 获取详情
+     * @author yl
+     * @date 2023-09-14 16:16
+     * @param id
+     * @return com.erp.model.bi.dto.BiTargetShopSettingDTO.ViewDTO
+     */
+    BiTargetShopSettingDTO.ViewDTO view(String id);
 
+    /**
+     * 分页查询
+     * @author yl
+     * @date 2023-09-14 16:43
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.bi.dto.BiTargetShopSettingDTO.PagingViewDTO>
+     */
+    PagingVO<BiTargetShopSettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto);
 }
