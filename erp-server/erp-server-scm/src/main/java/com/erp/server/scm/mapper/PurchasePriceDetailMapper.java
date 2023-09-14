@@ -38,4 +38,8 @@ public interface PurchasePriceDetailMapper extends BaseMapper<PurchasePriceDetai
     List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(@Param("supplierId") String supplierId,@Param("statusList") List<String> statusList,@Param("detailIds") List<String> detailIds,@Param("skuIdList") List<String> skuIdList);
 
     List<PurchasePriceDetailEntity> getBySupplierAndStatus(@Param("supplierId") String supplierId,@Param("statusList") List<String> statusList);
+    /**
+     * 批量修改
+     */
+    List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(@Param("params") PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO dto);
 }

@@ -9,10 +9,12 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.plm.vo.SkuVO;
@@ -730,6 +732,53 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         }
         return pair.getValue();
     }
+
+
+    @Override
+    public List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(ValidList<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<String> skuIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> supplierIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSupplierId).distinct().collect(Collectors.toList());
+        List<Integer> purchaseQtyList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getPurchaseQty).distinct().collect(Collectors.toList());
+
+        PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO dto = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO();
+        dto.setSkuIdList(skuIdList);
+        dto.setSupplierIdList(supplierIdList);
+        dto.setPurchaseQtyList(purchaseQtyList);
+        //报价信息
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewList = baseMapper.batchGetTaxPrice(dto);
+        //币种信息
+        List<String> currencyList = viewList.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO::getCurrency).collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
+
+
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> resultList = new ArrayList<>();
+        for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO : list.getList()) {
+            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO purchaseTaxPriceViewDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO();
+            if (CollectionUtils.isNotEmpty(viewList)) {
+                PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> obj.getSkuId().equals(searchDTO.getSkuId())
+                        && obj.getSupplierId().equals(searchDTO.getSupplierId())
+                        && (searchDTO.getPurchaseQty() >= obj.getMinQty() && obj.getMaxQty() > searchDTO.getPurchaseQty()))
+                        .findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(viewDTO)) {
+                    BeanMapperUtils.copy(viewDTO,purchaseTaxPriceViewDTO);
+                    //币种符号
+                    if (CollectionUtils.isNotEmpty(currencyViewList)) {
+                        CurrencyDTO.ViewDTO currencyDTO = currencyViewList.stream().filter(obj -> obj.getId().equals(viewDTO.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
+                        purchaseTaxPriceViewDTO.setCurrencySymbol(currencyDTO.getSymbol());
+                    }
+                }
+            }
+            purchaseTaxPriceViewDTO.setSkuId(searchDTO.getSkuId());
+            purchaseTaxPriceViewDTO.setSupplierId(searchDTO.getSupplierId());
+            purchaseTaxPriceViewDTO.setPurchaseQty(searchDTO.getPurchaseQty());
+            resultList.add(purchaseTaxPriceViewDTO);
+        }
+        return resultList;
+    }
+
 
     @Override
     public Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> listPurchaseTaxPriceView(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
