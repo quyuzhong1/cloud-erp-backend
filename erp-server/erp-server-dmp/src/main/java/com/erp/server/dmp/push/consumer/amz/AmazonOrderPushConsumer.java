@@ -3,6 +3,7 @@ package com.erp.server.dmp.push.consumer.amz;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
@@ -40,7 +41,7 @@ public class AmazonOrderPushConsumer extends AbstractPlatformConsumerHandler<Dmp
     }
 
     @Override
-    public ApiResult handle(DmpSyncMqDTO ext) {
+    public ApiResult<?> handle(Object ext) {
         // 调用亚马逊订单推送服务
         return pushOrderService.handle(ext);
     }

@@ -2,11 +2,13 @@ package com.common.message.handler;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
@@ -20,17 +22,22 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
 
     @Override
     public void onMessage(Object obj) {
-        T  ext = (T) obj;
+        String dmpSyncTaskId = "";
         try {
-            ApiResult handle = handle(ext);
-            if (!handle.isSuccess()) {
-                log.error("平台数据消费异常 {}", JSONUtil.toJsonStr(handle));
-                updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncStatusEnum.FAILED_SYNC, handle.getMsg());
+            dmpSyncTaskId = new JSONObject(obj).getStr("dmpSyncTaskId");
+            if (StringUtils.isBlank(dmpSyncTaskId)){
+                log.error("平台数据消费异常:找不到dmpSyncTaskId, object={}", JSONUtil.toJsonStr(obj));
                 return;
             }
-            updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncStatusEnum.SUCCESS_SYNC, SyncStatusEnum.SUCCESS_SYNC.getName());
+            ApiResult<?> handle = handle(obj);
+            if (!handle.isSuccess()) {
+                log.error("平台数据消费异常 {}", JSONUtil.toJsonStr(handle));
+                updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.FAILED_SYNC, handle.getMsg());
+                return;
+            }
+            updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.SUCCESS_SYNC, SyncStatusEnum.SUCCESS_SYNC.getName());
         }catch (Exception e) {
-            updateSyncTaskStatus(ext.getDmpSyncTaskId(), SyncStatusEnum.FAILED_SYNC, StrUtil.isBlank(e.getMessage()) ? e.getMessage() : ExceptionUtil.stacktraceToString(e));
+            updateSyncTaskStatus(dmpSyncTaskId, SyncStatusEnum.FAILED_SYNC, StrUtil.isBlank(e.getMessage()) ? e.getMessage() : ExceptionUtil.stacktraceToString(e));
             log.error("平台数据消费异常", e);
         }
     }
@@ -46,6 +53,6 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
      * 处理平台数据
      * @param ext
      */
-    public abstract ApiResult handle(T ext);
+    public abstract ApiResult<?> handle(Object ext);
 
 }

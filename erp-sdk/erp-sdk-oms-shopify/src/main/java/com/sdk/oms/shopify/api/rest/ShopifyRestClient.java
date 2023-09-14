@@ -502,7 +502,7 @@ public class ShopifyRestClient {
      * @return ShopifyShop
      */
     public ShopifyShop getShop() {
-        final Response response = get(getWebTarget().path(SHOP));
+        final Response response = get(getWebTarget().path(SHOP.concat(JSON)));
         return response.readEntity(ShopifyShop.class);
     }
 
@@ -1379,7 +1379,7 @@ public class ShopifyRestClient {
         if (this.webTarget == null) {
 
             if (StringUtils.isNotBlank(this.shopSubdomain)) {
-                this.webTarget = CLIENT.target(new StringBuilder().append(HTTPS).append(this.shopSubdomain).append(API_TARGET).toString());
+                this.webTarget = CLIENT.target(HTTPS + this.shopSubdomain + API_TARGET);
 
             } else {
                 this.webTarget = CLIENT.target(this.apiUrl);

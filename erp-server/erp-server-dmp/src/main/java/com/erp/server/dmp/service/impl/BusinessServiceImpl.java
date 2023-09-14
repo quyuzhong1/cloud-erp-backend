@@ -58,8 +58,8 @@ public class BusinessServiceImpl {
      * @param <R>      业务返回类型
      * @param <>      业务数据类型
      */
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+//    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public <T extends CleanBaseDTO,R extends UniqueDto> void pullProcessBusiness(String category, String platform, String business, JobTaskDTO data) {
         IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);
         if (handler != null) {
@@ -121,7 +121,7 @@ public class BusinessServiceImpl {
         pushToMqList.stream().peek(msg ->{
             String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, business, targetPlatform, topic, tag, msg));
             msg.setDmpSyncTaskId(modelTaskId);
-            SendResult cleanResult = mqProducerService.syncClassMsgByDelayLevel(topic, tag, msg, msg.getUniqueId());
+            SendResult cleanResult = mqProducerService.syncClassMsg(topic, tag, msg, msg.getUniqueId());
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送业务模块 MQ数据异常，{}", JSONUtil.toJsonStr(cleanResult)));
             }

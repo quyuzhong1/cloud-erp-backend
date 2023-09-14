@@ -21,7 +21,7 @@ import java.util.List;
  * @Date 2023/8/31 15:48
  **/
 @Component
-@PlatformCategoryType(PlatformCategoryEnum.OMS)
+@PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 @PlatformType(PlatformDictEnum.AMAZON)
 @BusinessType(BusinessTypeEnum.ORDER)
 public class AmazonRefundHandler extends AbstractOrderHandler<PlatformAmazonRefundDTO, PlatformRefundDTO> {

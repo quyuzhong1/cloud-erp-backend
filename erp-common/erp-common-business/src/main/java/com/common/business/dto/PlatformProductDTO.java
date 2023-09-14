@@ -1,9 +1,12 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+
+import java.time.LocalDateTime;
 
 /**
  * 产品DTO 所有平台订单通用数据，转换为此类后发送mq统一消费处理
@@ -48,11 +51,6 @@ public class PlatformProductDTO extends UniqueDto {
     private String platformProductName;
 
     /**
-     * 类型 platform 平台  warehouse 仓库
-     */
-    private String type;
-
-    /**
      * 匹配结果吧true 已匹配 false 未匹配
      */
 //    private Boolean matchResult;
@@ -71,4 +69,14 @@ public class PlatformProductDTO extends UniqueDto {
      * 产品包装信息
      */
     private String productPacking;
+
+    /**
+     * 类型 platform 平台  warehouse 仓库
+     */
+    private String type = "platform";
+
+    /**
+     * 平台最后修改时间
+     */
+    private LocalDateTime platformUpdateTime;
 }
