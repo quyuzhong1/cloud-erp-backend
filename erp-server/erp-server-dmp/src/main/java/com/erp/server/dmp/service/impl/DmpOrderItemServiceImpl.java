@@ -149,8 +149,11 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void checkOrderItem(List<DmpOrderItemEntity> orderItem, LocalDate platformCreateTime) {
+        //拆单
+        List<DmpOrderItemEntity> itemEntityList = splitOrderItem(orderItem);
+
         List<DmpOrderItemEntity> insertList = new ArrayList<>();
-        for (DmpOrderItemEntity orderItemBean : orderItem) {
+        for (DmpOrderItemEntity orderItemBean : itemEntityList) {
             if(StrUtil.isBlank(orderItemBean.getSkuNo())){
                 continue;
             }
@@ -304,9 +307,9 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         List<String> skuList = itemEntityList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
         //根据sku查询加工件
         List<DmpBomEntity> machining = dmpBomService.listFindBomBySkuList(skuList, PlatformEnum.MABANG.getDesc(), "machining");
-
-        List<String> financialCodeList = machining.stream().map(req -> req.getFinancialCode()).collect(Collectors.toList());
-        //获取所有bom
+        //获取财务编码
+        List<String> financialCodeList = machining.stream().map(req -> req.getFinancialCode()).distinct().collect(Collectors.toList());
+        //根据财务编码查询ERP的bom
         List<BomChildrenSkuDTO> allBomList = plmTaskFeign.listBomChildBySkuNos(financialCodeList);
         //获取所有成本
         List<DmpSkuCostEntity> allSkuCostList = dmpSkuCostService.list();
@@ -370,7 +373,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
      * 递归获取sku成本
      */
     private void getSkuCost(List<BomChildrenSkuDTO> bomList, List<DmpSkuCostEntity> allSkuCostList, DmpOrderItemEntity dmpOrderItemEntity, List<DmpOrderItemEntity> itemList, List<BomChildrenSkuDTO> allBomList) {
-        List<String> list = bomList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+        List<String> list = bomList.stream().map(req -> req.getParentSkuNo()).collect(Collectors.toList());
         allBomList = plmTaskFeign.listBomChildBySkuNos(list);
         for (BomChildrenSkuDTO bomChildrenSkuDTO : bomList) {
             //用bom里的sku匹配成本，没匹配到继续下查
@@ -387,6 +390,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                     itemEntity.setOriginalSkuNo(dmpOrderItemEntity.getSkuNo());
                     itemEntity.setCleanCostPrice(BigDecimal.ZERO);
                     itemEntity.setIsGift(1);
+                    itemEntity.setIsSplitSku(1);
                     itemList.add(itemEntity);
                 }
             } else {
@@ -395,6 +399,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 itemEntity.setSkuNo(entity.getSkuNo());
                 itemEntity.setOriginalSkuNo(dmpOrderItemEntity.getSkuNo());
                 itemEntity.setCleanCostPrice(entity.getCostPrice().multiply(MathUtil.valueOf(bomChildrenSkuDTO.getQuantity() + "")).multiply(MathUtil.valueOf(dmpOrderItemEntity.getQuantity() + "")));
+                itemEntity.setIsSplitSku(1);
                 itemList.add(itemEntity);
             }
         }
@@ -410,16 +415,19 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         List<DmpOrderItemEntity> collect = itemList.stream().filter(req -> !req.getIsGift().equals(1)).collect(Collectors.toList());
         BigDecimal sumCostPrice = BigDecimal.ZERO;
         BigDecimal finalSumCostPrice = BigDecimal.ZERO;
-        collect.forEach(req -> sumCostPrice.add(req.getCleanCostPrice()));
+        for (DmpOrderItemEntity itemEntity : collect) {
+            sumCostPrice = sumCostPrice.add(itemEntity.getCleanCostPrice());
+        }
+
         for (int i = 0; i < collect.size(); i++) {
             //最后一个sku计算方式为：总价-前面的所有sku价格汇总得出最后一个sku价格
             if (i == collect.size()-1) {
                 for (int i1 = 0; i1 < collect.size() -1; i1++) {
-                    finalSumCostPrice.add(collect.get(i1).getAmountAfter());
+                    finalSumCostPrice = finalSumCostPrice.add(collect.get(i1).getAmountAfter());
                 }
                 collect.get(i).setAmountAfter(amountAfter.subtract(finalSumCostPrice));
             } else {
-                collect.get(i).setAmountAfter(amountAfter.divide(sumCostPrice).multiply(collect.get(i).getCleanCostPrice()).setScale(4, BigDecimal.ROUND_DOWN));
+                collect.get(i).setAmountAfter(amountAfter.divide(sumCostPrice, 4, BigDecimal.ROUND_DOWN).multiply(collect.get(i).getCleanCostPrice()).setScale(4, BigDecimal.ROUND_DOWN));
             }
         }
     }
