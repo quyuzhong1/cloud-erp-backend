@@ -34,10 +34,11 @@ public class CopySubjectDTO implements Serializable {
     /**
      * 分享标示
      * personal 私人
-     * share 共享
+     * share 按多用户ID共享
+     * role 按多角色ID
      */
-    @NotBlank(message = "分享标示不能为空")
-    @StateEnumValue(strValues = {"personal","share"},message = "分享标识有误")
+    @NotBlank(message = "分享类型不能为空")
+    @StateEnumValue(strValues = {"personal","share","role"},message = "分享类型有误")
     private String shareFlag="personal";
 
 
@@ -50,4 +51,9 @@ public class CopySubjectDTO implements Serializable {
      * 是否常用
      */
     private Integer isFrequently=0;
+
+    /**
+     * 分享的标识ID集合
+     */
+    private List<String> shareFlagIdList;
 }

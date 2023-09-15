@@ -2,6 +2,7 @@ package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
@@ -76,4 +77,9 @@ public interface BiModuleService  extends IService<BiModuleEntity> {
     ModuleDTO details(String id);
 
     List<BiModuleEntity> getByIds(List<String> moduleIdList);
+
+    /**
+     * 设置分享
+     */
+    BatchResultDTO updateShare(List<String> shareFlagIdList, String mainId, String shareFlag);
 }

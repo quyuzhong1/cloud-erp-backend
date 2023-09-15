@@ -1,6 +1,7 @@
 package com.erp.model.bi.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -28,11 +29,19 @@ public class BiSubjectShareEntity implements Serializable {
      */
     private String subjectId;
 
+    /**
+     * 身份ID
+     * 用户ID/角色ID
+     */
+    @TableField(value = "identity_id")
+    private String identityId;
 
     /**
-     * 主题id
+     * 引用类型: 用户=user, 角色=role
+     * {@link BiShareIdentityTypeEnum}
      */
-    private String userId;
+    @TableField(value = "identity_type")
+    private String identityType;
 
     /**
      * 创建人id

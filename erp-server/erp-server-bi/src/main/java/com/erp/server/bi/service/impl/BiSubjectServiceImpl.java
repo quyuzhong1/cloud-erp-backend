@@ -6,13 +6,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.*;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.core.constant.BaseStateConstants;
 import com.common.core.utils.BeanMapper;
 import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseSearchDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.business.vo.PagingVO;
@@ -131,14 +129,10 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         subject.setShareFlag(shareFlag);
         subject.setCategoryId(categoryId);
         subject.setCategoryName(categoryName);
-        Boolean result = this.updateById(subject);
+        boolean result = this.updateById(subject);
         if (result) {
-            //如果是分享
-            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
-                List<String> userList = dto.getShareUserIdList();
-                //添加专题的分享用户
-                subjectShareService.addSubjectShare(userList, subjectId);
-            }
+            // 检查和添加分享记录
+            subjectShareService.checkAndAddSubjectShare(dto.getShareFlagIdList(), subjectId, shareFlag);
             return subjectId;
         }
         return "";
@@ -292,14 +286,10 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         subject.setCategoryId(categoryId);
         subject.setCategoryName(categoryName);
         subject.setIsFrequently(dto.getIsFrequently());
-        Boolean result = this.save(subject);
+        boolean result = this.save(subject);
         if (result) {
-            //如果是分享
-            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
-                List<String> userList = dto.getShareUserIdList();
-                //添加专题的分享用户
-                subjectShareService.addSubjectShare(userList, subjectId);
-            }
+            // 检查和添加分享记录
+            subjectShareService.checkAndAddSubjectShare(dto.getShareFlagIdList(), subjectId, shareFlag);
             return subjectId;
         }
         return "";
@@ -456,12 +446,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         boolean flag = this.save(copySubject);
         //当复制成功的时候
         if (flag) {
-            //如果是分享
-            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
-                List<String> userList = dto.getShareUserIdList();
-                //添加专题的分享用户
-                subjectShareService.addSubjectShare(userList, newSubjectId);
-            }
+            // 检查和添加分享记录
+            subjectShareService.checkAndAddSubjectShare(dto.getShareFlagIdList(), newSubjectId, shareFlag);
+
             layoutService.copySubjectLayout(newSubjectId, subjectId);
             return newSubjectId;
         }
@@ -504,14 +491,10 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         subject.setCategoryId(categoryId);
         subject.setCategoryName(categoryName);
         subject.setIsFrequently(dto.getIsFrequently());
-        Boolean result = this.save(subject);
+        boolean result = this.save(subject);
         if (result) {
-            //如果是分享
-            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
-                List<String> userList = dto.getShareUserIdList();
-                //添加专题的分享用户
-                subjectShareService.addSubjectShare(userList, subjectId);
-            }
+            // 检查和添加分享记录
+            subjectShareService.checkAndAddSubjectShare(dto.getShareFlagIdList(), subjectId, shareFlag);
             return subjectId;
         }
         return "";
@@ -652,12 +635,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         //当复制成功的时候
         if (flag) {
             copySubjectId = copySubject.getId();
-            //如果是分享
-            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
-                List<String> userList = dto.getShareUserIdList();
-                //添加专题的分享用户
-                subjectShareService.addSubjectShare(userList, newSubjectId);
-            }
+            // 检查和添加分享记录
+            subjectShareService.checkAndAddSubjectShare(dto.getShareFlagIdList(), newSubjectId, shareFlag);
+
             layoutService.copySubjectLayout(newSubjectId, subjectId);
         }
         return copySubjectId;
@@ -677,6 +657,17 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             checkCanHandle(subject, userId);
         }
 
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO updateShare(List<String> shareFlagIdList, String mainId, String shareFlag) {
+        BiSubjectEntity entity = this.getById(mainId);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.ERROR_97000);
+        }
+        subjectShareService.checkAndAddSubjectShare(shareFlagIdList, mainId, shareFlag);
+        return BatchResultDTO.success(entity.getId(), "", OperationTypeEnum.PERMISSION);
     }
 
 

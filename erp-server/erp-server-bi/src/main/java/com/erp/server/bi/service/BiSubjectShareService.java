@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.dto.UpdateSubjectShareDTO;
 import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.model.bi.entity.BiSubjectShareEntity;
+import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 
 import java.util.List;
 
@@ -42,13 +43,14 @@ public interface BiSubjectShareService extends IService<BiSubjectShareEntity> {
     /**
      * 方法说明
      *
-     * @param userList
+     * @param identityIdList
      * @param subjectId
+     * @param identityTypeEnum
      * @return void
      * @author yl
      * @date 2022-12-13 11:36
      */
-    Boolean addSubjectShare(List<String> userList, String subjectId);
+    Boolean addSubjectShare(List<String> identityIdList, String subjectId, BiShareIdentityTypeEnum identityTypeEnum);
 
     /**
      * 根据专题id 删除分享信息
@@ -77,4 +79,12 @@ public interface BiSubjectShareService extends IService<BiSubjectShareEntity> {
      * @return
      */
     List<String> getUserIdsBySubjectId(String subjectId);
+
+    /**
+     * 检查和添加共享记录
+     * @param shareFlagIdList
+     * @param subjectId
+     * @param shareFlag
+     */
+    void checkAndAddSubjectShare(List<String> shareFlagIdList, String subjectId, String shareFlag);
 }

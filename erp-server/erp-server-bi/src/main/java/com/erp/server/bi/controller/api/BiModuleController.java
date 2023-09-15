@@ -1,21 +1,24 @@
 package com.erp.server.bi.controller.api;
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.dto.base.*;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseSearchDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.validator.UpdateGroup;
 import com.common.business.vo.PagingVO;
+import com.erp.model.bi.dto.BiBatchShareDTO;
 import com.erp.model.bi.dto.CategoryModuleDTO;
 import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
+import com.erp.model.bi.entity.BiModuleEntity;
+import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.server.bi.service.BiModuleService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,6 +27,7 @@ import java.util.List;
  * @author yl
  * @since 2022-12-08 14:31:14
  */
+@Slf4j
 @RestController
 @RequestMapping("module")
 @Validated
@@ -118,6 +122,36 @@ public class BiModuleController extends BaseController {
     public ApiResult<List<CategoryModuleDTO>> categoryList(@RequestBody @Validated BaseSearchDTO dto) {
         List<CategoryModuleDTO> list = biModuleService.categoryList(dto.getSearchKeyword());
         return success(list);
+    }
+
+
+    /**
+     * 模板批量设置权限
+     * @author Jim
+     * @date: 2023-09-14
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/batchShare")
+    public ApiResult<List<BatchResultDTO>> batchShare(@RequestBody @Validated BiBatchShareDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO submit;
+            try {
+                submit = biModuleService.updateShare(dto.getShareFlagIdList(), id, dto.getShareFlag());
+            }catch (Exception e){
+                log.error("模板批量设置权限失败:{}", e.getMessage());
+                BiModuleEntity entity = biModuleService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "专题不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getId(), "", e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 }
