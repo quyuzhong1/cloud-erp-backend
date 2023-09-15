@@ -1,18 +1,16 @@
 package com.erp.server.bi.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.entity.BiTargetCategorySettingEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.entity.BiTargetCategorySettingEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
-import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -38,7 +36,7 @@ public interface BiTargetCategorySettingMapper extends BaseMapper<BiTargetCatego
      * @author Will
      * @date: 2023/9/15 11:36
      * @param dto
-     * @return List<BiTargetCategorySettingEntity>
+     * @return List<TargetFinishDTO.ViewDTO>
      */
-    List<BiTargetCategorySettingEntity> listTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
+    List<TargetFinishDTO.ViewDTO> listTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
 }

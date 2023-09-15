@@ -30,7 +30,7 @@ public interface BiTargetSkuSettingMapper extends BaseMapper<BiTargetSkuSettingE
      * @author Will
      * @date: 2023/9/15 11:43
      * @param dto
-     * @return List<BiTargetSkuSettingEntity>
+     * @return List<TargetFinishDTO.ViewDTO>
      */
-    List<BiTargetSkuSettingEntity> listTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
+    List<TargetFinishDTO.ViewDTO> listTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
 }

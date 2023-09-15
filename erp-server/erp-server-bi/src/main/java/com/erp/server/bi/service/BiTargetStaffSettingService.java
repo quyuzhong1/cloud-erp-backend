@@ -63,9 +63,9 @@ public interface BiTargetStaffSettingService extends SuperService<BiTargetStaffS
      * @author Will
      * @date: 2023/9/15 11:06
      * @param dto
-     * @return List<BiTargetStaffSettingEntity>
+     * @return List<TargetFinishDTO.ViewDTO>
      */
-    List<BiTargetStaffSettingEntity> listUserTargetFinish(TargetFinishDTO.ParamDTO dto);
+    List<TargetFinishDTO.ViewDTO> listUserTargetFinish(TargetFinishDTO.ParamDTO dto);
     /**
      * @description: 根据指标查询部门目标值
      * @author Will
@@ -73,7 +73,7 @@ public interface BiTargetStaffSettingService extends SuperService<BiTargetStaffS
      * @param dto
      * @return List<BiTargetStaffSettingEntity>
      */
-    List<BiTargetStaffSettingEntity> listDeptTargetFinish(TargetFinishDTO.ParamDTO dto);
+    List<TargetFinishDTO.ViewDTO> listDeptTargetFinish(TargetFinishDTO.ParamDTO dto);
 
     /**
      * 下载模板

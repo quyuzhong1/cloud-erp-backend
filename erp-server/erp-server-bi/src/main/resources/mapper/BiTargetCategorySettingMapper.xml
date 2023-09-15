@@ -71,14 +71,11 @@
         ORDER BY ty.id DESC
     </select>
 
-    <select id="listTargetFinish" resultType="com.erp.model.bi.entity.BiTargetCategorySettingEntity">
+    <select id="listTargetFinish" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
         select
-            btcs.main_id,
-            btcs.category_id,
-            btcs.category_name,
+            btcs.category_name as typeName,
             btcs.month,
-            btcs.value,
-            btcs.metrics
+            btcs.value
         from bi_target_year bty
         left join bi_target_category_setting btcs on btcs.is_deleted = false and bty.id = btcs.main_id
         <where>

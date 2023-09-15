@@ -71,14 +71,11 @@
         ORDER BY ty.id DESC
     </select>
 
-    <select id="listTargetFinish" resultType="com.erp.model.bi.entity.BiTargetSkuSettingEntity">
+    <select id="listTargetFinish" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
         select
-            btcs.main_id,
-            btcs.sku_id,
-            btcs.sku_no,
+            btcs.sku_no as typeName,
             btcs.month,
-            btcs.value,
-            btcs.metrics
+            btcs.value
         from bi_target_year bty
         left join bi_target_sku_setting btss on btss.is_deleted = false and bty.id = btss.main_id
         <where>
