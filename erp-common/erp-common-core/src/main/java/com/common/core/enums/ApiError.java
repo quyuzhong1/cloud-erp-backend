@@ -28,7 +28,6 @@ public enum ApiError implements Serializable {
 
 
     /**
-    /**
      * 通用错误
      */
     ERROR_405(405, "方法不被允许"),

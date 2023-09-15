@@ -1,5 +1,6 @@
 package com.sdk.oms.shopify.api.rest.model;
 
+
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.fasterxml.jackson.annotation.JsonAnySetter;

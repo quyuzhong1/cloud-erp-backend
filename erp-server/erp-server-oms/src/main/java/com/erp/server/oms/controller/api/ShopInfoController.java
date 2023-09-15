@@ -250,6 +250,17 @@ public class ShopInfoController extends BaseController {
         return result ? success() : failure();
     }
 
+    /**
+     * 检查店铺是否授权
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("checkShopIsAuthorize")
+    public ApiResult checkShopIsAuthorize(@RequestParam(value = "id") String id) {
+        Boolean checkResult = shopInfoService.checkShopIsAuthorize(id);
+        return success(checkResult);
+    }
 
     /**
      * 取消授权
