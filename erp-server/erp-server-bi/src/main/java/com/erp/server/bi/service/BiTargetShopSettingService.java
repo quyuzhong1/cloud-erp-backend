@@ -7,7 +7,9 @@ import com.erp.model.bi.dto.BiTargetShopSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.entity.BiTargetShopSettingEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -63,4 +65,20 @@ public interface BiTargetShopSettingService extends SuperService<BiTargetShopSet
      * @return List<TargetFinishDTO.ViewDTO>
      */
     List<TargetFinishDTO.ViewDTO> listTargetFinish(TargetFinishDTO.ParamDTO dto);
+
+    /**
+     * 下载模板
+     * @param response
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 导入
+     * @author yl
+     * @date 2023-09-15 16:32
+     * @param excelFile
+     * @param response
+     * @return com.erp.model.bi.dto.BiTargetShopSettingDTO.ImportDTO
+     */
+    BiTargetShopSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
 }
