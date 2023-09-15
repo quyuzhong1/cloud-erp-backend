@@ -7,27 +7,42 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
+import com.erp.model.bi.entity.BiProductInfoEntity;
 import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
+
+import com.common.core.exception.ServiceException;
 import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.server.bi.mapper.BiTargetStaffSettingMapper;
 import com.erp.server.bi.service.BiTargetStaffSettingService;
 import com.erp.server.bi.service.BiTargetYearService;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.compress.utils.Lists;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -351,6 +366,45 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         List<BiTargetStaffSettingDTO.PagingViewDTO> list = pageData.getRecords();
         pullPaging(list);
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/TargetStaffSetting.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("warehouse downloadTemplate  出错了 e=={}", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+    /**
+     * 导入人员目标设置
+     * @author yl
+     * @date 2023-09-15 14:20
+     * @param excelFile
+     * @param response
+     * @return com.erp.model.bi.dto.BiTargetStaffSettingDTO.ImportDTO
+     */
+    @Override
+    public BiTargetStaffSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+        List<String> metricsList=MetricsEnum.listName();
+        List<FindUserDTO> userList=sysUserFeign.getUserList();
+
+        return null;
     }
 
     @Override

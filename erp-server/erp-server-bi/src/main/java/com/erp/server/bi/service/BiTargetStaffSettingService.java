@@ -1,13 +1,14 @@
 package com.erp.server.bi.service;
-
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
+import com.common.business.service.SuperService;
+import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -73,4 +74,20 @@ public interface BiTargetStaffSettingService extends SuperService<BiTargetStaffS
      * @return List<BiTargetStaffSettingEntity>
      */
     List<BiTargetStaffSettingEntity> listDeptTargetFinish(TargetFinishDTO.ParamDTO dto);
+
+    /**
+     * 下载模板
+     * @param response
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 导入人员目标设置
+     * @author yl
+     * @date 2023-09-15 14:20
+     * @param excelFile
+     * @param response
+     * @return com.erp.model.bi.dto.BiTargetStaffSettingDTO.ImportDTO
+     */
+    BiTargetStaffSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
 }
