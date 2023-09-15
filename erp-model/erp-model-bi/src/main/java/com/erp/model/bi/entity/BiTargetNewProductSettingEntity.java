@@ -31,16 +31,7 @@ public class BiTargetNewProductSettingEntity extends BaseEntity<BiTargetNewProdu
     */
     @TableField("main_id")
     private String mainId;
-    /**
-    * 店铺id
-    */
-    @TableField("shop_id")
-    private String shopId;
-    /**
-    * 店铺名
-    */
-    @TableField("shop_name")
-    private String shopName;
+
     /**
     * 月
     */

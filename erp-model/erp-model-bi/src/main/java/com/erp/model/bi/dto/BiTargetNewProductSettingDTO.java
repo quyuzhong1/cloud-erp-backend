@@ -28,6 +28,42 @@ public class BiTargetNewProductSettingDTO implements Serializable {
 
 
 
+
+    /**
+     * 分页详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO {
+
+        private String id;
+
+        /**
+         * 年
+         */
+        private String year;
+
+        /**
+         * 部门id
+         */
+        private String deptId;
+
+        /**
+         * 部门id
+         */
+        private String deptName;
+
+        /**
+         * 详情信息
+         */
+        private List<CommonDTO> detailList;
+
+
+    }
+
+
+
+
     /**
     * 详情
     */
@@ -79,13 +115,11 @@ public class BiTargetNewProductSettingDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO extends BiTargetYearDTO.UpdateDTO {
 
-        /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
+        @Size(min = 1, message = "目标设置不能为空")
+        @NotNull(message = "目标设置不能为空")
+        private List<CommonDTO> detailList;
 
     }
 

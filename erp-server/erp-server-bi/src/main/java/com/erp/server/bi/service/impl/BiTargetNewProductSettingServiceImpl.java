@@ -1,9 +1,15 @@
 package com.erp.server.bi.service.impl;
 
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.api.R;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.entity.BiTargetNewProductSettingEntity;
 
 import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
@@ -50,6 +56,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
 
     @Autowired
     private BiTargetYearService biTargetYearService;
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -219,22 +226,31 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(BiTargetNewProductSettingDTO.UpdateDTO updateDTO) {
-        BiTargetNewProductSettingEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "新品目标设置单"));
-        BiTargetNewProductSettingEntity biTargetNewProductSettingEntity = BeanMapperUtils.map(BiTargetNewProductSettingEntity.class, updateDTO);
-
-        // 数据处理
-      //  handleData(biTargetNewProductSettingEntity);
-        log.info("编辑 开始修改新品目标设置单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(biTargetNewProductSettingEntity);
-        if (!save) {
+        String id = updateDTO.getId();
+        BiTargetYearEntity oldTargetYear = biTargetYearService.getById(id);
+        Optional.ofNullable(oldTargetYear).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "新品目标设置"));
+        BiTargetYearEntity targetYear = BeanMapperUtils.map(BiTargetYearEntity.class, updateDTO);
+        List<String> metricsList = updateDTO.getMetricsList();
+        targetYear.setMetrics(metricsList.stream().collect(Collectors.joining(",")));
+        List<BiTargetNewProductSettingDTO.CommonDTO> detailList = updateDTO.getDetailList();
+        handleData(targetYear, detailList);
+        boolean result = biTargetYearService.updateById(targetYear);
+        if (!result) {
             throw new ServiceException("新品目标设置单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
+        this.removeByMainId(id);
+        this.batchAdd(id, detailList);
         return Boolean.TRUE;
     }
 
+    /**
+     * 删除
+     *
+     * @param mainId
+     */
+    public void removeByMainId(String mainId) {
+        this.lambdaUpdate().eq(BiTargetNewProductSettingEntity::getMainId, mainId).remove();
+    }
     /**
      * 详情
      *
@@ -259,6 +275,8 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
                 collect(Collectors.groupingBy(BiTargetNewProductSettingEntity::getMetrics));
         //详情
         List<BiTargetNewProductSettingDTO.DetailDTO> detailList = new ArrayList<>(map.size());
+        String valueStr = "";
+        String rateStr = "";
         for (Map.Entry<MetricsEnum, List<BiTargetNewProductSettingEntity>> item : map.entrySet()) {
             BiTargetNewProductSettingDTO.DetailDTO detail = new BiTargetNewProductSettingDTO.DetailDTO();
             MetricsEnum metricsEnum = item.getKey();
@@ -269,11 +287,204 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
             Map<String, List<BiTargetNewProductSettingEntity>> staffMap = productSettingList.stream().
                     collect(Collectors.groupingBy(BiTargetNewProductSettingEntity::getStaffId));
             List<BiTargetNewProductSettingDTO.CommonDTO> staffList = new ArrayList<>(staffMap.size());
+            for (Map.Entry<String, List<BiTargetNewProductSettingEntity>> staff : staffMap.entrySet()) {
+                String staffId = staff.getKey();
+                List<BiTargetNewProductSettingEntity> dbList = staff.getValue();
+                BiTargetNewProductSettingDTO.CommonDTO common = new BiTargetNewProductSettingDTO.CommonDTO();
+                common.setStaffId(staffId);
+                common.setStaffName(dbList.get(0).getStaffName());
+                //一月
+                Integer january = MonthEnum.JANUARY.getValue();
+                common.setJanuary(pullView(metrics, january, dbList, valueStr));
+                common.setJanuaryRate(pullView(metrics, january, dbList,rateStr));
 
+                //二月
+                Integer february = MonthEnum.FEBRUARY.getValue();
+                common.setFebruary(pullView(metrics, february, dbList,valueStr));
+                common.setFebruaryRate(pullView(metrics, february, dbList,rateStr));
 
+                //三月
+                Integer march = MonthEnum.MARCH.getValue();
+                common.setMarch(pullView(metrics, march, dbList,valueStr));
+                common.setMarchRate(pullView(metrics, march, dbList,rateStr));
+                //四月
+                Integer april = MonthEnum.APRIL.getValue();
+                common.setApril(pullView(metrics, april, dbList,valueStr));
+                common.setAprilRate(pullView(metrics, april, dbList,rateStr));
+                //五月
+                Integer may = MonthEnum.MAY.getValue();
+                common.setMay(pullView(metrics, may, dbList,valueStr));
+                common.setMayRate(pullView(metrics, may, dbList,rateStr));
+                //六月
+                Integer june = MonthEnum.JUNE.getValue();
+                common.setJune(pullView(metrics, june, dbList,valueStr));
+                common.setJuneRate(pullView(metrics, june, dbList,rateStr));
+                //七月
+                Integer july = MonthEnum.JULY.getValue();
+                common.setJuly(pullView(metrics, july, dbList,valueStr));
+                common.setJulyRate(pullView(metrics, july, dbList,rateStr));
+                //八月
+                Integer august = MonthEnum.AUGUST.getValue();
+                common.setAugust(pullView(metrics, august, dbList,valueStr));
+                common.setAugustRate(pullView(metrics, august, dbList,rateStr));
+                //九月
+                Integer september = MonthEnum.SEPTEMBER.getValue();
+                common.setSeptember(pullView(metrics, september, dbList,valueStr));
+                common.setSeptemberRate(pullView(metrics, september, dbList,rateStr));
+                //十月
+                Integer october = MonthEnum.OCTOBER.getValue();
+                common.setOctober(pullView(metrics, october, dbList,valueStr));
+                common.setOctoberRate(pullView(metrics, october, dbList,rateStr));
+
+                //十一月
+                Integer november = MonthEnum.NOVEMBER.getValue();
+                common.setNovember(pullView(metrics, november, dbList,valueStr));
+                common.setNovemberRate(pullView(metrics, november, dbList,rateStr));
+
+                //十二月
+                Integer december = MonthEnum.DECEMBER.getValue();
+                common.setDecember(pullView(metrics, december, dbList,valueStr));
+                common.setDecemberRate(pullView(metrics, december, dbList,rateStr));
+                staffList.add(common);
+            }
+            detail.setNewProductSettingList(staffList);
+            detailList.add(detail);
+        }
+        view.setDetailList(detailList);
+        return view;
+    }
+
+    /**
+     * 分页展示
+     * @author yl
+     * @date 2023-09-15 12:07
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.bi.dto.BiTargetNewProductSettingDTO.PagingViewDTO>
+     */
+    @Override
+    public PagingVO<BiTargetNewProductSettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto) {
+        BiTargetYearDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+        List<BiTargetNewProductSettingDTO.PagingViewDTO> list = pageData.getRecords();
+        pullPaging(list);
+        return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 填充分页数据
+     * @param list
+     */
+    private void pullPaging(List<BiTargetNewProductSettingDTO.PagingViewDTO> list) {
+
+        List<String> mainIdList = list.stream().map(BiTargetNewProductSettingDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        List<BiTargetNewProductSettingEntity> staffSettingDbList = this.listBaseByMainIdList(mainIdList);
+        for (BiTargetNewProductSettingDTO.PagingViewDTO item : list) {
+            List<BiTargetNewProductSettingEntity> dbList = staffSettingDbList.stream().
+                    filter(s -> s.getMainId().equals(item.getId())).collect(Collectors.toList());
+            List<BiTargetNewProductSettingDTO.CommonDTO> commonList = getCommon(dbList);
+            item.setDetailList(commonList);
+        }
+    }
+
+    private List<BiTargetNewProductSettingDTO.CommonDTO> getCommon(List<BiTargetNewProductSettingEntity> dbList) {
+        List<BiTargetNewProductSettingDTO.CommonDTO> resultList = new ArrayList<>(10);
+        String valueStr = "";
+        String rateStr = "";
+        //根据指标分组
+        Map<MetricsEnum, List<BiTargetNewProductSettingEntity>> map = dbList.stream().
+                collect(Collectors.groupingBy(BiTargetNewProductSettingEntity::getMetrics));
+
+        for (Map.Entry<MetricsEnum, List<BiTargetNewProductSettingEntity>> item : map.entrySet()) {
+            MetricsEnum metricsEnum = item.getKey();
+            String metrics = metricsEnum.getCode();
+            List<BiTargetNewProductSettingEntity> staffSettingList = item.getValue();
+            //根据人分组
+            Map<String, List<BiTargetNewProductSettingEntity>> staffMap = staffSettingList.stream().
+                    collect(Collectors.groupingBy(BiTargetNewProductSettingEntity::getStaffId));
+            for (Map.Entry<String, List<BiTargetNewProductSettingEntity>> staff : staffMap.entrySet()) {
+                String staffId = staff.getKey();
+                List<BiTargetNewProductSettingEntity> staffDbList = staff.getValue();
+                BiTargetNewProductSettingDTO.CommonDTO common = new BiTargetNewProductSettingDTO.CommonDTO();
+                common.setStaffId(staffId);
+                common.setStaffName(dbList.get(0).getStaffName());
+                //一月
+                Integer january = MonthEnum.JANUARY.getValue();
+                common.setJanuary(pullView(metrics, january, dbList, valueStr));
+                common.setJanuaryRate(pullView(metrics, january, dbList,rateStr));
+
+                //二月
+                Integer february = MonthEnum.FEBRUARY.getValue();
+                common.setFebruary(pullView(metrics, february, dbList,valueStr));
+                common.setFebruaryRate(pullView(metrics, february, dbList,rateStr));
+
+                //三月
+                Integer march = MonthEnum.MARCH.getValue();
+                common.setMarch(pullView(metrics, march, dbList,valueStr));
+                common.setMarchRate(pullView(metrics, march, dbList,rateStr));
+                //四月
+                Integer april = MonthEnum.APRIL.getValue();
+                common.setApril(pullView(metrics, april, dbList,valueStr));
+                common.setAprilRate(pullView(metrics, april, dbList,rateStr));
+                //五月
+                Integer may = MonthEnum.MAY.getValue();
+                common.setMay(pullView(metrics, may, dbList,valueStr));
+                common.setMayRate(pullView(metrics, may, dbList,rateStr));
+                //六月
+                Integer june = MonthEnum.JUNE.getValue();
+                common.setJune(pullView(metrics, june, dbList,valueStr));
+                common.setJuneRate(pullView(metrics, june, dbList,rateStr));
+                //七月
+                Integer july = MonthEnum.JULY.getValue();
+                common.setJuly(pullView(metrics, july, dbList,valueStr));
+                common.setJulyRate(pullView(metrics, july, dbList,rateStr));
+                //八月
+                Integer august = MonthEnum.AUGUST.getValue();
+                common.setAugust(pullView(metrics, august, dbList,valueStr));
+                common.setAugustRate(pullView(metrics, august, dbList,rateStr));
+                //九月
+                Integer september = MonthEnum.SEPTEMBER.getValue();
+                common.setSeptember(pullView(metrics, september, dbList,valueStr));
+                common.setSeptemberRate(pullView(metrics, september, dbList,rateStr));
+                //十月
+                Integer october = MonthEnum.OCTOBER.getValue();
+                common.setOctober(pullView(metrics, october, dbList,valueStr));
+                common.setOctoberRate(pullView(metrics, october, dbList,rateStr));
+
+                //十一月
+                Integer november = MonthEnum.NOVEMBER.getValue();
+                common.setNovember(pullView(metrics, november, dbList,valueStr));
+                common.setNovemberRate(pullView(metrics, november, dbList,rateStr));
+
+                //十二月
+                Integer december = MonthEnum.DECEMBER.getValue();
+                common.setDecember(pullView(metrics, december, dbList,valueStr));
+                common.setDecemberRate(pullView(metrics, december, dbList,rateStr));
+
+                common.setMetrics(metricsEnum);
+                common.setMetricsName(metricsEnum.getName());
+                resultList.add(common);
+            }
 
         }
-        return null;
+
+        return resultList;
+    }
+
+    /**
+     * 填充显示的数据
+     */
+    private BigDecimal pullView(String metrics, Integer month, List<BiTargetNewProductSettingEntity> dbList, String flagStr) {
+        if ("value".equals(flagStr)) {
+            BigDecimal value = dbList.stream().filter(d -> d.getMonth().equals(month)).findFirst().
+                    map(BiTargetNewProductSettingEntity::getValue).orElse(null);
+            return value;
+        } else {
+            BigDecimal rate = dbList.stream().filter(d -> d.getMonth().equals(month)).findFirst().
+                    map(BiTargetNewProductSettingEntity::getRate).orElse(null);
+            return Objects.nonNull(rate) ? MathUtil.multiply(rate, MathUtil.BigDecimal_100) : rate;
+        }
     }
 
     /**
