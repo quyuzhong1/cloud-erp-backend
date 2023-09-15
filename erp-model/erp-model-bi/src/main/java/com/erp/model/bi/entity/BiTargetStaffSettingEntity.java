@@ -1,15 +1,15 @@
 package com.erp.model.bi.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-
 import com.erp.model.bi.enums.MetricsEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -57,6 +57,17 @@ public class BiTargetStaffSettingEntity extends BaseEntity<BiTargetStaffSettingE
     @TableField("metrics")
     private MetricsEnum metrics;
 
+
+    /**
+     * 部门id
+     */
+    @TableField(exist = false)
+    private String deptId;
+    /**
+     * 部门名称
+     */
+    @TableField(exist = false)
+    private String deptName;
 
     public static final String MAIN_ID = "main_id";
 

@@ -1,23 +1,22 @@
 package com.erp.server.bi.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.erp.model.bi.dto.BiTargetShopSettingDTO;
-import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.entity.BiProductDetailEntity;
-import com.erp.model.bi.entity.BiTargetShopSettingEntity;
-import com.erp.model.bi.entity.BiTargetSkuSettingEntity;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.bi.dto.TargetFinishDTO;
+import com.erp.model.bi.entity.BiProductDetailEntity;
+import com.erp.model.bi.entity.BiTargetSkuSettingEntity;
 import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -25,20 +24,15 @@ import com.erp.server.bi.mapper.BiTargetSkuSettingMapper;
 import com.erp.server.bi.service.BiProductDetailService;
 import com.erp.server.bi.service.BiTargetSkuSettingService;
 import com.erp.server.bi.service.BiTargetYearService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -335,6 +329,11 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
         pullPaging(list);
         return new PagingVO<>(pageData);
 
+    }
+
+    @Override
+    public List<BiTargetSkuSettingEntity> listTargetFinish(TargetFinishDTO.ParamDTO dto) {
+        return baseMapper.listTargetFinish(dto);
     }
 
     /**

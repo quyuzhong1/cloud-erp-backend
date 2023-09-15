@@ -3,15 +3,16 @@ package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
-import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.entity.BiTargetShopSettingEntity;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.bi.dto.BiTargetShopSettingDTO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.bi.dto.TargetFinishDTO;
+import com.erp.model.bi.entity.BiTargetShopSettingEntity;
 import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
@@ -23,20 +24,15 @@ import com.erp.server.bi.mapper.BiTargetShopSettingMapper;
 import com.erp.server.bi.service.BiTargetShopSettingService;
 import com.erp.server.bi.service.BiTargetYearService;
 import com.erp.server.bi.service.DmpShopInfoService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.bi.dto.BiTargetShopSettingDTO;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -339,6 +335,11 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         pullPaging(list);
         return new PagingVO<>(pageData);
 
+    }
+
+    @Override
+    public List<BiTargetShopSettingEntity> listTargetFinish(TargetFinishDTO.ParamDTO dto) {
+        return baseMapper.listTargetFinish(dto);
     }
 
     /**

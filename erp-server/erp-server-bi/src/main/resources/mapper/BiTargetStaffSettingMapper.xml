@@ -89,5 +89,70 @@
 
     </select>
 
+    <select id="listUserTargetFinish" resultType="com.erp.model.bi.entity.BiTargetStaffSettingEntity">
+        select
+            btss.main_id,
+            btss.staff_id,
+            btss.staff_name,
+            btss.month,
+            btss.value,
+            btss.metrics
+        from bi_target_year bty
+        left join bi_target_staff_setting btss on btss.is_deleted = false and bty.id = btss.main_id
+        <where>
+            bty.is_deleted = false
+            <if test="params.metrics != null and params.metrics != ''">
+              and  btss.metrics = #{params.metrics}
+            </if>
+            <if test="params.date != null ">
+                and  bty.year = to_char(#{params.date},'yyyy')  and btss.month between 1 and 12
+            </if>
+            <if test="params.deptIdList !=null and params.deptIdList.size > 0">
+                and bty.dept_id in
+                <foreach collection="params.deptIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.userIdList !=null and params.userIdList.size > 0">
+                and btss.staff_id in
+                <foreach collection="params.userIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="listDeptTargetFinish" resultType="com.erp.model.bi.entity.BiTargetStaffSettingEntity">
+        select
+            bty.dept_id,
+            bty.dept_name,
+            btss.month,
+            sum(btss.value) as value
+        from bi_target_year bty
+        left join bi_target_staff_setting btss on btss.is_deleted = false and bty.id = btss.main_id
+        <where>
+            bty.is_deleted = false
+            <if test="params.metrics != null and params.metrics != ''">
+                and  btss.metrics = #{params.metrics}
+            </if>
+            <if test="params.date != null ">
+                and  bty.year = to_char(#{params.date},'yyyy')  and btss.month between 1 and 12
+            </if>
+            <if test="params.deptIdList !=null and params.deptIdList.size > 0">
+                and bty.dept_id in
+                <foreach collection="params.deptIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.userIdList !=null and params.userIdList.size > 0">
+                and btss.staff_id in
+                <foreach collection="params.userIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        group by bty.dept_id,bty.dept_name,btss.month
+    </select>
+
 
 </mapper>

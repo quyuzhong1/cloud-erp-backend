@@ -7,33 +7,27 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.entity.BiProductInfoEntity;
-import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
-
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.bi.dto.TargetFinishDTO;
+import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.server.bi.mapper.BiTargetStaffSettingMapper;
 import com.erp.server.bi.service.BiTargetStaffSettingService;
 import com.erp.server.bi.service.BiTargetYearService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.compress.utils.Lists;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -357,6 +351,16 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         List<BiTargetStaffSettingDTO.PagingViewDTO> list = pageData.getRecords();
         pullPaging(list);
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public List<BiTargetStaffSettingEntity> listDeptTargetFinish(TargetFinishDTO.ParamDTO dto) {
+        return baseMapper.listDeptTargetFinish(dto);
+    }
+
+    @Override
+    public List<BiTargetStaffSettingEntity> listUserTargetFinish(TargetFinishDTO.ParamDTO dto) {
+        return baseMapper.listUserTargetFinish(dto);
     }
 
 

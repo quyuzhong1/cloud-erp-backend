@@ -2,15 +2,18 @@ package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.erp.model.bi.dto.TargetFinishDTO;
+import com.erp.model.bi.entity.BiTargetCategorySettingEntity;
+import com.erp.model.bi.entity.BiTargetShopSettingEntity;
+import com.erp.model.bi.entity.BiTargetSkuSettingEntity;
+import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 import com.erp.model.bi.enums.TargetSearchTypeEnum;
 import com.erp.server.bi.service.*;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.temporal.TemporalAdjusters;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * @author Will
@@ -21,12 +24,16 @@ import java.util.LinkedHashMap;
 @Service
 public class BiTargetReportServiceImpl implements BiTargetReportService {
 
+    @Resource
     private BiTargetStaffSettingService biTargetStaffSettingService;
 
+    @Resource
     private BiTargetShopSettingService biTargetShopSettingService;
 
+    @Resource
     private BiTargetCategorySettingService biTargetCategorySettingService;
 
+    @Resource
     private BiTargetSkuSettingService biTargetSkuSettingService;
 
     @Override
@@ -34,25 +41,27 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         if (ObjectUtils.isEmpty(dto.getDate())) {
             dto.setDate(LocalDate.now());
         }
-        // 获取月度开始时间和结束时间
-        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getDate().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
-        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getDate().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
-
-        if (TargetSearchTypeEnum.DEPT.equals(dto.getSearchType()) || TargetSearchTypeEnum.USER.equals(dto.getSearchType())) {
+        // 获取年度开始时间和结束时间
+        if (TargetSearchTypeEnum.DEPT.equals(dto.getSearchType()) ) {
+            //根据指标查询部门目标值
+            List<BiTargetStaffSettingEntity> list = biTargetStaffSettingService.listDeptTargetFinish(dto);
+            //查询平台销量
+        }
+        if (TargetSearchTypeEnum.USER.equals(dto.getSearchType())) {
             //根据指标查询人员目标值
-            //biTargetStaffSettingService.listTargetFinish(dto);
+            List<BiTargetStaffSettingEntity> list = biTargetStaffSettingService.listUserTargetFinish(dto);
         }
         if (TargetSearchTypeEnum.SHOP.equals(dto.getSearchType())) {
             //根据指标查询店铺目标值
-            //biTargetShopSettingService.listTargetFinish(dto);
+            List<BiTargetShopSettingEntity> list = biTargetShopSettingService.listTargetFinish(dto);
         }
         if (TargetSearchTypeEnum.CATEGORY.equals(dto.getSearchType())) {
             //根据指标查询品类目标值
-            //biTargetCategorySettingService.listTargetFinish(dto);
+            List<BiTargetCategorySettingEntity> list = biTargetCategorySettingService.listTargetFinish(dto);
         }
         if (TargetSearchTypeEnum.SKU.equals(dto.getSearchType())) {
             //根据指标查询SKU目标值
-            //biTargetSkuSettingService.listTargetFinish(dto);
+            List<BiTargetSkuSettingEntity> list = biTargetSkuSettingService.listTargetFinish(dto);
         }
         return null;
     }
