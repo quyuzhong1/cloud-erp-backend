@@ -7,6 +7,7 @@ import com.common.business.vo.SeriesVO;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.DateFilterDTO;
+import com.erp.model.bi.dto.NewAndOldSalesSearchDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
@@ -2150,4 +2151,61 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         return "";
     }
 
+    @Override
+    public List<NewAndOldSalesSearchDTO.PagingDTO> newAndOldSalesAmount(NewAndOldSalesSearchDTO.SearchDTO dto) {
+
+        return null;
+    }
+
+    private List<ProductNewAndOldVO> divisionNewAndOldSalesAmount(BiFilterDTO dto) {
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
+        List<SalesFlagVO> list = baseMapper.byDeptNewAndOld(dto, settleRate);
+        //新品
+        Integer newFlag = BiConstant.NEW;
+        //老品
+        Integer oldFlag = BiConstant.OLD;
+        List<ProductNewAndOldVO> resultList = new ArrayList<>(list.size());
+        Map<String, List<SalesFlagVO>> groupMap = list.parallelStream().
+                collect(Collectors.groupingBy(SalesFlagVO::getName));
+
+        for (Map.Entry<String, List<SalesFlagVO>> item : groupMap.entrySet()) {
+            String deptId = item.getKey();
+            List<SalesFlagVO> salesList = item.getValue();
+            ProductNewAndOldVO vo = new ProductNewAndOldVO();
+            SysDepartmentDTO dept = deptList.stream().filter(u -> u.getId().equals(deptId)).
+                    findFirst().orElse(null);
+            if (dept != null) {
+                vo.setName(dept.getName());
+            } else {
+                vo.setName("无");
+            }
+
+            BigDecimal newProductSales = salesList.stream().
+                    filter(s -> s.getFlag().equals(newFlag) && s.getSales() != null).
+                    map(SalesFlagVO::getSales).
+                    reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal oldProductSales = salesList.stream().
+                    filter(s -> s.getFlag().equals(oldFlag) && s.getSales() != null).
+                    map(SalesFlagVO::getSales).
+                    reduce(BigDecimal.ZERO, BigDecimal::add);
+            vo.setNewProductSales(newProductSales);
+            vo.setOldProductSales(oldProductSales);
+            Integer newSalesQuantity = salesList.stream().
+                    filter(s -> s.getFlag().equals(newFlag) && s.getSalesQuantity() != null).
+                    mapToInt(SalesFlagVO::getSalesQuantity).
+                    sum();
+            Integer oldSalesQuantity = salesList.stream().
+                    filter(s -> s.getFlag().equals(oldFlag) && s.getSalesQuantity() != null).
+                    mapToInt(SalesFlagVO::getSalesQuantity).
+                    sum();
+            vo.setNewSalesQuantity(newSalesQuantity);
+            vo.setOldSalesQuantity(oldSalesQuantity);
+            resultList.add(vo);
+        }
+
+        return resultList;
+    }
 }

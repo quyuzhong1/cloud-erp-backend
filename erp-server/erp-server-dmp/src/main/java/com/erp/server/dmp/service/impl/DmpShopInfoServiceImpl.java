@@ -46,14 +46,12 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
      * @Author Luo_WG
      * @Date 2022/11/16 19:35
      * @param shopNo 店铺编号
-     * @param platformSign 平台标识
      * @return com.erp.model.dmp.entity.DmpSkuInfoEntity
      **/
     @Override
-    public DmpShopInfoEntity getShopByShopNo(String shopNo, String platformSign){
+    public DmpShopInfoEntity getShopByShopNo(String shopNo){
         LambdaQueryWrapper<DmpShopInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpShopInfoEntity::getPlatformShopNo, shopNo);
-        lambdaQueryWrapper.eq(StrUtil.isNotBlank(platformSign), DmpShopInfoEntity::getPlatformSign, platformSign);
         return this.getOne(lambdaQueryWrapper);
     }
 
@@ -81,7 +79,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void checkOrder(DmpShopInfoEntity dmpShopInfoEntity) {
-        DmpShopInfoEntity dmpOrderInfoEntity = this.getShopByShopNo(dmpShopInfoEntity.getPlatformShopNo(), dmpShopInfoEntity.getPlatformSign());
+        DmpShopInfoEntity dmpOrderInfoEntity = this.getShopByShopNo(dmpShopInfoEntity.getPlatformShopNo());
         if (dmpOrderInfoEntity != null) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpOrderInfoEntity.toString().equals(dmpShopInfoEntity.toString())) {
@@ -107,7 +105,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
      **/
     @Override
     public DmpShopInfoDTO queryShopByPlatformList(String shopNo, String platformSign, List<SysUserDeptDTO> userDeptList) {
-        DmpShopInfoEntity req = getShopByShopNo(shopNo, platformSign);
+        DmpShopInfoEntity req = getShopByShopNo(shopNo);
         DmpShopInfoDTO dmpShopInfoDTO = new DmpShopInfoDTO();
         BeanUtil.copyProperties(req, dmpShopInfoDTO);
 
