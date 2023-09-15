@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 专题表(BiSubject)表控制层
+ * 专题管理
  *
  * @author yl
  * @since 2022-12-08 14:31:58

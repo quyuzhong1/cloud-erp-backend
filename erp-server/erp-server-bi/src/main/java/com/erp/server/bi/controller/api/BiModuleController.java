@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 模块表(BiModule)表控制层
+ * 模块管理
  *
  * @author yl
  * @since 2022-12-08 14:31:14
@@ -64,7 +64,7 @@ public class BiModuleController extends BaseController {
     }
 
     /**
-     * 新增模块
+     * 模块详情
      *
      * @param dto 实体
      * @return 新增结果

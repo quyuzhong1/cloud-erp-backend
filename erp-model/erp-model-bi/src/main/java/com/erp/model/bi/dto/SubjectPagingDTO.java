@@ -59,6 +59,7 @@ public class SubjectPagingDTO implements Serializable {
      * 分享标示
      * personal 私人
      * share 共享
+     * role 角色共享
      */
     private String shareFlag;
 

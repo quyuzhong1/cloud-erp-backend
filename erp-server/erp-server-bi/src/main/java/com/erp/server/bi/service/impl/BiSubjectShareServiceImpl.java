@@ -71,7 +71,7 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
         boolean flag = subjectService.updateById(subject);
         //如果是分享
         if (!DashboardEnum.PERSONAL.getFlag().equals(shareFlag) && flag) {
-            checkAndAddSubjectShare(dto.getShareUserIdList(), subjectId, shareFlag);
+            checkAndAddSubjectShare(dto.checkAndGetShareFlagIdList(), subjectId, shareFlag);
         }else{
             //删除分享的数据
             deleteBySubjectId(subjectId);
