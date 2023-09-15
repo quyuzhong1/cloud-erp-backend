@@ -31,6 +31,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.DictBasicValueEnum;
+import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -476,7 +477,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         try {
             // 二级域名
             String secondDomain = shop;
-            if (shop.contains(ShopifyConstant.DOMAIN)){
+            if (shop.contains(ShopifyConstant.DOMAIN)) {
                 secondDomain = shop.replace(ShopifyConstant.DOMAIN, "");
             }
             ShopInfoEntity shopInfo = this.getByDomain(secondDomain);
@@ -610,7 +611,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         // platform-token:平台名称:店铺ID
         String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopInfo.getId());
         Object shopInfoObj = redisUtil.get(tokenKey);
-        if (null != shopInfoObj){
+        if (null != shopInfoObj) {
             redisUtil.del(tokenKey);
         }
         return result;
@@ -656,10 +657,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             List<ShopInfoEntity> shopList = shopInfoList.stream().filter(obj -> obj.getDictPlatform().equals(viewDTO.getValue())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(shopList)) {
                 resultList.add(listTreeDTO);
-               continue;
+                continue;
             }
             List<ShopDTO.ListChildTreeDTO> listChildList = new ArrayList<>();
-            for (ShopInfoEntity shopInfoEntity:shopList) {
+            for (ShopInfoEntity shopInfoEntity : shopList) {
                 ShopDTO.ListChildTreeDTO listChildTreeDTO = new ShopDTO.ListChildTreeDTO();
                 listChildTreeDTO.setId(shopInfoEntity.getId());
                 listChildTreeDTO.setName(shopInfoEntity.getName());
@@ -672,14 +673,31 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return resultList;
     }
 
+
     /**
+     * 检查店铺是否授权
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public Boolean checkShopIsAuthorize(String id) {
+        ShopInfoEntity shopInfo = this.getById(id);
+        if (Objects.isNull(shopInfo)) {
+            throw new ServiceException("店铺不存在");
+        }
+        String authStatus = shopInfo.getAuthStatus();
+        return AuthStatusEnum.ALREADY.getCode().equals(authStatus);
+    }
+
+    /**
+     * @param platformList
+     * @return List<ShopInfoEntity>
      * @description: 根据平台集合查询
      * @author Will
      * @date: 2023/9/7 16:39
-     * @param platformList
-     * @return List<ShopInfoEntity>
      */
-    private List<ShopInfoEntity> listByPlatformList (List<String> platformList) {
+    private List<ShopInfoEntity> listByPlatformList(List<String> platformList) {
         if (CollectionUtils.isEmpty(platformList)) {
             return Collections.EMPTY_LIST;
         }

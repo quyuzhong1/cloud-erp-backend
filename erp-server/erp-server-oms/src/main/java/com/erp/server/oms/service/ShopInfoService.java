@@ -136,4 +136,11 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return List<ListTreeDTO>
      */
     List<ShopDTO.ListTreeDTO> listTree();
+
+    /**
+     * 检查店铺是否授权
+     * @param id
+     * @return
+     */
+    Boolean checkShopIsAuthorize(String id);
 }
