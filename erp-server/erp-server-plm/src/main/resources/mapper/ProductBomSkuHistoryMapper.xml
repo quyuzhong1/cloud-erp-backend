@@ -18,6 +18,12 @@
         left join product_bom_info pbi on pbi.is_deleted = false and pbh.bom_id = pbi.id
         <where>
             pbh.is_deleted = false and pbi.state = 4
+            and pbi.id in (
+            select distinct bom_id from product_bom_sku where is_deleted = false and parent_sku_id in
+            <foreach collection="parentSkuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+            )
             and pbs.parent_sku_id in
             <foreach collection="parentSkuIds" item="item" open="(" separator="," close=")">
                 #{item}
