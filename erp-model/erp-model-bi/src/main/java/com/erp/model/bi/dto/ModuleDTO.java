@@ -1,6 +1,7 @@
 package com.erp.model.bi.dto;
 
 import com.common.business.validator.UpdateGroup;
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -85,7 +86,22 @@ public class ModuleDTO implements Serializable {
     private String code;
 
     /**
-     * 权限人员
+     * 分享的ID, 用户ID/角色ID
+     */
+    @Deprecated
+    private List<String> shareFlagIdList;
+
+    /**
+     * 分享标示
+     * personal 私人
+     * share 按多用户ID共享
+     * role 按多角色ID
+     */
+    @StateEnumValue(strValues = {"personal","share","role"},message = "分享类型有误")
+    private String shareFlag = "personal";
+
+    /**
+     * 分享的ID, 用户ID/角色ID
      */
     private List<String> permissionUserIdList;
 }

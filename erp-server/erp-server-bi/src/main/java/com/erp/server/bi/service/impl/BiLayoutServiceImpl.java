@@ -95,12 +95,8 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         Boolean result = subjectService.updateById(subject);
         String shareFlag = subject.getShareFlag();
         if (result) {
-            //如果是分享
-            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
-                List<String> userList = dto.getShareUserIdList();
-                //添加专题的分享用户
-                subjectShareService.addSubjectShare(userList, subjectId);
-            }
+            // 检查和添加分享记录
+            subjectShareService.checkAndAddSubjectShare(dto.getShareUserIdList(), subjectId, shareFlag);
         }
         List<LayoutDTO> layoutList = dto.getLayoutList();
         List<String> LayoutIds = new ArrayList<>();
@@ -212,7 +208,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         }
         List<String> userList = dto.getShareUserIdList();
         //添加专题的分享用户
-        subjectShareService.addSubjectShare(userList, subjectId);
+        subjectShareService.checkAndAddSubjectShare(userList, subjectId, subject.getShareFlag());
 
         //删除布局主题关系
         subjectRefLayoutService.deleteBySubjectId(subjectId);
@@ -344,7 +340,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         }
         subject.setShareFlag(shareFlag);
         subject.setIsFrequently(dto.getIsFrequently());
-        subject.setShareUserIdList(dto.getShareUserIdList());
+        subject.setShareFlagIdList(dto.getShareUserIdList());
         //专题id
         String subjectId = subjectService.addSubject(subject);
         if (StringUtils.isBlank(subjectId)) {

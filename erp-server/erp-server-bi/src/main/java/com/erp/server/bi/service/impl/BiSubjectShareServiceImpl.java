@@ -9,6 +9,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.bi.dto.UpdateSubjectShareDTO;
 import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.model.bi.entity.BiSubjectShareEntity;
+import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.mapper.BiSubjectShareMapper;
 import com.erp.server.bi.service.BiSubjectService;
@@ -67,10 +68,10 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
         }
         subject.setShareFlag(shareFlag);
         subject.setIsFrequently(dto.getIsFrequently());
-        Boolean flag = subjectService.updateById(subject);
+        boolean flag = subjectService.updateById(subject);
         //如果是分享
-        if (DashboardEnum.SHARE.getFlag().equals(shareFlag) && flag) {
-            addSubjectShare(dto.getShareUserIdList(), subjectId);
+        if (!DashboardEnum.PERSONAL.getFlag().equals(shareFlag) && flag) {
+            checkAndAddSubjectShare(dto.getShareUserIdList(), subjectId, shareFlag);
         }else{
             //删除分享的数据
             deleteBySubjectId(subjectId);
@@ -91,7 +92,7 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
     public List<String> getShareToMeDashboardIds(String userId) {
         LambdaQueryWrapper<BiSubjectShareEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(BiSubjectShareEntity::getSubjectId);
-        queryWrapper.eq(BiSubjectShareEntity::getUserId, userId);
+        queryWrapper.eq(BiSubjectShareEntity::getIdentityId, userId);
         return this.listObjs(queryWrapper, Object::toString);
     }
 
@@ -99,22 +100,24 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
     /**
      * 保存专题分享的信息
      *
-     * @param userList
+     * @param identityIdList
      * @param subjectId
+     * @param identityTypeEnum
      * @return void
      * @author yl
      * @date 2022-12-13 11:38
      */
     @Override
-    public Boolean addSubjectShare(List<String> userList, String subjectId) {
+    public Boolean addSubjectShare(List<String> identityIdList, String subjectId, BiShareIdentityTypeEnum identityTypeEnum) {
         //先删除分享的数据
         deleteBySubjectId(subjectId);
-        if (CollectionUtils.isNotEmpty(userList)) {
+        if (CollectionUtils.isNotEmpty(identityIdList)) {
             List<BiSubjectShareEntity> addList = new ArrayList<>();
-            for (String userId : userList) {
+            for (String userId : identityIdList) {
                 BiSubjectShareEntity share = new BiSubjectShareEntity();
                 share.setSubjectId(subjectId);
-                share.setUserId(userId);
+                share.setIdentityId(userId);
+                share.setIdentityType(identityTypeEnum.getCode());
                 addList.add(share);
             }
             return this.saveBatch(addList);
@@ -171,14 +174,27 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
     @Override
     public List<String> getUserIdsBySubjectId(String subjectId) {
         LambdaQueryWrapper<BiSubjectShareEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(BiSubjectShareEntity::getUserId);
+        queryWrapper.select(BiSubjectShareEntity::getIdentityId);
         queryWrapper.eq(BiSubjectShareEntity::getSubjectId, subjectId);
         return this.listObjs(queryWrapper, Object::toString);
     }
 
+    @Override
+    public void checkAndAddSubjectShare(List<String> shareFlagIdList, String subjectId, String shareFlag) {
+        // 非分享
+        if (DashboardEnum.PERSONAL.getFlag().equals(shareFlag)) {
+            return;
+        }
+        // 检查对应身份类型
+        BiShareIdentityTypeEnum refTypeEnum = BiShareIdentityTypeEnum.isRoleCheck(shareFlag);
+
+        //添加专题的分享用户/角色
+        this.addSubjectShare(shareFlagIdList, subjectId, refTypeEnum);
+    }
+
     private Boolean getShare(String userId, String subjectId) {
         LambdaQueryWrapper<BiSubjectShareEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(BiSubjectShareEntity::getUserId, userId);
+        queryWrapper.eq(BiSubjectShareEntity::getIdentityId, userId);
         queryWrapper.eq(BiSubjectShareEntity::getSubjectId, subjectId);
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
