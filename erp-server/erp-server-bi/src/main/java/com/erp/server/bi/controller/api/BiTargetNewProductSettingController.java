@@ -1,7 +1,11 @@
 package com.erp.server.bi.controller.api;
 
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogViewService;
+import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.server.bi.service.BiTargetNewProductSettingService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,6 +33,28 @@ public class BiTargetNewProductSettingController extends BaseController {
 
     @Resource
     private BiTargetNewProductSettingService biTargetNewProductSettingService;
+
+
+
+    /**
+     * 分页
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-09-13
+     */
+    @PostMapping("/paging")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "bi:biTargetStaffSetting:paging",
+//            tableAlias = ""
+//    )
+    public ApiResult<PagingVO<BiTargetNewProductSettingDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<BiTargetYearDTO.PagingParamDTO> dto) {
+        PagingVO<BiTargetNewProductSettingDTO.PagingViewDTO> pagingVO = biTargetNewProductSettingService.paging(dto);
+        return success(pagingVO);
+    }
+
 
     /**
     * 新增
@@ -63,11 +89,11 @@ public class BiTargetNewProductSettingController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "dmp:biTargetNewProductSetting:update",
-        serviceClass = BiTargetNewProductSettingService.class,
-        keyIdName = "id")
+//        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//        tableField = "create_user_id",
+//        menuCode = "dmp:biTargetNewProductSetting:update",
+//        serviceClass = BiTargetNewProductSettingService.class,
+//        keyIdName = "id")
     public ApiResult update(@RequestBody @Validated BiTargetNewProductSettingDTO.UpdateDTO dto) {
         biTargetNewProductSettingService.update(dto);
         return success();
