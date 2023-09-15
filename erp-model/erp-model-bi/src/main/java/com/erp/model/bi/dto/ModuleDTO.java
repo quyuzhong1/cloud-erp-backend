@@ -2,8 +2,10 @@ package com.erp.model.bi.dto;
 
 import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
+import com.common.core.exception.ServiceException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.util.CollectionUtils;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -88,7 +90,6 @@ public class ModuleDTO implements Serializable {
     /**
      * 分享的ID, 用户ID/角色ID
      */
-    @Deprecated
     private List<String> shareFlagIdList;
 
     /**
@@ -101,7 +102,18 @@ public class ModuleDTO implements Serializable {
     private String shareFlag = "personal";
 
     /**
-     * 分享的ID, 用户ID/角色ID
+     * 原用户ID列表
      */
+    @Deprecated
     private List<String> permissionUserIdList;
+
+    public List<String> checkAndGetShareFlagIdList() {
+        if ("personal".equalsIgnoreCase(this.shareFlag)){
+            return shareFlagIdList;
+        }
+        if (CollectionUtils.isEmpty(this.shareFlagIdList)){
+            throw new ServiceException("shareFlagIdList分享的标识ID列表不能为空");
+        }
+        return shareFlagIdList;
+    }
 }

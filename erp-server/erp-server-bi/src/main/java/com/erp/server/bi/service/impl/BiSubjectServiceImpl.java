@@ -289,7 +289,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         boolean result = this.save(subject);
         if (result) {
             // 检查和添加分享记录
-            subjectShareService.checkAndAddSubjectShare(dto.getShareFlagIdList(), subjectId, shareFlag);
+            subjectShareService.checkAndAddSubjectShare(dto.checkAndGetShareFlagIdList(), subjectId, shareFlag);
             return subjectId;
         }
         return "";
@@ -447,7 +447,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         //当复制成功的时候
         if (flag) {
             // 检查和添加分享记录
-            subjectShareService.checkAndAddSubjectShare(dto.getShareFlagIdList(), newSubjectId, shareFlag);
+            subjectShareService.checkAndAddSubjectShare(dto.checkAndGetShareFlagIdList(), newSubjectId, shareFlag);
 
             layoutService.copySubjectLayout(newSubjectId, subjectId);
             return newSubjectId;
@@ -494,7 +494,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         boolean result = this.save(subject);
         if (result) {
             // 检查和添加分享记录
-            subjectShareService.checkAndAddSubjectShare(dto.getShareFlagIdList(), subjectId, shareFlag);
+            subjectShareService.checkAndAddSubjectShare(dto.checkAndGetShareFlagIdList(), subjectId, shareFlag);
             return subjectId;
         }
         return "";
