@@ -1289,7 +1289,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     private void checkRepeatBomSku (UpdateBomDTO dto) {
         List<BomSkuDTO> skuList = dto.getSkuList();
         List<String> skuIds = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> childList = bomSkuService.listBomChildBySkuIds(skuIds);
+        List<BomChildrenSkuDTO> childList = bomSkuService.listAllBomChildBySkuIds(skuIds);
         for (BomSkuDTO bomSkuDTO : skuList) {
             long count = childList.stream().filter(obj -> !obj.getBomId().equals(dto.getId()) && obj.getParentSkuId().equals(bomSkuDTO.getSkuId())).count();
             if (count > 0) {
