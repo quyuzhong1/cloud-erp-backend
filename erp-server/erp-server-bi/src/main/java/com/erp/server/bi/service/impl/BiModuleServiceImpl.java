@@ -251,7 +251,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         module.setSysModuleId(sysModuleId);
         module.setCode(biModule.getCode());
         checkCode(null, biModule.getCode());
-        List<String> permissionUserIdList = biModule.getShareFlagIdList();
+        List<String> permissionUserIdList = biModule.checkAndGetShareFlagIdList();
         boolean flag = this.save(module);
         if (flag) {
             //修改系统模块的状态
