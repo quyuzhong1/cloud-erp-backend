@@ -2,6 +2,7 @@ package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.entity.BiModulePermissionEntity;
+import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 
 import java.util.List;
 
@@ -15,11 +16,16 @@ import java.util.List;
 public interface BiModulePermissionService  extends IService<BiModulePermissionEntity> {
 
 
-    void addModulePermission(String id, List<String> permissionUserIdList);
+    void addModulePermission(String id, List<String> permissionUserIdList, BiShareIdentityTypeEnum typeEnum);
 
     void deleteByModuleId(String id);
 
     List<String> getByModuleId(String moduleId);
 
     List<String> getModuleIdsByUserId(String userId);
+
+    /**
+     * 检查和添加
+     */
+    void checkAndAddModulePermission(List<String> shareFlagIdList, String mainId, String shareFlag);
 }

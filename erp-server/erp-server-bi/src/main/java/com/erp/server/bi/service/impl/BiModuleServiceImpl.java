@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.core.constant.BaseStateConstants;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FileUtil;
@@ -20,6 +22,7 @@ import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
 import com.erp.model.bi.entity.BiLayoutRefModuleEntity;
 import com.erp.model.bi.entity.BiModuleEntity;
+import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 import com.erp.model.bi.vo.LayoutVO;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiModuleMapper;
@@ -174,7 +177,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         ModuleDTO result = new ModuleDTO();
         BeanMapper.copy(module, result);
         List<String> permissionUserIdList = modulePermissionService.getByModuleId(moduleId);
-        result.setPermissionUserIdList(permissionUserIdList);
+        result.setShareFlagIdList(permissionUserIdList);
         return result;
     }
 
@@ -193,6 +196,18 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
             return this.list(queryWrapper);
         }
         return new ArrayList<>();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO updateShare(List<String> shareFlagIdList, String mainId, String shareFlag) {
+        BiModuleEntity entity = this.getById(mainId);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.ERROR_97004);
+        }
+        modulePermissionService.checkAndAddModulePermission(shareFlagIdList, mainId, shareFlag);
+
+        return BatchResultDTO.success(entity.getId(), "", OperationTypeEnum.PERMISSION);
     }
 
     /**
@@ -236,13 +251,14 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         module.setSysModuleId(sysModuleId);
         module.setCode(biModule.getCode());
         checkCode(null, biModule.getCode());
-        List<String> permissionUserIdList = biModule.getPermissionUserIdList();
+        List<String> permissionUserIdList = biModule.getShareFlagIdList();
         boolean flag = this.save(module);
         if (flag) {
             //修改系统模块的状态
             sysModuleService.updateAddState(sysModuleId, BaseStateConstants.OPEN_STATE);
             if (CollectionUtils.isNotEmpty(permissionUserIdList)) {
-                modulePermissionService.addModulePermission(module.getId(), permissionUserIdList);
+                BiShareIdentityTypeEnum identityTypeEnum = BiShareIdentityTypeEnum.isRoleCheck(biModule.getShareFlag());
+                modulePermissionService.addModulePermission(module.getId(), permissionUserIdList, identityTypeEnum);
             }
         }
         return flag;
@@ -331,7 +347,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         module.setSysModuleId(sysModuleId);
         module.setCode(biModule.getCode());
 
-        List<String> permissionUserIdList = biModule.getPermissionUserIdList();
+        List<String> permissionUserIdList = biModule.getShareFlagIdList();
         boolean flag = this.updateById(module);
         if (flag) {
             /*
@@ -343,7 +359,8 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
                 sysModuleService.updateAddState(dbSysModuleId, BaseStateConstants.CLOSE_STATE);
             }
             if (CollectionUtils.isNotEmpty(permissionUserIdList)) {
-                modulePermissionService.addModulePermission(module.getId(), permissionUserIdList);
+                BiShareIdentityTypeEnum identityTypeEnum = BiShareIdentityTypeEnum.isRoleCheck(biModule.getShareFlag());
+                modulePermissionService.addModulePermission(module.getId(), permissionUserIdList, identityTypeEnum);
             }
         }
         return flag;
