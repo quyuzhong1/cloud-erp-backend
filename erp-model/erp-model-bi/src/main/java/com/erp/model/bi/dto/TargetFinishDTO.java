@@ -5,8 +5,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
-import java.time.LocalDate;
-import java.util.List;
 
 /**
  * @author Will
@@ -19,11 +17,11 @@ import java.util.List;
 public class TargetFinishDTO implements Serializable {
 
     /**
-     * 列表
+     * 列表参数
      */
     @Data
     @NoArgsConstructor
-    public static class ParamDTO {
+    public static class ParamDTO extends BiFilterDTO{
 
         /**
          * 考核维度（财务销售额、销售额、净销售额、销量、毛利润、毛利率）
@@ -40,29 +38,14 @@ public class TargetFinishDTO implements Serializable {
          */
         @NotBlank(message = "搜索类型不能为空")
         private String searchType;
-        /**
-         * 日期
-         */
-        private LocalDate date;
-        /**
-         * 部门
-         */
-        private List<String> deptIdList;
-        /**
-         * 人员
-         */
-        private List<String> userIdList;
-        /**
-         * 店铺
-         */
-        private List<String> shopNameList;
-        /**
-         * 品类
-         */
-        private List<String> categoryIdList;
-        /**
-         * SKU
-         */
-        private List<String> skuNoList;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+
+    }
+
 }

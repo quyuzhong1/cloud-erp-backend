@@ -107,9 +107,9 @@
             <if test="params.date != null ">
                 and  bty.year = to_char(#{params.date},'yyyy')  and btss.month between 1 and 12
             </if>
-            <if test="params.deptIdList !=null and params.deptIdList.size > 0">
+            <if test="params.department !=null and params.department.size > 0">
                 and bty.dept_id in
-                <foreach collection="params.deptIdList" item="item" open="(" separator="," close=")">
+                <foreach collection="params.department" item="item" open="(" separator="," close=")">
                     #{item}
                 </foreach>
             </if>
@@ -138,15 +138,9 @@
             <if test="params.date != null ">
                 and  bty.year = to_char(#{params.date},'yyyy')  and btss.month between 1 and 12
             </if>
-            <if test="params.deptIdList !=null and params.deptIdList.size > 0">
+            <if test="params.department !=null and params.department.size > 0">
                 and bty.dept_id in
-                <foreach collection="params.deptIdList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.userIdList !=null and params.userIdList.size > 0">
-                and btss.staff_id in
-                <foreach collection="params.userIdList" item="item" open="(" separator="," close=")">
+                <foreach collection="params.department" item="item" open="(" separator="," close=")">
                     #{item}
                 </foreach>
             </if>
