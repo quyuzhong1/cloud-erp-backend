@@ -393,6 +393,18 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     }
 
     /**
+     * 获取到父级分类
+     * @author yl
+     * @date 2023-09-15 9:42
+     * @param
+     * @return java.util.List<com.erp.model.plm.entity.BasicCategoryEntity>
+     */
+    @Override
+    public List<BasicCategoryEntity> listParentCategory() {
+        return this.lambdaQuery().eq(BasicCategoryEntity::getPid,"0").orderByDesc(BasicCategoryEntity::getId).list();
+    }
+
+    /**
      * list加入父级品类
      */
     private void setParentEntity(String pid, List<BasicCategoryEntity> list) {

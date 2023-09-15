@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+
+import com.erp.model.bi.enums.MetricsEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -53,7 +55,7 @@ public class BiTargetNewProductSettingEntity extends BaseEntity<BiTargetNewProdu
     * 指标维度
     */
     @TableField("metrics")
-    private String metrics;
+    private MetricsEnum metrics;
     /**
     * 员工id
     */

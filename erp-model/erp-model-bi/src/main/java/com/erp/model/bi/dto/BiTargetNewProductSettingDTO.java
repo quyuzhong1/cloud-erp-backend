@@ -1,10 +1,13 @@
 package com.erp.model.bi.dto;
 
 import java.math.BigDecimal;
+
+import com.erp.model.bi.enums.MetricsEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -30,58 +33,32 @@ public class BiTargetNewProductSettingDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ViewDTO extends BiTargetYearDTO.ViewDTO{
+        List<DetailDTO> detailList;
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DetailDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 考核指标
+         */
+        private MetricsEnum metrics;
+
 
         /**
-        * 主表id 对应 target_year 表id
-        */
-        private String mainId;
+         * 考核指标名
+         */
+        private String metricsName;
 
         /**
-        * 店铺id
-        */
-        private String shopId;
-
-        /**
-        * 店铺名
-        */
-        private String shopName;
-
-        /**
-        * 月
-        */
-        private Integer month;
-
-        /**
-        * 对应值
-        */
-        private BigDecimal value;
-
-        /**
-        * 指标维度
-        */
-        private String metrics;
-
-        /**
-        * 员工id
-        */
-        private String staffId;
-
-        /**
-        * 员工名称
-        */
-        private String staffName;
-
-        /**
-        * 占比
-        */
-        private BigDecimal rate ;
-
+         * 人员设置列表
+         */
+        private List<CommonDTO> newProductSettingList;
 
     }
 
@@ -90,9 +67,11 @@ public class BiTargetNewProductSettingDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
+    public static class AddDTO extends BiTargetYearDTO.AddDTO {
 
-
+        @Size(min = 1, message = "目标设置不能为空")
+        @NotNull(message = "目标设置不能为空")
+        private List<CommonDTO> detailList;
     }
 
     /**
@@ -112,69 +91,82 @@ public class BiTargetNewProductSettingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class CommonDTO {
+    public static class CommonDTO extends BiTargetYearDTO.MonthDTO {
 
         /**
-        * 主表id 对应 target_year 表id
-        */
-        @NotBlank(message = "主表id 对应 target_year 表id不能为空")
-        @Size(max = 19,message = "主表id 对应 target_year 表id最大长度不能超过19位")
-        private String mainId;
-
-        /**
-        * 店铺id
-        */
-        @NotBlank(message = "店铺id不能为空")
-        @Size(max = 19,message = "店铺id最大长度不能超过19位")
-        private String shopId;
-
-        /**
-        * 店铺名
-        */
-        @NotBlank(message = "店铺名不能为空")
-        @Size(max = 30,message = "店铺名最大长度不能超过30位")
-        private String shopName;
-
-        /**
-        * 月
-        */
-        @NotNull(message = "月不能为空")
-        private Integer month;
-
-        /**
-        * 对应值
-        */
-        @NotNull(message = "对应值不能为空")
-        @Digits(integer = 12, fraction = 4, message = "对应值整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal value;
-
-        /**
-        * 指标维度
-        */
-        @NotBlank(message = "指标维度不能为空")
-        @Size(max = 20,message = "指标维度最大长度不能超过20位")
-        private String metrics;
-
-        /**
-        * 员工id
-        */
-        @NotBlank(message = "员工id不能为空")
-        @Size(max = 19,message = "员工id最大长度不能超过19位")
+         * 员工id
+         */
+        @NotBlank(message = "员工不能为空")
         private String staffId;
 
-        /**
-        * 员工名称
-        */
-        @NotBlank(message = "员工名称不能为空")
-        @Size(max = 30,message = "员工名称最大长度不能超过30位")
         private String staffName;
 
+
         /**
-        * 占比
-        */
-        @NotNull(message = "占比不能为空")
-        @Digits(integer = 12, fraction = 4, message = "占比整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal rate ;
+         * 一月占比
+         */
+        private BigDecimal januaryRate;
+
+        /**
+         * 二月占比
+         */
+        private BigDecimal februaryRate;
+
+        /**
+         * 三月占比
+         */
+        private BigDecimal marchRate;
+
+
+        /**
+         * 四月占比
+         */
+        private BigDecimal aprilRate;
+
+        /**
+         * 五月占比
+         */
+        private BigDecimal mayRate;
+
+
+        /**
+         * 六月占比
+         */
+        private BigDecimal juneRate;
+
+
+        /**
+         * 七月占比
+         */
+        private BigDecimal julyRate;
+
+
+        /**
+         * 八月占比
+         */
+        private BigDecimal augustRate;
+
+
+        /**
+         * 九月占比
+         */
+        private BigDecimal septemberRate;
+
+
+        /**
+         * 十月占比
+         */
+        private BigDecimal octoberRate;
+
+        /**
+         * 十一月占比
+         */
+        private BigDecimal novemberRate;
+
+        /**
+         * 十二月占比
+         */
+        private BigDecimal decemberRate;
 
 
     }

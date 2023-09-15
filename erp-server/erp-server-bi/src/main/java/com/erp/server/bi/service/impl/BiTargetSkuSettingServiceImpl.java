@@ -218,9 +218,6 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
         if (!save) {
             throw new ServiceException("sku目标设置单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
         this.removeByMainId(id);
         this.batchAdd(id, detailList);
         return Boolean.TRUE;

@@ -1,6 +1,7 @@
 package com.erp.server.bi.controller.api;
 
 
+import com.common.core.anno.LogViewService;
 import com.erp.server.bi.service.BiTargetNewProductSettingService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,6 +40,19 @@ public class BiTargetNewProductSettingController extends BaseController {
     @PostMapping("/add")
     public ApiResult<String> add(@RequestBody @Validated BiTargetNewProductSettingDTO.AddDTO dto) {
         return success(biTargetNewProductSettingService.add(dto));
+    }
+
+    /**
+     * 详情
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("/view")
+    @LogViewService
+    public ApiResult<BiTargetNewProductSettingDTO.ViewDTO> view(@RequestParam(value = "id") String id) {
+        BiTargetNewProductSettingDTO.ViewDTO view = biTargetNewProductSettingService.view(id);
+        return success(view);
     }
 
     /**

@@ -67,8 +67,6 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         List<BiTargetStaffSettingDTO.CommonDTO> detailList = addDTO.getDetailList();
         // 数据处理
         handleData(targetYear, detailList);
-
-
         Boolean save = biTargetYearService.save(targetYear);
         if (!save) {
             throw new ServiceException("人员目标设置单保存失败");

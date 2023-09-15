@@ -1,6 +1,8 @@
 package com.erp.model.bi.dto;
 
 import java.math.BigDecimal;
+
+import com.erp.model.bi.enums.MetricsEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -25,49 +27,71 @@ public class BiTargetCategorySettingDTO implements Serializable {
 
 
 
+    /**
+     * 分页详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO {
+
+        private String id;
+
+        /**
+         * 年
+         */
+        private String year;
+
+        /**
+         * 部门id
+         */
+        private String deptId;
+
+        /**
+         * 部门id
+         */
+        private String deptName;
+
+        /**
+         * 详情信息
+         */
+        private List<CommonDTO> detailList;
+
+
+    }
+
+
+
 
     /**
     * 详情
     */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ViewDTO extends BiTargetYearDTO.ViewDTO{
+
+        List<DetailDTO> detailList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DetailDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 考核指标
+         */
+        private MetricsEnum metrics;
+
 
         /**
-        * 主表id 对应 target_year 表id
-        */
-        private String mainId;
+         * 考核指标名
+         */
+        private String metricsName;
 
         /**
-        * 分类id
-        */
-        private String categoryId;
-
-        /**
-        * 分类名
-        */
-        private String categoryName;
-
-        /**
-        * 月
-        */
-        private Integer month;
-
-        /**
-        * 对应值
-        */
-        private BigDecimal value;
-
-        /**
-        * 指标维度
-        */
-        private String metrics;
-
+         * 人员设置列表
+         */
+        private List<CommonDTO> categorySettingList;
 
     }
 
@@ -88,13 +112,11 @@ public class BiTargetCategorySettingDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO extends BiTargetYearDTO.UpdateDTO {
 
-        /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
+        @Size(min = 1, message = "目标设置不能为空")
+        @NotNull(message = "目标设置不能为空")
+        private List<CommonDTO> detailList;
 
     }
 

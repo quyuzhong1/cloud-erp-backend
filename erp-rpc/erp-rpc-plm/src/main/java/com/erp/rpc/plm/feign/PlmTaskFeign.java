@@ -2,6 +2,7 @@ package com.erp.rpc.plm.feign;
 
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -293,4 +294,11 @@ public interface PlmTaskFeign {
 
     @PostMapping("feign/product/listByCreateTimeList")
     List<ProductDetailEntity> listByCreateTimeList(@Param("createTimeList") List skuCreateTimeList);
+
+    /**
+     * 获取到父级的分类id
+     * @return
+     */
+    @PostMapping("feign/product/listCategoryByIds")
+    List<BasicCategoryEntity> listCategoryByIds(@RequestBody List<String> idList);
 }
