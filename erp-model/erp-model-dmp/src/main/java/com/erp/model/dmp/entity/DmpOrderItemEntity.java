@@ -215,6 +215,14 @@ public class DmpOrderItemEntity implements Serializable {
     private BigDecimal cleanCostPrice;
 
 
+
+    /**
+     * 是否拆分订单 1.拆分 2.非拆分
+     */
+    @TableField(value = "is_split_sku")
+    private Integer isSplitSku;
+
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
