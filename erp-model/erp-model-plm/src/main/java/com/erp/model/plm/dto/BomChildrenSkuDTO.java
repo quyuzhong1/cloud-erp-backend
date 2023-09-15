@@ -22,7 +22,7 @@ public class BomChildrenSkuDTO  implements Serializable {
     /**
      * bomId
      */
-    private Integer bomId;
+    private String bomId;
     /**
      * bom版本
      */
