@@ -332,7 +332,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
     }
 
     @Override
-    public List<BiTargetSkuSettingEntity> listTargetFinish(TargetFinishDTO.ParamDTO dto) {
+    public List<TargetFinishDTO.ViewDTO> listTargetFinish(TargetFinishDTO.ParamDTO dto) {
         return baseMapper.listTargetFinish(dto);
     }
 

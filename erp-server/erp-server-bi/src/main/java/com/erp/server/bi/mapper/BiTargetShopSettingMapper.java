@@ -26,5 +26,5 @@ public interface BiTargetShopSettingMapper extends BaseMapper<BiTargetShopSettin
 
     IPage<BiTargetShopSettingDTO.PagingViewDTO> paging(Page query,@Param("params") BiTargetYearDTO.PagingParamDTO params);
 
-    List<BiTargetShopSettingEntity> listTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
+    List<TargetFinishDTO.ViewDTO> listTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
 }

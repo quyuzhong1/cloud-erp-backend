@@ -70,14 +70,11 @@
         ORDER BY ty.id DESC
     </select>
 
-    <select id="listTargetFinish" resultType="com.erp.model.bi.entity.BiTargetShopSettingEntity">
+    <select id="listTargetFinish" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
         select
-            btss.main_id,
-            btss.shop_id,
-            btss.shop_name,
+            btss.shop_name as typeName,
             btss.month,
-            btss.value,
-            btss.metrics
+            btss.value
         from bi_target_year bty
         left join bi_target_shop_setting btss on btss.is_deleted = false and bty.id = btss.main_id
         <where>

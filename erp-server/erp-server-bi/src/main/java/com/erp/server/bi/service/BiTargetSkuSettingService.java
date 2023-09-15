@@ -59,7 +59,7 @@ public interface BiTargetSkuSettingService extends SuperService<BiTargetSkuSetti
      * @author Will
      * @date: 2023/9/15 11:42
      * @param dto
-     * @return List<BiTargetSkuSettingEntity>
+     * @return List<TargetFinishDTO.ViewDTO>
      */
-    List<BiTargetSkuSettingEntity> listTargetFinish(TargetFinishDTO.ParamDTO dto);
+    List<TargetFinishDTO.ViewDTO> listTargetFinish(TargetFinishDTO.ParamDTO dto);
 }

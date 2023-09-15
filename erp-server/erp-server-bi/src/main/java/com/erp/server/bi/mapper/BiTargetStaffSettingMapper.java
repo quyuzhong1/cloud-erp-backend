@@ -32,15 +32,15 @@ public interface BiTargetStaffSettingMapper extends BaseMapper<BiTargetStaffSett
      * @author Will
      * @date: 2023/9/15 12:13
      * @param dto
-     * @return List<BiTargetStaffSettingEntity>
+     * @return List<TargetFinishDTO.ViewDTO>
      */
-    List<BiTargetStaffSettingEntity> listUserTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
+    List<TargetFinishDTO.ViewDTO> listUserTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
     /**
      * @description: 根据指标查询部门目标值
      * @author Will
      * @date: 2023/9/15 12:13
      * @param dto
-     * @return List<BiTargetStaffSettingEntity>
+     * @return List<TargetFinishDTO.ViewDTO>
      */
-    List<BiTargetStaffSettingEntity> listDeptTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
+    List<TargetFinishDTO.ViewDTO> listDeptTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
 }

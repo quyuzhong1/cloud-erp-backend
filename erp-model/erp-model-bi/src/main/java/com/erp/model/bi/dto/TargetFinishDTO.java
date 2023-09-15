@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * @author Will
@@ -45,7 +46,20 @@ public class TargetFinishDTO implements Serializable {
     @NoArgsConstructor
     public static class ViewDTO {
 
+        /**
+         * 类型名称 （部门、人员、店铺、品类、SKU）
+         */
+        private String typeName;
 
+        /**
+         * 月份
+         */
+        private Integer month;
+
+        /**
+         * 对应值
+         */
+        private BigDecimal value;
     }
 
 }

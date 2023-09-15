@@ -412,12 +412,12 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
     }
 
     @Override
-    public List<BiTargetStaffSettingEntity> listDeptTargetFinish(TargetFinishDTO.ParamDTO dto) {
+    public List<TargetFinishDTO.ViewDTO> listDeptTargetFinish(TargetFinishDTO.ParamDTO dto) {
         return baseMapper.listDeptTargetFinish(dto);
     }
 
     @Override
-    public List<BiTargetStaffSettingEntity> listUserTargetFinish(TargetFinishDTO.ParamDTO dto) {
+    public List<TargetFinishDTO.ViewDTO> listUserTargetFinish(TargetFinishDTO.ParamDTO dto) {
         return baseMapper.listUserTargetFinish(dto);
     }
 

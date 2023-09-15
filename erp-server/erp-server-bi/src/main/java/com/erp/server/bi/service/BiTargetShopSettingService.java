@@ -60,7 +60,7 @@ public interface BiTargetShopSettingService extends SuperService<BiTargetShopSet
      * @author Will
      * @date: 2023/9/15 11:26
      * @param dto
-     * @return List<BiTargetShopSettingEntity>
+     * @return List<TargetFinishDTO.ViewDTO>
      */
-    List<BiTargetShopSettingEntity> listTargetFinish(TargetFinishDTO.ParamDTO dto);
+    List<TargetFinishDTO.ViewDTO> listTargetFinish(TargetFinishDTO.ParamDTO dto);
 }

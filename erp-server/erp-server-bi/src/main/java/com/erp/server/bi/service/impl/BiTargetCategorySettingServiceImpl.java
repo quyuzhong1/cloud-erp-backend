@@ -5,16 +5,12 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.enums.ApiError;
 import com.common.business.vo.PagingVO;
-import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
-import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.entity.BiProductDetailEntity;
-import com.erp.model.bi.entity.BiTargetCategorySettingEntity;
-
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.entity.BiTargetCategorySettingEntity;
 import com.erp.model.bi.entity.BiTargetYearEntity;
@@ -38,9 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 /**
  * <p>
@@ -232,7 +225,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
     }
 
     @Override
-    public List<BiTargetCategorySettingEntity> listTargetFinish(TargetFinishDTO.ParamDTO dto) {
+    public List<TargetFinishDTO.ViewDTO> listTargetFinish(TargetFinishDTO.ParamDTO dto) {
         return baseMapper.listTargetFinish(dto);
     }
 
