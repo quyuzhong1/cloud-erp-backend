@@ -1,10 +1,14 @@
 package com.erp.server.bi.service;
+
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
-import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.bi.dto.TargetFinishDTO;
+import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -53,4 +57,20 @@ public interface BiTargetStaffSettingService extends SuperService<BiTargetStaffS
      * @return com.common.business.vo.PagingVO<com.erp.model.bi.dto.BiTargetStaffSettingDTO.PagingViewDTO>
      */
     PagingVO<BiTargetStaffSettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto);
+    /**
+     * @description: 根据指标查询人员目标值
+     * @author Will
+     * @date: 2023/9/15 11:06
+     * @param dto
+     * @return List<BiTargetStaffSettingEntity>
+     */
+    List<BiTargetStaffSettingEntity> listUserTargetFinish(TargetFinishDTO.ParamDTO dto);
+    /**
+     * @description: 根据指标查询部门目标值
+     * @author Will
+     * @date: 2023/9/15 12:06
+     * @param dto
+     * @return List<BiTargetStaffSettingEntity>
+     */
+    List<BiTargetStaffSettingEntity> listDeptTargetFinish(TargetFinishDTO.ParamDTO dto);
 }

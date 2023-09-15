@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
 import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
@@ -12,7 +13,10 @@ import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.entity.BiTargetCategorySettingEntity;
 
 import com.common.core.exception.ServiceException;
-import com.erp.model.bi.entity.BiTargetSkuSettingEntity;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
+import com.erp.model.bi.dto.TargetFinishDTO;
+import com.erp.model.bi.entity.BiTargetCategorySettingEntity;
 import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
@@ -24,13 +28,12 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.mapper.BiTargetCategorySettingMapper;
 import com.erp.server.bi.service.BiTargetCategorySettingService;
 import com.erp.server.bi.service.BiTargetYearService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -226,6 +229,11 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
         this.removeByMainId(id);
         this.batchAdd(id, detailList);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<BiTargetCategorySettingEntity> listTargetFinish(TargetFinishDTO.ParamDTO dto) {
+        return baseMapper.listTargetFinish(dto);
     }
 
 

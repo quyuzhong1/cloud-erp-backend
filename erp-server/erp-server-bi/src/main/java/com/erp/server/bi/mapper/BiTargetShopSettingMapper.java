@@ -1,14 +1,16 @@
 package com.erp.server.bi.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.BiTargetShopSettingDTO;
-import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.entity.BiTargetShopSettingEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -23,4 +25,6 @@ import org.apache.ibatis.annotations.Param;
 public interface BiTargetShopSettingMapper extends BaseMapper<BiTargetShopSettingEntity> {
 
     IPage<BiTargetShopSettingDTO.PagingViewDTO> paging(Page query,@Param("params") BiTargetYearDTO.PagingParamDTO params);
+
+    List<BiTargetShopSettingEntity> listTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
 }

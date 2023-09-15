@@ -71,5 +71,38 @@
         ORDER BY ty.id DESC
     </select>
 
+    <select id="listTargetFinish" resultType="com.erp.model.bi.entity.BiTargetSkuSettingEntity">
+        select
+            btcs.main_id,
+            btcs.sku_id,
+            btcs.sku_no,
+            btcs.month,
+            btcs.value,
+            btcs.metrics
+        from bi_target_year bty
+        left join bi_target_sku_setting btss on btss.is_deleted = false and bty.id = btss.main_id
+        <where>
+            bty.is_deleted = false
+            <if test="params.metrics != null and params.metrics != ''">
+                and  btss.metrics = #{params.metrics}
+            </if>
+            <if test="params.date != null ">
+                and  bty.year = to_char(#{params.date},'yyyy')  and btss.month between 1 and 12
+            </if>
+            <if test="params.deptIdList !=null and params.deptIdList.size > 0">
+                and bty.dept_id in
+                <foreach collection="params.deptIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.skuNoList !=null and params.skuNoList.size > 0">
+                and btss.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
 
 </mapper>

@@ -1,12 +1,9 @@
 package com.erp.model.bi.dto;
 
-import com.erp.model.bi.enums.MetricsEnum;
-import com.erp.model.bi.enums.TargetFinishViewTypeEnum;
-import com.erp.model.bi.enums.TargetSearchTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
@@ -31,18 +28,18 @@ public class TargetFinishDTO implements Serializable {
         /**
          * 考核维度（财务销售额、销售额、净销售额、销量、毛利润、毛利率）
          */
-        @NotNull(message = "考核维度不能为空")
-        private MetricsEnum metrics;
+        @NotBlank(message = "考核维度不能为空")
+        private String metrics;
         /**
          * 查看类型（完成率、占比）
          */
-        @NotNull(message = "查看类型不能为空")
-        private TargetFinishViewTypeEnum viewType;
+        @NotBlank(message = "查看类型不能为空")
+        private String viewType;
         /**
          * 搜索类型（二级部门、人员、店铺、品类、SKU）
          */
-        @NotNull(message = "搜索类型不能为空")
-        private TargetSearchTypeEnum searchType;
+        @NotBlank(message = "搜索类型不能为空")
+        private String searchType;
         /**
          * 日期
          */

@@ -1,10 +1,14 @@
 package com.erp.server.bi.service;
+
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
-import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.entity.BiTargetSkuSettingEntity;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.bi.dto.TargetFinishDTO;
+import com.erp.model.bi.entity.BiTargetSkuSettingEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -50,4 +54,12 @@ public interface BiTargetSkuSettingService extends SuperService<BiTargetSkuSetti
      * @return com.common.business.vo.PagingVO<com.erp.model.bi.dto.BiTargetSkuSettingDTO.PagingViewDTO>
      */
     PagingVO<BiTargetSkuSettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto);
+    /**
+     * @description: 根据指标查询SKU目标值
+     * @author Will
+     * @date: 2023/9/15 11:42
+     * @param dto
+     * @return List<BiTargetSkuSettingEntity>
+     */
+    List<BiTargetSkuSettingEntity> listTargetFinish(TargetFinishDTO.ParamDTO dto);
 }
