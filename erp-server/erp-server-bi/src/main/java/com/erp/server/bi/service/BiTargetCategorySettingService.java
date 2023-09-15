@@ -1,4 +1,7 @@
 package com.erp.server.bi.service;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.entity.BiTargetCategorySettingEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
@@ -32,4 +35,17 @@ public interface BiTargetCategorySettingService extends SuperService<BiTargetCat
     Boolean update(BiTargetCategorySettingDTO.UpdateDTO dto);
 
 
+    /**
+     * 详情
+     * @param id
+     * @return
+     */
+    BiTargetCategorySettingDTO.ViewDTO view(String id);
+
+    /**
+     * 分页
+     * @param dto
+     * @return
+     */
+    PagingVO<BiTargetCategorySettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto);
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.dmp.mapper.BiTargetCategorySettingMapper">
+<mapper namespace="com.erp.server.bi.mapper.BiTargetCategorySettingMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.bi.entity.BiTargetCategorySettingEntity">
        <result column="id" property="id" />
@@ -33,6 +33,43 @@
         is_deleted,
         main_id, category_id, category_name, month, value, metrics
     </sql>
+
+    <select id="paging" resultType="com.erp.model.bi.dto.BiTargetCategorySettingDTO$PagingViewDTO">
+        SELECT
+        ty.id,
+        ty.year,
+        ty.dept_id,
+        ty.dept_name
+        FROM bi_target_year ty
+        WHERE ty.is_deleted=false
+        <if test="params.yearList !=null and params.yearList.size>0">
+            AND ty.year IN
+            <foreach collection="params.yearList" item="year" open="(" separator="," close=")">
+                #{year}
+            </foreach>
+        </if>
+        <if test="params.metricsList !=null and params.metricsList.size>0">
+            AND ty.id IN (
+            SELECT main_id FROM bi_target_category_setting
+            WHERE is_deleted=FALSE AND metrics IN
+            <foreach collection="params.metricsList" item="metrics" open="(" separator="," close=")">
+                #{metrics}
+            </foreach>
+            )
+        </if>
+        <if test="params.name !=null and params.name!=''">
+            AND ty.id IN (
+            SELECT main_id FROM bi_target_category_setting
+            WHERE is_deleted=FALSE AND category_name
+            ILIKE concat('%', #{params.name} ,'%')
+            )
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY ty.id DESC
+    </select>
 
 
 </mapper>

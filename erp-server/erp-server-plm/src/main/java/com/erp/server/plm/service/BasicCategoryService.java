@@ -76,4 +76,13 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
      * 更新金蝶同步状态
      */
     Boolean updateSyncKingdeeStatus(String categoryId, String syncKingdeeStatus,String syncKingdeeId);
+
+    /**
+     * 获取到父级分类
+     * @author yl
+     * @date 2023-09-15 9:42
+     * @param
+     * @return java.util.List<com.erp.model.plm.entity.BasicCategoryEntity>
+     */
+    List<BasicCategoryEntity> listParentCategory();
 }

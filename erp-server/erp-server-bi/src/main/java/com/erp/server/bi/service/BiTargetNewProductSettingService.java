@@ -32,4 +32,12 @@ public interface BiTargetNewProductSettingService extends SuperService<BiTargetN
     Boolean update(BiTargetNewProductSettingDTO.UpdateDTO dto);
 
 
+    /**
+     * 详情
+     * @author yl
+     * @date 2023-09-15 11:26
+     * @param id
+     * @return com.erp.model.bi.dto.BiTargetNewProductSettingDTO.ViewDTO
+     */
+    BiTargetNewProductSettingDTO.ViewDTO view(String id);
 }
