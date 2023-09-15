@@ -15,8 +15,15 @@
         from product_bom_history pbh
         left join product_bom_sku_history pbs on pbh.id = pbs.bom_history_id and pbs.is_deleted = false
         left join product_detail pd on pbs.sku_id = pd.id and pd.is_deleted = false
+        left join product_bom_info pbi on pbi.is_deleted = false and pbh.bom_id = pbi.id
         <where>
-            pbh.is_deleted = false
+            pbh.is_deleted = false and pbi.state = 4
+            and pbi.id in (
+            select distinct bom_id from product_bom_sku where is_deleted = false and parent_sku_id in
+            <foreach collection="parentSkuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+            )
             and pbs.parent_sku_id in
             <foreach collection="parentSkuIds" item="item" open="(" separator="," close=")">
                 #{item}

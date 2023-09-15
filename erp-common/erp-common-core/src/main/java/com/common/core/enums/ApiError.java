@@ -439,6 +439,7 @@ public enum ApiError implements Serializable {
     ERROR_95241(95241, "审核中和审核通过状态不可删除"),
     ERROR_95242(95242, "Sku已被其他单据引用不能删除"),
     ERROR_95243(95243, "请检查产品必填项是否填写完成"),
+    ERROR_BOM_PARENT_SKU_REPEAT(95245,"父级sku【{}】已生成BOM"),
 
 
     /**

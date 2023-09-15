@@ -120,6 +120,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (CollectionUtils.isEmpty(bomSkuList)) {
             throw new ServiceException(ApiError.ERROR_95094);
         }
+        //数据验证
+        checkRepeatBomSku(BeanMapperUtils.map(UpdateBomDTO.class,dto));
         //获取到 编号
         String serialNumber = sysCodeService.getBusinessNo(BusinessNoConstant.BOM, BusinessNoTypeEnum.Bom_NO);
         BomInfoEntity bom = new BomInfoEntity();
@@ -514,6 +516,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (Objects.isNull(bom)) {
             throw new ServiceException(ApiError.ERROR_95095);
         }
+        //数据验证
+        checkRepeatBomSku(dto);
         checkBomCanUpdate(bom.getState(), BomConstant.EDIT);
         Integer bomVersion = bom.getBomVersion();
         List<BomSkuDTO> oldBomList = bomSkuService.getByBomId(id);
@@ -1271,6 +1275,24 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             stateList.add(BomStateEnum.AUDIT_PASS.getState());
             if (!stateList.contains(state)) {
                 throw new ServiceException(ApiError.ERROR_95096);
+            }
+        }
+    }
+
+    /**
+     * @description: bom数据验证
+     * @author Will
+     * @date: 2023/8/16 18:14
+     * @param dto
+     */
+    private void checkRepeatBomSku (UpdateBomDTO dto) {
+        List<BomSkuDTO> skuList = dto.getSkuList();
+        List<String> skuIds = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> childList = bomSkuService.listAllBomChildBySkuIds(skuIds);
+        for (BomSkuDTO bomSkuDTO : skuList) {
+            long count = childList.stream().filter(obj -> !obj.getBomId().equals(dto.getId()) && obj.getParentSkuId().equals(bomSkuDTO.getSkuId())).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_BOM_PARENT_SKU_REPEAT,bomSkuDTO.getSkuNo());
             }
         }
     }
