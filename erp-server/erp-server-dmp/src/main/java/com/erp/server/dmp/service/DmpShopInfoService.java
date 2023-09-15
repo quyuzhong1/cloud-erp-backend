@@ -25,10 +25,9 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      * @Author Luo_WG
      * @Date 2022/11/16 19:35
      * @param shopNo 店铺编号
-     * @param platformSign 平台标识
      * @return com.erp.model.dmp.entity.DmpSkuInfoEntity
      **/
-    DmpShopInfoEntity getShopByShopNo(String shopNo, String platformSign);
+    DmpShopInfoEntity getShopByShopNo(String shopNo);
 
     /**
      * 根据平台店铺id修改店铺信息

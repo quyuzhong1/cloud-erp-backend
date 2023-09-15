@@ -3272,4 +3272,31 @@
 
     </select>
 
+
+    <select id="divisionNewAndOldSalesAmount" resultType="com.erp.model.bi.vo.SalesFlagVO">
+        SELECT
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        i.new_sign AS flag,COALESCE(o.dept_id,'无') AS name,SUM ( i.quantity ) AS salesQuantity,
+        COUNT ( DISTINCT ( o.platform_order_id ) ) AS orderCount FROM
+        dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
+        <where>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        GROUP BY i.new_sign,o.dept_id
+    </select>
 </mapper>

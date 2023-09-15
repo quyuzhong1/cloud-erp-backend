@@ -3,6 +3,7 @@ package com.erp.server.bi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.DateFilterDTO;
+import com.erp.model.bi.dto.NewAndOldSalesSearchDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 
@@ -148,4 +149,13 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
     List<ProductNewAndOldVO> byDeptNewAndOld(BiFilterDTO dto);
 
     StatisticalDataVO byDate(DateFilterDTO biFilterDTO);
+
+    /**
+     * 新老品销售额
+     * @Author Luo_WG
+     * @Date 2023/9/15 14:15
+     * @param dto
+     * @return java.util.List<com.erp.model.bi.dto.NewAndOldSalesSearchDTO.PagingDTO>
+     **/
+    List<NewAndOldSalesSearchDTO.PagingDTO> newAndOldSalesAmount(NewAndOldSalesSearchDTO.SearchDTO dto);
 }
