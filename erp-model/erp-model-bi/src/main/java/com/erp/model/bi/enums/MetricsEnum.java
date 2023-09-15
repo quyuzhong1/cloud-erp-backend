@@ -63,4 +63,14 @@ public enum MetricsEnum implements EnumMessage {
         }
         return nameList;
     }
+
+
+    public static MetricsEnum getByName(String metricsName) {
+        for (MetricsEnum item : MetricsEnum.values()) {
+            if (metricsName.equals(item.getName())) {
+                return item;
+            }
+        }
+        return null;
+    }
 }

@@ -1,6 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
@@ -9,6 +10,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
+import com.erp.model.bi.dto.excel.TargetStaffSettingImportExcelDTO;
 import com.erp.model.bi.entity.BiProductInfoEntity;
 import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 
@@ -19,6 +21,7 @@ import com.erp.model.bi.enums.MonthEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.bi.listener.BiTargetStaffSettingExcelListener;
 import com.erp.server.bi.mapper.BiTargetStaffSettingMapper;
 import com.erp.server.bi.service.BiTargetStaffSettingService;
 import com.erp.server.bi.service.BiTargetYearService;
@@ -36,6 +39,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
@@ -390,25 +394,57 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            log.error("warehouse downloadTemplate  出错了 e=={}", e);
+            log.error(" downloadTemplate  出错了 e=={}", e);
             throw new ServiceException(ApiError.ERROR_95131);
         }
     }
 
     /**
      * 导入人员目标设置
-     * @author yl
-     * @date 2023-09-15 14:20
+     *
      * @param excelFile
      * @param response
      * @return com.erp.model.bi.dto.BiTargetStaffSettingDTO.ImportDTO
+     * @author yl
+     * @date 2023-09-15 14:20
      */
     @Override
     public BiTargetStaffSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
-        List<String> metricsList=MetricsEnum.listName();
-        List<FindUserDTO> userList=sysUserFeign.getUserList();
+        List<String> metricsNameList = MetricsEnum.listName();
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        BiTargetStaffSettingExcelListener excelListenerUtil = new BiTargetStaffSettingExcelListener(metricsNameList, userList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), TargetStaffSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("人员目标设置 导入错误>>>{}", e);
+        }
+        BiTargetStaffSettingDTO.ImportDTO result = new BiTargetStaffSettingDTO.ImportDTO();
+        List<BiTargetStaffSettingDTO.CommonDTO> successList = excelListenerUtil.getSuccessList();
 
-        return null;
+        Map<MetricsEnum, List<BiTargetStaffSettingDTO.CommonDTO>> map = successList.stream().
+                collect(Collectors.groupingBy(BiTargetStaffSettingDTO.CommonDTO::getMetrics));
+
+        List<BiTargetStaffSettingDTO.DetailDTO> detailList = new ArrayList<>(map.size());
+        for (Map.Entry<MetricsEnum, List<BiTargetStaffSettingDTO.CommonDTO>> item : map.entrySet()) {
+            BiTargetStaffSettingDTO.DetailDTO detail = new BiTargetStaffSettingDTO.DetailDTO();
+            detail.setMetrics(item.getKey());
+            detail.setMetricsName(item.getKey().getName());
+            detail.setStaffSettingList(item.getValue());
+            detailList.add(detail);
+        }
+        result.setSuccessList(detailList);
+        List<TargetStaffSettingImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "人员设置错误.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, TargetStaffSettingImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        result.setErrorUrl(url);
+        return result;
     }
 
     @Override

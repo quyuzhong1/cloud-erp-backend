@@ -1,6 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -9,9 +10,14 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.bi.dto.BiTargetShopSettingDTO;
+import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
+import com.erp.model.bi.dto.excel.TargetShopSettingImportExcelDTO;
+import com.erp.model.bi.dto.excel.TargetStaffSettingImportExcelDTO;
 import com.erp.model.bi.entity.BiTargetShopSettingEntity;
 import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.erp.model.bi.enums.MetricsEnum;
@@ -20,16 +26,26 @@ import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.bi.listener.BiTargetShopSettingExcelListener;
+import com.erp.server.bi.listener.BiTargetStaffSettingExcelListener;
 import com.erp.server.bi.mapper.BiTargetShopSettingMapper;
 import com.erp.server.bi.service.BiTargetShopSettingService;
 import com.erp.server.bi.service.BiTargetYearService;
 import com.erp.server.bi.service.DmpShopInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -320,10 +336,11 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
 
     /**
      * 分页查询
-     * @author yl
-     * @date 2023-09-14 16:43
+     *
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.bi.dto.BiTargetShopSettingDTO.PagingViewDTO>
+     * @author yl
+     * @date 2023-09-14 16:43
      */
     @Override
     public PagingVO<BiTargetShopSettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto) {
@@ -344,10 +361,11 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
 
     /**
      * 填充分页数据
-     * @author yl
-     * @date 2023-09-14 16:47
+     *
      * @param list
      * @return void
+     * @author yl
+     * @date 2023-09-14 16:47
      */
     private void pullPaging(List<BiTargetShopSettingDTO.PagingViewDTO> list) {
         List<String> mainIdList = list.stream().map(BiTargetShopSettingDTO.PagingViewDTO::getId).collect(Collectors.toList());
@@ -430,6 +448,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
 
     /**
      * 填充显示的数据
+     *
      * @param metrics
      * @param month
      * @param dbList
@@ -467,5 +486,76 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         if (CollectionUtils.isNotEmpty(currencyList)) {
             targetYear.setCurrencySymbol(currencyList.get(0).getSymbol());
         }
+    }
+
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/TargetShopSetting.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error(" downloadTemplate  出错了 e=={}", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+
+    /**
+     * 导入
+     *
+     * @param excelFile
+     * @param response
+     * @return com.erp.model.bi.dto.BiTargetShopSettingDTO.ImportDTO
+     * @author yl
+     * @date 2023-09-15 16:32
+     */
+    @Override
+    public BiTargetShopSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+        List<String> metricsNameList = MetricsEnum.listName();
+        List<DmpShopInfoEntity> shopInfoList = dmpShopInfoService.list();
+        BiTargetShopSettingExcelListener excelListenerUtil = new BiTargetShopSettingExcelListener(metricsNameList, shopInfoList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), TargetShopSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("人员目标设置 导入错误>>>{}", e);
+        }
+        BiTargetShopSettingDTO.ImportDTO result = new BiTargetShopSettingDTO.ImportDTO();
+        List<BiTargetShopSettingDTO.CommonDTO> successList = excelListenerUtil.getSuccessList();
+        Map<MetricsEnum, List<BiTargetShopSettingDTO.CommonDTO>> map = successList.stream().
+                collect(Collectors.groupingBy(BiTargetShopSettingDTO.CommonDTO::getMetrics));
+
+        List<BiTargetShopSettingDTO.DetailDTO> detailList = new ArrayList<>(map.size());
+        for (Map.Entry<MetricsEnum, List<BiTargetShopSettingDTO.CommonDTO>> item : map.entrySet()) {
+            BiTargetShopSettingDTO.DetailDTO detail = new BiTargetShopSettingDTO.DetailDTO();
+            detail.setMetrics(item.getKey());
+            detail.setMetricsName(item.getKey().getName());
+            detail.setShopSettingList(item.getValue());
+            detailList.add(detail);
+        }
+        result.setSuccessList(detailList);
+        List<TargetShopSettingImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "店铺设置错误.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, TargetShopSettingImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        result.setErrorUrl(url);
+        return result;
     }
 }
