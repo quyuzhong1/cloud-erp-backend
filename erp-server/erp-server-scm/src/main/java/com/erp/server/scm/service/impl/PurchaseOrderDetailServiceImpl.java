@@ -377,9 +377,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             throw new ServiceException(ApiError.ERROR_98025);
         }
 
-        for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO: priceList) {
-            PurchaseOrderDetailDTO.AddDTO addDTO = details.stream().filter(obj -> obj.getSkuId().equals(priceDTO.getSkuId()) && MathUtil.compareTo(priceDTO.getPurchaseQty(),obj.getPurchaseQty()) == MathUtil.ZERO).findFirst().orElse(null);
-
+        for (PurchaseOrderDetailDTO.AddDTO addDTO : details) {
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO = priceList.stream().filter(obj -> obj.getSkuId().equals(addDTO.getSkuId()) && MathUtil.compareTo(addDTO.getPurchaseQty(),obj.getPurchaseQty()) == MathUtil.ZERO).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(priceDTO)) {
+                continue;
+            }
             List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(priceDTO);
             PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
             //汇率
