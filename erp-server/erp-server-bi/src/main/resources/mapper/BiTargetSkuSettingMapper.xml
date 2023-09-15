@@ -89,15 +89,15 @@
             <if test="params.date != null ">
                 and  bty.year = to_char(#{params.date},'yyyy')  and btss.month between 1 and 12
             </if>
-            <if test="params.deptIdList !=null and params.deptIdList.size > 0">
+            <if test="params.department !=null and params.department.size > 0">
                 and bty.dept_id in
-                <foreach collection="params.deptIdList" item="item" open="(" separator="," close=")">
+                <foreach collection="params.department" item="item" open="(" separator="," close=")">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.skuNoList !=null and params.skuNoList.size > 0">
+            <if test="params.sku !=null and params.sku.size > 0">
                 and btss.sku_no in
-                <foreach collection="params.skuNoList" item="item" open="(" separator="," close=")">
+                <foreach collection="params.sku" item="item" open="(" separator="," close=")">
                     #{item}
                 </foreach>
             </if>
