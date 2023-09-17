@@ -1,6 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -9,27 +10,43 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.bi.dto.BiTargetShopSettingDTO;
 import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
+import com.erp.model.bi.dto.excel.TargetShopSettingImportExcelDTO;
+import com.erp.model.bi.dto.excel.TargetSkuSettingImportExcelDTO;
 import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.entity.BiTargetSkuSettingEntity;
 import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.bi.listener.BiTargetShopSettingExcelListener;
+import com.erp.server.bi.listener.BiTargetSkuSettingExcelListener;
 import com.erp.server.bi.mapper.BiTargetSkuSettingMapper;
 import com.erp.server.bi.service.BiProductDetailService;
 import com.erp.server.bi.service.BiTargetSkuSettingService;
 import com.erp.server.bi.service.BiTargetYearService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -334,6 +351,81 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
     @Override
     public List<TargetFinishDTO.ViewDTO> listTargetFinish(TargetFinishDTO.ParamDTO dto) {
         return baseMapper.listTargetFinish(dto);
+    }
+
+
+    /**
+     * 下载模板
+     * @author yl
+     * @date 2023-09-17 14:22
+     * @param response
+     * @return void
+     */
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/TargetSkuSetting.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error(" downloadTemplate  出错了 e=={}", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+
+    }
+
+
+    /**
+     * 导入
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    @Override
+    public BiTargetSkuSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+        List<String> metricsNameList = MetricsEnum.listName();
+        BiTargetSkuSettingExcelListener excelListenerUtil = new BiTargetSkuSettingExcelListener(metricsNameList, biProductDetailService);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), TargetSkuSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("单品目标设置 导入错误>>>{}", e);
+        }
+        BiTargetSkuSettingDTO.ImportDTO result = new BiTargetSkuSettingDTO.ImportDTO();
+        List<BiTargetSkuSettingDTO.CommonDTO> successList = excelListenerUtil.getSuccessList();
+        Map<MetricsEnum, List<BiTargetSkuSettingDTO.CommonDTO>> map = successList.stream().
+                collect(Collectors.groupingBy(BiTargetSkuSettingDTO.CommonDTO::getMetrics));
+
+        List<BiTargetSkuSettingDTO.DetailDTO> detailList = new ArrayList<>(map.size());
+        for (Map.Entry<MetricsEnum, List<BiTargetSkuSettingDTO.CommonDTO>> item : map.entrySet()) {
+            BiTargetSkuSettingDTO.DetailDTO detail = new BiTargetSkuSettingDTO.DetailDTO();
+            detail.setMetrics(item.getKey());
+            detail.setMetricsName(item.getKey().getName());
+            detail.setSkuSettingList(item.getValue());
+            detailList.add(detail);
+        }
+        result.setSuccessList(detailList);
+        List<TargetSkuSettingImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "单品设置错误.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, TargetSkuSettingImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        result.setErrorUrl(url);
+        return result;
     }
 
     /**

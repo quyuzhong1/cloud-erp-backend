@@ -10,6 +10,8 @@ import com.erp.server.bi.service.BiTargetCategorySettingService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +21,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 分类 目标设置表
@@ -98,6 +101,29 @@ public class BiTargetCategorySettingController extends BaseController {
         biTargetCategorySettingService.update(dto);
         return success();
     }
+
+    /**
+     * 下载模板
+     *
+     * @return
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        biTargetCategorySettingService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入单品目标设置
+     *
+     * @return
+     */
+    @GetMapping("/importFile")
+    public ApiResult<BiTargetCategorySettingDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        BiTargetCategorySettingDTO.ImportDTO result = biTargetCategorySettingService.importFile(excelFile, response);
+        return success(result);
+    }
+
 
 
 

@@ -24,19 +24,27 @@ import com.erp.server.bi.service.BiTargetNewProductSettingService;
 import com.common.core.exception.ServiceException;
 import com.erp.server.bi.service.BiTargetYearService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -370,6 +378,47 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
         List<BiTargetNewProductSettingDTO.PagingViewDTO> list = pageData.getRecords();
         pullPaging(list);
         return new PagingVO<>(pageData);
+    }
+
+
+    /**
+     * 下载模板
+     * @param response
+     */
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/TargetNewProductSetting.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error(" downloadTemplate  出错了 e=={}", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+
+    }
+
+
+    /**
+     * 导入
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    @Override
+    public BiTargetNewProductSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+        return null;
     }
 
     /**

@@ -17,8 +17,10 @@ import com.erp.server.bi.service.BiTargetSkuSettingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * sku 目标设置表
@@ -100,6 +102,29 @@ public class BiTargetSkuSettingController extends BaseController {
         return success();
     }
 
+
+    /**
+     * 下载模板
+     *
+     * @return
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        biTargetSkuSettingService.downloadTemplate(response);
+        return success();
+    }
+
+
+    /**
+     * 导入单品目标设置
+     *
+     * @return
+     */
+    @GetMapping("/importFile")
+    public ApiResult<BiTargetSkuSettingDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        BiTargetSkuSettingDTO.ImportDTO result = biTargetSkuSettingService.importFile(excelFile, response);
+        return success(result);
+    }
 
 
 }

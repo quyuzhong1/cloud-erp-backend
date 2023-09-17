@@ -23,9 +23,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class TargetStaffSettingImportExcelDTO {
 
-    /**
-     * 质检项
-     */
+
     @ColumnWidth(20)
     @ExcelProperty(value = "考核人员", index = 0)
     @FieldValid(fieldName = "考核人员", isNotBlank = true)

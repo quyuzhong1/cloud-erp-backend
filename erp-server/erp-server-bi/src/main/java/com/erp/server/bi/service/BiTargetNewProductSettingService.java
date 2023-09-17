@@ -5,6 +5,9 @@ import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.entity.BiTargetNewProductSettingEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -53,4 +56,19 @@ public interface BiTargetNewProductSettingService extends SuperService<BiTargetN
      * @return com.common.business.vo.PagingVO<com.erp.model.bi.dto.BiTargetNewProductSettingDTO.PagingViewDTO>
      */
     PagingVO<BiTargetNewProductSettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto);
+
+
+    /**
+     * 下载模板
+     * @param response
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 导入
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    BiTargetNewProductSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
 }
