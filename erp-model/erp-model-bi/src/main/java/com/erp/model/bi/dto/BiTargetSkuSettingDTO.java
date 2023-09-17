@@ -133,4 +133,22 @@ public class BiTargetSkuSettingDTO implements Serializable {
     }
 
 
+    /**
+     * 导入质
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+
+        /**
+         o      * 成功返回数据
+         */
+        private List<DetailDTO> successList;
+
+        /**
+         * 错误的url
+         */
+        private String errorUrl;
+    }
+
 }

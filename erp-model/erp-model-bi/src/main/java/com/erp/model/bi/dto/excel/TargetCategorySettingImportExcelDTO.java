@@ -21,13 +21,13 @@ import java.math.BigDecimal;
  */
 @Data
 @NoArgsConstructor
-public class TargetShopSettingImportExcelDTO {
+public class TargetCategorySettingImportExcelDTO {
 
 
     @ColumnWidth(20)
-    @ExcelProperty(value = "店铺", index = 0)
-    @FieldValid(fieldName = "店铺", isNotBlank = true)
-    private String shopName;
+    @ExcelProperty(value = "一级类目", index = 0)
+    @FieldValid(fieldName = "一级类目", isNotBlank = true)
+    private String categoryName;
 
     @ColumnWidth(20)
     @ExcelProperty(value = "考核指标", index = 1)
