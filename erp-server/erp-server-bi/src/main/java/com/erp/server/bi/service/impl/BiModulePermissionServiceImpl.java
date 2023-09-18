@@ -117,7 +117,7 @@ public class BiModulePermissionServiceImpl extends ServiceImpl<BiModulePermissio
             return Collections.emptyMap();
         }
         return lambdaQuery()
-                .eq(BiModulePermissionEntity::getModuleId, moduleIds)
+                .in(BiModulePermissionEntity::getModuleId, moduleIds)
                 .list()
                 .stream()
                 .collect(Collectors.groupingBy(BiModulePermissionEntity::getModuleId))
