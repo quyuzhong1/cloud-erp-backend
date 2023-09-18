@@ -7,6 +7,7 @@ import com.erp.model.bi.entity.BiSubjectShareEntity;
 import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -100,4 +101,14 @@ public interface BiSubjectShareService extends IService<BiSubjectShareEntity> {
      * 当前用户是否有权限
      */
     Boolean getShare(String userId, String subjectId, List<String> roleIdList);
+
+    /**
+     * 当通过Subject查询
+     */
+    List<BiSubjectShareEntity> findBySubjectId(String subjectId);
+
+    /**
+     * 查询权限信息
+     */
+    Map<String, List<BiSubjectShareEntity>> mapBySubjectIds(List<String> subjectIds);
 }
