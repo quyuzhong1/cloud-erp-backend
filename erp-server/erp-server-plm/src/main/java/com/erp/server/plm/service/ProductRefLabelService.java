@@ -1,8 +1,11 @@
 package com.erp.server.plm.service;
+
 import com.erp.model.plm.entity.ProductRefLabelEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.plm.dto.ProductRefLabelDTO;
+import com.erp.model.plm.vo.ProductRefLabelVO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,22 +18,29 @@ import com.erp.model.plm.dto.ProductRefLabelDTO;
 public interface ProductRefLabelService extends SuperService<ProductRefLabelEntity> {
 
     /**
-    * 新增
-    * @author Lambda
-    * @date: 2023-09-13
-    * @param dto
-    * @return
-    */
-    String add(ProductRefLabelDTO.AddDTO dto);
+     * 新增
+     *
+     * @param dtos
+     * @return
+     * @author Lambda
+     * @date: 2023-09-13
+     */
+    void batchAdd(ProductRefLabelDTO.BatchAddDTO dtos);
 
     /**
-    * 修改
-    * @author Lambda
-    * @date: 2023-09-13
-    * @param dto
-    * @return
-    */
-    Boolean update(ProductRefLabelDTO.UpdateDTO dto);
+     * 删除关系记录
+     *
+     * @param dto
+     */
+    void removeProductRef(ProductRefLabelDTO.RemoveDTO dto);
 
-
+    /**
+     * 获取标签列表
+     *
+     * @param productId
+     * @param lableId
+     * @param skuId
+     * @return
+     */
+    List<ProductRefLabelVO> getLabelList(String productId, String lableId, String skuId);
 }
