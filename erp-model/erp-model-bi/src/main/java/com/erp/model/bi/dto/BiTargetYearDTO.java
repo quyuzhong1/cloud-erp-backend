@@ -284,6 +284,38 @@ public class BiTargetYearDTO implements Serializable {
     }
 
 
+
+    /**
+     * 年月目标设置值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class YearMonthValueDTO {
+
+        private Integer year;
+
+        private Integer month;
+
+        /**
+         * 指标维度
+         */
+        private String metrics;
+
+        /**
+         * 指标名
+         */
+        private String metricsName;
+
+        /**
+         * 目标值
+         */
+        private Object metricsValue;
+
+
+
+    }
+
+
     /**
      * 销售模板的参数
      */

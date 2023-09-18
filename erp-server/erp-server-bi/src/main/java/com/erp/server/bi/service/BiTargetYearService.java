@@ -3,6 +3,8 @@ import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 年度目标表 服务类
@@ -32,4 +34,10 @@ public interface BiTargetYearService extends SuperService<BiTargetYearEntity> {
     Boolean update(BiTargetYearDTO.UpdateDTO dto);
 
 
+    /**
+     * 获取到对应设置的目标值
+     * @param dto
+     * @return
+     */
+    List<BiTargetYearDTO.YearMonthValueDTO> listYearMonthValue(BiTargetYearDTO.SearchDTO dto);
 }
