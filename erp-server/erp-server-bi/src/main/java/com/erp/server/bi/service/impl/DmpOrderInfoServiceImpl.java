@@ -2,6 +2,7 @@ package com.erp.server.bi.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -13,9 +14,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
 import com.common.business.service.impl.RedisService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -50,6 +53,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -58,6 +62,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -136,7 +141,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             flag = 1;
         }
         BigDecimal amount = baseMapper.sumSales(dto, flag);
-        return new TargetSaleSumVO(amount.setScale(4, BigDecimal.ROUND_DOWN));
+        return new TargetSaleSumVO(amount.setScale(4, RoundingMode.DOWN));
     }
 
 
@@ -1298,6 +1303,42 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             obj.setCorrectionStatusName(OrderStateEnum.getName(obj.getCorrectionStatus()));
         });
     }
+
+    /**
+     * 通过SKU NO查询首单
+     */
+    @Override
+    public DmpOrderInfoEntity firstOrderBySkuNo(String skuNo) {
+        String subSql = StrUtil.format("select order_id from dmp_order_item where sku_no = '{}'", skuNo);
+
+        return lambdaQuery()
+                .inSql(DmpOrderInfoEntity::getId, subSql)
+                .orderByAsc(DmpOrderInfoEntity::getCreateTime)
+                .last(" LIMIT 1")
+                .one();
+    }
+
+    /**
+     * 通过SKU NO查询各平台首单
+     */
+    @Override
+    public Map<String, DmpOrderInfoEntity> mapFirstOrderBySkuNo(String skuNo) {
+        String subSql = StrUtil.format(" select order_id from dmp_order_item where sku_no = '{}' ", skuNo);
+
+        List<DmpOrderInfoEntity> list = query()
+                .select("MIN(create_time) as create_time",
+                        "source_platform as source_platform")
+                .inSql(BaseEntity.ID, subSql)
+                .groupBy(DmpOrderInfoEntity.SOURCE_PLATFORM)
+                .list();
+        if (CollectionUtils.isEmpty(list)){
+            return Collections.emptyMap();
+        }
+        return list.stream()
+                .collect(Collectors.toMap(DmpOrderInfoEntity::getSourcePlatform, Function.identity()));
+    }
+
+
 }
 
 

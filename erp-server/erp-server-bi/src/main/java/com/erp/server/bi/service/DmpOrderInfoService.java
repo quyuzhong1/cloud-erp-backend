@@ -253,4 +253,14 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
     Map<String, BigDecimal> statisticsSalesByCondition(BiFilterDTO dto, String groupName);
 
     List<DimensionSalesVO> sumSalesByCondition(BiFilterDTO dto, String groupName);
+
+    /**
+     * 通过SKU NO查询首单
+     */
+    DmpOrderInfoEntity firstOrderBySkuNo(String skuNo);
+
+    /**
+     * 通过SKU NO查询各平台首单
+     */
+    Map<String, DmpOrderInfoEntity> mapFirstOrderBySkuNo(String skuNo);
 }

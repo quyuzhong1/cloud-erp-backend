@@ -289,13 +289,13 @@
     <select id="sumSales" resultType="java.math.BigDecimal" parameterType="com.erp.model.bi.dto.BiFilterDTO">
         SELECT
          <if test="null != params.settleMethod and params.settleMethod == 0">
-            SUM(doit.amount_after * COALESCE(doit.currency_rate, 0))
+             COALESCE(SUM(doit.amount_after * COALESCE(doit.currency_rate, 0)), 0)
          </if>
          <if test="null != params.settleMethod and params.settleMethod == 2">
-            SUM(doit.amount_after)
+             COALESCE(SUM(doit.amount_after), 0)
          </if>
          <if test="null != params.settleMethod and params.settleMethod == 1">
-            SUM(doit.amount_after * COALESCE(doit.settle_rate, 0))
+             COALESCE(SUM(doit.amount_after * COALESCE(doit.settle_rate, 0)), 0)
          </if>
           AS salesAmount
         FROM dmp_order_info AS doi
