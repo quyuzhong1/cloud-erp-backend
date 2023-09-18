@@ -60,8 +60,8 @@ public class BiTargetNewProductSettingEntity extends BaseEntity<BiTargetNewProdu
     /**
     * 占比
     */
-    @TableField("rate ")
-    private BigDecimal rate ;
+    @TableField("rate")
+    private BigDecimal rate;
 
     public static final String MAIN_ID = "main_id";
 
@@ -79,7 +79,7 @@ public class BiTargetNewProductSettingEntity extends BaseEntity<BiTargetNewProdu
 
     public static final String STAFF_NAME = "staff_name";
 
-    public static final String RATE  = "rate ";
+    public static final String RATE  = "rate";
 
     @Override
     public Serializable pkVal() {
