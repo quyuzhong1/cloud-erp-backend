@@ -190,7 +190,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         boolean deliveryTimeTag = false;
         if (0 == dmpOrderInfoEntity.getCleanState()){
             //查询店铺信息获取'负责人','站点信息'同步到订单
-            DmpShopInfoEntity shopByShopNo = dmpShopInfoService.getShopByShopNo(dmpOrderInfoEntity.getShopNo(), dmpOrderInfoEntity.getPlatformSign());
+            DmpShopInfoEntity shopByShopNo = dmpShopInfoService.getShopByShopNo(dmpOrderInfoEntity.getShopNo());
             if (null != shopByShopNo) {
                 if(!Objects.equals(dmpOrderInfoEntity.getSite(), shopByShopNo.getSite())){
                     updateWrapper.set(DmpOrderInfoEntity::getSite, shopByShopNo.getSite());
