@@ -14,7 +14,7 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="sku_id" property="skuId" />
        <result column="product_id" property="productId" />
-       <result column="leable_id" property="leableId" />
+       <result column="lable_id" property="lableId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -28,8 +28,35 @@
         update_time,
         version,
         is_deleted,
-        sku_id, product_id, leable_id
+        sku_id, product_id, lable_id
     </sql>
 
+    <select id="countByLabelId" resultType="java.lang.Integer">
+        select count(1) from product_ref_label where is_deleted = false and lable_id = #{labelId}
+    </select>
+
+    <select id="getLabelList" resultType="com.erp.model.plm.vo.ProductRefLabelVO">
+        SELECT
+            prd.id,
+            prd.sku_id,
+            prd.product_id,
+            prd.lable_id,
+            bl."name",
+            bl."level",
+            bl.colour
+        FROM
+            product_ref_label prd
+                LEFT JOIN basic_label bl ON bl.id = prd.lable_id and bl.is_deleted = false
+        WHERE prd.is_deleted = false
+        <if test="productId != null and productId != ''">
+            AND prd.product_id = #{productId}
+        </if>
+        <if test="skuId != null and skuId != ''">
+            AND prd.sku_id = #{skuId}
+        </if>
+        <if test="labelId != null and labelId != ''">
+            AND prd.lable_id = #{labelId}
+        </if>
+    </select>
 
 </mapper>
