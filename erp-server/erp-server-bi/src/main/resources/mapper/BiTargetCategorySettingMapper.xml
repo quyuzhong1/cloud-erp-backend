@@ -83,8 +83,8 @@
             <if test="params.metrics != null and params.metrics != ''">
                 and  btcs.metrics = #{params.metrics}
             </if>
-            <if test="params.date != null ">
-                and  bty.year = to_char(#{params.date},'yyyy')  and btcs.month between 1 and 12
+            <if test="params.startTime != null ">
+                and  bty.year = to_char(#{params.startTime},'yyyy')::INTEGER  and btcs.month between 1 and 12
             </if>
             <if test="params.department !=null and params.department.size > 0">
                 and bty.dept_id in

@@ -1,12 +1,14 @@
 package com.erp.server.bi.service.impl;
 
 import cn.hutool.core.lang.Pair;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
+import com.erp.model.bi.enums.TargetFinishViewTypeEnum;
 import com.erp.model.bi.enums.TargetSearchTypeEnum;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
@@ -77,38 +79,42 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         headMap.put("typeName",TargetSearchTypeEnum.getByCode(dto.getSearchType()));
         headMap.put("yearTotalTarget","累计年度目标");
         headMap.put("yearTotalReal","累计年度实际");
-        headMap.put("rate","完成率");
+        headMap.put("rate", TargetFinishViewTypeEnum.getNameByCode(dto.getViewType()));
         MonthEnum[] values = MonthEnum.values();
         for (MonthEnum monthEnum : values) {
-            headMap.put(monthEnum.getCode(),monthEnum.getValue());
+            headMap.put(monthEnum.getCode(), StrUtil.format("{}年{}月",start.getYear(),monthEnum.getValue()));
         }
         resultMap.put("head",headMap);
         //列表数据
-        List<Map<String, Object>> resultList = new ArrayList<>();
+        List<LinkedHashMap<String, Object>> resultList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(targetList)) {
             Map<String, List<TargetFinishDTO.ViewDTO>> map = targetList.stream().collect(Collectors.groupingBy(TargetFinishDTO.ViewDTO::getTypeName));
 
             for (Map.Entry<String, List<TargetFinishDTO.ViewDTO>> entry : map.entrySet()) {
-                Map<String, Object> result = new HashMap<>();
+                LinkedHashMap<String, Object> result = new LinkedHashMap<>();
                 List<TargetFinishDTO.ViewDTO> value = entry.getValue();
+                result.put("typeName",entry.getKey());
                 //年目标
                 BigDecimal yearTotalTarget = value.stream().map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
                 result.put("yearTotalTarget",yearTotalTarget);
                 //年实际
-                BigDecimal yearTotalReal = realList.stream().map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal yearTotalReal = realList.stream().filter(obj -> obj.getTypeName().equals(entry.getKey())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
                 result.put("yearTotalReal",yearTotalReal);
                 BigDecimal yearRate = MathUtil.divide(yearTotalReal,yearTotalTarget);
                 result.put("rate",yearRate);
-                for (TargetFinishDTO.ViewDTO m : value) {
+
+                for (MonthEnum monthEnum : values) {
                     TargetFinishDTO.SlotDTO slotDTO = new TargetFinishDTO.SlotDTO();
+                    //目标值
+                    BigDecimal targetValue = value.stream().filter(obj -> obj.getMonth().equals(monthEnum.getValue())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
                     //实际值
-                    BigDecimal realValue = realList.stream().filter(obj -> obj.getMonth().equals(m.getMonth()) && obj.getTypeName().equals(m.getTypeName())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal realValue = realList.stream().filter(obj -> obj.getMonth().equals(monthEnum.getValue()) && obj.getTypeName().equals(entry.getKey())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
                     slotDTO.setValue(realValue);
                     //完成率
-                    BigDecimal rate = MathUtil.compareTo(m.getValue(), BigDecimal.ZERO) == MathUtil.ZERO ? BigDecimal.ZERO : MathUtil.divide(realValue, m.getValue()).multiply(MathUtil.BigDecimal_100);
+                    BigDecimal rate = MathUtil.divide(realValue, targetValue).multiply(MathUtil.BigDecimal_100);
                     slotDTO.setRate(rate);
-                    result.put(String.valueOf(m.getMonth()), slotDTO);
-                };
+                    result.put(monthEnum.getCode(), slotDTO);
+                }
                 resultList.add(result);
             }
         };
@@ -257,7 +263,11 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
      */
     private  Pair<List<DmpOrderInfoEntity>,List<DmpOrderItemEntity>> listOrderItem (TargetFinishDTO.ParamDTO dto,LocalDateTime start,LocalDateTime end) {
         QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
-        qw.select("id", "platform_create_time", "delivery_time","sell_price","currency_rate", getFieldName(dto.getSearchType()));
+        if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SKU.getCode().equals(dto.getSearchType())) {
+            qw.select("id", "platform_create_time", "delivery_time");
+        } else {
+            qw.select("id", "platform_create_time", "delivery_time", getFieldName(dto.getSearchType()));
+        }
         List<DmpOrderInfoEntity> mainList = getOrderInfoEntities(dto, qw, start, end,null);
         if (CollectionUtils.isEmpty(mainList)) {
             return new Pair<>(Collections.EMPTY_LIST,Collections.EMPTY_LIST);
@@ -309,8 +319,8 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             );
         }
         //根据指标查询品类目标值
-        Map<String, Integer> monthMap = mainList.stream().collect(Collectors.toMap(obj -> obj.getId(), obj -> (flag ? obj.getPlatformCreateTime() : obj.getDeliveryTime()).getMonthValue()));
         if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType())) {
+            Map<String, Integer> monthMap = mainList.stream().collect(Collectors.toMap(obj -> obj.getId(), obj -> (flag ? obj.getPlatformCreateTime() : obj.getDeliveryTime()).getMonthValue()));
             map = detailList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getCategoryId().concat(",").concat(String.valueOf(monthMap.get(x.getOrderId()))),
@@ -318,6 +328,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             );
         }
         if (TargetSearchTypeEnum.SKU.getCode().equals(dto.getSearchType())) {
+            Map<String, Integer> monthMap = mainList.stream().collect(Collectors.toMap(obj -> obj.getId(), obj -> (flag ? obj.getPlatformCreateTime() : obj.getDeliveryTime()).getMonthValue()));
             //根据指标查询SKU目标值
             map = detailList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
