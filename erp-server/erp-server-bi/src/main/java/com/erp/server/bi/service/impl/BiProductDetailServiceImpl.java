@@ -7,6 +7,7 @@ import com.erp.model.bi.vo.SkuCategoryVO;
 import com.erp.server.bi.mapper.BiProductDetailMapper;
 import com.erp.server.bi.service.BiProductDetailService;
 import com.erp.server.bi.service.BiProductInfoService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -110,5 +111,18 @@ public class BiProductDetailServiceImpl extends SuperServiceImpl<BiProductDetail
             resultList.add(vo);
         }
         return resultList;
+    }
+
+    /**
+     * 根据sku 获取详情信息
+     * @param skuNo
+     * @return
+     */
+    @Override
+    public BiProductDetailEntity getBySkuNo(String skuNo) {
+        if(StringUtils.isBlank(skuNo)){
+            return null;
+        }
+        return this.lambdaQuery().eq(BiProductDetailEntity::getSkuNo,skuNo).last("LIMIT 1").one();
     }
 }
