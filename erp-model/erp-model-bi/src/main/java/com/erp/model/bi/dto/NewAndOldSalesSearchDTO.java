@@ -11,7 +11,7 @@ public class NewAndOldSalesSearchDTO {
      * 查询参数
      **/
     @Data
-    public static class SearchDTO {
+    public static class SearchDTO extends BiFilterDTO {
         /**
          * 搜索类型：/bi/common/enumDropDown?type=NewAndOldSalesSearchType
          * 描述：division 事业部，
@@ -52,23 +52,36 @@ public class NewAndOldSalesSearchDTO {
         /**
          * 老品销售量
          */
-        private Integer oldSalesQuantity=0;
+        private Integer oldSalesQuantity;
         /**
          * 新品销售额占比
          */
-        private BigDecimal newProductSalesRatio;
+        private String newProductSalesRatio;
         /**
          * 老品销售额占比
          */
-        private BigDecimal oldProductSalesRatio;
+        private String oldProductSalesRatio;
+
+        /**
+         * 新品销售额完成率
+         */
+        private String newProductSalesFinishRate;
+
+        /**
+         * 新品销量完成率
+         */
+        private String newSalesQuantityFinishRate;
+
+        /**
+         * 新品目标
+         */
+        private String newTarget;
 
         public PagingDTO() {
             this.newProductSales = BigDecimal.ZERO;
             this.newSalesQuantity = 0;
             this.oldProductSales = BigDecimal.ZERO;
             this.oldSalesQuantity = 0;
-            this.newProductSalesRatio = BigDecimal.ZERO;
-            this.oldProductSalesRatio = BigDecimal.ZERO;
         }
     }
 

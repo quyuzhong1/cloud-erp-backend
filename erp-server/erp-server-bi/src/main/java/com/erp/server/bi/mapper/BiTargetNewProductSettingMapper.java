@@ -22,4 +22,15 @@ import org.apache.ibatis.annotations.Param;
 public interface BiTargetNewProductSettingMapper extends BaseMapper<BiTargetNewProductSettingEntity> {
 
     IPage<BiTargetNewProductSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params);
+
+    /**
+     * 根据年月维度查询目标
+     * @Author Luo_WG
+     * @Date 2023/9/15 16:54
+     * @param year 年
+     * @param month 月
+     * @param metrics 维度
+     * @return com.erp.model.bi.entity.BiTargetNewProductSettingEntity
+     **/
+    BiTargetNewProductSettingEntity getTargetByParams(@Param("year") Integer year, @Param("month") Integer month, @Param("metrics") String metrics);
 }

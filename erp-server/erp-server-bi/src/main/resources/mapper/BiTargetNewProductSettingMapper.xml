@@ -73,5 +73,36 @@
 
     </select>
 
-
+    <select id="getTargetByParams" resultType="com.erp.model.bi.entity.BiTargetNewProductSettingEntity">
+        SELECT
+            btnps.id,
+            btnps.create_user_id,
+            btnps.create_user_name,
+            btnps.create_time,
+            btnps.update_user_id,
+            btnps.update_user_name,
+            btnps.update_time,
+            btnps.version,
+            btnps.is_deleted,
+            btnps.main_id,
+            btnps.month,
+            btnps.value,
+            btnps.metrics,
+            btnps.staff_id,
+            btnps.staff_name,
+            btnps.rate
+        FROM bi_target_year ty
+        LEFT JOIN bi_target_new_product_setting btnps
+        WHERE ty.is_deleted=false
+        <if test="year != null and year != ''">
+            AND ty.year = #{year}
+        </if>
+        <if test="month !=null and month != ''">
+            AND btnps.month = #{month}
+        </if>
+        <if test="metrics !=null and metrics != ''">
+            AND btnps.metrics = #{metrics}
+        </if>
+        ORDER BY btnps.id DESC
+    </select>
 </mapper>

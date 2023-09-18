@@ -57,6 +57,17 @@ public interface BiTargetNewProductSettingService extends SuperService<BiTargetN
      */
     PagingVO<BiTargetNewProductSettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto);
 
+    /**
+     * 条件查询新品目标
+     * @Author Luo_WG
+     * @Date 2023/9/15 16:44
+     * @param month 月
+     * @param metrics 维度
+     * @return com.erp.model.bi.entity.BiTargetNewProductSettingEntity
+     **/
+    BiTargetNewProductSettingEntity getTargetByParams(Integer month, String metrics);
+
+
 
     /**
      * 下载模板

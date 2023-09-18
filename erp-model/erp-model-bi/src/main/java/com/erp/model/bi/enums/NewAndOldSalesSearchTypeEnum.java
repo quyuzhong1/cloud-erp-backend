@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * @Author Luo_WG
  * @Date 2023/9/15 11:56
  **/
-public enum  NewAndOldSalesSearchTypeEnum implements EnumMessage {
+public enum NewAndOldSalesSearchTypeEnum implements EnumMessage {
     DIVISION("division","事业部"),
     USER("user","人员"),
     SHOP("shop","店铺"),
@@ -43,11 +43,21 @@ public enum  NewAndOldSalesSearchTypeEnum implements EnumMessage {
         return null;
     }
 
-    public static String getNameByCode(Integer code) {
+    public static String getNameByCode(String code) {
         NewAndOldSalesSearchTypeEnum[] enums = values();
         for (NewAndOldSalesSearchTypeEnum typeEnum : enums) {
             if (typeEnum.getCode().equals(code)) {
                 return typeEnum.getName();
+            }
+        }
+        return null;
+    }
+
+    public static NewAndOldSalesSearchTypeEnum getEnumByCode(String code) {
+        NewAndOldSalesSearchTypeEnum[] enums = values();
+        for (NewAndOldSalesSearchTypeEnum typeEnum : enums) {
+            if (typeEnum.getCode().equals(code)) {
+                return typeEnum;
             }
         }
         return null;
