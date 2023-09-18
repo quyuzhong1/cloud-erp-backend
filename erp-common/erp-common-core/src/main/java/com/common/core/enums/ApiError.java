@@ -28,6 +28,7 @@ public enum ApiError implements Serializable {
 
 
     /**
+    /**
      * 通用错误
      */
     ERROR_405(405, "方法不被允许"),
@@ -497,6 +498,7 @@ public enum ApiError implements Serializable {
     CLEAN_SPLIT_FINANCIAL_EXIST(97030, "sku{【%s】}的财务编码不存在！"),
     ERP_BOM_EXIST(97031, "sku{【%s】}在ERP的BOM中不存在！"),
     MABANG_BOM_EXIST(97032, "sku{【%s】}在马帮的BOM中不存在！"),
+    YEAR_METRICS_EXIST(97030, "{}已设置,不可重复设置"),
 
 
 

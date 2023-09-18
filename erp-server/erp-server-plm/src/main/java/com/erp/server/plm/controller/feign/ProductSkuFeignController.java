@@ -4,6 +4,7 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.ProductVO;
@@ -18,9 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -48,10 +47,10 @@ public class ProductSkuFeignController {
 
 
     /**
-     *产品包装信息
+     * 产品包装信息
      */
     @Resource
-    private ProductPackService  productPackService;
+    private ProductPackService productPackService;
 
     @Resource
     private WorkOptionService workOptionService;
@@ -141,13 +140,14 @@ public class ProductSkuFeignController {
         return skuList;
     }
 
-   /**
-    * 根据sku no 获取sku 信息
-    * @author yl
-    * @date 2023-06-27 17:51
-    * @param skuNoList
-    * @return java.util.List<com.erp.model.plm.vo.SkuVO>
-    */
+    /**
+     * 根据sku no 获取sku 信息
+     *
+     * @param skuNoList
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-06-27 17:51
+     */
     @PostMapping("/listBySkuNos")
     public List<SkuVO> listBySkuNos(@RequestBody List<String> skuNoList) {
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
@@ -155,10 +155,10 @@ public class ProductSkuFeignController {
     }
 
     /**
+     * @return List<SkuVO>
      * @description: 获取已审核sku
      * @author Will
      * @date: 2023/3/21 14:13
-     * @return List<SkuVO>
      */
     @GetMapping("/listApproveSku")
     public List<SkuVO> listApproveSku() {
@@ -168,10 +168,11 @@ public class ProductSkuFeignController {
 
     /**
      * 根据id查询sku信息
-     * @Author Luo_WG
-     * @Date 2023/4/14 15:07
+     *
      * @param ids ids
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @Author Luo_WG
+     * @Date 2023/4/14 15:07
      **/
     @PostMapping("/getByIdList")
     public List<ProductDetailEntity> getByIdList(@RequestBody List<String> ids) {
@@ -182,6 +183,7 @@ public class ProductSkuFeignController {
 
     /**
      * 根据sku id 集合获取对应产品信息
+     *
      * @param skuIds
      * @return
      */
@@ -194,10 +196,11 @@ public class ProductSkuFeignController {
 
     /**
      * 根据用户获取各任务阶段数量
-     * @Author Luo_WG
-     * @Date 2023/4/24 9:34
+     *
      * @param optionUserId optionUserId
      * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.StageViewDTO>
+     * @Author Luo_WG
+     * @Date 2023/4/24 9:34
      **/
     @PostMapping("/stageView")
     public List<WorkOptionDTO.StageViewDTO> stageView(@RequestBody String optionUserId) {
@@ -207,10 +210,11 @@ public class ProductSkuFeignController {
 
     /**
      * 根据skuId 获取到产品的角色人员
-     * @author yl
-     * @date 2023-04-28 12:23
+     *
      * @param skuIds
      * @return com.erp.model.plm.dto.ProductInfoDTO.ProductRolePeopleDTO
+     * @author yl
+     * @date 2023-04-28 12:23
      */
     @PostMapping("/getRolePeople")
     public List<ProductInfoDTO.ProductRolePeopleDTO> getRolePeople(@RequestBody List<String> skuIds) {
@@ -219,6 +223,7 @@ public class ProductSkuFeignController {
 
     /**
      * 根据sku id集合获取采购员、供应商信息
+     *
      * @param dto
      * @return
      */
@@ -230,10 +235,11 @@ public class ProductSkuFeignController {
 
     /**
      * 更新不可删除标识
-     * @Author Luo_WG
-     * @Date 2023/6/15 11:32
+     *
      * @param skuIds skuIds
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/6/15 11:32
      **/
     @PostMapping("/updateOccupyStatus")
     public Boolean updateOccupyStatus(@RequestBody List<String> skuIds) {
@@ -246,19 +252,38 @@ public class ProductSkuFeignController {
 
     /**
      * 获取不参与库存操作的sku
+     *
      * @return
      */
     @PostMapping("/getNoInventorySku")
-    public List<SkuVO> getNoInventorySku( ) {
+    public List<SkuVO> getNoInventorySku() {
         return productDetailService.getNoInventorySku();
     }
 
     /**
      * 根据创建时间获取到对应的sku
+     *
      * @return
      */
     @PostMapping("/listByCreateTimeList")
     public List<ProductDetailEntity> listByCreateTimeList(@RequestBody List<LocalDateTime> createTimeList) {
         return productDetailService.listByCreateTimeList(createTimeList);
+    }
+
+    /**
+     * 根据分类id 获取分类
+     */
+    @PostMapping("listCategoryByIds")
+    public List<BasicCategoryEntity> listCategoryByIds(@RequestBody List<String> ids) {
+        return CollectionUtils.isEmpty(ids) ? Collections.emptyList() : basicCategoryService.listByIds(ids);
+    }
+
+
+    /**
+     * 获取到父级分类
+     */
+    @GetMapping("listParentCategory")
+    public List<BasicCategoryEntity> listCategoryByIds() {
+        return  basicCategoryService.listParentCategory();
     }
 }
