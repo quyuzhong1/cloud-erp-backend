@@ -22,8 +22,10 @@ import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
 import com.erp.model.bi.entity.BiLayoutRefModuleEntity;
 import com.erp.model.bi.entity.BiModuleEntity;
+import com.erp.model.bi.entity.BiModulePermissionEntity;
 import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 import com.erp.model.bi.vo.LayoutVO;
+import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiModuleMapper;
 import com.erp.server.bi.service.*;
@@ -176,8 +178,21 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         }
         ModuleDTO result = new ModuleDTO();
         BeanMapper.copy(module, result);
-        List<String> permissionUserIdList = modulePermissionService.getByModuleId(moduleId);
-        result.setShareFlagIdList(permissionUserIdList);
+//        List<String> permissionUserIdList = modulePermissionService.getByModuleId(moduleId);
+        List<BiModulePermissionEntity> permissionEntityList = modulePermissionService.findByModuleId(moduleId);
+        //  personal 私人 share 按多用户ID共享 role 按多角色ID
+        String shareFlag = "personal";
+        List<String> shareFlagIdList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(permissionEntityList)){
+            shareFlag = DashboardEnum.getByIsRole(permissionEntityList.get(0).getIdentityType());
+            shareFlagIdList = permissionEntityList
+                    .stream()
+                    .map(BiModulePermissionEntity::getIdentityId)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+        result.setShareFlagIdList(shareFlagIdList);
+        result.setShareFlag(shareFlag);
         return result;
     }
 

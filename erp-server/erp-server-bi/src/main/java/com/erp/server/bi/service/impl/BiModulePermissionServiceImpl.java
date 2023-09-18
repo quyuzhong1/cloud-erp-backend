@@ -97,4 +97,14 @@ public class BiModulePermissionServiceImpl extends ServiceImpl<BiModulePermissio
         // 添加
         addModulePermission(mainId, shareFlagIdList, identityTypeEnum);
     }
+
+    /**
+     * 通过ModuleId查询
+     */
+    @Override
+    public List<BiModulePermissionEntity> findByModuleId(String moduleId) {
+        return lambdaQuery()
+                .eq(BiModulePermissionEntity::getModuleId, moduleId)
+                .list();
+    }
 }

@@ -28,4 +28,9 @@ public interface BiModulePermissionService  extends IService<BiModulePermissionE
      * 检查和添加
      */
     void checkAndAddModulePermission(List<String> shareFlagIdList, String mainId, String shareFlag);
+
+    /**
+     * 通过ModuleId查询
+     */
+    List<BiModulePermissionEntity> findByModuleId(String moduleId);
 }
