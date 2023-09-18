@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.dmp.mapper.BiTargetYearMapper">
+<mapper namespace="com.erp.server.bi.mapper.BiTargetYearMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.bi.entity.BiTargetYearEntity">
        <result column="id" property="id" />
@@ -32,6 +32,153 @@
         is_deleted,
         year, currency, currency_symbol, dept_id, dept_name
     </sql>
+    <select id="AllTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
+           SELECT
+             month,
+             SUM(value) AS metricsValue
+           FROM (
+                 SELECT
+                 month ,SUM(value) AS value
+                 FROM bi_target_staff_setting tss
+                 LEFT JOIN bi_target_year ty
+                 ON tss.main_id=ty.id and ty.is_deleted=false
+                 WHERE tss.is_deleted=false AND ty.year=#{year}
+                 AND tss.metrics=#{metrics}
+                 GROUP BY month
+
+           UNION ALL
+
+               SELECT
+               month ,SUM(value) AS value
+               FROM bi_target_shop_setting tss
+               LEFT JOIN bi_target_year ty
+               ON tss.main_id=ty.id and ty.is_deleted=false
+               WHERE tss.is_deleted=false AND ty.year=#{year}
+               AND tss.metrics=#{metrics}
+               GROUP BY month
+
+           UNION ALL
+
+               SELECT
+               month ,SUM(value) AS value
+               FROM bi_target_category_setting tcs
+               LEFT JOIN bi_target_year ty
+               ON tcs.main_id=ty.id and ty.is_deleted=false
+               WHERE tcs.is_deleted=false AND ty.year=#{year}
+               AND tcs.metrics=#{metrics}
+               GROUP BY month
+
+          UNION ALL
+
+               SELECT
+               month ,SUM(value) AS value
+               FROM bi_target_sku_setting tss
+               LEFT JOIN bi_target_year ty
+               ON tss.main_id=ty.id and ty.is_deleted=false
+               WHERE tss.is_deleted=false AND ty.year=#{year}
+               AND tss.metrics=#{metrics}
+               GROUP BY month
+
+          UNION ALL
+
+               SELECT
+               month ,SUM(value) AS value
+               FROM bi_target_new_product_setting tnp
+               LEFT JOIN bi_target_year ty
+               ON tnp.main_id=ty.id and ty.is_deleted=false
+               WHERE tnp.is_deleted=false AND ty.year=#{year}
+               AND tnp.metrics=#{metrics}
+               GROUP BY month
+
+
+               ) temp
+         GROUP BY temp.month
+    </select>
+
+    <select id="ListDeptTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
+        SELECT
+            month,
+            SUM(value) AS metricsValue
+        FROM (
+            SELECT
+            month ,SUM(value) AS value
+            FROM bi_target_staff_setting tss
+            LEFT JOIN bi_target_year ty
+            ON tss.main_id=ty.id and ty.is_deleted=false
+            WHERE tss.is_deleted=false AND ty.year=#{year}
+            AND tss.metrics=#{metrics} AND ty.dept_id=#{deptId}
+            GROUP BY month
+
+            UNION ALL
+
+            SELECT
+            month ,SUM(value) AS value
+            FROM bi_target_shop_setting tss
+            LEFT JOIN bi_target_year ty
+            ON tss.main_id=ty.id and ty.is_deleted=false
+            WHERE tss.is_deleted=false AND ty.year=#{year}
+            AND tss.metrics=#{metrics}
+            GROUP BY month
+
+            UNION ALL
+
+            SELECT
+            month ,SUM(value) AS value
+            FROM bi_target_category_setting tcs
+            LEFT JOIN bi_target_year ty
+            ON tcs.main_id=ty.id and ty.is_deleted=false
+            WHERE tcs.is_deleted=false AND ty.year=#{year}
+            AND tcs.metrics=#{metrics} AND ty.dept_id=#{deptId}
+            GROUP BY month
+
+            UNION ALL
+
+            SELECT
+            month ,SUM(value) AS value
+            FROM bi_target_sku_setting tss
+            LEFT JOIN bi_target_year ty
+            ON tss.main_id=ty.id and ty.is_deleted=false
+            WHERE tss.is_deleted=false AND ty.year=#{year}
+            AND tss.metrics=#{metrics} AND ty.dept_id=#{deptId}
+            GROUP BY month
+
+            UNION ALL
+
+            SELECT
+            month ,SUM(value) AS value
+            FROM bi_target_new_product_setting tnp
+            LEFT JOIN bi_target_year ty
+            ON tnp.main_id=ty.id and ty.is_deleted=false
+            WHERE tnp.is_deleted=false AND ty.year=#{year}
+            AND tnp.metrics=#{metrics} AND ty.dept_id=#{deptId}
+            GROUP BY month
+
+
+            ) temp
+        GROUP BY temp.month
+    </select>
+
+    <select id="ListStaffTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
+        SELECT
+            month ,SUM(value) AS metricsValue
+        FROM bi_target_staff_setting tss
+            LEFT JOIN bi_target_year ty
+        ON tss.main_id=ty.id and ty.is_deleted=false
+        WHERE tss.is_deleted=false AND ty.year=#{year}
+          AND tss.metrics=#{metrics} AND tss.staff_id=#{staffId}
+        GROUP BY month
+    </select>
+
+    <select id="ListShopTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
+        SELECT
+            month ,SUM(value) AS metricsValue
+        FROM bi_target_shop_setting tss
+            LEFT JOIN bi_target_year ty
+        ON tss.main_id=ty.id and ty.is_deleted=false
+        WHERE tss.is_deleted=false AND ty.year=#{year}
+          AND tss.metrics=#{metrics} AND tss.shop_id=#{shopId}
+        GROUP BY month
+    </select>
 
 
 </mapper>

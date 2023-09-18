@@ -24,10 +24,7 @@ import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.enums.SiteEnum;
 import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
-import com.erp.server.bi.service.BiProductDetailService;
-import com.erp.server.bi.service.BiTargetNewProductSettingService;
-import com.erp.server.bi.service.DmpShopInfoService;
-import com.erp.server.bi.service.SalesOrderService;
+import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -71,6 +68,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     @Resource
     private BiTargetNewProductSettingService biTargetNewProductSettingService;
+
+    @Resource
+    private BiTargetYearService biTargetYearService;
 
 
     @Override
@@ -2220,7 +2220,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             year = yearMonthDate.getYear();
             moth = yearMonthDate.getMonthValue();
         }
-
+        //获取到对应设置的目标值
+        List<BiTargetYearDTO.YearMonthValueDTO> yearMonthValueList=biTargetYearService.listYearMonthValue(dto);
 
 
 
