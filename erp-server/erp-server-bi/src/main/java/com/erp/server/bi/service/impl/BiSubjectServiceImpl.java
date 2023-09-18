@@ -10,6 +10,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.core.constant.BaseStateConstants;
 import com.common.core.utils.BeanMapper;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -21,7 +22,6 @@ import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.model.bi.vo.CategorySubjectVO;
 import com.erp.model.bi.vo.SubjectVO;
 import com.erp.server.bi.constant.BiConstant;
-import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiSubjectMapper;
 import com.erp.server.bi.service.*;
@@ -68,6 +68,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
 
     /**
@@ -515,7 +518,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         String type = DictEnum.DASHBOARD.getType();
         List<BiDictEntity> dictList = dictService.getByType(type);
         //查询到用户可见的专题
-        List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
+//        List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
+        List<String> subjectIdList = subjectShareService.findSubjectId(userId, roleIdList);
         List<SubjectDTO> subjectList = baseMapper.getByIds(subjectIdList, searchKeyword);
         //获取到非仪表盘的列表
         dictList = dictList.stream().filter(d -> StringUtils.isBlank(d.getValue())).collect(Collectors.toList());

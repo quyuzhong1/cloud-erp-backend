@@ -2,6 +2,7 @@ package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.constant.BaseStateConstants;
 import com.common.core.enums.ApiError;
@@ -16,12 +17,14 @@ import com.erp.server.bi.service.BiSubjectService;
 import com.erp.server.bi.service.BiSubjectShareService;
 import com.erp.server.bi.service.CommonService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 主题分享表(BiSubjectShare)表服务实现类
@@ -153,9 +156,9 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
      * @date 2022-12-13 18:10
      */
     @Override
-    public void checkPermission(String userId, BiSubjectEntity subject) {
+    public void checkPermission(String userId, BiSubjectEntity subject, List<String> roleIdList) {
         //这个是 这个人是在分享的里面
-        Boolean shareFlag = getShare(userId, subject.getId());
+        Boolean shareFlag = getShare(userId, subject.getId(), roleIdList);
         //如果在 就返回
         if (shareFlag) {
             return;
@@ -179,6 +182,9 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
         return this.listObjs(queryWrapper, Object::toString);
     }
 
+    /**
+     * 检查和添加共享记录
+     */
     @Override
     public void checkAndAddSubjectShare(List<String> shareFlagIdList, String subjectId, String shareFlag) {
         // 非分享
@@ -192,13 +198,44 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
         this.addSubjectShare(shareFlagIdList, subjectId, refTypeEnum);
     }
 
-    private Boolean getShare(String userId, String subjectId) {
+    /**
+     * 查询用户支持的专题
+     */
+    @Override
+    public List<String> findSubjectId(String userId, List<String> roleIdList) {
+        LambdaQueryChainWrapper<BiSubjectShareEntity> lambdaWrapper = lambdaQuery()
+                .eq(BiSubjectShareEntity::getIdentityType, BiShareIdentityTypeEnum.USER.getCode())
+                .eq(BiSubjectShareEntity::getIdentityId, userId);
+
+        if (CollectionUtils.isNotEmpty(roleIdList)){
+            lambdaWrapper = lambdaWrapper.or(w->
+                            w.eq(BiSubjectShareEntity::getIdentityType, BiShareIdentityTypeEnum.ROLE.getCode())
+                            .in(BiSubjectShareEntity::getIdentityId, roleIdList)
+                    );
+        }
+        return lambdaWrapper.list().stream()
+                .map(BiSubjectShareEntity::getSubjectId)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 当前用户是否有权限
+     */
+    @Override
+    public Boolean getShare(String userId, String subjectId, List<String> roleIdList) {
         LambdaQueryWrapper<BiSubjectShareEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiSubjectShareEntity::getIdentityId, userId);
-        queryWrapper.eq(BiSubjectShareEntity::getSubjectId, subjectId);
-        queryWrapper.last("LIMIT 1");
+        queryWrapper.and(ww -> ww.or(w->
+                w.eq(BiSubjectShareEntity::getSubjectId, subjectId)
+                .eq(BiSubjectShareEntity::getIdentityType, BiShareIdentityTypeEnum.USER.getCode())
+        ).or(sw -> sw
+                .eq(CollectionUtils.isNotEmpty(roleIdList), BiSubjectShareEntity::getSubjectId, subjectId)
+                .eq(CollectionUtils.isNotEmpty(roleIdList), BiSubjectShareEntity::getIdentityType, BiShareIdentityTypeEnum.USER.getCode())
+                ));
+
         int count = this.count(queryWrapper);
-        return count > 0 ? true : false;
+        return count > 0;
     }
 
 

@@ -99,7 +99,7 @@ public class ModuleDTO implements Serializable {
      * role 按多角色ID
      */
     @StateEnumValue(strValues = {"personal","share","role"},message = "分享类型有误")
-    private String shareFlag = "personal";
+    private String shareFlag;
 
     /**
      * 原用户ID列表
