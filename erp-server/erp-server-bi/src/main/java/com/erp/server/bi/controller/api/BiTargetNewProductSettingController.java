@@ -25,7 +25,7 @@ import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * 新品目标设置表
+ * 目标管理-新品
  *
  * @author Lambda
  * @since 2023-09-13

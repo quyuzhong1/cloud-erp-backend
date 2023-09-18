@@ -26,7 +26,7 @@ import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * 分类 目标设置表
+ * 目标管理-品类
  *
  * @author Lambda
  * @since 2023-09-13
