@@ -68,7 +68,7 @@
             upgrade_time
         FROM pda_version pv
         WHERE pv.is_deleted = FALSE
-        AND pv.upgrade_time >= now()
+        AND now() >= pv.upgrade_time
 		AND NOT EXISTS (
 		    SELECT
 			    pusv.id
