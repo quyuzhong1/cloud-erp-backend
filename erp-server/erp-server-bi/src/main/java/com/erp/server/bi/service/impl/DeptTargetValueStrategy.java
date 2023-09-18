@@ -24,7 +24,7 @@ import java.util.List;
  * @Date 2023-09-18 14:02
  */
 @Service
-public class DeptTargetValue implements ListYearMonthValueStrategy {
+public class DeptTargetValueStrategy implements ListYearMonthValueStrategy {
 
     @Resource
     private BiTargetYearMapper biTargetYearMapper;

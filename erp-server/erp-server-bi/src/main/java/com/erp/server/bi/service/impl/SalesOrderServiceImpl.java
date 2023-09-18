@@ -7,10 +7,11 @@ import com.common.business.vo.SeriesVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.BiSalesRadioDTO;
+import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.dto.*;
-import com.erp.model.bi.entity.BiTargetNewProductSettingEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.TargetMetricsSearchTypeEnum;
 import com.erp.model.bi.vo.*;
@@ -30,8 +31,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.NotNull;
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -41,7 +40,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,7 +47,6 @@ import java.util.stream.Collectors;
  * 销售维度 模块服务
  *
  * @Classname
-
  * @Date 2022-12-16 11:09
  * @Created by yl
  */
@@ -1068,8 +1065,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             List<String> skuList = item.getSkuList();
             xAxisList.add(item.getName());
             BigDecimal totalSales = list.stream().filter(
-                    s -> skuList.contains(s.getFlagNo()) && s.getSales() != null
-            ).map(SalesBaseVO::getSales).
+                            s -> skuList.contains(s.getFlagNo()) && s.getSales() != null
+                    ).map(SalesBaseVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
 
             dataList.add(totalSales);
@@ -2008,7 +2005,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             if (m == 1) {
                 vo.setChainRelativeRatio(getChainRelativeRatio(sales, lastMonth.getSales()));
             } else {
-                String last = m-1 > 9 ? String.valueOf(m-1) : "0".concat(String.valueOf(m-1));
+                String last = m - 1 > 9 ? String.valueOf(m - 1) : "0".concat(String.valueOf(m - 1));
 
                 SalesFlagVO lastMonthFlag = list.stream().filter(s -> s.getFlag().equals(last)).
                         findFirst().orElse(null);
@@ -2203,6 +2200,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public List<BiTargetYearDTO.TargetMetricsFinishDTO> listTargetMetrics(BiTargetYearDTO.SearchDTO dto) {
+
+        List<BiTargetYearDTO.TargetMetricsFinishDTO> resultList = new ArrayList<>(2);
         /**
          * 年月
          */
@@ -2210,7 +2209,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //年
         Integer year = LocalDate.now().getYear();
         //月
-        Integer moth = LocalDate.now().getMonthValue();
+        Integer month = LocalDate.now().getMonthValue();
         if (StringUtils.isNotBlank(yearMonth) && yearMonth.length() >= 7) {
             DateTimeFormatter fmt = new DateTimeFormatterBuilder()
                     .appendPattern("yyyy-MM")
@@ -2218,14 +2217,65 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     .toFormatter();
             LocalDate yearMonthDate = LocalDate.parse(yearMonth, fmt);
             year = yearMonthDate.getYear();
-            moth = yearMonthDate.getMonthValue();
+            month = yearMonthDate.getMonthValue();
         }
+        //指标
+        String metrics = dto.getMetrics();
+        String metricsName = MetricsEnum.getNameByCode(metrics);
+        List<BiTargetYearDTO.YearMonthValueDTO> yearMonthValueList = new ArrayList<>();
         //获取到对应设置的目标值
-        List<BiTargetYearDTO.YearMonthValueDTO> yearMonthValueList=biTargetYearService.listYearMonthValue(dto);
+        String deptId = dto.getDeptId();
+        if (StringUtils.isNotBlank(deptId)) {
+            ListYearMonthValueStrategy deptStrategy = new DeptTargetValueStrategy();
+            YearMonthValueContext deptContext = new YearMonthValueContext(deptStrategy);
+            yearMonthValueList = deptContext.listMetricsValue(year, metrics, deptId);
+        }
+        //员工id
+        String staffId = dto.getStaffId();
+        if (StringUtils.isNotBlank(staffId)) {
+            ListYearMonthValueStrategy staffStrategy = new StaffTargetValueStrategy();
+            YearMonthValueContext staffContext = new YearMonthValueContext(staffStrategy);
+            yearMonthValueList = staffContext.listMetricsValue(year, metrics, staffId);
+        }
+        //店铺id
+        String shopId = dto.getShopId();
+        if (StringUtils.isNotBlank(shopId)) {
+            ListYearMonthValueStrategy shopStrategy = new ShopTargetValueStrategy();
+            YearMonthValueContext shopContext = new YearMonthValueContext(shopStrategy);
+            yearMonthValueList = shopContext.listMetricsValue(year, metrics, shopId);
+        }
+        //为空就是所有
+        if (CollectionUtils.isEmpty(yearMonthValueList)) {
+            ListYearMonthValueStrategy allStrategy = new AllTargetValueStrategy();
+            YearMonthValueContext allContext = new YearMonthValueContext(allStrategy);
+            yearMonthValueList = allContext.listMetricsValue(year, metrics, "");
+        }
+        //月度
+        BiTargetYearDTO.TargetMetricsFinishDTO monthMetrics = new BiTargetYearDTO.TargetMetricsFinishDTO();
+        monthMetrics.setMetrics(metrics);
+        monthMetrics.setMetricsName(metricsName);
+        Integer finalMonth = month;
+        Integer finalYear = year;
+        //月度目标值
+        BigDecimal monthMetricsValue = yearMonthValueList.stream().
+                filter(y -> y.getMonth().equals(finalMonth) && y.getYear().equals(finalYear)).
+                findFirst().map(BiTargetYearDTO.YearMonthValueDTO::getMetricsValue).orElse(BigDecimal.ZERO);
+        monthMetrics.setMetricsValue(monthMetricsValue);
+        resultList.add(monthMetrics);
 
 
+        //年度
+        BiTargetYearDTO.TargetMetricsFinishDTO yearMetrics = new BiTargetYearDTO.TargetMetricsFinishDTO();
+        yearMetrics.setMetrics(metrics);
+        yearMetrics.setMetricsName(metricsName);
 
-        return null;
+        //年度目标值
+        BigDecimal yearMetricsValue = yearMonthValueList.stream().map(BiTargetYearDTO.YearMonthValueDTO::getMetricsValue).reduce(BigDecimal.ZERO,BigDecimal::add);
+        yearMetrics.setMetricsValue(yearMetricsValue);
+        resultList.add(monthMetrics);
+
+
+        return resultList;
     }
 
     private List<NewAndOldSalesSearchDTO.PagingDTO> deptNewAndOldSalesAmount(NewAndOldSalesSearchDTO.SearchDTO dto) {
@@ -2288,7 +2338,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     vo.setNewSalesAmountFinishRate(newProductSales.divide(targetNewProductSalesAmount.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
                 }
                 if (targetNewProductSalesQty.getValue() != null && targetNewProductSalesQty.getValue().compareTo(BigDecimal.ZERO) > 0) {
-                    vo.setNewSalesQuantityFinishRate(MathUtil.valueOf(newSalesQuantity+"").divide(targetNewProductSalesQty.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                    vo.setNewSalesQuantityFinishRate(MathUtil.valueOf(newSalesQuantity + "").divide(targetNewProductSalesQty.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
                 }
                 vo.setNewSalesAmountTarget(targetNewProductSalesAmount.getValue());
                 vo.setNewSalesQuantityTarget(targetNewProductSalesQty.getValue());
@@ -2360,7 +2410,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     vo.setNewSalesAmountFinishRate(newItemSales.divide(targetNewProductSalesAmount.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
                 }
                 if (targetNewProductSalesQty.getValue() != null && targetNewProductSalesQty.getValue().compareTo(BigDecimal.ZERO) > 0) {
-                    vo.setNewSalesQuantityFinishRate(MathUtil.valueOf(newItemSalesQuantity+"").divide(targetNewProductSalesQty.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                    vo.setNewSalesQuantityFinishRate(MathUtil.valueOf(newItemSalesQuantity + "").divide(targetNewProductSalesQty.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
                 }
                 vo.setNewSalesAmountTarget(targetNewProductSalesAmount.getValue());
                 vo.setNewSalesQuantityTarget(targetNewProductSalesQty.getValue());

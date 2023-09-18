@@ -34,10 +34,4 @@ public interface BiTargetYearService extends SuperService<BiTargetYearEntity> {
     Boolean update(BiTargetYearDTO.UpdateDTO dto);
 
 
-    /**
-     * 获取到对应设置的目标值
-     * @param dto
-     * @return
-     */
-    List<BiTargetYearDTO.YearMonthValueDTO> listYearMonthValue(BiTargetYearDTO.SearchDTO dto);
 }

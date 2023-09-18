@@ -50,7 +50,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
     private BiTargetSkuSettingService biTargetSkuSettingService;
 
     @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
+    private BiDataSourceCustomService biDataSourceCustomService;
 
     @Resource
     private DmpOrderInfoMapper dmpOrderInfoMapper;
@@ -218,14 +218,35 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
      */
     private List<TargetFinishDTO.ViewDTO> getOrderAmountOrVolume (TargetFinishDTO.ParamDTO dto,List<DmpOrderInfoEntity> mainList,List<DmpOrderItemEntity> detailList) {
         List<TargetFinishDTO.ViewDTO> resultList = new ArrayList<>();
+        //销售额
         if (MetricsEnum.SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
             if (CollectionUtils.isEmpty(mainList)) {
                 return resultList;
             }
             resultList = groupOrderSalesAmount(mainList, detailList, dto);
         }
-
+        //销量
         if (MetricsEnum.SALES_QTY.getCode().equals(dto.getMetrics())) {
+
+            resultList = groupOrderSalesVolume(mainList, detailList, dto);
+        }
+        //财务销售额
+        if (MetricsEnum.FINANCE_SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
+
+            resultList = groupOrderSalesVolume(mainList, detailList, dto);
+        }
+        //净销售额
+        if (MetricsEnum.NET_SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
+
+            resultList = groupOrderSalesVolume(mainList, detailList, dto);
+        }
+        //毛利润
+        if (MetricsEnum.GROSS_PROFIT.getCode().equals(dto.getMetrics())) {
+
+            resultList = groupOrderSalesVolume(mainList, detailList, dto);
+        }
+        //毛利率
+        if (MetricsEnum.GROSS_PROFIT_RATE.getCode().equals(dto.getMetrics())) {
 
             resultList = groupOrderSalesVolume(mainList, detailList, dto);
         }
