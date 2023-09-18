@@ -568,4 +568,13 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
             targetYear.setCurrencySymbol(currencyList.get(0).getSymbol());
         }
     }
+
+    @Override
+    public BiTargetNewProductSettingEntity getTargetByParams(Integer month, String metrics) {
+        return lambdaQuery()
+                .eq(BiTargetNewProductSettingEntity::getMonth, month)
+                .eq(BiTargetNewProductSettingEntity::getMetrics, metrics)
+                .last("LIMIT 1")
+                .one();
+    }
 }
