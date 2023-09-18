@@ -3,16 +3,21 @@ package com.erp.server.bi.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.BiSkuDetailTopDTO;
 import com.erp.model.bi.dto.SkuDateFilterDTO;
+import com.erp.model.bi.dto.SkuDetailDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.server.bi.mapper.BiComprehensiveAnalyseMapper;
-import com.erp.server.bi.service.BiComprehensiveAnalyseService;
-import com.erp.server.bi.service.DmpOrderInfoService;
-import com.erp.server.bi.service.DmpShopInfoService;
+import com.erp.server.bi.service.*;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -29,6 +34,12 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
+
+    @Resource
+    private DmpSkuInfoService dmpSkuInfoService;
+
+    @Resource
+    private DmpOrderItemService dmpOrderItemService;
 
     /**
      * SKU矩阵
@@ -516,4 +527,35 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         }
         return skuDateSaleTrendVOS;
     }
+
+    @Override
+    public BiSkuDetailTopDTO skuDetailTop(SkuDetailDTO dto) {
+        DmpSkuInfoEntity entity = dmpSkuInfoService.getBySkuNo(dto.getSkuNo(), null);
+        if (null == entity){
+            throw new ServiceException(ApiError.ERROR_92051);
+        }
+        // 公司首单
+        DmpOrderInfoEntity orderInfoEntity = dmpOrderInfoService.firstOrderBySkuNo(dto.getSkuNo());
+        // 各平台首单时间
+        // Map<平台, 订单>
+        Map<String, DmpOrderInfoEntity> orderMap = dmpOrderInfoService.mapFirstOrderBySkuNo(dto.getSkuNo());
+
+        //组合
+        BiSkuDetailTopDTO resultDto = new BiSkuDetailTopDTO();
+        BeanUtils.copyProperties(entity, resultDto);
+        if (null != orderInfoEntity){
+            resultDto.setFirstOrderDate(orderInfoEntity.getCreateTime().toLocalDate().toString());
+        }
+        if (!orderMap.isEmpty()){
+            // 各平台首单时间
+            List<String> platformFistOrderList = orderMap.entrySet()
+                    .stream()
+                    .map(e -> e.getKey().concat(":").concat(e.getValue().getCreateTime().toLocalDate().toString()))
+                    .collect(Collectors.toList());
+            resultDto.setPlatformFirstOrderDate(platformFistOrderList);
+        }
+        return resultDto;
+    }
+
+
 }
