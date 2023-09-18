@@ -28,6 +28,7 @@ import com.erp.server.bi.mapper.SalesOrderServiceMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -68,6 +69,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     @Resource
     private BiTargetYearService biTargetYearService;
+
+
+    @Autowired
+    private YearMonthValueContext context;
 
 
     @Override
@@ -2220,35 +2225,44 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             month = yearMonthDate.getMonthValue();
         }
         //指标
-        String metrics = dto.getMetrics();
-        String metricsName = MetricsEnum.getNameByCode(metrics);
-        List<BiTargetYearDTO.YearMonthValueDTO> yearMonthValueList = new ArrayList<>();
+        MetricsEnum metricsEnum = dto.getMetrics();
+        String metrics = metricsEnum.getCode();
+        String metricsName = metricsEnum.getName();
         //获取到对应设置的目标值
         String deptId = dto.getDeptId();
+        ListYearMonthValueStrategy strategy = null;
+        List<BiTargetYearDTO.YearMonthValueDTO> yearMonthValueList = new ArrayList<>();
+
         if (StringUtils.isNotBlank(deptId)) {
-            ListYearMonthValueStrategy deptStrategy = new DeptTargetValueStrategy();
-            YearMonthValueContext deptContext = new YearMonthValueContext(deptStrategy);
-            yearMonthValueList = deptContext.listMetricsValue(year, metrics, deptId);
+            strategy = context.getBean(DeptTargetValueStrategy.class);
+            if(Objects.nonNull(strategy)){
+                yearMonthValueList=strategy.ListYearMonthValue(year,metrics,deptId);
+            }
         }
         //员工id
         String staffId = dto.getStaffId();
         if (StringUtils.isNotBlank(staffId)) {
-            ListYearMonthValueStrategy staffStrategy = new StaffTargetValueStrategy();
-            YearMonthValueContext staffContext = new YearMonthValueContext(staffStrategy);
-            yearMonthValueList = staffContext.listMetricsValue(year, metrics, staffId);
+            strategy = context.getBean(StaffTargetValueStrategy.class);
+            if(Objects.nonNull(strategy)){
+                yearMonthValueList=strategy.ListYearMonthValue(year,metrics,staffId);
+            }
         }
         //店铺id
         String shopId = dto.getShopId();
         if (StringUtils.isNotBlank(shopId)) {
-            ListYearMonthValueStrategy shopStrategy = new ShopTargetValueStrategy();
-            YearMonthValueContext shopContext = new YearMonthValueContext(shopStrategy);
-            yearMonthValueList = shopContext.listMetricsValue(year, metrics, shopId);
+            strategy = context.getBean(ShopTargetValueStrategy.class);
+            if(Objects.nonNull(strategy)){
+                yearMonthValueList=strategy.ListYearMonthValue(year,metrics,shopId);
+            }
         }
+
         //为空就是所有
-        if (CollectionUtils.isEmpty(yearMonthValueList)) {
-            ListYearMonthValueStrategy allStrategy = new AllTargetValueStrategy();
-            YearMonthValueContext allContext = new YearMonthValueContext(allStrategy);
-            yearMonthValueList = allContext.listMetricsValue(year, metrics, "");
+        if (Objects.isNull(strategy)) {
+            strategy = context.getBean(AllTargetValueStrategy.class);
+            yearMonthValueList=strategy.ListYearMonthValue(year,metrics,"");
+        }
+        if (Objects.isNull(strategy)) {
+            throw new ServiceException("条件未匹配");
         }
         //月度
         BiTargetYearDTO.TargetMetricsFinishDTO monthMetrics = new BiTargetYearDTO.TargetMetricsFinishDTO();
@@ -2262,6 +2276,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 findFirst().map(BiTargetYearDTO.YearMonthValueDTO::getMetricsValue).orElse(BigDecimal.ZERO);
         monthMetrics.setMetricsValue(monthMetricsValue);
         resultList.add(monthMetrics);
+        BigDecimal dd = biTargetYearService.getMetricsFinishValue(dto, "month");
 
 
         //年度
@@ -2270,7 +2285,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         yearMetrics.setMetricsName(metricsName);
 
         //年度目标值
-        BigDecimal yearMetricsValue = yearMonthValueList.stream().map(BiTargetYearDTO.YearMonthValueDTO::getMetricsValue).reduce(BigDecimal.ZERO,BigDecimal::add);
+        BigDecimal yearMetricsValue = yearMonthValueList.stream().map(BiTargetYearDTO.YearMonthValueDTO::getMetricsValue).reduce(BigDecimal.ZERO, BigDecimal::add);
         yearMetrics.setMetricsValue(yearMetricsValue);
         resultList.add(monthMetrics);
 

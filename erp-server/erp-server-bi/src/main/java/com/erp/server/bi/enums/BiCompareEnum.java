@@ -9,12 +9,16 @@ package com.erp.server.bi.enums;
 public enum BiCompareEnum {
 
 
-    GREATERTHANEQUAL(">=", "大于等于"),
-    LESSTHANEQUAL("<=", "小于等于"),
-    GREATERTHAN(">", "大于"),
-    LESSTHAN("<", "小于");
+    GREATER_THAN_EQUAL(">=", "大于等于"),
+    LESS_THAN_EQUAL("<=", "小于等于"),
+    GREATER_THAN(">", "大于"),
+    LESS_THAN("<", "小于"),
+    TOW_MONTH_GREATER_THEN_EQUAL("towMonthGreaterThenEqual", "连续两个月大于等于"),
+    TOW_MONTH_LESS_THEN_EQUAL("towMonthLessThenEqual", "连续两个月小于等于")
+    ;
 
     private String code;
+
     private String name;
 
     BiCompareEnum(String code, String name) {

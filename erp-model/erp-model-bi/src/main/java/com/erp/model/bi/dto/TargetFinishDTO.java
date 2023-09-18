@@ -69,6 +69,24 @@ public class TargetFinishDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class TotalSlotDTO {
+
+        /**
+         * 累计年度目标
+         */
+        private BigDecimal yearTotalTarget;
+        /**
+         * 累计年度实际
+         */
+        private BigDecimal yearTotalReal;
+        /**
+         * 完成率
+         */
+        private BigDecimal rate;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class SlotDTO {
         /**
          * 销量/销售额/利润/利润率
@@ -80,5 +98,7 @@ public class TargetFinishDTO implements Serializable {
          */
         private BigDecimal rate;
     }
+
+
 
 }
