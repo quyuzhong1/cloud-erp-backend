@@ -63,7 +63,6 @@ public class BiTargetNewProductSettingEntity extends BaseEntity<BiTargetNewProdu
     @TableField("rate ")
     private BigDecimal rate ;
 
-
     public static final String MAIN_ID = "main_id";
 
     public static final String SHOP_ID = "shop_id";

@@ -65,7 +65,7 @@ public class NewAndOldSalesSearchDTO {
         /**
          * 新品销售额完成率
          */
-        private String newProductSalesFinishRate;
+        private String newSalesAmountFinishRate;
 
         /**
          * 新品销量完成率
@@ -73,15 +73,22 @@ public class NewAndOldSalesSearchDTO {
         private String newSalesQuantityFinishRate;
 
         /**
-         * 新品目标
+         * 新品销售目标
          */
-        private String newTarget;
+        private BigDecimal newSalesAmountTarget;
+
+        /**
+         * 新品销量目标
+         */
+        private BigDecimal newSalesQuantityTarget;
 
         public PagingDTO() {
             this.newProductSales = BigDecimal.ZERO;
             this.newSalesQuantity = 0;
             this.oldProductSales = BigDecimal.ZERO;
             this.oldSalesQuantity = 0;
+            this.newSalesAmountTarget = BigDecimal.ZERO;
+            this.newSalesQuantityTarget = BigDecimal.ZERO;
         }
     }
 

@@ -12,8 +12,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum TargetMetricsSearchTypeEnum implements EnumMessage {
     DEPT("dept","部门"),
     USER("user","人员"),
-    SHOP("shop","店铺"),
-    CATEGORY("category","品类"),
     ;
 
     TargetMetricsSearchTypeEnum(String code, String name) {

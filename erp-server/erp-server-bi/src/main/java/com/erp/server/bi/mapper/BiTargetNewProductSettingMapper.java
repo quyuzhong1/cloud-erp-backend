@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -24,13 +26,20 @@ public interface BiTargetNewProductSettingMapper extends BaseMapper<BiTargetNewP
     IPage<BiTargetNewProductSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params);
 
     /**
-     * 根据年月维度查询目标
+     * 查询部门新品目标
      * @Author Luo_WG
-     * @Date 2023/9/15 16:54
-     * @param year 年
-     * @param month 月
-     * @param metrics 维度
-     * @return com.erp.model.bi.entity.BiTargetNewProductSettingEntity
+     * @Date 2023/9/18 12:06
+     * @param params
+     * @return java.util.List<com.erp.model.bi.dto.BiTargetNewProductSettingDTO.DeptTargetDTO>
      **/
-    BiTargetNewProductSettingEntity getTargetByParams(@Param("year") Integer year, @Param("month") Integer month, @Param("metrics") String metrics);
+    List<BiTargetNewProductSettingDTO.DeptTargetDTO> listDeptTarget(@Param("params") BiTargetNewProductSettingDTO.TargetParamDTO params);
+
+    /**
+     * 查询用户新品目标
+     * @Author Luo_WG
+     * @Date 2023/9/18 12:06
+     * @param params
+     * @return java.util.List<com.erp.model.bi.dto.BiTargetNewProductSettingDTO.UserTargetDTO>
+     **/
+    List<BiTargetNewProductSettingDTO.UserTargetDTO> listUserTarget(@Param("params") BiTargetNewProductSettingDTO.TargetParamDTO params);
 }
