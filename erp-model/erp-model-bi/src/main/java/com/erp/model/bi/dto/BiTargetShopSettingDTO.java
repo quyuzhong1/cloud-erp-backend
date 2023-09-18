@@ -61,6 +61,25 @@ public class BiTargetShopSettingDTO implements Serializable {
 
 
     /**
+     * 导入质
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+
+        /**
+         o      * 成功返回数据
+         */
+        private List<DetailDTO> successList;
+
+        /**
+         * 错误的url
+         */
+        private String errorUrl;
+    }
+
+
+    /**
     * 详情
     */
     @Data
@@ -134,6 +153,44 @@ public class BiTargetShopSettingDTO implements Serializable {
 
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListDetailDTO {
+
+        private String id;
+
+        private String mainId;
+
+        private String year;
+
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+
+        /**
+         * 月
+         */
+
+        private Integer month;
+
+
+        private BigDecimal value;
+
+
+        private MetricsEnum metrics;
+
+
+    }
+
 
 
 }

@@ -2,11 +2,10 @@ package com.erp.server.plm.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.plm.entity.BasicLabelEntity;
 import com.erp.server.plm.mapper.BasicLabelMapper;
 import com.erp.server.plm.service.BasicLabelService;
-import com.common.business.service.SuperServiceImpl;
-import com.erp.server.plm.service.OperateLogService;
 import com.erp.server.plm.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
@@ -29,8 +28,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, BasicLabelEntity> implements BasicLabelService {
-    @Autowired
-    private OperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
 
@@ -52,9 +50,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "基础标签单" , basicLabelEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, basicLabelEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+
         return basicLabelEntity.getId();
     }
 
@@ -80,8 +76,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         // 记录主单操作日志
             log.info("编辑 开始记录基础标签单日志数据，id：【{}】", basicLabelEntity.getId());
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), basicLabelEntity.getId(), "基础标签单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, basicLabelEntity, null, basicLabelEntity.getId(), msg);
+
         return Boolean.TRUE;
     }
 

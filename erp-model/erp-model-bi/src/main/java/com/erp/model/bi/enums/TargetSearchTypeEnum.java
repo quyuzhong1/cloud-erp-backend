@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+import java.util.Arrays;
+import java.util.Optional;
+
 /**
  * @author Will
  * @version 1.0
@@ -44,5 +47,16 @@ public enum TargetSearchTypeEnum implements EnumMessage {
     @Override
     public String getName() {
         return name;
+    }
+
+    /**
+     * 通过Code查找
+     */
+    public static String getByCode(String code) {
+        return Arrays.stream(TargetSearchTypeEnum.values())
+                .filter(e-> e.getCode().equals(code))
+                .findFirst()
+                .flatMap(obj -> Optional.ofNullable(obj.getName()))
+                .orElse("");
     }
 }

@@ -2,11 +2,10 @@ package com.erp.server.plm.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.plm.entity.ProductRefLabelEntity;
 import com.erp.server.plm.mapper.ProductRefLabelMapper;
 import com.erp.server.plm.service.ProductRefLabelService;
-import com.common.business.service.SuperServiceImpl;
-import com.erp.server.plm.service.OperateLogService;
 import com.erp.server.plm.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
@@ -29,8 +28,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabelMapper, ProductRefLabelEntity> implements ProductRefLabelService {
-    @Autowired
-    private OperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
 
@@ -52,8 +50,7 @@ public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabel
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "产品便签关系单" , productRefLabelEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, productRefLabelEntity.getId(), "新增操作");
+
         // TODO 新增明细（如果有明细的话）
         return productRefLabelEntity.getId();
     }
@@ -80,8 +77,7 @@ public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabel
         // 记录主单操作日志
             log.info("编辑 开始记录产品便签关系单日志数据，id：【{}】", productRefLabelEntity.getId());
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), productRefLabelEntity.getId(), "产品便签关系单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, productRefLabelEntity, null, productRefLabelEntity.getId(), msg);
+
         return Boolean.TRUE;
     }
 

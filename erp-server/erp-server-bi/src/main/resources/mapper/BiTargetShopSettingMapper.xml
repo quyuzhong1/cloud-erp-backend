@@ -70,5 +70,52 @@
         ORDER BY ty.id DESC
     </select>
 
+    <select id="listTargetFinish" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
+        select
+            btss.shop_name as typeName,
+            btss.month,
+            btss.value
+        from bi_target_year bty
+        left join bi_target_shop_setting btss on btss.is_deleted = false and bty.id = btss.main_id
+        <where>
+            bty.is_deleted = false
+            <if test="params.metrics != null and params.metrics != ''">
+                and  btss.metrics = #{params.metrics}
+            </if>
+            <if test="params.date != null ">
+                and  bty.year = to_char(#{params.date},'yyyy')  and btss.month between 1 and 12
+            </if>
+            <if test="params.department !=null and params.department.size > 0">
+                and bty.dept_id in
+                <foreach collection="params.department" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.shopName !=null and params.shopName.size > 0">
+                and btss.shop_name in
+                <foreach collection="params.shopName" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="listByYear" resultType="com.erp.model.bi.dto.BiTargetShopSettingDTO$ListDetailDTO">
+        SELECT
+            tss.id,
+            tss.main_id,
+            ty.year,
+            tss.shop_id,
+            tss.shop_name,
+            tss.month,
+            tss.value,
+            tss.metrics
+        FROM bi_target_shop_setting tss
+        LEFT JOIN bi_target_year ty
+        ON tss.main_id=ty.id and ty.is_deleted=false
+        WHERE tss.is_deleted=false
+          AND ty.year=#{year}
+    </select>
+
 
 </mapper>

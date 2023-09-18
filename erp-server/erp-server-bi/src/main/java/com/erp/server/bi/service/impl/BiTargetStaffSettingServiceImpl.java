@@ -1,13 +1,17 @@
 package com.erp.server.bi.service.impl;
 
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.bi.dto.TargetFinishDTO;
+import com.erp.model.bi.dto.excel.TargetStaffSettingImportExcelDTO;
 import com.erp.model.bi.entity.BiProductInfoEntity;
 import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 
@@ -18,6 +22,7 @@ import com.erp.model.bi.enums.MonthEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.bi.listener.BiTargetStaffSettingExcelListener;
 import com.erp.server.bi.mapper.BiTargetStaffSettingMapper;
 import com.erp.server.bi.service.BiTargetStaffSettingService;
 import com.erp.server.bi.service.BiTargetYearService;
@@ -25,19 +30,28 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 
+import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -66,7 +80,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         targetYear.setMetrics(metricsList.stream().collect(Collectors.joining(",")));
         List<BiTargetStaffSettingDTO.CommonDTO> detailList = addDTO.getDetailList();
         // 数据处理
-        handleData(targetYear, detailList);
+        handleData(targetYear, detailList,LogActionEnum.INSERT);
         Boolean save = biTargetYearService.save(targetYear);
         if (!save) {
             throw new ServiceException("人员目标设置单保存失败");
@@ -248,7 +262,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         List<String> metricsList = updateDTO.getMetricsList();
         targetYear.setMetrics(metricsList.stream().collect(Collectors.joining(",")));
         List<BiTargetStaffSettingDTO.CommonDTO> detailList = updateDTO.getDetailList();
-        handleData(targetYear, detailList);
+        handleData(targetYear, detailList,LogActionEnum.UPDATE);
         Boolean result = biTargetYearService.updateById(targetYear);
         if (!result) {
             throw new ServiceException("人员目标设置单保存失败");
@@ -363,6 +377,87 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         return new PagingVO<>(pageData);
     }
 
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/TargetStaffSetting.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error(" downloadTemplate  出错了 e=={}", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+    /**
+     * 导入人员目标设置
+     *
+     * @param excelFile
+     * @param response
+     * @return com.erp.model.bi.dto.BiTargetStaffSettingDTO.ImportDTO
+     * @author yl
+     * @date 2023-09-15 14:20
+     */
+    @Override
+    public BiTargetStaffSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+        List<String> metricsNameList = MetricsEnum.listName();
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        BiTargetStaffSettingExcelListener excelListenerUtil = new BiTargetStaffSettingExcelListener(metricsNameList, userList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), TargetStaffSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("人员目标设置 导入错误>>>{}", e);
+        }
+        BiTargetStaffSettingDTO.ImportDTO result = new BiTargetStaffSettingDTO.ImportDTO();
+        List<BiTargetStaffSettingDTO.CommonDTO> successList = excelListenerUtil.getSuccessList();
+
+        Map<MetricsEnum, List<BiTargetStaffSettingDTO.CommonDTO>> map = successList.stream().
+                collect(Collectors.groupingBy(BiTargetStaffSettingDTO.CommonDTO::getMetrics));
+
+        List<BiTargetStaffSettingDTO.DetailDTO> detailList = new ArrayList<>(map.size());
+        for (Map.Entry<MetricsEnum, List<BiTargetStaffSettingDTO.CommonDTO>> item : map.entrySet()) {
+            BiTargetStaffSettingDTO.DetailDTO detail = new BiTargetStaffSettingDTO.DetailDTO();
+            detail.setMetrics(item.getKey());
+            detail.setMetricsName(item.getKey().getName());
+            detail.setStaffSettingList(item.getValue());
+            detailList.add(detail);
+        }
+        result.setSuccessList(detailList);
+        List<TargetStaffSettingImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "人员设置错误.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, TargetStaffSettingImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        result.setErrorUrl(url);
+        return result;
+    }
+
+    @Override
+    public List<TargetFinishDTO.ViewDTO> listDeptTargetFinish(TargetFinishDTO.ParamDTO dto) {
+        return baseMapper.listDeptTargetFinish(dto);
+    }
+
+    @Override
+    public List<TargetFinishDTO.ViewDTO> listUserTargetFinish(TargetFinishDTO.ParamDTO dto) {
+        return baseMapper.listUserTargetFinish(dto);
+    }
+
 
     /**
      * 填充分页的数据
@@ -470,7 +565,93 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
     /**
      * 新增修改处理数据
      */
-    private void handleData(BiTargetYearEntity targetYear, List<BiTargetStaffSettingDTO.CommonDTO> detailList) {
+    private void handleData(BiTargetYearEntity targetYear, List<BiTargetStaffSettingDTO.CommonDTO> detailList,LogActionEnum action) {
+        List<BiTargetStaffSettingDTO.ListDetailDTO> existList = baseMapper.listByYear(targetYear.getYear());
+        List<String> existStaff = Lists.newArrayList();
+        for (BiTargetStaffSettingDTO.CommonDTO item : detailList) {
+            String staffId = item.getStaffId();
+            MetricsEnum metrics = item.getMetrics();
+            //一月
+            BigDecimal january = item.getJanuary();
+            if (Objects.nonNull(january)) {
+                Integer januaryMoth = MonthEnum.JANUARY.getValue();
+                putListDetailDTO(existList, staffId, metrics, januaryMoth, existStaff,action);
+            }
+            //二月
+            BigDecimal february = item.getFebruary();
+            if (Objects.nonNull(february)) {
+                Integer februaryMoth = MonthEnum.FEBRUARY.getValue();
+                putListDetailDTO(existList, staffId, metrics, februaryMoth, existStaff,action);
+            }
+            //三月
+            BigDecimal march = item.getMarch();
+            if (Objects.nonNull(march)) {
+                Integer marchMoth = MonthEnum.MARCH.getValue();
+                putListDetailDTO(existList, staffId, metrics, marchMoth, existStaff,action);
+            }
+            //四月
+            BigDecimal april = item.getApril();
+            if (Objects.nonNull(april)) {
+                Integer aprilMoth = MonthEnum.APRIL.getValue();
+                putListDetailDTO(existList, staffId, metrics, aprilMoth, existStaff,action);
+            }
+            //五月
+            BigDecimal may = item.getMay();
+            if (Objects.nonNull(may)) {
+                Integer mayMoth = MonthEnum.MAY.getValue();
+                putListDetailDTO(existList, staffId, metrics, mayMoth, existStaff,action);
+            }
+            //六月
+            BigDecimal june = item.getJune();
+            if (Objects.nonNull(june)) {
+                Integer juneMoth = MonthEnum.JUNE.getValue();
+                putListDetailDTO(existList, staffId, metrics, juneMoth, existStaff,action);
+            }
+            //七月
+            BigDecimal july = item.getJuly();
+            if (Objects.nonNull(july)) {
+                Integer julyMoth = MonthEnum.JULY.getValue();
+                putListDetailDTO(existList, staffId, metrics, julyMoth, existStaff,action);
+            }
+            //八月
+            BigDecimal august = item.getAugust();
+            if (Objects.nonNull(august)) {
+                Integer augustMoth = MonthEnum.AUGUST.getValue();
+                putListDetailDTO(existList, staffId, metrics, augustMoth, existStaff,action);
+            }
+            //九月
+            BigDecimal september = item.getSeptember();
+            if (Objects.nonNull(september)) {
+                Integer septemberMoth = MonthEnum.SEPTEMBER.getValue();
+                putListDetailDTO(existList, staffId, metrics, septemberMoth, existStaff,action);
+            }
+            //十月
+            BigDecimal october = item.getOctober();
+            if (Objects.nonNull(october)) {
+                Integer octoberMoth = MonthEnum.OCTOBER.getValue();
+                putListDetailDTO(existList, staffId, metrics, octoberMoth, existStaff,action);
+            }
+
+            //十一月
+            BigDecimal november = item.getNovember();
+            if (Objects.nonNull(november)) {
+                Integer novemberMoth = MonthEnum.NOVEMBER.getValue();
+                putListDetailDTO(existList, staffId, metrics, novemberMoth, existStaff,action);
+            }
+
+            //十二月
+            BigDecimal december = item.getDecember();
+            if (Objects.nonNull(december)) {
+                Integer decemberMoth = MonthEnum.DECEMBER.getValue();
+                putListDetailDTO(existList, staffId, metrics, decemberMoth, existStaff,action);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(existStaff)) {
+            String existStaffName = existStaff.stream().collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.YEAR_METRICS_EXIST, existStaffName);
+        }
+
+
         //部门id
         String deptId = targetYear.getDeptId();
         //币种符号
@@ -483,22 +664,31 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         if (CollectionUtils.isNotEmpty(currencyList)) {
             targetYear.setCurrencySymbol(currencyList.get(0).getSymbol());
         }
-//        List<BiTargetStaffSettingDTO.ListDetailDTO> existList = baseMapper.listByYear(year);
-//        List<String> existStaff = Lists.newArrayList();
-//        for (BiTargetStaffSettingDTO.CommonDTO item : detailList) {
-//            BiTargetStaffSettingDTO.ListDetailDTO existDb = existList.stream().filter(e -> !e.getId().equals(item.getId()) &&
-//                    e.getStaffId().equals(item.getStaffId()) &&
-//                    e.getMetrics().equals(item.getMetrics()) &&
-//                    e.getMonth().equals(item.getMonth())).findFirst().orElse(null);
-//            if (existDb != null) {
-//                existStaff.add(existDb.getStaffName());
-//            }
-//        }
-//        if (CollectionUtils.isNotEmpty(existStaff)) {
-//            String existStaffName = existStaff.stream().collect(Collectors.joining(","));
-//            throw new ServiceException(ApiError.YEAR_METRICS_EXIST, existStaffName);
-//        }
 
+
+    }
+
+
+    private void putListDetailDTO(List<BiTargetStaffSettingDTO.ListDetailDTO> existList, String staffId, MetricsEnum metrics, Integer month, List<String> existStaff,LogActionEnum action) {
+        //添加的
+        if(LogActionEnum.INSERT.equals(action)){
+            BiTargetStaffSettingDTO.ListDetailDTO exist = existList.stream().filter(e ->
+                    e.getStaffId().equals(staffId) &&
+                            e.getMetrics().equals(metrics) &&
+                            e.getMonth().equals(month)).findFirst().orElse(null);
+            if (exist != null) {
+                existStaff.add(exist.getStaffName());
+            }
+        }else{
+            //修改的
+            List<BiTargetStaffSettingDTO.ListDetailDTO> list = existList.stream().filter(e ->
+                    e.getStaffId().equals(staffId) &&
+                            e.getMetrics().equals(metrics) &&
+                            e.getMonth().equals(month)).collect(Collectors.toList());
+            if (list.size()>1) {
+                existStaff.add(list.get(0).getStaffName());
+            }
+        }
 
     }
 }

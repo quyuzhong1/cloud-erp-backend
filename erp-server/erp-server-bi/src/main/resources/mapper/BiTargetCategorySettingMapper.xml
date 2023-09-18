@@ -71,5 +71,52 @@
         ORDER BY ty.id DESC
     </select>
 
+    <select id="listTargetFinish" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
+        select
+            btcs.category_name as typeName,
+            btcs.month,
+            btcs.value
+        from bi_target_year bty
+        left join bi_target_category_setting btcs on btcs.is_deleted = false and bty.id = btcs.main_id
+        <where>
+            bty.is_deleted = false
+            <if test="params.metrics != null and params.metrics != ''">
+                and  btcs.metrics = #{params.metrics}
+            </if>
+            <if test="params.date != null ">
+                and  bty.year = to_char(#{params.date},'yyyy')  and btcs.month between 1 and 12
+            </if>
+            <if test="params.department !=null and params.department.size > 0">
+                and bty.dept_id in
+                <foreach collection="params.department" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.category !=null and params.category.size > 0">
+                and btcs.category_id in
+                <foreach collection="params.category" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <select id="listByYearAndDept" resultType="com.erp.model.bi.dto.BiTargetCategorySettingDTO$ListDetailDTO">
+        SELECT
+            tcs.id,
+            tcs.main_id,
+            ty.year,
+            ty.dept_name,
+            tcs.staff_id,
+            tcs.staff_name,
+            tcs.month,
+            tcs.value,
+            tcs.metrics
+        FROM bi_target_category_setting tcs
+        LEFT JOIN bi_target_year ty
+        ON tcs.main_id=ty.id and ty.is_deleted=false
+        WHERE tcs.is_deleted=false
+        AND ty.year=#{year} AND ty.dept_id=#{deptId}
+    </select>
+
 
 </mapper>

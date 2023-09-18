@@ -3,13 +3,17 @@ package com.erp.server.bi.controller.api;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.server.bi.service.BiTargetCategorySettingService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +23,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 分类 目标设置表
@@ -64,6 +69,7 @@ public class BiTargetCategorySettingController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "分类目标设置添加")
     public ApiResult<String> add(@RequestBody @Validated BiTargetCategorySettingDTO.AddDTO dto) {
         return success(biTargetCategorySettingService.add(dto));
     }
@@ -89,6 +95,7 @@ public class BiTargetCategorySettingController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "分类目标设置修改")
 //        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //        tableField = "create_user_id",
 //        menuCode = "dmp:biTargetCategorySetting:update",
@@ -98,6 +105,30 @@ public class BiTargetCategorySettingController extends BaseController {
         biTargetCategorySettingService.update(dto);
         return success();
     }
+
+    /**
+     * 下载模板
+     *
+     * @return
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        biTargetCategorySettingService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入单品目标设置
+     *
+     * @return
+     */
+    @GetMapping("/importFile")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "分类目标设置导入")
+    public ApiResult<BiTargetCategorySettingDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        BiTargetCategorySettingDTO.ImportDTO result = biTargetCategorySettingService.importFile(excelFile, response);
+        return success(result);
+    }
+
 
 
 

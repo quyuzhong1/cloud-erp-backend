@@ -134,5 +134,63 @@ public class BiTargetCategorySettingDTO implements Serializable {
 
     }
 
+    /**
+     * 导入质
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+
+        /**
+         o      * 成功返回数据
+         */
+        private List<DetailDTO> successList;
+
+        /**
+         * 错误的url
+         */
+        private String errorUrl;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ListDetailDTO {
+
+        private String id;
+
+        private String mainId;
+
+        private String year;
+
+        private String deptName;
+
+
+        /**
+         * 分类id
+         */
+        private String categoryId;
+
+        /**
+         * 分类名
+         */
+        private String categoryName;
+
+
+        /**
+         * 月
+         */
+
+        private Integer month;
+
+
+        private BigDecimal value;
+
+
+        private MetricsEnum metrics;
+
+
+    }
+
 
 }

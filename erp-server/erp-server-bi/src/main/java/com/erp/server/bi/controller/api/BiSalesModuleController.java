@@ -6,6 +6,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.DateFilterDTO;
+import com.erp.model.bi.dto.NewAndOldSalesSearchDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.server.bi.service.SalesOrderService;
 import org.springframework.validation.annotation.Validated;
@@ -197,7 +198,6 @@ public class BiSalesModuleController extends BaseController {
         List<ShopNewAndOldSalesVO> resultList=salesOrderService.byShopNewAndOld(dto);
         return success(resultList);
     }
-
 
     /**
      * 销售相关-一级模块-国家销售额
@@ -561,5 +561,19 @@ public class BiSalesModuleController extends BaseController {
         StatisticalDataVO result=salesOrderService.byEuropeAndJapanSite(dto);
         return success(result);
     }
+
+    /**
+     * 新老品销售额
+     * @Author Luo_WG
+     * @Date 2023/9/15 14:15
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.bi.dto.NewAndOldSalesSearchDTO.PagingDTO>>
+     **/
+     @PostMapping("/newAndOldSalesAmount")
+    public ApiResult<List<NewAndOldSalesSearchDTO.PagingDTO>> newAndOldSalesAmount(@RequestBody @Validated NewAndOldSalesSearchDTO.SearchDTO dto) {
+        List<NewAndOldSalesSearchDTO.PagingDTO> result=salesOrderService.newAndOldSalesAmount(dto);
+        return success(result);
+    }
+
 
 }

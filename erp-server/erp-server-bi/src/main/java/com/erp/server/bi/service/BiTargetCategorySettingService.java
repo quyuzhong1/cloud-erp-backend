@@ -1,10 +1,16 @@
 package com.erp.server.bi.service;
+
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
-import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.entity.BiTargetCategorySettingEntity;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.bi.dto.TargetFinishDTO;
+import com.erp.model.bi.entity.BiTargetCategorySettingEntity;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -34,7 +40,14 @@ public interface BiTargetCategorySettingService extends SuperService<BiTargetCat
     */
     Boolean update(BiTargetCategorySettingDTO.UpdateDTO dto);
 
-
+    /**
+     * @description: 根据指标查询品类目标值
+     * @author Will
+     * @date: 2023/9/15 11:35
+     * @param dto
+     * @return List<TargetFinishDTO.ViewDTO>
+     */
+    List<TargetFinishDTO.ViewDTO> listTargetFinish(TargetFinishDTO.ParamDTO dto);
     /**
      * 详情
      * @param id
@@ -48,4 +61,18 @@ public interface BiTargetCategorySettingService extends SuperService<BiTargetCat
      * @return
      */
     PagingVO<BiTargetCategorySettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto);
+
+    /**
+     * 下载模板
+     * @param response
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 导入数据
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    BiTargetCategorySettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
 }

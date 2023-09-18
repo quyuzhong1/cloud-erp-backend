@@ -12,6 +12,7 @@ import com.erp.server.bi.service.BiTargetStaffSettingService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 目标管理-人员
@@ -37,7 +39,6 @@ public class BiTargetStaffSettingController extends BaseController {
 
     @Resource
     private BiTargetStaffSettingService biTargetStaffSettingService;
-
 
 
     /**
@@ -95,6 +96,7 @@ public class BiTargetStaffSettingController extends BaseController {
      * @date: 2023-09-13
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "人员目标设置修改")
 //        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //        tableField = "create_user_id",
 //        menuCode = "dmp:biTargetStaffSetting:update",
@@ -103,6 +105,29 @@ public class BiTargetStaffSettingController extends BaseController {
     public ApiResult update(@RequestBody @Validated BiTargetStaffSettingDTO.UpdateDTO dto) {
         biTargetStaffSettingService.update(dto);
         return success();
+    }
+
+    /**
+     * 下载模板
+     *
+     * @return
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        biTargetStaffSettingService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入人员目标设置
+     *
+     * @return
+     */
+    @GetMapping("/importFile")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "人员目标设置导入")
+    public ApiResult<BiTargetStaffSettingDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        BiTargetStaffSettingDTO.ImportDTO result = biTargetStaffSettingService.importFile(excelFile, response);
+        return success(result);
     }
 
 

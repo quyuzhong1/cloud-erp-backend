@@ -301,4 +301,11 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/listCategoryByIds")
     List<BasicCategoryEntity> listCategoryByIds(@RequestBody List<String> idList);
+
+    /**
+     * 获取到父级的分类
+     * @return
+     */
+    @GetMapping("feign/product/listParentCategory")
+    List<BasicCategoryEntity> listParentCategory();
 }

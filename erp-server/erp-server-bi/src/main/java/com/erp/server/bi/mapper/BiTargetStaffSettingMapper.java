@@ -1,11 +1,12 @@
 package com.erp.server.bi.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -23,7 +24,28 @@ import java.util.List;
 @Mapper
 public interface BiTargetStaffSettingMapper extends BaseMapper<BiTargetStaffSettingEntity> {
 
+    /**
+     * 根据年会获取到对应值
+     * @param year
+     * @return
+     */
     List<BiTargetStaffSettingDTO.ListDetailDTO> listByYear(@Param("year") String year);
 
     IPage<BiTargetStaffSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params);
+    /**
+     * @description: 根据指标查询人员目标值
+     * @author Will
+     * @date: 2023/9/15 12:13
+     * @param dto
+     * @return List<TargetFinishDTO.ViewDTO>
+     */
+    List<TargetFinishDTO.ViewDTO> listUserTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
+    /**
+     * @description: 根据指标查询部门目标值
+     * @author Will
+     * @date: 2023/9/15 12:13
+     * @param dto
+     * @return List<TargetFinishDTO.ViewDTO>
+     */
+    List<TargetFinishDTO.ViewDTO> listDeptTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
 }

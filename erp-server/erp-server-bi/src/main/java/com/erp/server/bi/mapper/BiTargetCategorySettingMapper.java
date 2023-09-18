@@ -1,13 +1,16 @@
 package com.erp.server.bi.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.entity.BiTargetCategorySettingEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -28,4 +31,20 @@ public interface BiTargetCategorySettingMapper extends BaseMapper<BiTargetCatego
      * @return
      */
     IPage<BiTargetCategorySettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params);
+    /**
+     * @description: 根据指标查询品类目标值
+     * @author Will
+     * @date: 2023/9/15 11:36
+     * @param dto
+     * @return List<TargetFinishDTO.ViewDTO>
+     */
+    List<TargetFinishDTO.ViewDTO> listTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
+
+    /**
+     * 根据部门和年查询数据
+     * @param year
+     * @param deptId
+     * @return
+     */
+    List<BiTargetCategorySettingDTO.ListDetailDTO> listByYearAndDept(@Param("year") String year, @Param("deptId")String deptId);
 }

@@ -12,6 +12,8 @@ import com.erp.server.bi.service.BiTargetShopSettingService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,6 +23,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiTargetShopSettingDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 店铺目标设置表
@@ -92,6 +95,7 @@ public class BiTargetShopSettingController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "店铺目标设置修改")
 //        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //        tableField = "create_user_id",
 //        menuCode = "dmp:biTargetShopSetting:update",
@@ -102,6 +106,28 @@ public class BiTargetShopSettingController extends BaseController {
         return success();
     }
 
+
+    /**
+     * 下载模板
+     *
+     * @return
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        biTargetShopSettingService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入店铺目标设置
+     *
+     * @return
+     */
+    @GetMapping("/importFile")
+    public ApiResult<BiTargetShopSettingDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        BiTargetShopSettingDTO.ImportDTO result = biTargetShopSettingService.importFile(excelFile, response);
+        return success(result);
+    }
 
 
 }
