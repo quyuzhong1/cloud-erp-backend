@@ -7,6 +7,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.*;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.LayoutBlockEnum;
 import com.erp.server.bi.mapper.BiLayoutMapper;
@@ -58,6 +59,9 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
 
     @Resource
     private BiModulePermissionService modulePermissionService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
 
     /**
@@ -138,7 +142,8 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
             log.info("subject result ={}", JSONUtil.toJsonStr(subject));
             throw new ServiceException(ApiError.ERROR_97000);
         }
-        subjectShareService.checkPermission(userId, subject);
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
+        subjectShareService.checkPermission(userId, subject, roleIdList);
         List<String> shareUserIdList = subjectShareService.getUserIdsBySubjectId(subjectId);
         SubjectLayoutDetailsDTO details = new SubjectLayoutDetailsDTO();
         details.setSubjectId(subjectId);

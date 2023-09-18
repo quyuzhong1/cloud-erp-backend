@@ -129,21 +129,21 @@ public class BiModuleController extends BaseController {
      * 模板批量设置权限
      * @author Jim
      * @date: 2023-09-14
-     * @param dto
+     * @param dtoList
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/batchShare")
-    public ApiResult<List<BatchResultDTO>> batchShare(@RequestBody @Validated BiBatchShareDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
+    public ApiResult<List<BatchResultDTO>> batchShare(@RequestBody @Validated List<BiBatchShareDTO> dtoList) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
+        for (BiBatchShareDTO dto : dtoList) {
             BatchResultDTO submit;
             try {
-                submit = biModuleService.updateShare(dto.getShareFlagIdList(), id, dto.getShareFlag());
+                submit = biModuleService.updateShare(dto.getShareFlagIdList(), dto.getId(), dto.getShareFlag());
             }catch (Exception e){
                 log.error("模板批量设置权限失败:{}", e.getMessage());
-                BiModuleEntity entity = biModuleService.getById(id);
+                BiModuleEntity entity = biModuleService.getById(dto.getId());
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "专题不存在, 提交失败");
+                    submit = BatchResultDTO.fail(dto.getId(), dto.getId(), "专题不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
