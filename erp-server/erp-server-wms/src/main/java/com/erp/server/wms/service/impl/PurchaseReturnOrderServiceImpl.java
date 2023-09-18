@@ -1788,9 +1788,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                         addSkuDTO.setReplenishQty(addDTO.getReplenishQty());
                         addSkuDTO.setDeductAmountQty(addDTO.getDeductAmountQty());
                         addSkuDTO.setSkuNo(addDTO.getSkuNo());
-                        if (returnQty > (stockInQty - entity.getPurchaseQty() - alreadyReturnQty) && !detailEntityList.get(detailEntityList.size()-1).getId().equals(entity.getId())) {
-                            returnQty = returnQty - (stockInQty - entity.getPurchaseQty() - alreadyReturnQty);
-                            addSkuDTO.setReturnQty(stockInQty - entity.getPurchaseQty() - alreadyReturnQty);
+                        if (returnQty > (stockInQty - alreadyReturnQty) && !detailEntityList.get(detailEntityList.size()-1).getId().equals(entity.getId())) {
+                            returnQty = returnQty - (stockInQty - alreadyReturnQty);
+                            addSkuDTO.setReturnQty(stockInQty - alreadyReturnQty);
                             addDTOList.add(addSkuDTO);
                         } else {
                             addSkuDTO.setReturnQty(returnQty);
