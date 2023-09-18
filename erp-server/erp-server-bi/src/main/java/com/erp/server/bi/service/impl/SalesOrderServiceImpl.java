@@ -2286,7 +2286,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesFlagVO> list = baseMapper.deptNewAndOldSalesAmount(dto, settleRate);
         LocalDateTime startTime = dto.getStartTime();
         BiTargetNewProductSettingDTO.TargetParamDTO paramDTO = new BiTargetNewProductSettingDTO.TargetParamDTO();
-        paramDTO.setYear(startTime.getYear() + "");
+        paramDTO.setYear(startTime.getYear());
         paramDTO.setMonth(startTime.getMonthValue());
         paramDTO.setMetricsList(Arrays.asList(MetricsEnum.SALES_AMOUNT.getCode(), MetricsEnum.SALES_QTY.getCode()));
         List<String> deptIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
@@ -2361,12 +2361,14 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Integer oldFlag = BiConstant.OLD;
 
         List<SalesFlagVO> list = baseMapper.userNewAndOldSalesAmount(dto, settleRate);
-
+        LocalDateTime startTime = dto.getStartTime();
         BiTargetNewProductSettingDTO.TargetParamDTO paramDTO = new BiTargetNewProductSettingDTO.TargetParamDTO();
-
+        paramDTO.setYear(startTime.getYear());
+        paramDTO.setMonth(startTime.getMonthValue());
         paramDTO.setMetricsList(Arrays.asList(MetricsEnum.SALES_AMOUNT.getCode(), MetricsEnum.SALES_QTY.getCode()));
         List<String> deptIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
         paramDTO.setDeptIdList(deptIds);
+
         List<BiTargetNewProductSettingDTO.UserTargetDTO> userTargetDTOS = biTargetNewProductSettingService.listUserTarget(paramDTO);
 
         Map<String, List<SalesFlagVO>> groupMap = list.parallelStream().

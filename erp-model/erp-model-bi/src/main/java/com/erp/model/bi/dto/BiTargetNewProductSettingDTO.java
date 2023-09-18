@@ -289,7 +289,7 @@ public class BiTargetNewProductSettingDTO implements Serializable {
         /**
          * 年
          */
-        private String year;
+        private Integer year;
         /**
          * 月
          */
