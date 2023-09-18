@@ -605,12 +605,14 @@ public class BiSalesModuleController extends BaseController {
 
 
     /**
+     * 战略目标达成
      *
      * @return
      */
     @PostMapping("/targetMetrics")
-    public ApiResult<List<BiTargetYearDTO.TargetMetricsFinishDTO>> targetMetrics() {
-        return success();
+    public ApiResult<List<BiTargetYearDTO.TargetMetricsFinishDTO>> targetMetrics(@RequestBody @Validated BiTargetYearDTO.SearchDTO dto) {
+        List<BiTargetYearDTO.TargetMetricsFinishDTO> resultList = salesOrderService.listTargetMetrics(dto);
+        return success(resultList);
     }
 
 

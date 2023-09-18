@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -285,4 +286,35 @@ public class BiTargetYearDTO implements Serializable {
     }
 
 
+    /**
+     * 销售模板的参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO extends BiFilterDTO{
+
+        /**
+         * 日期年月
+         */
+        private String yearMonth;
+
+        /**
+         * 指标
+         */
+        @NotBlank(message = "指标维度不能为空")
+        @StateEnumValue(clazz = MetricsEnum.class, message = "指标维度有误")
+        private String metrics;
+
+        /**
+         * 人员
+         */
+        private String staffId;
+
+
+        /**
+         * 部门id
+         */
+        private String deptId;
+
+    }
 }
