@@ -141,6 +141,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //数据处理
         doOpHandleData(records);
         List<String> list = new ArrayList<>();
+        List<String> inWarehouseIds = records.stream().map(req -> req.getInWarehouseId()).distinct().collect(Collectors.toList());
+        List<String> outWarehouseIds = records.stream().map(req -> req.getOutWarehouseId()).distinct().collect(Collectors.toList());
+        inWarehouseIds.addAll(outWarehouseIds);
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(inWarehouseIds);
+
         //清空明细数据
         records.forEach(obj -> {
             boolean contains = list.contains(obj.getId());
@@ -156,6 +161,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 obj.setCreateUserName(null);
                 return;
             }
+            WarehouseLocationEntity inWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getInWarehouseId()) && req.getCode().equals(obj.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            obj.setInWarehouseLocationName(inWarehouseLocationEntity.getName());
+            WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getOutWarehouseId()) && req.getCode().equals(obj.getOutWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            obj.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
             list.add(obj.getId());
         });
         return new PagingVO(pageData);
@@ -639,6 +648,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         Map<String, List<TransferInfoDetailDTO.AddDTO>> multiTransferMap = detailList.stream().collect(
                 Collectors.groupingBy(r -> r.getOutWarehouseId() + "-" + r.getSkuId() + "-" + StrUtils.null2EmptyWithTrim(r.getOutWarehouseLocation()), Collectors.toList()));
 
+        List<String> warehouseIds = detailList.stream().map(req -> req.getOutWarehouseId()).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
+
         multiTransferMap.forEach((key, multiList)->{
             String warehouseId = multiList.get(0).getOutWarehouseId();
             String skuId = multiList.get(0).getSkuId();
@@ -659,7 +671,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             if(isScarce && !ignoreInventorySkuIds.contains(skuId)) {
                 WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(warehouseId, (v) -> warehouseService.detailWithCache(v));
                 String warehouseName = Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId()) ? warehouseDetail.getName() : "";
-                String msg = StrUtil.format("仓库【{}】仓位【{}】SKU【{}】【缺货：{}个】", warehouseName, warehouseLocation, skuNo, (sumQty - curInventoryQty));
+                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(warehouseId) && req.getCode().equals(warehouseLocation)).findFirst().orElse(new WarehouseLocationEntity());
+
+                String msg = StrUtil.format("仓库【{}】仓位【{}】SKU【{}】【缺货：{}个】", warehouseName, warehouseLocationEntity.getName(), skuNo, (sumQty - curInventoryQty));
                 errmsg.append(msg).append("</br>");
             }
         });

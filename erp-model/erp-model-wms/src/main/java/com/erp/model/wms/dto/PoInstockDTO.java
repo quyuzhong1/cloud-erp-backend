@@ -118,6 +118,11 @@ public class PoInstockDTO implements Serializable {
         private Integer exceedQty;
 
         /**
+         * 交货仓库Id
+         */
+        private String deliveryWarehouseId;
+
+        /**
          * 交货仓库名称
          */
         private String deliveryWarehouseName;
@@ -161,6 +166,11 @@ public class PoInstockDTO implements Serializable {
          * 仓位
          */
         private String warehouseLocation;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
 
     }
 

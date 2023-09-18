@@ -492,6 +492,11 @@ public class PurchaseReturnOrderDTO {
         private LocalDate billDate;
 
         /**
+         * 退货仓库Id
+         */
+        private String returnWarehouseId;
+
+        /**
          * 退货仓库
          */
         private String returnWarehouseName;
@@ -576,6 +581,11 @@ public class PurchaseReturnOrderDTO {
          * 仓位
          */
         private String warehouseLocation;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
 
         /**
          * 单据来源

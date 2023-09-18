@@ -147,6 +147,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //数据处理
         doOpHandlePurchaseStockIn(records);
         List<String> list = new ArrayList<>();
+
+        List<String> warehouseIds = records.stream().map(req -> req.getDeliveryWarehouseId()).distinct().collect(Collectors.toList());
+
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
+
         //清空明细数据
         records.forEach(obj -> {
             boolean contains = list.contains(obj.getId());
@@ -161,6 +166,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 obj.setCreateUserName(null);
                 return;
             }
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getDeliveryWarehouseId()) && req.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            obj.setWarehouseLocationName(warehouseLocationEntity.getName());
             list.add(obj.getId());
         });
         return new PagingVO(pageData);
@@ -1704,7 +1711,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     //已签收数量
                     Integer alreadyStockInQty = poInstockDetailEntities.stream().filter(obj -> obj.getSourceDetailId().equals(entity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (stockInQty > receiveQty - alreadyStockInQty) {
-                        throw new ServiceException(new ApiResult(MathUtil.ONE,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + receiveQty));
+                        throw new ServiceException(String.format("SKU【%s】实收数量不能超过未入库量",detailEntity.getSkuNo()));
 
                     }
                     if (alreadyStockInQty >= entity.getReceiveQty()) {
@@ -1763,7 +1770,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     //已签收数量
                     Integer alreadyStockInQty = poInstockDetailEntities.stream().filter(obj -> obj.getSourceDetailId().equals(entity.getId()) && !poInstockIds.contains(obj.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (stockInQty > receiveQty - alreadyStockInQty) {
-                        throw new ServiceException(new ApiResult(MathUtil.ONE,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + receiveQty));
+                        throw new ServiceException(String.format("SKU【%s】实收数量不能超过未入库量",detailEntity.getSkuNo()));
                     }
                     if (alreadyStockInQty >= entity.getReceiveQty()) {
                         continue;
