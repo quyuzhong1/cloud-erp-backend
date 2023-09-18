@@ -2286,7 +2286,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesFlagVO> list = baseMapper.deptNewAndOldSalesAmount(dto, settleRate);
         LocalDateTime startTime = dto.getStartTime();
         BiTargetNewProductSettingDTO.TargetParamDTO paramDTO = new BiTargetNewProductSettingDTO.TargetParamDTO();
-        paramDTO.setYear(startTime.getYear() + "");
+        paramDTO.setYear(startTime.getYear());
         paramDTO.setMonth(startTime.getMonthValue());
         paramDTO.setMetricsList(Arrays.asList(MetricsEnum.SALES_AMOUNT.getCode(), MetricsEnum.SALES_QTY.getCode()));
         List<String> deptIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());

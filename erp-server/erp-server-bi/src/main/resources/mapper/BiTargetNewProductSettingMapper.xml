@@ -95,7 +95,7 @@
                 #{metrics}
             </foreach>
         </if>
-        <if test="params.deptIdList != null and params.deptIdList != ''">
+        <if test="params.deptIdList != null and params.deptIdList.size > 0">
             AND ty.dept_id IN
             <foreach collection = "params.deptIdList" item = "deptId" open = "(" separator="," close=")">
                 #{deptId}
@@ -130,7 +130,7 @@
                 #{metrics}
             </foreach>
         </if>
-        <if test="params.userIdList != null and params.userIdList != ''">
+        <if test="params.userIdList != null and params.userIdList.size > 0">
             AND btnps.staff_id IN
             <foreach collection = "params.userIdList" item = "userId" open = "(" separator="," close=")">
                 #{userId}
