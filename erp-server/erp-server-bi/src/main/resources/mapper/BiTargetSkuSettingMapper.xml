@@ -73,9 +73,9 @@
 
     <select id="listTargetFinish" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
         select
-            btcs.sku_no as typeName,
-            btcs.month,
-            btcs.value
+            btss.sku_no as typeName,
+            btss.month,
+            btss.value
         from bi_target_year bty
         left join bi_target_sku_setting btss on btss.is_deleted = false and bty.id = btss.main_id
         <where>
@@ -83,8 +83,8 @@
             <if test="params.metrics != null and params.metrics != ''">
                 and  btss.metrics = #{params.metrics}
             </if>
-            <if test="params.date != null ">
-                and  bty.year = to_char(#{params.date},'yyyy')  and btss.month between 1 and 12
+            <if test="params.startTime != null ">
+                and  bty.year = to_char(#{params.startTime},'yyyy')::INTEGER  and btss.month between 1 and 12
             </if>
             <if test="params.department !=null and params.department.size > 0">
                 and bty.dept_id in
