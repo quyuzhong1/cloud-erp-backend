@@ -7,9 +7,10 @@ import com.common.business.vo.SeriesVO;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.dto.NewAndOldSalesSearchDTO;
-import com.erp.model.bi.enums.NewAndOldSalesSearchTypeEnum;
+import com.erp.model.bi.enums.TargetMetricsSearchTypeEnum;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
@@ -2158,16 +2159,29 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     @Override
     public List<NewAndOldSalesSearchDTO.PagingDTO> newAndOldSalesAmount(NewAndOldSalesSearchDTO.SearchDTO dto) {
-        NewAndOldSalesSearchTypeEnum enumByCode = NewAndOldSalesSearchTypeEnum.getEnumByCode(dto.getSearchType());
+        TargetMetricsSearchTypeEnum enumByCode = TargetMetricsSearchTypeEnum.getEnumByCode(dto.getSearchType());
 //        biTargetNewProductSettingService.getTargetByParams()
         switch (enumByCode) {
-            case DIVISION:
+            case DEPT:
                 divisionNewAndOldSalesAmount(dto);
             case USER:
             case SHOP:
             case CATEGORY:
         }
 
+        return null;
+    }
+
+
+    /**
+     * 战略目标达成
+     * @author yl
+     * @date 2023-09-18 11:01
+     * @param dto
+     * @return java.util.List<com.erp.model.bi.dto.BiTargetYearDTO.TargetMetricsFinishDTO>
+     */
+    @Override
+    public List<BiTargetYearDTO.TargetMetricsFinishDTO> listTargetMetrics(BiTargetYearDTO.SearchDTO dto) {
         return null;
     }
 
