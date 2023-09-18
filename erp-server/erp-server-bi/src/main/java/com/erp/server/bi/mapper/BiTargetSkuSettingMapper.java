@@ -39,5 +39,5 @@ public interface BiTargetSkuSettingMapper extends BaseMapper<BiTargetSkuSettingE
      * @param deptId
      * @return
      */
-    List<BiTargetSkuSettingDTO.ListDetailDTO> listByYearAndDept(@Param("year") String year,@Param("deptId") String deptId);
+    List<BiTargetSkuSettingDTO.ListDetailDTO> listByYearAndDept(@Param("year") Integer year,@Param("deptId") String deptId);
 }

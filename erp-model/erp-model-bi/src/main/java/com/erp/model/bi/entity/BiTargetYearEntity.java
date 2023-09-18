@@ -27,7 +27,7 @@ public class BiTargetYearEntity extends BaseEntity<BiTargetYearEntity> {
     * 年
     */
     @TableField("year")
-    private String year;
+    private Integer year;
 
     /**
      * 考核字标多个逗号分割

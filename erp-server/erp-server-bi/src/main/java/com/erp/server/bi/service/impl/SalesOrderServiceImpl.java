@@ -5,6 +5,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.vo.ChartVO;
 import com.common.business.vo.SeriesVO;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
@@ -36,6 +37,9 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,7 +48,6 @@ import java.util.stream.Collectors;
  * 销售维度 模块服务
  *
  * @Classname
-
  * @Date 2022-12-16 11:09
  * @Created by yl
  */
@@ -1060,8 +1063,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             List<String> skuList = item.getSkuList();
             xAxisList.add(item.getName());
             BigDecimal totalSales = list.stream().filter(
-                    s -> skuList.contains(s.getFlagNo()) && s.getSales() != null
-            ).map(SalesBaseVO::getSales).
+                            s -> skuList.contains(s.getFlagNo()) && s.getSales() != null
+                    ).map(SalesBaseVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
 
             dataList.add(totalSales);
@@ -2000,7 +2003,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             if (m == 1) {
                 vo.setChainRelativeRatio(getChainRelativeRatio(sales, lastMonth.getSales()));
             } else {
-                String last = m-1 > 9 ? String.valueOf(m-1) : "0".concat(String.valueOf(m-1));
+                String last = m - 1 > 9 ? String.valueOf(m - 1) : "0".concat(String.valueOf(m - 1));
 
                 SalesFlagVO lastMonthFlag = list.stream().filter(s -> s.getFlag().equals(last)).
                         findFirst().orElse(null);
@@ -2175,13 +2178,35 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 战略目标达成
-     * @author yl
-     * @date 2023-09-18 11:01
+     *
      * @param dto
      * @return java.util.List<com.erp.model.bi.dto.BiTargetYearDTO.TargetMetricsFinishDTO>
+     * @author yl
+     * @date 2023-09-18 11:01
      */
     @Override
     public List<BiTargetYearDTO.TargetMetricsFinishDTO> listTargetMetrics(BiTargetYearDTO.SearchDTO dto) {
+        /**
+         * 年月
+         */
+        String yearMonth = dto.getYearMonth();
+        //年
+        Integer year = LocalDate.now().getYear();
+        //月
+        Integer moth = LocalDate.now().getMonthValue();
+        if (StringUtils.isNotBlank(yearMonth) && yearMonth.length() >= 7) {
+            DateTimeFormatter fmt = new DateTimeFormatterBuilder()
+                    .appendPattern("yyyy-MM")
+                    .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+                    .toFormatter();
+            LocalDate yearMonthDate = LocalDate.parse(yearMonth, fmt);
+            year = yearMonthDate.getYear();
+            moth = yearMonthDate.getMonthValue();
+        }
+
+
+
+
         return null;
     }
 
@@ -2234,4 +2259,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         return resultList;
     }
+
+
 }

@@ -39,5 +39,5 @@ public interface BiTargetShopSettingMapper extends BaseMapper<BiTargetShopSettin
      * @param year
      * @return
      */
-    List<BiTargetShopSettingDTO.ListDetailDTO> listByYear(@Param("year") String year);
+    List<BiTargetShopSettingDTO.ListDetailDTO> listByYear(@Param("year") Integer year);
 }
