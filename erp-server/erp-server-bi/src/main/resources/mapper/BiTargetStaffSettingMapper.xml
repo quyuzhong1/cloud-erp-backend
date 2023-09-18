@@ -59,11 +59,8 @@
             ty.dept_name
         FROM bi_target_year ty
         WHERE ty.is_deleted=false
-        <if test="params.yearList !=null and params.yearList.size>0">
-           AND ty.year IN
-           <foreach collection="params.yearList" item="year" open="(" separator="," close=")">
-              #{year}
-          </foreach>
+        <if test="params.year !=null and params.year!=''">
+           AND ty.year =#{params.year}
         </if>
         <if test="params.metricsList !=null and params.metricsList.size>0">
             AND ty.id IN (
