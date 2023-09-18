@@ -100,4 +100,10 @@ public class BiSalesMonitoringEntity implements Serializable {
     @TableField(value = "relative_ratio_compare")
     private String relativeRatioCompare;
 
+    /**
+     * 指标（销量、销售额）
+     */
+    @TableField(value = "metrics")
+    private String metrics;
+
 }

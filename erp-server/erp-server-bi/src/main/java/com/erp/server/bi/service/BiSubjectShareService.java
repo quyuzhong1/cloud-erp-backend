@@ -7,6 +7,7 @@ import com.erp.model.bi.entity.BiSubjectShareEntity;
 import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -71,7 +72,7 @@ public interface BiSubjectShareService extends IService<BiSubjectShareEntity> {
      * @author yl
      * @date 2022-12-13 18:10
      */
-    void checkPermission(String userId, BiSubjectEntity subject);
+    void checkPermission(String userId, BiSubjectEntity subject, List<String> roleIdList);
 
     /**
      * 获取可以看到的 专题 的用户id
@@ -87,4 +88,27 @@ public interface BiSubjectShareService extends IService<BiSubjectShareEntity> {
      * @param shareFlag
      */
     void checkAndAddSubjectShare(List<String> shareFlagIdList, String subjectId, String shareFlag);
+
+    /**
+     * 查询用户支持的专题
+     * @param userId
+     * @param roleIdList
+     * @return
+     */
+    List<String> findSubjectId(String userId, List<String> roleIdList);
+
+    /**
+     * 当前用户是否有权限
+     */
+    Boolean getShare(String userId, String subjectId, List<String> roleIdList);
+
+    /**
+     * 当通过Subject查询
+     */
+    List<BiSubjectShareEntity> findBySubjectId(String subjectId);
+
+    /**
+     * 查询权限信息
+     */
+    Map<String, List<BiSubjectShareEntity>> mapBySubjectIds(List<String> subjectIds);
 }

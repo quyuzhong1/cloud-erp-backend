@@ -11,7 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 模块权限表(BiModulePermission)表服务实现类
@@ -96,5 +99,28 @@ public class BiModulePermissionServiceImpl extends ServiceImpl<BiModulePermissio
         BiShareIdentityTypeEnum identityTypeEnum = BiShareIdentityTypeEnum.isRoleCheck(shareFlag);
         // 添加
         addModulePermission(mainId, shareFlagIdList, identityTypeEnum);
+    }
+
+    /**
+     * 通过ModuleId查询
+     */
+    @Override
+    public List<BiModulePermissionEntity> findByModuleId(String moduleId) {
+        return lambdaQuery()
+                .eq(BiModulePermissionEntity::getModuleId, moduleId)
+                .list();
+    }
+
+    @Override
+    public Map<String, List<BiModulePermissionEntity>> mapByModuleIds(List<String> moduleIds) {
+        if (CollectionUtils.isEmpty(moduleIds)){
+            return Collections.emptyMap();
+        }
+        return lambdaQuery()
+                .eq(BiModulePermissionEntity::getModuleId, moduleIds)
+                .list()
+                .stream()
+                .collect(Collectors.groupingBy(BiModulePermissionEntity::getModuleId))
+                ;
     }
 }

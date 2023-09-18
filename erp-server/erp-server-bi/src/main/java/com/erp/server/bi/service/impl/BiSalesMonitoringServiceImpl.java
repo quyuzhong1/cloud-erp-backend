@@ -6,20 +6,23 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.LocalDateUtil;
 import com.common.business.interceptor.CommonInterceptor;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.SeriesVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiSalesMonitoringDTO;
 import com.erp.model.bi.dto.BiSalesMonitoringSearchDTO;
 import com.erp.model.bi.dto.BiSalesMonitoringTableDTO;
 import com.erp.model.bi.entity.BiModuleEntity;
 import com.erp.model.bi.entity.BiSalesMonitoringEntity;
 import com.erp.model.bi.entity.BiSysModuleEntity;
-import com.erp.model.bi.vo.*;
+import com.erp.model.bi.vo.BiBrandNameMonitoringTableVO;
+import com.erp.model.bi.vo.BiCategoryMonitoringTableVO;
+import com.erp.model.bi.vo.BiChargeMonitoringTableVO;
+import com.erp.model.bi.vo.BiSalesMonitoringTableVO;
 import com.erp.server.bi.enums.BiCompareEnum;
 import com.erp.server.bi.enums.SalesMonitoringTypeEnum;
 import com.erp.server.bi.mapper.BiSalesMonitoringMapper;
@@ -406,28 +409,28 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         //比较最新月基础值
         if (MathUtil.compareTo(entity.getLatestMonthValue(), BigDecimal.ZERO) > 0 ) {
             //大于等于
-            if (BiCompareEnum.GREATERTHANEQUAL.getCode().equals(entity.getLatestMonthCompare())) {
+            if (BiCompareEnum.GREATER_THAN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
                 name = name.concat("(最新月基础值超过"+entity.getLatestMonthValue().setScale(2));
                 if ((MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) < 0)) {
                     return null;
                 }
             }
             //小于等于
-            if (BiCompareEnum.LESSTHANEQUAL.getCode().equals(entity.getLatestMonthCompare())) {
+            if (BiCompareEnum.LESS_THAN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
                 name = name.concat("(最新月基础值不超过"+entity.getLatestMonthValue().setScale(2));
                 if ((MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) > 0)) {
                     return null;
                 }
             }
             //大于
-            if (BiCompareEnum.GREATERTHAN.getCode().equals(entity.getLatestMonthCompare())) {
+            if (BiCompareEnum.GREATER_THAN.getCode().equals(entity.getLatestMonthCompare())) {
                 name = name.concat("(最新月基础值超过"+entity.getLatestMonthValue().setScale(2));
                 if ((MathUtil.compareTo(entity.getLatestMonthValue(),sumSecondMonthSale) >= 0)) {
                     return null;
                 }
             }
             //小于
-            if (BiCompareEnum.LESSTHAN.getCode().equals(entity.getLatestMonthCompare())) {
+            if (BiCompareEnum.LESS_THAN.getCode().equals(entity.getLatestMonthCompare())) {
                 name = name.concat("(最新月基础值不超过"+entity.getLatestMonthValue().setScale(2));
                 if ((MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) >= 0)) {
                     return null;
@@ -442,7 +445,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         //比较环比
         if (MathUtil.compareTo(entity.getRelativeRatio(), BigDecimal.ZERO) > 0 ) {
             //大于等于
-            if (BiCompareEnum.GREATERTHANEQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
+            if (BiCompareEnum.GREATER_THAN_EQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
                 if (StringUtils.isNotBlank(name)) {
                     name = name.concat("，环比超过"+entity.getRelativeRatio().setScale(2).toString().concat("%"));
                 } else {
@@ -453,7 +456,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                 }
             }
             //小于等于
-            if (BiCompareEnum.LESSTHANEQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
+            if (BiCompareEnum.LESS_THAN_EQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
                 if (StringUtils.isNotBlank(name)) {
                     name = name.concat("，环比不超过"+entity.getRelativeRatio().setScale(2).toString().concat("%"));
                 } else {
@@ -464,7 +467,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                 }
             }
             //大于
-            if (BiCompareEnum.GREATERTHAN.getCode().equals(entity.getRelativeRatioCompare())) {
+            if (BiCompareEnum.GREATER_THAN.getCode().equals(entity.getRelativeRatioCompare())) {
                 if (StringUtils.isNotBlank(name)) {
                     name = name.concat("，环比超过"+entity.getRelativeRatio().setScale(2).toString().concat("%"));
                 } else {
@@ -475,7 +478,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                 }
             }
             //小于
-            if (BiCompareEnum.LESSTHAN.getCode().equals(entity.getRelativeRatioCompare())) {
+            if (BiCompareEnum.LESS_THAN.getCode().equals(entity.getRelativeRatioCompare())) {
                 if (StringUtils.isNotBlank(name)) {
                     name = name.concat("，环比不超过"+entity.getRelativeRatio().setScale(2).toString().concat("%"));
                 } else {

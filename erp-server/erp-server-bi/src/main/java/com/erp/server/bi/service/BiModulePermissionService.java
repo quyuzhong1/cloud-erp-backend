@@ -5,6 +5,7 @@ import com.erp.model.bi.entity.BiModulePermissionEntity;
 import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -28,4 +29,14 @@ public interface BiModulePermissionService  extends IService<BiModulePermissionE
      * 检查和添加
      */
     void checkAndAddModulePermission(List<String> shareFlagIdList, String mainId, String shareFlag);
+
+    /**
+     * 通过ModuleId查询
+     */
+    List<BiModulePermissionEntity> findByModuleId(String moduleId);
+
+    /**
+     * 通过ModuleIds查询
+     */
+    Map<String, List<BiModulePermissionEntity>> mapByModuleIds(List<String> moduleIds);
 }

@@ -11,6 +11,8 @@ import org.apache.commons.collections.CollectionUtils;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 /**
@@ -19,7 +21,7 @@ import java.util.List;
  * @author Cloud
  */
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 @ToString
 @NoArgsConstructor
 public class BiFilterDTO extends PermissionsDTO {
@@ -36,9 +38,9 @@ public class BiFilterDTO extends PermissionsDTO {
     /**
      * 开始日期
      */
-    @NotNull(message = "开始时间不能为空")
+/*    @NotNull(message = "开始时间不能为空")
     @NotNull(message = "开始时间不能为空", groups = SelectTargetModule.class)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")*/
     private LocalDateTime startTime;
 
 
@@ -46,9 +48,9 @@ public class BiFilterDTO extends PermissionsDTO {
     /**
      * 结束日期
      */
-    @NotNull(message = "结束时间不能为空")
-    @NotNull(message = "结束时间不能为空", groups = SelectTargetModule.class)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+/*    @NotNull(message = "开始时间不能为空")
+    @NotNull(message = "开始时间不能为空", groups = SelectTargetModule.class)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")*/
     private LocalDateTime endTime;
 
     /**
@@ -109,9 +111,23 @@ public class BiFilterDTO extends PermissionsDTO {
         return CollectionUtils.isNotEmpty(dto.getSite()) || CollectionUtils.isNotEmpty(dto.getSku()) || CollectionUtils.isNotEmpty(dto.getShopName());
     }
 
+    /**
+     * 默认当月开始时间
+     */
+    public LocalDateTime getStartTime() {
+        if (null == this.startTime){
+            return LocalDateTime.now(ZoneId.systemDefault()).with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN);
+        }
+        return startTime;
+    }
 
-
+    /**
+     * 默认当月结束时间
+     */
     public LocalDateTime getEndTime() {
+        if (null == this.endTime){
+            return LocalDateTime.now(ZoneId.systemDefault()).with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX);
+        }
         return LocalDateTime.of(endTime.plusDays(1).toLocalDate(), LocalTime.MIN);
     }
 

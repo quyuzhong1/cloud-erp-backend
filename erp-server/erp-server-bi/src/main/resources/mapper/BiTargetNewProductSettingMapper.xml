@@ -73,5 +73,73 @@
 
     </select>
 
+    <select id="listDeptTarget" resultType="com.erp.model.bi.dto.BiTargetNewProductSettingDTO$DeptTargetDTO">
+        SELECT
+            ty.dept_id,
+            ty.dept_name,
+            btnps.month,
+            SUM(btnps.value) AS value,
+            btnps.metrics
+        FROM bi_target_year ty
+        INNER JOIN bi_target_new_product_setting btnps ON ty.id = btnps.main_id AND btnps.is_deleted = false
+        WHERE ty.is_deleted = false
+        <if test="params.year != null and params.year != ''">
+            AND ty.year = #{params.year}
+        </if>
+        <if test="params.month != null and params.month != ''">
+            AND btnps.month = #{params.month}
+        </if>
+        <if test="params.metricsList != null and params.metricsList.size > 0">
+            AND btnps.metrics IN
+            <foreach collection = "params.metricsList" item = "metrics" open = "(" separator="," close=")">
+                #{metrics}
+            </foreach>
+        </if>
+        <if test="params.deptIdList != null and params.deptIdList.size > 0">
+            AND ty.dept_id IN
+            <foreach collection = "params.deptIdList" item = "deptId" open = "(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
+        GROUP BY
+        ty.dept_id,
+        ty.dept_name,
+        btnps.month,
+        btnps.metrics
+    </select>
 
+    <select id="listUserTarget" resultType="com.erp.model.bi.dto.BiTargetNewProductSettingDTO$UserTargetDTO">
+        SELECT
+            btnps.staff_id AS userId,
+            btnps.staff_name AS userName,
+            btnps.month,
+            SUM(btnps.value) AS value,
+            btnps.metrics
+        FROM bi_target_year ty
+        INNER JOIN bi_target_new_product_setting btnps ON ty.id = btnps.main_id AND btnps.is_deleted = false
+        WHERE ty.is_deleted = false
+        <if test="params.year != null and params.year != ''">
+            AND ty.year = #{params.year}
+        </if>
+        <if test="params.month != null and params.month != ''">
+            AND btnps.month = #{params.month}
+        </if>
+        <if test="params.metricsList != null and params.metricsList.size > 0">
+            AND btnps.metrics IN
+            <foreach collection = "params.metricsList" item = "metrics" open = "(" separator="," close=")">
+                #{metrics}
+            </foreach>
+        </if>
+        <if test="params.userIdList != null and params.userIdList.size > 0">
+            AND btnps.staff_id IN
+            <foreach collection = "params.userIdList" item = "userId" open = "(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        GROUP BY
+        btnps.staff_id,
+        btnps.staff_name,
+        btnps.month,
+        btnps.metrics
+    </select>
 </mapper>

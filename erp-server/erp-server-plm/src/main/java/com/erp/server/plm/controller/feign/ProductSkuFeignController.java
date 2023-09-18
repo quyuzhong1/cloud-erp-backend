@@ -271,10 +271,19 @@ public class ProductSkuFeignController {
     }
 
     /**
-     * 获取到父级分类
+     * 根据分类id 获取分类
      */
     @PostMapping("listCategoryByIds")
     public List<BasicCategoryEntity> listCategoryByIds(@RequestBody List<String> ids) {
         return CollectionUtils.isEmpty(ids) ? Collections.emptyList() : basicCategoryService.listByIds(ids);
+    }
+
+
+    /**
+     * 获取到父级分类
+     */
+    @GetMapping("listParentCategory")
+    public List<BasicCategoryEntity> listCategoryByIds() {
+        return  basicCategoryService.listParentCategory();
     }
 }

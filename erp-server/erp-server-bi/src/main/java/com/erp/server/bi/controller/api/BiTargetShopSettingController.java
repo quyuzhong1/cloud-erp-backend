@@ -26,7 +26,7 @@ import com.erp.model.bi.dto.BiTargetShopSettingDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * 店铺目标设置表
+ * 目标管理-店铺
  *
  * @author Lambda
  * @since 2023-09-13
@@ -95,6 +95,7 @@ public class BiTargetShopSettingController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "店铺目标设置修改")
 //        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //        tableField = "create_user_id",
 //        menuCode = "dmp:biTargetShopSetting:update",

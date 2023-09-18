@@ -85,4 +85,6 @@ public interface BiDictService  extends IService<BiDictEntity> {
     List<BiDictEntity> getByType(String type);
 
     BiDictEntity getByTypeName(String type, String name);
+
+    List<Map<String, Object>> listValueByType(String type);
 }

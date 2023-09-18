@@ -73,9 +73,9 @@
 
     <select id="listTargetFinish" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
         select
-            btcs.sku_no as typeName,
-            btcs.month,
-            btcs.value
+            btss.sku_no as typeName,
+            btss.month,
+            btss.value
         from bi_target_year bty
         left join bi_target_sku_setting btss on btss.is_deleted = false and bty.id = btss.main_id
         <where>
@@ -83,8 +83,8 @@
             <if test="params.metrics != null and params.metrics != ''">
                 and  btss.metrics = #{params.metrics}
             </if>
-            <if test="params.date != null ">
-                and  bty.year = to_char(#{params.date},'yyyy')  and btss.month between 1 and 12
+            <if test="params.startTime != null ">
+                and  bty.year = to_char(#{params.startTime},'yyyy')::INTEGER  and btss.month between 1 and 12
             </if>
             <if test="params.department !=null and params.department.size > 0">
                 and bty.dept_id in
@@ -99,6 +99,23 @@
                 </foreach>
             </if>
         </where>
+    </select>
+    <select id="listByYearAndDept" resultType="com.erp.model.bi.dto.BiTargetSkuSettingDTO$ListDetailDTO">
+        SELECT
+            tss.id,
+            tss.main_id,
+            ty.year,
+            ty.dept_name,
+            tss.sku_id,
+            tss.sku_no,
+            tss.month,
+            tss.value,
+            tss.metrics
+        FROM bi_target_sku_setting tss
+        LEFT JOIN bi_target_year ty
+        ON tss.main_id=ty.id and ty.is_deleted=false
+        WHERE tss.is_deleted=false
+          AND ty.year=#{year} AND ty.dept_id=#{deptId}
     </select>
 
 

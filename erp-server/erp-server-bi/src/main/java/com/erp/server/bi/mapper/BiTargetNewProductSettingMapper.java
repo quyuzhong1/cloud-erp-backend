@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -22,4 +24,22 @@ import org.apache.ibatis.annotations.Param;
 public interface BiTargetNewProductSettingMapper extends BaseMapper<BiTargetNewProductSettingEntity> {
 
     IPage<BiTargetNewProductSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params);
+
+    /**
+     * 查询部门新品目标
+     * @Author Luo_WG
+     * @Date 2023/9/18 12:06
+     * @param params
+     * @return java.util.List<com.erp.model.bi.dto.BiTargetNewProductSettingDTO.DeptTargetDTO>
+     **/
+    List<BiTargetNewProductSettingDTO.DeptTargetDTO> listDeptTarget(@Param("params") BiTargetNewProductSettingDTO.TargetParamDTO params);
+
+    /**
+     * 查询用户新品目标
+     * @Author Luo_WG
+     * @Date 2023/9/18 12:06
+     * @param params
+     * @return java.util.List<com.erp.model.bi.dto.BiTargetNewProductSettingDTO.UserTargetDTO>
+     **/
+    List<BiTargetNewProductSettingDTO.UserTargetDTO> listUserTarget(@Param("params") BiTargetNewProductSettingDTO.TargetParamDTO params);
 }

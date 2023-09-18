@@ -5,6 +5,11 @@ import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.entity.BiTargetNewProductSettingEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
+import org.apache.ibatis.annotations.Param;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -53,4 +58,36 @@ public interface BiTargetNewProductSettingService extends SuperService<BiTargetN
      * @return com.common.business.vo.PagingVO<com.erp.model.bi.dto.BiTargetNewProductSettingDTO.PagingViewDTO>
      */
     PagingVO<BiTargetNewProductSettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto);
+
+    /**
+     * 条件查询部门新品目标
+     * @Author Luo_WG
+     * @Date 2023/9/15 16:44
+     * @param dto dto
+     * @return com.erp.model.bi.entity.BiTargetNewProductSettingEntity
+     **/
+    List<BiTargetNewProductSettingDTO.DeptTargetDTO> listDeptTarget(BiTargetNewProductSettingDTO.TargetParamDTO dto);
+
+    /**
+     * 条件查询部门新品目标
+     * @Author Luo_WG
+     * @Date 2023/9/15 16:44
+     * @param dto dto
+     * @return com.erp.model.bi.entity.BiTargetNewProductSettingEntity
+     **/
+    List<BiTargetNewProductSettingDTO.UserTargetDTO> listUserTarget(BiTargetNewProductSettingDTO.TargetParamDTO dto);
+
+    /**
+     * 下载模板
+     * @param response
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 导入
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    BiTargetNewProductSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
 }

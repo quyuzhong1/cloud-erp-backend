@@ -43,4 +43,9 @@ public class BiSalesMonitoringDTO {
      */
     private String relativeRatioCompare;
 
+    /**
+     * 监控指标 （销售额 salesAmount，销量 salesQty）
+     */
+    private String metrics;
+
 }

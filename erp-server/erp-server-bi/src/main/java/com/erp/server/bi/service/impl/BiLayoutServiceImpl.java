@@ -7,6 +7,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.*;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.LayoutBlockEnum;
 import com.erp.server.bi.mapper.BiLayoutMapper;
@@ -58,6 +59,9 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
 
     @Resource
     private BiModulePermissionService modulePermissionService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
 
     /**
@@ -138,8 +142,19 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
             log.info("subject result ={}", JSONUtil.toJsonStr(subject));
             throw new ServiceException(ApiError.ERROR_97000);
         }
-        subjectShareService.checkPermission(userId, subject);
-        List<String> shareUserIdList = subjectShareService.getUserIdsBySubjectId(subjectId);
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
+        subjectShareService.checkPermission(userId, subject, roleIdList);
+//        List<String> shareUserIdList = subjectShareService.getUserIdsBySubjectId(subjectId);
+        List<BiSubjectShareEntity> shareEntityList =  subjectShareService.findBySubjectId(subjectId);
+        List<String> shareFlagIdList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(shareEntityList)){
+            shareFlagIdList = shareEntityList
+                    .stream()
+                    .map(BiSubjectShareEntity::getIdentityId)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+
         SubjectLayoutDetailsDTO details = new SubjectLayoutDetailsDTO();
         details.setSubjectId(subjectId);
         details.setName(subject.getName());
@@ -147,7 +162,8 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         details.setIsFrequently(subject.getIsFrequently());
         details.setCategoryId(subject.getCategoryId());
         details.setCategoryName(subject.getCategoryName());
-        details.setShareUserIdList(shareUserIdList);
+        details.setShareUserIdList(shareFlagIdList);
+        details.setShareFlagIdList(shareFlagIdList);
         List<LayoutDetailsDTO> layoutDetailsList = getBySubjectId(subjectId, userId);
         details.setLayoutDetailsList(layoutDetailsList);
         return details;

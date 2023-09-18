@@ -30,5 +30,4 @@ public enum DashboardEnum {
         this.name = name;
     }
 
-
 }

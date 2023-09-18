@@ -24,7 +24,20 @@ import java.util.List;
 @Mapper
 public interface BiTargetShopSettingMapper extends BaseMapper<BiTargetShopSettingEntity> {
 
+    /**
+     * 分页
+     * @param query
+     * @param params
+     * @return
+     */
     IPage<BiTargetShopSettingDTO.PagingViewDTO> paging(Page query,@Param("params") BiTargetYearDTO.PagingParamDTO params);
 
     List<TargetFinishDTO.ViewDTO> listTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
+
+    /**
+     * 根据年份获取到对应值
+     * @param year
+     * @return
+     */
+    List<BiTargetShopSettingDTO.ListDetailDTO> listByYear(@Param("year") Integer year);
 }

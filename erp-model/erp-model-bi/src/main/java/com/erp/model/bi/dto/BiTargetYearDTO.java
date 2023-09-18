@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -188,9 +189,8 @@ public class BiTargetYearDTO implements Serializable {
         /**
          * 年
          */
-        @NotBlank(message = "考核年度不能为空")
-        @Size(max = 10, message = "年最大长度不能超过10位")
-        private String year;
+        @NotNull(message = "考核年度不能为空")
+        private Integer year;
 
         /**
          *
@@ -228,9 +228,8 @@ public class BiTargetYearDTO implements Serializable {
         /**
          * 年
          */
-        @NotBlank(message = "考核年度不能为空")
-        @Size(max = 10, message = "年最大长度不能超过10位")
-        private String year;
+        @NotNull(message = "考核年度不能为空")
+        private Integer year;
 
         /**
          *
@@ -250,4 +249,107 @@ public class BiTargetYearDTO implements Serializable {
     }
 
 
+    /**
+     * 目标完成情况
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TargetMetricsFinishDTO {
+
+        /**
+         * 指标维度
+         */
+        private String metrics;
+
+        /**
+         * 指标名
+         */
+        private String metricsName;
+
+        /**
+         * 目标值
+         */
+        private Object metricsValue;
+
+        /**
+         * 完成值
+         */
+        private Object finishValue;
+
+        /**
+         * 完成率
+         */
+        private BigDecimal finishRate;
+
+    }
+
+
+
+    /**
+     * 年月目标设置值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class YearMonthValueDTO {
+
+        private Integer year;
+
+        private Integer month;
+
+        /**
+         * 指标维度
+         */
+        private String metrics;
+
+        /**
+         * 指标名
+         */
+        private String metricsName;
+
+        /**
+         * 目标值
+         */
+        private BigDecimal metricsValue;
+
+
+
+    }
+
+
+    /**
+     * 销售模板的参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO extends BiFilterDTO{
+
+        /**
+         * 日期年月
+         */
+        private String yearMonth;
+
+        /**
+         * 指标
+         */
+        @NotNull(message = "指标维度不能为空")
+        @StateEnumValue(clazz = MetricsEnum.class, message = "指标维度有误")
+        private MetricsEnum metrics;
+
+        /**
+         * 人员
+         */
+        private String staffId;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+
+        /**
+         * 部门id
+         */
+        private String deptId;
+
+    }
 }

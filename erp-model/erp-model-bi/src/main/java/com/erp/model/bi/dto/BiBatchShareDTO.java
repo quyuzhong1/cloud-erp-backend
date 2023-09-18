@@ -18,8 +18,8 @@ public class BiBatchShareDTO implements Serializable {
     /**
      * 主实体IDS
      */
-    @NotEmpty(message = "ids不能为空")
-    private List<String> ids;
+    @NotBlank(message = "ids不能为空")
+    private String id;
 
     /**
      * 分享标示
@@ -33,8 +33,7 @@ public class BiBatchShareDTO implements Serializable {
     /**
      * 分享的身份id列表(用户ID/角色ID)
      */
-    @NotNull(message = "分享的身份id列表(shareFlagIdList)不能为空")
-    @Size(min = 1, message = "分享的身份id列表数量至少为1")
+    @NotEmpty(message = "分享的身份id列表(shareFlagIdList)不能为空")
     private List<@NotBlank(message = "分享的身份id不能为空") String> shareFlagIdList;
 
 }

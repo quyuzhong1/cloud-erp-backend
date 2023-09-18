@@ -10,18 +10,16 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.core.constant.BaseStateConstants;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.bi.entity.*;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.*;
-import com.erp.model.bi.entity.BiDictEntity;
-import com.erp.model.bi.entity.BiSubjectDefaultEntity;
-import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.model.bi.vo.CategorySubjectVO;
 import com.erp.model.bi.vo.SubjectVO;
 import com.erp.server.bi.constant.BiConstant;
-import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiSubjectMapper;
 import com.erp.server.bi.service.*;
@@ -33,10 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -68,6 +63,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
 
     /**
@@ -515,8 +513,17 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         String type = DictEnum.DASHBOARD.getType();
         List<BiDictEntity> dictList = dictService.getByType(type);
         //查询到用户可见的专题
-        List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
+//        List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
+        List<String> subjectIdList = subjectShareService.findSubjectId(userId, roleIdList);
         List<SubjectDTO> subjectList = baseMapper.getByIds(subjectIdList, searchKeyword);
+
+        // 模板IDS
+        List<String> subjectIds = subjectList.stream().map(SubjectDTO::getId).distinct().collect(Collectors.toList());
+        Map<String, List<BiSubjectShareEntity>> shareMap = subjectShareService.mapBySubjectIds(subjectIds);
+        // 设置权限信息
+        subjectList.forEach(e -> e.checkAndSetFlagInfo(shareMap.get(e.getId())));
+
         //获取到非仪表盘的列表
         dictList = dictList.stream().filter(d -> StringUtils.isBlank(d.getValue())).collect(Collectors.toList());
         for (BiDictEntity dict : dictList) {

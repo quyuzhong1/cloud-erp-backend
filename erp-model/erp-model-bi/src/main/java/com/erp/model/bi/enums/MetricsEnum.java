@@ -3,6 +3,7 @@ package com.erp.model.bi.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,5 +73,17 @@ public enum MetricsEnum implements EnumMessage {
             }
         }
         return null;
+    }
+
+    public static String getNameByCode(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        for (MetricsEnum item : MetricsEnum.values()) {
+            if (code.equals(item.getCode())) {
+                return item.getName();
+            }
+        }
+        return "";
     }
 }

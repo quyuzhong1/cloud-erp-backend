@@ -17,11 +17,13 @@ import com.erp.server.bi.service.BiTargetSkuSettingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 
 /**
- * sku 目标设置表
+ * 目标管理-单品
  *
  * @author Lambda
  * @since 2023-09-13
@@ -90,6 +92,7 @@ public class BiTargetSkuSettingController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "单品目标设置修改")
 //        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //        tableField = "create_user_id",
 //        menuCode = "dmp:biTargetSkuSetting:update",
@@ -100,6 +103,30 @@ public class BiTargetSkuSettingController extends BaseController {
         return success();
     }
 
+
+    /**
+     * 下载模板
+     *
+     * @return
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        biTargetSkuSettingService.downloadTemplate(response);
+        return success();
+    }
+
+
+    /**
+     * 导入单品目标设置
+     *
+     * @return
+     */
+    @GetMapping("/importFile")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "单品目标设置导入")
+    public ApiResult<BiTargetSkuSettingDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        BiTargetSkuSettingDTO.ImportDTO result = biTargetSkuSettingService.importFile(excelFile, response);
+        return success(result);
+    }
 
 
 }

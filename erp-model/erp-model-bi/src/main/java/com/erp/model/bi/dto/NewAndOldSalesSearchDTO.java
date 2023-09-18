@@ -11,13 +11,11 @@ public class NewAndOldSalesSearchDTO {
      * 查询参数
      **/
     @Data
-    public static class SearchDTO {
+    public static class SearchDTO extends BiFilterDTO {
         /**
-         * 搜索类型：/bi/common/enumDropDown?type=NewAndOldSalesSearchType
-         * 描述：division 事业部，
+         * 搜索类型：/bi/common/enumDropDown?type=TargetMetricsSearchType
+         * 描述：dept 事业部，
          *  user 人员，
-         *  shop 店铺，
-         *  category 品类
          */
         private String searchType;
 
@@ -25,6 +23,11 @@ public class NewAndOldSalesSearchDTO {
          * 搜索内容
          */
         private String searchParam;
+
+        /**
+         * 日期年月
+         */
+        private String yearMonth;
     }
 
     /**
@@ -52,23 +55,46 @@ public class NewAndOldSalesSearchDTO {
         /**
          * 老品销售量
          */
-        private Integer oldSalesQuantity=0;
+        private Integer oldSalesQuantity;
         /**
          * 新品销售额占比
          */
-        private BigDecimal newProductSalesRatio;
+        private String newProductSalesRatio;
         /**
          * 老品销售额占比
          */
-        private BigDecimal oldProductSalesRatio;
+        private String oldProductSalesRatio;
+
+        /**
+         * 新品销售额完成率
+         */
+        private String newSalesAmountFinishRate;
+
+        /**
+         * 新品销量完成率
+         */
+        private String newSalesQuantityFinishRate;
+
+        /**
+         * 新品销售目标
+         */
+        private BigDecimal newSalesAmountTarget;
+
+        /**
+         * 新品销量目标
+         */
+        private BigDecimal newSalesQuantityTarget;
 
         public PagingDTO() {
             this.newProductSales = BigDecimal.ZERO;
             this.newSalesQuantity = 0;
             this.oldProductSales = BigDecimal.ZERO;
             this.oldSalesQuantity = 0;
-            this.newProductSalesRatio = BigDecimal.ZERO;
-            this.oldProductSalesRatio = BigDecimal.ZERO;
+            this.newSalesAmountTarget = BigDecimal.ZERO;
+            this.newSalesQuantityTarget = BigDecimal.ZERO;
+            this.oldProductSalesRatio = BigDecimal.ZERO + "%";
+            this.newSalesAmountFinishRate = BigDecimal.ZERO + "%";
+            this.newSalesQuantityFinishRate = BigDecimal.ZERO + "%";
         }
     }
 
