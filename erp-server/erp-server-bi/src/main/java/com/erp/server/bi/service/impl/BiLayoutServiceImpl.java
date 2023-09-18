@@ -223,9 +223,9 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         if (!updateResult) {
             return "";
         }
-        List<String> userList = dto.getShareFlagIdList();
+        List<String> shareFlagIdList = dto.checkAndGetShareFlagIdList();
         //添加专题的分享用户
-        subjectShareService.checkAndAddSubjectShare(userList, subjectId, subject.getShareFlag());
+        subjectShareService.checkAndAddSubjectShare(shareFlagIdList, subjectId, subject.getShareFlag());
 
         //删除布局主题关系
         subjectRefLayoutService.deleteBySubjectId(subjectId);

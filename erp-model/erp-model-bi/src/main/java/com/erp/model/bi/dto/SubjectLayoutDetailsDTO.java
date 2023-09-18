@@ -1,7 +1,10 @@
 package com.erp.model.bi.dto;
 
+import com.common.core.anno.StateEnumValue;
+import com.common.core.exception.ServiceException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.util.CollectionUtils;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -38,6 +41,7 @@ public class SubjectLayoutDetailsDTO implements Serializable {
     /**
      * 分享标示 personal 私人  share 共享
      */
+    @StateEnumValue(strValues = {"personal","share","role"},message = "分享类型有误")
     private String shareFlag;
 
 
@@ -72,5 +76,15 @@ public class SubjectLayoutDetailsDTO implements Serializable {
 
     @Valid
     private List<LayoutDetailsDTO> layoutDetailsList;
+
+    public List<String> checkAndGetShareFlagIdList() {
+        if ("personal".equalsIgnoreCase(this.shareFlag)){
+            return shareFlagIdList;
+        }
+        if (CollectionUtils.isEmpty(this.shareFlagIdList)){
+            throw new ServiceException("shareFlagIdList分享的标识ID列表不能为空");
+        }
+        return shareFlagIdList;
+    }
 
 }
