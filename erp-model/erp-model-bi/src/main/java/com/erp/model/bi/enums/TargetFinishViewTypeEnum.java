@@ -42,4 +42,14 @@ public enum TargetFinishViewTypeEnum implements EnumMessage {
     public String getName() {
         return name;
     }
+
+    public static String getNameByCode(String code) {
+        TargetFinishViewTypeEnum[] enums = values();
+        for (TargetFinishViewTypeEnum typeEnum : enums) {
+            if (typeEnum.getCode().equals(code)) {
+                return typeEnum.getName();
+            }
+        }
+        return null;
+    }
 }

@@ -71,6 +71,17 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
 
 
     /**
+     * 获取到对应设置的目标值
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<BiTargetYearDTO.YearMonthValueDTO> listYearMonthValue(BiTargetYearDTO.SearchDTO dto) {
+        return null;
+    }
+
+
+    /**
     * 新增修改处理数据
     */
     private void handleData(BiTargetYearEntity biTargetYearEntity) {

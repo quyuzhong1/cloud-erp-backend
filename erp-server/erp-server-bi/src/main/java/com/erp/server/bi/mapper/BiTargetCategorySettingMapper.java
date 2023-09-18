@@ -46,5 +46,5 @@ public interface BiTargetCategorySettingMapper extends BaseMapper<BiTargetCatego
      * @param deptId
      * @return
      */
-    List<BiTargetCategorySettingDTO.ListDetailDTO> listByYearAndDept(@Param("year") String year, @Param("deptId")String deptId);
+    List<BiTargetCategorySettingDTO.ListDetailDTO> listByYearAndDept(@Param("year") Integer year, @Param("deptId")String deptId);
 }

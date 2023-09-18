@@ -1,7 +1,6 @@
 package com.erp.model.bi.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
-import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
@@ -25,7 +24,7 @@ public enum MonthEnum {
     SEPTEMBER("september",9),
     OCTOBER("october",10),
     NOVEMBER("november",11),
-    DECEMBER("august",12)
+    DECEMBER("december",12)
 
     ;
 

@@ -13,11 +13,9 @@ public class NewAndOldSalesSearchDTO {
     @Data
     public static class SearchDTO extends BiFilterDTO {
         /**
-         * 搜索类型：/bi/common/enumDropDown?type=NewAndOldSalesSearchType
-         * 描述：division 事业部，
+         * 搜索类型：/bi/common/enumDropDown?type=TargetMetricsSearchType
+         * 描述：dept 事业部，
          *  user 人员，
-         *  shop 店铺，
-         *  category 品类
          */
         private String searchType;
 
@@ -25,6 +23,11 @@ public class NewAndOldSalesSearchDTO {
          * 搜索内容
          */
         private String searchParam;
+
+        /**
+         * 日期年月
+         */
+        private String yearMonth;
     }
 
     /**
@@ -65,7 +68,7 @@ public class NewAndOldSalesSearchDTO {
         /**
          * 新品销售额完成率
          */
-        private String newProductSalesFinishRate;
+        private String newSalesAmountFinishRate;
 
         /**
          * 新品销量完成率
@@ -73,15 +76,22 @@ public class NewAndOldSalesSearchDTO {
         private String newSalesQuantityFinishRate;
 
         /**
-         * 新品目标
+         * 新品销售目标
          */
-        private String newTarget;
+        private BigDecimal newSalesAmountTarget;
+
+        /**
+         * 新品销量目标
+         */
+        private BigDecimal newSalesQuantityTarget;
 
         public PagingDTO() {
             this.newProductSales = BigDecimal.ZERO;
             this.newSalesQuantity = 0;
             this.oldProductSales = BigDecimal.ZERO;
             this.oldSalesQuantity = 0;
+            this.newSalesAmountTarget = BigDecimal.ZERO;
+            this.newSalesQuantityTarget = BigDecimal.ZERO;
         }
     }
 

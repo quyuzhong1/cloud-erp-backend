@@ -499,6 +499,7 @@ public enum ApiError implements Serializable {
     ERP_BOM_EXIST(97031, "sku{【%s】}在ERP的BOM中不存在！"),
     MABANG_BOM_EXIST(97032, "sku{【%s】}在马帮的BOM中不存在！"),
     YEAR_METRICS_EXIST(97030, "{}已设置,不可重复设置"),
+    SEARCH_TYPE_EXIST(97031, "搜索类型不存在"),
 
 
 

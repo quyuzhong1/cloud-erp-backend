@@ -189,9 +189,8 @@ public class BiTargetYearDTO implements Serializable {
         /**
          * 年
          */
-        @NotBlank(message = "考核年度不能为空")
-        @Size(max = 10, message = "年最大长度不能超过10位")
-        private String year;
+        @NotNull(message = "考核年度不能为空")
+        private Integer year;
 
         /**
          *
@@ -229,9 +228,8 @@ public class BiTargetYearDTO implements Serializable {
         /**
          * 年
          */
-        @NotBlank(message = "考核年度不能为空")
-        @Size(max = 10, message = "年最大长度不能超过10位")
-        private String year;
+        @NotNull(message = "考核年度不能为空")
+        private Integer year;
 
         /**
          *
@@ -282,6 +280,38 @@ public class BiTargetYearDTO implements Serializable {
          * 完成率
          */
         private BigDecimal finishRate;
+
+    }
+
+
+
+    /**
+     * 年月目标设置值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class YearMonthValueDTO {
+
+        private Integer year;
+
+        private Integer month;
+
+        /**
+         * 指标维度
+         */
+        private String metrics;
+
+        /**
+         * 指标名
+         */
+        private String metricsName;
+
+        /**
+         * 目标值
+         */
+        private Object metricsValue;
+
+
 
     }
 

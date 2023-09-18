@@ -29,7 +29,7 @@ public interface BiTargetStaffSettingMapper extends BaseMapper<BiTargetStaffSett
      * @param year
      * @return
      */
-    List<BiTargetStaffSettingDTO.ListDetailDTO> listByYear(@Param("year") String year);
+    List<BiTargetStaffSettingDTO.ListDetailDTO> listByYear(@Param("year") Integer year);
 
     IPage<BiTargetStaffSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params);
     /**

@@ -4,13 +4,14 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.vo.ChartVO;
 import com.common.business.vo.SeriesVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.dto.BiSalesRadioDTO;
-import com.erp.model.bi.dto.DateFilterDTO;
-import com.erp.model.bi.dto.NewAndOldSalesSearchDTO;
+import com.erp.model.bi.dto.*;
+import com.erp.model.bi.entity.BiTargetNewProductSettingEntity;
+import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.TargetMetricsSearchTypeEnum;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
@@ -23,21 +24,24 @@ import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.enums.SiteEnum;
 import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
-import com.erp.server.bi.service.BiProductDetailService;
-import com.erp.server.bi.service.BiTargetNewProductSettingService;
-import com.erp.server.bi.service.DmpShopInfoService;
-import com.erp.server.bi.service.SalesOrderService;
+import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotNull;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,6 +68,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     @Resource
     private BiTargetNewProductSettingService biTargetNewProductSettingService;
+
+    @Resource
+    private BiTargetYearService biTargetYearService;
 
 
     @Override
@@ -2161,36 +2168,81 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     @Override
     public List<NewAndOldSalesSearchDTO.PagingDTO> newAndOldSalesAmount(NewAndOldSalesSearchDTO.SearchDTO dto) {
         TargetMetricsSearchTypeEnum enumByCode = TargetMetricsSearchTypeEnum.getEnumByCode(dto.getSearchType());
-//        biTargetNewProductSettingService.getTargetByParams()
+        DateTimeFormatter fmt = new DateTimeFormatterBuilder()
+                .appendPattern("yyyy-MM")
+                .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+                .toFormatter();
+        if (StringUtils.isNotBlank(dto.getYearMonth())) {
+            LocalDateTime localDateTime = LocalDate.parse(dto.getYearMonth(), fmt).atStartOfDay();
+            dto.setStartTime(localDateTime);
+            dto.setEndTime(localDateTime.plusMonths(1));
+        } else {
+            LocalDate now = LocalDate.now();
+            LocalDateTime localDateTime = LocalDate.of(now.getYear(), now.getMonth(), 1).atStartOfDay();
+            dto.setStartTime(localDateTime);
+            dto.setEndTime(localDateTime.plusMonths(1));
+        }
         switch (enumByCode) {
             case DEPT:
-                divisionNewAndOldSalesAmount(dto);
+                return deptNewAndOldSalesAmount(dto);
             case USER:
-            case SHOP:
-            case CATEGORY:
+                return userNewAndOldSalesAmount(dto);
+            default:
+                throw new ServiceException(ApiError.SEARCH_TYPE_EXIST);
         }
-
-        return null;
     }
 
 
     /**
      * 战略目标达成
-     * @author yl
-     * @date 2023-09-18 11:01
+     *
      * @param dto
      * @return java.util.List<com.erp.model.bi.dto.BiTargetYearDTO.TargetMetricsFinishDTO>
+     * @author yl
+     * @date 2023-09-18 11:01
      */
     @Override
     public List<BiTargetYearDTO.TargetMetricsFinishDTO> listTargetMetrics(BiTargetYearDTO.SearchDTO dto) {
+        /**
+         * 年月
+         */
+        String yearMonth = dto.getYearMonth();
+        //年
+        Integer year = LocalDate.now().getYear();
+        //月
+        Integer moth = LocalDate.now().getMonthValue();
+        if (StringUtils.isNotBlank(yearMonth) && yearMonth.length() >= 7) {
+            DateTimeFormatter fmt = new DateTimeFormatterBuilder()
+                    .appendPattern("yyyy-MM")
+                    .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+                    .toFormatter();
+            LocalDate yearMonthDate = LocalDate.parse(yearMonth, fmt);
+            year = yearMonthDate.getYear();
+            moth = yearMonthDate.getMonthValue();
+        }
+        //获取到对应设置的目标值
+        List<BiTargetYearDTO.YearMonthValueDTO> yearMonthValueList=biTargetYearService.listYearMonthValue(dto);
+
+
+
         return null;
     }
 
-    private List<NewAndOldSalesSearchDTO.PagingDTO> divisionNewAndOldSalesAmount(NewAndOldSalesSearchDTO.SearchDTO dto) {
+    private List<NewAndOldSalesSearchDTO.PagingDTO> deptNewAndOldSalesAmount(NewAndOldSalesSearchDTO.SearchDTO dto) {
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        List<SalesFlagVO> list = baseMapper.divisionNewAndOldSalesAmount(dto, settleRate);
+
+        List<SalesFlagVO> list = baseMapper.deptNewAndOldSalesAmount(dto, settleRate);
+        LocalDateTime startTime = dto.getStartTime();
+        BiTargetNewProductSettingDTO.TargetParamDTO paramDTO = new BiTargetNewProductSettingDTO.TargetParamDTO();
+        paramDTO.setYear(startTime.getYear() + "");
+        paramDTO.setMonth(startTime.getMonthValue());
+        paramDTO.setMetricsList(Arrays.asList(MetricsEnum.SALES_AMOUNT.getCode(), MetricsEnum.SALES_QTY.getCode()));
+        List<String> deptIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
+        paramDTO.setDeptIdList(deptIds);
+        List<BiTargetNewProductSettingDTO.DeptTargetDTO> deptTargetDTOS = biTargetNewProductSettingService.listDeptTarget(paramDTO);
+
         //新品
         Integer newFlag = BiConstant.NEW;
         //老品
@@ -2215,8 +2267,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     filter(s -> s.getFlag().equals(oldFlag) && s.getSales() != null).
                     map(SalesFlagVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
-            vo.setNewProductSales(newProductSales);
-            vo.setOldProductSales(oldProductSales);
+
             Integer newSalesQuantity = salesList.stream().
                     filter(s -> s.getFlag().equals(newFlag) && s.getSalesQuantity() != null).
                     mapToInt(SalesFlagVO::getSalesQuantity).
@@ -2225,9 +2276,23 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     filter(s -> s.getFlag().equals(oldFlag) && s.getSalesQuantity() != null).
                     mapToInt(SalesFlagVO::getSalesQuantity).
                     sum();
-
+            vo.setNewProductSales(newProductSales);
+            vo.setOldProductSales(oldProductSales);
             vo.setNewSalesQuantity(newSalesQuantity);
             vo.setOldSalesQuantity(oldSalesQuantity);
+            List<BiTargetNewProductSettingDTO.DeptTargetDTO> targetNewProductSettingEntities = deptTargetDTOS.stream().filter(req -> req.getDeptId().equals(deptId)).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(targetNewProductSettingEntities)) {
+                BiTargetNewProductSettingDTO.DeptTargetDTO targetNewProductSalesAmount = targetNewProductSettingEntities.stream().filter(req -> MetricsEnum.SALES_AMOUNT.getCode().equals(req.getMetrics())).findFirst().orElse(null);
+                BiTargetNewProductSettingDTO.DeptTargetDTO targetNewProductSalesQty = targetNewProductSettingEntities.stream().filter(req -> MetricsEnum.SALES_QTY.getCode().equals(req.getMetrics())).findFirst().orElse(null);
+                if (targetNewProductSalesAmount.getValue() != null && targetNewProductSalesAmount.getValue().compareTo(BigDecimal.ZERO) > 0) {
+                    vo.setNewSalesAmountFinishRate(newProductSales.divide(targetNewProductSalesAmount.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                }
+                if (targetNewProductSalesQty.getValue() != null && targetNewProductSalesQty.getValue().compareTo(BigDecimal.ZERO) > 0) {
+                    vo.setNewSalesQuantityFinishRate(MathUtil.valueOf(newSalesQuantity+"").divide(targetNewProductSalesQty.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                }
+                vo.setNewSalesAmountTarget(targetNewProductSalesAmount.getValue());
+                vo.setNewSalesQuantityTarget(targetNewProductSalesQty.getValue());
+            }
 
             vo.setNewProductSalesRatio(newProductSales.add(oldProductSales).divide(newProductSales, 4, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
             vo.setOldProductSalesRatio(newProductSales.add(oldProductSales).divide(oldProductSales, 4, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
@@ -2235,4 +2300,76 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         return resultList;
     }
+
+    private List<NewAndOldSalesSearchDTO.PagingDTO> userNewAndOldSalesAmount(NewAndOldSalesSearchDTO.SearchDTO dto) {
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
+        //新品
+        Integer newFlag = BiConstant.NEW;
+        //老品
+        Integer oldFlag = BiConstant.OLD;
+
+        List<SalesFlagVO> list = baseMapper.userNewAndOldSalesAmount(dto, settleRate);
+
+        BiTargetNewProductSettingDTO.TargetParamDTO paramDTO = new BiTargetNewProductSettingDTO.TargetParamDTO();
+
+        paramDTO.setMetricsList(Arrays.asList(MetricsEnum.SALES_AMOUNT.getCode(), MetricsEnum.SALES_QTY.getCode()));
+        List<String> deptIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
+        paramDTO.setDeptIdList(deptIds);
+        List<BiTargetNewProductSettingDTO.UserTargetDTO> userTargetDTOS = biTargetNewProductSettingService.listUserTarget(paramDTO);
+
+        Map<String, List<SalesFlagVO>> groupMap = list.parallelStream().
+                collect(Collectors.groupingBy(SalesFlagVO::getName));
+        List<NewAndOldSalesSearchDTO.PagingDTO> resultList = new ArrayList<>(list.size());
+        for (Map.Entry<String, List<SalesFlagVO>> item : groupMap.entrySet()) {
+            String userId = item.getKey();
+            List<SalesFlagVO> salesFlagList = item.getValue();
+            NewAndOldSalesSearchDTO.PagingDTO vo = new NewAndOldSalesSearchDTO.PagingDTO();
+            FindUserDTO userInfo = userList.stream().filter(u -> u.getUserId().equals(userId)).
+                    findFirst().orElse(null);
+            if (userInfo != null) {
+                vo.setName(userInfo.getUserName());
+            }
+            BigDecimal newItemSales = salesFlagList.stream().
+                    filter(s -> s.getFlag().
+                            equals(newFlag)
+                            && s.getSales() != null).map(SalesFlagVO::getSales).
+                    reduce(BigDecimal.ZERO, BigDecimal::add);
+            Integer newItemSalesQuantity = salesFlagList.stream().
+                    filter(s -> s.getFlag().equals(newFlag)).
+                    mapToInt(SalesFlagVO::getSalesQuantity).sum();
+            BigDecimal oldItemSales = salesFlagList.stream().
+                    filter(s -> s.getFlag().equals(oldFlag) && s.getSales() != null).
+                    map(SalesFlagVO::getSales).
+                    reduce(BigDecimal.ZERO, BigDecimal::add);
+            Integer oldItemSalesQuantity = salesFlagList.stream().
+                    filter(s -> s.getFlag().equals(oldFlag)).
+                    mapToInt(SalesFlagVO::getSalesQuantity).sum();
+
+            vo.setOldProductSales(oldItemSales);
+            vo.setNewProductSales(newItemSales);
+            vo.setOldSalesQuantity(oldItemSalesQuantity);
+            vo.setNewSalesQuantity(newItemSalesQuantity);
+
+            List<BiTargetNewProductSettingDTO.UserTargetDTO> targetNewProductSettingEntities = userTargetDTOS.stream().filter(req -> req.getUserId().equals(userId)).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(targetNewProductSettingEntities)) {
+                BiTargetNewProductSettingDTO.UserTargetDTO targetNewProductSalesAmount = targetNewProductSettingEntities.stream().filter(req -> MetricsEnum.SALES_AMOUNT.getCode().equals(req.getMetrics())).findFirst().orElse(null);
+                BiTargetNewProductSettingDTO.UserTargetDTO targetNewProductSalesQty = targetNewProductSettingEntities.stream().filter(req -> MetricsEnum.SALES_QTY.getCode().equals(req.getMetrics())).findFirst().orElse(null);
+                if (targetNewProductSalesAmount.getValue() != null && targetNewProductSalesAmount.getValue().compareTo(BigDecimal.ZERO) > 0) {
+                    vo.setNewSalesAmountFinishRate(newItemSales.divide(targetNewProductSalesAmount.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                }
+                if (targetNewProductSalesQty.getValue() != null && targetNewProductSalesQty.getValue().compareTo(BigDecimal.ZERO) > 0) {
+                    vo.setNewSalesQuantityFinishRate(MathUtil.valueOf(newItemSalesQuantity+"").divide(targetNewProductSalesQty.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                }
+                vo.setNewSalesAmountTarget(targetNewProductSalesAmount.getValue());
+                vo.setNewSalesQuantityTarget(targetNewProductSalesQty.getValue());
+            }
+
+            resultList.add(vo);
+        }
+        return resultList;
+    }
+
+
 }
