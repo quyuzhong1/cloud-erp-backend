@@ -8,7 +8,6 @@ import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
-import com.erp.model.bi.enums.TargetFinishViewTypeEnum;
 import com.erp.model.bi.enums.TargetSearchTypeEnum;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
@@ -77,9 +76,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
         //表头数据
         headMap.put("typeName",TargetSearchTypeEnum.getByCode(dto.getSearchType()));
-        headMap.put("yearTotalTarget","累计年度目标");
-        headMap.put("yearTotalReal","累计年度实际");
-        headMap.put("rate", TargetFinishViewTypeEnum.getNameByCode(dto.getViewType()));
+        headMap.put("totalName","累计年度目标/完成率");
         MonthEnum[] values = MonthEnum.values();
         for (MonthEnum monthEnum : values) {
             headMap.put(monthEnum.getCode(), StrUtil.format("{}年{}月",start.getYear(),monthEnum.getValue()));
@@ -94,15 +91,17 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
                 LinkedHashMap<String, Object> result = new LinkedHashMap<>();
                 List<TargetFinishDTO.ViewDTO> value = entry.getValue();
                 result.put("typeName",entry.getKey());
+
+                TargetFinishDTO.TotalSlotDTO totalSlotDTO = new TargetFinishDTO.TotalSlotDTO();
                 //年目标
                 BigDecimal yearTotalTarget = value.stream().map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
-                result.put("yearTotalTarget",yearTotalTarget);
+                totalSlotDTO.setYearTotalTarget(yearTotalTarget);
                 //年实际
                 BigDecimal yearTotalReal = realList.stream().filter(obj -> obj.getTypeName().equals(entry.getKey())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
-                result.put("yearTotalReal",yearTotalReal);
+                totalSlotDTO.setYearTotalReal(yearTotalReal);
                 BigDecimal yearRate = MathUtil.divide(yearTotalReal,yearTotalTarget);
-                result.put("rate",yearRate);
-
+                totalSlotDTO.setRate(MathUtil.multiply(yearRate,MathUtil.BigDecimal_100));
+                result.put("totalName",totalSlotDTO);
                 for (MonthEnum monthEnum : values) {
                     TargetFinishDTO.SlotDTO slotDTO = new TargetFinishDTO.SlotDTO();
                     //目标值
@@ -190,16 +189,16 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
         String fieldName = "";
         if (TargetSearchTypeEnum.DEPT.getCode().equals(searchType) ) {
-            fieldName = "dept_id";
+            fieldName = "dept_id,dept_name";
         }
         if (TargetSearchTypeEnum.USER.getCode().equals(searchType)) {
-            fieldName = "charge_id";
+            fieldName = "charge_id,charge_name";
         }
         if (TargetSearchTypeEnum.SHOP.getCode().equals(searchType)) {
             fieldName = "shop_name";
         }
         if (TargetSearchTypeEnum.CATEGORY.getCode().equals(searchType)) {
-            fieldName = "category_id";
+            fieldName = "category_id,category_name";
         }
         if (TargetSearchTypeEnum.SKU.getCode().equals(searchType)) {
             fieldName = "sku_No";
@@ -318,7 +317,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             //根据指标查询部门目标值
              map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
-                            x.getDeptId().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
+                            x.getDeptName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
                     Collectors.reducing(BigDecimal.ZERO, e -> e.getOrderFee(), BigDecimal::add))
             );
         }
@@ -326,7 +325,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             //根据指标查询人员目标值
             map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
-                            x.getChargeId().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
+                            x.getChargeName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
                     Collectors.reducing(BigDecimal.ZERO, e -> e.getOrderFee(), BigDecimal::add))
             );
 
@@ -344,7 +343,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             Map<String, Integer> monthMap = mainList.stream().collect(Collectors.toMap(obj -> obj.getId(), obj -> (flag ? obj.getPlatformCreateTime() : obj.getDeliveryTime()).getMonthValue()));
             map = detailList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
-                            x.getCategoryId().concat(",").concat(String.valueOf(monthMap.get(x.getOrderId()))),
+                            x.getCategoryName().concat(",").concat(String.valueOf(monthMap.get(x.getOrderId()))),
                     Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.multiply(e.getSellPrice(),e.getCurrencyRate()), BigDecimal::add))
             );
         }
