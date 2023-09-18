@@ -24,7 +24,7 @@ import java.util.List;
  * @Date 2023-09-18 14:02
  */
 @Service
-public class StaffTargetValue implements ListYearMonthValueStrategy {
+public class ShopTargetValueStrategy implements ListYearMonthValueStrategy {
 
     @Resource
     private BiTargetYearMapper biTargetYearMapper;
@@ -36,8 +36,8 @@ public class StaffTargetValue implements ListYearMonthValueStrategy {
      * @return
      */
     @Override
-    public List<BiTargetYearDTO.YearMonthValueDTO> ListYearMonthValue(Integer year, String metrics,String staffId) {
-        List<BiTargetYearDTO.YearMonthValueDTO> staffTargetValue = biTargetYearMapper.ListStaffTargetValue(year, metrics,staffId);
+    public List<BiTargetYearDTO.YearMonthValueDTO> ListYearMonthValue(Integer year, String metrics,String shopId) {
+        List<BiTargetYearDTO.YearMonthValueDTO> staffTargetValue = biTargetYearMapper.ListShopTargetValue(year, metrics,shopId);
         String metricsName = MetricsEnum.getNameByCode(metrics);
         staffTargetValue.forEach(obj -> {
             obj.setYear(year);
