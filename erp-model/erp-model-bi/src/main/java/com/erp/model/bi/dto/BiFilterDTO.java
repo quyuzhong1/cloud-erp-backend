@@ -22,6 +22,7 @@ import java.util.List;
  * @author Cloud
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @ToString
 @NoArgsConstructor
 public class BiFilterDTO extends SortDTO {
@@ -48,8 +49,8 @@ public class BiFilterDTO extends SortDTO {
     /**
      * 结束日期
      */
-    @NotNull(message = "开始时间不能为空")
-    @NotNull(message = "开始时间不能为空", groups = SelectTargetModule.class)
+    @NotNull(message = "结束时间不能为空")
+    @NotNull(message = "结束时间不能为空", groups = SelectTargetModule.class)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endTime;
 
