@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.vo.ChartVO;
 import com.common.business.vo.SeriesVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -2186,9 +2188,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             case USER:
                 return userNewAndOldSalesAmount(dto);
             default:
-                new ArrayList<>();
+                throw new ServiceException(ApiError.SEARCH_TYPE_EXIST);
         }
-        return null;
     }
 
 
