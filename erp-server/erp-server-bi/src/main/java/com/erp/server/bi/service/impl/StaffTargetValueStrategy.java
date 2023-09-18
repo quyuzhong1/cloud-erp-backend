@@ -1,5 +1,4 @@
 package com.erp.server.bi.service.impl;
-
 /**
  * @author Lambda
  * @Classname AllTargetValue
@@ -25,7 +24,7 @@ import java.util.List;
  * @Date 2023-09-18 14:02
  */
 @Service
-public class AllTargetValue implements ListYearMonthValueStrategy {
+public class StaffTargetValueStrategy implements ListYearMonthValueStrategy {
 
     @Resource
     private BiTargetYearMapper biTargetYearMapper;
@@ -37,13 +36,13 @@ public class AllTargetValue implements ListYearMonthValueStrategy {
      * @return
      */
     @Override
-    public List<BiTargetYearDTO.YearMonthValueDTO> ListYearMonthValue(Integer year, String metrics,String flagId) {
-        List<BiTargetYearDTO.YearMonthValueDTO> allTargetValue = biTargetYearMapper.AllTargetValue(year, metrics);
+    public List<BiTargetYearDTO.YearMonthValueDTO> ListYearMonthValue(Integer year, String metrics,String staffId) {
+        List<BiTargetYearDTO.YearMonthValueDTO> staffTargetValue = biTargetYearMapper.ListStaffTargetValue(year, metrics,staffId);
         String metricsName = MetricsEnum.getNameByCode(metrics);
-        allTargetValue.forEach(obj -> {
+        staffTargetValue.forEach(obj -> {
             obj.setYear(year);
             obj.setMetricsName(metricsName);
         });
-        return allTargetValue;
+        return staffTargetValue;
     }
 }

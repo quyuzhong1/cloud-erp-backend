@@ -309,7 +309,7 @@ public class BiTargetYearDTO implements Serializable {
         /**
          * 目标值
          */
-        private Object metricsValue;
+        private BigDecimal metricsValue;
 
 
 
@@ -339,6 +339,11 @@ public class BiTargetYearDTO implements Serializable {
          * 人员
          */
         private String staffId;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
 
 
         /**
