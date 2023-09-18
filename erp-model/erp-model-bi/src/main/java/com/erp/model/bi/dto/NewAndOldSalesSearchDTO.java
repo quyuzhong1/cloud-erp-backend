@@ -92,6 +92,9 @@ public class NewAndOldSalesSearchDTO {
             this.oldSalesQuantity = 0;
             this.newSalesAmountTarget = BigDecimal.ZERO;
             this.newSalesQuantityTarget = BigDecimal.ZERO;
+            this.oldProductSalesRatio = BigDecimal.ZERO + "%";
+            this.newSalesAmountFinishRate = BigDecimal.ZERO + "%";
+            this.newSalesQuantityFinishRate = BigDecimal.ZERO + "%";
         }
     }
 

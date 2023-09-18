@@ -29,7 +29,7 @@ public class SalesFlagVO implements Serializable {
     private Integer salesQuantity;
 
 
-    private String flag;
+    private Integer flag;
 
     private String skuNo;
 
