@@ -9,14 +9,14 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * @Author Luo_WG
  * @Date 2023/9/15 11:56
  **/
-public enum NewAndOldSalesSearchTypeEnum implements EnumMessage {
-    DIVISION("division","事业部"),
+public enum TargetMetricsSearchTypeEnum implements EnumMessage {
+    DEPT("dept","部门"),
     USER("user","人员"),
     SHOP("shop","店铺"),
     CATEGORY("category","品类"),
     ;
 
-    NewAndOldSalesSearchTypeEnum(String code, String name) {
+    TargetMetricsSearchTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -44,8 +44,8 @@ public enum NewAndOldSalesSearchTypeEnum implements EnumMessage {
     }
 
     public static String getNameByCode(String code) {
-        NewAndOldSalesSearchTypeEnum[] enums = values();
-        for (NewAndOldSalesSearchTypeEnum typeEnum : enums) {
+        TargetMetricsSearchTypeEnum[] enums = values();
+        for (TargetMetricsSearchTypeEnum typeEnum : enums) {
             if (typeEnum.getCode().equals(code)) {
                 return typeEnum.getName();
             }
@@ -53,9 +53,9 @@ public enum NewAndOldSalesSearchTypeEnum implements EnumMessage {
         return null;
     }
 
-    public static NewAndOldSalesSearchTypeEnum getEnumByCode(String code) {
-        NewAndOldSalesSearchTypeEnum[] enums = values();
-        for (NewAndOldSalesSearchTypeEnum typeEnum : enums) {
+    public static TargetMetricsSearchTypeEnum getEnumByCode(String code) {
+        TargetMetricsSearchTypeEnum[] enums = values();
+        for (TargetMetricsSearchTypeEnum typeEnum : enums) {
             if (typeEnum.getCode().equals(code)) {
                 return typeEnum;
             }
