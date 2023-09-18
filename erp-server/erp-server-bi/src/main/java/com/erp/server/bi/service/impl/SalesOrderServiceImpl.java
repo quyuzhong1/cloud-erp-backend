@@ -497,7 +497,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         }
 
-
         ChartVO chartVO = new ChartVO();
         int initSize = CollectionUtils.isNotEmpty(resultList) ? resultList.size() : 10;
         List<Object> xAxisList = new ArrayList<>(initSize);
