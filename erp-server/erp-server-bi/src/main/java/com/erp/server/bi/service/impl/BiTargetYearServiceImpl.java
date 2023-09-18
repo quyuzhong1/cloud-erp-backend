@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.bi.dto.BiTargetYearDTO;
+
+import java.math.BigDecimal;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -69,8 +71,19 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
         return Boolean.TRUE;
     }
 
+    /**
+     * 获取指标完成值
+     * @author yl
+     * @date 2023-09-18 16:51
+     * @param dto
+     * @param flagStr
+     * @return java.math.BigDecimal
+     */
+    @Override
+    public BigDecimal getMetricsFinishValue(BiTargetYearDTO.SearchDTO dto, String flagStr) {
 
-
+        return null;
+    }
 
 
     /**
