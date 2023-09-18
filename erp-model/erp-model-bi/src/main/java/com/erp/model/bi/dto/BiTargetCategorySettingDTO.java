@@ -153,4 +153,44 @@ public class BiTargetCategorySettingDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class ListDetailDTO {
+
+        private String id;
+
+        private String mainId;
+
+        private String year;
+
+        private String deptName;
+
+
+        /**
+         * 分类id
+         */
+        private String categoryId;
+
+        /**
+         * 分类名
+         */
+        private String categoryName;
+
+
+        /**
+         * 月
+         */
+
+        private Integer month;
+
+
+        private BigDecimal value;
+
+
+        private MetricsEnum metrics;
+
+
+    }
+
+
 }

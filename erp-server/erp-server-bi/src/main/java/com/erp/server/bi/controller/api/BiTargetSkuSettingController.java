@@ -92,6 +92,7 @@ public class BiTargetSkuSettingController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "单品目标设置修改")
 //        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //        tableField = "create_user_id",
 //        menuCode = "dmp:biTargetSkuSetting:update",
@@ -121,6 +122,7 @@ public class BiTargetSkuSettingController extends BaseController {
      * @return
      */
     @GetMapping("/importFile")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "单品目标设置导入")
     public ApiResult<BiTargetSkuSettingDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         BiTargetSkuSettingDTO.ImportDTO result = biTargetSkuSettingService.importFile(excelFile, response);
         return success(result);

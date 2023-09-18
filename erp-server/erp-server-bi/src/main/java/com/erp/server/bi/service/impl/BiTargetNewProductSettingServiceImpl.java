@@ -1,6 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -8,8 +9,11 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
 import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.bi.dto.excel.TargetNewProductSettingImportExcelDTO;
+import com.erp.model.bi.dto.excel.TargetSkuSettingImportExcelDTO;
 import com.erp.model.bi.entity.BiTargetNewProductSettingEntity;
 
 import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
@@ -19,6 +23,8 @@ import com.erp.model.bi.enums.MonthEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.bi.listener.BiTargetNewProductSettingExcelListener;
+import com.erp.server.bi.listener.BiTargetSkuSettingExcelListener;
 import com.erp.server.bi.mapper.BiTargetNewProductSettingMapper;
 import com.erp.server.bi.service.BiTargetNewProductSettingService;
 import com.common.core.exception.ServiceException;
@@ -34,6 +40,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
@@ -418,7 +425,39 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
      */
     @Override
     public BiTargetNewProductSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
-        return null;
+        List<String> metricsNameList = MetricsEnum.listName();
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        BiTargetNewProductSettingExcelListener excelListenerUtil = new BiTargetNewProductSettingExcelListener(metricsNameList, userList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), TargetNewProductSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("新品目标设置 导入错误>>>{}", e);
+        }
+        BiTargetNewProductSettingDTO.ImportDTO result = new BiTargetNewProductSettingDTO.ImportDTO();
+        List<BiTargetNewProductSettingDTO.CommonDTO> successList = excelListenerUtil.getSuccessList();
+        Map<MetricsEnum, List<BiTargetNewProductSettingDTO.CommonDTO>> map = successList.stream().
+                collect(Collectors.groupingBy(BiTargetNewProductSettingDTO.CommonDTO::getMetrics));
+
+        List<BiTargetNewProductSettingDTO.DetailDTO> detailList = new ArrayList<>(map.size());
+        for (Map.Entry<MetricsEnum, List<BiTargetNewProductSettingDTO.CommonDTO>> item : map.entrySet()) {
+            BiTargetNewProductSettingDTO.DetailDTO detail = new BiTargetNewProductSettingDTO.DetailDTO();
+            detail.setMetrics(item.getKey());
+            detail.setMetricsName(item.getKey().getName());
+            detail.setNewProductSettingList(item.getValue());
+            detailList.add(detail);
+        }
+        result.setSuccessList(detailList);
+        List<TargetNewProductSettingImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "单品设置错误.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, TargetNewProductSettingImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        result.setErrorUrl(url);
+        return result;
     }
 
     /**

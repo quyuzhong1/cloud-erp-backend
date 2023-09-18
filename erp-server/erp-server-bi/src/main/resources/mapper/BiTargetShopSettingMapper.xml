@@ -100,5 +100,22 @@
         </where>
     </select>
 
+    <select id="listByYear" resultType="com.erp.model.bi.dto.BiTargetShopSettingDTO$ListDetailDTO">
+        SELECT
+            tss.id,
+            tss.main_id,
+            ty.year,
+            tss.shop_id,
+            tss.shop_name,
+            tss.month,
+            tss.value,
+            tss.metrics
+        FROM bi_target_shop_setting tss
+        LEFT JOIN bi_target_year ty
+        ON tss.main_id=ty.id and ty.is_deleted=false
+        WHERE tss.is_deleted=false
+          AND ty.year=#{year}
+    </select>
+
 
 </mapper>

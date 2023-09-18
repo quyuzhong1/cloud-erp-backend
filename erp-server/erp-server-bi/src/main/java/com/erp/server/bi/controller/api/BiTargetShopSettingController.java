@@ -95,6 +95,7 @@ public class BiTargetShopSettingController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "店铺目标设置修改")
 //        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //        tableField = "create_user_id",
 //        menuCode = "dmp:biTargetShopSetting:update",
