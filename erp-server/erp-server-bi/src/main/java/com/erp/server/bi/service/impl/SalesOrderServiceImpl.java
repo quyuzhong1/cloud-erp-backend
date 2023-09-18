@@ -2344,11 +2344,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 vo.setNewSalesQuantityTarget(targetNewProductSalesQty.getValue());
             }
             if (newProductSales.compareTo(BigDecimal.ZERO) > 0) {
-                vo.setNewProductSalesRatio(newProductSales.add(oldProductSales).divide(newProductSales, 4, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                vo.setNewProductSalesRatio(newProductSales.add(oldProductSales).divide(newProductSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
             }
 
             if (oldProductSales.compareTo(BigDecimal.ZERO) > 0) {
-                vo.setOldProductSalesRatio(newProductSales.add(oldProductSales).divide(oldProductSales, 4, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                vo.setOldProductSalesRatio(newProductSales.add(oldProductSales).divide(oldProductSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
             }
             resultList.add(vo);
         }
@@ -2422,11 +2422,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 vo.setNewSalesQuantityTarget(targetNewProductSalesQty.getValue());
             }
             if (newItemSales.compareTo(BigDecimal.ZERO) > 0) {
-                vo.setNewProductSalesRatio(newItemSales.add(oldItemSales).divide(newItemSales, 4, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                vo.setNewProductSalesRatio(newItemSales.add(oldItemSales).divide(newItemSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
             }
 
             if (oldItemSales.compareTo(BigDecimal.ZERO) > 0) {
-                vo.setOldProductSalesRatio(newItemSales.add(oldItemSales).divide(oldItemSales, 4, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                vo.setOldProductSalesRatio(newItemSales.add(oldItemSales).divide(oldItemSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
             }
             resultList.add(vo);
         }
