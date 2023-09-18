@@ -23,7 +23,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * sku 目标设置表
+ * 目标管理-单品
  *
  * @author Lambda
  * @since 2023-09-13

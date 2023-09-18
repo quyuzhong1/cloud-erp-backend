@@ -250,4 +250,39 @@ public class BiTargetYearDTO implements Serializable {
     }
 
 
+    /**
+     * 目标完成情况
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TargetMetricsFinishDTO {
+
+        /**
+         * 指标维度
+         */
+        private String metrics;
+
+        /**
+         * 指标名
+         */
+        private String metricsName;
+
+        /**
+         * 目标值
+         */
+        private Object metricsValue;
+
+        /**
+         * 完成值
+         */
+        private Object finishValue;
+
+        /**
+         * 完成率
+         */
+        private BigDecimal finishRate;
+
+    }
+
+
 }

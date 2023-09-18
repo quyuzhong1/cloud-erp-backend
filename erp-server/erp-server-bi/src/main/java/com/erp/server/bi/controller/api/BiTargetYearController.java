@@ -26,39 +26,6 @@ import com.erp.model.bi.dto.BiTargetYearDTO;
 @RequestMapping("/biTargetYear")
 public class BiTargetYearController extends BaseController {
 
-    @Resource
-    private BiTargetYearService biTargetYearService;
-
-    /**
-    * 新增
-    * @author Lambda
-    * @date:  2023-09-13
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    public ApiResult<String> add(@RequestBody @Validated BiTargetYearDTO.AddDTO dto) {
-        return success(biTargetYearService.add(dto));
-    }
-
-    /**
-    * 修改
-    * @author Lambda
-    * @date:  2023-09-13
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "dmp:biTargetYear:update",
-        serviceClass = BiTargetYearService.class,
-        keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated BiTargetYearDTO.UpdateDTO dto) {
-        biTargetYearService.update(dto);
-        return success();
-    }
-
 
 
 }

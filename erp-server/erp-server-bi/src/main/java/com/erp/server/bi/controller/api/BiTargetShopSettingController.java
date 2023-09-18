@@ -26,7 +26,7 @@ import com.erp.model.bi.dto.BiTargetShopSettingDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * 店铺目标设置表
+ * 目标管理-店铺
  *
  * @author Lambda
  * @since 2023-09-13
