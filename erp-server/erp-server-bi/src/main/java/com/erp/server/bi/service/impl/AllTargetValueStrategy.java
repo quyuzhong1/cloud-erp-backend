@@ -12,6 +12,7 @@ import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.server.bi.mapper.BiTargetYearMapper;
 import com.erp.server.bi.service.ListYearMonthValueStrategy;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -24,7 +25,7 @@ import java.util.List;
  * @Author yl
  * @Date 2023-09-18 14:02
  */
-@Service
+@Component
 public class AllTargetValueStrategy implements ListYearMonthValueStrategy {
 
     @Resource
