@@ -102,7 +102,7 @@ public class PdaVersionDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO {
-
+        private String searchKeyword;
     }
 
 

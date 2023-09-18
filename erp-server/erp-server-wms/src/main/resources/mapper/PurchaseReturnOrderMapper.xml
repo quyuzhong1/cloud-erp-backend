@@ -13,6 +13,7 @@
         prod.sku_id,
         prod.sku_no,
         pro.bill_date,
+        pro.return_warehouse_id,
         pro.return_warehouse_name,
         prod.return_qty,
         prod.return_price,

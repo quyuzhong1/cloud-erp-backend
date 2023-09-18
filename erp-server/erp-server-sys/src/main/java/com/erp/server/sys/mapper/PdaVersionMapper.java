@@ -28,7 +28,7 @@ public interface PdaVersionMapper extends BaseMapper<PdaVersionEntity> {
      * @param params
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.sys.dto.PdaVersionDTO.PagingDTO>
      **/
-    IPage<PdaVersionDTO.PagingDTO> paging(Page query, PdaVersionDTO.PagingParamDTO params);
+    IPage<PdaVersionDTO.PagingDTO> paging(Page query, @Param("params") PdaVersionDTO.PagingParamDTO params);
 
     /**
      * 获取pda最新版本

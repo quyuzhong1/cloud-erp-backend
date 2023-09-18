@@ -102,9 +102,19 @@ public class TransferInfoDTO implements Serializable {
         private String unit;
 
         /**
+         * 调入仓库id
+         */
+        private String inWarehouseId;
+
+        /**
          * 调入仓库名称
          */
         private String inWarehouseName;
+
+        /**
+         * 调出仓库id
+         */
+        private String outWarehouseId;
 
         /**
          * 调出仓库名称
@@ -117,9 +127,19 @@ public class TransferInfoDTO implements Serializable {
         private String inWarehouseLocation;
 
         /**
+         * 调入仓位名称
+         */
+        private String inWarehouseLocationName;
+
+        /**
          * 调出仓位
          */
         private String outWarehouseLocation;
+
+        /**
+         * 调出仓位名称
+         */
+        private String outWarehouseLocationName;
 
         /**
          * 备注

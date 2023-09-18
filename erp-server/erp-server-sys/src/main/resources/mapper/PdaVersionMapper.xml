@@ -34,19 +34,23 @@
 
     <select id="paging" resultType="com.erp.model.sys.dto.PdaVersionDTO$PagingDTO">
         SELECT
-        id,
-        create_user_name,
-        create_time,
-        update_user_name,
-        update_time,
-        pda_version,
-        remark,
-        force,
-        url,
-        type,
-        upgrade_time
+        pv.id,
+        pv.create_user_name,
+        pv.create_time,
+        pv.update_user_name,
+        pv.update_time,
+        pv.pda_version,
+        pv.remark,
+        pv.force,
+        pv.url,
+        pv.type,
+        pv.upgrade_time
         FROM pda_version pv
         WHERE pv.is_deleted = FALSE
+        <if test="params.searchKeyword !='' and params.searchKeyword != null ">
+            AND pv.remark ILIKE concat('%', #{params.searchKeyword}::text ,'%')
+        </if>
+        ORDER BY pv.create_time DESC
     </select>
 
     <select id="getPdaVersion" resultType="com.erp.model.sys.entity.PdaVersionEntity">
