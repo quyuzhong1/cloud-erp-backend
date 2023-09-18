@@ -40,4 +40,17 @@ public enum BiShareIdentityTypeEnum {
                 .filter(e-> e.getCode().equals(code))
                 .findFirst().orElse(null);
     }
+
+    /**
+     * @param identityType
+     * @return
+     */
+    public static String getShareFlag(String identityType) {
+        if (ROLE.getCode().equalsIgnoreCase(identityType)){
+            return ROLE.getCode();
+        }
+        return "share";
+    }
+
+
 }

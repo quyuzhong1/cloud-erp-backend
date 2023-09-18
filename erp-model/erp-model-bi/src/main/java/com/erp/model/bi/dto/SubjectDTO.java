@@ -3,6 +3,9 @@ package com.erp.model.bi.dto;
 import com.common.core.anno.StateEnumValue;
 import com.common.business.validator.UpdateGroup;
 import com.common.core.exception.ServiceException;
+import com.erp.model.bi.entity.BiModulePermissionEntity;
+import com.erp.model.bi.entity.BiSubjectShareEntity;
+import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.util.CollectionUtils;
@@ -10,7 +13,9 @@ import org.springframework.util.CollectionUtils;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @Classname SubjectDTO
@@ -97,5 +102,20 @@ public class SubjectDTO  implements Serializable {
     }
 
 
+    public void checkAndSetFlagInfo(List<BiSubjectShareEntity> shareList) {
+        String shareFlag = "personal";
+        List<String> shareFlagIdList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(shareList)){
+            shareFlag = BiShareIdentityTypeEnum.getShareFlag(shareList.get(0).getIdentityType());
 
+            shareFlagIdList = shareList
+                    .stream()
+                    .map(BiSubjectShareEntity::getIdentityId)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+        this.setShareFlag(shareFlag);
+        this.setShareFlagIdList(shareFlagIdList);
+        this.setShareUserIdList(shareFlagIdList);
+    }
 }

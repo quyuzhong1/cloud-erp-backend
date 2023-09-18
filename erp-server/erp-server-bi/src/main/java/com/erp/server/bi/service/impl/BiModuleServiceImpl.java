@@ -42,6 +42,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -158,6 +159,12 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         List<String> moduleIdList = baseMapper.getUserVisibleModuleIds(userId);
         List<Pair<String, String>> pairList = dictService.getCategory(DictEnum.MODULE.getType());
         List<ModuleDTO> moduleList = baseMapper.getByIds(moduleIdList, searchKeyword);
+        // 模板IDS
+        List<String> moduleIds = moduleList.stream().map(ModuleDTO::getId).distinct().collect(Collectors.toList());
+        Map<String, List<BiModulePermissionEntity>> permissionMap = modulePermissionService.mapByModuleIds(moduleIds);
+        // 设置权限信息
+        moduleList.forEach(e -> e.checkAndSetFlagInfo(permissionMap.get(e.getId())));
+
         for (Pair<String, String> pair : pairList) {
             CategoryModuleDTO result = new CategoryModuleDTO();
             String categoryId = pair.getKey();
@@ -184,7 +191,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         String shareFlag = "personal";
         List<String> shareFlagIdList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(permissionEntityList)){
-            shareFlag = DashboardEnum.getByIsRole(permissionEntityList.get(0).getIdentityType());
+            shareFlag = BiShareIdentityTypeEnum.getShareFlag(permissionEntityList.get(0).getIdentityType());
             shareFlagIdList = permissionEntityList
                     .stream()
                     .map(BiModulePermissionEntity::getIdentityId)

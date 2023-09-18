@@ -58,12 +58,16 @@ public class SubjectLayoutDetailsDTO implements Serializable {
     // @NotBlank(message = "分类id 不能为空")
     private String categoryId;
 
-
-
     /**
      * 分享的用户集合
      */
+//    @Deprecated
     private List<String> shareUserIdList;
+
+    /**
+     * 分享的用户/角色集合
+     */
+    private List<String> shareFlagIdList;
 
 
     @Valid
