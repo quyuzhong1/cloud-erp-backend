@@ -13,11 +13,9 @@ public class NewAndOldSalesSearchDTO {
     @Data
     public static class SearchDTO extends BiFilterDTO {
         /**
-         * 搜索类型：/bi/common/enumDropDown?type=NewAndOldSalesSearchType
-         * 描述：division 事业部，
+         * 搜索类型：/bi/common/enumDropDown?type=TargetMetricsSearchType
+         * 描述：dept 事业部，
          *  user 人员，
-         *  shop 店铺，
-         *  category 品类
          */
         private String searchType;
 
@@ -25,6 +23,11 @@ public class NewAndOldSalesSearchDTO {
          * 搜索内容
          */
         private String searchParam;
+
+        /**
+         * 日期年月
+         */
+        private String yearMonth;
     }
 
     /**
