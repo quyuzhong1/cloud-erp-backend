@@ -3,7 +3,9 @@ package com.erp.server.bi.controller.api;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.BiSkuDetailTopDTO;
 import com.erp.model.bi.dto.SkuDateFilterDTO;
+import com.erp.model.bi.dto.SkuDetailDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.server.bi.service.BiComprehensiveAnalyseService;
 import org.springframework.validation.annotation.Validated;
@@ -151,5 +153,18 @@ public class BiComprehensiveAnalyseController extends BaseController {
     public ApiResult<List<SkuDateSaleTrendVO>> skuDateSaleTrend(@RequestBody @Validated SkuDateFilterDTO biFilterDTO) {
         List<SkuDateSaleTrendVO> skuDateSaleTrendVOS = biComprehensiveAnalyseService.skuDateSaleTrend(biFilterDTO);
         return success(skuDateSaleTrendVOS);
+    }
+
+    /**
+     * 单商品-SKU详情顶部信息
+     * @Author Jim
+     * @Date 2023/09/15
+     * @param dto SkuDetailDTO
+     * @return java.util.List<com.erp.model.bi.dto.BiSkuDetailTopVO>
+     **/
+    @PostMapping("/skuDetail")
+    public ApiResult<BiSkuDetailTopDTO> skuDateSaleTrend(@RequestBody @Validated SkuDetailDTO dto) {
+        BiSkuDetailTopDTO vo = biComprehensiveAnalyseService.skuDetailTop(dto);
+        return success(vo);
     }
 }

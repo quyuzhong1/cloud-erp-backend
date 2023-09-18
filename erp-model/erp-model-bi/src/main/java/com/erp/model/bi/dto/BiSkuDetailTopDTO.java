@@ -1,0 +1,71 @@
+package com.erp.model.bi.dto;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 平台SKU详情
+ */
+@Data
+@Accessors(chain = true)
+@NoArgsConstructor
+public class BiSkuDetailTopDTO {
+
+    /**
+     * SKU NO
+     */
+    private String skuNo;
+
+    /**
+     * SKU中文名
+     */
+    private String nameCn;
+
+    /**
+     * 英文名
+     */
+    private String nameEn;
+
+    /**
+     * 商品状态:1.自动创建;2.待开发;3.正常;4.清仓;5.停止销售
+     */
+    private Integer status;
+
+    /**
+     * 商品目录(一级)
+     */
+    private String parentCategoryName;
+
+    /**
+     * 商品目录(二级)
+     */
+    private String categoryName;
+
+    /**
+     * 开发员id
+     */
+    private String developerId;
+
+    /**
+     * 开发员名称
+     */
+    private String developerName;
+
+    /**
+     * 公司首单日期
+     */
+    private String firstOrderDate = "";
+
+    /**
+     * 各平台首单日期
+     */
+    private List<String> platformFirstOrderDate = new ArrayList<>();
+
+
+}
