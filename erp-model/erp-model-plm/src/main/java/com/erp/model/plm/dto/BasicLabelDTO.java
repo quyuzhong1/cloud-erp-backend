@@ -68,6 +68,21 @@ public class BasicLabelDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO{
+        /**
+         * 名称搜索
+         */
+        private String searchKeyword;
+
+        /**
+         * 标签级别 private 私有，company 公司
+         */
+        private String level;
+
+    }
+
     /**
     * 修改
     */
@@ -83,6 +98,21 @@ public class BasicLabelDTO implements Serializable {
 
     }
 
+    /**
+     * 修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeleteDTO{
+
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+    }
+
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
@@ -91,15 +121,15 @@ public class BasicLabelDTO implements Serializable {
         * 标签名称
         */
         @NotBlank(message = "标签名称不能为空")
-        @Size(max = 30,message = "标签名称最大长度不能超过30位")
+        @Size(max = 50,message = "标签名称最大长度不能超过50位")
         private String name;
 
-        /**
-        * 类型
-        */
-        @NotBlank(message = "类型不能为空")
-        @Size(max = 30,message = "类型最大长度不能超过30位")
-        private String type;
+//        /**
+//        * 类型
+//        */
+//        @NotBlank(message = "类型不能为空")
+//        @Size(max = 30,message = "类型最大长度不能超过30位")
+//        private String type;
 
         /**
         * 颜色

@@ -30,11 +30,6 @@ public class BasicLabelEntity extends BaseEntity<BasicLabelEntity> {
     @TableField("name")
     private String name;
     /**
-    * 类型
-    */
-    @TableField("type")
-    private String type;
-    /**
     * 颜色
     */
     @TableField("colour")
@@ -58,5 +53,4 @@ public class BasicLabelEntity extends BaseEntity<BasicLabelEntity> {
     public Serializable pkVal() {
         return null;
     }
-
 }
