@@ -30,6 +30,7 @@ import com.erp.server.bi.service.BiTargetNewProductSettingService;
 import com.common.core.exception.ServiceException;
 import com.erp.server.bi.service.BiTargetYearService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -609,11 +610,12 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     }
 
     @Override
-    public BiTargetNewProductSettingEntity getTargetByParams(Integer month, String metrics) {
-        return lambdaQuery()
-                .eq(BiTargetNewProductSettingEntity::getMonth, month)
-                .eq(BiTargetNewProductSettingEntity::getMetrics, metrics)
-                .last("LIMIT 1")
-                .one();
+    public List<BiTargetNewProductSettingDTO.DeptTargetDTO> listDeptTarget(BiTargetNewProductSettingDTO.TargetParamDTO dto) {
+        return baseMapper.listDeptTarget(dto);
+    }
+
+    @Override
+    public List<BiTargetNewProductSettingDTO.UserTargetDTO> listUserTarget(BiTargetNewProductSettingDTO.TargetParamDTO dto) {
+        return baseMapper.listUserTarget(dto);
     }
 }

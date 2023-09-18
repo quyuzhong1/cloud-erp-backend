@@ -224,5 +224,88 @@ public class BiTargetNewProductSettingDTO implements Serializable {
         private String errorUrl;
     }
 
+    /**
+     * 部门目标
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeptTargetDTO {
+        /**
+         * 部门id
+         */
+        private String deptId;
+        /**
+         * 部门名称
+         */
+        private String deptName;
+        /**
+         * 月
+         */
+        private Integer month;
+        /**
+         * 目标值
+         */
+        private BigDecimal value;
+        /**
+         * 维度
+         */
+        private String metrics;
+    }
+
+    /**
+     * 部门目标
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UserTargetDTO {
+        /**
+         * 部门id
+         */
+        private String userId;
+        /**
+         * 部门名称
+         */
+        private String userName;
+        /**
+         * 月
+         */
+        private Integer month;
+        /**
+         * 目标值
+         */
+        private BigDecimal value;
+        /**
+         * 维度
+         */
+        private String metrics;
+    }
+
+    /**
+     * 目标查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TargetParamDTO {
+        /**
+         * 年
+         */
+        private String year;
+        /**
+         * 月
+         */
+        private Integer month;
+        /**
+         * 维度
+         */
+        private List<String> metricsList;
+        /**
+         * 部门id
+         */
+        private List<String> deptIdList;
+        /**
+         * 用户id
+         */
+        private List<String> userIdList;
+    }
 
 }
