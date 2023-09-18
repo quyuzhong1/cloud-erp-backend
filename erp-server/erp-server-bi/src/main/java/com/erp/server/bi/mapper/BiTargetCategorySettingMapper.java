@@ -39,4 +39,12 @@ public interface BiTargetCategorySettingMapper extends BaseMapper<BiTargetCatego
      * @return List<TargetFinishDTO.ViewDTO>
      */
     List<TargetFinishDTO.ViewDTO> listTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
+
+    /**
+     * 根据部门和年查询数据
+     * @param year
+     * @param deptId
+     * @return
+     */
+    List<BiTargetCategorySettingDTO.ListDetailDTO> listByYearAndDept(@Param("year") String year, @Param("deptId")String deptId);
 }

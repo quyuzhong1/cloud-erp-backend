@@ -151,4 +151,44 @@ public class BiTargetSkuSettingDTO implements Serializable {
         private String errorUrl;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class ListDetailDTO {
+
+        private String id;
+
+        private String mainId;
+
+        private String year;
+
+        private String deptName;
+
+
+        /**
+         * skuid
+         */
+        private String skuId;
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+
+        /**
+         * 月
+         */
+
+        private Integer month;
+
+
+        private BigDecimal value;
+
+
+        private MetricsEnum metrics;
+
+
+    }
+
 }

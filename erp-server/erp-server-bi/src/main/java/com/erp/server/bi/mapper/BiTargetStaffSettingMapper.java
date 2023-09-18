@@ -24,6 +24,11 @@ import java.util.List;
 @Mapper
 public interface BiTargetStaffSettingMapper extends BaseMapper<BiTargetStaffSettingEntity> {
 
+    /**
+     * 根据年会获取到对应值
+     * @param year
+     * @return
+     */
     List<BiTargetStaffSettingDTO.ListDetailDTO> listByYear(@Param("year") String year);
 
     IPage<BiTargetStaffSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params);

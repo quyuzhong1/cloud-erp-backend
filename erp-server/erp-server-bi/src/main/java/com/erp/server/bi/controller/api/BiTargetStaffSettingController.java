@@ -96,6 +96,7 @@ public class BiTargetStaffSettingController extends BaseController {
      * @date: 2023-09-13
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "人员目标设置修改")
 //        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //        tableField = "create_user_id",
 //        menuCode = "dmp:biTargetStaffSetting:update",
@@ -123,6 +124,7 @@ public class BiTargetStaffSettingController extends BaseController {
      * @return
      */
     @GetMapping("/importFile")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "人员目标设置导入")
     public ApiResult<BiTargetStaffSettingDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         BiTargetStaffSettingDTO.ImportDTO result = biTargetStaffSettingService.importFile(excelFile, response);
         return success(result);
