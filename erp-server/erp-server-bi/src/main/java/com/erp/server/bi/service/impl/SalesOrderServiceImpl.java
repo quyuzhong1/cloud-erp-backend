@@ -531,17 +531,28 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //获取各个平台的销售额
         List<Map<String, Object>> resultList = baseMapper.getPlatformSales(dto, settleRate);
         int initSize = CollectionUtils.isNotEmpty(resultList) ? resultList.size() : 10;
-        statistical.setName("平台销售额");
+        statistical.setName("平台销售额与占比");
         statistical.setChartType(ChartType.PIE);
-        ChartVO chartVO = new ChartVO();
+        ChartVO<BiSalesRadioDTO> chartVO = new ChartVO<>();
         chartVO.setXAxis(new ArrayList<>());
-        List<SeriesVO<Object>> seriesList = new ArrayList<>(initSize);
-        SeriesVO<Object> series = new SeriesVO();
-        series.setName("平台销售额");
-        List<Object> list = new ArrayList<>(resultList.size());
+        List<SeriesVO<BiSalesRadioDTO>> seriesList = new ArrayList<>(initSize);
+        SeriesVO<BiSalesRadioDTO> series = new SeriesVO<>();
+        series.setName("平台销售额与占比");
+        List<BiSalesRadioDTO> list = new ArrayList<>(resultList.size());
+        // 总和
+        BigDecimal sumNumber = BigDecimal.ZERO;
         for (Map<String, Object> map : resultList) {
-            list.add(map);
+            BiSalesRadioDTO itemDto = BiSalesRadioDTO.init(map);
+            list.add(itemDto);
+            sumNumber = sumNumber.add(new BigDecimal(itemDto.getSales()));
         }
+        // 设置占比
+        BigDecimal finalSumNumber = sumNumber;
+        list.forEach(o->{
+            o.setRadioBySumSumNumber(finalSumNumber);
+        });
+
+        statistical.setSumNumber(sumNumber.stripTrailingZeros().toPlainString());
         series.setData(list);
         seriesList.add(series);
         chartVO.setSeries(seriesList);
