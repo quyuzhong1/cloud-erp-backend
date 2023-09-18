@@ -30,15 +30,14 @@ public enum TargetMetricsSearchTypeEnum implements EnumMessage {
      */
     private String name;
 
-
     @Override
-    public Object getCode() {
-        return null;
+    public String getCode() {
+        return code;
     }
 
     @Override
     public String getName() {
-        return null;
+        return name;
     }
 
     public static String getNameByCode(String code) {
