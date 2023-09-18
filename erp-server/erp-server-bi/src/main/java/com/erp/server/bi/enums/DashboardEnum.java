@@ -30,5 +30,10 @@ public enum DashboardEnum {
         this.name = name;
     }
 
-
+    public static String getByIsRole(String identityType) {
+        if (ROLE.getFlag().equalsIgnoreCase(identityType)){
+            return ROLE.getFlag();
+        }
+        return SHARE.getFlag();
+    }
 }
