@@ -144,7 +144,17 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         }
         List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
         subjectShareService.checkPermission(userId, subject, roleIdList);
-        List<String> shareUserIdList = subjectShareService.getUserIdsBySubjectId(subjectId);
+//        List<String> shareUserIdList = subjectShareService.getUserIdsBySubjectId(subjectId);
+        List<BiSubjectShareEntity> shareEntityList =  subjectShareService.findBySubjectId(subjectId);
+        List<String> shareFlagIdList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(shareEntityList)){
+            shareFlagIdList = shareEntityList
+                    .stream()
+                    .map(BiSubjectShareEntity::getIdentityId)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+
         SubjectLayoutDetailsDTO details = new SubjectLayoutDetailsDTO();
         details.setSubjectId(subjectId);
         details.setName(subject.getName());
@@ -152,7 +162,8 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         details.setIsFrequently(subject.getIsFrequently());
         details.setCategoryId(subject.getCategoryId());
         details.setCategoryName(subject.getCategoryName());
-        details.setShareUserIdList(shareUserIdList);
+        details.setShareUserIdList(shareFlagIdList);
+        details.setShareFlagIdList(shareFlagIdList);
         List<LayoutDetailsDTO> layoutDetailsList = getBySubjectId(subjectId, userId);
         details.setLayoutDetailsList(layoutDetailsList);
         return details;

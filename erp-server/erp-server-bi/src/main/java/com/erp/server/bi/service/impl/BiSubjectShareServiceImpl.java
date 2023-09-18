@@ -8,6 +8,7 @@ import com.common.core.constant.BaseStateConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.bi.dto.UpdateSubjectShareDTO;
+import com.erp.model.bi.entity.BiModulePermissionEntity;
 import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.model.bi.entity.BiSubjectShareEntity;
 import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
@@ -21,9 +22,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -236,6 +235,26 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
 
         int count = this.count(queryWrapper);
         return count > 0;
+    }
+
+    @Override
+    public List<BiSubjectShareEntity> findBySubjectId(String subjectId) {
+        return lambdaQuery()
+                .eq(BiSubjectShareEntity::getSubjectId, subjectId)
+                .list();
+    }
+
+    @Override
+    public Map<String, List<BiSubjectShareEntity>> mapBySubjectIds(List<String> subjectIds) {
+        if (CollectionUtils.isEmpty(subjectIds)){
+            return Collections.emptyMap();
+        }
+        return lambdaQuery()
+                .eq(BiSubjectShareEntity::getSubjectId, subjectIds)
+                .list()
+                .stream()
+                .collect(Collectors.groupingBy(BiSubjectShareEntity::getSubjectId))
+                ;
     }
 
 
