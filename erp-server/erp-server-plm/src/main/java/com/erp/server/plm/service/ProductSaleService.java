@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.dto.ProductSaleDTO;
 import com.erp.model.plm.dto.ProductSaleShowDTO;
+import com.erp.model.plm.dto.SkuDTO;
 import com.erp.model.plm.entity.ProductSaleEntity;
 
 import java.util.List;
@@ -82,4 +83,11 @@ public interface ProductSaleService extends IService<ProductSaleEntity> {
      * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      **/
     List<NewProductDTO> getListingProductAll(Boolean sign);
+
+    /**
+     * 获取sku 销售信息
+     * @param skuNoList
+     * @return
+     */
+    List<SkuDTO.SalesDTO> listSkuSalesBySkuNos(List<String> skuNoList);
 }

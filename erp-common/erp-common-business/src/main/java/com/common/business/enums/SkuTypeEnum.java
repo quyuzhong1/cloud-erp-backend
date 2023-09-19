@@ -1,0 +1,48 @@
+package com.common.business.enums;
+
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
+import com.fasterxml.jackson.annotation.JsonValue;
+
+/**
+ * @author Lambda
+ * @Classname SkuTypeEnum
+ * @Description TODO
+ * @Date 2023-09-19 9:25
+ * @Created by yl
+ */
+public enum SkuTypeEnum implements EnumMessage {
+    NEW("new","新品"),
+    OLD("old","老品"),
+    SINGLE("single","单品"),
+    COMBINE("combine","组合")
+
+    ;
+
+    SkuTypeEnum(String code, String name) {
+        this.code = code;
+        this.name = name;
+    }
+
+    /**
+     * 类型
+     */
+    @EnumValue
+    @JsonValue
+    public String code;
+    /**
+     * 名称
+     */
+    private String name;
+
+
+    @Override
+    public String getCode() {
+        return code;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+}
