@@ -2,18 +2,26 @@ package com.erp.server.bi.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
+import com.erp.model.plm.entity.BasicLabelEntity;
+import com.erp.model.plm.vo.ProductRefLabelVO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.mapper.BiComprehensiveAnalyseMapper;
 import com.erp.server.bi.service.*;
-import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -46,13 +54,14 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
 
     /**
      * SKU矩阵
-     * @Author Luo_WG
-     * @Date 2022/12/26 9:41
+     *
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SkuMatrixVO>
+     * @Author Luo_WG
+     * @Date 2022/12/26 9:41
      **/
     @Override
-    public List<List<Object>>skuMatrix(BiFilterDTO biFilterDTO) {
+    public List<List<Object>> skuMatrix(BiFilterDTO biFilterDTO) {
         List<SkuMatrixVO> skuMatrixVOIPage = baseMapper.skuMatrix(biFilterDTO);
         List<List<Object>> skuMatrixList = new ArrayList<>();
         skuMatrixVOIPage.stream().sorted(Comparator.comparing(SkuMatrixVO::getSales)).forEach(x -> {
@@ -67,10 +76,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
 
     /**
      * 店铺矩阵
-     * @Author Luo_WG
-     * @Date 2022/12/26 10:42
+     *
      * @param biFilterDTO biFilterDTO
      * @return com.erp.common.vo.PagingVO<com.erp.model.bi.vo.SkuMatrixVO>
+     * @Author Luo_WG
+     * @Date 2022/12/26 10:42
      **/
     @Override
     public List<List<Object>> shopMatrix(BiFilterDTO biFilterDTO) {
@@ -88,10 +98,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
 
     /**
      * 平台店铺对比趋势
-     * @Author Luo_WG
-     * @Date 2022/12/26 15:29
+     *
      * @param biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ShopContrastTrendVO>
+     * @Author Luo_WG
+     * @Date 2022/12/26 15:29
      **/
     @Override
     public List<List<Object>> shopContrastTrend(BiFilterDTO biFilterDTO) {
@@ -114,7 +125,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         String thisYearKey = String.valueOf(LocalDate.now().minusYears(1L).getYear());
         for (DmpShopInfoEntity dmpShopInfoEntity : dmpShopInfoEntities) {
             Map<String, BigDecimal> yearMap = shopNoMap.get(dmpShopInfoEntity.getPlatformShopNo());
-            if(CollectionUtil.isEmpty(yearMap)){
+            if (CollectionUtil.isEmpty(yearMap)) {
                 continue;
             }
             lastYearSales.add(yearMap.getOrDefault(lastYearKey, BigDecimal.ZERO));
@@ -129,10 +140,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
 
     /**
      * 品类矩阵
-     * @Author Luo_WG
-     * @Date 2022/12/26 10:35
+     *
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ShopContrastTrendVO>
+     * @Author Luo_WG
+     * @Date 2022/12/26 10:35
      **/
     @Override
     public List<List<Object>> categoryMatrix(BiFilterDTO biFilterDTO) {
@@ -150,10 +162,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
 
     /**
      * 销售明细表-SKU
-     * @Author Luo_WG
-     * @Date 2022/12/27 10:41
+     *
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     * @Author Luo_WG
+     * @Date 2022/12/27 10:41
      **/
     @Override
     public List<SaleDetailVO> saleDetailSku(BiFilterDTO biFilterDTO) {
@@ -196,7 +209,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 saleDetailVO.setSaleProportion(BigDecimal.ZERO);
             } else {
                 if (targetSaleSumVO.getValue() != null) {
-                    saleDetailVO.setSaleProportion(saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue(),4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                    saleDetailVO.setSaleProportion(saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 } else {
                     saleDetailVO.setSaleProportion(BigDecimal.ZERO);
                 }
@@ -206,12 +219,12 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             if (skuYearSakeAmountVO != null) {
                 saleDetailVO.setLastYearSaleAmount(skuYearSakeAmountVO.getAmount());
                 if (yearSakeAmount != null) {
-                    saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount,4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                    saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 } else {
                     saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
                 }
 
-            }else {
+            } else {
                 saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
                 saleDetailVO.setLastYearSaleAmount(BigDecimal.ZERO);
             }
@@ -220,11 +233,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             if (skuYearSakeAmountVOT != null) {
                 saleDetailVO.setYearBeforeLastSaleAmount(skuYearSakeAmountVOT.getAmount());
                 if (yearSakeAmountT != null) {
-                    saleDetailVO.setYearBeforeLastSaleProportion(skuYearSakeAmountVOT.getAmount().divide(yearSakeAmountT,4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                    saleDetailVO.setYearBeforeLastSaleProportion(skuYearSakeAmountVOT.getAmount().divide(yearSakeAmountT, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 } else {
                     saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
                 }
-            }else {
+            } else {
                 saleDetailVO.setYearBeforeLastSaleAmount(BigDecimal.ZERO);
                 saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
             }
@@ -237,7 +250,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 } else {
                     saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
                 }
-            }else {
+            } else {
                 saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
             }
         }
@@ -251,10 +264,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
 
     /**
      * 销售明细表-店铺
-     * @Author Luo_WG
-     * @Date 2022/12/27 10:41
+     *
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     * @Author Luo_WG
+     * @Date 2022/12/27 10:41
      **/
     @Override
     public List<SaleDetailVO> saleDetailShop(BiFilterDTO biFilterDTO) {
@@ -295,14 +309,14 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             if (saleDetailVO.getSaleAmount().compareTo(BigDecimal.ZERO) <= 0) {
                 saleDetailVO.setSaleProportion(BigDecimal.ZERO);
             } else {
-                saleDetailVO.setSaleProportion(saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue(),4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                saleDetailVO.setSaleProportion(saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
             }
             //计算去年sku销售额
             SkuYearSaleAmountVO skuYearSakeAmountVO = skuYearSakeAmountVOS.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
             if (skuYearSakeAmountVO != null) {
                 saleDetailVO.setLastYearSaleAmount(skuYearSakeAmountVO.getAmount());
                 if (yearSakeAmount != null) {
-                    saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount,4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                    saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 } else {
                     saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
                 }
@@ -312,7 +326,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             if (skuYearSakeAmountVOT != null) {
                 saleDetailVO.setYearBeforeLastSaleAmount(skuYearSakeAmountVOT.getAmount());
                 if (yearSakeAmountT != null) {
-                    saleDetailVO.setYearBeforeLastSaleProportion(skuYearSakeAmountVOT.getAmount().divide(yearSakeAmountT,4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                    saleDetailVO.setYearBeforeLastSaleProportion(skuYearSakeAmountVOT.getAmount().divide(yearSakeAmountT, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 } else {
                     saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
                 }
@@ -322,7 +336,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             SkuYearSaleAmountVO skuYearSakeAmountVO1 = skuYearSakeAmountVOS1.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
             if (skuYearSakeAmountVO1 != null) {
                 if (skuYearSakeAmountVO1.getAmount() != null) {
-                    saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount().subtract(skuYearSakeAmountVO1.getAmount()).divide(skuYearSakeAmountVO1.getAmount(),4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                    saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount().subtract(skuYearSakeAmountVO1.getAmount()).divide(skuYearSakeAmountVO1.getAmount(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 } else {
                     saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
                 }
@@ -334,10 +348,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
 
     /**
      * 销售明细表-用户
-     * @Author Luo_WG
-     * @Date 2022/12/27 10:41
+     *
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     * @Author Luo_WG
+     * @Date 2022/12/27 10:41
      **/
     @Override
     public List<SaleDetailVO> saleDetailUser(BiFilterDTO biFilterDTO) {
@@ -378,18 +393,18 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             if (saleDetailVO.getSaleAmount().compareTo(BigDecimal.ZERO) <= 0) {
                 saleDetailVO.setSaleProportion(BigDecimal.ZERO);
             } else {
-                saleDetailVO.setSaleProportion(saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue(),4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                saleDetailVO.setSaleProportion(saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
             }
             //计算去年sku销售额
             SkuYearSaleAmountVO skuYearSakeAmountVO = skuYearSakeAmountVOS.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
             if (skuYearSakeAmountVO != null) {
                 saleDetailVO.setLastYearSaleAmount(skuYearSakeAmountVO.getAmount());
                 if (yearSakeAmount != null) {
-                    saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount,4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                    saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 } else {
                     saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
                 }
-            }else {
+            } else {
                 saleDetailVO.setLastYearSaleAmount(BigDecimal.ZERO);
                 saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
             }
@@ -398,11 +413,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             if (skuYearSakeAmountVOT != null) {
                 saleDetailVO.setYearBeforeLastSaleAmount(skuYearSakeAmountVOT.getAmount());
                 if (yearSakeAmountT != null) {
-                    saleDetailVO.setYearBeforeLastSaleProportion(skuYearSakeAmountVOT.getAmount().divide(yearSakeAmountT,4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                    saleDetailVO.setYearBeforeLastSaleProportion(skuYearSakeAmountVOT.getAmount().divide(yearSakeAmountT, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 } else {
                     saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
                 }
-            }else {
+            } else {
                 saleDetailVO.setYearBeforeLastSaleAmount(BigDecimal.ZERO);
                 saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
             }
@@ -413,9 +428,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 if (skuYearSakeAmountVO1.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
                     saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
                 } else {
-                    saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount().subtract(skuYearSakeAmountVO1.getAmount()).divide(skuYearSakeAmountVO1.getAmount(),4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                    saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount().subtract(skuYearSakeAmountVO1.getAmount()).divide(skuYearSakeAmountVO1.getAmount(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 }
-            }else {
+            } else {
                 saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
             }
         }
@@ -424,10 +439,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
 
     /**
      * 销售明细表-日期
-     * @Author Luo_WG
-     * @Date 2022/12/27 10:41
+     *
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     * @Author Luo_WG
+     * @Date 2022/12/27 10:41
      **/
     @Override
     public List<SaleDetailVO> saleDetailDate(SkuDateFilterDTO biFilterDTO) {
@@ -459,7 +475,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             if (saleDetailVO.getSaleAmount().compareTo(BigDecimal.ZERO) <= 0) {
                 saleDetailVO.setSaleProportion(BigDecimal.ZERO);
             } else {
-                saleDetailVO.setSaleProportion(saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue(),4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                saleDetailVO.setSaleProportion(saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
             }
             //计算去年sku销售额
             SkuYearSaleAmountVO skuYearSakeAmountVO = skuYearSakeAmountVOS.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
@@ -468,9 +484,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 if (yearSakeAmount.compareTo(BigDecimal.ZERO) <= 0) {
                     saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
                 } else {
-                    saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount,4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                    saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 }
-            }else {
+            } else {
                 saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
                 saleDetailVO.setLastYearSaleAmount(BigDecimal.ZERO);
             }
@@ -481,9 +497,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 if (yearSakeAmountT.compareTo(BigDecimal.ZERO) <= 0) {
                     saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
                 } else {
-                    saleDetailVO.setYearBeforeLastSaleProportion(skuYearSakeAmountVOT.getAmount().divide(yearSakeAmountT,4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                    saleDetailVO.setYearBeforeLastSaleProportion(skuYearSakeAmountVOT.getAmount().divide(yearSakeAmountT, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 }
-            }else {
+            } else {
                 saleDetailVO.setYearBeforeLastSaleAmount(BigDecimal.ZERO);
                 saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
             }
@@ -494,9 +510,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 if (skuYearSakeAmountVO1.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
                     saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
                 } else {
-                    saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount().subtract(skuYearSakeAmountVO1.getAmount()).divide(skuYearSakeAmountVO1.getAmount(),4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                    saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount().subtract(skuYearSakeAmountVO1.getAmount()).divide(skuYearSakeAmountVO1.getAmount(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 }
-            }else {
+            } else {
                 saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
             }
         }
@@ -505,10 +521,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
 
     /**
      * SKU日期销售额趋势图
-     * @Author Luo_WG
-     * @Date 2022/12/27 10:41
+     *
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     * @Author Luo_WG
+     * @Date 2022/12/27 10:41
      **/
     @Override
     public List<SkuDateSaleTrendVO> skuDateSaleTrend(SkuDateFilterDTO biFilterDTO) {
@@ -539,7 +556,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     @Override
     public BiSkuDetailTopDTO skuDetailTop(SkuDetailDTO dto) {
         DmpSkuInfoEntity entity = dmpSkuInfoService.getBySkuNo(dto.getSkuNo(), null);
-        if (null == entity){
+        if (null == entity) {
             throw new ServiceException(ApiError.ERROR_92051);
         }
         // 公司首单
@@ -551,10 +568,10 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         //组合
         BiSkuDetailTopDTO resultDto = new BiSkuDetailTopDTO();
         BeanUtils.copyProperties(entity, resultDto);
-        if (null != orderInfoEntity){
+        if (null != orderInfoEntity) {
             resultDto.setFirstOrderDate(orderInfoEntity.getCreateTime().toLocalDate().toString());
         }
-        if (!orderMap.isEmpty()){
+        if (!orderMap.isEmpty()) {
             // 各平台首单时间
             List<String> platformFistOrderList = orderMap.entrySet()
                     .stream()
@@ -562,7 +579,140 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                     .collect(Collectors.toList());
             resultDto.setPlatformFirstOrderDate(platformFistOrderList);
         }
+        //增加标签列表
+        List<ProductRefLabelVO> productRefLabelVOS = plmTaskFeign.getProductRelLabel(entity.getId());
+        if (CollectionUtils.isNotEmpty(productRefLabelVOS)) {
+            resultDto.setLabels(BeanMapperUtils.copyList(LabelVO.class, productRefLabelVOS));
+        }
         return resultDto;
+    }
+
+    /**
+     * 区域销售分析
+     */
+    @Override
+    public List<BiRegionAnalyzeDTO> getRegionSales(BiCountryRegionFilterDTO dto) {
+        // 国家列表
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        // 国家销售额
+        List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto);
+
+        // 区域Map<区域Code, 国家List>
+        Map<String, List<DictCountryDTO.ListDTO>> regionMap = countryList
+                .stream()
+                .filter(e-> StringUtils.isNotBlank(e.getAreaName()))
+                .collect(Collectors.groupingBy(DictCountryDTO.ListDTO::getAreaName));
+
+        // 区域所有国家名称Map<区域Code, 国家名称List>
+        Map<String, List<String>> regionCountryNameMap = regionMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().stream()
+                                .map(DictCountryDTO.ListDTO::getNameCn)
+                                .collect(Collectors.toList())));
+
+        // 区域名称map
+        Map<String, DictCountryDTO.ListDTO> regionNameMap = countryList.stream()
+                .collect(Collectors.toMap(
+                        // 指定去重的字段
+                        DictCountryDTO.ListDTO::getAreaName,
+                        // 保留第一个出现的对象
+                        listDto -> listDto,
+                        // 解决冲突时保留
+                        (existing, replacement) -> existing));
+
+        // 国家销量Map<国家名称, 国家销量>
+        Map<String, BigDecimal> countrySalesMap = countrySalesList
+                .stream()
+                .collect(Collectors.toMap(BiCountryAnalyzeDTO::getCountryNameCn, BiCountryAnalyzeDTO::getSalesAmount));
+
+        // 全球总销量
+        BigDecimal globalTotal = BigDecimal.ZERO;
+        // 结果列表
+        List<BiRegionAnalyzeDTO> resultList = new LinkedList<>();
+
+        // 组合信息
+        for (Map.Entry<String, List<String>> entry : regionCountryNameMap.entrySet()) {
+            // 初始化
+            BiRegionAnalyzeDTO resultDto = BiRegionAnalyzeDTO.init(entry.getKey(), regionNameMap.get(entry.getKey()).getRegionCode());
+            // 当前区域所有国家名称
+            List<String> currentCountryNameList = entry.getValue();
+
+            // 当前区域的销量
+            BigDecimal currentRegionSales = currentCountryNameList.stream()
+                    // 过滤出存在于map中的键
+                    .filter(countrySalesMap::containsKey)
+                    // 获取对应键的值
+                    .map(countrySalesMap::get)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // 设置到结果
+            resultDto.setSalesAmount(currentRegionSales);
+            // 累加到总数量
+            globalTotal = globalTotal.add(currentRegionSales);
+            // 添加到结果
+            resultList.add(resultDto);
+        }
+        // 设置销售比例
+        BigDecimal finalGlobalTotal = globalTotal;
+        resultList.forEach(e -> e.calculateSalesRatio(finalGlobalTotal));
+
+        return resultList;
+    }
+
+    /**
+     * 国家销售分析
+     */
+    @Override
+    public List<BiCountryAnalyzeDTO> getCountrySales(BiCountryRegionFilterDTO dto) {
+        // 国家列表
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        // 国家销售额
+        List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto);
+
+        // 国家销量Map<国家名称, 国家销量>
+        Map<String, BigDecimal> countrySalesMap = countrySalesList
+                .stream()
+                .collect(Collectors.toMap(BiCountryAnalyzeDTO::getCountryNameCn, BiCountryAnalyzeDTO::getSalesAmount));
+
+        // 全球总销量
+        BigDecimal globalTotal = BigDecimal.ZERO;
+        // 区域总销量Map<区域code, 当前区域总销量>
+        Map<String, BigDecimal> regionTotalMap = new HashMap<>();
+        // 相应结果
+        List<BiCountryAnalyzeDTO> resultList = new LinkedList<>();
+
+        // 组合
+        for (DictCountryDTO.ListDTO listDTO : countryList) {
+            // 初始化
+            BiCountryAnalyzeDTO resultDto = BiCountryAnalyzeDTO.init(
+                    listDTO.getNameCn(),
+                    listDTO.getNameEn(),
+                    listDTO.getId(),
+                    listDTO.getAreaName(),
+                    listDTO.getRegionCode(),
+                    countrySalesMap.getOrDefault(listDTO.getNameCn(), BigDecimal.ZERO)
+            );
+
+            // 添加到结果
+            resultList.add(resultDto);
+            if (0 == resultDto.getSalesAmount().compareTo(BigDecimal.ZERO)){
+                continue;
+            }
+            // 添加到全球总销量
+            globalTotal = globalTotal.add(resultDto.getSalesAmount());
+            // 添加到当前区域总销量
+            regionTotalMap.merge(resultDto.getRegionCode(), resultDto.getSalesAmount(), BigDecimal::add);
+        }
+        // 设置所有占比
+        BigDecimal finalGlobalTotal = globalTotal;
+        resultList.forEach(e-> e.setAllRadio(finalGlobalTotal, regionTotalMap.getOrDefault(e.getRegionCode(), BigDecimal.ZERO)));
+
+        return resultList.stream()
+                // 过滤得到要求的区域
+                .filter(e -> StringUtils.isBlank(dto.getRegionCode()) ||
+                        (StringUtils.isNotBlank(dto.getRegionCode()) && e.getRegionCode().equalsIgnoreCase(dto.getRegionCode())))
+                .collect(Collectors.toList());
     }
 
 
