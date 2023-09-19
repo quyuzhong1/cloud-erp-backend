@@ -23,7 +23,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,9 +64,13 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         LinkedHashMap<String,Object> resultMap = new LinkedHashMap<>();
         LinkedHashMap<String, Object> headMap = new LinkedHashMap<>();
 
+        Integer year = LocalDate.now().getYear();
+        if (StringUtils.isNotBlank(dto.getYear())) {
+            year = Integer.valueOf(dto.getYear());
+        }
         // 获取月度开始时间和结束时间
-        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
-        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
+        LocalDateTime start = LocalDateTime.of(year,1,1,0,0,0);
+        LocalDateTime end = LocalDateTime.of(year,12,31,23,59,59, LocalTime.MAX.getNano());
 
         //目标数据
         List<TargetFinishDTO.ViewDTO> targetList = listTarget(dto);

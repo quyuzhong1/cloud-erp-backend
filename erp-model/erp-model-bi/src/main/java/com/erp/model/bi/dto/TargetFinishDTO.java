@@ -25,6 +25,11 @@ public class TargetFinishDTO implements Serializable {
     public static class ParamDTO extends BiFilterDTO{
 
         /**
+         * 年份
+         */
+        private String year;
+
+        /**
          * http://172.16.100.11:3002/project/74/interface/api/23416 type = metrics
          * 考核维度（财务销售额、销售额、净销售额、销量、毛利润、毛利率）
          */
