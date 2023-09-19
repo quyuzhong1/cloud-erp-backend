@@ -546,6 +546,20 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                     return null;
                 }
             }
+            //连续两个月大于等于
+            if (BiCompareEnum.TOW_MONTH_GREATER_THEN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
+                name = name.concat("(最新月基础值超过"+entity.getLatestMonthValue().setScale(2));
+                if (MathUtil.compareTo(sumFirstMonthSale,entity.getLatestMonthValue()) >= MathUtil.ZERO && MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) >= MathUtil.ZERO) {
+                    return null;
+                }
+            }
+            //连续两个月大于等于
+            if (BiCompareEnum.TOW_MONTH_LESS_THEN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
+                name = name.concat("(最新月基础值不超过"+entity.getLatestMonthValue().setScale(2));
+                if ((MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) >= 0)) {
+                    return null;
+                }
+            }
         }
         //环比（最新月-上个月）/上个月*100%
         BigDecimal radio = BigDecimal.ZERO;
