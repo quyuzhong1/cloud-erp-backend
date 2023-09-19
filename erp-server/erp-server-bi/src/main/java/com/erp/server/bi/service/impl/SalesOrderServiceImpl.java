@@ -2209,6 +2209,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @param dateType
      */
     private void dateSalesTrendRatio(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, DateTimeFormatter dateTimeFormatter, String dateType) {
+        List<SalesFlagVO> list = new ArrayList<>();
+        list.addAll(salesList);
+        list.addAll(lastYearSalesList);
         for (SalesFlagVO salesFlagVO : salesList) {
             String parse = "";
             String prevYearDate = "";
@@ -2234,7 +2237,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
             //获取销售环比
             String finalParse = parse;
-            SalesFlagVO lastYearSalesFlagVo = lastYearSalesList.stream().filter(req -> req.getName().equals(finalParse)).findFirst().orElse(null);
+            SalesFlagVO lastYearSalesFlagVo = list.stream().filter(req -> req.getName().equals(finalParse)).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(lastYearSalesFlagVo) && lastYearSalesFlagVo.getSales().compareTo(BigDecimal.ZERO) > 0) {
                 salesFlagVO.setSalesChainRelativeRatio(salesFlagVO.getSales()
                         .subtract(lastYearSalesFlagVo.getSales())
@@ -2313,13 +2316,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         SeriesVO<Object> salesBasisRatio = new SeriesVO();
         salesBasisRatio.setName("同比");
-        List<Object> salesBasisRatioList = lastYearSalesList.stream().map(SalesFlagVO::getSalesBasisRatio).collect(Collectors.toList());
+        List<Object> salesBasisRatioList = salesList.stream().map(SalesFlagVO::getSalesBasisRatio).collect(Collectors.toList());
         salesBasisRatio.setData(salesBasisRatioList);
         seriesList.add(salesBasisRatio);
 
         SeriesVO<Object> salesChainRelativeRatio = new SeriesVO();
         salesChainRelativeRatio.setName("环比");
-        List<Object> salesChainRelativeRatioList = lastYearSalesList.stream().map(SalesFlagVO::getSalesChainRelativeRatio).collect(Collectors.toList());
+        List<Object> salesChainRelativeRatioList = salesList.stream().map(SalesFlagVO::getSalesChainRelativeRatio).collect(Collectors.toList());
         salesChainRelativeRatio.setData(salesChainRelativeRatioList);
         seriesList.add(salesChainRelativeRatio);
     }
@@ -2345,13 +2348,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         SeriesVO<Object> basisRatio = new SeriesVO();
         basisRatio.setName("同比");
-        List<Object> basisRatioList = lastYearSalesList.stream().map(SalesFlagVO::getSalesQuantityBasisRatio).collect(Collectors.toList());
+        List<Object> basisRatioList = salesList.stream().map(SalesFlagVO::getSalesQuantityBasisRatio).collect(Collectors.toList());
         basisRatio.setData(basisRatioList);
         seriesList.add(basisRatio);
 
         SeriesVO<Object> chainRelativeRatio = new SeriesVO();
         chainRelativeRatio.setName("环比");
-        List<Object> chainRelativeRatioList = lastYearSalesList.stream().map(SalesFlagVO::getSalesQuantityChainRelativeRatio).collect(Collectors.toList());
+        List<Object> chainRelativeRatioList = salesList.stream().map(SalesFlagVO::getSalesQuantityChainRelativeRatio).collect(Collectors.toList());
         chainRelativeRatio.setData(chainRelativeRatioList);
         seriesList.add(chainRelativeRatio);
     }
@@ -2377,13 +2380,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         SeriesVO<Object> basisRatio = new SeriesVO();
         basisRatio.setName("同比");
-        List<Object> basisRatioList = lastYearSalesList.stream().map(SalesFlagVO::getSalesPriceBasisRatio).collect(Collectors.toList());
+        List<Object> basisRatioList = salesList.stream().map(SalesFlagVO::getSalesPriceBasisRatio).collect(Collectors.toList());
         basisRatio.setData(basisRatioList);
         seriesList.add(basisRatio);
 
         SeriesVO<Object> chainRelativeRatio = new SeriesVO();
         chainRelativeRatio.setName("环比");
-        List<Object> chainRelativeRatioList = lastYearSalesList.stream().map(SalesFlagVO::getSalesPriceChainRelativeRatio).collect(Collectors.toList());
+        List<Object> chainRelativeRatioList = salesList.stream().map(SalesFlagVO::getSalesPriceChainRelativeRatio).collect(Collectors.toList());
         chainRelativeRatio.setData(chainRelativeRatioList);
         seriesList.add(chainRelativeRatio);
     }
