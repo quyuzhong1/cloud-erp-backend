@@ -38,4 +38,14 @@ public interface ProductRefLabelMapper extends BaseMapper<ProductRefLabelEntity>
      * @return
      */
     List<ProductRefLabelVO> getLabelList(@Param("productId") String productId, @Param("labelId") String labelId, @Param("skuId") String skuId);
+
+    /**
+     * 获取标签列表
+     *
+     * @param productIds
+     * @param labelIds
+     * @param skuIds
+     * @return
+     */
+    List<ProductRefLabelVO> getLabelListByIds(@Param("productIds") List<String> productIds, @Param("labelIds") List<String> labelIds, @Param("skuIds") List<String> skuIds);
 }

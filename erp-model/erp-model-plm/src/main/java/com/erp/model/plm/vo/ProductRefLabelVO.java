@@ -25,7 +25,7 @@ public class ProductRefLabelVO implements Serializable {
      * 标签id
      */
     @NotNull(message = "标签id不能为空")
-    private String lableId;
+    private String labelId;
     /**
      * 标签名称
      */
