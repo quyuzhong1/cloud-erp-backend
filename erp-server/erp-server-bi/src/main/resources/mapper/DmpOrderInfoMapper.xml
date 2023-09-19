@@ -298,7 +298,7 @@
              COALESCE(SUM(doit.amount_after * COALESCE(doit.settle_rate, 0)), 0)
          </if>
           AS salesAmount
-        FROM   AS doi
+        FROM dmp_order_info  AS doi
         left join  dmp_order_item AS doit on doi.id = doit.order_id
         left join product_detail AS pd on doit.sku_no = pd.sku_no
         left join product_info AS pi on pi.id = pd.product_id

@@ -42,6 +42,14 @@ public interface BiDictService  extends IService<BiDictEntity> {
     Boolean insert(BiDictEntity biDict);
 
     /**
+     * 批量新增数据
+     *
+     * @param dictEntities 实例对象
+     * @return 实例对象
+     */
+    Boolean batchAdd(List<BiDictEntity> dictEntities);
+
+    /**
      * 修改数据
      *
      * @param biDict 实例对象
