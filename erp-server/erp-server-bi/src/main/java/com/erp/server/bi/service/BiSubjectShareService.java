@@ -34,11 +34,13 @@ public interface BiSubjectShareService extends IService<BiSubjectShareEntity> {
      * 获取分享给我的仪表盘id
      *
      * @param userId
+     * @param roleIdList
      * @return java.util.List<java.lang.String>
      * @author yl
      * @date 2022-12-09 11:02
      */
-    List<String> getShareToMeDashboardIds(String userId);
+    @Deprecated
+    List<String> getShareToMeDashboardIds(String userId, List<String> roleIdList);
 
 
     /**

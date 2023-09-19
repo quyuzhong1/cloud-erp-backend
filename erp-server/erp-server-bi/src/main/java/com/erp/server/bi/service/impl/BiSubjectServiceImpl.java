@@ -218,11 +218,13 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         List<String> findIdList = new ArrayList<>();
         List<String> myCreateIds = myCreateList.stream().map(DashboardDTO::getId).collect(Collectors.toList());
         findIdList.addAll(myCreateIds);
+        // 用户角色
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
         /**
          * 根据用户id
          * 查询出分享给我的专题id
          */
-        List<String> shareDashboardIds = subjectShareService.getShareToMeDashboardIds(userId);
+        List<String> shareDashboardIds = subjectShareService.findSubjectId(userId, roleIdList);
         findIdList.addAll(shareDashboardIds);
         Integer frequentlyFlag = BiConstant.OK;
 
@@ -354,9 +356,11 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         List<CategorySubjectVO> resultList = new ArrayList<>(10);
         String userId = commonService.getUserInfo().getUid();
         List<Pair<String, String>> pairList = dictService.getCategory(DictEnum.DASHBOARD.getType());
+        // 查询用户当前角色
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
 
         //分享给我的
-        List<String> shareToMeIds = subjectShareService.getShareToMeDashboardIds(userId);
+        List<String> shareToMeIds = subjectShareService.findSubjectId(userId, roleIdList);
 
         //查询到用户可见的专题
         List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
