@@ -11,9 +11,12 @@ import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.mapper.BiComprehensiveAnalyseMapper;
 import com.erp.server.bi.service.*;
-import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +39,10 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     private DmpSkuInfoService dmpSkuInfoService;
 
     @Resource
-    private DmpOrderItemService dmpOrderItemService;
+    private SysDictFeign sysDictFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     /**
      * SKU矩阵
@@ -557,6 +563,134 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             resultDto.setPlatformFirstOrderDate(platformFistOrderList);
         }
         return resultDto;
+    }
+
+    /**
+     * 区域销售分析
+     */
+    @Override
+    public List<BiRegionAnalyzeDTO> getRegionSales(BiCountryRegionFilterDTO dto) {
+        // 国家列表
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        // 国家销售额
+        List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto);
+
+        // 区域Map<区域Code, 国家List>
+        Map<String, List<DictCountryDTO.ListDTO>> regionMap = countryList
+                .stream()
+                .filter(e-> StringUtils.isNotBlank(e.getAreaName()))
+                .collect(Collectors.groupingBy(DictCountryDTO.ListDTO::getAreaName));
+
+        // 区域所有国家名称Map<区域Code, 国家名称List>
+        Map<String, List<String>> regionCountryNameMap = regionMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().stream()
+                                .map(DictCountryDTO.ListDTO::getNameCn)
+                                .collect(Collectors.toList())));
+
+        // 区域名称map
+        Map<String, DictCountryDTO.ListDTO> regionNameMap = countryList.stream()
+                .collect(Collectors.toMap(
+                        // 指定去重的字段
+                        DictCountryDTO.ListDTO::getAreaName,
+                        // 保留第一个出现的对象
+                        listDto -> listDto,
+                        // 解决冲突时保留
+                        (existing, replacement) -> existing));
+
+        // 国家销量Map<国家名称, 国家销量>
+        Map<String, BigDecimal> countrySalesMap = countrySalesList
+                .stream()
+                .collect(Collectors.toMap(BiCountryAnalyzeDTO::getCountryNameCn, BiCountryAnalyzeDTO::getSalesAmount));
+
+        // 全球总销量
+        BigDecimal globalTotal = BigDecimal.ZERO;
+        // 结果列表
+        List<BiRegionAnalyzeDTO> resultList = new LinkedList<>();
+
+        // 组合信息
+        for (Map.Entry<String, List<String>> entry : regionCountryNameMap.entrySet()) {
+            // 初始化
+            BiRegionAnalyzeDTO resultDto = BiRegionAnalyzeDTO.init(entry.getKey(), regionNameMap.get(entry.getKey()).getRegionCode());
+            // 当前区域所有国家名称
+            List<String> currentCountryNameList = entry.getValue();
+
+            // 当前区域的销量
+            BigDecimal currentRegionSales = currentCountryNameList.stream()
+                    // 过滤出存在于map中的键
+                    .filter(countrySalesMap::containsKey)
+                    // 获取对应键的值
+                    .map(countrySalesMap::get)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // 设置到结果
+            resultDto.setSalesAmount(currentRegionSales);
+            // 累加到总数量
+            globalTotal = globalTotal.add(currentRegionSales);
+            // 添加到结果
+            resultList.add(resultDto);
+        }
+        // 设置销售比例
+        BigDecimal finalGlobalTotal = globalTotal;
+        resultList.forEach(e -> e.calculateSalesRatio(finalGlobalTotal));
+
+        return resultList;
+    }
+
+    /**
+     * 国家销售分析
+     */
+    @Override
+    public List<BiCountryAnalyzeDTO> getCountrySales(BiCountryRegionFilterDTO dto) {
+        // 国家列表
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        // 国家销售额
+        List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto);
+
+        // 国家销量Map<国家名称, 国家销量>
+        Map<String, BigDecimal> countrySalesMap = countrySalesList
+                .stream()
+                .collect(Collectors.toMap(BiCountryAnalyzeDTO::getCountryNameCn, BiCountryAnalyzeDTO::getSalesAmount));
+
+        // 全球总销量
+        BigDecimal globalTotal = BigDecimal.ZERO;
+        // 区域总销量Map<区域code, 当前区域总销量>
+        Map<String, BigDecimal> regionTotalMap = new HashMap<>();
+        // 相应结果
+        List<BiCountryAnalyzeDTO> resultList = new LinkedList<>();
+
+        // 组合
+        for (DictCountryDTO.ListDTO listDTO : countryList) {
+            // 初始化
+            BiCountryAnalyzeDTO resultDto = BiCountryAnalyzeDTO.init(
+                    listDTO.getNameCn(),
+                    listDTO.getNameEn(),
+                    listDTO.getId(),
+                    listDTO.getAreaName(),
+                    listDTO.getRegionCode(),
+                    countrySalesMap.getOrDefault(listDTO.getNameCn(), BigDecimal.ZERO)
+            );
+
+            // 添加到结果
+            resultList.add(resultDto);
+            if (0 == resultDto.getSalesAmount().compareTo(BigDecimal.ZERO)){
+                continue;
+            }
+            // 添加到全球总销量
+            globalTotal = globalTotal.add(resultDto.getSalesAmount());
+            // 添加到当前区域总销量
+            regionTotalMap.merge(resultDto.getRegionCode(), resultDto.getSalesAmount(), BigDecimal::add);
+        }
+        // 设置所有占比
+        BigDecimal finalGlobalTotal = globalTotal;
+        resultList.forEach(e-> e.setAllRadio(finalGlobalTotal, regionTotalMap.getOrDefault(e.getRegionCode(), BigDecimal.ZERO)));
+
+        return resultList.stream()
+                // 过滤得到要求的区域
+                .filter(e -> StringUtils.isBlank(dto.getRegionCode()) ||
+                        (StringUtils.isNotBlank(dto.getRegionCode()) && e.getRegionCode().equalsIgnoreCase(dto.getRegionCode())))
+                .collect(Collectors.toList());
     }
 
 

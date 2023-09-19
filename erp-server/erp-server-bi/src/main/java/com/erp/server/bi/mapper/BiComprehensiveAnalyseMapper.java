@@ -1,8 +1,7 @@
 package com.erp.server.bi.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.SkuDateFilterDTO;
+import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -216,4 +215,13 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
      **/
     List<SkuDateSaleTrendVO> skuYearSaleTrend(@Param("params") SkuDateFilterDTO biFilterDTO);
 
+
+    /**
+     * SKU日期销售额趋势图-年
+     * @Author Jim
+     * @Date 2022/09/18 11:41
+     * @param dto BiCountryRegionFilterDTO
+     * @return java.util.List<com.erp.model.bi.dto.BiCountryAnalyzeDTO>
+     **/
+    List<BiCountryAnalyzeDTO> getCountrySales(@Param("params") BiCountryRegionFilterDTO dto);
 }
