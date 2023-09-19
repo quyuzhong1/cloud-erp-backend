@@ -15,17 +15,6 @@ import java.math.BigDecimal;
 @Data
 public class SalesFlagVO implements Serializable {
 
-
-    /**
-     * 销售额
-     */
-    private BigDecimal sales;
-
-    /**
-     * 销量
-     */
-    private Integer salesQuantity;
-
     private Integer flag;
 
     private String skuNo;
@@ -33,6 +22,11 @@ public class SalesFlagVO implements Serializable {
     private String name;
 
     private Integer orderCount;
+
+    /**
+     * 销售额
+     */
+    private BigDecimal sales;
 
     /**
      * 销售同比
@@ -45,6 +39,11 @@ public class SalesFlagVO implements Serializable {
     private BigDecimal salesChainRelativeRatio;
 
     /**
+     * 销量
+     */
+    private Integer salesQuantity;
+
+    /**
      * 销量同比
      */
     private BigDecimal salesQuantityBasisRatio;
@@ -54,14 +53,33 @@ public class SalesFlagVO implements Serializable {
      */
     private BigDecimal salesQuantityChainRelativeRatio;
 
+    /**
+     * 客单价
+     */
+    private BigDecimal salesPrice;
+
+    /**
+     * 客单价同比
+     */
+    private BigDecimal salesPriceBasisRatio;
+
+    /**
+     * 客单价环比
+     */
+    private BigDecimal salesPriceChainRelativeRatio;
+
     public SalesFlagVO() {
-        this.sales = BigDecimal.ZERO;
-        this.salesQuantity = 0;
+        this.name = "";
         this.flag = 0;
         this.orderCount = 0;
+        this.sales = BigDecimal.ZERO;
         this.salesBasisRatio = BigDecimal.ZERO;
         this.salesChainRelativeRatio = BigDecimal.ZERO;
+        this.salesQuantity = 0;
         this.salesQuantityBasisRatio = BigDecimal.ZERO;
         this.salesQuantityChainRelativeRatio = BigDecimal.ZERO;
+        this.salesPrice = BigDecimal.ZERO;
+        this.salesPriceBasisRatio = BigDecimal.ZERO;
+        this.salesPriceChainRelativeRatio = BigDecimal.ZERO;
     }
 }
