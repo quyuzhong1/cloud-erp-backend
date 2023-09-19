@@ -10,7 +10,7 @@ public enum LabelColorEnum {
     /**
      * 标签级别 private 私有，company 公司';
      */
-    GREY("grey", "灰色"),
+    GREY("#9c9ca0", "灰色"),
     BLUE("bule", "蓝色"),
     ORANGE("orange", "橘色"),
     KHAKI("khaki", "黄褐色");
