@@ -24,6 +24,7 @@
             psid.purchase_qty,
             psid.stock_in_qty,
             psid.exceed_qty,
+            psi.delivery_warehouse_id,
             psi.delivery_warehouse_name,
             psid.remark,
             psi.subcontract_type as subcontractType,

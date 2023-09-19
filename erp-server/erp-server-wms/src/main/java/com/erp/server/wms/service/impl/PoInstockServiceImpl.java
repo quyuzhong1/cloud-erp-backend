@@ -154,6 +154,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         //清空明细数据
         records.forEach(obj -> {
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getDeliveryWarehouseId()) && req.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            obj.setWarehouseLocationName(warehouseLocationEntity.getName());
             boolean contains = list.contains(obj.getId());
             if (contains) {
                 obj.setCode(null);
@@ -166,8 +168,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 obj.setCreateUserName(null);
                 return;
             }
-            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getDeliveryWarehouseId()) && req.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
-            obj.setWarehouseLocationName(warehouseLocationEntity.getName());
             list.add(obj.getId());
         });
         return new PagingVO(pageData);

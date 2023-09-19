@@ -148,6 +148,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         //清空明细数据
         records.forEach(obj -> {
+            WarehouseLocationEntity inWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getInWarehouseId()) && req.getCode().equals(obj.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            obj.setInWarehouseLocationName(inWarehouseLocationEntity.getName());
+            WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getOutWarehouseId()) && req.getCode().equals(obj.getOutWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            obj.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
             boolean contains = list.contains(obj.getId());
             if (contains) {
                 obj.setCode(null);
@@ -161,10 +165,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 obj.setCreateUserName(null);
                 return;
             }
-            WarehouseLocationEntity inWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getInWarehouseId()) && req.getCode().equals(obj.getInWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
-            obj.setInWarehouseLocationName(inWarehouseLocationEntity.getName());
-            WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getOutWarehouseId()) && req.getCode().equals(obj.getOutWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
-            obj.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
             list.add(obj.getId());
         });
         return new PagingVO(pageData);
