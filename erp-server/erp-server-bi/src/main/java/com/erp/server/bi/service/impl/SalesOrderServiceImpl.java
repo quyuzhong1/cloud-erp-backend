@@ -2273,6 +2273,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                         .divide(lastYearSalesFlag.getSales(), 2, BigDecimal.ROUND_HALF_UP)
                         .multiply(MathUtil.BigDecimal_100)
                 );
+            } else {
+                lastYearSalesList.add(new SalesFlagVO());
             }
 
             //获取销量同比

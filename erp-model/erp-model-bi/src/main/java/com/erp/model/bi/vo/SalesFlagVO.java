@@ -69,6 +69,7 @@ public class SalesFlagVO implements Serializable {
     private BigDecimal salesPriceChainRelativeRatio;
 
     public SalesFlagVO() {
+        this.name = "";
         this.flag = 0;
         this.orderCount = 0;
         this.sales = BigDecimal.ZERO;
