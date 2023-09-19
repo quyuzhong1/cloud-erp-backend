@@ -3,12 +3,14 @@ package com.erp.server.bi.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoSearchDTO;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -33,6 +35,21 @@ public interface DmpRefundInfoMapper extends BaseMapper<DmpRefundInfoEntity> {
      * @return List<DmpRefundInfoDTO>
      */
     List<DmpRefundInfoDTO> getAllRefundInfo(@Param("params") DmpRefundInfoSearchDTO params);
+
+    /**
+     * 获取退款金额
+     * @param dto
+     * @return
+     */
+    BigDecimal getRefundOrderAmount(@Param("params") BiFilterDTO dto);
+
+    /**
+     * 获取年退款金额
+     * @param dto
+     * @param yearStr
+     * @return
+     */
+    BigDecimal getYearRefundOrderAmount(@Param("params")BiFilterDTO dto, @Param("year") String yearStr);
 }
 
 

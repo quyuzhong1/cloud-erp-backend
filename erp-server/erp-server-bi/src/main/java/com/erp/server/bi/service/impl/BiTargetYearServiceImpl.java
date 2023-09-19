@@ -8,6 +8,7 @@ import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.server.bi.mapper.BiTargetYearMapper;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
 import com.erp.server.bi.service.BiTargetYearService;
+import com.erp.server.bi.service.DmpRefundInfoService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -37,6 +38,9 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
 
     @Resource
     private SalesOrderServiceMapper salesOrderServiceMapper;
+
+    @Resource
+    private DmpRefundInfoService dmpRefundInfoService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -89,26 +93,46 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
      * @date 2023-09-18 16:51
      */
     @Override
-    public BigDecimal getMetricsFinishValue(BiTargetYearDTO.SearchDTO dto, String flagStr,Integer year,Integer month) {
+    public BigDecimal getMetricsFinishValue(BiTargetYearDTO.SearchDTO dto, String flagStr, Integer year, Integer month, String settleRate) {
         MetricsEnum metrics = dto.getMetrics();
-        String yearFlag="year";
-        String yearStr=String.valueOf(year);
+        String yearFlag = "year";
+        String yearStr = String.valueOf(year);
         switch (metrics) {
             case SALES_QTY:
                 //年度的
-                if(yearFlag.equals(flagStr)){
-                   return salesOrderServiceMapper.getYearQtyByYear(dto,yearStr);
-                }else{
+                if (yearFlag.equals(flagStr)) {
+                    return salesOrderServiceMapper.getYearQtyByYear(dto, yearStr);
+                } else {
                     return salesOrderServiceMapper.getMonthQty(dto);
                 }
 
             case SALES_AMOUNT:
                 //年度
-                if(yearFlag.equals(flagStr)){
-                    return salesOrderServiceMapper.getYearSalesAmountByYear(dto,yearStr);
-                }else{
-                    return salesOrderServiceMapper.getMonthAmount(dto);
+                if (yearFlag.equals(flagStr)) {
+                    return salesOrderServiceMapper.getYearSalesAmountByYear(dto, yearStr, settleRate);
+                } else {
+                    return salesOrderServiceMapper.getMonthAmount(dto, settleRate);
                 }
+
+            case NET_SALES_AMOUNT:
+                //净销售额
+                //年度
+                if (yearFlag.equals(flagStr)) {
+                    //销售额
+                    BigDecimal yearOrderAmount = salesOrderServiceMapper.getYearSalesAmountByYear(dto, yearStr, settleRate);
+                    //年退款金额
+                    BigDecimal yearRefundOrderAmount = dmpRefundInfoService.getYearRefundOrderAmount(dto, yearStr);
+                    return yearOrderAmount.subtract(yearRefundOrderAmount);
+                } else {
+                    //退款金额
+                    BigDecimal refundOrderAmount = dmpRefundInfoService.getRefundOrderAmount(dto);
+                    BigDecimal monthAmount = salesOrderServiceMapper.getMonthAmount(dto, settleRate);
+                    if (Objects.isNull(monthAmount)) {
+                        monthAmount = BigDecimal.ZERO;
+                    }
+                    return monthAmount.subtract(refundOrderAmount);
+                }
+
         }
 
         return null;

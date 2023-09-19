@@ -3706,10 +3706,10 @@
     <select id="getYearSalesAmountByYear" resultType="java.math.BigDecimal">
         SELECT
         <if test="settleRate !=null and settleRate!=''">
-            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales
         </if>
         <if test="settleRate ==null or settleRate==''">
-            round(SUM (i.amount_after * 1),2) AS sales,
+            round(SUM (i.amount_after * 1),2) AS sales
         </if>
         FROM
         dmp_order_item i
@@ -3795,10 +3795,10 @@
     <select id="getMonthAmount" resultType="java.math.BigDecimal">
         SELECT
         <if test="settleRate !=null and settleRate!=''">
-            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales
         </if>
         <if test="settleRate ==null or settleRate==''">
-            round(SUM (i.amount_after * 1),2) AS sales,
+            round(SUM (i.amount_after * 1),2) AS sales
         </if>
         FROM
         dmp_order_item i

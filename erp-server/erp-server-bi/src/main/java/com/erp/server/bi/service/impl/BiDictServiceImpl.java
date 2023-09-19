@@ -1,6 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.erp.model.bi.entity.BiDictEntity;
@@ -157,9 +158,9 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
 
     @Override
     public List<Map<String, Object>> listValueByType(String type) {
-        LambdaQueryWrapper<BiDictEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(BiDictEntity::getValue, BiDictEntity::getName);
-        queryWrapper.eq(BiDictEntity::getType, type);
+        QueryWrapper<BiDictEntity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.select("value AS code","name AS value");
+        queryWrapper.eq("type", type);
         return this.listMaps(queryWrapper);
     }
 

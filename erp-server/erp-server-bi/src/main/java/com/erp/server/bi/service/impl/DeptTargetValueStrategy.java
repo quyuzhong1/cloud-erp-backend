@@ -37,8 +37,8 @@ public class DeptTargetValueStrategy implements ListYearMonthValueStrategy {
      * @return
      */
     @Override
-    public List<BiTargetYearDTO.YearMonthValueDTO> ListYearMonthValue(Integer year, String metrics,String deptId ) {
-        List<BiTargetYearDTO.YearMonthValueDTO> deptTargetValue = biTargetYearMapper.ListDeptTargetValue(year, metrics,deptId);
+    public List<BiTargetYearDTO.YearMonthValueDTO> ListYearMonthValue(Integer year, String metrics,List<String> deptIdList ) {
+        List<BiTargetYearDTO.YearMonthValueDTO> deptTargetValue = biTargetYearMapper.ListDeptTargetValue(year, metrics,deptIdList);
         String metricsName = MetricsEnum.getNameByCode(metrics);
         deptTargetValue.forEach(obj -> {
             obj.setYear(year);

@@ -13,6 +13,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoExcelDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoImportExcelDTO;
@@ -33,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -116,6 +118,28 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
             throw new ServiceException(ApiError.Default);
         }
         return  true;
+    }
+
+
+    /**
+     * 获取到退款金额
+     * @param dto
+     * @return
+     */
+    @Override
+    public BigDecimal getRefundOrderAmount(BiFilterDTO dto) {
+        return baseMapper.getRefundOrderAmount(dto);
+    }
+
+    /**
+     * 获取年度的退款金额
+     * @param dto
+     * @param yearStr
+     * @return
+     */
+    @Override
+    public BigDecimal getYearRefundOrderAmount(BiFilterDTO dto, String yearStr) {
+        return baseMapper.getYearRefundOrderAmount(dto,yearStr);
     }
 
 }

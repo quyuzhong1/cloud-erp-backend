@@ -1084,7 +1084,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public StatisticalDataVO byCategory(BiCategoryDTO.FirstCategoryParamsDTO dto) {
         //获取到一级类目列表
         List<BasicCategoryEntity> categoryList = plmTaskFeign.listParentCategory();
-        List<String> categoryIdList=categoryList.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
+        List<String> categoryIdList = categoryList.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
         dto.setCategoryIdList(categoryIdList);
         //查询sku 分类以及分类下对应的skuno
         List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList(categoryIdList);
@@ -2203,6 +2203,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 计算销售趋势同比/环比
+     *
      * @param salesList
      * @param lastYearSalesList
      * @param dateTimeFormatter
@@ -2299,6 +2300,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 设置销售趋势的销售额数据
+     *
      * @param salesList
      * @param lastYearSalesList
      * @param seriesList
@@ -2331,6 +2333,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 设置销售趋势的销量数据
+     *
      * @param salesList
      * @param lastYearSalesList
      * @param seriesList
@@ -2363,6 +2366,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 设置销售趋势的客单价数据
+     *
      * @param salesList
      * @param lastYearSalesList
      * @param seriesList
@@ -2455,7 +2459,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public List<BiTargetYearDTO.TargetMetricsFinishDTO> listTargetMetrics(BiTargetYearDTO.SearchDTO dto) {
-
         List<BiTargetYearDTO.TargetMetricsFinishDTO> resultList = new ArrayList<>(2);
         /**
          * 年月
@@ -2463,6 +2466,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String yearMonth = dto.getYearMonth();
         //年
         Integer year = LocalDate.now().getYear();
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
         //月
         Integer month = LocalDate.now().getMonthValue();
         if (StringUtils.isNotBlank(yearMonth) && yearMonth.length() >= 7) {
@@ -2489,37 +2494,40 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String metrics = metricsEnum.getCode();
         String metricsName = metricsEnum.getName();
         //获取到对应设置的目标值
-        String deptId = dto.getDeptId();
+        List<String> deptIdList = dto.getDepartment();
         ListYearMonthValueStrategy strategy = null;
         List<BiTargetYearDTO.YearMonthValueDTO> yearMonthValueList = new ArrayList<>();
 
-        if (StringUtils.isNotBlank(deptId)) {
+        if (CollectionUtils.isNotEmpty(deptIdList)) {
             strategy = context.getBean(DeptTargetValueStrategy.class);
             if (Objects.nonNull(strategy)) {
-                yearMonthValueList = strategy.ListYearMonthValue(year, metrics, deptId);
+                yearMonthValueList = strategy.ListYearMonthValue(year, metrics, deptIdList);
             }
         }
         //员工id
-        String staffId = dto.getStaffId();
-        if (StringUtils.isNotBlank(staffId)) {
+        List<String> staffIdList = dto.getUserId();
+        if (CollectionUtils.isNotEmpty(staffIdList)) {
             strategy = context.getBean(StaffTargetValueStrategy.class);
             if (Objects.nonNull(strategy)) {
-                yearMonthValueList = strategy.ListYearMonthValue(year, metrics, staffId);
+                yearMonthValueList = strategy.ListYearMonthValue(year, metrics, staffIdList);
             }
         }
         //店铺id
-        String shopId = dto.getShopId();
-        if (StringUtils.isNotBlank(shopId)) {
-            strategy = context.getBean(ShopTargetValueStrategy.class);
-            if (Objects.nonNull(strategy)) {
-                yearMonthValueList = strategy.ListYearMonthValue(year, metrics, shopId);
+        List<String> shopNameList = dto.getShopName();
+        if (CollectionUtils.isNotEmpty(shopNameList)) {
+            List<DmpShopInfoEntity> shopInfoList = shopInfoService.listByNames(shopNameList);
+            List<String> shopIdList = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(shopIdList)) {
+                strategy = context.getBean(ShopTargetValueStrategy.class);
+                if (Objects.nonNull(strategy)) {
+                    yearMonthValueList = strategy.ListYearMonthValue(year, metrics, shopIdList);
+                }
             }
         }
-
         //为空就是所有
         if (Objects.isNull(strategy)) {
             strategy = context.getBean(AllTargetValueStrategy.class);
-            yearMonthValueList = strategy.ListYearMonthValue(year, metrics, "");
+            yearMonthValueList = strategy.ListYearMonthValue(year, metrics, Collections.emptyList());
         }
         if (Objects.isNull(strategy)) {
             throw new ServiceException("条件未匹配");
@@ -2536,7 +2544,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 findFirst().map(BiTargetYearDTO.YearMonthValueDTO::getMetricsValue).orElse(BigDecimal.ZERO);
         monthMetrics.setMetricsValue(monthMetricsValue);
         //完成值
-        BigDecimal monthFinishValue = biTargetYearService.getMetricsFinishValue(dto, "month", year, month);
+        BigDecimal monthFinishValue = biTargetYearService.getMetricsFinishValue(dto, "month", year, month, settleRate);
+        if (Objects.isNull(monthFinishValue)) {
+            monthFinishValue = BigDecimal.ZERO;
+        }
         monthMetrics.setFinishValue(monthFinishValue);
         //完成占比
         BigDecimal monthFinishRate = getSalesRatio(monthMetricsValue, monthFinishValue);
@@ -2552,9 +2563,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //年度目标值
         BigDecimal yearMetricsValue = yearMonthValueList.stream().map(BiTargetYearDTO.YearMonthValueDTO::getMetricsValue).reduce(BigDecimal.ZERO, BigDecimal::add);
         yearMetrics.setMetricsValue(yearMetricsValue);
-        BigDecimal yearFinishValue = biTargetYearService.getMetricsFinishValue(dto, "year", year, month);
+        BigDecimal yearFinishValue = biTargetYearService.getMetricsFinishValue(dto, "year", year, month, settleRate);
+        if (Objects.isNull(yearFinishValue)) {
+            yearFinishValue = BigDecimal.ZERO;
+        }
         //完成占比
-        BigDecimal yearFinishRate = getSalesRatio(monthMetricsValue, monthFinishValue);
+        BigDecimal yearFinishRate = getSalesRatio(yearMetricsValue, yearFinishValue);
         yearMetrics.setFinishRate(yearFinishRate);
         resultList.add(monthMetrics);
         return resultList;

@@ -38,7 +38,7 @@ public class AllTargetValueStrategy implements ListYearMonthValueStrategy {
      * @return
      */
     @Override
-    public List<BiTargetYearDTO.YearMonthValueDTO> ListYearMonthValue(Integer year, String metrics,String flagId) {
+    public List<BiTargetYearDTO.YearMonthValueDTO> ListYearMonthValue(Integer year, String metrics,List<String> flagIdList) {
         List<BiTargetYearDTO.YearMonthValueDTO> allTargetValue = biTargetYearMapper.AllTargetValue(year, metrics);
         String metricsName = MetricsEnum.getNameByCode(metrics);
         allTargetValue.forEach(obj -> {

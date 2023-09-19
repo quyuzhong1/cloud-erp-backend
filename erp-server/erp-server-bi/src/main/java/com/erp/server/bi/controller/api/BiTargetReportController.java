@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
 
 /**
@@ -39,4 +40,17 @@ public class BiTargetReportController extends BaseController {
         return success(map);
     }
 
+    /**
+     * 业绩目标完成导出
+     * @author Will
+     * @date: 2023/9/19 16:40
+     * @param dto
+     * @param response
+     * @return ApiResult
+     */
+    @PostMapping(value = "/exportExcel")
+    public ApiResult exportExcel(@RequestBody @Validated TargetFinishDTO.ParamDTO dto, HttpServletResponse response) {
+        biTargetReportService.exportExcel(dto, response);
+        return success();
+    }
 }
