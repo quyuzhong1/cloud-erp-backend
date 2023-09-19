@@ -2,6 +2,7 @@ package com.erp.server.bi.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.dto.NewAndOldSalesSearchDTO;
 import com.erp.model.bi.vo.*;
@@ -9,6 +10,7 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -132,4 +134,34 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     List<SalesFlagVO> deptNewAndOldSalesAmount(@Param("params") NewAndOldSalesSearchDTO.SearchDTO dto, @Param("settleRate") String settleRate);
 
     List<SalesFlagVO> userNewAndOldSalesAmount(@Param("params") NewAndOldSalesSearchDTO.SearchDTO dto,@Param("settleRate") String settleRate);
+
+    /**
+     * 获取年销售量
+     * @param dto
+     * @param yearStr
+     * @return
+     */
+    BigDecimal getYearQtyByYear(@Param("params")BiTargetYearDTO.SearchDTO  dto ,@Param("year") String yearStr);
+
+    /**
+     * 获取月度销量
+     * @param dto
+     * @return
+     */
+    BigDecimal getMonthQty(@Param("params") BiTargetYearDTO.SearchDTO dto);
+
+    /**
+     * 获取年度的销售额
+     * @param dto
+     * @param yearStr
+     * @return
+     */
+    BigDecimal getYearSalesAmountByYear(@Param("params") BiTargetYearDTO.SearchDTO dto, @Param("year") String yearStr);
+
+    /**
+     * 获取月度销售额
+     * @param dto
+     * @return
+     */
+    BigDecimal getMonthAmount(@Param("params") BiTargetYearDTO.SearchDTO dto);
 }

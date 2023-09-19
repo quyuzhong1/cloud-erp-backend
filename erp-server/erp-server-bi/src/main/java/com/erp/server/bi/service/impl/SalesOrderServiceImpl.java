@@ -2223,7 +2223,17 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             LocalDate yearMonthDate = LocalDate.parse(yearMonth, fmt);
             year = yearMonthDate.getYear();
             month = yearMonthDate.getMonthValue();
+
+            LocalDateTime localDateTime = LocalDate.parse(dto.getYearMonth(), fmt).atStartOfDay();
+            dto.setStartTime(localDateTime);
+            dto.setEndTime(localDateTime.plusMonths(1));
+        } else {
+            LocalDate now = LocalDate.now();
+            LocalDateTime localDateTime = LocalDate.of(now.getYear(), now.getMonth(), 1).atStartOfDay();
+            dto.setStartTime(localDateTime);
+            dto.setEndTime(localDateTime.plusMonths(1));
         }
+
         //指标
         MetricsEnum metricsEnum = dto.getMetrics();
         String metrics = metricsEnum.getCode();
@@ -2235,31 +2245,31 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         if (StringUtils.isNotBlank(deptId)) {
             strategy = context.getBean(DeptTargetValueStrategy.class);
-            if(Objects.nonNull(strategy)){
-                yearMonthValueList=strategy.ListYearMonthValue(year,metrics,deptId);
+            if (Objects.nonNull(strategy)) {
+                yearMonthValueList = strategy.ListYearMonthValue(year, metrics, deptId);
             }
         }
         //员工id
         String staffId = dto.getStaffId();
         if (StringUtils.isNotBlank(staffId)) {
             strategy = context.getBean(StaffTargetValueStrategy.class);
-            if(Objects.nonNull(strategy)){
-                yearMonthValueList=strategy.ListYearMonthValue(year,metrics,staffId);
+            if (Objects.nonNull(strategy)) {
+                yearMonthValueList = strategy.ListYearMonthValue(year, metrics, staffId);
             }
         }
         //店铺id
         String shopId = dto.getShopId();
         if (StringUtils.isNotBlank(shopId)) {
             strategy = context.getBean(ShopTargetValueStrategy.class);
-            if(Objects.nonNull(strategy)){
-                yearMonthValueList=strategy.ListYearMonthValue(year,metrics,shopId);
+            if (Objects.nonNull(strategy)) {
+                yearMonthValueList = strategy.ListYearMonthValue(year, metrics, shopId);
             }
         }
 
         //为空就是所有
         if (Objects.isNull(strategy)) {
             strategy = context.getBean(AllTargetValueStrategy.class);
-            yearMonthValueList=strategy.ListYearMonthValue(year,metrics,"");
+            yearMonthValueList = strategy.ListYearMonthValue(year, metrics, "");
         }
         if (Objects.isNull(strategy)) {
             throw new ServiceException("条件未匹配");
@@ -2275,8 +2285,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 filter(y -> y.getMonth().equals(finalMonth) && y.getYear().equals(finalYear)).
                 findFirst().map(BiTargetYearDTO.YearMonthValueDTO::getMetricsValue).orElse(BigDecimal.ZERO);
         monthMetrics.setMetricsValue(monthMetricsValue);
+        //完成值
+        BigDecimal monthFinishValue = biTargetYearService.getMetricsFinishValue(dto, "month", year, month);
+        monthMetrics.setFinishValue(monthFinishValue);
+        //完成占比
+        BigDecimal monthFinishRate = getSalesRatio(monthMetricsValue, monthFinishValue);
+        monthMetrics.setFinishRate(monthFinishRate);
         resultList.add(monthMetrics);
-        BigDecimal dd = biTargetYearService.getMetricsFinishValue(dto, "month");
 
 
         //年度
@@ -2287,9 +2302,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //年度目标值
         BigDecimal yearMetricsValue = yearMonthValueList.stream().map(BiTargetYearDTO.YearMonthValueDTO::getMetricsValue).reduce(BigDecimal.ZERO, BigDecimal::add);
         yearMetrics.setMetricsValue(yearMetricsValue);
+        BigDecimal yearFinishValue = biTargetYearService.getMetricsFinishValue(dto, "year", year, month);
+        //完成占比
+        BigDecimal yearFinishRate = getSalesRatio(monthMetricsValue, monthFinishValue);
+        yearMetrics.setFinishRate(yearFinishRate);
         resultList.add(monthMetrics);
-
-
         return resultList;
     }
 

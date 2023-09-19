@@ -1,22 +1,26 @@
 package com.erp.server.plm.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.plm.entity.ProductRefLabelEntity;
+import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.server.plm.mapper.ProductRefLabelMapper;
 import com.erp.server.plm.service.ProductRefLabelService;
 import com.erp.server.plm.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.plm.dto.ProductRefLabelDTO;
+
 import java.util.*;
-import com.common.core.utils.*;
+
 import com.common.core.enums.ApiError;
+
 /**
  * <p>
  * 产品便签关系表 服务实现类
@@ -35,57 +39,60 @@ public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabel
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public String add(ProductRefLabelDTO.AddDTO addDTO) {
-        ProductRefLabelEntity productRefLabelEntity = new ProductRefLabelEntity();
-        BeanMapperUtils.copy(addDTO, productRefLabelEntity);
-
+    public void batchAdd(ProductRefLabelDTO.BatchAddDTO batchAddDTO) {
+        if (CollectionUtils.isEmpty(batchAddDTO.getLableIds())) throw new ServiceException(ApiError.Default);
+        if (CollectionUtils.isEmpty(batchAddDTO.getProjectDTOs())) throw new ServiceException(ApiError.Default);
+        List<ProductRefLabelEntity> productRefLabelEntities = new ArrayList<>();
         // 数据处理
-        handleData(productRefLabelEntity);
-
+        handleData(batchAddDTO, productRefLabelEntities);
         log.info("开始新增产品便签关系单");
-        boolean save = super.save(productRefLabelEntity);
-        if(!save) {
-            throw new ServiceException("产品便签关系单保存失败");
+        if (CollectionUtils.isNotEmpty(productRefLabelEntities)) {
+            boolean save = super.saveBatch(productRefLabelEntities);
+            if (!save) throw new ServiceException("产品便签关系单保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", commonService.getUserInfo().getUserName(), "产品便签关系单" , productRefLabelEntity.getId());
-
-        // TODO 新增明细（如果有明细的话）
-        return productRefLabelEntity.getId();
+        log.info("结束新增产品便签关系单");
     }
 
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(ProductRefLabelDTO.UpdateDTO updateDTO) {
-        ProductRefLabelEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "产品便签关系单"));
-        ProductRefLabelEntity productRefLabelEntity =  BeanMapperUtils.map(ProductRefLabelEntity.class, updateDTO);
+    @Transactional(rollbackFor = Exception.class)
+    public void removeProductRef(ProductRefLabelDTO.RemoveDTO dto) {
+        if (CollectionUtils.isNotEmpty(dto.getIds())) this.removeByIds(dto.getIds());
+    }
 
-        // 数据处理
-        handleData(productRefLabelEntity);
-        log.info("编辑 开始修改产品便签关系单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(productRefLabelEntity);
-        if(!save) {
-            throw new ServiceException("产品便签关系单保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录产品便签关系单日志数据，id：【{}】", productRefLabelEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", commonService.getUserInfo().getUserName(), productRefLabelEntity.getId(), "产品便签关系单");
-
-        return Boolean.TRUE;
+    @Override
+    public List<ProductRefLabelVO> getLabelList(String productId, String labelId, String skuId) {
+        return baseMapper.getLabelList(productId, labelId, skuId);
     }
 
 
     /**
-    * 新增修改处理数据
-    */
-    private void handleData(ProductRefLabelEntity productRefLabelEntity) {
-    // TODO 验证数据 & 数据赋值
+     * 新增修改处理数据
+     */
+    private void handleData(ProductRefLabelDTO.BatchAddDTO batchAddDTO, List<ProductRefLabelEntity> productRefLabelEntities) {
+        //检查数据是否已存在,存在则过滤，不存在则新增
+        batchAddDTO.getLableIds().forEach(labelId -> {
+            batchAddDTO.getProjectDTOs().forEach(projectDTO -> {
+                if (!isExistRef(labelId, projectDTO.getSkuId(), projectDTO.getProductId())) {
+                    productRefLabelEntities.add(new ProductRefLabelEntity().setProductId(projectDTO.getProductId()).setLableId(labelId).setSkuId(projectDTO.getSkuId()));
+                }
+            });
+        });
+    }
+
+    /**
+     * 是否存在记录 ture 是, false 否
+     *
+     * @param labelId
+     * @param skuId
+     * @param productId
+     * @return
+     */
+    private boolean isExistRef(String labelId, String skuId, String productId) {
+        LambdaQueryWrapper<ProductRefLabelEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductRefLabelEntity::getProductId, productId);
+        queryWrapper.eq(ProductRefLabelEntity::getSkuId, skuId);
+        queryWrapper.eq(ProductRefLabelEntity::getLableId, labelId);
+        int count = this.count(queryWrapper);
+        return count != 0;
     }
 }
