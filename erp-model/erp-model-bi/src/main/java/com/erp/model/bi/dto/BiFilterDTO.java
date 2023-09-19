@@ -38,9 +38,9 @@ public class BiFilterDTO extends SortDTO {
     /**
      * 开始日期
      */
-/*    @NotNull(message = "开始时间不能为空")
+    @NotNull(message = "开始时间不能为空")
     @NotNull(message = "开始时间不能为空", groups = SelectTargetModule.class)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")*/
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startTime;
 
 
@@ -48,9 +48,9 @@ public class BiFilterDTO extends SortDTO {
     /**
      * 结束日期
      */
-/*    @NotNull(message = "开始时间不能为空")
+    @NotNull(message = "开始时间不能为空")
     @NotNull(message = "开始时间不能为空", groups = SelectTargetModule.class)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")*/
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endTime;
 
     /**
