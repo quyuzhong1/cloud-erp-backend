@@ -14,7 +14,7 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="sku_id" property="skuId" />
        <result column="product_id" property="productId" />
-       <result column="lable_id" property="lableId" />
+       <result column="label_id" property="labelId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -28,11 +28,11 @@
         update_time,
         version,
         is_deleted,
-        sku_id, product_id, lable_id
+        sku_id, product_id, label_id
     </sql>
 
     <select id="countByLabelId" resultType="java.lang.Integer">
-        select count(1) from product_ref_label where is_deleted = false and lable_id = #{labelId}
+        select count(1) from product_ref_label where is_deleted = false and label_id = #{labelId}
     </select>
 
     <select id="getLabelList" resultType="com.erp.model.plm.vo.ProductRefLabelVO">
@@ -40,13 +40,13 @@
             prd.id,
             prd.sku_id,
             prd.product_id,
-            prd.lable_id,
+            prd.label_id,
             bl."name",
             bl."level",
             bl.colour
         FROM
             product_ref_label prd
-                LEFT JOIN basic_label bl ON bl.id = prd.lable_id and bl.is_deleted = false
+                LEFT JOIN basic_label bl ON bl.id = prd.label_id and bl.is_deleted = false
         WHERE prd.is_deleted = false
         <if test="productId != null and productId != ''">
             AND prd.product_id = #{productId}
@@ -55,7 +55,40 @@
             AND prd.sku_id = #{skuId}
         </if>
         <if test="labelId != null and labelId != ''">
-            AND prd.lable_id = #{labelId}
+            AND prd.label_id = #{labelId}
+        </if>
+    </select>
+
+    <select id="getLabelListByIds" resultType="com.erp.model.plm.vo.ProductRefLabelVO">
+        SELECT
+        prd.id,
+        prd.sku_id,
+        prd.product_id,
+        prd.label_id,
+        bl."name",
+        bl."level",
+        bl.colour
+        FROM
+        product_ref_label prd
+        LEFT JOIN basic_label bl ON bl.id = prd.label_id and bl.is_deleted = false
+        WHERE prd.is_deleted = false
+        <if test="productIds != null and productIds.size>0">
+            AND prd.product_id IN
+            <foreach collection="productIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="skuIds != null and skuIds.size>0">
+            AND prd.sku_id IN
+            <foreach collection="skuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="labelIds != null and labelIds.size>0">
+            AND prd.label_id IN
+            <foreach collection="labelIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
         </if>
     </select>
 

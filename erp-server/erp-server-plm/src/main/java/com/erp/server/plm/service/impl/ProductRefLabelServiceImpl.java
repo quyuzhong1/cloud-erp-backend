@@ -40,7 +40,7 @@ public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabel
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void batchAdd(ProductRefLabelDTO.BatchAddDTO batchAddDTO) {
-        if (CollectionUtils.isEmpty(batchAddDTO.getLableIds())) throw new ServiceException(ApiError.Default);
+        if (CollectionUtils.isEmpty(batchAddDTO.getLabelIds())) throw new ServiceException(ApiError.Default);
         if (CollectionUtils.isEmpty(batchAddDTO.getProjectDTOs())) throw new ServiceException(ApiError.Default);
         List<ProductRefLabelEntity> productRefLabelEntities = new ArrayList<>();
         // 数据处理
@@ -70,10 +70,10 @@ public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabel
      */
     private void handleData(ProductRefLabelDTO.BatchAddDTO batchAddDTO, List<ProductRefLabelEntity> productRefLabelEntities) {
         //检查数据是否已存在,存在则过滤，不存在则新增
-        batchAddDTO.getLableIds().forEach(labelId -> {
+        batchAddDTO.getLabelIds().forEach(labelId -> {
             batchAddDTO.getProjectDTOs().forEach(projectDTO -> {
                 if (!isExistRef(labelId, projectDTO.getSkuId(), projectDTO.getProductId())) {
-                    productRefLabelEntities.add(new ProductRefLabelEntity().setProductId(projectDTO.getProductId()).setLableId(labelId).setSkuId(projectDTO.getSkuId()));
+                    productRefLabelEntities.add(new ProductRefLabelEntity().setProductId(projectDTO.getProductId()).setLabelId(labelId).setSkuId(projectDTO.getSkuId()));
                 }
             });
         });
@@ -91,7 +91,7 @@ public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabel
         LambdaQueryWrapper<ProductRefLabelEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductRefLabelEntity::getProductId, productId);
         queryWrapper.eq(ProductRefLabelEntity::getSkuId, skuId);
-        queryWrapper.eq(ProductRefLabelEntity::getLableId, labelId);
+        queryWrapper.eq(ProductRefLabelEntity::getLabelId, labelId);
         int count = this.count(queryWrapper);
         return count != 0;
     }

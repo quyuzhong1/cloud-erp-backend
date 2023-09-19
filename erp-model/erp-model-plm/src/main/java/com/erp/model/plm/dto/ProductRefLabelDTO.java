@@ -48,7 +48,7 @@ public class ProductRefLabelDTO implements Serializable {
         /**
          * 标签id
          */
-        private String lableId;
+        private String labelId;
 
 
     }
@@ -69,7 +69,7 @@ public class ProductRefLabelDTO implements Serializable {
          * 标签ids
          */
         @NotNull(message = "标签id集合不能为空")
-        private List<String> lableIds;
+        private List<String> labelIds;
 
 
     }
@@ -109,7 +109,7 @@ public class ProductRefLabelDTO implements Serializable {
          * 标签id
          */
         @NotNull(message = "标签id不能为空")
-        private String lableId;
+        private String labelId;
         /**
          * 标签名称
          */
@@ -186,7 +186,7 @@ public class ProductRefLabelDTO implements Serializable {
          * 标签id
          */
         @Size(max = 19, message = "标签id最大长度不能超过19位")
-        private String lableId;
+        private String labelId;
     }
 
     @Data
@@ -212,7 +212,7 @@ public class ProductRefLabelDTO implements Serializable {
          */
         @NotBlank(message = "标签id不能为空")
         @Size(max = 19, message = "标签id最大长度不能超过19位")
-        private String lableId;
+        private String labelId;
 
 
     }
