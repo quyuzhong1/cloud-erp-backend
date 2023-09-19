@@ -335,21 +335,7 @@ public class BiTargetYearDTO implements Serializable {
         @StateEnumValue(clazz = MetricsEnum.class, message = "指标维度有误")
         private MetricsEnum metrics;
 
-        /**
-         * 人员
-         */
-        private String staffId;
 
-        /**
-         * 店铺id
-         */
-        private String shopId;
-
-
-        /**
-         * 部门id
-         */
-        private String deptId;
 
     }
 }

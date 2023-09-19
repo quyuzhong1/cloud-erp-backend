@@ -17,5 +17,5 @@ import java.util.List;
  */
 public interface ListYearMonthValueStrategy {
 
-    List<BiTargetYearDTO.YearMonthValueDTO> ListYearMonthValue(Integer year,String metrics,String flagId);
+    List<BiTargetYearDTO.YearMonthValueDTO> ListYearMonthValue(Integer year,String metrics,List<String> flagIdList);
 }

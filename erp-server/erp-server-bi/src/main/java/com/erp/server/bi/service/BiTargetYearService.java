@@ -43,5 +43,5 @@ public interface BiTargetYearService extends SuperService<BiTargetYearEntity> {
     * @param flagStr
     * @return java.math.BigDecimal
     */
-    BigDecimal getMetricsFinishValue(@Param("dto") BiTargetYearDTO.SearchDTO dto, String flagStr,Integer year,Integer month);
+    BigDecimal getMetricsFinishValue(@Param("dto") BiTargetYearDTO.SearchDTO dto, String flagStr,Integer year,Integer month,String settleRate);
 }
