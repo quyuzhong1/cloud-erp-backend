@@ -74,5 +74,16 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
         return this.lambdaQuery().in(DictGlobalAreaEntity::getId,ids).list();
     }
 
+    /**
+     * 获取地区列表
+     * @author Jim
+     * @date 2023-09-19 09:48
+     * @return java.util.List<com.erp.model.sys.entity.DictGlobalAreaEntity>
+     */
+    @Override
+    public List<DictGlobalAreaEntity> listGlobalArea() {
+        return this.lambdaQuery().list();
+    }
+
 
 }

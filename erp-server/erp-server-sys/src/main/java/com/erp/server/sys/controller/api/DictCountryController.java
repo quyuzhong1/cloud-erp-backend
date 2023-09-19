@@ -46,7 +46,10 @@ public class DictCountryController extends BaseController {
     @GetMapping("/list")
     public ApiResult<List<DictCountryDTO.ListDTO>> list() {
         List<DictCountryDTO.ListDTO> list = dictCountryService.listCountry();
-        return success(list);
+        List<DictCountryDTO.ListDTO> resultList = list.stream()
+                .filter(e -> !e.getDisabled())
+                .collect(Collectors.toList());
+        return success(resultList);
     }
 
     @GetMapping("/country")
