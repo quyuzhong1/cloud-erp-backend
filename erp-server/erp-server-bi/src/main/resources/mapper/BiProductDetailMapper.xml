@@ -3,5 +3,22 @@
 <mapper namespace="com.erp.server.bi.mapper.BiProductDetailMapper">
 
 
-
+    <select id="listByCategoryIds" resultType="com.erp.model.bi.dto.BiCategoryDTO$ProductCategoryDTO">
+        SELECT
+            pd.id AS skuId,
+            pd.name AS productName,
+            pd.sku_no,
+            pi.category_id
+        FROM product_detail pd
+        INNER JOIN product_info pi
+        ON pd.product_id=pi.id
+        AND pi.is_deleted=false
+        WHERE pd.is_deleted=FALSE
+        <if test="categoryIdList!=null and categoryIdList.size>0">
+           AND  category_id IN
+          <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
+               #{categoryId}
+          </foreach>
+        </if>
+    </select>
 </mapper>

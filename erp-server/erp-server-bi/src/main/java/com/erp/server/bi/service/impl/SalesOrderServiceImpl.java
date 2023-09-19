@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.collection.ListUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -23,6 +24,7 @@ import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.plm.dto.SkuDTO;
+import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -34,6 +36,7 @@ import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -183,7 +186,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.getBySku(query, params, settleRate);
         List<SkuSalesDTO.PagingSalesInfoDTO> list = pageData.getRecords();
-        if(CollectionUtils.isEmpty(list)){
+        if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
 
@@ -208,7 +211,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         for (SkuSalesDTO.PagingSalesInfoDTO item : list) {
             SkuDTO.SalesDTO skuInfo = skuList.stream().filter(s -> s.getSkuNo().equals(item.getSkuNo())).
                     findFirst().orElse(null);
-            if(Objects.nonNull(skuInfo)){
+            if (Objects.nonNull(skuInfo)) {
                 item.setFirstOrderDate(skuInfo.getFirstOrderDate());
                 item.setSaleStateName(skuInfo.getSaleStateName());
             }
@@ -632,7 +635,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         XyAxesResultVO result = new XyAxesResultVO();
         //查询sku 分类以及分类下对应的skuno
-        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList();
+        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList(Collections.emptyList());
         int skuCategorySize = skuCategoryList.size();
         //列名
         List<XAxesVO> columnList = new ArrayList<>(skuCategorySize + 1);
@@ -1075,9 +1078,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
-    public StatisticalDataVO byCategory(BiFilterDTO dto) {
+    public StatisticalDataVO byCategory(BiCategoryDTO.FirstCategoryParamsDTO dto) {
+        //获取到一级类目列表
+        List<BasicCategoryEntity> categoryList = plmTaskFeign.listParentCategory();
+        List<String> categoryIdList=categoryList.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
+        dto.setCategoryIdList(categoryIdList);
         //查询sku 分类以及分类下对应的skuno
-        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList();
+        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList(categoryIdList);
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
         List<SalesBaseVO> list = baseMapper.byCategory(dto, settleRate);
@@ -1085,7 +1092,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         statistical.setChartType(ChartType.BAR);
         statistical.setName("销售品类排行");
         ChartVO chart = new ChartVO();
-        List<Object> xAxisList = new ArrayList<>(skuCategoryList.size());
+        List<String> xAxisList = categoryList.stream().map(BasicCategoryEntity::getName).collect(Collectors.toList());
         List<SeriesVO<Object>> seriesList = new ArrayList<>(10);
         //只有一个柱子
         SeriesVO<Object> series = new SeriesVO();
@@ -1093,7 +1100,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<Object> dataList = new ArrayList<>(10);
         for (SkuCategoryVO item : skuCategoryList) {
             List<String> skuList = item.getSkuList();
-            xAxisList.add(item.getName());
             BigDecimal totalSales = list.stream().filter(
                             s -> skuList.contains(s.getFlagNo()) && s.getSales() != null
                     ).map(SalesBaseVO::getSales).
@@ -1701,7 +1707,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         List<ProductNewAndOldVO> resultList = new ArrayList<>(10);
         //查询sku 分类以及分类下对应的skuno
-        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList();
+        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList(Collections.emptyList());
         List<SalesFlagVO> list = baseMapper.byCategoryNewAndOld(dto, settleRate);
         for (SkuCategoryVO item : skuCategoryList) {
             ProductNewAndOldVO vo = new ProductNewAndOldVO();
@@ -1833,7 +1839,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         StatisticalDataVO statistical = new StatisticalDataVO();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        List<SalesBaseVO> list = baseMapper.byCategory(dto, settleRate);
+        List<SalesBaseVO> list = baseMapper.byCategory((BiCategoryDTO.FirstCategoryParamsDTO) dto, settleRate);
         //获取到sku 属性分类
         List<SkuCategoryVO> itemPropertyList = productDetailService.getSkuPropertyList();
         //自研

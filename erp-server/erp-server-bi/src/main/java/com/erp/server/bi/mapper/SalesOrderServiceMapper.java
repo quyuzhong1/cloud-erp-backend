@@ -88,7 +88,13 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
     List<ShopSalesVO> byShopCategory(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesBaseVO> byCategory(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
+    /**
+     * 一级分类的 销售额
+     * @param dto
+     * @param settleRate
+     * @return
+     */
+    List<SalesBaseVO> byCategory(@Param("params") BiCategoryDTO.FirstCategoryParamsDTO dto,@Param("settleRate") String settleRate);
 
     List<SalesCountVO> byPlatform(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 

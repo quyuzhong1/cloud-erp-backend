@@ -54,6 +54,12 @@ public class BiFilterDTO extends SortDTO {
     private LocalDateTime endTime;
 
     /**
+     * 1 新品
+     * 0 老品
+     */
+    private Integer productSign;
+
+    /**
      * 0 CNY实时  1 CNY结算  2原币种
      * 对应枚举 SettleMethodEnum
      */

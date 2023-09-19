@@ -1,9 +1,11 @@
 package com.erp.server.bi.service.impl;
 
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.model.bi.dto.BiCategoryDTO;
 import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.entity.BiProductInfoEntity;
 import com.erp.model.bi.vo.SkuCategoryVO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.bi.mapper.BiProductDetailMapper;
 import com.erp.server.bi.service.BiProductDetailService;
 import com.erp.server.bi.service.BiProductInfoService;
@@ -32,6 +34,7 @@ public class BiProductDetailServiceImpl extends SuperServiceImpl<BiProductDetail
     @Resource
     private BiProductInfoService biProductInfoService;
 
+
     /**
      * 获取分类一级下面的sku 信息
      *
@@ -41,18 +44,19 @@ public class BiProductDetailServiceImpl extends SuperServiceImpl<BiProductDetail
      * @date 2023-04-21 10:20
      */
     @Override
-    public List<SkuCategoryVO> getSkuCategoryList() {
-        List<BiProductInfoEntity> productList = biProductInfoService.list();
-        Map<String, List<BiProductInfoEntity>> productMap = productList.parallelStream().
-                collect(Collectors.groupingBy(BiProductInfoEntity::getCategory));
-        List<SkuCategoryVO> resultList = new ArrayList<>(productMap.size());
-        List<BiProductDetailEntity> detailList = this.list();
-        for (Map.Entry<String, List<BiProductInfoEntity>> item : productMap.entrySet()) {
+    public List<SkuCategoryVO> getSkuCategoryList(List<String> categoryIdList) {
+        if (CollectionUtils.isEmpty(categoryIdList)) {
+            return Collections.emptyList();
+        }
+        List<BiCategoryDTO.ProductCategoryDTO> productCategoryList = baseMapper.listByCategoryIds(categoryIdList);
+        Map<String, List<BiCategoryDTO.ProductCategoryDTO>> productCategoryMap = productCategoryList.parallelStream().
+                collect(Collectors.groupingBy(BiCategoryDTO.ProductCategoryDTO::getCategoryId));
+        List<SkuCategoryVO> resultList = new ArrayList<>(productCategoryMap.size());
+        for (Map.Entry<String, List<BiCategoryDTO.ProductCategoryDTO>> item : productCategoryMap.entrySet()) {
             SkuCategoryVO vo = new SkuCategoryVO();
-            List<BiProductInfoEntity> productInfoList = item.getValue();
-            List<String> productIds = productInfoList.stream().map(BiProductInfoEntity::getId).collect(Collectors.toList());
-            vo.setName(item.getKey());
-            List<String> skuNoList = detailList.stream().filter(d -> productIds.contains(d.getProductId())).map(BiProductDetailEntity::getSkuNo).collect(Collectors.toList());
+            List<BiCategoryDTO.ProductCategoryDTO> valueList = item.getValue();
+            List<String> skuNoList = valueList.stream().map(BiCategoryDTO.ProductCategoryDTO::getSkuNo).collect(Collectors.toList());
+            vo.setCategoryId(item.getKey());
             vo.setSkuList(skuNoList);
             resultList.add(vo);
         }
