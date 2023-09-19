@@ -1,9 +1,6 @@
 package com.erp.server.bi.service;
 
-import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.BiSkuDetailTopDTO;
-import com.erp.model.bi.dto.SkuDateFilterDTO;
-import com.erp.model.bi.dto.SkuDetailDTO;
+import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 
 import java.util.List;
@@ -54,6 +51,15 @@ public interface BiComprehensiveAnalyseService {
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
     List<SaleDetailVO> saleDetailSku(BiFilterDTO biFilterDTO);
+
+    /**
+     * 销售单价分布
+     * @Author Luo_WG
+     * @Date 2022/12/27 10:41
+     * @param biFilterDTO biFilterDTO
+     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     **/
+    List<SalesPriceRangeVO> salePriceDistribution(BiSalesFilterDTO biFilterDTO);
 
     /**
      * 销售明细表-店铺

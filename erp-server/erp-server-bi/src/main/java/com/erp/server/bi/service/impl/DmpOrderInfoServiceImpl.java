@@ -28,6 +28,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.BiSalesFilterDTO;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.dto.*;
@@ -144,6 +145,39 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         return new TargetSaleSumVO(amount.setScale(4, RoundingMode.DOWN));
     }
 
+    @Override
+    public List<SalesPriceRangeVO> salePriceDistribution(BiSalesFilterDTO dto) {
+        List<SalePriceDistributionVO> salePriceDistributionVOS = baseMapper.salePriceDistribution(dto);
+        //获取区间列表
+        List<SalesPriceRangeVO> rangeVOS = getDefaultRangeList();
+        BigDecimal totalSaleAmount = salePriceDistributionVOS.stream().filter(v -> Objects.nonNull(v.getSaleAmount()))
+                .map(SalePriceDistributionVO::getSaleAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        int totalSalesQuantity = salePriceDistributionVOS.stream().filter(v -> 0 != v.getSalesQuantity()).mapToInt(SalePriceDistributionVO::getSalesQuantity).sum();
+        //根据区间进行汇总
+        rangeVOS.forEach(salesPriceRangeVO -> {
+            List<SalePriceDistributionVO> vos = salePriceDistributionVOS.stream().filter(v -> Objects.nonNull(v.getSellPrice()))
+                    .filter(v -> (v.getSellPrice().intValue() >= salesPriceRangeVO.getStartValue()
+                            && v.getSellPrice().intValue() < salesPriceRangeVO.getEndValue())).collect(Collectors.toList());
+            salesPriceRangeVO.setSaleAmount(vos.stream().map(SalePriceDistributionVO::getSaleAmount).reduce(BigDecimal.ZERO,BigDecimal::add));
+            salesPriceRangeVO.setSaleAmountRate(salesPriceRangeVO.getSaleAmount().divide(totalSaleAmount, 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString() + "%");
+            salesPriceRangeVO.setSalesQuantity(vos.stream().mapToInt(SalePriceDistributionVO::getSalesQuantity).sum());
+            salesPriceRangeVO.setSalesQuantityRate(BigDecimal.valueOf(salesPriceRangeVO.getSalesQuantity()).divide(BigDecimal.valueOf(totalSalesQuantity), 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString() + "%");
+        });
+        return rangeVOS;
+    }
+
+    private List<SalesPriceRangeVO> getDefaultRangeList(){
+        List<SalesPriceRangeVO> rangeVOS = new ArrayList<>(8);
+        rangeVOS.add(new SalesPriceRangeVO("1",1,0,100));
+        rangeVOS.add(new SalesPriceRangeVO("2",1,100,200));
+        rangeVOS.add(new SalesPriceRangeVO("3",1,200,300));
+        rangeVOS.add(new SalesPriceRangeVO("4",1,300,400));
+        rangeVOS.add(new SalesPriceRangeVO("5",1,400,500));
+        rangeVOS.add(new SalesPriceRangeVO("6",1,500,600));
+        rangeVOS.add(new SalesPriceRangeVO("7",1,600,700));
+        rangeVOS.add(new SalesPriceRangeVO("8",1,700,-1));
+        return rangeVOS;
+    }
 
     private static QueryWrapper<DmpOrderInfoEntity> getDmpOrderInfoEntityQueryWrapper(BiFilterDTO dto) {
         QueryWrapper<DmpOrderInfoEntity> query = new QueryWrapper<>();
