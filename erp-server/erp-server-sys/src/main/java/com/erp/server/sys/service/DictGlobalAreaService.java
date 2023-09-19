@@ -44,4 +44,12 @@ public interface DictGlobalAreaService extends SuperService<DictGlobalAreaEntity
      * @return java.util.List<com.erp.model.sys.entity.DictGlobalAreaEntity>
      */
     List<DictGlobalAreaEntity> listGlobalAreaByIds(List<String> ids);
+
+    /**
+     * 获取地区列表
+     * @author Jim
+     * @date 2023-09-19 09:48
+     * @return java.util.List<com.erp.model.sys.entity.DictGlobalAreaEntity>
+     */
+    List<DictGlobalAreaEntity> listGlobalArea();
 }

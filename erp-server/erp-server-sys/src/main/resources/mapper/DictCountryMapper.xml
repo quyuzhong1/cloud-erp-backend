@@ -12,6 +12,7 @@
            dc.short_name_en,
            dc.region_code,
            dga.region_name AS areaName,
+           dc.subregion_code,
            dc.disabled
         FROM dict_country dc LEFT JOIN dict_global_area dga
         ON dc.region_code=dga.id

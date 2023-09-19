@@ -101,4 +101,14 @@ public interface BiComprehensiveAnalyseService {
      * SKU顶部详情
      */
     BiSkuDetailTopDTO skuDetailTop(SkuDetailDTO dto);
+
+    /**
+     * 区域销售分析
+     */
+    List<BiRegionAnalyzeDTO> getRegionSales(BiCountryRegionFilterDTO dto);
+
+    /**
+     * 国家销售分析
+     */
+    List<BiCountryAnalyzeDTO> getCountrySales(BiCountryRegionFilterDTO dto);
 }
