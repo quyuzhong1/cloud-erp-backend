@@ -2362,26 +2362,30 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             vo.setOldProductSales(oldProductSales);
             vo.setNewSalesQuantity(newSalesQuantity);
             vo.setOldSalesQuantity(oldSalesQuantity);
+            if (newProductSales.compareTo(BigDecimal.ZERO) > 0) {
+                vo.setNewProductSalesRatio(newProductSales.add(oldProductSales).divide(newProductSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+            }
+            if (oldProductSales.compareTo(BigDecimal.ZERO) > 0) {
+                vo.setOldProductSalesRatio(newProductSales.add(oldProductSales).divide(oldProductSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+            }
             List<BiTargetNewProductSettingDTO.DeptTargetDTO> targetNewProductSettingEntities = deptTargetDTOS.stream().filter(req -> req.getDeptId().equals(deptId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(targetNewProductSettingEntities)) {
                 BiTargetNewProductSettingDTO.DeptTargetDTO targetNewProductSalesAmount = targetNewProductSettingEntities.stream().filter(req -> MetricsEnum.SALES_AMOUNT.getCode().equals(req.getMetrics())).findFirst().orElse(null);
                 BiTargetNewProductSettingDTO.DeptTargetDTO targetNewProductSalesQty = targetNewProductSettingEntities.stream().filter(req -> MetricsEnum.SALES_QTY.getCode().equals(req.getMetrics())).findFirst().orElse(null);
                 if (targetNewProductSalesAmount.getValue() != null && targetNewProductSalesAmount.getValue().compareTo(BigDecimal.ZERO) > 0) {
-                    vo.setNewSalesAmountFinishRate(newProductSales.divide(targetNewProductSalesAmount.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                    vo.setNewSalesAmountFinishRate(newProductSales.divide(targetNewProductSalesAmount.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
                 }
                 if (targetNewProductSalesQty.getValue() != null && targetNewProductSalesQty.getValue().compareTo(BigDecimal.ZERO) > 0) {
-                    vo.setNewSalesQuantityFinishRate(MathUtil.valueOf(newSalesQuantity + "").divide(targetNewProductSalesQty.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                    vo.setNewSalesQuantityFinishRate(MathUtil.valueOf(newSalesQuantity + "").divide(targetNewProductSalesQty.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+                }
+                if (targetNewProductSalesAmount.getRate() != null && targetNewProductSalesAmount.getRate().compareTo(BigDecimal.ZERO) > 0) {
+                    vo.setNewSalesRateFinishRate(vo.getNewProductSalesRatio().divide(targetNewProductSalesAmount.getRate(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
                 }
                 vo.setNewSalesAmountTarget(targetNewProductSalesAmount.getValue());
                 vo.setNewSalesQuantityTarget(targetNewProductSalesQty.getValue());
-            }
-            if (newProductSales.compareTo(BigDecimal.ZERO) > 0) {
-                vo.setNewProductSalesRatio(newProductSales.add(oldProductSales).divide(newProductSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                vo.setNewSalesRateTarget(targetNewProductSalesAmount.getRate());
             }
 
-            if (oldProductSales.compareTo(BigDecimal.ZERO) > 0) {
-                vo.setOldProductSalesRatio(newProductSales.add(oldProductSales).divide(oldProductSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
-            }
             resultList.add(vo);
         }
         return resultList;
@@ -2440,26 +2444,32 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             vo.setOldSalesQuantity(oldItemSalesQuantity);
             vo.setNewSalesQuantity(newItemSalesQuantity);
 
+            if (newItemSales.compareTo(BigDecimal.ZERO) > 0) {
+                vo.setNewProductSalesRatio(newItemSales.add(oldItemSales).divide(newItemSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+            }
+
+            if (oldItemSales.compareTo(BigDecimal.ZERO) > 0) {
+                vo.setOldProductSalesRatio(newItemSales.add(oldItemSales).divide(oldItemSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+            }
+
             List<BiTargetNewProductSettingDTO.UserTargetDTO> targetNewProductSettingEntities = userTargetDTOS.stream().filter(req -> req.getUserId().equals(userId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(targetNewProductSettingEntities)) {
                 BiTargetNewProductSettingDTO.UserTargetDTO targetNewProductSalesAmount = targetNewProductSettingEntities.stream().filter(req -> MetricsEnum.SALES_AMOUNT.getCode().equals(req.getMetrics())).findFirst().orElse(null);
                 BiTargetNewProductSettingDTO.UserTargetDTO targetNewProductSalesQty = targetNewProductSettingEntities.stream().filter(req -> MetricsEnum.SALES_QTY.getCode().equals(req.getMetrics())).findFirst().orElse(null);
                 if (targetNewProductSalesAmount.getValue() != null && targetNewProductSalesAmount.getValue().compareTo(BigDecimal.ZERO) > 0) {
-                    vo.setNewSalesAmountFinishRate(newItemSales.divide(targetNewProductSalesAmount.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                    vo.setNewSalesAmountFinishRate(newItemSales.divide(targetNewProductSalesAmount.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
                 }
                 if (targetNewProductSalesQty.getValue() != null && targetNewProductSalesQty.getValue().compareTo(BigDecimal.ZERO) > 0) {
-                    vo.setNewSalesQuantityFinishRate(MathUtil.valueOf(newItemSalesQuantity + "").divide(targetNewProductSalesQty.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                    vo.setNewSalesQuantityFinishRate(MathUtil.valueOf(newItemSalesQuantity + "").divide(targetNewProductSalesQty.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+                }
+                if (targetNewProductSalesAmount.getRate() != null && targetNewProductSalesAmount.getRate().compareTo(BigDecimal.ZERO) > 0) {
+                    vo.setNewSalesRateFinishRate(vo.getNewProductSalesRatio().divide(targetNewProductSalesAmount.getRate(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
                 }
                 vo.setNewSalesAmountTarget(targetNewProductSalesAmount.getValue());
                 vo.setNewSalesQuantityTarget(targetNewProductSalesQty.getValue());
-            }
-            if (newItemSales.compareTo(BigDecimal.ZERO) > 0) {
-                vo.setNewProductSalesRatio(newItemSales.add(oldItemSales).divide(newItemSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
+                vo.setNewSalesRateTarget(targetNewProductSalesAmount.getRate());
             }
 
-            if (oldItemSales.compareTo(BigDecimal.ZERO) > 0) {
-                vo.setOldProductSalesRatio(newItemSales.add(oldItemSales).divide(oldItemSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100) + "%");
-            }
             resultList.add(vo);
         }
         return resultList;
