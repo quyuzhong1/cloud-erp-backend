@@ -1,8 +1,11 @@
 package com.erp.model.bi.dto;
 
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.bi.enums.DateSalesTrendSearchTypeEnum;
+import com.erp.model.bi.enums.MetricsEnum;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 /**
@@ -17,9 +20,13 @@ public class DateSalesTrendDTO {
     public static class SearchDTO extends BiFilterDTO {
         /**
          * 搜索类型：/bi/common/enumDropDown?type=DateSalesTrendSearchType
-         * 描述：dept 事业部，
-         *  user 人员，
+         * 描述：salesAmount 销售额，
+         *  salesQuantity 销量，
+         *  financeSalesQuantity 财务销售额，
+         *  salesPrice 客单价
          */
+        @NotBlank(message = "搜索类型不能为空")
+        @StateEnumValue(clazz = DateSalesTrendSearchTypeEnum.class, message = "搜索类型有误")
         private String searchType;
 
         /**
