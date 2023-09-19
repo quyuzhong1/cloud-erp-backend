@@ -9,6 +9,7 @@ import com.erp.server.bi.service.BiDictService;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -54,6 +55,15 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
     @Override
     public Boolean insert(BiDictEntity biDict) {
         return this.save(biDict);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean batchAdd(List<BiDictEntity> dictEntities) {
+        if (CollectionUtils.isNotEmpty(dictEntities)) {
+            return this.saveOrUpdateBatch(dictEntities);
+        }
+        return Boolean.TRUE;
     }
 
     /**

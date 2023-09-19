@@ -84,23 +84,35 @@ public class BiDictController extends BaseController {
      */
     @GetMapping("/list")
     public ApiResult list(String type) {
-        List<Map<String,Object>> list = this.biDictService.listByType(type);
+        List<Map<String, Object>> list = this.biDictService.listByType(type);
         return success(list);
     }
 
     /**
      * 根据分类查询值和编码
-     * @author Will
-     * @date: 2023/9/18 16:43
+     *
      * @param type
      * @return ApiResult
+     * @author Will
+     * @date: 2023/9/18 16:43
      */
     @GetMapping("/listValue")
     public ApiResult listValue(String type) {
-        List<Map<String,Object>> list = this.biDictService.listValueByType(type);
+        List<Map<String, Object>> list = this.biDictService.listValueByType(type);
         return success(list);
     }
 
 
+    /**
+     * 批量新增字典
+     *
+     * @param dictEntities 实体
+     * @return 新增结果
+     */
+    @PostMapping("/batchAdd")
+    public ApiResult add(@RequestBody List<BiDictEntity> dictEntities) {
+        Boolean flag = this.biDictService.batchAdd(dictEntities);
+        return flag == true ? success() : failure();
+    }
 }
 
