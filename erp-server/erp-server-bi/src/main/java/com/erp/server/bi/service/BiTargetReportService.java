@@ -2,6 +2,7 @@ package com.erp.server.bi.service;
 
 import com.erp.model.bi.dto.TargetFinishDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
 
 /**
@@ -19,4 +20,9 @@ public interface BiTargetReportService {
      * @return LinkedHashMap<Object>
      */
     LinkedHashMap<String, Object> targetFinish(TargetFinishDTO.ParamDTO dto);
+
+    /**
+     * 导出
+     */
+    void exportExcel(TargetFinishDTO.ParamDTO dto, HttpServletResponse response);
 }
