@@ -6,10 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.BiSkuDetailTopDTO;
-import com.erp.model.bi.dto.SkuDateFilterDTO;
-import com.erp.model.bi.dto.SkuDetailDTO;
+import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
@@ -239,6 +236,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             }
         }
         return saleDetailList;
+    }
+
+    @Override
+    public List<SalesPriceRangeVO> salePriceDistribution(BiSalesFilterDTO biFilterDTO) {
+        return dmpOrderInfoService.salePriceDistribution(biFilterDTO);
     }
 
     /**

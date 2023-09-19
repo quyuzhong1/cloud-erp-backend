@@ -1,10 +1,9 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.dto.DateFilterDTO;
-import com.erp.model.bi.dto.NewAndOldSalesSearchDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 
@@ -25,11 +24,11 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
     StatisticalDataVO getMonthSales(BiFilterDTO dto);
 
     /**
-     * 一级模块 sku 销售额
+     * 一级模块 sku 销售额 分页
      * @param dto
      * @return
      */
-    List<SalesVO> getBySku(BiFilterDTO dto);
+    PagingVO<SkuSalesDTO.PagingSalesInfoDTO> queryByPageBySku(PagingDTO<SkuSalesDTO.SearchSkuDTO> dto);
 
 
     /**
@@ -101,12 +100,17 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
     List<SalesCountVO> byCountry(BiFilterDTO dto);
 
     /**
-     * 一级模块  品类销售额
+     * 一级模块  一级类目销售额
      * @param dto
      * @return
      */
-    StatisticalDataVO byCategory(BiFilterDTO dto);
+    StatisticalDataVO byCategory(BiCategoryDTO.FirstCategoryParamsDTO dto);
 
+    /**
+     * 品类销售额
+     * @param dto
+     * @return
+     */
     XyAxesResultVO byShopCategory(BiFilterDTO dto);
 
     List<SalesCountVO> byBrand(BiFilterDTO dto);

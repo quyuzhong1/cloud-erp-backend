@@ -10,15 +10,17 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.common.business.vo.SeriesVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.business.vo.PagingVO;
-import com.common.business.vo.SeriesVO;
+import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
@@ -91,6 +93,36 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
+    public List<BiDataSourceCostDTO.ListDTO> listBiDataSourceCost (BiDataSourceCostDTO.GroupDTO dto) {
+        // 数据字典获取主营收入  成本合计  销售费用小计 的value
+        List<String> dictValues = dto.getCostTypeList();
+        // 获取成本详情ids
+        List<BiDataSourceCostEntity> dataSourceCostList = listCostList(dto);
+        List<String> costIds = dataSourceCostList.stream().map(BiDataSourceCostEntity::getId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(costIds)) {
+            return Collections.EMPTY_LIST;
+        }
+        // 获取详情数据并转为 map 计算
+        HashMap<String, Map<String, BigDecimal>> dataSourceCostDetailMap = biDataSourceCostDetailService.convertListByCostIds(costIds, dictValues);
+        if(CollectionUtil.isEmpty(dataSourceCostDetailMap)){
+            return Collections.EMPTY_LIST;
+        }
+        List<BiDataSourceCostDTO.ListDTO> resultList = new ArrayList<>();
+        for (BiDataSourceCostEntity biDataSourceCostEntity : dataSourceCostList) {
+            BiDataSourceCostDTO.ListDTO listDTO = new BiDataSourceCostDTO.ListDTO();
+            BeanMapperUtils.copy(biDataSourceCostEntity,listDTO);
+            Map<String, BigDecimal> map = dataSourceCostDetailMap.get(biDataSourceCostEntity.getId());
+            if (ObjectUtils.isEmpty(map)) {
+                continue;
+            }
+            listDTO.setMap(map);
+            resultList.add(listDTO);
+        }
+        return resultList;
+    }
+
+
+    @Override
     public TargetSaleSumVO sumSalesProfit(BiFilterDTO dto) {
         // 数据字典获取主营收入  成本合计  销售费用小计 的value
         List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome", "cost_totalCost", "cost_saleExpenses"));
@@ -124,6 +156,25 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         return new TargetSaleSumVO(resultAmount);
     }
 
+    /**
+     * 查询成本数据
+     */
+    private List<BiDataSourceCostEntity> listCostList (BiDataSourceCostDTO.GroupDTO dto) {
+        List<BiDataSourceCostEntity> dataSourceCostList = lambdaQuery()
+                .in(CollectionUtil.isNotEmpty(dto.getSite()), BiDataSourceCostEntity::getSite, dto.getSite())
+                .in(CollectionUtil.isNotEmpty(dto.getShopName()), BiDataSourceCostEntity::getShopName, dto.getShopName())
+                .in(CollectionUtil.isNotEmpty(dto.getDepartment()), BiDataSourceCostEntity::getDeptName, dto.getDepartment())
+                .in(CollectionUtil.isNotEmpty(dto.getPlatform()), BiDataSourceCostEntity::getPlatformName, dto.getPlatform())
+                .in(CollectionUtil.isNotEmpty(dto.getShopName()), BiDataSourceCostEntity::getShopName, dto.getShopName())
+                .in(CollectionUtil.isNotEmpty(dto.getUserId()), BiDataSourceCostEntity::getChargeId, dto.getUserId())
+                .last(StrUtil.isNotBlank(dto.getPermissionSql()), dto.getPermissionSql())
+                .list();
+        return dataSourceCostList;
+    }
+
+    /**
+     * 获取最新月的成本数据
+     */
     private List<BiDataSourceCostEntity> getCostList(BiFilterDTO dto) {
         // 查询最新月份数据
         BiDataSourceCostEntity maxMonthEntity = getMaxMonth();

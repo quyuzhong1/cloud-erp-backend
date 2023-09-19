@@ -1,10 +1,9 @@
 package com.erp.server.bi.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.dto.DateFilterDTO;
-import com.erp.model.bi.dto.NewAndOldSalesSearchDTO;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -24,7 +23,13 @@ import java.util.Map;
 public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity> {
     List<SalesFlagVO> getMonthSales(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate,@Param("timeFlag")String timeFlag);
 
-    List<SalesVO> getBySku(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
+    /**
+     * 获取sku 销售额
+      * @param dto
+     * @param settleRate
+     * @return
+     */
+    IPage<SkuSalesDTO.PagingSalesInfoDTO> getBySku(Page query, @Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
 
     /**
@@ -34,7 +39,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      * @param findTime
      * @return
      */
-    List<SalesBaseVO> getLastDays(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate ,@Param("findTime") String  findTime);
+    List<SalesBaseVO> getLastDays(@Param("params") SkuSalesDTO.SearchSkuDTO dto,@Param("settleRate") String settleRate ,@Param("findTime") String  findTime);
 
 
     List<SalesVO> getBySpu(@Param("params") BiFilterDTO dto);
@@ -83,7 +88,13 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
     List<ShopSalesVO> byShopCategory(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesBaseVO> byCategory(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
+    /**
+     * 一级分类的 销售额
+     * @param dto
+     * @param settleRate
+     * @return
+     */
+    List<SalesBaseVO> byCategory(@Param("params") BiCategoryDTO.FirstCategoryParamsDTO dto,@Param("settleRate") String settleRate);
 
     List<SalesCountVO> byPlatform(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 

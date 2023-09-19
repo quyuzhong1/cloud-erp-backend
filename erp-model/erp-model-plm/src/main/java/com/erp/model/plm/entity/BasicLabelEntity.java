@@ -32,8 +32,8 @@ public class BasicLabelEntity extends BaseEntity<BasicLabelEntity> {
     /**
     * 颜色
     */
-    @TableField("colour")
-    private String colour;
+    @TableField("color")
+    private String color;
     /**
     * 标签级别 private 私有，company 公司
     */
@@ -45,7 +45,7 @@ public class BasicLabelEntity extends BaseEntity<BasicLabelEntity> {
 
     public static final String TYPE = "type";
 
-    public static final String COLOUR = "colour";
+    public static final String COLOR = "color";
 
     public static final String LEVEL = "level";
 

@@ -308,4 +308,10 @@ public interface PlmTaskFeign {
      */
     @GetMapping("feign/product/listParentCategory")
     List<BasicCategoryEntity> listParentCategory();
+
+    /**
+     * 获取到sku 销售信息
+     */
+    @PostMapping("feign/product/listSkuSalesBySkuNos")
+    List<SkuDTO.SalesDTO> listSkuSalesBySkuNos(List<String> skuNoList);
 }

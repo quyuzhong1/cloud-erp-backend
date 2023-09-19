@@ -23,7 +23,7 @@ public interface BiProductDetailService extends SuperService<BiProductDetailEnti
      * @param
      * @return java.util.List<com.erp.model.bi.vo.SkuCategoryVO>
      */
-    List<SkuCategoryVO> getSkuCategoryList();
+    List<SkuCategoryVO> getSkuCategoryList(List<String> categoryIdList);
 
 
     /**
@@ -50,4 +50,11 @@ public interface BiProductDetailService extends SuperService<BiProductDetailEnti
      * @return
      */
     BiProductDetailEntity getBySkuNo(String skuNo);
+
+    /**
+     * 根据sku no list 获取信息
+     * @param skuNoList
+     * @return
+     */
+    List<BiProductDetailEntity> listBySkuNoList(List<String> skuNoList);
 }

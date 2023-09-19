@@ -1,8 +1,13 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.collection.ListUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.ChartVO;
+import com.common.business.vo.PagingVO;
 import com.common.business.vo.SeriesVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -12,12 +17,16 @@ import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.BiSalesRadioDTO;
 import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.dto.*;
+import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.TargetMetricsSearchTypeEnum;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.plm.dto.SkuDTO;
+import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.constant.ChartType;
@@ -27,6 +36,7 @@ import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -73,6 +83,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     @Autowired
     private YearMonthValueContext context;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
 
     @Override
@@ -164,41 +177,58 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
-    public List<SalesVO> getBySku(BiFilterDTO dto) {
+    public PagingVO<SkuSalesDTO.PagingSalesInfoDTO> queryByPageBySku(PagingDTO<SkuSalesDTO.SearchSkuDTO> dto) {
+        SkuSalesDTO.SearchSkuDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
         LocalDate nowDate = LocalDate.now();
         //获取到结算汇率
-        String settleRate = getSettleRate(dto.getSettleMethod());
-        List<SalesVO> resultList = baseMapper.getBySku(dto, settleRate);
+        String settleRate = getSettleRate(params.getSettleMethod());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.getBySku(query, params, settleRate);
+        List<SkuSalesDTO.PagingSalesInfoDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+
         LocalDateTime nowTime = LocalDateTime.now();
         LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 29);
-        dto.setStartTime(beforeThirtyDays);
-        dto.setEndTime(nowTime);
+        params.setStartTime(beforeThirtyDays);
+        params.setEndTime(nowTime);
         String findTime = "delivery_time";
-        if (dto.getTimeType() != null && dto.getTimeType() == 0) {
+        if (params.getTimeType() != null && params.getTimeType() == 0) {
             findTime = "platform_create_time";
         }
         //查询进三十天信息
-        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(dto, settleRate, findTime);
+        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(params, settleRate, findTime);
         LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
-        dto.setStartTime(beforeSevenDays);
-        dto.setEndTime(nowTime);
+        params.setStartTime(beforeSevenDays);
+        params.setEndTime(nowTime);
 
         //查询进七天信息
-        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(dto, settleRate, findTime);
-        for (SalesVO item : resultList) {
+        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(params, settleRate, findTime);
+        List<String> skuNoList = list.stream().map(SkuSalesDTO.PagingSalesInfoDTO::getSkuNo).collect(Collectors.toList());
+        List<SkuDTO.SalesDTO> skuList = plmTaskFeign.listSkuSalesBySkuNos(skuNoList);
+        for (SkuSalesDTO.PagingSalesInfoDTO item : list) {
+            SkuDTO.SalesDTO skuInfo = skuList.stream().filter(s -> s.getSkuNo().equals(item.getSkuNo())).
+                    findFirst().orElse(null);
+            if (Objects.nonNull(skuInfo)) {
+                item.setFirstOrderDate(skuInfo.getFirstOrderDate());
+                item.setSaleStateName(skuInfo.getSaleStateName());
+            }
+
             List<Integer> salesTrend = new ArrayList<>(7);
             //近三十天
             Integer lastThirtyDaysSalesQuantity = lastThirtyDays.stream().
-                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getName())).
+                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getSkuNo())).
                     mapToInt(SalesBaseVO::getSalesQuantity).sum();
             //近七天
             Integer lastSevenDaysSalesQuantity = lastSevenDays.stream().
                     filter(b -> StringUtils.isNotBlank(b.getFlagNo()) &&
-                            b.getFlagNo().equals(item.getName())).
+                            b.getFlagNo().equals(item.getSkuNo())).
                     mapToInt(SalesBaseVO::getSalesQuantity).sum();
 
-            item.setLastSevenDaysSalesQuantity(lastSevenDaysSalesQuantity);
-            item.setLastThirtyDaysSalesQuantity(lastThirtyDaysSalesQuantity);
+            item.setLastSevenDaysSalesQty(lastSevenDaysSalesQuantity);
+            item.setLastThirtyDaysSalesQty(lastThirtyDaysSalesQuantity);
 
             for (int i = 6; i >= 0; i--) {
                 LocalDate flagDay = nowDate.minus(i, ChronoUnit.DAYS);
@@ -207,7 +237,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 Integer salesQuantity = lastSevenDays.stream().
                         filter(b -> b.getFlagDate().isAfter(startTime)
                                 && b.getFlagDate().isBefore(endTime)
-                                && b.getFlagNo().equals(item.getName())
+                                && b.getFlagNo().equals(item.getSkuNo())
                                 && b.getSales() != null
                         ).mapToInt(SalesBaseVO::getSalesQuantity).sum();
                 salesTrend.add(salesQuantity);
@@ -220,10 +250,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 BigDecimal perCustomerTransaction = sales.divide(new BigDecimal(orderCount), 2, BigDecimal.ROUND_HALF_UP);
                 item.setPerCustomerTransaction(perCustomerTransaction);
             }
-
         }
-
-        return resultList;
+        return new PagingVO<>(pageData);
     }
 
     /**
@@ -607,7 +635,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         XyAxesResultVO result = new XyAxesResultVO();
         //查询sku 分类以及分类下对应的skuno
-        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList();
+        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList(Collections.emptyList());
         int skuCategorySize = skuCategoryList.size();
         //列名
         List<XAxesVO> columnList = new ArrayList<>(skuCategorySize + 1);
@@ -1050,9 +1078,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
-    public StatisticalDataVO byCategory(BiFilterDTO dto) {
+    public StatisticalDataVO byCategory(BiCategoryDTO.FirstCategoryParamsDTO dto) {
+        //获取到一级类目列表
+        List<BasicCategoryEntity> categoryList = plmTaskFeign.listParentCategory();
+        List<String> categoryIdList=categoryList.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
+        dto.setCategoryIdList(categoryIdList);
         //查询sku 分类以及分类下对应的skuno
-        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList();
+        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList(categoryIdList);
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
         List<SalesBaseVO> list = baseMapper.byCategory(dto, settleRate);
@@ -1060,7 +1092,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         statistical.setChartType(ChartType.BAR);
         statistical.setName("销售品类排行");
         ChartVO chart = new ChartVO();
-        List<Object> xAxisList = new ArrayList<>(skuCategoryList.size());
+        List<String> xAxisList = categoryList.stream().map(BasicCategoryEntity::getName).collect(Collectors.toList());
         List<SeriesVO<Object>> seriesList = new ArrayList<>(10);
         //只有一个柱子
         SeriesVO<Object> series = new SeriesVO();
@@ -1068,7 +1100,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<Object> dataList = new ArrayList<>(10);
         for (SkuCategoryVO item : skuCategoryList) {
             List<String> skuList = item.getSkuList();
-            xAxisList.add(item.getName());
             BigDecimal totalSales = list.stream().filter(
                             s -> skuList.contains(s.getFlagNo()) && s.getSales() != null
                     ).map(SalesBaseVO::getSales).
@@ -1676,7 +1707,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         List<ProductNewAndOldVO> resultList = new ArrayList<>(10);
         //查询sku 分类以及分类下对应的skuno
-        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList();
+        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList(Collections.emptyList());
         List<SalesFlagVO> list = baseMapper.byCategoryNewAndOld(dto, settleRate);
         for (SkuCategoryVO item : skuCategoryList) {
             ProductNewAndOldVO vo = new ProductNewAndOldVO();
@@ -1808,7 +1839,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         StatisticalDataVO statistical = new StatisticalDataVO();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        List<SalesBaseVO> list = baseMapper.byCategory(dto, settleRate);
+        List<SalesBaseVO> list = baseMapper.byCategory((BiCategoryDTO.FirstCategoryParamsDTO) dto, settleRate);
         //获取到sku 属性分类
         List<SkuCategoryVO> itemPropertyList = productDetailService.getSkuPropertyList();
         //自研

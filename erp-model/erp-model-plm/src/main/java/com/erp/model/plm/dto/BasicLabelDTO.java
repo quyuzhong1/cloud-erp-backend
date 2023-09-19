@@ -48,7 +48,7 @@ public class BasicLabelDTO implements Serializable {
         /**
         * 颜色
         */
-        private String colour;
+        private String color;
 
         /**
         * 标签级别 private 私有，company 公司
@@ -136,7 +136,7 @@ public class BasicLabelDTO implements Serializable {
         */
         @NotBlank(message = "颜色不能为空")
         @Size(max = 50,message = "颜色最大长度不能超过50位")
-        private String colour;
+        private String color;
 
         /**
         * 标签级别 private 私有，company 公司

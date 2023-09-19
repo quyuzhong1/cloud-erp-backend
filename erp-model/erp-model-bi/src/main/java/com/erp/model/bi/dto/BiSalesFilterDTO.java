@@ -1,8 +1,6 @@
 package com.erp.model.bi.dto;
 
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.dto.base.SortDTO;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -22,49 +20,32 @@ import java.util.List;
  * @author Cloud
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @ToString
 @NoArgsConstructor
-public class BiFilterDTO extends SortDTO {
+public class BiSalesFilterDTO extends PermissionsDTO {
 
 
     /**
      * 0 -订单时间 1-发货时间
      * 对应枚举 TimeTypeEnum
      */
-    @NotNull(message = "时间类型不能为空")
-    @NotNull(message = "时间类型不能为空", groups = SelectTargetModule.class)
     private Integer timeType;
 
     /**
      * 开始日期
      */
-/*    @NotNull(message = "开始时间不能为空")
-    @NotNull(message = "开始时间不能为空", groups = SelectTargetModule.class)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")*/
     private LocalDateTime startTime;
-
-
-
     /**
      * 结束日期
      */
-/*    @NotNull(message = "开始时间不能为空")
-    @NotNull(message = "开始时间不能为空", groups = SelectTargetModule.class)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")*/
     private LocalDateTime endTime;
 
     /**
-     * 1 新品
-     * 0 老品
+     * 区间类型 1 国内 2国外
      */
-    private Integer productSign;
-
-    /**
-     * 0 CNY实时  1 CNY结算  2原币种
-     * 对应枚举 SettleMethodEnum
-     */
-    @NotNull(message = "结算方式不能为空")
-    private Integer settleMethod;
+    @NotNull(message = "区间类型不能为空")
+    private Integer rangeType;
 
     /**
      * 事业部
@@ -82,7 +63,7 @@ public class BiFilterDTO extends SortDTO {
     private List<String> site;
 
     /**
-     * 店铺
+     * 店铺编号
      */
     private List<String> shopName;
 
@@ -108,16 +89,6 @@ public class BiFilterDTO extends SortDTO {
     private List<String> userId;
 
     /**
-     * 是否可以支持源币种
-     *
-     * @param dto
-     * @return
-     */
-    public static Boolean validOriginalCurrency(BiFilterDTO dto) {
-        return CollectionUtils.isNotEmpty(dto.getSite()) || CollectionUtils.isNotEmpty(dto.getSku()) || CollectionUtils.isNotEmpty(dto.getShopName());
-    }
-
-    /**
      * 默认当月开始时间
      */
     public LocalDateTime getStartTime() {
@@ -141,19 +112,4 @@ public class BiFilterDTO extends SortDTO {
      * 是否为新品 bool
      */
     private Boolean hasNewSign;
-
-    /**
-     * 排行数量
-     */
-    private Integer rankNum = 5;
-
-    /**
-     * 排序字段
-     */
-    private String rankKey;
-
-
-    public interface SelectTargetModule {
-    }
-
 }

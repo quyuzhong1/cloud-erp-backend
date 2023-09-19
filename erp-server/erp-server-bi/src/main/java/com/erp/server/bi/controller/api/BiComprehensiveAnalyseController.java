@@ -2,10 +2,7 @@ package com.erp.server.bi.controller.api;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.BiSkuDetailTopDTO;
-import com.erp.model.bi.dto.SkuDateFilterDTO;
-import com.erp.model.bi.dto.SkuDetailDTO;
+import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 import com.erp.server.bi.service.BiComprehensiveAnalyseService;
 import org.springframework.validation.annotation.Validated;
@@ -97,6 +94,19 @@ public class BiComprehensiveAnalyseController extends BaseController {
     public ApiResult<List<SaleDetailVO>> saleDetailSku(@RequestBody @Validated BiFilterDTO biFilterDTO) {
         List<SaleDetailVO> saleDetailVOList = biComprehensiveAnalyseService.saleDetailSku(biFilterDTO);
         return success(saleDetailVOList);
+    }
+    /**
+     * 销售单价分布
+     * @Author zdy
+     * @Date 2022/12/27 10:41
+     * @param biFilterDTO biFilterDTO
+     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     **/
+    @PostMapping("/salePriceDistribution")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
+    public ApiResult<List<SalesPriceRangeVO>> salePriceDistribution(@RequestBody @Validated BiSalesFilterDTO biFilterDTO) {
+        List<SalesPriceRangeVO> salePriceDistributionVOS = biComprehensiveAnalyseService.salePriceDistribution(biFilterDTO);
+        return success(salePriceDistributionVOS);
     }
 
     /**

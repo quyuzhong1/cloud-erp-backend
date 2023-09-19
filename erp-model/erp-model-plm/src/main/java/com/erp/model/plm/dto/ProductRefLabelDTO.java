@@ -117,7 +117,7 @@ public class ProductRefLabelDTO implements Serializable {
         /**
          * 标签颜色
          */
-        private String colour;
+        private String color;
         /**
          * 标签等级
          */
