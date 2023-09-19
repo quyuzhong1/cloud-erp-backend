@@ -29,7 +29,9 @@ import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.BiSalesFilterDTO;
+import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
+import com.erp.model.bi.enums.SaleContryTypeEnum;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
@@ -88,6 +90,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     private SysUserFeign sysUserFeign;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    
+    @Resource
+    private BiDictService biDictService;
 
     @Override
     public PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpOrderInfoSearchDTO> dto) {
@@ -149,23 +154,56 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public List<SalesPriceRangeVO> salePriceDistribution(BiSalesFilterDTO dto) {
         List<SalePriceDistributionVO> salePriceDistributionVOS = baseMapper.salePriceDistribution(dto);
         //获取区间列表
-        List<SalesPriceRangeVO> rangeVOS = getDefaultRangeList();
+        List<SalesPriceRangeVO> rangeVOS = getRangeList(dto.getRangeType());
         BigDecimal totalSaleAmount = salePriceDistributionVOS.stream().filter(v -> Objects.nonNull(v.getSaleAmount()))
                 .map(SalePriceDistributionVO::getSaleAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         int totalSalesQuantity = salePriceDistributionVOS.stream().filter(v -> 0 != v.getSalesQuantity()).mapToInt(SalePriceDistributionVO::getSalesQuantity).sum();
+        BigDecimal maxSellPrice = salePriceDistributionVOS.stream().map(SalePriceDistributionVO::getSellPrice).max(BigDecimal::compareTo).get();
         //根据区间进行汇总
         rangeVOS.forEach(salesPriceRangeVO -> {
+            //防止最后范围统计不到最大单价
+            if (salesPriceRangeVO.getEndValue() == -1){
+                salesPriceRangeVO.setEndValue(maxSellPrice.intValue() + 10);
+            }
             List<SalePriceDistributionVO> vos = salePriceDistributionVOS.stream().filter(v -> Objects.nonNull(v.getSellPrice()))
                     .filter(v -> (v.getSellPrice().intValue() >= salesPriceRangeVO.getStartValue()
                             && v.getSellPrice().intValue() < salesPriceRangeVO.getEndValue())).collect(Collectors.toList());
-            salesPriceRangeVO.setSaleAmount(vos.stream().map(SalePriceDistributionVO::getSaleAmount).reduce(BigDecimal.ZERO,BigDecimal::add));
-            salesPriceRangeVO.setSaleAmountRate(salesPriceRangeVO.getSaleAmount().divide(totalSaleAmount, 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString() + "%");
+            salesPriceRangeVO.setSaleAmount(vos.stream().filter(v -> v.getSaleAmount().compareTo(BigDecimal.ZERO) != 0).map(SalePriceDistributionVO::getSaleAmount).reduce(BigDecimal.ZERO,BigDecimal::add));
+            if (totalSaleAmount.compareTo(BigDecimal.ZERO) != 0){
+                salesPriceRangeVO.setSaleAmountRate(salesPriceRangeVO.getSaleAmount().divide(totalSaleAmount, 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString() + "%");
+            }else {
+                salesPriceRangeVO.setSaleAmountRate("0%");
+            }
             salesPriceRangeVO.setSalesQuantity(vos.stream().mapToInt(SalePriceDistributionVO::getSalesQuantity).sum());
-            salesPriceRangeVO.setSalesQuantityRate(BigDecimal.valueOf(salesPriceRangeVO.getSalesQuantity()).divide(BigDecimal.valueOf(totalSalesQuantity), 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString() + "%");
+            if (0 != totalSalesQuantity){
+                salesPriceRangeVO.setSalesQuantityRate(BigDecimal.valueOf(salesPriceRangeVO.getSalesQuantity()).divide(BigDecimal.valueOf(totalSalesQuantity), 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString() + "%");
+            }else {
+                salesPriceRangeVO.setSalesQuantityRate("0%");
+            }
         });
         return rangeVOS;
     }
 
+    private List<SalesPriceRangeVO> getRangeList(Integer rangeType){
+        List<BiDictEntity> biDictEntities = null;
+        List<SalesPriceRangeVO> rangeVOS = new ArrayList<>();
+        switch (rangeType){
+            case 1:
+                biDictEntities = biDictService.getByType(SaleContryTypeEnum.DOMESTIC.code); 
+            case 2:
+                biDictEntities = biDictService.getByType(SaleContryTypeEnum.ABROAD.code);
+        }
+        if (CollectionUtils.isNotEmpty(biDictEntities)){
+            return getDefaultRangeList();
+        }else {
+            biDictEntities.forEach(biDictEntity -> {
+
+                rangeVOS.add(new SalesPriceRangeVO(biDictEntity.getId(),rangeType,0,100));
+            });
+        }
+        
+        return rangeVOS;
+    }
     private List<SalesPriceRangeVO> getDefaultRangeList(){
         List<SalesPriceRangeVO> rangeVOS = new ArrayList<>(8);
         rangeVOS.add(new SalesPriceRangeVO("1",1,0,100));
