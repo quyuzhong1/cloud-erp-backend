@@ -250,6 +250,10 @@ public class BiTargetNewProductSettingDTO implements Serializable {
          * 维度
          */
         private String metrics;
+        /**
+         * 占比
+         */
+        private BigDecimal rate;
     }
 
     /**
@@ -278,6 +282,10 @@ public class BiTargetNewProductSettingDTO implements Serializable {
          * 维度
          */
         private String metrics;
+        /**
+         * 占比
+         */
+        private BigDecimal rate;
     }
 
     /**
