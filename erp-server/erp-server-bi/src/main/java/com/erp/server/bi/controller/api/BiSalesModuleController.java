@@ -372,8 +372,8 @@ public class BiSalesModuleController extends BaseController {
             menuCode = "bi:module:content",
             tableAlias = "o"
     )
-    public ApiResult<StatisticalDataVO> byDate(@RequestBody @Validated DateFilterDTO biFilterDTO) {
-        StatisticalDataVO result = salesOrderService.byDate(biFilterDTO);
+    public ApiResult<StatisticalDataVO> byDate(@RequestBody @Validated DateSalesTrendDTO.SearchDTO searchDTO) {
+        StatisticalDataVO result = salesOrderService.byDate(searchDTO);
         return success(result);
     }
 
