@@ -34,27 +34,27 @@ public interface BiTargetYearMapper extends BaseMapper<BiTargetYearEntity> {
      * @date 2023-09-18 14:50
      * @param year
      * @param metrics
-     * @param deptId
+     * @param deptIdList
      * @return java.util.List<com.erp.model.bi.dto.BiTargetYearDTO.YearMonthValueDTO>
      */
-    List<BiTargetYearDTO.YearMonthValueDTO> ListDeptTargetValue(@Param("year")Integer year,@Param("metrics") String metrics,@Param("deptId") String deptId);
+    List<BiTargetYearDTO.YearMonthValueDTO> ListDeptTargetValue(@Param("year")Integer year,@Param("metrics") String metrics,@Param("deptIdList") List<String> deptIdList);
 
 
     /**
      * 获取员个目标值
      * @param year
      * @param metrics
-     * @param staffId
+     * @param staffIdList
      * @return
      */
-    List<BiTargetYearDTO.YearMonthValueDTO> ListStaffTargetValue(@Param("year")Integer year, @Param("metrics")String metrics,@Param("staffId") String staffId);
+    List<BiTargetYearDTO.YearMonthValueDTO> ListStaffTargetValue(@Param("year")Integer year, @Param("metrics")String metrics,@Param("staffIdList") List<String> staffIdList);
 
     /**
      * 获取店铺 目标值
      * @param year
      * @param metrics
-     * @param shopId
+     * @param shopIdList
      * @return
      */
-    List<BiTargetYearDTO.YearMonthValueDTO> ListShopTargetValue(@Param("year")Integer year, @Param("metrics")String metrics,@Param("shopId") String shopId);
+    List<BiTargetYearDTO.YearMonthValueDTO> ListShopTargetValue(@Param("year")Integer year, @Param("metrics")String metrics,@Param("shopIdList") List<String> shopIdList);
 }

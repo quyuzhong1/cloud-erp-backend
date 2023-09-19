@@ -167,12 +167,12 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      * @param yearStr
      * @return
      */
-    BigDecimal getYearSalesAmountByYear(@Param("params") BiTargetYearDTO.SearchDTO dto, @Param("year") String yearStr);
+    BigDecimal getYearSalesAmountByYear(@Param("params") BiTargetYearDTO.SearchDTO dto, @Param("year") String yearStr,@Param("settleRate") String settleRate);
 
     /**
      * 获取月度销售额
      * @param dto
      * @return
      */
-    BigDecimal getMonthAmount(@Param("params") BiTargetYearDTO.SearchDTO dto);
+    BigDecimal getMonthAmount(@Param("params") BiTargetYearDTO.SearchDTO dto,@Param("settleRate") String settleRate);
 }
