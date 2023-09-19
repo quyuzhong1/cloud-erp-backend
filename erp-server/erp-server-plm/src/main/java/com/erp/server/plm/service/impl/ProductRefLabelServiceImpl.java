@@ -64,6 +64,11 @@ public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabel
         return baseMapper.getLabelList(productId, labelId, skuId);
     }
 
+    @Override
+    public List<ProductRefLabelVO> getLabelListByIds(List<String> productIds, List<String> labelIds, List<String> skuIds) {
+        return baseMapper.getLabelListByIds(productIds, labelIds, skuIds);
+    }
+
 
     /**
      * 新增修改处理数据

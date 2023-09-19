@@ -7,6 +7,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.BasicLabelEntity;
+import com.erp.model.plm.vo.LabelLevelTreeVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -55,6 +56,18 @@ public class BasicLabelController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 标签列表下拉框
+     *
+     * @return com.common.core.vo.ApiResult
+     * @author zdy
+     * @date 2023-09-16 14:34
+     */
+    @PostMapping("/tree")
+    public ApiResult<List<LabelLevelTreeVO>> tree() {
+        List<LabelLevelTreeVO> list = basicLabelService.listByTree();
+        return success(list);
+    }
     /**
      * 新增基础标签
      *
