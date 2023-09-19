@@ -8,7 +8,6 @@ import com.common.core.constant.BaseStateConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.bi.dto.UpdateSubjectShareDTO;
-import com.erp.model.bi.entity.BiModulePermissionEntity;
 import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.model.bi.entity.BiSubjectShareEntity;
 import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
@@ -18,7 +17,6 @@ import com.erp.server.bi.service.BiSubjectService;
 import com.erp.server.bi.service.BiSubjectShareService;
 import com.erp.server.bi.service.CommonService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -86,15 +84,17 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
      * 获取分享给我的仪表盘id
      *
      * @param userId
+     * @param roleIdList
      * @return java.util.List<java.lang.String>
      * @author yl
      * @date 2022-12-09 11:02
      */
     @Override
-    public List<String> getShareToMeDashboardIds(String userId) {
+    public List<String> getShareToMeDashboardIds(String userId, List<String> roleIdList) {
         LambdaQueryWrapper<BiSubjectShareEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(BiSubjectShareEntity::getSubjectId);
-        queryWrapper.eq(BiSubjectShareEntity::getIdentityId, userId);
+        queryWrapper.select(BiSubjectShareEntity::getSubjectId)
+                .eq(BiSubjectShareEntity::getIdentityId, userId)
+        ;
         return this.listObjs(queryWrapper, Object::toString);
     }
 
