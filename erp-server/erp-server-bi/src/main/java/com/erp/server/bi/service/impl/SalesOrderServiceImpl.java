@@ -2181,7 +2181,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         ChartVO chartVO = new ChartVO();
         List<String> siteNameList = salesList.stream().map(SalesFlagVO::getName).collect(Collectors.toList());
         //有两个
-        List<SeriesVO<Object>> seriesList = new ArrayList<>(3);
+        List<SeriesVO<Object>> seriesList = new ArrayList<>();
 
         switch (DateSalesTrendSearchTypeEnum.getEnumByCode(dto.getSearchType())) {
             case SALES_AMOUNT:
@@ -2210,9 +2210,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     private void dateSalesTrendRatio(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, DateTimeFormatter dateTimeFormatter, String dateType) {
         for (SalesFlagVO salesFlagVO : salesList) {
-            if (salesFlagVO.getSalesQuantity() > 0) {
-                salesFlagVO.setSalesPrice(salesFlagVO.getSales().divide(MathUtil.valueOf(salesFlagVO.getSalesQuantity() + "")));
-            }
             String parse = "";
             String prevYearDate = "";
             if ("DAY".equals(dateType)) {
