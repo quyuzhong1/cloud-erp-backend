@@ -1,13 +1,12 @@
 package com.erp.server.bi.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.dto.DateFilterDTO;
-import com.erp.model.bi.dto.NewAndOldSalesSearchDTO;
+import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 import com.erp.server.bi.service.SalesOrderService;
 import org.springframework.validation.annotation.Validated;
@@ -57,15 +56,15 @@ public class BiSalesModuleController extends BaseController {
      *
      * @return
      */
-    @PostMapping("/bySku")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id",
-            menuCode = "bi:module:content",
-            tableAlias = "o"
-    )
-    public ApiResult<List<SalesVO>> getBySku(@RequestBody @Validated BiFilterDTO dto) {
-        List<SalesVO> resultList = salesOrderService.getBySku(dto);
-        return success(resultList);
+    @PostMapping("/queryByPageBySku")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:module:content",
+//            tableAlias = "o"
+//    )
+    public ApiResult<PagingVO<SkuSalesDTO.PagingSalesInfoDTO>> queryByPageBySku(@RequestBody @Validated PagingDTO<SkuSalesDTO.SearchSkuDTO> dto) {
+        PagingVO<SkuSalesDTO.PagingSalesInfoDTO> pagingVO = salesOrderService.queryByPageBySku(dto);
+        return success(pagingVO);
     }
 
 

@@ -1,8 +1,12 @@
 package com.erp.server.bi.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.ChartVO;
+import com.common.business.vo.PagingVO;
 import com.common.business.vo.SeriesVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -12,12 +16,15 @@ import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.BiSalesRadioDTO;
 import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.dto.*;
+import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.TargetMetricsSearchTypeEnum;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.plm.dto.SkuDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.constant.ChartType;
@@ -73,6 +80,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     @Autowired
     private YearMonthValueContext context;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
 
     @Override
@@ -164,41 +174,58 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     @Override
-    public List<SalesVO> getBySku(BiFilterDTO dto) {
+    public PagingVO<SkuSalesDTO.PagingSalesInfoDTO> queryByPageBySku(PagingDTO<SkuSalesDTO.SearchSkuDTO> dto) {
+        SkuSalesDTO.SearchSkuDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
         LocalDate nowDate = LocalDate.now();
         //获取到结算汇率
-        String settleRate = getSettleRate(dto.getSettleMethod());
-        List<SalesVO> resultList = baseMapper.getBySku(dto, settleRate);
+        String settleRate = getSettleRate(params.getSettleMethod());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.getBySku(query, params, settleRate);
+        List<SkuSalesDTO.PagingSalesInfoDTO> list = pageData.getRecords();
+        if(CollectionUtils.isEmpty(list)){
+            return new PagingVO<>(pageData);
+        }
+
         LocalDateTime nowTime = LocalDateTime.now();
         LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 29);
-        dto.setStartTime(beforeThirtyDays);
-        dto.setEndTime(nowTime);
+        params.setStartTime(beforeThirtyDays);
+        params.setEndTime(nowTime);
         String findTime = "delivery_time";
-        if (dto.getTimeType() != null && dto.getTimeType() == 0) {
+        if (params.getTimeType() != null && params.getTimeType() == 0) {
             findTime = "platform_create_time";
         }
         //查询进三十天信息
-        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(dto, settleRate, findTime);
+        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(params, settleRate, findTime);
         LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
-        dto.setStartTime(beforeSevenDays);
-        dto.setEndTime(nowTime);
+        params.setStartTime(beforeSevenDays);
+        params.setEndTime(nowTime);
 
         //查询进七天信息
-        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(dto, settleRate, findTime);
-        for (SalesVO item : resultList) {
+        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(params, settleRate, findTime);
+        List<String> skuNoList = list.stream().map(SkuSalesDTO.PagingSalesInfoDTO::getSkuNo).collect(Collectors.toList());
+        List<SkuDTO.SalesDTO> skuList = plmTaskFeign.listSkuSalesBySkuNos(skuNoList);
+        for (SkuSalesDTO.PagingSalesInfoDTO item : list) {
+            SkuDTO.SalesDTO skuInfo = skuList.stream().filter(s -> s.getSkuNo().equals(item.getSkuNo())).
+                    findFirst().orElse(null);
+            if(Objects.nonNull(skuInfo)){
+                item.setFirstOrderDate(skuInfo.getFirstOrderDate());
+                item.setSaleStateName(skuInfo.getSaleStateName());
+            }
+
             List<Integer> salesTrend = new ArrayList<>(7);
             //近三十天
             Integer lastThirtyDaysSalesQuantity = lastThirtyDays.stream().
-                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getName())).
+                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getSkuNo())).
                     mapToInt(SalesBaseVO::getSalesQuantity).sum();
             //近七天
             Integer lastSevenDaysSalesQuantity = lastSevenDays.stream().
                     filter(b -> StringUtils.isNotBlank(b.getFlagNo()) &&
-                            b.getFlagNo().equals(item.getName())).
+                            b.getFlagNo().equals(item.getSkuNo())).
                     mapToInt(SalesBaseVO::getSalesQuantity).sum();
 
-            item.setLastSevenDaysSalesQuantity(lastSevenDaysSalesQuantity);
-            item.setLastThirtyDaysSalesQuantity(lastThirtyDaysSalesQuantity);
+            item.setLastSevenDaysSalesQty(lastSevenDaysSalesQuantity);
+            item.setLastThirtyDaysSalesQty(lastThirtyDaysSalesQuantity);
 
             for (int i = 6; i >= 0; i--) {
                 LocalDate flagDay = nowDate.minus(i, ChronoUnit.DAYS);
@@ -207,7 +234,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 Integer salesQuantity = lastSevenDays.stream().
                         filter(b -> b.getFlagDate().isAfter(startTime)
                                 && b.getFlagDate().isBefore(endTime)
-                                && b.getFlagNo().equals(item.getName())
+                                && b.getFlagNo().equals(item.getSkuNo())
                                 && b.getSales() != null
                         ).mapToInt(SalesBaseVO::getSalesQuantity).sum();
                 salesTrend.add(salesQuantity);
@@ -220,10 +247,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 BigDecimal perCustomerTransaction = sales.divide(new BigDecimal(orderCount), 2, BigDecimal.ROUND_HALF_UP);
                 item.setPerCustomerTransaction(perCustomerTransaction);
             }
-
         }
-
-        return resultList;
+        return new PagingVO<>(pageData);
     }
 
     /**

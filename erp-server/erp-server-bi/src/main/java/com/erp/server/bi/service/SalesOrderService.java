@@ -1,10 +1,9 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.dto.DateFilterDTO;
-import com.erp.model.bi.dto.NewAndOldSalesSearchDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 
@@ -25,11 +24,11 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
     StatisticalDataVO getMonthSales(BiFilterDTO dto);
 
     /**
-     * 一级模块 sku 销售额
+     * 一级模块 sku 销售额 分页
      * @param dto
      * @return
      */
-    List<SalesVO> getBySku(BiFilterDTO dto);
+    PagingVO<SkuSalesDTO.PagingSalesInfoDTO> queryByPageBySku(PagingDTO<SkuSalesDTO.SearchSkuDTO> dto);
 
 
     /**

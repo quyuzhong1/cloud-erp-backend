@@ -7,11 +7,13 @@ import com.erp.model.bi.vo.SkuCategoryVO;
 import com.erp.server.bi.mapper.BiProductDetailMapper;
 import com.erp.server.bi.service.BiProductDetailService;
 import com.erp.server.bi.service.BiProductInfoService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -60,10 +62,11 @@ public class BiProductDetailServiceImpl extends SuperServiceImpl<BiProductDetail
 
     /**
      * 获取品牌下面的sku 信息
-     * @author yl
-     * @date 2023-04-21 10:20
+     *
      * @param
      * @return java.util.List<com.erp.model.bi.vo.SkuCategoryVO>
+     * @author yl
+     * @date 2023-04-21 10:20
      */
     @Override
     public List<SkuCategoryVO> getSkuBrandList(List<String> brandList) {
@@ -86,13 +89,13 @@ public class BiProductDetailServiceImpl extends SuperServiceImpl<BiProductDetail
     }
 
 
-
     /**
      * 根据属性 获取到对应的sku 信息
-     * @author yl
-     * @date 2023-04-21 10:40
+     *
      * @param
      * @return java.util.List<com.erp.model.bi.vo.SkuCategoryVO>
+     * @author yl
+     * @date 2023-04-21 10:40
      */
     @Override
     public List<SkuCategoryVO> getSkuPropertyList() {
@@ -115,14 +118,29 @@ public class BiProductDetailServiceImpl extends SuperServiceImpl<BiProductDetail
 
     /**
      * 根据sku 获取详情信息
+     *
      * @param skuNo
      * @return
      */
     @Override
     public BiProductDetailEntity getBySkuNo(String skuNo) {
-        if(StringUtils.isBlank(skuNo)){
+        if (StringUtils.isBlank(skuNo)) {
             return null;
         }
-        return this.lambdaQuery().eq(BiProductDetailEntity::getSkuNo,skuNo).last("LIMIT 1").one();
+        return this.lambdaQuery().eq(BiProductDetailEntity::getSkuNo, skuNo).last("LIMIT 1").one();
+    }
+
+    /**
+     * 根据sku no list 获取信息
+     *
+     * @param skuNoList
+     * @return
+     */
+    @Override
+    public List<BiProductDetailEntity> listBySkuNoList(List<String> skuNoList) {
+        if (CollectionUtils.isEmpty(skuNoList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(BiProductDetailEntity::getSkuNo, skuNoList).list();
     }
 }

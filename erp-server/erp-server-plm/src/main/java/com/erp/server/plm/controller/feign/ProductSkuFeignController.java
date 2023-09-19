@@ -46,6 +46,8 @@ public class ProductSkuFeignController {
     private SyncKingdeeService syncKingdeeService;
 
 
+
+
     /**
      * 产品包装信息
      */
@@ -284,6 +286,12 @@ public class ProductSkuFeignController {
      */
     @GetMapping("listParentCategory")
     public List<BasicCategoryEntity> listCategoryByIds() {
-        return  basicCategoryService.listParentCategory();
+        return basicCategoryService.listParentCategory();
     }
+
+    @PostMapping("listSkuSalesBySkuNos")
+    public List<SkuDTO.SalesDTO> listSkuSalesBySkuNos(@RequestBody List<String> skuNoList) {
+        return productSaleService.listSkuSalesBySkuNos(skuNoList);
+    }
+
 }
