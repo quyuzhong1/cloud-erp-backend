@@ -93,6 +93,11 @@ public class TargetFinishDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SlotDTO {
+
+        /**
+         * 目标值
+         */
+        private BigDecimal targetValue;
         /**
          * 销量/销售额/利润/利润率
          */

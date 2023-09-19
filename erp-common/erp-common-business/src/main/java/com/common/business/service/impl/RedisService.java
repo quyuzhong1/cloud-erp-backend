@@ -1,5 +1,6 @@
 package com.common.business.service.impl;
 
+import com.common.core.utils.date.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.BoundSetOperations;
 import org.springframework.data.redis.core.HashOperations;
@@ -240,6 +241,26 @@ public class RedisService  {
     public Boolean setNx(String key, Object value, long timeout, final TimeUnit unit) {
         Boolean result = redisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);
         return result != null && result;
+    }
+
+    /**
+     * 格式话导出文件名称
+     * @param fileName
+     * @return String
+     */
+    public String getFileName(String fileName) {
+        StringBuffer sb = new StringBuffer();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(fileName);
+        sb.append(date);
+        String redisKey = "file:name:" + date;
+        Integer last = this.getCacheObject(redisKey);
+        Integer lastNo = 1;
+        if (last != null) {
+            lastNo = last + 1;
+        }
+        this.setCacheObject(redisKey, lastNo, (long) 1, TimeUnit.DAYS);
+        return sb.append(lastNo).toString();
     }
 
 }
