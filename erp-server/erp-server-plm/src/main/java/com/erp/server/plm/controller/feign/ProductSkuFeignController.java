@@ -7,6 +7,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
+import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
@@ -45,7 +46,8 @@ public class ProductSkuFeignController {
     @Resource
     private SyncKingdeeService syncKingdeeService;
 
-
+    @Resource
+    private ProductRefLabelService productRefLabelService;
 
 
     /**
@@ -294,4 +296,8 @@ public class ProductSkuFeignController {
         return productSaleService.listSkuSalesBySkuNos(skuNoList);
     }
 
+    @PostMapping("/getProductRelLabelBySkuId")
+    public List<ProductRefLabelVO> getProductRelLabel(@RequestBody String skuId) {
+        return productRefLabelService.getLabelList(null, null, skuId);
+    }
 }
