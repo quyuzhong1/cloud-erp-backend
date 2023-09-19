@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
@@ -18,6 +19,7 @@ import java.time.LocalDate;
  */
 @Getter
 @Setter
+@NoArgsConstructor
 @Accessors(chain = true)
 @TableName("inventory_detail")
 public class InventoryDetailEntity extends BaseEntity<InventoryDetailEntity> implements Serializable  {
@@ -43,4 +45,8 @@ public class InventoryDetailEntity extends BaseEntity<InventoryDetailEntity> imp
     @TableField("qty")
     private Integer qty;
 
+    public InventoryDetailEntity(String id, Integer tradeQty) {
+        super(id);
+        this.qty = tradeQty;
+    }
 }

@@ -4,11 +4,13 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @Classname: InventoryHisEntity
@@ -18,6 +20,7 @@ import java.time.LocalDate;
  */
 @Getter
 @Setter
+@NoArgsConstructor
 @Accessors(chain = true)
 @TableName("inventory_his")
 public class InventoryHisEntity extends BaseEntity<InventoryHisEntity> implements Serializable  {
@@ -41,4 +44,13 @@ public class InventoryHisEntity extends BaseEntity<InventoryHisEntity> implement
     @TableField("qty")
     private Integer qty;
 
+    public InventoryHisEntity(String id, AtomicReference<Integer> curQty) {
+        super(id);
+        this.qty = curQty.get();
+    }
+
+    public InventoryHisEntity(AtomicReference<Integer> curQty, LocalDate billDate) {
+        this.qty = curQty.get();
+        this.billDate = billDate;
+    }
 }
