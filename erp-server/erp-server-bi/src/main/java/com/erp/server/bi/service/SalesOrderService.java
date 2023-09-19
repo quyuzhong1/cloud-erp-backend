@@ -153,7 +153,7 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
 
     List<ProductNewAndOldVO> byDeptNewAndOld(BiFilterDTO dto);
 
-    StatisticalDataVO byDate(DateFilterDTO biFilterDTO);
+    StatisticalDataVO byDate(DateSalesTrendDTO.SearchDTO searchDTO);
 
     /**
      * 新老品销售额

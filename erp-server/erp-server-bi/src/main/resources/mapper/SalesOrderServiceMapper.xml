@@ -3199,7 +3199,10 @@
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
         </if>
-        date_trunc('QUARTER',o.${timeFlag}) AS name,SUM ( i.quantity ) AS salesQuantity
+
+        to_char(date_trunc('QUARTER',o.${timeFlag}),'yyyy-mm') AS name,
+
+        SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
             <if test="params.timeType!=null and params.timeType==0">
