@@ -100,12 +100,17 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
     List<SalesCountVO> byCountry(BiFilterDTO dto);
 
     /**
-     * 一级模块  品类销售额
+     * 一级模块  一级类目销售额
      * @param dto
      * @return
      */
-    StatisticalDataVO byCategory(BiFilterDTO dto);
+    StatisticalDataVO byCategory(BiCategoryDTO.FirstCategoryParamsDTO dto);
 
+    /**
+     * 品类销售额
+     * @param dto
+     * @return
+     */
     XyAxesResultVO byShopCategory(BiFilterDTO dto);
 
     List<SalesCountVO> byBrand(BiFilterDTO dto);

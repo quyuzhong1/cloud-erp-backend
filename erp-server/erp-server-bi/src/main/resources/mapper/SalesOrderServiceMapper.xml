@@ -1276,7 +1276,7 @@
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
-        </if>,
+        </if>
         i.sku_no AS flagNo FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
@@ -1325,6 +1325,10 @@
                     #{shopName}
                 </foreach>
             </if>
+            <!-- 新老品 -->
+            <if test="params.productSign!=null ">
+                AND i.new_sign =#{params.productSign}
+            </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
                 AND i.sku_no IN
@@ -1339,6 +1343,15 @@
                 pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
+                </foreach>
+                )
+            </if>
+            <if test="params.categoryIdList!=null and params.categoryIdList.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category_id IN
+                <foreach collection="params.categoryIdList" item="categoryId" open="(" separator="," close=")">
+                    #{categoryId}
                 </foreach>
                 )
             </if>
@@ -1359,6 +1372,7 @@
                     #{userId}
                 </foreach>
             </if>
+
             <!-- 权限 -->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
