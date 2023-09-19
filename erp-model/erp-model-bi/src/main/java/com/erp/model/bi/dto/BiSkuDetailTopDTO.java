@@ -66,6 +66,8 @@ public class BiSkuDetailTopDTO {
      * 各平台首单日期
      */
     private List<String> platformFirstOrderDate = new ArrayList<>();
-
-
+    /**
+     * 标签列表
+     */
+    private List<LabelVO> labels;
 }

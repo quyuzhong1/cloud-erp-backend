@@ -114,7 +114,7 @@ public class BasicLabelDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class CommonDTO {
+    public static class CommonDTO implements Serializable{
 
         /**
         * 标签名称

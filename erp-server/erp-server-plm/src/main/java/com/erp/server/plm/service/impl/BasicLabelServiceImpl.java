@@ -16,6 +16,7 @@ import com.erp.model.plm.entity.BomOperateLogEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.enums.LabelColorEnum;
 import com.erp.model.plm.enums.LabelLevelEnum;
+import com.erp.model.plm.vo.LabelLevelTreeVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.plm.mapper.BasicLabelMapper;
 import com.erp.server.plm.mapper.ProductRefLabelMapper;
@@ -66,10 +67,10 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     public List<BasicLabelEntity> listByCondition(BasicLabelDTO.SearchDTO dto) {
         //获取通用的全部和自己创建的私有标签
         LambdaQueryWrapper<BasicLabelEntity> queryWrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.isNotBlank(dto.getSearchKeyword())) {
+        if (Objects.nonNull(dto) && StringUtils.isNotBlank(dto.getSearchKeyword())) {
             queryWrapper.like(BasicLabelEntity::getName, dto.getSearchKeyword());
         }
-        if (StringUtils.isNotBlank(dto.getLevel())) {
+        if (Objects.nonNull(dto) && StringUtils.isNotBlank(dto.getLevel())) {
             queryWrapper.eq(BasicLabelEntity::getLevel, dto.getLevel());
         } else {
             queryWrapper.and(labelEntityLambdaQueryWrapper -> labelEntityLambdaQueryWrapper.eq(BasicLabelEntity::getLevel, "company")
@@ -77,6 +78,21 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         }
         queryWrapper.select(BasicLabelEntity::getId, BasicLabelEntity::getName, BasicLabelEntity::getColor, BasicLabelEntity::getLevel);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<LabelLevelTreeVO> listByTree() {
+        List<LabelLevelTreeVO> treeVOS = new ArrayList<>(2);
+        //用户当前标签列表
+        List<BasicLabelEntity> list = listByCondition(null);
+        if (CollectionUtils.isNotEmpty(list)) {
+            Map<String, List<BasicLabelEntity>> map = list.stream().collect(Collectors.groupingBy(BasicLabelEntity::getLevel));
+            treeVOS.add(new LabelLevelTreeVO().setName(LabelLevelEnum.COMPANY.getName())
+                    .setLevel(LabelLevelEnum.COMPANY.getType()).setChildren(map.get(LabelLevelEnum.COMPANY.getType())));
+            treeVOS.add(new LabelLevelTreeVO().setName(LabelLevelEnum.PRIVATE.getName())
+                    .setLevel(LabelLevelEnum.PRIVATE.getType()).setChildren(map.get(LabelLevelEnum.PRIVATE.getType())));
+        }
+        return treeVOS;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -114,11 +130,12 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
             throw new ServiceException(ApiError.ERROR_EXIST_BASIC_LABEL_NAME, stringSet);
         }
         //校验标签是否数据库已存在
-        Set<String> names = basicLabelEntities.stream().filter(v->StringUtils.isBlank(v.getId())).map(BasicLabelEntity::getName).collect(Collectors.toSet());
-        List<Object> nameObjs = getByNames(names);
-        if (CollectionUtils.isNotEmpty(nameObjs)) {
-            throw new ServiceException(ApiError.ERROR_EXIST_BASIC_LABEL, nameObjs.toArray());
+        Set<String> names = basicLabelEntities.stream().filter(v -> StringUtils.isBlank(v.getId())).map(BasicLabelEntity::getName).collect(Collectors.toSet());
+        if (CollectionUtils.isNotEmpty(names)){
+            List<Object> nameObjs = getByNames(names);
+            if (CollectionUtils.isNotEmpty(nameObjs)) throw new ServiceException(ApiError.ERROR_EXIST_BASIC_LABEL, nameObjs.toArray());
         }
+
         //补充默认颜色 校验使用范围
         Set<String> labelNames = list.stream().filter(label -> {
             if (StringUtils.isBlank(label.getColor())) label.setColor(LabelColorEnum.GREY.getCode());

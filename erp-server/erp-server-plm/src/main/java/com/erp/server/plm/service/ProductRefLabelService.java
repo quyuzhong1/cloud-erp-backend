@@ -43,4 +43,14 @@ public interface ProductRefLabelService extends SuperService<ProductRefLabelEnti
      * @return
      */
     List<ProductRefLabelVO> getLabelList(String productId, String labelId, String skuId);
+
+    /**
+     * 获取标签列表
+     *
+     * @param productIds
+     * @param labelIds
+     * @param skuIds
+     * @return
+     */
+    List<ProductRefLabelVO> getLabelListByIds(List<String> productIds, List<String> labelIds, List<String> skuIds);
 }

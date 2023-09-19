@@ -1084,7 +1084,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public StatisticalDataVO byCategory(BiCategoryDTO.FirstCategoryParamsDTO dto) {
         //获取到一级类目列表
         List<BasicCategoryEntity> categoryList = plmTaskFeign.listParentCategory();
-        List<String> categoryIdList=categoryList.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
+        List<String> categoryIdList = categoryList.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
         dto.setCategoryIdList(categoryIdList);
         //查询sku 分类以及分类下对应的skuno
         List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList(categoryIdList);
@@ -2181,7 +2181,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         ChartVO chartVO = new ChartVO();
         List<String> siteNameList = salesList.stream().map(SalesFlagVO::getName).collect(Collectors.toList());
         //有两个
-        List<SeriesVO<Object>> seriesList = new ArrayList<>(3);
+        List<SeriesVO<Object>> seriesList = new ArrayList<>();
 
         switch (DateSalesTrendSearchTypeEnum.getEnumByCode(dto.getSearchType())) {
             case SALES_AMOUNT:
@@ -2189,6 +2189,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 break;
             case SALES_QUANTITY:
                 dateSalesTrendSalesQuantity(salesList, lastYearSalesList, seriesList);
+                break;
+            case SALES_PRICE:
+                dateSalesTrendSalesPrice(salesList, lastYearSalesList, seriesList);
                 break;
         }
 
@@ -2200,12 +2203,16 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 计算销售趋势同比/环比
+     *
      * @param salesList
      * @param lastYearSalesList
      * @param dateTimeFormatter
      * @param dateType
      */
     private void dateSalesTrendRatio(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, DateTimeFormatter dateTimeFormatter, String dateType) {
+        List<SalesFlagVO> list = new ArrayList<>();
+        list.addAll(salesList);
+        list.addAll(lastYearSalesList);
         for (SalesFlagVO salesFlagVO : salesList) {
             String parse = "";
             String prevYearDate = "";
@@ -2231,9 +2238,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
             //获取销售环比
             String finalParse = parse;
-            SalesFlagVO lastYearSalesFlagVo = lastYearSalesList.stream().filter(req -> req.getName().equals(finalParse)).findFirst().orElse(null);
+            SalesFlagVO lastYearSalesFlagVo = list.stream().filter(req -> req.getName().equals(finalParse)).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(lastYearSalesFlagVo) && lastYearSalesFlagVo.getSales().compareTo(BigDecimal.ZERO) > 0) {
-
                 salesFlagVO.setSalesChainRelativeRatio(salesFlagVO.getSales()
                         .subtract(lastYearSalesFlagVo.getSales())
                         .divide(lastYearSalesFlagVo.getSales(), 2, BigDecimal.ROUND_HALF_UP)
@@ -2243,9 +2249,18 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
             //获取销量环比
             if (ObjectUtils.isNotEmpty(lastYearSalesFlagVo) && lastYearSalesFlagVo.getSalesQuantity() > 0) {
-                salesFlagVO.setSalesQuantityBasisRatio(MathUtil.valueOf(salesFlagVO.getSalesQuantity() + "")
+                salesFlagVO.setSalesQuantityChainRelativeRatio(MathUtil.valueOf(salesFlagVO.getSalesQuantity() + "")
                         .subtract(MathUtil.valueOf(lastYearSalesFlagVo.getSalesQuantity() + ""))
                         .divide(MathUtil.valueOf(lastYearSalesFlagVo.getSalesQuantity() + ""), 2, BigDecimal.ROUND_HALF_UP)
+                        .multiply(MathUtil.BigDecimal_100)
+                );
+            }
+
+            //获取客单价环比
+            if (ObjectUtils.isNotEmpty(lastYearSalesFlagVo) && lastYearSalesFlagVo.getSalesPrice().compareTo(BigDecimal.ZERO) > 0) {
+                salesFlagVO.setSalesPriceChainRelativeRatio(salesFlagVO.getSalesPrice()
+                        .subtract(lastYearSalesFlagVo.getSalesPrice())
+                        .divide(lastYearSalesFlagVo.getSalesPrice(), 2, BigDecimal.ROUND_HALF_UP)
                         .multiply(MathUtil.BigDecimal_100)
                 );
             }
@@ -2259,29 +2274,40 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                         .divide(lastYearSalesFlag.getSales(), 2, BigDecimal.ROUND_HALF_UP)
                         .multiply(MathUtil.BigDecimal_100)
                 );
+            } else {
+                lastYearSalesList.add(new SalesFlagVO());
             }
 
             //获取销量同比
             if (ObjectUtils.isNotEmpty(lastYearSalesFlag) && lastYearSalesFlag.getSalesQuantity() > 0) {
-                salesFlagVO.setSalesQuantityChainRelativeRatio(MathUtil.valueOf(salesFlagVO.getSalesQuantity() + "")
+                salesFlagVO.setSalesQuantityBasisRatio(MathUtil.valueOf(salesFlagVO.getSalesQuantity() + "")
                         .subtract(MathUtil.valueOf(lastYearSalesFlag.getSalesQuantity() + ""))
                         .divide(MathUtil.valueOf(lastYearSalesFlag.getSalesQuantity() + ""), 2, BigDecimal.ROUND_HALF_UP)
                         .multiply(MathUtil.BigDecimal_100)
                 );
             }
 
+            //获取客单价同比
+            if (ObjectUtils.isNotEmpty(lastYearSalesFlag) && lastYearSalesFlag.getSalesPrice().compareTo(BigDecimal.ZERO) > 0) {
+                salesFlagVO.setSalesPriceBasisRatio(salesFlagVO.getSalesPrice()
+                        .subtract(lastYearSalesFlag.getSalesPrice())
+                        .divide(lastYearSalesFlag.getSalesPrice(), 2, BigDecimal.ROUND_HALF_UP)
+                        .multiply(MathUtil.BigDecimal_100)
+                );
+            }
         }
     }
 
     /**
      * 设置销售趋势的销售额数据
+     *
      * @param salesList
      * @param lastYearSalesList
      * @param seriesList
      */
     private void dateSalesTrendSalesAmount(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, List<SeriesVO<Object>> seriesList) {
         SeriesVO<Object> sales = new SeriesVO();
-        sales.setName("销售额");
+        sales.setName("今年销售额");
         List<Object> orderSalesList = salesList.stream().map(SalesFlagVO::getSales).collect(Collectors.toList());
         sales.setData(orderSalesList);
         seriesList.add(sales);
@@ -2294,45 +2320,79 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         SeriesVO<Object> salesBasisRatio = new SeriesVO();
         salesBasisRatio.setName("同比");
-        List<Object> salesBasisRatioList = lastYearSalesList.stream().map(SalesFlagVO::getSalesBasisRatio).collect(Collectors.toList());
+        List<Object> salesBasisRatioList = salesList.stream().map(SalesFlagVO::getSalesBasisRatio).collect(Collectors.toList());
         salesBasisRatio.setData(salesBasisRatioList);
         seriesList.add(salesBasisRatio);
 
         SeriesVO<Object> salesChainRelativeRatio = new SeriesVO();
         salesChainRelativeRatio.setName("环比");
-        List<Object> salesChainRelativeRatioList = lastYearSalesList.stream().map(SalesFlagVO::getSalesChainRelativeRatio).collect(Collectors.toList());
+        List<Object> salesChainRelativeRatioList = salesList.stream().map(SalesFlagVO::getSalesChainRelativeRatio).collect(Collectors.toList());
         salesChainRelativeRatio.setData(salesChainRelativeRatioList);
         seriesList.add(salesChainRelativeRatio);
     }
 
     /**
      * 设置销售趋势的销量数据
+     *
      * @param salesList
      * @param lastYearSalesList
      * @param seriesList
      */
     private void dateSalesTrendSalesQuantity(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, List<SeriesVO<Object>> seriesList) {
         SeriesVO<Object> salesQuantity = new SeriesVO();
-        salesQuantity.setName("今年销售量");
+        salesQuantity.setName("今年销量");
         List<Object> salesQuantityList = salesList.stream().map(SalesFlagVO::getSalesQuantity).collect(Collectors.toList());
         salesQuantity.setData(salesQuantityList);
         seriesList.add(salesQuantity);
 
         SeriesVO<Object> lastYearSalesQuantity = new SeriesVO();
-        lastYearSalesQuantity.setName("去年销售量");
+        lastYearSalesQuantity.setName("去年销量");
         List<Object> lastYearSalesQuantityList = lastYearSalesList.stream().map(SalesFlagVO::getSalesQuantity).collect(Collectors.toList());
         lastYearSalesQuantity.setData(lastYearSalesQuantityList);
         seriesList.add(lastYearSalesQuantity);
 
         SeriesVO<Object> basisRatio = new SeriesVO();
         basisRatio.setName("同比");
-        List<Object> basisRatioList = lastYearSalesList.stream().map(SalesFlagVO::getSalesQuantityBasisRatio).collect(Collectors.toList());
+        List<Object> basisRatioList = salesList.stream().map(SalesFlagVO::getSalesQuantityBasisRatio).collect(Collectors.toList());
         basisRatio.setData(basisRatioList);
         seriesList.add(basisRatio);
 
         SeriesVO<Object> chainRelativeRatio = new SeriesVO();
         chainRelativeRatio.setName("环比");
-        List<Object> chainRelativeRatioList = lastYearSalesList.stream().map(SalesFlagVO::getSalesQuantityChainRelativeRatio).collect(Collectors.toList());
+        List<Object> chainRelativeRatioList = salesList.stream().map(SalesFlagVO::getSalesQuantityChainRelativeRatio).collect(Collectors.toList());
+        chainRelativeRatio.setData(chainRelativeRatioList);
+        seriesList.add(chainRelativeRatio);
+    }
+
+    /**
+     * 设置销售趋势的客单价数据
+     *
+     * @param salesList
+     * @param lastYearSalesList
+     * @param seriesList
+     */
+    private void dateSalesTrendSalesPrice(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, List<SeriesVO<Object>> seriesList) {
+        SeriesVO<Object> salesQuantity = new SeriesVO();
+        salesQuantity.setName("今年客单价");
+        List<Object> salesQuantityList = salesList.stream().map(SalesFlagVO::getSalesPrice).collect(Collectors.toList());
+        salesQuantity.setData(salesQuantityList);
+        seriesList.add(salesQuantity);
+
+        SeriesVO<Object> lastYearSalesQuantity = new SeriesVO();
+        lastYearSalesQuantity.setName("去年客单价");
+        List<Object> lastYearSalesQuantityList = lastYearSalesList.stream().map(SalesFlagVO::getSalesPrice).collect(Collectors.toList());
+        lastYearSalesQuantity.setData(lastYearSalesQuantityList);
+        seriesList.add(lastYearSalesQuantity);
+
+        SeriesVO<Object> basisRatio = new SeriesVO();
+        basisRatio.setName("同比");
+        List<Object> basisRatioList = salesList.stream().map(SalesFlagVO::getSalesPriceBasisRatio).collect(Collectors.toList());
+        basisRatio.setData(basisRatioList);
+        seriesList.add(basisRatio);
+
+        SeriesVO<Object> chainRelativeRatio = new SeriesVO();
+        chainRelativeRatio.setName("环比");
+        List<Object> chainRelativeRatioList = salesList.stream().map(SalesFlagVO::getSalesPriceChainRelativeRatio).collect(Collectors.toList());
         chainRelativeRatio.setData(chainRelativeRatioList);
         seriesList.add(chainRelativeRatio);
     }
@@ -2399,7 +2459,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public List<BiTargetYearDTO.TargetMetricsFinishDTO> listTargetMetrics(BiTargetYearDTO.SearchDTO dto) {
-
         List<BiTargetYearDTO.TargetMetricsFinishDTO> resultList = new ArrayList<>(2);
         /**
          * 年月
@@ -2407,6 +2466,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String yearMonth = dto.getYearMonth();
         //年
         Integer year = LocalDate.now().getYear();
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
         //月
         Integer month = LocalDate.now().getMonthValue();
         if (StringUtils.isNotBlank(yearMonth) && yearMonth.length() >= 7) {
@@ -2433,37 +2494,40 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String metrics = metricsEnum.getCode();
         String metricsName = metricsEnum.getName();
         //获取到对应设置的目标值
-        String deptId = dto.getDeptId();
+        List<String> deptIdList = dto.getDepartment();
         ListYearMonthValueStrategy strategy = null;
         List<BiTargetYearDTO.YearMonthValueDTO> yearMonthValueList = new ArrayList<>();
 
-        if (StringUtils.isNotBlank(deptId)) {
+        if (CollectionUtils.isNotEmpty(deptIdList)) {
             strategy = context.getBean(DeptTargetValueStrategy.class);
             if (Objects.nonNull(strategy)) {
-                yearMonthValueList = strategy.ListYearMonthValue(year, metrics, deptId);
+                yearMonthValueList = strategy.ListYearMonthValue(year, metrics, deptIdList);
             }
         }
         //员工id
-        String staffId = dto.getStaffId();
-        if (StringUtils.isNotBlank(staffId)) {
+        List<String> staffIdList = dto.getUserId();
+        if (CollectionUtils.isNotEmpty(staffIdList)) {
             strategy = context.getBean(StaffTargetValueStrategy.class);
             if (Objects.nonNull(strategy)) {
-                yearMonthValueList = strategy.ListYearMonthValue(year, metrics, staffId);
+                yearMonthValueList = strategy.ListYearMonthValue(year, metrics, staffIdList);
             }
         }
         //店铺id
-        String shopId = dto.getShopId();
-        if (StringUtils.isNotBlank(shopId)) {
-            strategy = context.getBean(ShopTargetValueStrategy.class);
-            if (Objects.nonNull(strategy)) {
-                yearMonthValueList = strategy.ListYearMonthValue(year, metrics, shopId);
+        List<String> shopNameList = dto.getShopName();
+        if (CollectionUtils.isNotEmpty(shopNameList)) {
+            List<DmpShopInfoEntity> shopInfoList = shopInfoService.listByNames(shopNameList);
+            List<String> shopIdList = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(shopIdList)) {
+                strategy = context.getBean(ShopTargetValueStrategy.class);
+                if (Objects.nonNull(strategy)) {
+                    yearMonthValueList = strategy.ListYearMonthValue(year, metrics, shopIdList);
+                }
             }
         }
-
         //为空就是所有
         if (Objects.isNull(strategy)) {
             strategy = context.getBean(AllTargetValueStrategy.class);
-            yearMonthValueList = strategy.ListYearMonthValue(year, metrics, "");
+            yearMonthValueList = strategy.ListYearMonthValue(year, metrics, Collections.emptyList());
         }
         if (Objects.isNull(strategy)) {
             throw new ServiceException("条件未匹配");
@@ -2480,7 +2544,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 findFirst().map(BiTargetYearDTO.YearMonthValueDTO::getMetricsValue).orElse(BigDecimal.ZERO);
         monthMetrics.setMetricsValue(monthMetricsValue);
         //完成值
-        BigDecimal monthFinishValue = biTargetYearService.getMetricsFinishValue(dto, "month", year, month);
+        BigDecimal monthFinishValue = biTargetYearService.getMetricsFinishValue(dto, "month", year, month, settleRate);
+        if (Objects.isNull(monthFinishValue)) {
+            monthFinishValue = BigDecimal.ZERO;
+        }
         monthMetrics.setFinishValue(monthFinishValue);
         //完成占比
         BigDecimal monthFinishRate = getSalesRatio(monthMetricsValue, monthFinishValue);
@@ -2496,9 +2563,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //年度目标值
         BigDecimal yearMetricsValue = yearMonthValueList.stream().map(BiTargetYearDTO.YearMonthValueDTO::getMetricsValue).reduce(BigDecimal.ZERO, BigDecimal::add);
         yearMetrics.setMetricsValue(yearMetricsValue);
-        BigDecimal yearFinishValue = biTargetYearService.getMetricsFinishValue(dto, "year", year, month);
+        BigDecimal yearFinishValue = biTargetYearService.getMetricsFinishValue(dto, "year", year, month, settleRate);
+        if (Objects.isNull(yearFinishValue)) {
+            yearFinishValue = BigDecimal.ZERO;
+        }
         //完成占比
-        BigDecimal yearFinishRate = getSalesRatio(monthMetricsValue, monthFinishValue);
+        BigDecimal yearFinishRate = getSalesRatio(yearMetricsValue, yearFinishValue);
         yearMetrics.setFinishRate(yearFinishRate);
         resultList.add(monthMetrics);
         return resultList;
