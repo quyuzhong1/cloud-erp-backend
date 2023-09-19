@@ -64,8 +64,7 @@ public class BasicLabelDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
-
+        private String id;
     }
 
     @Data
