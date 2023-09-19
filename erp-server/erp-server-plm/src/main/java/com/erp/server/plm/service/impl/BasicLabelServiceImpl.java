@@ -75,7 +75,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
             queryWrapper.and(labelEntityLambdaQueryWrapper -> labelEntityLambdaQueryWrapper.eq(BasicLabelEntity::getLevel, "company")
                     .or().eq(BasicLabelEntity::getLevel, "private").eq(BasicLabelEntity::getCreateUserId, commonService.getUserInfo().getUid()));
         }
-        queryWrapper.select(BasicLabelEntity::getId, BasicLabelEntity::getName, BasicLabelEntity::getColour, BasicLabelEntity::getLevel);
+        queryWrapper.select(BasicLabelEntity::getId, BasicLabelEntity::getName, BasicLabelEntity::getColor, BasicLabelEntity::getLevel);
         return this.list(queryWrapper);
     }
 
@@ -121,7 +121,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         }
         //补充默认颜色 校验使用范围
         Set<String> labelNames = list.stream().filter(label -> {
-            if (StringUtils.isBlank(label.getColour())) label.setColour(LabelColorEnum.GREY.getCode());
+            if (StringUtils.isBlank(label.getColor())) label.setColor(LabelColorEnum.GREY.getCode());
             return true;
         }).map(BasicLabelDTO.AddDTO::getLevel).filter(level -> StringUtils.isBlank(LabelLevelEnum.getName(level))).collect(Collectors.toSet());
         if (CollectionUtils.isNotEmpty(labelNames)) {
@@ -162,7 +162,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     private boolean updateBasicLabel(BasicLabelEntity basicLabelEntity) {
         LambdaUpdateWrapper<BasicLabelEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(BasicLabelEntity::getName, basicLabelEntity.getName());
-        updateWrapper.set(BasicLabelEntity::getColour, basicLabelEntity.getColour());
+        updateWrapper.set(BasicLabelEntity::getColor, basicLabelEntity.getColor());
         updateWrapper.set(BasicLabelEntity::getLevel, basicLabelEntity.getLevel());
         updateWrapper.set(BasicLabelEntity::getUpdateTime, LocalDateTime.now());
         LoginUser user = commonService.getUserInfo();
@@ -185,8 +185,8 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         int count = countByLabelName(basicLabelEntity.getName(), basicLabelEntity.getId());
         if (0 != count) throw new ServiceException(ApiError.ERROR_EXIST_BASIC_LABEL, basicLabelEntity.getName());
         //颜色无值时，默认灰色
-        if (StringUtils.isBlank(basicLabelEntity.getColour())) {
-            basicLabelEntity.setColour(LabelColorEnum.GREY.getCode());
+        if (StringUtils.isBlank(basicLabelEntity.getColor())) {
+            basicLabelEntity.setColor(LabelColorEnum.GREY.getCode());
         }
     }
 

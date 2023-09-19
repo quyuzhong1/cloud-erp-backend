@@ -43,7 +43,7 @@
             prd.label_id,
             bl."name",
             bl."level",
-            bl.colour
+            bl.color
         FROM
             product_ref_label prd
                 LEFT JOIN basic_label bl ON bl.id = prd.label_id and bl.is_deleted = false
@@ -67,7 +67,7 @@
         prd.label_id,
         bl."name",
         bl."level",
-        bl.colour
+        bl.color
         FROM
         product_ref_label prd
         LEFT JOIN basic_label bl ON bl.id = prd.label_id and bl.is_deleted = false
