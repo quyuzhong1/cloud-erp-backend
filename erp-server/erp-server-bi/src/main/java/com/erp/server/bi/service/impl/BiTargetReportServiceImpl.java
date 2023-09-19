@@ -185,7 +185,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         //需要查询订单数据的类型
         if (MetricsEnum.SALES_AMOUNT.getCode().equals(dto.getMetrics())
                 || MetricsEnum.SALES_QTY.getCode().equals(dto.getMetrics())
-                || MetricsEnum.FINANCE_SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
+                || MetricsEnum.NET_SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
             //主表数据
             List<DmpOrderInfoEntity> mainList = listOrderInfo(dto, start, end);
             if (CollectionUtils.isEmpty(mainList)) {
@@ -250,7 +250,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         List<String> platformOrderIdList = mainList.stream().map(DmpOrderInfoEntity::getPlatformOrderId).collect(Collectors.toList());
         //根据订单id查询退货数据
         QueryWrapper<DmpRefundInfoEntity> qw = new QueryWrapper<>();
-        qw.select("platform_order_id","COALESCE(order_fee, 0) * currency_rate as order_fee")
+        qw.select("platform_order_id","COALESCE(refund_amount, 0) * currency_rate as refund_amount")
           .in("platform_order_id",platformOrderIdList);
         List<DmpRefundInfoEntity> entityList = dmpRefundInfoMapper.selectList(qw);
         return entityList;
@@ -296,9 +296,9 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
     private List<DmpOrderInfoEntity> listOrderInfo (TargetFinishDTO.ParamDTO dto,LocalDateTime start,LocalDateTime end) {
         QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
         if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SKU.getCode().equals(dto.getSearchType())) {
-            qw.select("id", "platform_create_time", "delivery_time");
+            qw.select("id", "platform_create_time", "delivery_time","order_fee","currency_rate");
         } else {
-            qw.select("id", "platform_create_time", "delivery_time", getFieldName(dto.getSearchType()));
+            qw.select("id", "platform_create_time", "delivery_time","order_fee","currency_rate", getFieldName(dto.getSearchType()));
         }
         List<DmpOrderInfoEntity> mainList = getOrderInfoEntities(dto, qw, start, end,null);
         return mainList;
@@ -341,7 +341,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
              map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getDeptName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> e.getOrderFee(), BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.multiply(e.getOrderFee(),e.getCurrencyRate()), BigDecimal::add))
             );
         }
         if (TargetSearchTypeEnum.USER.getCode().equals(dto.getSearchType())) {
@@ -349,7 +349,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getChargeName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> e.getOrderFee(), BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.multiply(e.getOrderFee(),e.getCurrencyRate()), BigDecimal::add))
             );
 
         }
@@ -358,7 +358,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
              map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getShopName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> e.getOrderFee(), BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.multiply(e.getOrderFee(),e.getCurrencyRate()), BigDecimal::add))
             );
         }
         //根据指标查询品类目标值
@@ -463,7 +463,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getDeptId().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract(e.getOrderFee(),refundList.stream().filter(obj -> obj.getPlatformOrderId().equals(e.getPlatformOrderId())).map(DmpRefundInfoEntity::getRefundAmount).reduce(BigDecimal.ZERO,BigDecimal::add)), BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract(MathUtil.multiply(e.getOrderFee(),e.getCurrencyRate()),refundList.stream().filter(obj -> obj.getPlatformOrderId().equals(e.getPlatformOrderId())).map(DmpRefundInfoEntity::getRefundAmount).reduce(BigDecimal.ZERO,BigDecimal::add)), BigDecimal::add))
             );
         }
         if (TargetSearchTypeEnum.USER.getCode().equals(dto.getSearchType())) {
@@ -471,7 +471,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getChargeId().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract(e.getOrderFee(),refundList.stream().filter(obj -> obj.getPlatformOrderId().equals(e.getPlatformOrderId())).map(DmpRefundInfoEntity::getRefundAmount).reduce(BigDecimal.ZERO,BigDecimal::add)), BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract(MathUtil.multiply(e.getOrderFee(),e.getCurrencyRate()),refundList.stream().filter(obj -> obj.getPlatformOrderId().equals(e.getPlatformOrderId())).map(DmpRefundInfoEntity::getRefundAmount).reduce(BigDecimal.ZERO,BigDecimal::add)), BigDecimal::add))
             );
 
         }
@@ -480,7 +480,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getShopName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract(e.getOrderFee(),refundList.stream().filter(obj -> obj.getPlatformOrderId().equals(e.getPlatformOrderId())).map(DmpRefundInfoEntity::getRefundAmount).reduce(BigDecimal.ZERO,BigDecimal::add)), BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract(MathUtil.multiply(e.getOrderFee(),e.getCurrencyRate()),refundList.stream().filter(obj -> obj.getPlatformOrderId().equals(e.getPlatformOrderId())).map(DmpRefundInfoEntity::getRefundAmount).reduce(BigDecimal.ZERO,BigDecimal::add)), BigDecimal::add))
             );
         }
         return mapToResultList(map);
