@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.BiSalesFilterDTO;
 import com.erp.model.bi.vo.DimensionSalesVO;
+import com.erp.model.bi.vo.SalePriceDistributionVO;
 import com.erp.model.dmp.dto.DmpOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoExcelDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
@@ -21,26 +23,28 @@ import java.util.List;
 @Mapper
 public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
     /**
-     * @description: 分页查询
-     * @author Will
-     * @date: 2022/12/13 15:50
      * @param query
      * @param params
      * @return IPage
+     * @description: 分页查询
+     * @author Will
+     * @date: 2022/12/13 15:50
      */
-    IPage<DmpOrderInfoDTO> paging(Page query,@Param("params") DmpOrderInfoSearchDTO params);
+    IPage<DmpOrderInfoDTO> paging(Page query, @Param("params") DmpOrderInfoSearchDTO params);
+
     /**
+     * @param params
+     * @return List<DmpOrderInfoExcelDTO>
      * @description: 查询所有的订单数据
      * @author Will
      * @date: 2022/12/15 10:33
-     * @param params
-     * @return List<DmpOrderInfoExcelDTO>
      */
     List<DmpOrderInfoExcelDTO> getAllDmpOrderInfo(@Param("params") DmpOrderInfoSearchDTO params);
 
 
     /**
      * 根据不同维度统计销售额
+     *
      * @param dto
      * @param groupName
      * @return
@@ -57,7 +61,16 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
     BigDecimal sumSales(@Param("params") BiFilterDTO dto, @Param("flag") Integer flag);
 
     /**
+     * 获取销售单价分布
+     *
+     * @param dto
+     * @return
+     */
+    List<SalePriceDistributionVO> salePriceDistribution(@Param("params") BiSalesFilterDTO dto);
+
+    /**
      * 根据不同维度统计销售量
+     *
      * @param dto
      * @return
      */
