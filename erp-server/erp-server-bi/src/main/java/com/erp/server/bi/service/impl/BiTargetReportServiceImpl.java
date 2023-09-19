@@ -1,9 +1,12 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.service.impl.RedisService;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
@@ -24,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -63,6 +67,9 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
     @Resource
     private BiDataSourceCostService biDataSourceCostService;
+
+    @Resource
+    private RedisService redisService;
 
     public BiTargetReportServiceImpl() {
     }
@@ -119,6 +126,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
                     TargetFinishDTO.SlotDTO slotDTO = new TargetFinishDTO.SlotDTO();
                     //目标值
                     BigDecimal targetValue = value.stream().filter(obj -> obj.getMonth().equals(monthEnum.getValue())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    slotDTO.setTargetValue(targetValue);
                     //实际值
                     BigDecimal realValue = realList.stream().filter(obj -> obj.getMonth().equals(monthEnum.getValue()) && obj.getTypeName().equals(entry.getKey())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
                     slotDTO.setValue(realValue);
@@ -141,6 +149,85 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
     }
 
 
+    @Override
+    public void exportExcel(TargetFinishDTO.ParamDTO dto, HttpServletResponse response) {
+        //查询所有数据
+        LinkedHashMap<String, Object> resultMap = targetFinish(dto);
+        LinkedList<String> headList = new LinkedList<>();
+        //表头数据
+        headList.add(TargetSearchTypeEnum.getByCode(dto.getSearchType()));
+        headList.add("指标");
+        headList.add("年累计");
+        MonthEnum[] values = MonthEnum.values();
+        Integer year = LocalDate.now().getYear();
+        if (StringUtils.isNotBlank(dto.getYear())) {
+            year = Integer.valueOf(dto.getYear());
+        }
+        for (MonthEnum monthEnum : values) {
+            headList.add(StrUtil.format("{}年{}月",year,monthEnum.getValue()));
+        }
+        //表格数据
+        List<LinkedHashMap<String, Object>> list = (List<LinkedHashMap<String, Object>>)resultMap.get("data");
+        List<LinkedHashMap<String, Object>> exportList = new ArrayList<>();
+
+        if (CollectionUtils.isNotEmpty(list)) {
+            for (LinkedHashMap<String, Object> map : list) {
+                //年度数据
+                TargetFinishDTO.TotalSlotDTO totalSlotDTO = BeanUtil.toBean(map.get("totalName"), TargetFinishDTO.TotalSlotDTO.class);
+
+                //目标数据
+                LinkedHashMap<String, Object> targetMap = new LinkedHashMap<>();
+                //类型名称
+                targetMap.put("typeName",map.get("typeName"));
+                //指标
+                targetMap.put("metrics","目标值");
+                //年累计
+                targetMap.put("yearTotal",totalSlotDTO.getYearTotalTarget().stripTrailingZeros().toPlainString());
+
+                //实际数据
+                LinkedHashMap<String, Object> realMap = new LinkedHashMap<>();
+                //类型名称
+                realMap.put("typeName",map.get("typeName"));
+                //指标
+                realMap.put("metrics",MetricsEnum.getNameByCode(dto.getMetrics()));
+                //年累计
+                realMap.put("yearTotal",totalSlotDTO.getYearTotalReal().stripTrailingZeros().toPlainString());
+
+                //完成率/占比
+                LinkedHashMap<String, Object> rateMap = new LinkedHashMap<>();
+                //类型名称
+                rateMap.put("typeName",map.get("typeName"));
+                //指标
+                rateMap.put("metrics",TargetFinishViewTypeEnum.getNameByCode(dto.getViewType()));
+                //年累计
+                rateMap.put("yearTotal",TargetFinishViewTypeEnum.FINISH_RATE.getCode().equals(dto.getViewType()) ? (totalSlotDTO.getRate().stripTrailingZeros().toPlainString() + "%") : "100%" );
+
+                for (MonthEnum monthEnum : values) {
+                    TargetFinishDTO.SlotDTO slotDTO = BeanUtil.toBean(map.get(monthEnum.getCode()), TargetFinishDTO.SlotDTO.class);
+                    targetMap.put(monthEnum.getCode(),slotDTO.getTargetValue().stripTrailingZeros().toPlainString());
+                    realMap.put(monthEnum.getCode(),slotDTO.getValue().stripTrailingZeros().toPlainString());
+                    rateMap.put(monthEnum.getCode(),slotDTO.getRate().stripTrailingZeros().toPlainString() + "%");
+                }
+                exportList.add(targetMap);
+                exportList.add(realMap);
+                exportList.add(rateMap);
+            }
+        }
+
+        String head = "业绩目标完成";
+        String fileName = redisService.getFileName("业绩目标完成导出")+ ".xlsx";
+        ExcelUtil.easyUtilStr(headList,head,exportList,fileName, response);
+        return;
+    }
+
+
+    /**
+     * @description: 查询目标数据
+     * @author Will
+     * @date: 2023/9/19 16:34
+     * @param dto
+     * @return List<ViewDTO>
+     */
     private List<TargetFinishDTO.ViewDTO> listTarget (TargetFinishDTO.ParamDTO dto) {
         //目标数据
         List<TargetFinishDTO.ViewDTO> list = new ArrayList<>();
