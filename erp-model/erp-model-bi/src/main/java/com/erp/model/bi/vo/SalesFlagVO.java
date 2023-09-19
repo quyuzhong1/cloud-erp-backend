@@ -13,7 +13,6 @@ import java.math.BigDecimal;
  * @Created by yl
  */
 @Data
-@NoArgsConstructor
 public class SalesFlagVO implements Serializable {
 
 
@@ -22,22 +21,47 @@ public class SalesFlagVO implements Serializable {
      */
     private BigDecimal sales;
 
-
     /**
      * 销量
      */
     private Integer salesQuantity;
 
-
     private Integer flag;
 
     private String skuNo;
 
-
     private String name;
 
+    private Integer orderCount;
 
+    /**
+     * 销售同比
+     */
+    private BigDecimal salesBasisRatio;
 
+    /**
+     * 销售环比
+     */
+    private BigDecimal salesChainRelativeRatio;
 
-    private Integer  orderCount;
+    /**
+     * 销量同比
+     */
+    private BigDecimal salesQuantityBasisRatio;
+
+    /**
+     * 销量环比
+     */
+    private BigDecimal salesQuantityChainRelativeRatio;
+
+    public SalesFlagVO() {
+        this.sales = BigDecimal.ZERO;
+        this.salesQuantity = 0;
+        this.flag = 0;
+        this.orderCount = 0;
+        this.salesBasisRatio = BigDecimal.ZERO;
+        this.salesChainRelativeRatio = BigDecimal.ZERO;
+        this.salesQuantityBasisRatio = BigDecimal.ZERO;
+        this.salesQuantityChainRelativeRatio = BigDecimal.ZERO;
+    }
 }
