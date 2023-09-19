@@ -24,5 +24,5 @@ public interface BiSalesMonitoringMapper extends BaseMapper<BiSalesMonitoringEnt
      * @param dto
      * @return List<BiSalesMonitoringTableDTO>
      */
-    List<BiSalesMonitoringTableDTO> listBiSalesMonitoringTable(@Param("dto") BiSalesMonitoringSearchDTO dto);
+    List<BiSalesMonitoringTableDTO> listBiSalesMonitoringTable(@Param("dto") BiSalesMonitoringSearchDTO.ParamDTO dto);
 }
