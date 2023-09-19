@@ -114,7 +114,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
             throw new ServiceException(ApiError.ERROR_EXIST_BASIC_LABEL_NAME, stringSet);
         }
         //校验标签是否数据库已存在
-        Set<String> names = basicLabelEntities.stream().map(BasicLabelEntity::getName).collect(Collectors.toSet());
+        Set<String> names = basicLabelEntities.stream().filter(v->StringUtils.isBlank(v.getId())).map(BasicLabelEntity::getName).collect(Collectors.toSet());
         List<Object> nameObjs = getByNames(names);
         if (CollectionUtils.isNotEmpty(nameObjs)) {
             throw new ServiceException(ApiError.ERROR_EXIST_BASIC_LABEL, nameObjs.toArray());
@@ -128,7 +128,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
             //存在不在定义范围内的等级
             throw new ServiceException(ApiError.NOT_EXIST_BASIC_LABEL_LEVEL, labelNames);
         }
-        return this.saveBatch(basicLabelEntities);
+        return this.saveOrUpdateBatch(basicLabelEntities);
     }
 
     /**
