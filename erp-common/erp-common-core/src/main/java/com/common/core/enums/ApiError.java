@@ -498,10 +498,12 @@ public enum ApiError implements Serializable {
     CLEAN_SPLIT_FINANCIAL_EXIST(97030, "sku{【%s】}的财务编码不存在！"),
     ERP_BOM_EXIST(97031, "sku{【%s】}在ERP的BOM中不存在！"),
     MABANG_BOM_EXIST(97032, "sku{【%s】}在马帮的BOM中不存在！"),
-    YEAR_METRICS_EXIST(97030, "{}已设置,不可重复设置"),
-    SEARCH_TYPE_EXIST(97031, "搜索类型不存在"),
-
-
+    YEAR_METRICS_EXIST(97033, "{}已设置,不可重复设置"),
+    SEARCH_TYPE_EXIST(97034, "搜索类型不存在"),
+    NOT_EXIST(97035, "{}不存在"),
+    ERROR_EXIST_BASIC_LABEL(97036, "基础标签单{}已存在"),
+    NOT_EXIST_BASIC_LABEL_LEVEL(97037, "基础标签单级别{}不存在"),
+    ERROR_EXIST_BASIC_LABEL_NAME(97038, "基础标签单标签名称{}数据重复"),
 
 
     /**

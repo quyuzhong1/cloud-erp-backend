@@ -59,21 +59,26 @@ public class NewAndOldSalesSearchDTO {
         /**
          * 新品销售额占比
          */
-        private String newProductSalesRatio;
+        private BigDecimal newProductSalesRatio;
         /**
          * 老品销售额占比
          */
-        private String oldProductSalesRatio;
+        private BigDecimal oldProductSalesRatio;
 
         /**
          * 新品销售额完成率
          */
-        private String newSalesAmountFinishRate;
+        private BigDecimal newSalesAmountFinishRate;
 
         /**
          * 新品销量完成率
          */
-        private String newSalesQuantityFinishRate;
+        private BigDecimal newSalesQuantityFinishRate;
+
+        /**
+         * 新品销售占比完成率
+         */
+        private BigDecimal newSalesRateFinishRate;
 
         /**
          * 新品销售目标
@@ -85,6 +90,11 @@ public class NewAndOldSalesSearchDTO {
          */
         private BigDecimal newSalesQuantityTarget;
 
+        /**
+         * 新品销售占比目标
+         */
+        private BigDecimal newSalesRateTarget;
+
         public PagingDTO() {
             this.newProductSales = BigDecimal.ZERO;
             this.newSalesQuantity = 0;
@@ -92,9 +102,12 @@ public class NewAndOldSalesSearchDTO {
             this.oldSalesQuantity = 0;
             this.newSalesAmountTarget = BigDecimal.ZERO;
             this.newSalesQuantityTarget = BigDecimal.ZERO;
-            this.oldProductSalesRatio = BigDecimal.ZERO + "%";
-            this.newSalesAmountFinishRate = BigDecimal.ZERO + "%";
-            this.newSalesQuantityFinishRate = BigDecimal.ZERO + "%";
+            this.newSalesRateTarget = BigDecimal.ZERO;
+            this.oldProductSalesRatio = BigDecimal.ZERO;
+            this.newSalesAmountFinishRate = BigDecimal.ZERO;
+            this.newSalesQuantityFinishRate = BigDecimal.ZERO;
+            this.newSalesRateFinishRate = BigDecimal.ZERO;
+
         }
     }
 

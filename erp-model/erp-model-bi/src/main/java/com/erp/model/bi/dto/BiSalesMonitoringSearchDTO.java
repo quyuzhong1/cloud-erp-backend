@@ -17,9 +17,23 @@ import javax.validation.constraints.NotBlank;
 public class BiSalesMonitoringSearchDTO extends PermissionsDTO {
 
     /**
-     * 模块id
+     * 列表参数
      */
-    @NotBlank(message = "模块id不能为空")
-    private String moduleId;
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO {
+
+        /**
+         * 考核维度（销售额 salesAmount、销量 salesQty）
+         */
+        @NotBlank(message = "考核维度不能为空")
+        private String metrics;
+
+        /**
+         * 搜索类型（二级部门 dept、人员 user、店铺 shop,、品类 category、SKU sku、平台 platform、国家 country）
+         */
+        @NotBlank(message = "搜索类型不能为空")
+        private String searchType;
+    }
 
 }

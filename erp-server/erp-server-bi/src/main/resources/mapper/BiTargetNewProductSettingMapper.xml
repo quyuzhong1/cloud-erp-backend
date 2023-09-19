@@ -79,7 +79,8 @@
             ty.dept_name,
             btnps.month,
             SUM(btnps.value) AS value,
-            btnps.metrics
+            btnps.metrics,
+            SUM(btnps.rate) AS rate
         FROM bi_target_year ty
         INNER JOIN bi_target_new_product_setting btnps ON ty.id = btnps.main_id AND btnps.is_deleted = false
         WHERE ty.is_deleted = false
@@ -114,7 +115,8 @@
             btnps.staff_name AS userName,
             btnps.month,
             SUM(btnps.value) AS value,
-            btnps.metrics
+            btnps.metrics,
+            SUM(btnps.rate) AS rate
         FROM bi_target_year ty
         INNER JOIN bi_target_new_product_setting btnps ON ty.id = btnps.main_id AND btnps.is_deleted = false
         WHERE ty.is_deleted = false

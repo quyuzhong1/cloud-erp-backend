@@ -37,6 +37,31 @@ public class BiSalesMonitoringTableDTO {
     private String brandName;
 
     /**
+     * 部门id
+     */
+    private String deptId;
+
+    /**
+     * 部门名称
+     */
+    private String deptName;
+
+    /**
+     * 店铺名称
+     */
+    private String shopName;
+
+    /**
+     * 平台名称
+     */
+    private String sourcePlatform;
+
+    /**
+     * 国家名称
+     */
+    private String countryNameCn;
+
+    /**
      * 品类id
      */
     private String categoryId;

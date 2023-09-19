@@ -29,12 +29,6 @@ public enum MetricsEnum implements EnumMessage {
     GROSS_PROFIT("grossProfit", "毛利润"),
     GROSS_PROFIT_RATE("grossProfitRate", "毛利率");
 
-
-    MetricsEnum(String code, String name) {
-        this.code = code;
-        this.name = name;
-    }
-
     /**
      * 类型
      */
@@ -45,6 +39,12 @@ public enum MetricsEnum implements EnumMessage {
      * 名称
      */
     private String name;
+
+    MetricsEnum(String code, String name) {
+        this.code = code;
+        this.name = name;
+    }
+
 
 
     @Override

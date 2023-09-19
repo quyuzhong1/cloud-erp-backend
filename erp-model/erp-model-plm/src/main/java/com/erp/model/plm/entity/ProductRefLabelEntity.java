@@ -37,15 +37,15 @@ public class ProductRefLabelEntity extends BaseEntity<ProductRefLabelEntity> {
     /**
     * 标签id
     */
-    @TableField("leable_id")
-    private String leableId;
+    @TableField("label_Id")
+    private String labelId;
 
 
     public static final String SKU_ID = "sku_id";
 
     public static final String PRODUCT_ID = "product_id";
 
-    public static final String LEABLE_ID = "leable_id";
+    public static final String LABEL_ID = "label_id";
 
     @Override
     public Serializable pkVal() {

@@ -40,7 +40,7 @@ public class BiTargetYearDTO implements Serializable {
         /**
          * 年
          */
-        private List<String> yearList;
+        private Integer year;
 
         /**
          * 考核指标
