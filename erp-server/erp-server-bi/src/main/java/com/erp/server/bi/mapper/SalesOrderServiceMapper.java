@@ -135,12 +135,16 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     List<SalesFlagVO> byTobToc(@Param("params")BiFilterDTO dto,@Param("settleRate") String settleRate);
 
     List<SalesFlagVO> getByDay(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate);
+    List<SalesFlagVO> getByDayCategory(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate);
 
     List<SalesFlagVO> getByMonth(@Param("params") DateSalesTrendDTO.SearchDTO dto,@Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate);
+    List<SalesFlagVO> getByMonthCategory(@Param("params") DateSalesTrendDTO.SearchDTO dto,@Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate);
 
     List<SalesFlagVO> getByQuarter(@Param("params")DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag")String timeFlag, @Param("settleRate")String settleRate);
+    List<SalesFlagVO> getByQuarterCategory(@Param("params")DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag")String timeFlag, @Param("settleRate")String settleRate);
 
     List<SalesFlagVO> getByYear(@Param("params") DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate);
+    List<SalesFlagVO> getByYearCategory(@Param("params") DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate);
 
     List<SalesFlagVO> deptNewAndOldSalesAmount(@Param("params") NewAndOldSalesSearchDTO.SearchDTO dto, @Param("settleRate") String settleRate);
 
