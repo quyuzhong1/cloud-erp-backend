@@ -75,4 +75,11 @@ public interface BiTargetCategorySettingService extends SuperService<BiTargetCat
      * @return
      */
     BiTargetCategorySettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 删除分类
+     * @param dto
+     * @return
+     */
+    Boolean delete(BiTargetCategorySettingDTO.RemoveDTO dto);
 }

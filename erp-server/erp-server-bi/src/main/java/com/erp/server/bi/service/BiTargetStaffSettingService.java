@@ -90,4 +90,11 @@ public interface BiTargetStaffSettingService extends SuperService<BiTargetStaffS
      * @return com.erp.model.bi.dto.BiTargetStaffSettingDTO.ImportDTO
      */
     BiTargetStaffSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 列表删除员工目标
+     * @param dto
+     * @return
+     */
+    Boolean delete(BiTargetStaffSettingDTO.RemoveDTO dto);
 }

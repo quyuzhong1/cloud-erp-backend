@@ -81,4 +81,11 @@ public interface BiTargetShopSettingService extends SuperService<BiTargetShopSet
      * @return com.erp.model.bi.dto.BiTargetShopSettingDTO.ImportDTO
      */
     BiTargetShopSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 列表删除店铺目标
+     * @param dto
+     * @return
+     */
+    Boolean delete(BiTargetShopSettingDTO.RemoveDTO dto);
 }
