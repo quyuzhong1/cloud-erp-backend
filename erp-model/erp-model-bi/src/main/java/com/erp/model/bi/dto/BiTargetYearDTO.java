@@ -50,6 +50,11 @@ public class BiTargetYearDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class PagingTotalDTO{
+
+    }
 
     /**
      * 详情
@@ -104,7 +109,7 @@ public class BiTargetYearDTO implements Serializable {
         /**
          * 指标维度
          */
-        @NotBlank(message = "指标维度不能为空")
+        @NotNull(message = "指标维度不能为空")
         @StateEnumValue(clazz = MetricsEnum.class, message = "指标维度有误")
         private MetricsEnum metrics;
 

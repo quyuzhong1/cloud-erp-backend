@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 import com.erp.server.bi.mapper.BiDataSourceCostDetailMapper;
 import com.erp.server.bi.service.BiDataSourceCostDetailService;
@@ -66,5 +67,29 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
         LambdaUpdateWrapper<BiDataSourceCostDetailEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(BiDataSourceCostDetailEntity::getCostId,costId);
         this.remove(updateWrapper);
+    }
+
+
+    /**
+     * 获取月度值
+     *
+     * @param yearMonthStr
+     * @param costType
+     * @param dto
+     * @return
+     */
+    @Override
+    public BigDecimal monthByCostType(String yearMonthStr, String costType, BiFilterDTO dto) {
+        return baseMapper.monthByCostType(yearMonthStr,costType,dto);
+    }
+
+    /**
+     * 获取成本根据类型
+     * @param costType
+     * @return
+     */
+    @Override
+    public BigDecimal yearByCostType(String year,String costType,BiFilterDTO dto) {
+        return baseMapper.yearByCostType(year,costType,dto);
     }
 }
