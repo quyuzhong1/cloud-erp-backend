@@ -2,6 +2,7 @@ package com.erp.model.wms.dto.inventory;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.business.dto.base.SortDTO;
+import com.common.core.utils.MathUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -956,7 +957,6 @@ public class InventoryDTO implements Serializable {
      * PDA首页库存结余查询
      */
     @Data
-    @NoArgsConstructor
     public static class PdaHomeInventoryBalanceDTO {
         /**
          * 仓库id
@@ -982,6 +982,12 @@ public class InventoryDTO implements Serializable {
          * 今日入库数量
          */
         private Integer todayStockInQty;
+
+        public  PdaHomeInventoryBalanceDTO() {
+            this.usableQty = MathUtil.ZERO;
+            this.todayDeliveryQty = MathUtil.ZERO;
+            this.todayStockInQty = MathUtil.ZERO;
+        }
     }
 
     @Data
