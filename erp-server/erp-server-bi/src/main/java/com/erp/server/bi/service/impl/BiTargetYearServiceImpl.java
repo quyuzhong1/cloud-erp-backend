@@ -149,7 +149,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
 
                 List<String> shopNameList = dto.getShopName();
                 List<DmpShopInfoEntity> shopInfoList = shopInfoService.listByNames(shopNameList);
-                List<String> shopIdList  = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
+                List<String> shopIdList = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
                 dto.setShopName(shopIdList);
                 //年
                 if (yearFlag.equals(flagStr)) {
@@ -158,11 +158,46 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                     //月
                     return biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
                 }
+                //毛利额
+            case GROSS_PROFIT:
+                //年
+                if (yearFlag.equals(flagStr)) {
+                    //主营业务收入
+                    BigDecimal mainBusinessIncome = biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
+                    //成本合计
+                    BigDecimal costTotalCost = biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_TOTALCOST.getCode(), dto);
+                    return mainBusinessIncome.subtract(costTotalCost);
+                } else {
+                    //月
+                    BigDecimal monthMainBusinessIncome = biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
+                    BigDecimal monthCostTotalCost = biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_TOTALCOST.getCode(), dto);
+                    return monthMainBusinessIncome.subtract(monthCostTotalCost);
+                }
 
+                //毛利率
+            case GROSS_PROFIT_RATE:
+                //年
+                if (yearFlag.equals(flagStr)) {
+                    //主营业务收入
+                    BigDecimal mainBusinessIncome = biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
+                    //成本合计
+                    BigDecimal costTotalCost = biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_TOTALCOST.getCode(), dto);
+                    //差值
+                    BigDecimal grossProfit = mainBusinessIncome.subtract(costTotalCost);
+                    return MathUtil.divide(grossProfit,mainBusinessIncome,2);
+
+                }else{
+                    //月
+                    BigDecimal monthMainBusinessIncome = biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
+                    BigDecimal monthCostTotalCost = biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_TOTALCOST.getCode(), dto);
+                    //差值
+                    BigDecimal monthGrossProfit = monthMainBusinessIncome.subtract(monthCostTotalCost);
+                    return MathUtil.divide(monthGrossProfit,monthMainBusinessIncome,2);
+                }
 
         }
 
-        return null;
+        return BigDecimal.ZERO;
     }
 
 
