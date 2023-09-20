@@ -57,6 +57,21 @@ public class BiSkuDetailTopDTO {
     private String developerName;
 
     /**
+     * 产品负责人/产品经理id
+     */
+    private String chargeId;
+
+    /**
+     * 产品负责人/产品经理名称
+     */
+    private String chargeName;
+
+    /**
+     * 示意图url
+     */
+    private String imageUrl;
+
+    /**
      * 公司首单日期
      */
     private String firstOrderDate = "";
