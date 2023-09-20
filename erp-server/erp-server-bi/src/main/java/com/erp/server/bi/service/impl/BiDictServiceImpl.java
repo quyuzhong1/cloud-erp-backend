@@ -63,7 +63,9 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchAdd(List<DictDTO> dictEntities) {
-        if (CollectionUtils.isEmpty(dictEntities)) throw new ServiceException(ApiError.ERROR_EMPTY_LIST);
+        if (CollectionUtils.isEmpty(dictEntities)) {
+            throw new ServiceException(ApiError.ERROR_EMPTY_LIST);
+        }
         Set<String> valueSet = dictEntities.stream().collect(Collectors.groupingBy(DictDTO::getValue, Collectors.counting()))
                 .entrySet().stream().filter(entry -> entry.getValue() > 1).map(Map.Entry::getKey).collect(Collectors.toSet());
         if (CollectionUtils.isNotEmpty(valueSet)) {
@@ -74,7 +76,9 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
         Set<String> values = dictEntities.stream().filter(v -> StringUtils.isBlank(v.getId())).map(DictDTO::getValue).collect(Collectors.toSet());
         if (CollectionUtils.isNotEmpty(values)){
             List<Object> valueObjs = getByNames(values, entity.getType());
-            if (CollectionUtils.isNotEmpty(valueObjs)) throw new ServiceException(ApiError.ERROR_EXIST_DICT_VALUE, valueObjs.toArray());
+            if (CollectionUtils.isNotEmpty(valueObjs)) {
+                throw new ServiceException(ApiError.ERROR_EXIST_DICT_VALUE, valueObjs.toArray());
+            }
         }
         List<BiDictEntity> entities = BeanMapperUtils.copyList(BiDictEntity.class, dictEntities);
         return this.saveOrUpdateBatch(entities, entities.size());
