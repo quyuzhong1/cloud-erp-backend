@@ -48,7 +48,8 @@ public interface MessageUserReadService extends SuperService<MessageUserReadEnti
      * @Author Luo_WG
      * @Date 2023/8/21 11:41
      * @param messageId
+     * @param userId
      * @return java.lang.Boolean
      **/
-    Boolean readByMessageId(String messageId);
+    Boolean readByMessageId(String messageId, String userId);
 }
