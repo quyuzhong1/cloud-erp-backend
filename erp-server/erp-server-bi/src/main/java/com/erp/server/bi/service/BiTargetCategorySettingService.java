@@ -82,4 +82,11 @@ public interface BiTargetCategorySettingService extends SuperService<BiTargetCat
      * @return
      */
     Boolean delete(BiTargetCategorySettingDTO.RemoveDTO dto);
+
+    /**
+     * 分页统计
+     * @param dto
+     * @return
+     */
+    BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto);
 }

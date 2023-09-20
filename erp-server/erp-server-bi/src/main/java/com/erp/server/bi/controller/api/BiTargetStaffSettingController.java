@@ -75,9 +75,11 @@ public class BiTargetStaffSettingController extends BaseController {
 //            menuCode = "bi:biTargetStaffSetting:paging",
 //            tableAlias = ""
 //    )
-    public ApiResult<BiTargetYearDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated PagingDTO<BiTargetYearDTO.PagingParamDTO> dto) {
-        return success(null);
+    public ApiResult<BiTargetYearDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated BiTargetYearDTO.PagingParamDTO dto) {
+        BiTargetYearDTO.PagingTotalDTO totalDTO = biTargetStaffSettingService.pagingTotal(dto);
+        return success(totalDTO);
     }
+
     /**
      * 新增
      *
@@ -148,18 +150,6 @@ public class BiTargetStaffSettingController extends BaseController {
         return success(result);
     }
 
-
-    /**
-     * 分页列表修改
-     *
-     * @return
-     */
-    @PostMapping("/listUpdate")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "人员目标列表修改")
-    public ApiResult listUpdate(@RequestBody BiTargetStaffSettingDTO.RemoveDTO dto) {
-        Boolean result = biTargetStaffSettingService.delete(dto);
-        return result ? success() : failure();
-    }
 
     /**
      * 分页列表删除

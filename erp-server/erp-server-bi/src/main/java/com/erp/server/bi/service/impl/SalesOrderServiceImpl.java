@@ -2726,6 +2726,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (Objects.isNull(yearFinishValue)) {
             yearFinishValue = BigDecimal.ZERO;
         }
+        yearMetrics.setFinishValue(yearFinishValue);
         //完成占比
         BigDecimal yearFinishRate = getSalesRatio(yearMetricsValue, yearFinishValue);
         yearMetrics.setFinishRate(yearFinishRate);

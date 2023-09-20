@@ -97,4 +97,11 @@ public interface BiTargetStaffSettingService extends SuperService<BiTargetStaffS
      * @return
      */
     Boolean delete(BiTargetStaffSettingDTO.RemoveDTO dto);
+
+    /**
+     * 分页统计
+     * @param dto
+     * @return
+     */
+    BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto);
 }

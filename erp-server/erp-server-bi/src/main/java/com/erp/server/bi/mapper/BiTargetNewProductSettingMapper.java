@@ -42,4 +42,10 @@ public interface BiTargetNewProductSettingMapper extends BaseMapper<BiTargetNewP
      * @return java.util.List<com.erp.model.bi.dto.BiTargetNewProductSettingDTO.UserTargetDTO>
      **/
     List<BiTargetNewProductSettingDTO.UserTargetDTO> listUserTarget(@Param("params") BiTargetNewProductSettingDTO.TargetParamDTO params);
+    /**
+     * 分页统计
+     * @param dto
+     * @return
+     */
+    List<BiTargetYearDTO.MonthValueDTO> pagingTotal(@Param("params") BiTargetYearDTO.PagingParamDTO dto);
 }
