@@ -153,4 +153,15 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      * 设置分享
      */
     BatchResultDTO updateShare(List<String> shareFlagIdList, String mainId, String shareFlag);
+
+    /**
+     * 用户所有可见专题
+     * (本人创建和共享)
+     */
+    List<String> allUserVisibleSubjectId(String userId, List<String> roleIdList);
+
+    /**
+     * 用户创建的专题
+     */
+    List<BiSubjectEntity> findByCreatedUserId(String userId);
 }
