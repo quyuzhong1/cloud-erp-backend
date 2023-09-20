@@ -2520,6 +2520,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         switch (dateType) {
             case "DAY":
+                int days = dto.getEndTime().toLocalDate().until(dto.getStartTime().toLocalDate()).getDays();
+                if (days > 31) {
+                    throw new ServiceException(ApiError.ERROR_DATE_RANGE_THIRTY_ONE);
+                }
                 salesList = baseMapper.getByDay(dto, timeFlag, settleRate);
                 dto.setStartTime(dto.getStartTime().minusYears(1));
                 dto.setEndTime(dto.getEndTime().minusYears(1));
@@ -2528,6 +2532,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "DAY");
                 break;
             case "WEEK":
+                int weekDay = dto.getEndTime().toLocalDate().until(dto.getStartTime().toLocalDate()).getDays();
+                if (weekDay > 62) {
+                    throw new ServiceException(ApiError.ERROR_DATE_RANGE_WEEK_DAY);
+                }
                 salesList = baseMapper.getByWeek(dto, timeFlag, settleRate);
                 dto.setStartTime(dto.getStartTime().minusYears(1));
                 dto.setEndTime(dto.getEndTime().minusYears(1));
