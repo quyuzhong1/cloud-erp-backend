@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.bi.entity.BiModulePermissionEntity;
 import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
+import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.mapper.BiModulePermissionMapper;
 import com.erp.server.bi.service.BiModulePermissionService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -95,6 +96,13 @@ public class BiModulePermissionServiceImpl extends ServiceImpl<BiModulePermissio
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void checkAndAddModulePermission(List<String> shareFlagIdList, String mainId, String shareFlag) {
+        // 私人
+        if (DashboardEnum.PERSONAL.getFlag().equalsIgnoreCase(shareFlag)){
+            // 移除其他
+            deleteByModuleId(mainId);
+            return;
+        }
+
         // 类
         BiShareIdentityTypeEnum identityTypeEnum = BiShareIdentityTypeEnum.isRoleCheck(shareFlag);
         // 添加
