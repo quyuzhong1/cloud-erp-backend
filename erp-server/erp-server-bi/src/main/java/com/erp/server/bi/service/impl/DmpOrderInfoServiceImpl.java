@@ -14,7 +14,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.service.SuperService;
 import com.common.business.service.impl.RedisService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -189,7 +188,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 : biDictService.getByType(SaleContryTypeEnum.ABROAD.code);
         List<SalesPriceRangeVO> rangeVOS = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(biDictEntities)) {
-            return getDefaultRangeList();
+            return getDefaultRangeList(rangeType);
         } else {
             biDictEntities.forEach(biDictEntity -> {
                 List<String> strings = Arrays.asList(biDictEntity.getValue().split(","));
@@ -199,16 +198,16 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         return rangeVOS;
     }
 
-    private List<SalesPriceRangeVO> getDefaultRangeList() {
+    private List<SalesPriceRangeVO> getDefaultRangeList(Integer rangeType) {
         List<SalesPriceRangeVO> rangeVOS = new ArrayList<>(8);
-        rangeVOS.add(new SalesPriceRangeVO("1", 1, 0, 100));
-        rangeVOS.add(new SalesPriceRangeVO("2", 1, 100, 200));
-        rangeVOS.add(new SalesPriceRangeVO("3", 1, 200, 300));
-        rangeVOS.add(new SalesPriceRangeVO("4", 1, 300, 400));
-        rangeVOS.add(new SalesPriceRangeVO("5", 1, 400, 500));
-        rangeVOS.add(new SalesPriceRangeVO("6", 1, 500, 600));
-        rangeVOS.add(new SalesPriceRangeVO("7", 1, 600, 700));
-        rangeVOS.add(new SalesPriceRangeVO("8", 1, 700, -1));
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 0, 100));
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 100, 200));
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 200, 300));
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 300, 400));
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 400, 500));
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 500, 600));
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 600, 700));
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 700, -1));
         return rangeVOS;
     }
 

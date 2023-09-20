@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 /**
  *  销售单价分布区间
@@ -26,7 +25,7 @@ public class SalesPriceRangeVO {
     /**
      * 1国内 2国外标识
      */
-    private Integer type;
+    private Integer rangeType;
 
 
     /**
@@ -50,7 +49,7 @@ public class SalesPriceRangeVO {
     private BigDecimal saleAmount;
 
     /**
-     * 销售额
+     * 销售额占比
      */
     private String saleAmountRate;
 
@@ -60,13 +59,13 @@ public class SalesPriceRangeVO {
     private Integer salesQuantity;
 
     /**
-     * 销量
+     * 销量占比
      */
     private String salesQuantityRate;
 
-    public SalesPriceRangeVO(String id, int type, int startValue, int endValue) {
+    public SalesPriceRangeVO(String id, int rangeType, int startValue, int endValue) {
         this.id = id;
-        this.type = type;
+        this.rangeType = rangeType;
         this.startValue = startValue;
         this.endValue = endValue;
     }
