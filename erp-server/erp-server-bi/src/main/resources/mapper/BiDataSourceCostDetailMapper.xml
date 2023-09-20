@@ -5,7 +5,7 @@
 
     <select id="yearByCostType" resultType="java.math.BigDecimal">
         SELECT
-            SUM(scd.cost_value)
+        coalesce(SUM(scd.cost_value),0)
         FROM bi_data_source_cost dsc
         INNER JOIN bi_data_source_cost_detail scd
         ON dsc.ID = scd.cost_id
@@ -33,12 +33,19 @@
                 #{shopId}
             </foreach>
         </if>
+        <!-- 平台 -->
+        <if test="params.platform!=null and params.platform.size>0">
+            AND dsc.platform_name IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
 
     </select>
 
     <select id="monthByCostType" resultType="java.math.BigDecimal">
         SELECT
-        SUM(scd.cost_value)
+        coalesce(SUM(scd.cost_value),0)
         FROM bi_data_source_cost dsc
         INNER JOIN bi_data_source_cost_detail scd
         ON dsc.ID = scd.cost_id
@@ -64,6 +71,13 @@
             AND dsc.shop_id IN
             <foreach collection="params.shopName" item="shopId" open="(" separator="," close=")">
                 #{shopId}
+            </foreach>
+        </if>
+        <!-- 平台 -->
+        <if test="params.platform!=null and params.platform.size>0">
+            AND dsc.platform_name IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
             </foreach>
         </if>
     </select>
