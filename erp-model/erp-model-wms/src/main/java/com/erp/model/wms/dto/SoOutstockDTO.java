@@ -463,6 +463,11 @@ public class SoOutstockDTO implements Serializable {
         private String customerOrderNo;
 
         /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
+
+        /**
          * 详情
          */
         @Valid
