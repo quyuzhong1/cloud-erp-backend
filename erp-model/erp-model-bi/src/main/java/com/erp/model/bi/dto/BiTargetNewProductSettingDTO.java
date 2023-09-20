@@ -260,7 +260,6 @@ public class BiTargetNewProductSettingDTO implements Serializable {
      * 部门目标
      */
     @Data
-    @NoArgsConstructor
     public static class UserTargetDTO {
         /**
          * 部门id
@@ -286,6 +285,15 @@ public class BiTargetNewProductSettingDTO implements Serializable {
          * 占比
          */
         private BigDecimal rate;
+
+        public UserTargetDTO() {
+            this.userId = "";
+            this.userName = "";
+            this.month = 0;
+            this.value = BigDecimal.ZERO;
+            this.metrics = "";
+            this.rate = BigDecimal.ZERO;
+        }
     }
 
     /**
