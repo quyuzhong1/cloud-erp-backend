@@ -21,6 +21,7 @@ import java.util.Map;
  */
 @Mapper
 public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity> {
+
     List<SalesFlagVO> getMonthSales(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate,@Param("timeFlag")String timeFlag);
 
     /**
@@ -31,6 +32,13 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      */
     IPage<SkuSalesDTO.PagingSalesInfoDTO> getBySku(Page query, @Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
+    /**
+     * 导出sku 销售额列表
+     * @param params
+     * @param settleRate
+     * @return
+     */
+    List<SkuSalesDTO.PagingSalesInfoDTO> listSkuSalesExcel(@Param("params") SkuSalesDTO.SearchSkuDTO params, @Param("settleRate")String settleRate);
 
     /**
      * 获取最近天数的销售数据
@@ -179,4 +187,6 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      * @return
      */
     BigDecimal getMonthAmount(@Param("params") BiTargetYearDTO.SearchDTO dto,@Param("settleRate") String settleRate);
+
+
 }

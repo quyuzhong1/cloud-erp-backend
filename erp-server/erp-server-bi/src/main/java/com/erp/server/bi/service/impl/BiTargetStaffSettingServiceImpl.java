@@ -71,6 +71,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
     @Autowired
     private SysUserFeign sysUserFeign;
 
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(BiTargetStaffSettingDTO.AddDTO addDTO) {
@@ -632,7 +633,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
     /**
      * 新增修改处理数据
      */
-    private void handleData(BiTargetYearEntity targetYear, List<BiTargetStaffSettingDTO.CommonDTO> detailList, LogActionEnum action) {
+    public void handleData(BiTargetYearEntity targetYear, List<BiTargetStaffSettingDTO.CommonDTO> detailList, LogActionEnum action) {
         List<BiTargetStaffSettingDTO.ListDetailDTO> existList = baseMapper.listByYear(targetYear.getYear());
         List<String> existStaff = Lists.newArrayList();
         for (BiTargetStaffSettingDTO.CommonDTO item : detailList) {
