@@ -51,6 +51,8 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     private ProductRefLabelMapper productRefLabelMapper;
 
     /**
+     * 根据条件进行查询标签列表
+     *
      * @param dto
      * @return List<BasicLabelEntity>
      */
@@ -118,9 +120,10 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         }
         //校验标签是否数据库已存在
         Set<String> names = basicLabelEntities.stream().filter(v -> StringUtils.isBlank(v.getId())).map(BasicLabelEntity::getName).collect(Collectors.toSet());
-        if (CollectionUtils.isNotEmpty(names)){
+        if (CollectionUtils.isNotEmpty(names)) {
             List<Object> nameObjs = getByNames(names);
-            if (CollectionUtils.isNotEmpty(nameObjs)) throw new ServiceException(ApiError.ERROR_EXIST_BASIC_LABEL, nameObjs.toArray());
+            if (CollectionUtils.isNotEmpty(nameObjs))
+                throw new ServiceException(ApiError.ERROR_EXIST_BASIC_LABEL, nameObjs.toArray());
         }
 
         //补充默认颜色 校验使用范围
@@ -197,7 +200,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     /**
      * 根据表name 获取到 BasicLabelEntity信息
      *
-     * @param
+     * @param names
      * @return java.util.List<com.erp.model.plm.entity.BasicLabelEntity>
      * @author zdy
      * @date 2023-09-16 08:01
