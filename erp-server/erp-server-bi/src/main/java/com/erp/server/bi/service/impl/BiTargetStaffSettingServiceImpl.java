@@ -448,6 +448,21 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         return result;
     }
 
+    /**
+     * 列表删除员工目标
+     * @param dto
+     * @return
+     */
+    @Override
+    public Boolean delete(BiTargetStaffSettingDTO.RemoveDTO dto) {
+        Boolean result = this.lambdaUpdate().
+                eq(BiTargetStaffSettingEntity::getStaffId, dto.getStaffId()).
+                eq(BiTargetStaffSettingEntity::getMainId,dto.getId()).
+                eq(BiTargetStaffSettingEntity::getMetrics,dto.getMetricsEnum()).
+                remove();
+        return result;
+    }
+
     @Override
     public List<TargetFinishDTO.ViewDTO> listDeptTargetFinish(TargetFinishDTO.ParamDTO dto) {
         return baseMapper.listDeptTargetFinish(dto);

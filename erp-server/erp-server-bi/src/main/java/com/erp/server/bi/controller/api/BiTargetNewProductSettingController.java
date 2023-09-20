@@ -3,7 +3,9 @@ package com.erp.server.bi.controller.api;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
 import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
@@ -125,5 +127,15 @@ public class BiTargetNewProductSettingController extends BaseController {
         BiTargetNewProductSettingDTO.ImportDTO result = biTargetNewProductSettingService.importFile(excelFile, response);
         return success(result);
     }
-
+    /**
+     * 分页列表删除
+     *
+     * @return
+     */
+    @PostMapping("/remove")
+    @LogAction(value = LogActionEnum.DELETE, desc = "新品目标设置删除")
+    public ApiResult remove(@RequestBody BiTargetNewProductSettingDTO.RemoveDTO dto) {
+        Boolean result = biTargetNewProductSettingService.delete(dto);
+        return result ? success() : failure();
+    }
 }

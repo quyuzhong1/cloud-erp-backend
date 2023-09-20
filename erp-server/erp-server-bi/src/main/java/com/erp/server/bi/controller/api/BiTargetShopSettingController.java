@@ -130,4 +130,16 @@ public class BiTargetShopSettingController extends BaseController {
     }
 
 
+    /**
+     * 分页列表删除
+     *
+     * @return
+     */
+    @PostMapping("/remove")
+    @LogAction(value = LogActionEnum.DELETE, desc = "店铺目标设置删除")
+    public ApiResult remove(@RequestBody BiTargetShopSettingDTO.RemoveDTO dto) {
+        Boolean result = biTargetShopSettingService.delete(dto);
+        return result ? success() : failure();
+    }
+
 }

@@ -316,4 +316,29 @@ public class BiTargetNewProductSettingDTO implements Serializable {
         private List<String> userIdList;
     }
 
+
+
+    @Data
+    @NoArgsConstructor
+    public static class RemoveDTO {
+
+        /**
+         * id
+         */
+        @NotBlank(message = "目标不能为空")
+        private String id;
+
+        /**
+         * 指标
+         */
+        @NotNull(message = "指标不能为空")
+        private MetricsEnum metricsEnum;
+
+        /**
+         * 员工id
+         */
+        @NotBlank(message = "人员不能为空")
+        private String staffId;
+
+    }
 }
