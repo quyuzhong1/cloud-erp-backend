@@ -145,6 +145,9 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     List<SalesFlagVO> getByDay(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate);
     List<SalesFlagVO> getByDayCategory(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate);
 
+    List<SalesFlagVO> getByWeek(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate);
+    List<SalesFlagVO> getByWeekCategory(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate);
+
     List<SalesFlagVO> getByMonth(@Param("params") DateSalesTrendDTO.SearchDTO dto,@Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate);
     List<SalesFlagVO> getByMonthCategory(@Param("params") DateSalesTrendDTO.SearchDTO dto,@Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate);
 

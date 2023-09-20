@@ -509,6 +509,8 @@ public enum ApiError implements Serializable {
     ERROR_EXIST_DICT_VALUE(97036, "系统字典表值{}已存在"),
     ERROR_EMPTY_DICT_TYPE(97037, "系统字典类型不能为空"),
     ERROR_EMPTY_LIST(97038, "请求参数不能为空"),
+    ERROR_DATE_RANGE_THIRTY_ONE(97039, "日范围不能大于31天"),
+    ERROR_DATE_RANGE_WEEK_DAY(97039, "日范围不能大于62天"),
 
     /**
      * SCM 错误
