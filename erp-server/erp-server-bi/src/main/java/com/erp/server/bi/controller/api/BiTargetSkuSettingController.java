@@ -12,6 +12,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.BiTargetShopSettingDTO;
 import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
+import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.server.bi.service.BiTargetSkuSettingService;
 import lombok.extern.slf4j.Slf4j;
@@ -128,5 +129,15 @@ public class BiTargetSkuSettingController extends BaseController {
         return success(result);
     }
 
-
+    /**
+     * 分页列表删除
+     *
+     * @return
+     */
+    @PostMapping("/remove")
+    @LogAction(value = LogActionEnum.DELETE, desc = "单品目标设置删除")
+    public ApiResult remove(@RequestBody BiTargetSkuSettingDTO.RemoveDTO dto) {
+        Boolean result = biTargetSkuSettingService.delete(dto);
+        return result ? success() : failure();
+    }
 }

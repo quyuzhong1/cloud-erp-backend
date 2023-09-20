@@ -17,6 +17,7 @@ import com.erp.model.bi.dto.*;
 import com.erp.model.bi.dto.excel.TargetCategorySettingImportExcelDTO;
 import com.erp.model.bi.dto.excel.TargetSkuSettingImportExcelDTO;
 import com.erp.model.bi.entity.BiTargetCategorySettingEntity;
+import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
@@ -422,6 +423,22 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
         }
         result.setErrorUrl(url);
         return result;
+    }
+
+    /**
+     * 删除分类
+     * @param dto
+     * @return
+     */
+    @Override
+    public Boolean delete(BiTargetCategorySettingDTO.RemoveDTO dto) {
+        Boolean result = this.lambdaUpdate().
+                eq(BiTargetCategorySettingEntity::getCategoryId, dto.getCategoryId()).
+                eq(BiTargetCategorySettingEntity::getMainId,dto.getId()).
+                eq(BiTargetCategorySettingEntity::getMetrics,dto.getMetricsEnum()).
+                remove();
+        return result;
+
     }
 
     /**

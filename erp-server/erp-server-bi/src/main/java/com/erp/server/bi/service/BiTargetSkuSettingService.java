@@ -82,4 +82,11 @@ public interface BiTargetSkuSettingService extends SuperService<BiTargetSkuSetti
      * @return
      */
     BiTargetSkuSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 列表删除单品
+     * @param dto
+     * @return
+     */
+    Boolean delete(BiTargetSkuSettingDTO.RemoveDTO dto);
 }
