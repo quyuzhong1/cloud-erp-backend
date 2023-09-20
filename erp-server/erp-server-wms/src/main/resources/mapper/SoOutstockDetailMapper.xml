@@ -19,7 +19,6 @@
         FROM so_outstock_detail sod
         INNER JOIN so_outstock so ON sod.main_id = so.id AND sod.is_deleted = FALSE
         WHERE so.is_deleted = FALSE
-        AND so.invalid_status = FALSE
         <if test="sourceDetailIds != null and sourceDetailIds.size > 0">
             AND sod.source_detail_id in
             <foreach collection="sourceDetailIds" separator="," item="id" open="(" close=")">
@@ -45,7 +44,6 @@
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON sod.main_id = so.id AND so.is_deleted=FALSE
         WHERE sod.is_deleted = FALSE
-        AND so.invalid_status = FALSE
         <if test="ids != null and ids.size > 0">
             AND so.so_id IN
             <foreach collection="ids" item="id" open="(" separator="," close=")">

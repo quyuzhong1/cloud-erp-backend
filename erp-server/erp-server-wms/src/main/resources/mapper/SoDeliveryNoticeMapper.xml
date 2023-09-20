@@ -292,26 +292,4 @@
         ORDER BY sdn.create_time DESC
     </select>
 
-    <select id="pdaList" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PdaSoDeliveryNotice">
-        SELECT
-        DISTINCT
-        sdn.id,
-        sdn.code,
-        sdn.source_code AS soCode,
-        sdn.seller_name,
-        sdn.warehouse_name,
-        sdn.customer_name,
-        sdn.approve_status
-        FROM so_delivery_notice sdn
-        LEFT JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdnd.is_deleted = FALSE
-        WHERE sdn.is_deleted = FALSE
-        AND sdn.invalid_status = FALSE
-        AND sdn.approve_status = 'approve'
-        <if test="skuNo != '' and skuNo != null ">
-            AND sdnd.sku_no = #{skuNo}
-        </if>
-        <if test="code != '' and code != null ">
-            AND sdn.code ILIKE concat('%', #{code} ,'%')
-        </if>
-    </select>
 </mapper>

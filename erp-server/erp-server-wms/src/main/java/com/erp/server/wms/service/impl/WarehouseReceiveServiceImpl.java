@@ -9,7 +9,10 @@ import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -1194,56 +1197,5 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         }
         inventoryInOutStockDTO.setMembers(members);
         inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
-    }
-
-    @Override
-    public PagingVO<WarehouseReceiveDTO.PdaPagingViewDTO> pdaPaging(PagingDTO<WarehouseReceiveDTO.PdaPagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<WarehouseReceiveDTO.PdaPagingViewDTO> pageData = this.baseMapper.pdaPaging(query, pagingParamDTO.getParams());
-        if (CollectionUtils.isEmpty(pageData.getRecords())) {
-            return new PagingVO(new Page());
-        }
-        List<WarehouseReceiveDTO.PdaPagingViewDTO> records = pageData.getRecords();
-        //主键id
-        List<String> ids = records.stream().map(req -> req.getId()).collect(Collectors.toList());
-        //查询详情
-        List<WarehouseReceiveDetailEntity> detailEntityList = warehouseReceiveDetailService.listDetailByMainIds(ids);
-        for (WarehouseReceiveDTO.PdaPagingViewDTO record : records) {
-            record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
-            List<WarehouseReceiveDetailEntity> detailEntities = detailEntityList.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
-            List<WarehouseReceiveDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, WarehouseReceiveDTO.PdaItemDTO.class);
-            record.setDetailCount(itemDTOList.size());
-            record.setItemList(itemDTOList);
-        }
-        return new PagingVO(pageData);
-    }
-
-    @Override
-    public List<WarehouseReceiveDTO.PdaPoReceiveCountDTO> pdaListCount(PermissionsDTO dto) {
-        PageListTypeEnum[] values = PageListTypeEnum.values();
-        List<WarehouseReceiveDTO.PdaPoReceiveCountDTO> list = new ArrayList<>();
-        for (PageListTypeEnum item : values) {
-            WarehouseReceiveDTO.PagingParamDTO pagingParamDTO = new WarehouseReceiveDTO.PagingParamDTO();
-            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
-            WarehouseReceiveDTO.PdaPoReceiveCountDTO resultDTO = new WarehouseReceiveDTO.PdaPoReceiveCountDTO();
-            Integer count = MathUtil.ZERO;
-            if (PdaTabFlagEnum.WAIT_SUBMIT_AND_REJECT.getCode().equals(item.getCode())) {
-                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
-            }
-            if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
-                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
-            }
-            if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
-                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
-            }
-            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setTabFlag(item.getCode());
-            list.add(resultDTO);
-        }
-        return list;
     }
 }

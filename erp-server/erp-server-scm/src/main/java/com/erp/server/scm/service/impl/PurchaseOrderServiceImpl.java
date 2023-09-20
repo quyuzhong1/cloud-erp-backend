@@ -1968,9 +1968,4 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         return Boolean.TRUE;
     }
-
-    @Override
-    public List<PurchaseOrderEntity> listPoBySkuNo(String skuNo) {
-        return baseMapper.listPoBySkuNo(skuNo);
-    }
 }

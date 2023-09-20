@@ -46,13 +46,4 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
      * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PagingView>
      **/
     List<SoDeliveryNoticeDTO.PagingView> listSoReturnDetailBySourceId(@Param("sourceId") String sourceId);
-
-    /**
-     * PDA:条件查询收货单
-     * @Author Luo_WG
-     * @Date 2023/8/22 18:55
-     * @param dto
-     * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PdaSoDeliveryNotice>
-     **/
-    List<SoDeliveryNoticeDTO.PdaSoDeliveryNotice> pdaList(SoDeliveryNoticeDTO.PdaSoDeliveryNoticeParam dto);
 }

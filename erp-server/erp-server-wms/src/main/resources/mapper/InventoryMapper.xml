@@ -353,44 +353,4 @@
         GROUP BY inv.id
         order by inv.warehouse_id, inv.warehouse_location, inv.sku_id, inv.dict_inventory_status
     </select>
-
-    <select id="getInventoryByWarehouseId" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaHomeInventoryBalanceDTO">
-        SELECT
-            t.warehouse_id,
-            t.usableQty,
-            tt.todayStockInQty,
-            tt.todayDeliveryQty
-        FROM (
-            SELECT
-                i.warehouse_id,
-                SUM(qty) AS usableQty
-            FROM inventory i
-            WHERE is_deleted = FALSE
-            <if test="status != null and status != ''">
-                AND dict_inventory_status = #{status}
-            </if>
-            <if test="warehouseId != null and warehouseId != ''">
-                AND t.warehouse_id = #{warehouseId}
-            </if>
-            GROUP BY i.warehouse_id
-        )t
-        LEFT JOIN (
-            SELECT
-                warehouse_id,
-                SUM(CASE WHEN qty > 0 THEN qty END) AS todayStockInQty,
-                SUM(CASE WHEN qty &lt; 0 THEN qty END) AS todayDeliveryQty
-            FROM "transaction_flow"
-            WHERE to_char(create_time,'YYYY-MM-dd') = to_char(NOW()::timestamp,'YYYY-MM-dd')
-            AND is_unapproved = FALSE
-            <if test="status != null and status != ''">
-                AND dict_inventory_status = #{status}
-            </if>
-            <if test="warehouseId != null and warehouseId != ''">
-                AND t.warehouse_id = #{warehouseId}
-            </if>
-            AND dict_inventory_status = 'usable'
-            GROUP BY warehouse_id
-        )tt ON t.warehouse_id = tt.warehouse_id
-    </select>
-
 </mapper>
