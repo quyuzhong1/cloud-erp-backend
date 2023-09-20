@@ -111,7 +111,7 @@ public class BiDictController extends BaseController {
      * @return 新增结果
      */
     @PostMapping("/batchAdd")
-    public ApiResult add(@RequestBody @Validated List<DictDTO> dictEntities) {
+    public ApiResult batchAdd(@RequestBody @Validated List<DictDTO> dictEntities) {
         Boolean flag = this.biDictService.batchAdd(dictEntities);
         return flag ? success() : failure();
     }
