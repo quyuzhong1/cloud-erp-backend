@@ -422,8 +422,9 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         List<LayoutRefModuleDTO.LayoutRefModuleInfoDTO> layoutRefModuleList = layoutRefModuleService.listByLayoutIds(layoutIdList);
         List<String> moduleIdList = layoutRefModuleList.stream().map(LayoutRefModuleDTO.LayoutRefModuleInfoDTO::getModuleId).collect(Collectors.toList());
         List<BiModuleEntity> moduleList = moduleService.getByIds(moduleIdList);
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
         //用户可见的模块id
-        List<String> visibleModuleIdList = modulePermissionService.getModuleIdsByUserId(userId);
+        List<String> visibleModuleIdList = modulePermissionService.findModuleId(userId, roleIdList);
         for (LayoutDetailsDTO item : list) {
             //布局id
             String layoutId = item.getId();
