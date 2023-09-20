@@ -138,7 +138,7 @@ public class BiModuleController extends BaseController {
         for (BiBatchShareDTO dto : dtoList) {
             BatchResultDTO submit;
             try {
-                submit = biModuleService.updateShare(dto.getShareFlagIdList(), dto.getId(), dto.getShareFlag());
+                submit = biModuleService.updateShare(dto.checkAndGetShareFlagIdList(), dto.getId(), dto.getShareFlag());
             }catch (Exception e){
                 log.error("模板批量设置权限失败:{}", e.getMessage());
                 BiModuleEntity entity = biModuleService.getById(dto.getId());

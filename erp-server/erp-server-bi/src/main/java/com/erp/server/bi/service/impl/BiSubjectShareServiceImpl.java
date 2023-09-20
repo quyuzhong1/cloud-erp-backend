@@ -186,10 +186,13 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
      */
     @Override
     public void checkAndAddSubjectShare(List<String> shareFlagIdList, String subjectId, String shareFlag) {
-        // 非分享
+        // 私人
         if (DashboardEnum.PERSONAL.getFlag().equals(shareFlag)) {
+            // 移除其他
+            deleteBySubjectId(subjectId);
             return;
         }
+
         // 检查对应身份类型
         BiShareIdentityTypeEnum refTypeEnum = BiShareIdentityTypeEnum.isRoleCheck(shareFlag);
 
