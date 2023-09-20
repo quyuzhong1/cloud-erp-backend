@@ -14,9 +14,12 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class SeriesVO<T> {
-
-    private String name;    //当前图名
-    private List<T> data;   //数据
+    //当前图名
+    private String name;
+    //当前图类型 line为折线， bar为柱状
+    private String type;
+    //数据
+    private List<T> data;
 
 
 }
