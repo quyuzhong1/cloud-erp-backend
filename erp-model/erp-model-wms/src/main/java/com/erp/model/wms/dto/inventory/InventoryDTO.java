@@ -951,35 +951,4 @@ public class InventoryDTO implements Serializable {
         }
     }
 
-    /**
-     * PDA首页库存结余查询
-     */
-    @Data
-    @NoArgsConstructor
-    public static class PdaHomeInventoryBalanceDTO {
-        /**
-         * 仓库id
-         */
-        private String warehouseId;
-
-        /**
-         * 仓库名称
-         */
-        private String warehouseName;
-
-        /**
-         * 可用数量
-         */
-        private Integer usableQty;
-
-        /**
-         * 今日出库数量
-         */
-        private Integer todayDeliveryQty;
-
-        /**
-         * 今日入库数量
-         */
-        private Integer todayStockInQty;
-    }
 }
