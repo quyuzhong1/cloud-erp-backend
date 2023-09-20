@@ -188,7 +188,30 @@ public class BiTargetSkuSettingDTO implements Serializable {
 
         private MetricsEnum metrics;
 
-
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class RemoveDTO {
+
+        /**
+         * id
+         */
+        @NotBlank(message = "目标不能为空")
+        private String id;
+
+        /**
+         * 指标
+         */
+        @NotNull(message = "指标不能为空")
+        private MetricsEnum metricsEnum;
+
+        /**
+         * sku id
+         */
+        @NotBlank(message = "sku不能为空")
+        private String skuId;
+
+    }
 }

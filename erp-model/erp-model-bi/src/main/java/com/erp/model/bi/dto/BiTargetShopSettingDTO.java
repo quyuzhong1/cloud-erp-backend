@@ -192,5 +192,27 @@ public class BiTargetShopSettingDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class RemoveDTO {
 
+        /**
+         * id
+         */
+        @NotBlank(message = "目标不能为空")
+        private String id;
+
+        /**
+         * 指标
+         */
+        @NotNull(message = "指标不能为空")
+        private MetricsEnum metricsEnum;
+
+        /**
+         * 店铺id
+         */
+        @NotBlank(message = "店铺不能为空")
+        private String shopId;
+
+    }
 }

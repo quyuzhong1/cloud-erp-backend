@@ -462,6 +462,21 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     }
 
     /**
+     * 列表删除
+     * @param dto
+     * @return
+     */
+    @Override
+    public Boolean delete(BiTargetNewProductSettingDTO.RemoveDTO dto) {
+        Boolean result = this.lambdaUpdate().
+                eq(BiTargetNewProductSettingEntity::getStaffId, dto.getStaffId()).
+                eq(BiTargetNewProductSettingEntity::getMainId,dto.getId()).
+                eq(BiTargetNewProductSettingEntity::getMetrics,dto.getMetricsEnum()).
+                remove();
+        return result;
+    }
+
+    /**
      * 填充分页数据
      * @param list
      */
