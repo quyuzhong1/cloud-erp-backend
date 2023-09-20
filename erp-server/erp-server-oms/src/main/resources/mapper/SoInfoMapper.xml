@@ -22,6 +22,7 @@
         si.approve_time,
         si.sales_dept_id,
         si.remark,
+        si.customer_order_no,
         sod.sku_id,
         sod.sku_no,
         sod.qty,
@@ -49,6 +50,9 @@
         </if>
         <if test="params.code !=null and params.code!=''">
             AND si.code ILIKE concat('%', #{params.code} ,'%')
+        </if>
+        <if test="params.customerOrderNo != null and params.customerOrderNo != ''">
+            AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo} ,'%')
         </if>
         <if test="params.orderType !=null and params.orderType!=''">
             AND si.order_type=#{params.orderType}
@@ -148,6 +152,9 @@
         </if>
         <if test="params.code !=null and params.code!=''">
             AND si.code ILIKE concat('%', #{params.code} ,'%')
+        </if>
+        <if test="params.customerOrderNo != null and params.customerOrderNo != ''">
+            AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo} ,'%')
         </if>
         <if test="params.orderType !=null and params.orderType!=''">
             AND si.order_type=#{params.orderType}
@@ -283,6 +290,7 @@
             si.delivery_mode,
             si.address_type,
             si.receive_condition,
+            si.customer_order_no,
             sod.tax_rate,
             sod.price,
             sod.tax_amount_before,
@@ -311,6 +319,9 @@
                 </if>
                 <if test="params.code !=null and params.code!=''">
                     AND si.code ILIKE concat('%', #{params.code} ,'%')
+                </if>
+                <if test="params.customerOrderNo != null and params.customerOrderNo != ''">
+                    AND si.customer_order_no ILIKE concat('%', #{params.customerOrderNo} ,'%')
                 </if>
                 <if test="params.orderType !=null and params.orderType!=''">
                     AND si.order_type=#{params.orderType}
