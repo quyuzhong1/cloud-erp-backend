@@ -3727,7 +3727,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), enumByCode.getCode(), dto.getValues(), enumByCode.getKeyName());
         }
-        if (flag == Boolean.FALSE) {
+        if (!flag) {
             throw new ServiceException(ApiError.ERROR_95243);
         }
         List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getId, dto.getIds()).list();
