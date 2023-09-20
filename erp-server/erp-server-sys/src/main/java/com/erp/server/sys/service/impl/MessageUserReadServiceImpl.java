@@ -43,10 +43,11 @@ public class MessageUserReadServiceImpl extends SuperServiceImpl<MessageUserRead
     }
 
     @Override
-    public Boolean readByMessageId(String messageId) {
+    public Boolean readByMessageId(String messageId, String userId) {
         return lambdaUpdate()
                 .set(MessageUserReadEntity::getIsRead, Boolean.TRUE)
                 .eq(MessageUserReadEntity::getMessageId, messageId)
+                .eq(MessageUserReadEntity::getUserId, userId)
                 .update();
     }
 }

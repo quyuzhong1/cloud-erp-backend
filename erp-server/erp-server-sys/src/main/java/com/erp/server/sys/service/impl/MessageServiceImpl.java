@@ -144,7 +144,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         for (MessageEntity messageEntity : messageEntityList) {
             //读取未读消息
             if (!messageIds.contains(messageEntity.getId())) {
-                messageUserReadService.readByMessageId(messageEntity.getId());
+                messageUserReadService.readByMessageId(messageEntity.getId(), userInfo.getUid());
             }
         }
         redisService.deleteObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()));
