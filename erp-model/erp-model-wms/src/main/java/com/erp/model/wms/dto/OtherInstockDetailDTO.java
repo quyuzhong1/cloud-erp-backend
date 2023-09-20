@@ -72,6 +72,16 @@ public class OtherInstockDetailDTO implements Serializable {
         private String productName;
 
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
+
+        /**
          * 单位
          */
         private String unit;

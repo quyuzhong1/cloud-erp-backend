@@ -99,6 +99,11 @@ public class TransferInfoDetailDTO implements Serializable {
         private String spuNo;
 
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
          * 单位
          */
         private String unit;

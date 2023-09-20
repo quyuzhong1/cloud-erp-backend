@@ -63,6 +63,8 @@ public abstract class AbstractInventoryServiceImpl {
     private WarehouseService warehouseService;
     @Resource
     private RedisUtil  redisUtil;
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
 
     /**
      *
@@ -259,16 +261,20 @@ public abstract class AbstractInventoryServiceImpl {
     private InventoryDetailEntity getAvaliableInventoryDetail(TransactionFlowEntity transactionFlow) {
         InventoryDetailEntity inventoryDetail = inventoryDetailService.getById(transactionFlow.getInventoryDetailId());
 
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(transactionFlow.getWarehouseId()));
+
+        WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(transactionFlow.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+
         String inventoryStatusName = InventoryStatusEnum.getNameByCode(transactionFlow.getDictInventoryStatus());
         if(null==inventoryDetail){
-            String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), transactionFlow.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(inventoryDetail)?"无":inventoryDetail.getQty()),transactionFlow.getQty());
+            String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(inventoryDetail)?"无":inventoryDetail.getQty()),transactionFlow.getQty());
             log.error(errMsg);
             throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
         }
         // 仓库是否允许负库存
         if(!inventoryHelper.allowNegativeInventory(transactionFlow.getWarehouseId())) {
             if(inventoryDetail.getQty()+transactionFlow.getQty()<0){
-                String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), transactionFlow.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(inventoryDetail)?"无":inventoryDetail.getQty()),transactionFlow.getQty());
+                String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(inventoryDetail)?"无":inventoryDetail.getQty()),transactionFlow.getQty());
                 log.error(errMsg);
                 throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
             }
@@ -284,15 +290,19 @@ public abstract class AbstractInventoryServiceImpl {
     private InventoryEntity getAvaliableInventory(TransactionFlowEntity transactionFlow) {
         InventoryEntity inventory = inventoryService.getById(transactionFlow.getInventoryId());
         String inventoryStatusName = InventoryStatusEnum.getNameByCode(transactionFlow.getDictInventoryStatus());
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(transactionFlow.getWarehouseId()));
+
+        WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(transactionFlow.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+
         if(null==inventory){
-            String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), transactionFlow.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),transactionFlow.getQty());
+            String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),transactionFlow.getQty());
             log.error(errMsg);
             throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
         }
         // 仓库是否允许负库存
         if(!inventoryHelper.allowNegativeInventory(transactionFlow.getWarehouseId())) {
             if(inventory.getQty()+transactionFlow.getQty()<0){
-                String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), transactionFlow.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),transactionFlow.getQty());
+                String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),transactionFlow.getQty());
                 log.error(errMsg);
                 throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
             }
@@ -380,11 +390,14 @@ public abstract class AbstractInventoryServiceImpl {
                 log.error("单据：{},SKU:{},入库加锁失败,key={}",param.getSourceCode(),param.getSkuNo(), lockKey);
                 throw new ServiceException(ApiError.ERROR_1026);
             }
+            List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(param.getWarehouseId()));
+
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(param.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
 
             InventoryEntity inventory = inventoryService.findInventory(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getSkuId(), param.getWarehouseLocation(), inventoryStatusEnum.getCode());
             String inventoryStatusName = Optional.ofNullable(inventoryStatusEnum).map(InventoryStatusEnum::getName).orElse("");
             if(Objects.isNull(inventory)) {
-                String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), param.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),param.getQty());
+                String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),param.getQty());
                 log.error(errMsg);
 
                 throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
@@ -392,7 +405,7 @@ public abstract class AbstractInventoryServiceImpl {
             // 仓库负库存是否允许
             if(!inventoryHelper.allowNegativeInventory(param.getWarehouseId())) {
                 if(inventory.getQty()<waitOutQty) {
-                    String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), param.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),param.getQty());
+                    String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),param.getQty());
                     log.error(errMsg);
                     throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
                 }
@@ -406,7 +419,7 @@ public abstract class AbstractInventoryServiceImpl {
                 inventoryDetails = inventoryDetailService.findListQtyLeZero(inventory.getId());
                 if(CollUtil.isEmpty(inventoryDetails)) {
                     log.warn("仓库【{}】SKU【{}】允许负库存，即时库存id【{}】,且没有大于0的库存明细，也没有小于等于0的库存明细", warehouseInfo.getName(), param.getSkuNo(), inventory.getId());
-                    String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), param.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),param.getQty());
+                    String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),param.getQty());
                     log.error(errMsg);
                     throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
                 } else {
@@ -417,6 +430,7 @@ public abstract class AbstractInventoryServiceImpl {
                     inventoryDetails.add(lastInventoryDetailEntity);
                 }
             }
+
             // 循环扣减
             for (int i = 0; i < inventoryDetails.size(); i++) {
                 InventoryDetailEntity detailEntity = inventoryDetails.get(i);
@@ -448,7 +462,7 @@ public abstract class AbstractInventoryServiceImpl {
                 if(!inventoryHelper.allowNegativeInventory(param.getWarehouseId())) {
                     if (curInventoryDetail.getQty() < 0) {
                         log.warn("库存明细id：{}出库后的库存数量变为:{}，不允许出库", detailEntity.getId(), curInventoryDetail.getQty());
-                        throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), param.getWarehouseLocation(), inventoryStatusName, (Objects.isNull(detailEntity) ? "无" : detailEntity.getQty()), tradeQty));
+                        throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName, (Objects.isNull(detailEntity) ? "无" : detailEntity.getQty()), tradeQty));
                     }
                 }
 
@@ -462,7 +476,7 @@ public abstract class AbstractInventoryServiceImpl {
             if(waitOutQty > 0) {
                 // 仓库允许负库存判断
                 if(!inventoryHelper.allowNegativeInventory(param.getWarehouseId())) {
-                    throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), param.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),param.getQty()));
+                    throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),param.getQty()));
                 }
             }
 
@@ -477,7 +491,7 @@ public abstract class AbstractInventoryServiceImpl {
             if(!inventoryHelper.allowNegativeInventory(param.getWarehouseId())) {
                 if(curInventory.getQty() < 0) {
                     log.warn("库存id:{}出库后的库存数量变为:{}，不允许出库", inventory.getId(), curInventory.getQty());
-                    throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), param.getWarehouseLocation(), inventoryStatusName,(Objects.isNull(curInventory)?"无":curInventory.getQty()),param.getQty()));
+                    throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(curInventory)?"无":curInventory.getQty()),param.getQty()));
                 }
             }
             // 创建/修改库存历史

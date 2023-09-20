@@ -334,6 +334,10 @@ public class SoDeliveryNoticeDTO {
          */
         private String type;
         /**
+         * 单据类型名称
+         */
+        private String typeName;
+        /**
          * 销售组织id
          */
         private String salesOrgId;
@@ -457,5 +461,73 @@ public class SoDeliveryNoticeDTO {
         private List<SoDeliveryNoticeDetailDTO.View> detailList;
     }
 
+    /**
+     * PDA:发货通知单查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaSoDeliveryNotice {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 销售订单
+         */
+        private String code;
+
+        /**
+         * 销售订单编号
+         */
+        private String soCode;
+
+        /**
+         * 销售员
+         */
+        private String sellerName;
+
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 客户名称
+         */
+        private String customerName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名
+         */
+        private String approveStatusName;
+    }
+
+    /**
+     * PDA:发货通知单查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaSoDeliveryNoticeParam {
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 采购订单号
+         */
+        private String code;
+    }
 
 }

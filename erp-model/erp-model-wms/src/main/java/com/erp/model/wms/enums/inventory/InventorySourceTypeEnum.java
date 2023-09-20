@@ -34,6 +34,7 @@ public enum InventorySourceTypeEnum {
     RECEIVE_MATERIAL("receiveMaterial", "领料"),
     RETURN_MATERIAL("returnMaterial", "退料"),
     STOCKTAKING_PROFIT_LOSS("stocktakingProfitLoss", "盘盈盘亏"),
+    WAREHOUSE_LOCATION_MOVE_INFO("warehouseLocationMoveInfo", "仓位移动"),
     ;
 
     /**

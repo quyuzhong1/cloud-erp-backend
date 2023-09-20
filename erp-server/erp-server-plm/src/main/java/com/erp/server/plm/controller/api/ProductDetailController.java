@@ -975,7 +975,7 @@ ProductDetailController extends BaseController {
      **/
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = productDetailService.submit(dto.getIds());
+        Boolean flag = productDetailService.submit(dto.getIds(), Boolean.TRUE);
         return flag == true ? success() : failure();
     }
 
@@ -1071,5 +1071,18 @@ ProductDetailController extends BaseController {
     @GetMapping("/listSkuByProductId")
     public ApiResult<List<ProductDetailEntity>> listSkuByProductId(@RequestParam("productId") String productId) {
         return success(productDetailService.queryByProductId(productId));
+    }
+
+    /**
+     * PDA:条件查询sku
+     * @Author Luo_WG
+     * @Date 2023/8/21 12:11
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.plm.vo.SkuVO>>
+     **/
+    @PostMapping("/search/pdaSearchSku")
+    public ApiResult<List<SkuVO>> pdaSearchSku(@RequestBody ProductDetailDTO.PdaSearchDTO dto) {
+        List<SkuVO> skuList = productDetailService.pdaSearchSku(dto);
+        return success(skuList);
     }
 }

@@ -20,4 +20,8 @@ public class RedisKeyUtil {
     public static String getEmailCodeCacheKey(String email) {
         return new StringBuffer(RedisCacheConstants.CODE_OF_EMAIL).append(Md5Util.md5(email)).toString();
     }
+
+    public static String getCloseMessageNoticeKey(String userId) {
+        return new StringBuffer(RedisCacheConstants.CLOSE_MESSAGE_NOTICE_KEY).append(userId).toString();
+    }
 }

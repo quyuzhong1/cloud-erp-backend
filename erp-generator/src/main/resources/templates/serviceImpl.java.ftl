@@ -246,7 +246,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", commonService.getUserInfo().getUserName(), entity.getCode(), "${docName}");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.SUBMIT);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -289,7 +289,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
     /**
@@ -335,7 +335,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "${docName}");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.DISAPPROVE);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
     private Boolean validateDisApprove(${entity} entity) {
@@ -364,7 +364,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         log.info("删除 开始删除${docName}日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", commonService.getUserInfo().getUserName(), entity.getCode(), "${docName}");
         operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除${docName}数据");
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
     <#if fieldMap["invalidStatus"]?? && fieldMap["invalidRemark"]??>
     /**
@@ -388,7 +388,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", commonService.getUserInfo().getUserName(), entity.getCode(), "${docName}", remark);
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "作废操作");
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.INVALID);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
      </#if>
 
@@ -421,7 +421,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         revokeDTO.setBusinessKey(null);
         revokeDTO.setUserId(commonService.getUserInfo().getUid());
         workflowFeign.revokeProcess(revokeDTO);
-        return BatchResultDTO.success(entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
     @Override

@@ -131,6 +131,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
             log.warn("马帮销售订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
             return;
         }
+
         // 构造订单结构
         List<DmpOrderInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(MabangOrderInfoServiceImpl::initOrderInfoEntity)
@@ -316,4 +317,6 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         }
         return items;
     }
+
+
 }

@@ -7,9 +7,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
-import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.StocktakingPlanDetailMapper;
 import com.erp.server.wms.service.CommonService;
@@ -19,7 +17,6 @@ import com.common.business.service.SuperServiceImpl;
 import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;

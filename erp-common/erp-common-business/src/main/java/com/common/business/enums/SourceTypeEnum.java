@@ -50,6 +50,7 @@ public enum SourceTypeEnum {
     SO_INFO("soInfo", "销售订单","so_info"),
     SO_CHANGE("soChange", "销售变更单","so_change"),
     CUSTOMER_INFO( "customerInfo", "客户表","customer_info"),
+    SO_B2C("soB2c", "B2C销售订单","so_b2c"),
 
     //Kingdee
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单",""),

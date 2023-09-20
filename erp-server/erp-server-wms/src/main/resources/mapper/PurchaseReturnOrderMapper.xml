@@ -13,6 +13,7 @@
         prod.sku_id,
         prod.sku_no,
         pro.bill_date,
+        pro.return_warehouse_id,
         pro.return_warehouse_name,
         prod.return_qty,
         prod.return_price,
@@ -32,7 +33,7 @@
         pro.source_type,
         prod.purchase_order_detail_id
         FROM po_return_detail prod
-        LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
+        INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
         <if test="params.code != null and params.code != ''">
             and pro.code = #{params.code}
@@ -299,6 +300,12 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.invalidStatus != null ">
+            and pro.invalid_status = #{params.invalidStatus}
+        </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">AND
+            pro.bill_date >= #{params.billDateList[0]} AND (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pro.bill_date
+        </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -324,5 +331,38 @@
             pr.bill_date >= #{params.dateList[0]} AND (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pr.bill_date
         </if>
         group by pr.supplier_id
+    </select>
+
+    <select id="pdaPaging" resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$PdaPagingViewDTO">
+        SELECT
+            DISTINCT
+            pro.id,
+            pro.code,
+            pro.approve_status,
+            pro.supplier_name,
+            pro.return_warehouse_name,
+            pro.create_time
+        FROM po_return_detail prod
+        INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
+        WHERE pro.is_deleted = FALSE
+        AND pro.invalid_status = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and pro.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">AND
+            pro.bill_date >= #{params.billDateList[0]} AND (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pro.bill_date
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ORDER BY pro.create_time desc
     </select>
 </mapper>

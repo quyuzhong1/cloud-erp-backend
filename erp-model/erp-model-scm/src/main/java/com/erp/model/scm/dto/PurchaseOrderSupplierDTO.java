@@ -106,4 +106,63 @@ public class PurchaseOrderSupplierDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class PdaView {
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 结算方式
+         */
+        private String payMethodId;
+
+        /**
+         * 结算方式
+         */
+        private String payMethodName;
+
+        /**
+         * 结算币种
+         */
+        private String payCurrency;
+
+        /**
+         * 供应商联系人表id
+         */
+        private String supplierContactId;
+
+        /**
+         * 供应商联系人名称
+         */
+        private String supplierContactName;
+
+        /**
+         * 供应商联系地址
+         */
+        private String supplierAddress;
+
+        /**
+         * 联系人电话
+         */
+        private String contactTelNumber;
+
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
+    }
 }

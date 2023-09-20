@@ -69,8 +69,12 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                 }
 
                 //当前仓和目的仓不能一样
-                ValidatorUtil.isTrue(!Objects.equals(param.getCurWarehouseId(), param.getTargetWarehouseId()),()->new ServiceException(ApiError.ERROR_99039));
-
+                // 仓位移动时不需要校验仓库
+                if(!businessType.equals(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO)) {
+                    ValidatorUtil.isTrue(!Objects.equals(param.getCurWarehouseId(), param.getTargetWarehouseId()), () -> new ServiceException(ApiError.ERROR_99039));
+                }else {
+                    ValidatorUtil.isTrue(Objects.equals(param.getCurWarehouseId(), param.getTargetWarehouseId()), () -> new ServiceException(ApiError.CURRENT_TARGET_WAREHOUSE_SAME));
+                }
                 // 当前仓仓库和仓位信息
                 WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getCurWarehouseId(),(v)->warehouseService.detailWithCache(v));
                 if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {

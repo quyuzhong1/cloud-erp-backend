@@ -164,9 +164,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             item.setAttachNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
             item.setAttachUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
             String warehouseLocation = item.getWarehouseLocation();
-            String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
-            item.setProductName(skuName);
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
+            item.setProductName(skuVO.getSkuName());
+            item.setVariantProperty(skuVO.getVariantProperty());
 
             String unit = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getUnitName())).orElse("");
@@ -247,11 +247,16 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             if (!planQty.equals(deliveryQty)) {
                 throw new ServiceException(ApiError.ERROR_92031);
             }
-
+            List<String> skuIds = detailList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+            List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIds);
             for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
                 String sourceDetailId = item.getSourceDetailId();
                 String soDetailId = deliveryNoticeDetailList.stream().filter(d -> d.getId().equals(sourceDetailId)).
                         findFirst().flatMap(obj -> Optional.ofNullable(obj.getSourceDetailId())).orElse("");
+                SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
+                if (StringUtils.isBlank(soDetailId)) {
+                    throw new ServiceException(ApiError.ERROR_SO_OUTSTOCK_NOT_EXIST, skuVO.getSkuNo());
+                }
                 //这个是已出的数量
                 Integer outStockQty = soOutstockDetailList.stream().filter(s ->
                         s.getSoDetailId().equals(soDetailId)

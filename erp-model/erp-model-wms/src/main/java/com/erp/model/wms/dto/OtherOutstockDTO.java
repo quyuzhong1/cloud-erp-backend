@@ -266,6 +266,8 @@ public class OtherOutstockDTO implements Serializable {
         @StateEnumValue(clazz = OutstockTypeEnum.class, message = "出库类型输入值有误")
         private String type;
 
+        private String typeName;
+
         /**
          * 领料部门id
          */
@@ -365,6 +367,16 @@ public class OtherOutstockDTO implements Serializable {
         private String inventoryOrgName;
 
         /**
+         * 领料组织id
+         */
+        private String receiveOrgId;
+
+        /**
+         * 领料组织名称
+         */
+        private String receiveOrgName;
+
+        /**
          * 领料员
          */
         private String receiverName;
@@ -413,5 +425,99 @@ public class OtherOutstockDTO implements Serializable {
          * 明细
          */
         private List<OtherOutstockDetailDTO.ViewDTO> detailList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaListDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 编号
+         */
+        public String code;
+
+        /**
+         * 收货仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 产品数量
+         */
+        private Integer detailCount;
+
+        /**
+         * 产品信息
+         */
+        private List<PdaItemDTO> itemList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaItemDTO {
+        /**
+         * 明细id
+         */
+        private String id;
+        /**
+         * sku
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 实收数量
+         */
+        private Integer actualQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaSearchParamDTO extends SortDTO {
+        /**
+         * 审核状态集合
+         */
+        private List<String> approveStatusList;
+
+        /**
+         * 入库日期集合
+         */
+        private List<LocalDate> billDateList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaListStatusCountDTO {
+        /**
+         * 类型(waitSubmitAndReject 待提交/审核不通过，approveIng 审核中，approve 已审核)
+         */
+        private String tabFlag;
+        /**
+         * 数量
+         */
+        private Integer count;
     }
 }

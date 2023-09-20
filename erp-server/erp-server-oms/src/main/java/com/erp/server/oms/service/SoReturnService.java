@@ -9,6 +9,7 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -226,4 +227,22 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @param telNumber
      */
     void updateAddress(String soId, String receiveAddress, String receiverName, String telNumber);
+
+    /**
+     * 根据sku编号查询销售退货单
+     * @Author Luo_WG
+     * @Date 2023/8/15 16:50
+     * @param dto
+     * @return java.util.List<com.erp.model.oms.dto.SoReturnDTO.PdaSoReturn>
+     **/
+    List<SoReturnDTO.PdaSoReturn> pdaList(SoReturnDTO.PdaSoReturnParam dto);
+
+    /**
+     * PDA:根据id查询详情
+     * @Author Luo_WG
+     * @Date 2023/8/16 9:31
+     * @param id
+     * @return com.erp.model.oms.dto.SoReturnDTO.View
+     **/
+    SoReturnDTO.View pdaView(String id);
 }

@@ -66,6 +66,8 @@ public enum InventoryBusinessTypeEnum {
 
     PO_RETURN_REP_NO_PURCHASE("po_return_rep_no_purchase", "30","采购退货（库存退货，无采购单）"),
 
+    WAREHOUSE_LOCATION_MOVE_INFO("warehouse_location_move_info", "31","仓位移动（PDA功能）"),
+
     ;
 
     private String code;

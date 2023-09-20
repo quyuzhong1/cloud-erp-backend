@@ -20,6 +20,10 @@ import java.io.Serializable;
 public class BatchResultDTO implements Serializable {
 
     /**
+     * 单据id
+     */
+    private String id;
+    /**
      * 单据编号
      */
     private String code;
@@ -30,29 +34,29 @@ public class BatchResultDTO implements Serializable {
 
     private Boolean success;
 
-    public static BatchResultDTO success(String code, OperationTypeEnum operationType) {
+    public static BatchResultDTO success(String id, String code, OperationTypeEnum operationType) {
         if (null == operationType) {
-            return new BatchResultDTO(code, "", Boolean.TRUE);
+            return new BatchResultDTO(id, code, "", Boolean.TRUE);
         }
         code = null == code ? "" : code;
-        return new BatchResultDTO(code, StrUtil.format("{}_{}",operationType.getName(),"成功"), Boolean.TRUE);
+        return new BatchResultDTO(id, code, StrUtil.format("{}_{}",operationType.getName(),"成功"), Boolean.TRUE);
     }
 
-    public static BatchResultDTO success(String code, String msg) {
+    public static BatchResultDTO success(String id, String code, String msg) {
         code = null == code ? "" : code;
-        return new BatchResultDTO(code, msg, Boolean.TRUE);
+        return new BatchResultDTO(id, code, msg, Boolean.TRUE);
     }
 
-    public static BatchResultDTO fail(String code, OperationTypeEnum operationType) {
+    public static BatchResultDTO fail(String id, String code, OperationTypeEnum operationType) {
         if (null == operationType) {
-            return new BatchResultDTO(code, "", Boolean.FALSE);
+            return new BatchResultDTO(id, code, "", Boolean.FALSE);
         }
         code = null == code ? "" : code;
-        return new BatchResultDTO(code, StrUtil.format("{}_{}",operationType.getName(),"失败"), Boolean.FALSE);
+        return new BatchResultDTO(id, code, StrUtil.format("{}_{}",operationType.getName(),"失败"), Boolean.FALSE);
     }
 
-    public static BatchResultDTO fail(String code, String msg) {
+    public static BatchResultDTO fail(String id, String code, String msg) {
         code = null == code ? "" : code;
-        return new BatchResultDTO(code, msg,Boolean.FALSE);
+        return new BatchResultDTO(id, code, msg,Boolean.FALSE);
     }
 }

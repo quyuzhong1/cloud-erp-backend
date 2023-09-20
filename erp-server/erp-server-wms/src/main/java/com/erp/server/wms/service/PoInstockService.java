@@ -255,4 +255,68 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * @return
      */
     List<PoInstockDTO.SupplierInstockInfoDTO> getInstockInfoBySupplierIds(PoInstockDTO.SupplierInstockParamDTO dto);
+
+    /**
+     * PDA:列表查询
+     * @Author Luo_WG
+     * @Date 2023/8/16 14:52
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.PoInstockDTO.PdaListDTO>
+     **/
+    PagingVO<PoInstockDTO.PdaPagingView> PdaPaging(PagingDTO<PoInstockDTO.PdaSearchParamDTO> dto);
+
+    /**
+     * PDA:列表数量
+     * @Author Luo_WG
+     * @Date 2023/8/16 17:51
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.PoInstockDTO.PdaPoInStockCountDTO>
+     **/
+    List<PoInstockDTO.PdaPoInStockCountDTO> pdaListCount(PermissionsDTO dto);
+
+    /**
+     * PDA:新增
+     * @Author Luo_WG
+     * @Date 2023/8/29 14:35
+     * @param dto
+     * @param aFalse
+     * @return java.lang.String
+     **/
+    String pdaAdd(PoInstockDTO.AddDTO dto, Boolean aFalse);
+
+    /**
+     * PDA:修改
+     * @Author Luo_WG
+     * @Date 2023/8/29 14:40
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaUpdate(PoInstockDTO.UpdateDTO dto);
+
+    /**
+     * PDA:新增并提交
+     * @Author Luo_WG
+     * @Date 2023/8/30 18:24
+     * @param dto
+     * @return java.lang.String
+     **/
+    String pdaAddAndSubmit(PoInstockDTO.AddDTO dto);
+
+    /**
+     * PDA:修改并提交
+     * @Author Luo_WG
+     * @Date 2023/8/30 18:24
+     * @param dto
+     * @return java.lang.String
+     **/
+    Boolean pdaUpdateAndSubmit(PoInstockDTO.UpdateDTO dto);
+
+    /**
+     * PDA:详情
+     * @Author Luo_WG
+     * @Date 2023/9/5 15:56
+     * @param id
+     * @return com.erp.model.wms.dto.PoInstockDTO.ViewDTO
+     **/
+    PoInstockDTO.ViewDTO pdaView(String id);
 }

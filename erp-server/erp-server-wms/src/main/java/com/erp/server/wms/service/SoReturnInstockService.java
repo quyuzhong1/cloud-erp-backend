@@ -216,6 +216,42 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return java.lang.Boolean
      **/
     Boolean saveKingdeeSoReturn(SoReturnInstockEntity instockEntity, List<SoReturnInstockDetailEntity> detailEntityList, List<String> ids);
+
+    /**
+     * Pda:列表查询
+     * @Author Luo_WG
+     * @Date 2023/8/17 16:38
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoReturnInstockDTO.PdaPagingView>
+     **/
+    PagingVO<SoReturnInstockDTO.PdaPagingView> PdaPaging(PagingDTO<SoReturnInstockDTO.PdaPagingParam> dto);
+
+    /**
+     * 列表状态数量统计
+     * @Author Luo_WG
+     * @Date 2023/8/17 18:48
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.PdaSoReturnInstockCountDTO>
+     **/
+    List<SoReturnInstockDTO.PdaSoReturnInstockCountDTO> pdaListCount(PermissionsDTO dto);
+
+    /**
+     * PDA:新增
+     * @Author Luo_WG
+     * @Date 2023/8/28 18:45
+     * @param dto
+     * @return java.lang.String
+     **/
+    String pdaAdd(SoReturnInstockDTO.Add dto);
+
+    /**
+     * PDA:修改
+     * @Author Luo_WG
+     * @Date 2023/8/28 18:45
+     * @param dto
+     * @return java.lang.String
+     **/
+    Boolean pdaUpdate(SoReturnInstockDTO.Update dto);
     /**
      * @description: 下推加工单
      * @author Will
@@ -232,4 +268,31 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return Boolean
      */
     Boolean generateMachineInfo(ValidList<SoReturnInstockDTO.GenerateMachineInfoDTO> list);
+
+    /**
+     * PDA:查询详情
+     * @Author Luo_WG
+     * @Date 2023/8/29 15:23
+     * @param id
+     * @return com.erp.model.wms.dto.SoReturnInstockDTO.View
+     **/
+    SoReturnInstockDTO.View pdaView(String id);
+
+    /**
+     * PDA:新增提交
+     * @Author Luo_WG
+     * @Date 2023/8/29 15:35
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaAddAndSubmit(SoReturnInstockDTO.Add dto);
+
+    /**
+     * pda:修改提交
+     * @Author Luo_WG
+     * @Date 2023/8/29 15:35
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaUpdateAndSubmit(SoReturnInstockDTO.Update dto);
 }

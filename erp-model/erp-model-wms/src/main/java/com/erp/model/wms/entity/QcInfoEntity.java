@@ -116,6 +116,12 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
     @TableField("source_detail_id")
     private String sourceDetailId;
 
+    /**
+     * 来源单号
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
 
     public static final String CODE = "code";
 

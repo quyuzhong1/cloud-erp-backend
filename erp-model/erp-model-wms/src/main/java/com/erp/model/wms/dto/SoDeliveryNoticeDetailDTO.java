@@ -137,6 +137,7 @@ public class SoDeliveryNoticeDetailDTO {
          * 发货数量
          */
         private Integer deliveryQty;
+
         /**
          * 仓库id
          */
@@ -165,6 +166,16 @@ public class SoDeliveryNoticeDetailDTO {
          * 附件url集合
          */
         private List<String> attachUrlList;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
     }
 
 

@@ -119,7 +119,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //部门信息
         SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoById.getSalesDeptId());
         //查询供应商信息
-        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getCarrierId());
+        SupplierEntity supplierEntity = null;
+        if (StringUtils.isNotBlank(entity.getCarrierId())) {
+            supplierEntity = scmTaskFeign.getSupplierById(entity.getCarrierId());
+        }
         //获取币别信息
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(soInfoById.getCurrency()));
         //仓库

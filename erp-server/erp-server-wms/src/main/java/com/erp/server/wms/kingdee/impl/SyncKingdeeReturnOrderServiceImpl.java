@@ -118,22 +118,21 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         //退料组织
         resultMap.put("returnOrgName", returnOrgCode);
 
-        //获取用户部门id
-        SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(entity.getPurchaseUserId());
-        //采购部门
-        if (ObjectUtil.isEmpty(departmentDTO)) {
-            resultMap.put("productDept", departmentDTO.getCode());
-        } else {
-            resultMap.put("productDept", "");
-        }
-
         //退货日期
         resultMap.put("billDate",entity.getBillDate());
-
 
         //采购员
         String purchaseUserId = entity.getPurchaseUserId();
         if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
+            //获取用户部门id
+            SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(entity.getPurchaseUserId());
+            //采购部门
+            if (ObjectUtil.isEmpty(departmentDTO)) {
+                resultMap.put("productDept", departmentDTO.getCode());
+            } else {
+                resultMap.put("productDept", "");
+            }
+
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgCode(returnOrgCode);
             findBusinessOperator.setUserId(purchaseUserId);

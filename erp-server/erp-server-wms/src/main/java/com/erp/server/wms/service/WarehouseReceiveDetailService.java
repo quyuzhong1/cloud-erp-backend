@@ -86,4 +86,15 @@ public interface WarehouseReceiveDetailService extends SuperService<WarehouseRec
      * @return String 
      */
     String getSubArrivalStatus(List<String> podIds, Integer qty);
+
+    /**
+     * 根据主表id和skuId删除
+     *
+     * @param mainId mainId
+     * @param skuId skuId
+     * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
+     **/
+    Boolean deleteBySkuId(String mainId, String skuId);
 }

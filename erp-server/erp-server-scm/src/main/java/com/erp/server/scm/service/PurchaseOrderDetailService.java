@@ -161,4 +161,18 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @param remark
      */
     void updateRemarkByIds(List<String> ids, String remark);
+
+
+    /**
+     * 根据sku编号查询采购单id
+     * @Author Luo_WG
+     * @Date 2023/8/11 11:13
+     * @param skuNo
+     * @return java.util.List<java.lang.String>
+     **/
+    List<String> listPoIdBySkuNo(String skuNo);
+
+
+
+
 }

@@ -55,6 +55,15 @@ public interface SoReturnReceiveDetailService extends SuperService<SoReturnRecei
     List<SoReturnReceiveDetailEntity> listDetailBySourceIds(List<String> sourceIds);
 
     /**
+     * 根据来源明细id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/8/28 15:38
+     * @param sourceDetailIds
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnReceiveDetailEntity>
+     **/
+    List<SoReturnReceiveDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds);
+
+    /**
      * 根据主键id查询详情表信息
      * @Author Luo_WG
      * @Date 2023/5/15 18:56
@@ -80,4 +89,5 @@ public interface SoReturnReceiveDetailService extends SuperService<SoReturnRecei
      * @return java.util.List<com.erp.model.wms.entity.SoReturnReceiveDetailEntity>
      **/
     List<SoReturnReceiveDetailEntity> listDetailByIds(List<String> ids);
+
 }

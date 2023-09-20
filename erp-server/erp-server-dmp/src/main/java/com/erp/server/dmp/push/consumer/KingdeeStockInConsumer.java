@@ -1,30 +1,16 @@
 package com.erp.server.dmp.push.consumer;
 
 
-import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.enums.SyncKingdeeOperateEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
-import com.common.core.enums.ApiError;
-import com.common.core.utils.FastJsonUtil;
-import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
-import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
-import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.dmp.push.service.business.KingdeeStockInConsumerService;
-import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
-import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
+import com.kingdee.bos.webapi.entity.SaveResult;
+import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -33,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 对接金蝶入库单
@@ -52,7 +37,7 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
 
 
     public static void main(String[] args) {
-
+/*
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_INSTOCK.getCode());
@@ -73,78 +58,48 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
         queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 3);
         for (Map<String, Object> map : queryList) {
             System.out.println(map);
-        }
+        }*/
 
-/*
         //模块类型
         Integer type = ApiModuleTypeEnum.PURCHASE_STOCK_IN.getCode();
         K3CloudApi client = new K3CloudApi();
 
         JSONObject json = JSONUtil.parseObj("{ \"FBillTypeID\" :{ \"FNumber\" : \"RKD01_SYS\" },\n" +
-                "\"FBillNo\" : \"CGRK23071200003\",\n" +
-                "\"FDate\" : \"2023-07-12\",\n" +
+                "\"FBillNo\" : \"CGRK23090500013\",\n" +
+                "\"FDate\" : \"2023-09-05\",\n" +
                 "\"FStockOrgId\" :{ \"FNumber\" : \"113\" },\n" +
                 "\"FPurchaseOrgId\" :{ \"FNumber\" : \"113\" },\n" +
-                "\"FPurchaseDeptId\" :{ \"FNumber\" : \"BM000004\" },\n" +
-                "\"FProviderContactID\" :{ \"FName\" : \"\" },\n" +
-                "\"FPurchaserId\" :{ \"FName\" : \"祝梦彬\",\n" +
+                "\"FPurchaseDeptId\" :{ \"FNumber\" : \"BM00077\" },\n" +
+                "\"FPurchaserId\" :{ \"FName\" : \"\",\n" +
                 "\"FNumber\" : \"\" },\n" +
-                "\"FSupplyAddress\" : \"测试\",\n" +
-                "\"FSupplierId\" :{ \"FNumber\" : \"GYS23070600001\",\n" +
-                "\"FName\" : \"供应商1（测试专用勿动）\" },\n" +
+                "\"FProviderContactID\" :{ \"FName\" : \"\" },\n" +
+                "\"FSupplierId\" :{ \"FName\" : \"COCO测试供应商\",\n" +
+                "\"FNumber\" : \"GYS23072400001\" },\n" +
+                "\"FSupplyAddress\" : \"雅宝\",\n" +
                 "\"F_ulz_Combo\" : 2,\n" +
                 "\"FInStockEntry\" :[{ \"FInStockEntry_FEntryID\" : \"\",\n" +
-                "\"FMaterialId\" :{ \"FNumber\" : \"test-sku\" },\n" +
-                "\"FRealQty\" : 1,\n" +
-                "\"FStockId\" :{ \"FNumber\" : \"test01\",\n" +
-                "\"FName\" : \"测试仓（勿动）\" },\n" +
-                "\"FStockLocId\" :{ \"FSTOCKLOCID__FF100014\" :{ \"FNumber\" : \"\" }},\n" +
+                "\"FMaterialId\" :{ \"FNumber\" : \"P012CNB1DZ\" },\n" +
+                "\"FStockId\" :{ \"FName\" : \"COCO测试仓--简拍\",\n" +
+                "\"FNumber\" : \"autotest1\" },\n" +
                 "\"F_ULZ_TEXT1\" : \"\",\n" +
+                "\"FStockLocId\" :{ \"FSTOCKLOCID__FF100014\" :{ \"FNumber\" : \"\" }},\n" +
                 "\"FNote\" : \"\",\n" +
+                "\"FRealQty\" : 1,\n" +
+                "\"FTAXPRICE\" : 200,\n" +
                 "\"FPriceBaseQty\" : 1,\n" +
                 "\"FUnitID\" :{ \"FNumber\" : \"Pcs\" },\n" +
                 "\"FPriceUnitID\" :{ \"FNumber\" : \"ge\" },\n" +
                 "\"FRemainInStockUnitId\" :{ \"FNumber\" : \"Pcs\" },\n" +
-                "\"FPOOrderNo\" : \"PO23071200001\",\n" +
-                "\"FRemainInStockQty\" : 1,\n" +
-                "\"FSupplierId\" :{ \"FName\" : \"供应商1（测试专用勿动）\",\n" +
-                "\"FNumber\" : \"GYS23070600001\" },\n" +
-                "\"FSRCBillNo\" : \"PO23071200001\",\n" +
-                "\"FSRCBILLTYPEID\" : \"PUR_PurchaseOrder\" },{ \"FInStockEntry_FEntryID\" : \"\",\n" +
-                "\"FMaterialId\" :{ \"FNumber\" : \"test-sku\" },\n" +
-                "\"FRealQty\" : 1,\n" +
-                "\"FStockId\" :{ \"FNumber\" : \"test01\",\n" +
-                "\"FName\" : \"测试仓（勿动）\" },\n" +
-                "\"FStockLocId\" :{ \"FSTOCKLOCID__FF100014\" :{ \"FNumber\" : \"\" }},\n" +
-                "\"F_ULZ_TEXT1\" : \"\",\n" +
-                "\"FNote\" : \"\",\n" +
-                "\"FPriceBaseQty\" : 1,\n" +
-                "\"FUnitID\" :{ \"FNumber\" : \"Pcs\" },\n" +
-                "\"FPriceUnitID\" :{ \"FNumber\" : \"ge\" },\n" +
-                "\"FRemainInStockUnitId\" :{ \"FNumber\" : \"Pcs\" },\n" +
-                "\"FPOOrderNo\" : \"PO23071200001\",\n" +
-                "\"FRemainInStockQty\" : 1,\n" +
-                "\"FSupplierId\" :{ \"FName\" : \"供应商1（测试专用勿动）\",\n" +
-                "\"FNumber\" : \"GYS23070600001\" },\n" +
-                "\"FSRCBillNo\" : \"PO23071200001\",\n" +
-                "\"FSRCBILLTYPEID\" : \"PUR_PurchaseOrder\" },{ \"FInStockEntry_FEntryID\" : \"\",\n" +
-                "\"FMaterialId\" :{ \"FNumber\" : \"test-sku02\" },\n" +
-                "\"FRealQty\" : 1,\n" +
-                "\"FStockId\" :{ \"FNumber\" : \"test01\",\n" +
-                "\"FName\" : \"测试仓（勿动）\" },\n" +
-                "\"FStockLocId\" :{ \"FSTOCKLOCID__FF100014\" :{ \"FNumber\" : \"\" }},\n" +
-                "\"F_ULZ_TEXT1\" : \"\",\n" +
-                "\"FNote\" : \"\",\n" +
-                "\"FPriceBaseQty\" : 1,\n" +
-                "\"FUnitID\" :{ \"FNumber\" : \"Pcs\" },\n" +
-                "\"FPriceUnitID\" :{ \"FNumber\" : \"ge\" },\n" +
-                "\"FRemainInStockUnitId\" :{ \"FNumber\" : \"Pcs\" },\n" +
-                "\"FPOOrderNo\" : \"PO23071200001\",\n" +
-                "\"FRemainInStockQty\" : 1,\n" +
-                "\"FSupplierId\" :{ \"FName\" : \"供应商1（测试专用勿动）\",\n" +
-                "\"FNumber\" : \"GYS23070600001\" },\n" +
-                "\"FSRCBillNo\" : \"PO23071200001\",\n" +
-                "\"FSRCBILLTYPEID\" : \"PUR_PurchaseOrder\" }]}");
+                "\"FPOOrderNo\" : \"PO23090500007\",\n" +
+                "\"FMustQty\" : 100,\n" +
+                "\"FPOORDERENTRYID\" : \"179859\",\n" +
+                "\"FSRCBILLTYPEID\" : \"PUR_PurchaseOrder\",\n" +
+                "\"FSRCBillNo\" : \"PO23090500007\",\n" +
+                "\"FInStockEntry_Link\" :[{ \"FInStockEntry_Link_FRuleId\" : \"PUR_PurchaseOrder-STK_InStock\",\n" +
+                "\"FInStockEntry_Link_FSTableName\" : \"t_PUR_POOrderEntry\",\n" +
+                "\"FInStockEntry_Link_FSBillId\" : \"129501\",\n" +
+                "\"FInStockEntry_Link_FSId\" : \"179859\" }]}],\n" +
+                "\"FId\" : \"3347719\"}");
 
         //判断金蝶系统是否已存在该数据
         SaveParam param = new SaveParam(json);
@@ -156,7 +111,7 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
             }
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
-        }*/
+        }
     }
 
     @Override

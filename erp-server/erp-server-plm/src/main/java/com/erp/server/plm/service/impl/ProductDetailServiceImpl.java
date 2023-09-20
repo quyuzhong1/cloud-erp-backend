@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -22,6 +23,7 @@ import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.StateEnumValue;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -538,6 +540,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return this.baseMapper.getNoInventorySku();
     }
 
+    @Override
+    public void updateName(String id, String name) {
+        lambdaUpdate().eq(ProductDetailEntity::getId, id)
+                .set(ProductDetailEntity::getName, name)
+                .update(new ProductDetailEntity());
+    }
+
+    @Override
+    public List<ProductDetailEntity> listBySkuNos(List<String> skuNos) {
+        if (CollectionUtils.isEmpty(skuNos)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(ProductDetailEntity::getSkuNo, skuNos).list();
+    }
+
     /**
      * @param productId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductManyDetailDTO>
@@ -913,7 +930,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             isAdd = true;
         }
         String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
-
+        //给对象赋值
+        productSkuBaseInfoDTO.setId(skuId);
         //SKU新增操作日志
         if (isAdd) {
             sysLogService.addSysLogBySave("生成了一个SKU：[" + productSkuBaseInfoDTO.getSkuNo() + "]", SKUCLASSPATH, skuId, id);
@@ -2264,7 +2282,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         Integer skuStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        return baseMapper.getSkuBySkuNos(skuNoList,skuStatus);
+        return baseMapper.getSkuBySkuNos(skuNoList, skuStatus);
     }
 
     /**
@@ -2309,8 +2327,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
 
-    public void checkRequiredField(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
+    public void checkRequiredField(List<String> ids, Boolean isCheck) {
+        if (CollectionUtils.isEmpty(ids) || !isCheck) {
             return;
         }
         List<ProductDetailEntity> detailEntityList = this.listByIds(ids);
@@ -2447,7 +2465,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95238);
         }*/
         //校验必填项
-        checkRequiredField(Arrays.asList(id));
+        checkRequiredField(Arrays.asList(id), Boolean.TRUE);
         ProductDetailEntity productDetailEntity = this.getById(id);
         if (ObjectUtils.isEmpty(productDetailEntity)) {
             throw new ServiceException(ApiError.ERROR_95084);
@@ -3392,9 +3410,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
+    public Boolean submit(List<String> ids, Boolean isCheck) {
         //校验必填项
-        checkRequiredField(ids);
+        checkRequiredField(ids, isCheck);
         List<ProductDetailEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.ERROR_95084);
@@ -3709,7 +3727,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), enumByCode.getCode(), dto.getValues(), enumByCode.getKeyName());
         }
-        if (flag == Boolean.FALSE) {
+        if (!flag) {
             throw new ServiceException(ApiError.ERROR_95243);
         }
         List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getId, dto.getIds()).list();
@@ -3731,4 +3749,90 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 .update();
     }
 
+    @Override
+    public List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto) {
+       /* Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+        dto.setStatus(state);*/
+        List<SkuVO> skuVOS = baseMapper.pdaSearchSku(dto);
+        if (CollectionUtils.isEmpty(skuVOS)) {
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+        return skuVOS;
+    }
+
+    /**
+     * 根据创建时间获取到对应实体
+     *
+     * @param createTimeList
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     * @author yl
+     * @date 2023-09-01 12:21
+     */
+    @Override
+    public List<ProductDetailEntity> listByCreateTimeList(List<LocalDateTime> createTimeList) {
+        if (CollectionUtils.isEmpty(createTimeList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(ProductDetailEntity::getStatus,ProductDetailStatusEnum.APPROVAL_PASS.getCode()).
+                ge(ProductDetailEntity::getCreateTime,createTimeList.get(0)).
+                le(ProductDetailEntity::getCreateTime,createTimeList.get(1)).list();
+    }
+
+    @Override
+    public PdaProductDetailDTO.View pdaProductView(String skuNo) {
+        ProductDetailEntity productIdBySku = getProductIdBySku(skuNo);
+        if (ObjectUtil.isEmpty(productIdBySku)) {
+            throw new ServiceException("sku不存在");
+        }
+        PdaProductDetailDTO.View view = baseMapper.pdaProductView(skuNo);
+        List<PdaProductDetailDTO.ParentSkuDTO> parentSkuDTOList = new ArrayList<>();
+        if (StringUtils.isBlank(view.getSpuNo())) {
+            view.setSpuNo("");
+            view.setSpuName("");
+        }
+        //查询子sku
+        List<BomChildrenSkuDTO> sonSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(productIdBySku.getId()));
+        if (CollectionUtils.isNotEmpty(sonSkuList)) {
+            PdaProductDetailDTO.ParentSkuDTO parentSkuDTO = new PdaProductDetailDTO.ParentSkuDTO();
+            parentSkuDTO.setSkuNo(productIdBySku.getSkuNo());
+            List<PdaProductDetailDTO.SonSkuDTO> sonSkuDTOS = BeanMapper.copyList(sonSkuList, PdaProductDetailDTO.SonSkuDTO.class);
+            parentSkuDTO.setChildSkuList(sonSkuDTOS);
+            parentSkuDTOList.add(parentSkuDTO);
+            //如果还有其他的bom也要添加
+            List<PdaProductDetailDTO.ParentSkuDTO> parentSku = getParentSku(productIdBySku.getId());
+            parentSkuDTOList.addAll(parentSku);
+        } else {
+            List<PdaProductDetailDTO.ParentSkuDTO> parentSku = getParentSku(productIdBySku.getId());
+            parentSkuDTOList.addAll(parentSku);
+        }
+        view.setParentSkuDTOList(parentSkuDTOList);
+        return view;
+    }
+
+
+    /**
+     * 根据sku获取父sku信息
+     * @param skuId
+     * @return
+     */
+    private List<PdaProductDetailDTO.ParentSkuDTO> getParentSku(String skuId) {
+        List<PdaProductDetailDTO.ParentSkuDTO> parentSkuDTOList = new ArrayList<>();
+        //没有子集获取父级
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomBySkuIds(Arrays.asList(skuId));
+        List<String> skuIds = bomChildrenSkuDTOS.stream().map(req -> req.getParentSkuId()).distinct().collect(Collectors.toList());
+        List<SkuVO> skuInfoBySkuIds = this.getSkuInfoBySkuIds(skuIds);
+        if (CollectionUtils.isNotEmpty(skuInfoBySkuIds)) {
+            List<String> parentSkuIds = skuInfoBySkuIds.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> sonSkuList = bomSkuService.listBomChildBySkuIds(parentSkuIds);
+            for (SkuVO vo : skuInfoBySkuIds) {
+                PdaProductDetailDTO.ParentSkuDTO parentSkuDTO = new PdaProductDetailDTO.ParentSkuDTO();
+                parentSkuDTO.setSkuNo(vo.getSkuNo());
+                List<BomChildrenSkuDTO> collect = sonSkuList.stream().filter(req -> req.getParentSkuId().equals(vo.getSkuId())).collect(Collectors.toList());
+                List<PdaProductDetailDTO.SonSkuDTO> sonSkuDTOS = BeanMapper.copyList(collect, PdaProductDetailDTO.SonSkuDTO.class);
+                parentSkuDTO.setChildSkuList(sonSkuDTOS);
+                parentSkuDTOList.add(parentSkuDTO);
+            }
+        }
+        return parentSkuDTOList;
+    }
 }

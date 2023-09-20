@@ -7,6 +7,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -205,4 +206,30 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return java.util.List<com.erp.model.wms.entity.SoDeliveryNoticeEntity>
      */
     List<SoDeliveryNoticeEntity> listBySourceIdList(List<String> sourceIds);
+
+    /**
+     * PDA:根据发货通知单获取详情
+     * @Author Luo_WG
+     * @Date 2023/9/6 18:10
+     * @param id
+     * @return java.lang.Boolean
+     **/
+    List<SoOutstockDTO.GenerateSoOutstockViewDTO> pdaDeliveryDetail(String id);
+
+    /**
+     * PDA：详情
+     * @Author Luo_WG
+     * @Date 2023/9/6 18:11
+     * @param id
+     * @return com.erp.model.wms.dto.SoDeliveryNoticeDTO.View
+     **/
+    SoDeliveryNoticeDTO.View pdaView(String id);
+    /**
+     * PDA:根据sku编号查询发货通知单
+     * @Author Luo_WG
+     * @Date 2023/8/22 18:26
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PdaSoDeliveryNotice>
+     **/
+    List<SoDeliveryNoticeDTO.PdaSoDeliveryNotice> pdaList(SoDeliveryNoticeDTO.PdaSoDeliveryNoticeParam dto);
 }

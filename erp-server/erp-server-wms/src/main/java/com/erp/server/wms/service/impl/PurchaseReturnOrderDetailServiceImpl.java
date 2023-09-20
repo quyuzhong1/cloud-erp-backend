@@ -19,6 +19,7 @@ import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
@@ -69,6 +70,9 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
     @Resource
     private WarehouseService warehouseService;
+
+    @Resource
+    private PurchaseReturnOrderService purchaseReturnOrderService;
 
     /**
      * @param sourceDetailIds
@@ -242,6 +246,8 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto, String id) {
+        PurchaseReturnOrderEntity entity = purchaseReturnOrderService.getById(id);
+
         List<String> addList = dto.getPurchasePriceDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(PurchaseReturnOrderDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         //原明细数据
         List<PurchaseReturnOrderDetailEntity> oldList = this.getDetailByMainId(dto.getId());
@@ -288,12 +294,12 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                     SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(purchaseReturnOrderDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
                     purchaseReturnOrderDetailEntity.setMainSupplierId(skuVO.getSupplierId());
 
-                    if (dto.getSourceType().equals(SourceTypeEnum.PO_RECEIVE.getCode())) {
+                    if (entity.getSourceType().equals(SourceTypeEnum.PO_RECEIVE.getCode())) {
                         Integer receiveQty = detailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                         if (updateDTO.getReturnQty() > receiveQty) {
                             throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
-                    } else if (dto.getSourceType().equals(ReturnOrderSourceEnum.QC.getCode())) {
+                    } else if (entity.getSourceType().equals(ReturnOrderSourceEnum.QC.getCode())) {
                         WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getReturnWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
                         Integer inventoryTotal = inventoryService.getInventoryTotal(warehouseDTO.getOrgId(), warehouseDTO.getId(), updateDTO.getSkuId(), updateDTO.getWarehouseLocation(), InventoryStatusEnum.WAIT_QC.getCode());
                         returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && !req.getId().equals(updateDTO.getId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);

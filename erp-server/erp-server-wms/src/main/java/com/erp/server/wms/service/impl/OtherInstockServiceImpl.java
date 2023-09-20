@@ -19,6 +19,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
@@ -34,10 +35,8 @@ import com.erp.model.wms.dto.OtherInstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.MachineInfoEntity;
-import com.erp.model.wms.entity.OtherInstockDetailEntity;
-import com.erp.model.wms.entity.OtherInstockEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -57,6 +56,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -106,10 +106,16 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Resource
     private SyncKingdeeOtherInstockService syncKingdeeOtherInstockService;
 
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
+
     @Override
     public PagingVO<OtherInstockDTO.ListDTO> paging(PagingDTO<OtherInstockDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        if (CollectionUtils.isNotEmpty(pagingDTO.getParams().getApproveStatusList())) {
+            pagingDTO.getParams().setInvalidStatus(Boolean.FALSE);
+        }
         IPage<OtherInstockDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         List<OtherInstockDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
@@ -270,18 +276,25 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         }
         List<OtherInstockDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(OtherInstockDetailDTO.ViewDTO.class, detailList);
 
+        viewDTO.setTypeName(InstockTypeEnum.getByCode(entity.getType()));
         //库存方向
         viewDTO.setInventoryDirectionName(InventoryDirectionEnum.getName(viewDTO.getInventoryDirection()));
 
         //产品信息
         List<String> skuIds = detailList.stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(entity.getWarehouseId()));
         for (OtherInstockDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
-                String productName = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
-                viewDetailDTO.setProductName(productName);
+                SkuVO skuVO = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).findFirst().orElse(null);
+                viewDetailDTO.setProductName(skuVO.getSkuName());
+                viewDetailDTO.setVariantProperty(skuVO.getVariantProperty());
             }
+
+
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(viewDetailDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            viewDetailDTO.setWarehouseLocationName(warehouseLocationEntity.getName());
         }
         viewDTO.setDetailList(viewDetailList);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
@@ -641,4 +654,70 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 .update();
     }
 
+    @Override
+    public PagingVO<OtherInstockDTO.PdaListDTO> PdaPaging(PagingDTO<OtherInstockDTO.PdaSearchParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        OtherInstockDTO.PdaSearchParamDTO params = pagingParamDTO.getParams();
+        List<String> approveStatusList = params.getApproveStatusList();
+        if (approveStatusList.contains(ApproveStatusEnum.APPROVE.getCode())) {
+            List<LocalDate> dateList = new ArrayList<>();
+            LocalDate now = LocalDate.now();
+            dateList.add(now.minusDays(30));
+            dateList.add(now);
+            params.setBillDateList(dateList);
+        }
+        IPage<OtherInstockDTO.PdaListDTO> pageData = this.baseMapper.pdaPaging(query, pagingParamDTO.getParams());
+        if (CollectionUtils.isEmpty(pageData.getRecords())) {
+            return new PagingVO(new Page());
+        }
+        List<OtherInstockDTO.PdaListDTO> records = pageData.getRecords();
+        //主键id
+        List<String> ids = records.stream().map(req -> req.getId()).collect(Collectors.toList());
+        //查询详情
+        List<OtherInstockDetailEntity> otherInstockDetailEntities = otherInstockDetailService.listByMainIds(ids);
+        for (OtherInstockDTO.PdaListDTO record : records) {
+            record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
+            List<OtherInstockDetailEntity> detailEntities = otherInstockDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
+            List<OtherInstockDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, OtherInstockDTO.PdaItemDTO.class);
+            record.setDetailCount(itemDTOList.size());
+            record.setItemList(itemDTOList);
+        }
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<OtherInstockDTO.PdaListStatusCountDTO> pdaListCount(PermissionsDTO dto) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(30);
+        PdaTabFlagEnum[] values = PdaTabFlagEnum.values();
+        List<OtherInstockDTO.PdaListStatusCountDTO> list = new ArrayList<>();
+        for (PdaTabFlagEnum item : values) {
+            OtherInstockDTO.SearchParamDTO pagingParamDTO = new OtherInstockDTO.SearchParamDTO();
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            pagingParamDTO.setInvalidStatus(Boolean.FALSE);
+            OtherInstockDTO.PdaListStatusCountDTO resultDTO = new OtherInstockDTO.PdaListStatusCountDTO();
+            Integer count = MathUtil.ZERO;
+            if (PdaTabFlagEnum.WAIT_SUBMIT_AND_REJECT.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.REJECT.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
+                List<LocalDate> dateList = new ArrayList<>();
+                dateList.add(startDate);
+                dateList.add(endDate);
+                pagingParamDTO.setBillDateList(dateList);
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            list.add(resultDTO);
+        }
+        return list;
+    }
 }

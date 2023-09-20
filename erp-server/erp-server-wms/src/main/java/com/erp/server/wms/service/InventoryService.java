@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.PickingDetailDTO;
@@ -124,6 +125,7 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      */
     List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(InventoryQtyDTO.SkuInventoryParamDTO dto);
 
+
     /**
      * 根据组织、仓库、库位、状态、SKU获取库存数量；如果库位为空，则不判断库位
      * @param orgId
@@ -182,10 +184,36 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     void exportInventoryAge(InventoryReportDTO.ExportInventoryAgeSearchParamDTO paramDTO, HttpServletResponse response);
 
     /**
+     * 根据仓库id查询库存信息
+     * @Author Luo_WG
+     * @Date 2023/8/10 10:23
+     * @param warehouseId
+     * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaHomeInventoryBalanceDTO
+     **/
+    InventoryDTO.PdaHomeInventoryBalanceDTO getInventoryByWarehouseId(String warehouseId);
+    /**
      * 根据盘点类型查询库存
      * @param entity
      * @param detailEntityList
      * @return
      */
     List<InventoryEntity> listByStocktakingType(StocktakingPlanEntity entity, List<StocktakingPlanDetailEntity> detailEntityList);
+
+    /**
+     * 根据条件查询库存信息
+     * @Author Luo_WG
+     * @Date 2023/8/25 18:00
+     * @param list
+     * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventoryDTO
+     **/
+    List<InventoryDTO.PdaInventoryDTO> getInventoryByParam(InventoryDTO.PdaSearchParamDTO list);
+
+    /**
+     * PDA:库存查询
+     * @Author Luo_WG
+     * @Date 2023/8/30 11:39
+     * @param skuNo
+     * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventorySearch
+     **/
+    InventoryDTO.PdaInventorySearch getInventoryBySkuNo(String skuNo);
 }

@@ -25,7 +25,6 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.mapper.SoChangeDetailMapper;
 import com.erp.server.oms.service.*;
-import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;

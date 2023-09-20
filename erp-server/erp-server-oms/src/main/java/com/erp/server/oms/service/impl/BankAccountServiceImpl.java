@@ -5,8 +5,6 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.oms.dto.excel.KingdeeBankAccountExcelDTO;
 import com.erp.model.oms.entity.BankAccountEntity;
-import com.erp.model.sys.dto.excel.UserKingdeePostImportExcelDTO;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.listener.KingdeeBankAccountListener;
 import com.erp.server.oms.mapper.BankAccountMapper;
