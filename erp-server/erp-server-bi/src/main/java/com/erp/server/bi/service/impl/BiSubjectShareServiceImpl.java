@@ -227,13 +227,13 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
     @Override
     public Boolean getShare(String userId, String subjectId, List<String> roleIdList) {
         LambdaQueryWrapper<BiSubjectShareEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(BiSubjectShareEntity::getIdentityId, userId);
+        queryWrapper.eq(BiSubjectShareEntity::getSubjectId, subjectId);
         queryWrapper.and(ww -> ww.or(w->
-                w.eq(BiSubjectShareEntity::getSubjectId, subjectId)
+                w.eq(BiSubjectShareEntity::getIdentityId, userId)
                 .eq(BiSubjectShareEntity::getIdentityType, BiShareIdentityTypeEnum.USER.getCode())
         ).or(sw -> sw
-                .eq(CollectionUtils.isNotEmpty(roleIdList), BiSubjectShareEntity::getSubjectId, subjectId)
-                .eq(CollectionUtils.isNotEmpty(roleIdList), BiSubjectShareEntity::getIdentityType, BiShareIdentityTypeEnum.USER.getCode())
+                .in(CollectionUtils.isNotEmpty(roleIdList), BiSubjectShareEntity::getIdentityId, roleIdList)
+                .eq(CollectionUtils.isNotEmpty(roleIdList), BiSubjectShareEntity::getIdentityType, BiShareIdentityTypeEnum.ROLE.getCode())
                 ));
 
         int count = this.count(queryWrapper);
