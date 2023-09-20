@@ -47,4 +47,11 @@ public interface BiTargetCategorySettingMapper extends BaseMapper<BiTargetCatego
      * @return
      */
     List<BiTargetCategorySettingDTO.ListDetailDTO> listByYearAndDept(@Param("year") Integer year, @Param("deptId")String deptId);
+
+    /**
+     * 分页统计
+     * @param dto
+     * @return
+     */
+    List<BiTargetYearDTO.MonthValueDTO> pagingTotal(@Param("params")BiTargetYearDTO.PagingParamDTO dto);
 }
