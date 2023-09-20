@@ -81,9 +81,9 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         if (CollectionUtils.isNotEmpty(list)) {
             Map<String, List<BasicLabelEntity>> map = list.stream().collect(Collectors.groupingBy(BasicLabelEntity::getLevel));
             treeVOS.add(new LabelLevelTreeVO().setName(LabelLevelEnum.COMPANY.getName())
-                    .setLevel(LabelLevelEnum.COMPANY.getType()).setChildren(map.get(LabelLevelEnum.COMPANY.getType())));
+                    .setLevel(LabelLevelEnum.COMPANY.getCode()).setChildren(map.get(LabelLevelEnum.COMPANY.getCode())));
             treeVOS.add(new LabelLevelTreeVO().setName(LabelLevelEnum.PRIVATE.getName())
-                    .setLevel(LabelLevelEnum.PRIVATE.getType()).setChildren(map.get(LabelLevelEnum.PRIVATE.getType())));
+                    .setLevel(LabelLevelEnum.PRIVATE.getCode()).setChildren(map.get(LabelLevelEnum.PRIVATE.getCode())));
         }
         return treeVOS;
     }
@@ -107,10 +107,14 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchAdd(List<BasicLabelDTO.AddDTO> list) {
-        if (CollectionUtils.isEmpty(list)) throw new ServiceException(ApiError.ERROR_EMPTY_LIST);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_EMPTY_LIST);
+        }
         //当前登录人
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (ObjectUtils.isEmpty(loginUser)) throw new ServiceException(ApiError.ERROR_403);
+        if (ObjectUtils.isEmpty(loginUser)) {
+            throw new ServiceException(ApiError.ERROR_403);
+        }
         List<BasicLabelEntity> basicLabelEntities = BeanMapperUtils.copyList(BasicLabelEntity.class, list);
         //校验数据是否存在重复
         Set<String> stringSet = basicLabelEntities.stream().collect(Collectors.groupingBy(BasicLabelEntity::getName, Collectors.counting()))
