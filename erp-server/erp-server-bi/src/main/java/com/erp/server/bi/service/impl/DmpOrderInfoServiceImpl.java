@@ -31,6 +31,7 @@ import com.erp.model.bi.dto.BiSalesFilterDTO;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
 import com.erp.model.bi.enums.SaleContryTypeEnum;
+import com.erp.model.bi.enums.SalePriceRangeEnum;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
@@ -187,7 +188,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         List<BiDictEntity> biDictEntities = 1 == rangeType ? biDictService.getByType(SaleContryTypeEnum.DOMESTIC.code)
                 : biDictService.getByType(SaleContryTypeEnum.ABROAD.code);
         List<SalesPriceRangeVO> rangeVOS = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(biDictEntities)) {
+        if (CollectionUtils.isEmpty(biDictEntities)) {
             return getDefaultRangeList(rangeType);
         } else {
             biDictEntities.forEach(biDictEntity -> {
@@ -199,15 +200,15 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     private List<SalesPriceRangeVO> getDefaultRangeList(Integer rangeType) {
-        List<SalesPriceRangeVO> rangeVOS = new ArrayList<>(8);
-        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 0, 100));
-        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 100, 200));
-        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 200, 300));
-        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 300, 400));
-        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 400, 500));
-        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 500, 600));
-        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 600, 700));
-        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, 700, -1));
+        List<SalesPriceRangeVO> rangeVOS = new ArrayList<>();
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, SalePriceRangeEnum.ZERO.getStartValue(), SalePriceRangeEnum.ZERO.getEndValue()));
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, SalePriceRangeEnum.ONE_HUNDRED.getStartValue(), SalePriceRangeEnum.ONE_HUNDRED.getEndValue()));
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, SalePriceRangeEnum.TWO_HUNDRED.getStartValue(), SalePriceRangeEnum.TWO_HUNDRED.getEndValue()));
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, SalePriceRangeEnum.THREE_HUNDRED.getStartValue(), SalePriceRangeEnum.THREE_HUNDRED.getEndValue()));
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, SalePriceRangeEnum.FOUR_HUNDRED.getStartValue(), SalePriceRangeEnum.FOUR_HUNDRED.getEndValue()));
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, SalePriceRangeEnum.FIVE_HUNDRED.getStartValue(), SalePriceRangeEnum.FIVE_HUNDRED.getEndValue()));
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, SalePriceRangeEnum.SIX_HUNDRED.getStartValue(), SalePriceRangeEnum.SIX_HUNDRED.getEndValue()));
+        rangeVOS.add(new SalesPriceRangeVO(null, rangeType, SalePriceRangeEnum.SEVEN_HUNDRED.getStartValue(), SalePriceRangeEnum.SEVEN_HUNDRED.getEndValue()));
         return rangeVOS;
     }
 
