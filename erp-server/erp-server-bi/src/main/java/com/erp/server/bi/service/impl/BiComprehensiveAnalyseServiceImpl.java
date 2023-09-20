@@ -622,17 +622,17 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * 区域销售分析
      */
     @Override
-    public List<BiRegionAnalyzeDTO> getRegionSales(BiCountryRegionFilterDTO dto) {
+    public List<BiRegionAnalyzeDTO> getSubRegionSales(BiCountryRegionFilterDTO dto) {
         // 国家列表
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
         // 国家销售额
         List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto);
 
-        // 区域Map<区域Code, 国家List>
+        // 区域Map<子区域Code, 国家List>
         Map<String, List<DictCountryDTO.ListDTO>> regionMap = countryList
                 .stream()
-                .filter(e-> StringUtils.isNotBlank(e.getAreaName()))
-                .collect(Collectors.groupingBy(DictCountryDTO.ListDTO::getAreaName));
+                .filter(e-> StringUtils.isNotBlank(e.getSubregionCode()))
+                .collect(Collectors.groupingBy(DictCountryDTO.ListDTO::getSubregionCode));
 
         // 区域所有国家名称Map<区域Code, 国家名称List>
         Map<String, List<String>> regionCountryNameMap = regionMap.entrySet().stream()
@@ -642,11 +642,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                                 .map(DictCountryDTO.ListDTO::getNameCn)
                                 .collect(Collectors.toList())));
 
-        // 区域名称map
-        Map<String, DictCountryDTO.ListDTO> regionNameMap = countryList.stream()
+        // 子区域名称map
+        Map<String, DictCountryDTO.ListDTO> subregionNameMap = countryList.stream()
                 .collect(Collectors.toMap(
                         // 指定去重的字段
-                        DictCountryDTO.ListDTO::getAreaName,
+                        DictCountryDTO.ListDTO::getSubregionCode,
                         // 保留第一个出现的对象
                         listDto -> listDto,
                         // 解决冲突时保留
@@ -665,7 +665,12 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         // 组合信息
         for (Map.Entry<String, List<String>> entry : regionCountryNameMap.entrySet()) {
             // 初始化
-            BiRegionAnalyzeDTO resultDto = BiRegionAnalyzeDTO.init(entry.getKey(), regionNameMap.get(entry.getKey()).getRegionCode());
+            DictCountryDTO.ListDTO subregionDto = subregionNameMap.get(entry.getKey());
+            BiRegionAnalyzeDTO resultDto = BiRegionAnalyzeDTO.init(subregionDto.getAreaName(),
+                    subregionDto.getRegionCode(),
+                    subregionDto.getSubregionName(),
+                    subregionDto.getSubregionCode()
+            );
             // 当前区域所有国家名称
             List<String> currentCountryNameList = entry.getValue();
 
@@ -710,6 +715,8 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         BigDecimal globalTotal = BigDecimal.ZERO;
         // 区域总销量Map<区域code, 当前区域总销量>
         Map<String, BigDecimal> regionTotalMap = new HashMap<>();
+        // 子区域总销量Map<区域code, 当前区域总销量>
+        Map<String, BigDecimal> subregionTotalMap = new HashMap<>();
         // 相应结果
         List<BiCountryAnalyzeDTO> resultList = new LinkedList<>();
 
@@ -722,6 +729,8 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                     listDTO.getId(),
                     listDTO.getAreaName(),
                     listDTO.getRegionCode(),
+                    listDTO.getSubregionName(),
+                    listDTO.getSubregionCode(),
                     countrySalesMap.getOrDefault(listDTO.getNameCn(), BigDecimal.ZERO)
             );
 
@@ -734,15 +743,22 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             globalTotal = globalTotal.add(resultDto.getSalesAmount());
             // 添加到当前区域总销量
             regionTotalMap.merge(resultDto.getRegionCode(), resultDto.getSalesAmount(), BigDecimal::add);
+            // 添加到当前子区域总销量
+            subregionTotalMap.merge(resultDto.getSubregionCode(), resultDto.getSalesAmount(), BigDecimal::add);
         }
         // 设置所有占比
         BigDecimal finalGlobalTotal = globalTotal;
-        resultList.forEach(e-> e.setAllRadio(finalGlobalTotal, regionTotalMap.getOrDefault(e.getRegionCode(), BigDecimal.ZERO)));
+        resultList.forEach(e-> e.setAllRadio(finalGlobalTotal,
+                regionTotalMap.getOrDefault(e.getRegionCode(), BigDecimal.ZERO),
+                subregionTotalMap.getOrDefault(e.getSubregionCode(), BigDecimal.ZERO)
+        ));
 
         return resultList.stream()
                 // 过滤得到要求的区域
                 .filter(e -> StringUtils.isBlank(dto.getRegionCode()) ||
-                        (StringUtils.isNotBlank(dto.getRegionCode()) && e.getRegionCode().equalsIgnoreCase(dto.getRegionCode())))
+                        (StringUtils.isNotBlank(dto.getRegionCode()) && e.getRegionCode().equalsIgnoreCase(dto.getRegionCode())) ||
+                        (StringUtils.isNotBlank(dto.getSubregionCode()) && e.getSubregionCode().equalsIgnoreCase(dto.getSubregionCode()))
+                )
                 .collect(Collectors.toList());
     }
 
