@@ -7,6 +7,7 @@ import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -172,4 +173,12 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      * @return java.util.List<com.erp.model.bi.dto.BiTargetYearDTO.TargetMetricsFinishDTO>
      */
     List<BiTargetYearDTO.TargetMetricsFinishDTO> listTargetMetrics(BiTargetYearDTO.SearchDTO dto);
+
+    /**
+     * 导出sku 销售额
+     * @param params
+     * @param response
+     * @return
+     */
+    Boolean exportSkuSalesExcel(SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response);
 }

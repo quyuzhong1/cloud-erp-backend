@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -67,6 +69,15 @@ public class BiSalesModuleController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 导出 sku 销售额
+     */
+    @PostMapping("/exportSkuSales")
+    public ApiResult exportSkuSales(@RequestBody @Valid SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response) {
+        Boolean result = salesOrderService.exportSkuSalesExcel(params, response);
+        return result ? success() : failure();
+
+    }
 
     /**
      * 销售相关-一级模块-SKU国家销售额

@@ -12,6 +12,7 @@ import com.common.business.vo.ChartVO;
 import com.common.business.vo.PagingVO;
 import com.common.business.vo.SeriesVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
@@ -48,6 +49,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.ParseException;
@@ -220,11 +223,21 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //查询进七天信息
         List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(params, settleRate, findTime);
         List<String> skuNoList = list.stream().map(SkuSalesDTO.PagingSalesInfoDTO::getSkuNo).collect(Collectors.toList());
+        Integer nowYear = LocalDate.now().getYear();
+        //销售信息
         List<SkuDTO.SalesDTO> skuList = plmTaskFeign.listSkuSalesBySkuNos(skuNoList);
         for (SkuSalesDTO.PagingSalesInfoDTO item : list) {
             SkuDTO.SalesDTO skuInfo = skuList.stream().filter(s -> s.getSkuNo().equals(item.getSkuNo())).
                     findFirst().orElse(null);
             if (Objects.nonNull(skuInfo)) {
+                //公司首单日期
+                LocalDate firstOrderDate = skuInfo.getFirstOrderDate();
+                if (firstOrderDate != null) {
+                    Integer year = firstOrderDate.getYear();
+                    if(nowYear.equals(year)){
+                        item.setIsNewProduct(Boolean.TRUE);
+                    }
+                }
                 item.setFirstOrderDate(skuInfo.getFirstOrderDate());
                 item.setSaleStateName(skuInfo.getSaleStateName());
             }
@@ -267,6 +280,96 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         return new PagingVO<>(pageData);
     }
 
+
+    /**
+     * 导出sku 销售额
+     * @param params
+     * @param response
+     * @return
+     */
+    @Override
+    public Boolean exportSkuSalesExcel(SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response) {
+        //获取到结算汇率
+        String settleRate = getSettleRate(params.getSettleMethod());
+        List<SkuSalesDTO.PagingSalesInfoDTO> resultList = baseMapper.listSkuSalesExcel(params,settleRate);
+        List<String> skuNoList = resultList.stream().map(SkuSalesDTO.PagingSalesInfoDTO::getSkuNo).collect(Collectors.toList());
+
+        LocalDateTime nowTime = LocalDateTime.now();
+        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 29);
+        params.setStartTime(beforeThirtyDays);
+        params.setEndTime(nowTime);
+        String findTime = "delivery_time";
+        if (params.getTimeType() != null && params.getTimeType() == 0) {
+            findTime = "platform_create_time";
+        }
+        //查询进三十天信息
+        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(params, settleRate, findTime);
+
+
+        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
+        params.setStartTime(beforeSevenDays);
+        params.setEndTime(nowTime);
+        //查询进七天信息
+        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(params, settleRate, findTime);
+
+
+        Integer nowYear = LocalDate.now().getYear();
+        //销售信息
+        List<SkuDTO.SalesDTO> skuList = plmTaskFeign.listSkuSalesBySkuNos(skuNoList);
+        for(SkuSalesDTO.PagingSalesInfoDTO item : resultList){
+            SkuDTO.SalesDTO skuInfo = skuList.stream().filter(s -> s.getSkuNo().equals(item.getSkuNo())).
+                    findFirst().orElse(null);
+            if (Objects.nonNull(skuInfo)) {
+                //公司首单日期
+                LocalDate firstOrderDate = skuInfo.getFirstOrderDate();
+                if (firstOrderDate != null) {
+                    Integer year = firstOrderDate.getYear();
+                    if(nowYear.equals(year)){
+                        item.setIsNewProductName("是");
+                    }
+                }
+                item.setFirstOrderDate(skuInfo.getFirstOrderDate());
+                item.setSaleStateName(skuInfo.getSaleStateName());
+            }
+
+            //近三十天
+            Integer lastThirtyDaysSalesQuantity = lastThirtyDays.stream().
+                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getSkuNo())).
+                    mapToInt(SalesBaseVO::getSalesQuantity).sum();
+            //近七天
+            Integer lastSevenDaysSalesQuantity = lastSevenDays.stream().
+                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) &&
+                            b.getFlagNo().equals(item.getSkuNo())).
+                    mapToInt(SalesBaseVO::getSalesQuantity).sum();
+
+            item.setLastSevenDaysSalesQty(lastSevenDaysSalesQuantity);
+            item.setLastThirtyDaysSalesQty(lastThirtyDaysSalesQuantity);
+
+            BigDecimal sales = item.getSales();
+            Integer orderCount = item.getOrderCount();
+            if (orderCount != 0 && sales != null) {
+                //客单价
+                BigDecimal perCustomerTransaction = sales.divide(new BigDecimal(orderCount), 2, BigDecimal.ROUND_HALF_UP);
+                item.setPerCustomerTransaction(perCustomerTransaction);
+            }
+
+        }
+
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/SkuSales.xlsx";
+        String name = "sku销售额";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(resultList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("sku销售额导出出错 >>>>{}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+
+    }
     /**
      * 一级模块 spu 销售额
      *
@@ -2279,7 +2382,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             case "YEAR":
                 format = "{}年";
                 // 年分组数据销售毛利率
-                Map<Integer, BigDecimal> yearMap = costMap.keySet().stream().collect(Collectors.groupingBy(e -> e.getYear() , MathUtil.summingBigDecimal(v -> {
+                Map<Integer, BigDecimal> yearMap = costMap.keySet().stream().collect(Collectors.groupingBy(e -> e.getYear(), MathUtil.summingBigDecimal(v -> {
                     Map<String, BigDecimal> tempMap = costMap.get(v);
                     BigDecimal costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
                     return costMainBusinessIncome;
@@ -2308,6 +2411,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 计算财务销售额同比环比
+     *
      * @param monthMap
      * @param lastYearMonthMap
      * @param seriesList
@@ -2368,20 +2472,20 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<Object> chainRelativeRatioList = new ArrayList<>();
         for (int i = 0; i < dateList.size(); i++) {
             if (i == 0) {
-                if (lastYearMonthMap.get(dateList.get(dateList.size()-1)) != null) {
+                if (lastYearMonthMap.get(dateList.get(dateList.size() - 1)) != null) {
                     chainRelativeRatioList.add(monthMap.get(dateList.get(i))
-                            .subtract(lastYearMonthMap.get(dateList.get(dateList.size()-1)))
-                            .divide(lastYearMonthMap.get(dateList.get(dateList.size()-1)), 2, BigDecimal.ROUND_HALF_UP)
+                            .subtract(lastYearMonthMap.get(dateList.get(dateList.size() - 1)))
+                            .divide(lastYearMonthMap.get(dateList.get(dateList.size() - 1)), 2, BigDecimal.ROUND_HALF_UP)
                             .multiply(MathUtil.BigDecimal_100)
                     );
                 } else {
                     chainRelativeRatioList.add(BigDecimal.ZERO);
                 }
             } else {
-                if (monthMap.get(dateList.get(i-1)) != null) {
+                if (monthMap.get(dateList.get(i - 1)) != null) {
                     chainRelativeRatioList.add(monthMap.get(dateList.get(i))
-                            .subtract(monthMap.get(dateList.get(i-1)))
-                            .divide(monthMap.get(dateList.get(i-1)), 2, BigDecimal.ROUND_HALF_UP)
+                            .subtract(monthMap.get(dateList.get(i - 1)))
+                            .divide(monthMap.get(dateList.get(i - 1)), 2, BigDecimal.ROUND_HALF_UP)
                             .multiply(MathUtil.BigDecimal_100)
                     );
                 } else {
@@ -2883,7 +2987,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<String> shopNameList = dto.getShopName();
         if (CollectionUtils.isNotEmpty(shopNameList)) {
             List<DmpShopInfoEntity> shopInfoList = shopInfoService.listByNames(shopNameList);
-            List<String> shopIdList  = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
+            List<String> shopIdList = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(shopIdList)) {
                 strategy = context.getBean(ShopTargetValueStrategy.class);
                 if (Objects.nonNull(strategy)) {
@@ -2941,6 +3045,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         resultList.add(yearMetrics);
         return resultList;
     }
+
 
     private List<NewAndOldSalesSearchDTO.PagingDTO> deptNewAndOldSalesAmount(NewAndOldSalesSearchDTO.SearchDTO dto) {
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
