@@ -60,6 +60,25 @@ public class BiTargetCategorySettingController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 分页
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-09-13
+     */
+    @PostMapping("/pagingTotal")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "bi:biTargetStaffSetting:paging",
+//            tableAlias = ""
+//    )
+    public ApiResult<BiTargetYearDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated BiTargetYearDTO.PagingParamDTO dto) {
+        BiTargetYearDTO.PagingTotalDTO totalDTO = biTargetCategorySettingService.pagingTotal(dto);
+        return success(totalDTO);
+    }
+
 
     /**
     * 新增

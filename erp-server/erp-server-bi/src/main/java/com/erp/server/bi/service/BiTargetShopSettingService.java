@@ -88,4 +88,11 @@ public interface BiTargetShopSettingService extends SuperService<BiTargetShopSet
      * @return
      */
     Boolean delete(BiTargetShopSettingDTO.RemoveDTO dto);
+
+    /**
+     * 分页统计
+     * @param dto
+     * @return
+     */
+    BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto);
 }

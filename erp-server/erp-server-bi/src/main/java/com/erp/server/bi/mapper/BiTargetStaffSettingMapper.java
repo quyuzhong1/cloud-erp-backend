@@ -48,4 +48,11 @@ public interface BiTargetStaffSettingMapper extends BaseMapper<BiTargetStaffSett
      * @return List<TargetFinishDTO.ViewDTO>
      */
     List<TargetFinishDTO.ViewDTO> listDeptTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
+
+    /**
+     * 分页统计
+     * @param dto
+     * @return
+     */
+    List<BiTargetYearDTO.MonthValueDTO> pagingTotal(@Param("params")BiTargetYearDTO.PagingParamDTO dto);
 }

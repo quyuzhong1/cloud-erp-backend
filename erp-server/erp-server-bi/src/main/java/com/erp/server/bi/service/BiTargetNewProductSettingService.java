@@ -97,4 +97,11 @@ public interface BiTargetNewProductSettingService extends SuperService<BiTargetN
      * @return
      */
     Boolean delete(BiTargetNewProductSettingDTO.RemoveDTO dto);
+
+    /**
+     * 分页统计
+     * @param dto
+     * @return
+     */
+    BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto);
 }
