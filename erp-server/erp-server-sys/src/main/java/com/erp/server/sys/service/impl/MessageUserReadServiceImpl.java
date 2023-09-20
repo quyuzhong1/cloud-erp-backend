@@ -5,7 +5,6 @@ import com.erp.server.sys.mapper.MessageUserReadMapper;
 import com.erp.server.sys.service.MessageUserReadService;
 import com.common.business.service.SuperServiceImpl;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;

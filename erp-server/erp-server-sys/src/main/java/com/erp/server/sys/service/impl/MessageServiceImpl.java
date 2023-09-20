@@ -1,12 +1,10 @@
 package com.erp.server.sys.service.impl;
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.service.RedisService;
 import com.common.business.vo.LoginUser;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.ObjectUtils;
 import com.erp.model.sys.dto.MessageDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
@@ -26,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;

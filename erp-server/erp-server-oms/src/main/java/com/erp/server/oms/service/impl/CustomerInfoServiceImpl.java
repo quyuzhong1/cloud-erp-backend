@@ -41,7 +41,6 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.constant.OmsConstant;
-import com.erp.server.oms.kingdee.SyncKingdeeCustomerContactService;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
 import com.erp.server.oms.service.*;

@@ -125,15 +125,6 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      */
     List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(InventoryQtyDTO.SkuInventoryParamDTO dto);
 
-    /**
-     * @description: 根据skuIds、仓库 、组织、仓位、库存状态 批量获取到 sku即时库存（库位没传，则查询空库位）
-     * @author Will
-     * @date: 2023/8/21 16:13
-     * @param dto
-     * @return List<SkuInventoryStatusTotalDTO>
-     */
-    List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> listSkuInventory(InventoryQtyDTO.SkuInventoryStatusParamDTO dto);
-
 
     /**
      * 根据组织、仓库、库位、状态、SKU获取库存数量；如果库位为空，则不判断库位

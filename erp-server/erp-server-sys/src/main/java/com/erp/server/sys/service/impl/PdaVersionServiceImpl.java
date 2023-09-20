@@ -7,34 +7,27 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.sys.dto.NoticeDTO;
 import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.MessageTypeEnum;
 import com.erp.model.sys.enums.SysTypeEnum;
 import com.erp.server.sys.mapper.PdaVersionMapper;
 import com.erp.server.sys.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.service.SuperServiceImpl;
 import com.erp.server.sys.service.MessageService;
 import com.erp.server.sys.service.MessageUserReadService;
 import com.erp.server.sys.service.PdaVersionService;
-import com.common.business.service.SuperServiceImpl;
 import com.erp.server.sys.service.SysUserInfoService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * <p>

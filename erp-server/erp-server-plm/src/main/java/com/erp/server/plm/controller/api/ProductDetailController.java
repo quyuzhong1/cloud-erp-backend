@@ -975,7 +975,7 @@ ProductDetailController extends BaseController {
      **/
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = productDetailService.submit(dto.getIds());
+        Boolean flag = productDetailService.submit(dto.getIds(), Boolean.TRUE);
         return flag == true ? success() : failure();
     }
 
