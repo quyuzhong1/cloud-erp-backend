@@ -19,6 +19,7 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
+import com.erp.model.bi.enums.DataSourceCostEnum;
 import com.erp.model.bi.enums.DateSalesTrendSearchTypeEnum;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.TargetMetricsSearchTypeEnum;
@@ -2204,7 +2205,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         statistical.setChartType(ChartType.BAR);
         String dateType = dto.getDateType();
 
-        List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome"));
+        List<String> dictValues = new ArrayList<>(Arrays.asList(DataSourceCostEnum.COST_MAINBUSINESSINCOME.code));
         LocalDateTime startTime = LocalDateTime.of(LocalDate.from(LocalDateTime.now().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
         LocalDateTime endTime = LocalDateTime.of(LocalDate.from(LocalDateTime.now().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
         dto.setStartTime(startTime);
