@@ -317,10 +317,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     private void listChargeNameMonitoring(List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
         Map<String, List<BiSalesMonitoringTableDTO>> listMap = biSalesMonitoringTableList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getChargeId()) && ObjectUtils.isNotEmpty(obj.getPlatformCreateTime())).collect(Collectors.groupingBy(obj -> obj.getChargeId()));
         LocalDate now = LocalDate.now();
-        //当前时间年月
-        String month = String.valueOf(now.getYear())+ now.getMonth();
-        String lastMonth = String.valueOf(LocalDateUtil.getLastMonthStart(now).getYear()) + now.getMonth();
-        String year = String.valueOf(now.getYear());
+
         List<BiSalesMonitoringTableVO.ChargeDTO> resultList = new ArrayList<>();
         String name = "";
         Integer seq = MathUtil.ONE;
@@ -328,16 +325,8 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             List<BiSalesMonitoringTableDTO> value = entry.getValue();
             BiSalesMonitoringTableVO.ChargeDTO vo = new BiSalesMonitoringTableVO.ChargeDTO();
             BeanUtils.copyProperties(value.get(0),vo);
-            //本月销售额
-            BigDecimal sumSecondMonthSale =  value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
-                    .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //上月销售额
-            BigDecimal sumFirstMonthSale =  value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
-                    .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //全年销售额
-            BigDecimal sumYearSale = value.stream().filter(obj -> year.equals(String.valueOf(obj.getPlatformCreateTime().getYear())))
-                    .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = setBiSalesMonitoringTableVO(entity, sumSecondMonthSale, sumFirstMonthSale, sumYearSale);
+            //获取结果集
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
             if (ObjectUtils.isNotEmpty(pair)) {
                 BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
                 if (StringUtils.isBlank(name)) {
@@ -360,10 +349,6 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     private void listShopMonitoring(List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
         Map<String, List<BiSalesMonitoringTableDTO>> listMap = biSalesMonitoringTableList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getChargeId()) && ObjectUtils.isNotEmpty(obj.getPlatformCreateTime())).collect(Collectors.groupingBy(obj -> obj.getChargeId()));
         LocalDate now = LocalDate.now();
-        //当前时间年月
-        String month = String.valueOf(now.getYear())+ now.getMonth();
-        String lastMonth = String.valueOf(LocalDateUtil.getLastMonthStart(now).getYear()) + now.getMonth();
-        String year = String.valueOf(now.getYear());
         List<BiSalesMonitoringTableVO.ShopDTO> resultList = new ArrayList<>();
         String name = "";
         Integer seq = MathUtil.ONE;
@@ -371,16 +356,8 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             List<BiSalesMonitoringTableDTO> value = entry.getValue();
             BiSalesMonitoringTableVO.ShopDTO vo = new BiSalesMonitoringTableVO.ShopDTO();
             BeanUtils.copyProperties(value.get(0),vo);
-            //本月销售额
-            BigDecimal sumSecondMonthSale =  value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
-                    .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //上月销售额
-            BigDecimal sumFirstMonthSale =  value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
-                    .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //全年销售额
-            BigDecimal sumYearSale = value.stream().filter(obj -> year.equals(String.valueOf(obj.getPlatformCreateTime().getYear())))
-                    .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = setBiSalesMonitoringTableVO(entity, sumSecondMonthSale, sumFirstMonthSale, sumYearSale);
+            //获取结果集
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
             if (ObjectUtils.isNotEmpty(pair)) {
                 BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
                 if (StringUtils.isBlank(name)) {
@@ -403,10 +380,6 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     private void listPlatformMonitoring(List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
         Map<String, List<BiSalesMonitoringTableDTO>> listMap = biSalesMonitoringTableList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getSourcePlatform()) && ObjectUtils.isNotEmpty(obj.getPlatformCreateTime())).collect(Collectors.groupingBy(obj -> obj.getSourcePlatform()));
         LocalDate now = LocalDate.now();
-        //当前时间年月
-        String month = String.valueOf(now.getYear())+ now.getMonth();
-        String lastMonth = String.valueOf(LocalDateUtil.getLastMonthStart(now).getYear()) + now.getMonth();
-        String year = String.valueOf(now.getYear());
 
         List<BiSalesMonitoringTableVO.PlatformDTO> resultList = new ArrayList<>();
         String name = "";
@@ -415,16 +388,8 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             List<BiSalesMonitoringTableDTO> value = entry.getValue();
             BiSalesMonitoringTableVO.PlatformDTO vo = new BiSalesMonitoringTableVO.PlatformDTO();
             BeanUtils.copyProperties(value.get(0),vo);
-            //本月销售额
-            BigDecimal sumSecondMonthSale =  value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
-                    .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //上月销售额
-            BigDecimal sumFirstMonthSale =  value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
-                    .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //全年销售额
-            BigDecimal sumYearSale = value.stream().filter(obj -> year.equals(String.valueOf(obj.getPlatformCreateTime().getYear())))
-                    .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = setBiSalesMonitoringTableVO(entity, sumSecondMonthSale, sumFirstMonthSale, sumYearSale);
+            //获取结果集
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
             if (ObjectUtils.isNotEmpty(pair)) {
                 BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
                 if (StringUtils.isBlank(name)) {
@@ -446,11 +411,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
      */
     private void listCountryMonitoring(List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
         Map<String, List<BiSalesMonitoringTableDTO>> listMap = biSalesMonitoringTableList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getChargeId()) && ObjectUtils.isNotEmpty(obj.getPlatformCreateTime())).collect(Collectors.groupingBy(obj -> obj.getChargeId()));
-        LocalDate now = LocalDate.now();
-        //当前时间年月
-        String month = String.valueOf(now.getYear())+ now.getMonth();
-        String lastMonth = String.valueOf(LocalDateUtil.getLastMonthStart(now).getYear()) + now.getMonth();
-        String year = String.valueOf(now.getYear());
+
 
         List<BiSalesMonitoringTableVO.ChargeDTO> resultList = new ArrayList<>();
         String name = "";
@@ -459,16 +420,8 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             List<BiSalesMonitoringTableDTO> value = entry.getValue();
             BiSalesMonitoringTableVO.ChargeDTO vo = new BiSalesMonitoringTableVO.ChargeDTO();
             BeanUtils.copyProperties(value.get(0),vo);
-            //本月销售额
-            BigDecimal sumSecondMonthSale =  value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
-                    .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //上月销售额
-            BigDecimal sumFirstMonthSale =  value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
-                    .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //全年销售额
-            BigDecimal sumYearSale = value.stream().filter(obj -> year.equals(String.valueOf(obj.getPlatformCreateTime().getYear())))
-                    .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = setBiSalesMonitoringTableVO(entity, sumSecondMonthSale, sumFirstMonthSale, sumYearSale);
+            //获取结果集
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
             if (ObjectUtils.isNotEmpty(pair)) {
                 BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
                 if (StringUtils.isBlank(name)) {
@@ -483,6 +436,37 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         }
         seriesVO.setName(name);
         seriesVO.setData(resultList);
+    }
+
+    /**
+     * @description: 格式化
+     * @author Will
+     * @date: 2023/9/20 9:04
+     * @param value
+     * @param entity
+     * @param metrics
+     * @return Pair<CommonDTO>
+     */
+    private Pair<String, BiSalesMonitoringTableVO.CommonDTO> handleMonitoring (List<BiSalesMonitoringTableDTO> value,BiSalesMonitoringEntity entity,String metrics) {
+
+        LocalDate now = LocalDate.now();
+        //当前时间年月
+        String month = String.valueOf(now.getYear()) + now.getMonth();
+        String lastMonth = String.valueOf(LocalDateUtil.getLastMonthStart(now).getYear()) + now.getMonth();
+        String year = String.valueOf(now.getYear());
+
+        //本月销售额
+        BigDecimal sumSecondMonthSale =  value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
+                .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
+        //上月销售额
+        BigDecimal sumFirstMonthSale =  value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
+                .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
+        //全年销售额
+        BigDecimal sumYearSale = value.stream().filter(obj -> year.equals(String.valueOf(obj.getPlatformCreateTime().getYear())))
+                .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
+        Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = setBiSalesMonitoringTableVO(entity, sumSecondMonthSale, sumFirstMonthSale, sumYearSale);
+
+        return pair;
     }
 
     /**
