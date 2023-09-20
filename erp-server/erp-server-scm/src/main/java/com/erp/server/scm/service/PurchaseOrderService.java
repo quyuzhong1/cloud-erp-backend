@@ -344,4 +344,13 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return List<PurchaseOrderEntity>
      */
     List<PurchaseOrderEntity> listPoBySourceIds(List<String> sourceIds);
+
+    /**
+     * 根据sku编号查询采购单
+     * @Author Luo_WG
+     * @Date 2023/8/11 10:23
+     * @param skuNo
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
+     **/
+    List<PurchaseOrderEntity> listPoBySkuNo(String skuNo);
 }

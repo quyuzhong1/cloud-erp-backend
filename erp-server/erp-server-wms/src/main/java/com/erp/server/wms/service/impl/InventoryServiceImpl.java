@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -747,4 +748,36 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         return resultList;
     }
 
+    @Override
+    public InventoryDTO.PdaHomeInventoryBalanceDTO getInventoryByWarehouseId(String warehouseId) {
+        InventoryDTO.PdaHomeInventoryBalanceDTO pdaHomeInventoryBalanceDTO = new InventoryDTO.PdaHomeInventoryBalanceDTO();
+        List<InventoryDTO.PdaHomeInventoryBalanceDTO> inventory = baseMapper.getInventoryByWarehouseId(warehouseId, InventoryStatusEnum.USABLE.getCode());
+        if (StringUtils.isBlank(warehouseId)) {
+            Integer usableQty = 0 ;
+            Integer todayDeliveryQty = 0;
+            Integer todayStockInQty = 0;
+
+            for (InventoryDTO.PdaHomeInventoryBalanceDTO homeInventoryBalanceDTO : inventory) {
+                usableQty = usableQty + homeInventoryBalanceDTO.getUsableQty();
+                todayDeliveryQty = todayDeliveryQty + homeInventoryBalanceDTO.getTodayDeliveryQty();
+                todayStockInQty = todayStockInQty + homeInventoryBalanceDTO.getTodayStockInQty();
+            }
+            pdaHomeInventoryBalanceDTO.setUsableQty(usableQty);
+            pdaHomeInventoryBalanceDTO.setTodayDeliveryQty(todayDeliveryQty);
+            pdaHomeInventoryBalanceDTO.setTodayStockInQty(todayStockInQty);
+        } else {
+            if (CollectionUtils.isNotEmpty(inventory)) {
+                //获取仓库信息
+                List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(warehouseId));
+                if (CollectionUtils.isNotEmpty(warehouseList)) {
+                    pdaHomeInventoryBalanceDTO.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
+                }
+                pdaHomeInventoryBalanceDTO.setUsableQty(inventory.get(MathUtil.ZERO).getUsableQty());
+                pdaHomeInventoryBalanceDTO.setTodayDeliveryQty(inventory.get(MathUtil.ZERO).getTodayDeliveryQty());
+                pdaHomeInventoryBalanceDTO.setTodayStockInQty(inventory.get(MathUtil.ZERO).getTodayStockInQty());
+            }
+        }
+
+        return pdaHomeInventoryBalanceDTO;
+    }
 }
