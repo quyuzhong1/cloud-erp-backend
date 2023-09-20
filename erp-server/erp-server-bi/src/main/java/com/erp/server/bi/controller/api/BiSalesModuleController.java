@@ -361,7 +361,7 @@ public class BiSalesModuleController extends BaseController {
 
 
     /**
-     * 销售相关-一级模块-日期
+     * 销售相关-一级模块-日期-销售趋势
      *
      * @param
      * @return
