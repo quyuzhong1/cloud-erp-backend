@@ -13,12 +13,12 @@ public enum LabelLevelEnum {
     PRIVATE("private", "私有"),
     COMPANY("company", "公司");
 
-    private String type;
+    private String code;
     private String name;
 
 
-    public String getType() {
-        return type;
+    public String getCode() {
+        return code;
     }
 
     public String getName() {
@@ -26,24 +26,24 @@ public enum LabelLevelEnum {
     }
 
 
-    LabelLevelEnum(String type, String name) {
-        this.type = type;
+    LabelLevelEnum(String code, String name) {
+        this.code = code;
         this.name = name;
     }
 
-    public static String getName(String type) {
+    public static String getName(String code) {
         for (LabelLevelEnum item : LabelLevelEnum.values()) {
-            if (type.equals(item.getType())) {
+            if (code.equals(item.getCode())) {
                 return item.getName();
             }
         }
         return "";
     }
 
-    public static String getType(String name) {
+    public static String getCode(String name) {
         for (LabelLevelEnum item : LabelLevelEnum.values()) {
             if (name.equals(item.getName())) {
-                return item.getType();
+                return item.getCode();
             }
         }
         return "";

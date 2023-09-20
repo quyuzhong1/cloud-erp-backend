@@ -1,12 +1,13 @@
 package com.erp.model.plm.dto;
 
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.plm.enums.LabelLevelEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -142,6 +143,7 @@ public class BasicLabelDTO implements Serializable {
         */
         @NotBlank(message = "标签级别 private 私有，company 公司不能为空")
         @Size(max = 20,message = "标签级别 private 私有，company 公司最大长度不能超过20位")
+        @StateEnumValue(clazz = LabelLevelEnum.class, message = "标签级别错误")
         private String level;
 
 
