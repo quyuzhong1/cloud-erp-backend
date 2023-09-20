@@ -2,6 +2,7 @@ package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.bi.dto.DictDTO;
 import com.erp.model.bi.entity.BiDictEntity;
 import org.apache.commons.math3.util.Pair;
 
@@ -47,7 +48,7 @@ public interface BiDictService  extends IService<BiDictEntity> {
      * @param dictEntities 实例对象
      * @return 实例对象
      */
-    Boolean batchAdd(List<BiDictEntity> dictEntities);
+    Boolean batchAdd(List<DictDTO> dictEntities);
 
     /**
      * 修改数据
