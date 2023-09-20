@@ -2328,6 +2328,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         SeriesVO<Object> sales = new SeriesVO();
         sales.setName("今年销售额");
+        sales.setType("bar");
         List<Object> orderSalesList = new ArrayList<>();
         for (Integer date : dateList) {
             if (monthMap.get(date) != null) {
@@ -2341,6 +2342,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         SeriesVO<Object> lastYearSales = new SeriesVO();
         lastYearSales.setName("去年销售额");
+        lastYearSales.setType("bar");
         List<Object> lastYearOrderSalesList = new ArrayList<>();
         for (Integer date : dateList) {
             if (lastYearMonthMap.get(date) != null) {
@@ -2354,6 +2356,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         SeriesVO<Object> basisRatio = new SeriesVO();
         basisRatio.setName("同比");
+        basisRatio.setType("line");
         List<Object> basisRatioList = new ArrayList<>();
         for (Integer date : dateList) {
             if (lastYearMonthMap.get(date) != null) {
@@ -2372,6 +2375,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         SeriesVO<Object> chainRelativeRatio = new SeriesVO();
         chainRelativeRatio.setName("环比");
+        chainRelativeRatio.setType("line");
         List<Object> chainRelativeRatioList = new ArrayList<>();
         for (int i = 0; i < dateList.size(); i++) {
             if (i == 0) {
@@ -2410,21 +2414,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public StatisticalDataVO byDate(DateSalesTrendDTO.SearchDTO dto) {
-   /*     List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome"));
-        // 获取成本详情ids
-        List<BiDataSourceCostEntity> dataSourceCostList = getCostList(dto);
-        List<String> costIds = dataSourceCostList.stream().map(BiDataSourceCostEntity::getId).distinct().collect(Collectors.toList());
-        if (org.apache.commons.collections.CollectionUtils.isEmpty(costIds)) {
-            return new TargetSaleSumVO(BigDecimal.ZERO);
-        }
-        // 获取详情数据并转为 map 计算
-        HashMap<String, Map<String, BigDecimal>> dataSourceCostDetailMap = biDataSourceCostDetailService.convertListByCostIds(costIds, dictValues);
-*/
         //如果查询客单价
         if (DateSalesTrendSearchTypeEnum.FINANCE_SALES_QUANTITY.getCode().equals(dto.getSearchType())) {
             return this.byDateFinanceSales(dto);
         }
-
 
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售趋势");
@@ -2685,24 +2678,28 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     private void dateSalesTrendSalesAmount(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, List<SeriesVO<Object>> seriesList) {
         SeriesVO<Object> sales = new SeriesVO();
         sales.setName("今年销售额");
+        sales.setType("bar");
         List<Object> orderSalesList = salesList.stream().map(SalesFlagVO::getSales).collect(Collectors.toList());
         sales.setData(orderSalesList);
         seriesList.add(sales);
 
         SeriesVO<Object> lastYearSales = new SeriesVO();
         lastYearSales.setName("去年销售额");
+        lastYearSales.setType("bar");
         List<Object> salesAmountList = lastYearSalesList.stream().map(SalesFlagVO::getSales).collect(Collectors.toList());
         lastYearSales.setData(salesAmountList);
         seriesList.add(lastYearSales);
 
         SeriesVO<Object> salesBasisRatio = new SeriesVO();
         salesBasisRatio.setName("同比");
+        salesBasisRatio.setType("line");
         List<Object> salesBasisRatioList = salesList.stream().map(SalesFlagVO::getSalesBasisRatio).collect(Collectors.toList());
         salesBasisRatio.setData(salesBasisRatioList);
         seriesList.add(salesBasisRatio);
 
         SeriesVO<Object> salesChainRelativeRatio = new SeriesVO();
         salesChainRelativeRatio.setName("环比");
+        salesChainRelativeRatio.setType("line");
         List<Object> salesChainRelativeRatioList = salesList.stream().map(SalesFlagVO::getSalesChainRelativeRatio).collect(Collectors.toList());
         salesChainRelativeRatio.setData(salesChainRelativeRatioList);
         seriesList.add(salesChainRelativeRatio);
@@ -2718,24 +2715,28 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     private void dateSalesTrendSalesQuantity(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, List<SeriesVO<Object>> seriesList) {
         SeriesVO<Object> salesQuantity = new SeriesVO();
         salesQuantity.setName("今年销量");
+        salesQuantity.setType("bar");
         List<Object> salesQuantityList = salesList.stream().map(SalesFlagVO::getSalesQuantity).collect(Collectors.toList());
         salesQuantity.setData(salesQuantityList);
         seriesList.add(salesQuantity);
 
         SeriesVO<Object> lastYearSalesQuantity = new SeriesVO();
         lastYearSalesQuantity.setName("去年销量");
+        lastYearSalesQuantity.setType("bar");
         List<Object> lastYearSalesQuantityList = lastYearSalesList.stream().map(SalesFlagVO::getSalesQuantity).collect(Collectors.toList());
         lastYearSalesQuantity.setData(lastYearSalesQuantityList);
         seriesList.add(lastYearSalesQuantity);
 
         SeriesVO<Object> basisRatio = new SeriesVO();
         basisRatio.setName("同比");
+        basisRatio.setType("line");
         List<Object> basisRatioList = salesList.stream().map(SalesFlagVO::getSalesQuantityBasisRatio).collect(Collectors.toList());
         basisRatio.setData(basisRatioList);
         seriesList.add(basisRatio);
 
         SeriesVO<Object> chainRelativeRatio = new SeriesVO();
         chainRelativeRatio.setName("环比");
+        chainRelativeRatio.setType("line");
         List<Object> chainRelativeRatioList = salesList.stream().map(SalesFlagVO::getSalesQuantityChainRelativeRatio).collect(Collectors.toList());
         chainRelativeRatio.setData(chainRelativeRatioList);
         seriesList.add(chainRelativeRatio);
