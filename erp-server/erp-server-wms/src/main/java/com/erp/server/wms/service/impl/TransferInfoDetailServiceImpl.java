@@ -258,8 +258,12 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             }
 
             //单位
-            String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
-            detail.setUnit(unit);
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(skuVO)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            detail.setUnit(skuVO.getUnitName());
+            detail.setSkuNo(skuVO.getSkuNo());
             detail.setMainId(mainId);
             //修改操作日志
             if (StringUtils.isNotBlank(detail.getId())) {
