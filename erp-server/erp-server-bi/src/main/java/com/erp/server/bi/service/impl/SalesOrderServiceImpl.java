@@ -2148,35 +2148,36 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 item.setName(quarterName);
             }
         }
-
         List<SeriesVO<Object>> seriesList = new ArrayList<>();
         List<String> categoryList = salesList.stream().map(SalesFlagVO::getCategory).distinct().collect(Collectors.toList());
         List<String> dateList = salesList.stream().map(SalesFlagVO::getName).distinct().collect(Collectors.toList());
-
-        List<String> siteNameList = new ArrayList<>();
+        Map<String, List<SalesFlagVO>> listDateMap = salesList.stream().collect(Collectors.groupingBy(SalesFlagVO::getName));
         for (String category : categoryList) {
             SeriesVO<Object> sales = new SeriesVO();
             DateSalesTrendDTO.StackedColumnChartDTO columnChartDTO = new DateSalesTrendDTO.StackedColumnChartDTO();
             List<BigDecimal> list = new ArrayList<>();
             sales.setName(category);
             columnChartDTO.setCategory(category);
-            List<SalesFlagVO> salesFlagVOList = salesList.stream().filter(req -> req.getCategory().equals(category)).collect(Collectors.toList());
-            Map<String, List<SalesFlagVO>> categoryMap = salesFlagVOList.stream().collect(Collectors.groupingBy(SalesFlagVO::getName));
-            for (Map.Entry<String, List<SalesFlagVO>> entry : categoryMap.entrySet()) {
 
-                siteNameList.add(entry.getKey());
-                BigDecimal salesAmount = entry.getValue().stream().
-                        map(SalesFlagVO::getSales).
-                        reduce(BigDecimal.ZERO, BigDecimal::add);
-                list.add(salesAmount);
+            for (Map.Entry<String, List<SalesFlagVO>> stringListEntry : listDateMap.entrySet()) {
+                List<SalesFlagVO> salesFlagVOList = stringListEntry.getValue().stream().filter(req -> req.getCategory().equals(category)).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(salesFlagVOList)) {
+                    BigDecimal salesAmount = salesFlagVOList.stream().
+                            map(SalesFlagVO::getSales).
+                            reduce(BigDecimal.ZERO, BigDecimal::add);
+                    list.add(salesAmount);
+                } else {
+                    list.add(BigDecimal.ZERO);
+                }
             }
+
             columnChartDTO.setDate(list);
             sales.setData(Collections.singletonList(list));
             seriesList.add(sales);
         }
         ChartVO chartVO = new ChartVO();
         chartVO.setSeries(seriesList);
-        chartVO.setXAxis(siteNameList);
+        chartVO.setXAxis(dateList);
         statistical.setData(chartVO);
         return statistical;
     }
@@ -2191,7 +2192,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public StatisticalDataVO byDate(DateSalesTrendDTO.SearchDTO dto) {
-
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售趋势");
         statistical.setChartType(ChartType.PIE);
