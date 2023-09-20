@@ -2664,7 +2664,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<String> shopNameList = dto.getShopName();
         if (CollectionUtils.isNotEmpty(shopNameList)) {
             List<DmpShopInfoEntity> shopInfoList = shopInfoService.listByNames(shopNameList);
-            List<String> shopIdList = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
+            List<String> shopIdList  = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(shopIdList)) {
                 strategy = context.getBean(ShopTargetValueStrategy.class);
                 if (Objects.nonNull(strategy)) {
@@ -2718,7 +2718,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //完成占比
         BigDecimal yearFinishRate = getSalesRatio(yearMetricsValue, yearFinishValue);
         yearMetrics.setFinishRate(yearFinishRate);
-        resultList.add(monthMetrics);
+        resultList.add(yearMetrics);
         return resultList;
     }
 
