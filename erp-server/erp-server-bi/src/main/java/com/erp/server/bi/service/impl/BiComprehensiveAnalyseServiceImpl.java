@@ -1,6 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -8,6 +9,9 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.entity.BiProductInfoEntity;
@@ -33,6 +37,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -584,7 +589,13 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         BiSkuDetailTopDTO resultDto = new BiSkuDetailTopDTO();
         BeanUtils.copyProperties(entity, resultDto);
         if (null != orderInfoEntity) {
-            resultDto.setFirstOrderDate(orderInfoEntity.getCreateTime().toLocalDate().toString());
+            // 平台首次下单时间
+            LocalDate platformCreateDate = orderInfoEntity.getPlatformCreateTime().toLocalDate();
+            resultDto.setFirstOrderDate(platformCreateDate.toString());
+            // 超过一年认为非新品
+            if (LocalDate.now(ZoneId.systemDefault()).isAfter(platformCreateDate.plusYears(1))){
+                resultDto.setHasNewSign(false);
+            }
         }
         // 图片
         resultDto.setImageUrl(null == productEntity ? "" : productEntity.getImageUrl());

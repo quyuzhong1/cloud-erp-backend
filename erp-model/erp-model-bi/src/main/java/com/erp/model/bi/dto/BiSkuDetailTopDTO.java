@@ -17,6 +17,11 @@ import java.util.List;
 public class BiSkuDetailTopDTO {
 
     /**
+     * 新品标识 ture 为新品 false 为非新品
+     */
+    private boolean hasNewSign = true;
+
+    /**
      * SKU NO
      */
     private String skuNo;

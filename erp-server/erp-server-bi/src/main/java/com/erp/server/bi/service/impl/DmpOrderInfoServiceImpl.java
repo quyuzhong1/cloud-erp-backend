@@ -1384,7 +1384,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
         return lambdaQuery()
                 .inSql(DmpOrderInfoEntity::getId, subSql)
-                .orderByAsc(DmpOrderInfoEntity::getCreateTime)
+                .orderByAsc(DmpOrderInfoEntity::getPlatformOrderStatus)
                 .last(" LIMIT 1")
                 .one();
     }
