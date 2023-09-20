@@ -9,10 +9,14 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.bi.dto.*;
+import com.erp.model.bi.entity.BiProductDetailEntity;
+import com.erp.model.bi.entity.BiProductInfoEntity;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
+import com.erp.model.plm.entity.BasicLabelEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.model.sys.dto.DictCountryDTO;
@@ -43,7 +47,10 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     private DmpSkuInfoService dmpSkuInfoService;
 
     @Resource
-    private SysDictFeign sysDictFeign;
+    private BiProductDetailService biProductDetailService;
+
+    @Resource
+    private BiProductInfoService biProductInfoService;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -558,6 +565,14 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         if (null == entity) {
             throw new ServiceException(ApiError.ERROR_92051);
         }
+        // 商品详情
+        BiProductDetailEntity detailEntity = biProductDetailService.getBySkuNo(dto.getSkuNo());
+        // 商品信息
+        BiProductInfoEntity productEntity = null;
+        if (null != detailEntity){
+            productEntity = biProductInfoService.getById(detailEntity.getProductId());
+        }
+
         // 公司首单
         DmpOrderInfoEntity orderInfoEntity = dmpOrderInfoService.firstOrderBySkuNo(dto.getSkuNo());
         // 各平台首单时间
@@ -570,6 +585,12 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         if (null != orderInfoEntity) {
             resultDto.setFirstOrderDate(orderInfoEntity.getCreateTime().toLocalDate().toString());
         }
+        // 图片
+        resultDto.setImageUrl(null == productEntity ? "" : productEntity.getImageUrl());
+        // 产品经理
+        resultDto.setChargeId(null == detailEntity ? "" : detailEntity.getChargeId());
+        resultDto.setChargeName(null == detailEntity ? "" : detailEntity.getChargeName());
+
         if (!orderMap.isEmpty()) {
             // 各平台首单时间
             List<String> platformFistOrderList = orderMap.entrySet()
