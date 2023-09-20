@@ -1,6 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.bi.entity.BiModulePermissionEntity;
 import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
@@ -130,5 +131,23 @@ public class BiModulePermissionServiceImpl extends ServiceImpl<BiModulePermissio
                 .stream()
                 .collect(Collectors.groupingBy(BiModulePermissionEntity::getModuleId))
                 ;
+    }
+
+    @Override
+    public List<String> findModuleId(String userId, List<String> roleIdList) {
+        LambdaQueryChainWrapper<BiModulePermissionEntity> lambdaWrapper = lambdaQuery()
+                .eq(BiModulePermissionEntity::getIdentityType, BiShareIdentityTypeEnum.USER.getCode())
+                .eq(BiModulePermissionEntity::getIdentityId, userId);
+
+        if (CollectionUtils.isNotEmpty(roleIdList)){
+            lambdaWrapper = lambdaWrapper.or(w->
+                    w.eq(BiModulePermissionEntity::getIdentityType, BiShareIdentityTypeEnum.ROLE.getCode())
+                            .in(BiModulePermissionEntity::getIdentityId, roleIdList)
+            );
+        }
+        return lambdaWrapper.list().stream()
+                .map(BiModulePermissionEntity::getModuleId)
+                .distinct()
+                .collect(Collectors.toList());
     }
 }

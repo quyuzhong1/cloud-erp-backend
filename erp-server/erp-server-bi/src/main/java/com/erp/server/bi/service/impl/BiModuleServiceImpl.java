@@ -25,6 +25,7 @@ import com.erp.model.bi.entity.BiModuleEntity;
 import com.erp.model.bi.entity.BiModulePermissionEntity;
 import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 import com.erp.model.bi.vo.LayoutVO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiModuleMapper;
@@ -75,6 +76,8 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     @Resource
     private BiLayoutRefModuleService layoutRefModuleService;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     /**
      * 模块分页
@@ -158,10 +161,9 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     public List<CategoryModuleDTO> categoryList(String searchKeyword) {
         List<CategoryModuleDTO> resultList = new ArrayList<>(10);
         String userId = commonService.getUserInfo().getUid();
-        /**
-         * 根据用户id 查询到可见的模块id 集合
-         */
-        List<String> moduleIdList = baseMapper.getUserVisibleModuleIds(userId);
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
+        //根据用户id 查询到可见的模块id 集合
+        List<String> moduleIdList = modulePermissionService.findModuleId(userId, roleIdList);
         List<Pair<String, String>> pairList = dictService.getCategory(DictEnum.MODULE.getType());
         List<ModuleDTO> moduleList = baseMapper.getByIds(moduleIdList, searchKeyword);
         // 模板IDS

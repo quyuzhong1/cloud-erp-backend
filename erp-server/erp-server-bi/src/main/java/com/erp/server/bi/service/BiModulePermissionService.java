@@ -23,6 +23,7 @@ public interface BiModulePermissionService  extends IService<BiModulePermissionE
 
     List<String> getByModuleId(String moduleId);
 
+    @Deprecated
     List<String> getModuleIdsByUserId(String userId);
 
     /**
@@ -39,4 +40,10 @@ public interface BiModulePermissionService  extends IService<BiModulePermissionE
      * 通过ModuleIds查询
      */
     Map<String, List<BiModulePermissionEntity>> mapByModuleIds(List<String> moduleIds);
+
+
+    /**
+     * 查询当前用户共享的ModuleId
+     */
+    List<String> findModuleId(String userId, List<String> roleIdList);
 }
