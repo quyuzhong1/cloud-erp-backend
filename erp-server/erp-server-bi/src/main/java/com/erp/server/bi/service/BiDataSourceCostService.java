@@ -8,10 +8,7 @@ import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
-import com.erp.model.bi.vo.CostProfitAnalyzeRankVO;
-import com.erp.model.bi.vo.DeptCostVO;
-import com.erp.model.bi.vo.PieChartVO;
-import com.erp.model.bi.vo.TargetSaleSumVO;
+import com.erp.model.bi.vo.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -179,4 +176,11 @@ public interface BiDataSourceCostService
      * @return
      */
     List<CostProfitAnalyzeRankVO> getUserCostProfitRank(BiFilterDTO dto);
+
+    /**
+     * 日期分类获取成本信息
+     * @param dto
+     * @return
+     */
+    List<DateCostVO> sumByDateAndCostType(BiFilterDTO dto, List<String> dictValues);
 }
