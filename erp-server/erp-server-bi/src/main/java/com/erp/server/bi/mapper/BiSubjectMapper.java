@@ -30,6 +30,7 @@ public interface BiSubjectMapper extends BaseMapper<BiSubjectEntity> {
 
     IPage<SubjectPagingDTO> paging(Page query, @Param("params") BaseSearchDTO params);
 
+    @Deprecated
     List<String> getUserVisibleSubjectId(@Param("userId") String userId);
 
     List<SubjectVO> getSubjectByIds(@Param("subjectIdList") List<String> subjectIdList, @Param("searchKeyword") String searchKeyword);

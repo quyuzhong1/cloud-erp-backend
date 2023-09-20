@@ -110,6 +110,11 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
                 item.setMonthUsageCount((int) monthUsageCount);
                 item.setUsageCount((int) usageCount);
             }
+            List<String> moduleIds = list.stream().map(ModulePagingDTO::getId).collect(Collectors.toList());
+            Map<String, List<BiModulePermissionEntity>> permissionMap = modulePermissionService.mapByModuleIds(moduleIds);
+            // 权限设置
+            list.forEach( e -> e.checkAndSetShareFlagInfo(permissionMap.get(e.getId())));
+
         }
 
 
