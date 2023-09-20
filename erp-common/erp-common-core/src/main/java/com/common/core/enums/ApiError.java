@@ -458,7 +458,10 @@ public enum ApiError implements Serializable {
     ERROR_BOM_COMBINATION_SKU_NOT_CHINESE(95249,"组合产品【{}】不能输入中文"),
     ERROR_BOM_COMBINATION_SKU_APPROVE_PASS(95250,"组合产品SKU【{}】未审核成功"),
     ERROR_BOM_COMBINATION_CHILD_SKU_REPEAT(95251,"组合产品子SKU【{}】不能重复"),
-
+    NOT_EXIST(95252, "{}不存在"),
+    ERROR_EXIST_BASIC_LABEL(95253, "基础标签单{}已存在"),
+    NOT_EXIST_BASIC_LABEL_LEVEL(95254, "基础标签单级别{}不存在"),
+    ERROR_EXIST_BASIC_LABEL_NAME(95255, "基础标签单标签名称{}数据重复"),
 
 
     /**
@@ -500,10 +503,6 @@ public enum ApiError implements Serializable {
     MABANG_BOM_EXIST(97032, "sku{【%s】}在马帮的BOM中不存在！"),
     YEAR_METRICS_EXIST(97033, "{}已设置,不可重复设置"),
     SEARCH_TYPE_EXIST(97034, "搜索类型不存在"),
-    NOT_EXIST(97035, "{}不存在"),
-    ERROR_EXIST_BASIC_LABEL(97036, "基础标签单{}已存在"),
-    NOT_EXIST_BASIC_LABEL_LEVEL(97037, "基础标签单级别{}不存在"),
-    ERROR_EXIST_BASIC_LABEL_NAME(97038, "基础标签单标签名称{}数据重复"),
 
 
     /**
