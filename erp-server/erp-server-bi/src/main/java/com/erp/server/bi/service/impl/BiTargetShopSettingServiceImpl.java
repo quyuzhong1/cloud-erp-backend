@@ -34,6 +34,7 @@ import com.erp.server.bi.mapper.BiTargetShopSettingMapper;
 import com.erp.server.bi.service.BiTargetShopSettingService;
 import com.erp.server.bi.service.BiTargetYearService;
 import com.erp.server.bi.service.DmpShopInfoService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
@@ -74,6 +75,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
     @Autowired
     private SysUserFeign sysUserFeign;
 
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(BiTargetShopSettingDTO.AddDTO addDTO) {
@@ -479,7 +481,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
     /**
      * 新增修改处理数据
      */
-    private void handleData(BiTargetYearEntity targetYear, List<BiTargetShopSettingDTO.CommonDTO> detailList,LogActionEnum action) {
+    public void handleData(BiTargetYearEntity targetYear, List<BiTargetShopSettingDTO.CommonDTO> detailList,LogActionEnum action) {
         List<BiTargetShopSettingDTO.ListDetailDTO> existList = baseMapper.listByYear(targetYear.getYear());
         List<String> existShop = Lists.newArrayList();
         for (BiTargetShopSettingDTO.CommonDTO item : detailList) {

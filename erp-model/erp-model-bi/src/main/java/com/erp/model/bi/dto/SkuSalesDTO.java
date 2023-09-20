@@ -1,5 +1,6 @@
 package com.erp.model.bi.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,29 +17,26 @@ import java.util.List;
  * @Date 2023-09-19 8:57
  */
 @Data
-public class SkuSalesDTO  implements Serializable {
+public class SkuSalesDTO implements Serializable {
 
 
     @Data
     @NoArgsConstructor
-    public static class SearchSkuDTO extends BiFilterDTO{
+    public static class SearchSkuDTO extends BiFilterDTO {
         private String skuType;
 
 
         /**
          * 是否组合品 true 是
-         *
          */
         @NotNull(message = "单品，组合品不能为空")
         private Boolean isCombo;
     }
 
     @Data
-    @NoArgsConstructor
-    public static class  PagingSalesInfoDTO{
+    public static class PagingSalesInfoDTO {
         /**
          * 品名
-         *
          */
         private String productName;
 
@@ -50,7 +48,8 @@ public class SkuSalesDTO  implements Serializable {
         /**
          * 公司首单日期
          */
-        private Date firstOrderDate;
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        private LocalDate firstOrderDate;
 
         /**
          * 销售状态
@@ -76,9 +75,8 @@ public class SkuSalesDTO  implements Serializable {
         private Integer salesQty;
 
 
-
         /**
-         *订单统计
+         * 订单统计
          */
         private Integer orderCount;
 
@@ -86,9 +84,7 @@ public class SkuSalesDTO  implements Serializable {
         /**
          * 客单价
          */
-        private BigDecimal perCustomerTransaction=BigDecimal.ZERO;
-
-
+        private BigDecimal perCustomerTransaction;
 
 
         /**
@@ -106,6 +102,20 @@ public class SkuSalesDTO  implements Serializable {
          * 销售趋势
          */
         private List<Integer> salesTrend;
+
+        /**
+         * 是否新品 true 是 false 不是
+         */
+        private Boolean isNewProduct;
+
+        private String isNewProductName;
+
+        public PagingSalesInfoDTO() {
+            this.isNewProduct = Boolean.FALSE;
+            this.isNewProductName = "否";
+            this.perCustomerTransaction = BigDecimal.ZERO;
+        }
     }
+
 
 }
