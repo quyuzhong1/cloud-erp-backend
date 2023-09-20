@@ -44,13 +44,14 @@
         <if test="params.year !=null and params.year!=''">
             AND ty.year =#{params.year}
         </if>
-        <if test="params.metricsList !=null and params.metricsList.size>0">
+        <if test="params.deptId !=null and params.deptId!=''">
+            AND ty.dept_id =#{params.deptId}
+        </if>
+        <if test="params.metrics !=null and params.metrics!=''">
             AND ty.id IN (
             SELECT main_id FROM bi_target_shop_setting
-            WHERE is_deleted=FALSE AND metrics IN
-            <foreach collection="params.metricsList" item="metrics" open="(" separator="," close=")">
-                #{metrics}
-            </foreach>
+            WHERE is_deleted=FALSE
+            AND metrics = #{params。metrics}
             )
         </if>
         <if test="params.name !=null and params.name!=''">
@@ -112,6 +113,36 @@
         ON tss.main_id=ty.id and ty.is_deleted=false
         WHERE tss.is_deleted=false
           AND ty.year=#{year}
+    </select>
+
+    <!--分页统计-->
+    <select id="pagingTotal" resultType="com.erp.model.bi.dto.BiTargetYearDTO$MonthValueDTO">
+        SELECT
+        month,
+        SUM(tss.value) AS  value
+        FROM
+        bi_target_year ty
+        INNER JOIN bi_target_shop_setting tss
+        ON ty.id=tss.main_id and tss.is_deleted=false
+        WHERE ty.is_deleted=false
+        <if test="params.year !=null and params.year!=''">
+            AND ty.year =#{params.year}
+        </if>
+        <if test="params.deptId !=null and params.deptId!=''">
+            AND ty.dept_id =#{params.deptId}
+        </if>
+        <if test="params.metrics !=null and params.metrics!=''">
+            AND tss.metrics = #{params.metrics}
+        </if>
+        <if test="params.name !=null and params.name!=''">
+            AND  tss.staff_name
+            ILIKE concat('%', #{params.name} ,'%')
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY month
     </select>
 
 

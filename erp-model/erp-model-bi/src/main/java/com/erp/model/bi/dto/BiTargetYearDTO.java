@@ -45,14 +45,86 @@ public class BiTargetYearDTO implements Serializable {
         /**
          * 考核指标
          */
-        private List<String> metricsList;
+        @NotBlank(message = "考核指标不能为空")
+        private String metrics;
+
+        /**
+         * 部门id
+         */
+        private String deptId;
 
 
     }
 
     @Data
     @NoArgsConstructor
-    public static class PagingTotalDTO{
+    public static class PagingTotalDTO {
+
+        /**
+         * 一月值
+         */
+        private BigDecimal januaryTotal;
+
+        /**
+         * 二月值
+         */
+        private BigDecimal februaryTotal;
+
+        /**
+         * 三月
+         */
+        private BigDecimal marchTotal;
+
+
+        /**
+         * 四月值
+         */
+        private BigDecimal aprilTotal;
+
+        /**
+         * 五月值
+         */
+        private BigDecimal mayTotal;
+
+
+        /**
+         * 六月值
+         */
+        private BigDecimal juneTotal;
+
+
+        /**
+         * 七月值
+         */
+        private BigDecimal julyTotal;
+
+
+        /**
+         * 八月值
+         */
+        private BigDecimal augustTotal;
+
+
+        /**
+         * 九月值
+         */
+        private BigDecimal septemberTotal;
+
+
+        /**
+         * 十月值
+         */
+        private BigDecimal octoberTotal;
+
+        /**
+         * 十一月值
+         */
+        private BigDecimal novemberTotal;
+
+        /**
+         * 十二月值
+         */
+        private BigDecimal decemberTotal;
 
     }
 
@@ -95,6 +167,19 @@ public class BiTargetYearDTO implements Serializable {
          */
         private String deptName;
 
+
+    }
+
+    /**
+     * 月值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MonthValueDTO {
+
+        private Integer month;
+
+        private BigDecimal value;
 
     }
 
@@ -289,7 +374,6 @@ public class BiTargetYearDTO implements Serializable {
     }
 
 
-
     /**
      * 年月目标设置值
      */
@@ -317,7 +401,6 @@ public class BiTargetYearDTO implements Serializable {
         private BigDecimal metricsValue;
 
 
-
     }
 
 
@@ -326,7 +409,7 @@ public class BiTargetYearDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class SearchDTO extends BiFilterDTO{
+    public static class SearchDTO extends BiFilterDTO {
 
         /**
          * 日期年月
@@ -339,7 +422,6 @@ public class BiTargetYearDTO implements Serializable {
         @NotNull(message = "指标维度不能为空")
         @StateEnumValue(clazz = MetricsEnum.class, message = "指标维度有误")
         private MetricsEnum metrics;
-
 
 
     }

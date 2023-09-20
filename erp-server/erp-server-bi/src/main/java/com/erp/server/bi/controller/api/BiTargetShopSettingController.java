@@ -61,6 +61,25 @@ public class BiTargetShopSettingController extends BaseController {
 
 
     /**
+     * 分页统计
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-09-13
+     */
+    @PostMapping("/pagingTotal")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "bi:biTargetStaffSetting:paging",
+//            tableAlias = ""
+//    )
+    public ApiResult<BiTargetYearDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated BiTargetYearDTO.PagingParamDTO dto) {
+        BiTargetYearDTO.PagingTotalDTO totalDTO = biTargetShopSettingService.pagingTotal(dto);
+        return success(totalDTO);
+    }
+
+    /**
     * 新增
     * @author Lambda
     * @date:  2023-09-13

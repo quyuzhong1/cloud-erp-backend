@@ -40,4 +40,11 @@ public interface BiTargetSkuSettingMapper extends BaseMapper<BiTargetSkuSettingE
      * @return
      */
     List<BiTargetSkuSettingDTO.ListDetailDTO> listByYearAndDept(@Param("year") Integer year,@Param("deptId") String deptId);
+
+    /**
+     * 分页统计
+     * @param dto
+     * @return
+     */
+    List<BiTargetYearDTO.MonthValueDTO> pagingTotal(@Param("params") BiTargetYearDTO.PagingParamDTO dto);
 }
