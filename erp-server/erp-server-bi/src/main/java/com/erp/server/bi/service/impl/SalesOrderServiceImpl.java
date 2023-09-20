@@ -2115,11 +2115,86 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @author yl
      * @date 2023-01-06 11:19
      */
+    private StatisticalDataVO byDateStackedColumnChart(DateSalesTrendDTO.SearchDTO dto, String timeFlag, String settleRate) {
+        StatisticalDataVO statistical = new StatisticalDataVO();
+        statistical.setName("销售趋势");
+        statistical.setChartType(ChartType.PIE);
+        String dateType = dto.getDateType();
+
+        List<SalesFlagVO> salesList = new ArrayList();
+        switch (dateType) {
+            case "DAY":
+                salesList = baseMapper.getByDayCategory(dto, timeFlag, settleRate);
+                break;
+            case "MONTH":
+                salesList = baseMapper.getByMonthCategory(dto, timeFlag, settleRate);
+                break;
+            case "QUARTER":
+                salesList = baseMapper.getByQuarterCategory(dto, timeFlag, settleRate);
+                break;
+            case "YEAR":
+                salesList = baseMapper.getByYearCategory(dto, timeFlag, settleRate);
+                break;
+            default:
+                salesList = new ArrayList<>();
+                break;
+        }
+
+        //如果是季度
+        if (dateType.equals("QUARTER")) {
+            for (SalesFlagVO item : salesList) {
+                String name = item.getName();
+                String quarterName = conversionQuarterName(name);
+                item.setName(quarterName);
+            }
+        }
+        List<SeriesVO<Object>> seriesList = new ArrayList<>();
+        List<String> categoryList = salesList.stream().map(SalesFlagVO::getCategory).distinct().collect(Collectors.toList());
+        List<String> dateList = salesList.stream().map(SalesFlagVO::getName).distinct().collect(Collectors.toList());
+        Map<String, List<SalesFlagVO>> listDateMap = salesList.stream().collect(Collectors.groupingBy(SalesFlagVO::getName));
+        for (String category : categoryList) {
+            SeriesVO<Object> sales = new SeriesVO();
+            DateSalesTrendDTO.StackedColumnChartDTO columnChartDTO = new DateSalesTrendDTO.StackedColumnChartDTO();
+            List<BigDecimal> list = new ArrayList<>();
+            sales.setName(category);
+            columnChartDTO.setCategory(category);
+
+            for (Map.Entry<String, List<SalesFlagVO>> stringListEntry : listDateMap.entrySet()) {
+                List<SalesFlagVO> salesFlagVOList = stringListEntry.getValue().stream().filter(req -> req.getCategory().equals(category)).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(salesFlagVOList)) {
+                    BigDecimal salesAmount = salesFlagVOList.stream().
+                            map(SalesFlagVO::getSales).
+                            reduce(BigDecimal.ZERO, BigDecimal::add);
+                    list.add(salesAmount);
+                } else {
+                    list.add(BigDecimal.ZERO);
+                }
+            }
+
+            columnChartDTO.setDate(list);
+            sales.setData(Collections.singletonList(list));
+            seriesList.add(sales);
+        }
+        ChartVO chartVO = new ChartVO();
+        chartVO.setSeries(seriesList);
+        chartVO.setXAxis(dateList);
+        statistical.setData(chartVO);
+        return statistical;
+    }
+
+    /**
+     * 一级销售模块 -日期销售额
+     *
+     * @param dto
+     * @return com.erp.model.bi.vo.StatisticalDataVO
+     * @author yl
+     * @date 2023-01-06 11:19
+     */
     @Override
     public StatisticalDataVO byDate(DateSalesTrendDTO.SearchDTO dto) {
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售趋势");
-        statistical.setChartType(ChartType.PIE);
+        statistical.setChartType(ChartType.BAR);
         String dateType = dto.getDateType();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
@@ -2127,6 +2202,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String timeFlag = "delivery_time";
         if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {
             timeFlag = "platform_create_time";
+        }
+        if (CollectionUtils.isNotEmpty(dto.getCategory())) {
+            return this.byDateStackedColumnChart(dto, timeFlag, settleRate);
         }
         List<SalesFlagVO> salesList = new ArrayList();
         List<SalesFlagVO> lastYearSalesList = new ArrayList();

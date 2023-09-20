@@ -7,6 +7,8 @@ import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 日期销售趋势DTO
@@ -43,5 +45,20 @@ public class DateSalesTrendDTO {
     @Data
     public static class PagingDTO {
 
+    }
+
+    /**
+     * 堆叠柱状图返回数据
+     **/
+    @Data
+    public static class StackedColumnChartDTO {
+        /**
+         * 类别
+         */
+        private String category;
+        /**
+         * 销售额
+         */
+        private List<BigDecimal> date;
     }
 }
