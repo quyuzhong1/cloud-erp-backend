@@ -503,7 +503,10 @@ public enum ApiError implements Serializable {
     MABANG_BOM_EXIST(97032, "sku{【%s】}在马帮的BOM中不存在！"),
     YEAR_METRICS_EXIST(97033, "{}已设置,不可重复设置"),
     SEARCH_TYPE_EXIST(97034, "搜索类型不存在"),
-
+    ERROR_HAS_EXIST_DICT_VALUE(97035, "系统字典表值{}数据重复"),
+    ERROR_EXIST_DICT_VALUE(97036, "系统字典表值{}已存在"),
+    ERROR_EMPTY_DICT_TYPE(97037, "系统字典类型不能为空"),
+    ERROR_EMPTY_LIST(97038, "请求参数不能为空"),
 
     /**
      * SCM 错误

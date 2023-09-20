@@ -1,4 +1,4 @@
-package com.erp.model.bi.dto;
+package com.erp.model.bi.vo;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

@@ -3,6 +3,7 @@ package com.erp.server.bi.controller.api;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.bi.dto.DictDTO;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.server.bi.service.BiDictService;
 import org.springframework.validation.annotation.Validated;
@@ -110,9 +111,9 @@ public class BiDictController extends BaseController {
      * @return 新增结果
      */
     @PostMapping("/batchAdd")
-    public ApiResult add(@RequestBody List<BiDictEntity> dictEntities) {
+    public ApiResult add(@RequestBody @Validated List<DictDTO> dictEntities) {
         Boolean flag = this.biDictService.batchAdd(dictEntities);
-        return flag == true ? success() : failure();
+        return flag ? success() : failure();
     }
 }
 

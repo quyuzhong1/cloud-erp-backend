@@ -13,7 +13,6 @@ import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
-import com.erp.model.plm.entity.BasicLabelEntity;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.model.sys.dto.DictCountryDTO;

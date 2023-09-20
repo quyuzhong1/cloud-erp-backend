@@ -1,46 +1,37 @@
 package com.erp.server.plm.service.impl;
 
 
-import cn.hutool.core.lang.Assert;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
-import com.erp.model.dmp.entity.PlatformApiTaskEntity;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ValidatorUtil;
+import com.erp.model.plm.dto.BasicLabelDTO;
 import com.erp.model.plm.entity.BasicLabelEntity;
-import com.erp.model.plm.entity.BomOperateLogEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.enums.LabelColorEnum;
 import com.erp.model.plm.enums.LabelLevelEnum;
 import com.erp.model.plm.vo.LabelLevelTreeVO;
-import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.plm.mapper.BasicLabelMapper;
 import com.erp.server.plm.mapper.ProductRefLabelMapper;
 import com.erp.server.plm.service.BasicLabelService;
-import com.erp.server.plm.service.BomOperateLogService;
 import com.erp.server.plm.service.CommonService;
-import com.common.core.exception.ServiceException;
 import io.seata.common.util.StringUtils;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.plm.dto.BasicLabelDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
 
 /**
  * <p>
@@ -114,14 +105,10 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchAdd(List<BasicLabelDTO.AddDTO> list) {
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.Default);
-        }
+        if (CollectionUtils.isEmpty(list)) throw new ServiceException(ApiError.ERROR_EMPTY_LIST);
         //当前登录人
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_403);
-        }
+        if (ObjectUtils.isEmpty(loginUser)) throw new ServiceException(ApiError.ERROR_403);
         List<BasicLabelEntity> basicLabelEntities = BeanMapperUtils.copyList(BasicLabelEntity.class, list);
         //校验数据是否存在重复
         Set<String> stringSet = basicLabelEntities.stream().collect(Collectors.groupingBy(BasicLabelEntity::getName, Collectors.counting()))
@@ -145,7 +132,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
             //存在不在定义范围内的等级
             throw new ServiceException(ApiError.NOT_EXIST_BASIC_LABEL_LEVEL, labelNames);
         }
-        return this.saveOrUpdateBatch(basicLabelEntities);
+        return this.saveOrUpdateBatch(basicLabelEntities, basicLabelEntities.size());
     }
 
     /**
