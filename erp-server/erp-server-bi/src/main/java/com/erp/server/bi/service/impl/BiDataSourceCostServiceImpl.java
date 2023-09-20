@@ -917,6 +917,13 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         return rankResult;
     }
 
+    @Override
+    public List<DateCostVO> sumByDateAndCostType(BiFilterDTO dto, List<String> dictValues) {
+        List<DateCostVO> vo = baseMapper.sumByDateAndCostType(dto, dictValues);
+        return vo;
+    }
+
+
     /**
      * 通过日期汇总成本数据
      * @param dto
@@ -1000,4 +1007,6 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         seriesList.add(yAxis);
         return seriesList;
     }
+
+
 }

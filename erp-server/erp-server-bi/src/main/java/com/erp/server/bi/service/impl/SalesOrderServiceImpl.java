@@ -91,6 +91,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private BiDataSourceCostService biDataSourceCostService;
+
 
     @Override
     public StatisticalDataVO getMonthSales(BiFilterDTO dto) {
@@ -2120,7 +2123,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
 
     /**
-     * 一级销售模块 -日期销售额
+     * 一级销售模块 -日期销售额-类别查询
      *
      * @param dto
      * @return com.erp.model.bi.vo.StatisticalDataVO
@@ -2195,6 +2198,56 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     }
 
     /**
+     * 一级销售模块 -日期销售额-财务销售额
+     *
+     * @param dto
+     * @return com.erp.model.bi.vo.StatisticalDataVO
+     * @author yl
+     * @date 2023-01-06 11:19
+     */
+    private StatisticalDataVO byDateFinanceSalesQuantity(DateSalesTrendDTO.SearchDTO dto) {
+
+        StatisticalDataVO statistical = new StatisticalDataVO();
+        statistical.setName("销售趋势");
+        statistical.setChartType(ChartType.BAR);
+        String dateType = dto.getDateType();
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
+        //查找的日期
+        String timeFlag = "delivery_time";
+        if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {
+            timeFlag = "platform_create_time";
+        }
+        List<SalesFlagVO> salesList = new ArrayList();
+        List<SalesFlagVO> lastYearSalesList = new ArrayList();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome"));
+
+        List<DateCostVO> vo = biDataSourceCostService.sumByDateAndCostType(dto, dictValues);
+
+
+        switch (dateType) {
+            case "DAY":
+                throw new ServiceException(ApiError.ERROR_DATE_TYPE);
+            case "MONTH":
+
+                break;
+            case "QUARTER":
+
+                break;
+            case "YEAR":
+
+                break;
+            default:
+                salesList = new ArrayList<>();
+                break;
+        }
+
+        return statistical;
+    }
+
+    /**
      * 一级销售模块 -日期销售额
      *
      * @param dto
@@ -2214,6 +2267,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         // 获取详情数据并转为 map 计算
         HashMap<String, Map<String, BigDecimal>> dataSourceCostDetailMap = biDataSourceCostDetailService.convertListByCostIds(costIds, dictValues);
 */
+        //如果查询客单价
+        if (DateSalesTrendSearchTypeEnum.FINANCE_SALES_QUANTITY.getCode().equals(dto.getSearchType())) {
+
+        }
+
 
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售趋势");
@@ -2617,7 +2675,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<String> shopNameList = dto.getShopName();
         if (CollectionUtils.isNotEmpty(shopNameList)) {
             List<DmpShopInfoEntity> shopInfoList = shopInfoService.listByNames(shopNameList);
-            List<String> shopIdList = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
+            List<String> shopIdList  = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(shopIdList)) {
                 strategy = context.getBean(ShopTargetValueStrategy.class);
                 if (Objects.nonNull(strategy)) {
@@ -2671,7 +2729,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //完成占比
         BigDecimal yearFinishRate = getSalesRatio(yearMetricsValue, yearFinishValue);
         yearMetrics.setFinishRate(yearFinishRate);
-        resultList.add(monthMetrics);
+        resultList.add(yearMetrics);
         return resultList;
     }
 

@@ -60,6 +60,24 @@ public class BiTargetStaffSettingController extends BaseController {
         return success(pagingVO);
     }
 
+
+    /**
+     * 分页
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author Lambda
+     * @date: 2023-09-13
+     */
+    @PostMapping("/pagingTotal")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "bi:biTargetStaffSetting:paging",
+//            tableAlias = ""
+//    )
+    public ApiResult<BiTargetYearDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated PagingDTO<BiTargetYearDTO.PagingParamDTO> dto) {
+        return success(null);
+    }
     /**
      * 新增
      *
@@ -128,6 +146,19 @@ public class BiTargetStaffSettingController extends BaseController {
     public ApiResult<BiTargetStaffSettingDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         BiTargetStaffSettingDTO.ImportDTO result = biTargetStaffSettingService.importFile(excelFile, response);
         return success(result);
+    }
+
+
+    /**
+     * 分页列表修改
+     *
+     * @return
+     */
+    @PostMapping("/listUpdate")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "人员目标列表修改")
+    public ApiResult listUpdate(@RequestBody BiTargetStaffSettingDTO.RemoveDTO dto) {
+        Boolean result = biTargetStaffSettingService.delete(dto);
+        return result ? success() : failure();
     }
 
     /**

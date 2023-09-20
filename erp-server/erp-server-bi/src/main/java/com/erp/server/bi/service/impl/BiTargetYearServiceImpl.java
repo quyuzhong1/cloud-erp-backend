@@ -4,11 +4,15 @@ package com.erp.server.bi.service.impl;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.common.core.exception.ServiceException;
+import com.erp.model.bi.enums.DataSourceCostEnum;
 import com.erp.model.bi.enums.MetricsEnum;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.server.bi.mapper.BiTargetYearMapper;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
+import com.erp.server.bi.service.BiDataSourceCostDetailService;
 import com.erp.server.bi.service.BiTargetYearService;
 import com.erp.server.bi.service.DmpRefundInfoService;
+import com.erp.server.bi.service.DmpShopInfoService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -17,6 +21,7 @@ import com.erp.model.bi.dto.BiTargetYearDTO;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -41,6 +46,12 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
 
     @Resource
     private DmpRefundInfoService dmpRefundInfoService;
+
+    @Resource
+    private DmpShopInfoService shopInfoService;
+
+    @Resource
+    private BiDataSourceCostDetailService biDataSourceCostDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -97,6 +108,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
         MetricsEnum metrics = dto.getMetrics();
         String yearFlag = "year";
         String yearStr = String.valueOf(year);
+        String yearMonthStr = month > 9 ? yearStr + "-" + month : yearStr + "-0" + month;
         switch (metrics) {
             case SALES_QTY:
                 //年度的
@@ -132,10 +144,60 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                     }
                     return monthAmount.subtract(refundOrderAmount);
                 }
+                //财务销售额
+            case FINANCE_SALES_AMOUNT:
+
+                List<String> shopNameList = dto.getShopName();
+                List<DmpShopInfoEntity> shopInfoList = shopInfoService.listByNames(shopNameList);
+                List<String> shopIdList = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
+                dto.setShopName(shopIdList);
+                //年
+                if (yearFlag.equals(flagStr)) {
+                    return biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
+                } else {
+                    //月
+                    return biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
+                }
+                //毛利额
+            case GROSS_PROFIT:
+                //年
+                if (yearFlag.equals(flagStr)) {
+                    //主营业务收入
+                    BigDecimal mainBusinessIncome = biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
+                    //成本合计
+                    BigDecimal costTotalCost = biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_TOTALCOST.getCode(), dto);
+                    return mainBusinessIncome.subtract(costTotalCost);
+                } else {
+                    //月
+                    BigDecimal monthMainBusinessIncome = biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
+                    BigDecimal monthCostTotalCost = biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_TOTALCOST.getCode(), dto);
+                    return monthMainBusinessIncome.subtract(monthCostTotalCost);
+                }
+
+                //毛利率
+            case GROSS_PROFIT_RATE:
+                //年
+                if (yearFlag.equals(flagStr)) {
+                    //主营业务收入
+                    BigDecimal mainBusinessIncome = biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
+                    //成本合计
+                    BigDecimal costTotalCost = biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_TOTALCOST.getCode(), dto);
+                    //差值
+                    BigDecimal grossProfit = mainBusinessIncome.subtract(costTotalCost);
+                    return MathUtil.divide(grossProfit,mainBusinessIncome,2);
+
+                }else{
+                    //月
+                    BigDecimal monthMainBusinessIncome = biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
+                    BigDecimal monthCostTotalCost = biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_TOTALCOST.getCode(), dto);
+                    //差值
+                    BigDecimal monthGrossProfit = monthMainBusinessIncome.subtract(monthCostTotalCost);
+                    return MathUtil.divide(monthGrossProfit,monthMainBusinessIncome,2);
+                }
 
         }
 
-        return null;
+        return BigDecimal.ZERO;
     }
 
 
