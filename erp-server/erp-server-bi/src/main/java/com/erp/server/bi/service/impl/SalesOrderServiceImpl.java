@@ -17,6 +17,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.*;
+import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.enums.DateSalesTrendSearchTypeEnum;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.TargetMetricsSearchTypeEnum;
@@ -2148,35 +2149,36 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 item.setName(quarterName);
             }
         }
-
         List<SeriesVO<Object>> seriesList = new ArrayList<>();
         List<String> categoryList = salesList.stream().map(SalesFlagVO::getCategory).distinct().collect(Collectors.toList());
         List<String> dateList = salesList.stream().map(SalesFlagVO::getName).distinct().collect(Collectors.toList());
-
-        List<String> siteNameList = new ArrayList<>();
+        Map<String, List<SalesFlagVO>> listDateMap = salesList.stream().collect(Collectors.groupingBy(SalesFlagVO::getName));
         for (String category : categoryList) {
             SeriesVO<Object> sales = new SeriesVO();
             DateSalesTrendDTO.StackedColumnChartDTO columnChartDTO = new DateSalesTrendDTO.StackedColumnChartDTO();
             List<BigDecimal> list = new ArrayList<>();
             sales.setName(category);
             columnChartDTO.setCategory(category);
-            List<SalesFlagVO> salesFlagVOList = salesList.stream().filter(req -> req.getCategory().equals(category)).collect(Collectors.toList());
-            Map<String, List<SalesFlagVO>> categoryMap = salesFlagVOList.stream().collect(Collectors.groupingBy(SalesFlagVO::getName));
-            for (Map.Entry<String, List<SalesFlagVO>> entry : categoryMap.entrySet()) {
 
-                siteNameList.add(entry.getKey());
-                BigDecimal salesAmount = entry.getValue().stream().
-                        map(SalesFlagVO::getSales).
-                        reduce(BigDecimal.ZERO, BigDecimal::add);
-                list.add(salesAmount);
+            for (Map.Entry<String, List<SalesFlagVO>> stringListEntry : listDateMap.entrySet()) {
+                List<SalesFlagVO> salesFlagVOList = stringListEntry.getValue().stream().filter(req -> req.getCategory().equals(category)).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(salesFlagVOList)) {
+                    BigDecimal salesAmount = salesFlagVOList.stream().
+                            map(SalesFlagVO::getSales).
+                            reduce(BigDecimal.ZERO, BigDecimal::add);
+                    list.add(salesAmount);
+                } else {
+                    list.add(BigDecimal.ZERO);
+                }
             }
+
             columnChartDTO.setDate(list);
             sales.setData(Collections.singletonList(list));
             seriesList.add(sales);
         }
         ChartVO chartVO = new ChartVO();
         chartVO.setSeries(seriesList);
-        chartVO.setXAxis(siteNameList);
+        chartVO.setXAxis(dateList);
         statistical.setData(chartVO);
         return statistical;
     }
@@ -2191,10 +2193,20 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public StatisticalDataVO byDate(DateSalesTrendDTO.SearchDTO dto) {
+   /*     List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome"));
+        // 获取成本详情ids
+        List<BiDataSourceCostEntity> dataSourceCostList = getCostList(dto);
+        List<String> costIds = dataSourceCostList.stream().map(BiDataSourceCostEntity::getId).distinct().collect(Collectors.toList());
+        if (org.apache.commons.collections.CollectionUtils.isEmpty(costIds)) {
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
+        // 获取详情数据并转为 map 计算
+        HashMap<String, Map<String, BigDecimal>> dataSourceCostDetailMap = biDataSourceCostDetailService.convertListByCostIds(costIds, dictValues);
+*/
 
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售趋势");
-        statistical.setChartType(ChartType.PIE);
+        statistical.setChartType(ChartType.BAR);
         String dateType = dto.getDateType();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());

@@ -90,4 +90,11 @@ public interface BiTargetNewProductSettingService extends SuperService<BiTargetN
      * @return
      */
     BiTargetNewProductSettingDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 列表删除
+     * @param dto
+     * @return
+     */
+    Boolean delete(BiTargetNewProductSettingDTO.RemoveDTO dto);
 }

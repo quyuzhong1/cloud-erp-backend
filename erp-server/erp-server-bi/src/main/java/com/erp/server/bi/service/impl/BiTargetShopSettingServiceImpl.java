@@ -20,6 +20,7 @@ import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.dto.excel.TargetShopSettingImportExcelDTO;
 import com.erp.model.bi.dto.excel.TargetStaffSettingImportExcelDTO;
 import com.erp.model.bi.entity.BiTargetShopSettingEntity;
+import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
@@ -666,6 +667,21 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
             }
         }
         result.setErrorUrl(url);
+        return result;
+    }
+
+    /**
+     * 列表删除店铺目标
+     * @param dto
+     * @return
+     */
+    @Override
+    public Boolean delete(BiTargetShopSettingDTO.RemoveDTO dto) {
+        Boolean result = this.lambdaUpdate().
+                eq(BiTargetShopSettingEntity::getShopId, dto.getShopId()).
+                eq(BiTargetShopSettingEntity::getMainId,dto.getId()).
+                eq(BiTargetShopSettingEntity::getMetrics,dto.getMetricsEnum()).
+                remove();
         return result;
     }
 }

@@ -130,5 +130,17 @@ public class BiTargetStaffSettingController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 分页列表删除
+     *
+     * @return
+     */
+    @PostMapping("/remove")
+    @LogAction(value = LogActionEnum.DELETE, desc = "人员目标设置删除")
+    public ApiResult remove(@RequestBody BiTargetStaffSettingDTO.RemoveDTO dto) {
+        Boolean result = biTargetStaffSettingService.delete(dto);
+        return result ? success() : failure();
+    }
+
 
 }

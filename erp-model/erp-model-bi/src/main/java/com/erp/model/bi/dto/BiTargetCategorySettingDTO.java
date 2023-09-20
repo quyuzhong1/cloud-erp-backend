@@ -192,5 +192,27 @@ public class BiTargetCategorySettingDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class RemoveDTO {
 
+        /**
+         * id
+         */
+        @NotBlank(message = "目标不能为空")
+        private String id;
+
+        /**
+         * 指标
+         */
+        @NotNull(message = "指标不能为空")
+        private MetricsEnum metricsEnum;
+
+        /**
+         * 分类不
+         */
+        @NotBlank(message = "分类不能空")
+        private String categoryId;
+
+    }
 }
