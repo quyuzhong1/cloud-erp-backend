@@ -81,9 +81,9 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         if (CollectionUtils.isNotEmpty(list)) {
             Map<String, List<BasicLabelEntity>> map = list.stream().collect(Collectors.groupingBy(BasicLabelEntity::getLevel));
             treeVOS.add(new LabelLevelTreeVO().setName(LabelLevelEnum.COMPANY.getName())
-                    .setLevel(LabelLevelEnum.COMPANY.getType()).setChildren(map.get(LabelLevelEnum.COMPANY.getType())));
+                    .setLevel(LabelLevelEnum.COMPANY.getCode()).setChildren(map.get(LabelLevelEnum.COMPANY.getCode())));
             treeVOS.add(new LabelLevelTreeVO().setName(LabelLevelEnum.PRIVATE.getName())
-                    .setLevel(LabelLevelEnum.PRIVATE.getType()).setChildren(map.get(LabelLevelEnum.PRIVATE.getType())));
+                    .setLevel(LabelLevelEnum.PRIVATE.getCode()).setChildren(map.get(LabelLevelEnum.PRIVATE.getCode())));
         }
         return treeVOS;
     }
