@@ -14,6 +14,7 @@ import com.common.business.vo.SeriesVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
@@ -2427,25 +2428,67 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (CollectionUtils.isNotEmpty(dto.getCategory())) {
             return this.byDateStackedColumnChart(dto, timeFlag, settleRate);
         }
+        List<String> dateList = new ArrayList<>();
         List<SalesFlagVO> salesList = new ArrayList();
         List<SalesFlagVO> lastYearSalesList = new ArrayList();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        LocalDateTime startTime = LocalDateTime.of(LocalDate.from(LocalDateTime.now().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
+        LocalDateTime endTime = LocalDateTime.of(LocalDate.from(LocalDateTime.now().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
+        dto.setStartTime(startTime);
+        dto.setEndTime(endTime);
+        salesList = baseMapper.getByDay(dto, timeFlag, settleRate);
+        startTime = LocalDateTime.of(LocalDate.from(LocalDateTime.now().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN).minusYears(1);
+        endTime = LocalDateTime.of(LocalDate.from(LocalDateTime.now().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX).minusYears(1);
+        dto.setStartTime(startTime);
+        dto.setEndTime(endTime);
+        lastYearSalesList = baseMapper.getByDay(dto, timeFlag, settleRate);
+        String format;
         switch (dateType) {
             case "DAY":
+                format = "{}-{}-{}";
+/*
                 salesList = baseMapper.getByDay(dto, timeFlag, settleRate);
                 dto.setStartTime(dto.getStartTime().minusYears(1));
                 dto.setEndTime(dto.getEndTime().minusYears(1));
-                lastYearSalesList = baseMapper.getByDay(dto, timeFlag, settleRate);
+
+                lastYearSalesList = baseMapper.getByDay(dto, timeFlag, settleRate);*/
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "DAY");
+
+
+                int day = dto.getStartTime().toLocalDate().lengthOfMonth();
+                LocalDateTime finalStartTime = startTime;
+                dateList = IntStream.rangeClosed(1, day).mapToObj(x -> StrUtil.format(format, LocalDateTime.now().getYear(), String.format("%02d", LocalDateTime.now().getMonthValue()), String.format("%02d", x))).collect(Collectors.toList());
+                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "DAY", dateList);
                 break;
             case "MONTH":
+                format = "{}-{}";
+                dateList = IntStream.rangeClosed(1, 4).mapToObj(x -> StrUtil.format(format, LocalDateTime.now().getYear(), String.format("%02d", LocalDateTime.now().getMonthValue()))).collect(Collectors.toList());
+                for (String name : dateList) {
+                    String dateStr[] = name.split("-");
+                    if (dateStr.length > 0) {
+                        String year = dateStr[0];
+                        String month = dateStr[1];
+                        String quarter = "01";
+                        if (month.contains("2")) {
+                            quarter = "04";
+                        }
+                        if (month.contains("3")) {
+                            quarter = "07";
+                        }
+                        if (month.contains("4")) {
+                            quarter = "10";
+                        }
+                        name = year + "-" + quarter;
+                    }
+                }
+
                 salesList = baseMapper.getByMonth(dto, timeFlag, settleRate);
                 dto.setStartTime(dto.getStartTime().minusYears(1));
                 dto.setEndTime(dto.getEndTime().minusYears(1));
                 lastYearSalesList = baseMapper.getByMonth(dto, timeFlag, settleRate);
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
-                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "MONTH");
+                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "MONTH", dateList);
                 break;
             case "QUARTER":
                 salesList = baseMapper.getByQuarter(dto, timeFlag, settleRate);
@@ -2453,7 +2496,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 dto.setEndTime(dto.getEndTime().minusYears(1));
                 lastYearSalesList = baseMapper.getByQuarter(dto, timeFlag, settleRate);
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
-                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "QUARTER");
+                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "QUARTER", dateList);
                 break;
             case "YEAR":
                 salesList = baseMapper.getByYear(dto, timeFlag, settleRate);
@@ -2461,7 +2504,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 dto.setEndTime(dto.getEndTime().minusYears(1));
                 lastYearSalesList = baseMapper.getByYear(dto, timeFlag, settleRate);
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy");
-                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "YEAR");
+                dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "YEAR", dateList);
                 break;
             default:
                 salesList = new ArrayList<>();
@@ -2508,11 +2551,19 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @param dateTimeFormatter
      * @param dateType
      */
-    private void dateSalesTrendRatio(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, DateTimeFormatter dateTimeFormatter, String dateType) {
+    private void dateSalesTrendRatio(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, DateTimeFormatter dateTimeFormatter, String dateType, List<String> dateList) {
         List<SalesFlagVO> list = new ArrayList<>();
         list.addAll(salesList);
         list.addAll(lastYearSalesList);
-        for (SalesFlagVO salesFlagVO : salesList) {
+        for (String dateStr : dateList) {
+            SalesFlagVO salesFlagVO = salesList.stream().filter(req -> req.getName().equals(dateStr)).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(salesFlagVO)) {
+                salesFlagVO = new SalesFlagVO();
+                salesFlagVO.setName(dateStr);
+                salesList.add(salesFlagVO);
+            }
+/*        }
+        for (SalesFlagVO salesFlagVO : salesList) {*/
             String parse = "";
             String prevYearDate = "";
             if ("DAY".equals(dateType)) {
