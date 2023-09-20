@@ -105,7 +105,7 @@ public interface BiComprehensiveAnalyseService {
     /**
      * 区域销售分析
      */
-    List<BiRegionAnalyzeDTO> getRegionSales(BiCountryRegionFilterDTO dto);
+    List<BiRegionAnalyzeDTO> getSubRegionSales(BiCountryRegionFilterDTO dto);
 
     /**
      * 国家销售分析

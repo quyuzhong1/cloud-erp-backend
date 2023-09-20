@@ -68,6 +68,11 @@ public class DictCountryDTO implements Serializable {
          */
         private String subregionCode;
 
+        /**
+         * 子区域名称
+         */
+        private String subregionName;
+
     }
 
     @Data

@@ -45,6 +45,16 @@ public class BiCountryAnalyzeDTO {
     private String regionCode;
 
     /**
+     * 国家所属子区域名称
+     */
+    private String subregionName;
+
+    /**
+     * 国家所属子区域代号
+     */
+    private String subregionCode;
+
+    /**
      * 销售额
      */
     private BigDecimal salesAmount;
@@ -59,6 +69,11 @@ public class BiCountryAnalyzeDTO {
      */
     private BigDecimal regionSalesRatio;
 
+    /**
+     * 国家所属子区域销售占比
+     */
+    private BigDecimal subregionSalesRatio;
+
 
     /**
      * 初始化
@@ -68,6 +83,8 @@ public class BiCountryAnalyzeDTO {
                                            String countryCode,
                                            String regionName,
                                            String regionCode,
+                                           String subregionName,
+                                           String subregionCode,
                                            BigDecimal salesAmount
     ) {
         return new BiCountryAnalyzeDTO()
@@ -76,16 +93,19 @@ public class BiCountryAnalyzeDTO {
                 .setCountryCode(countryCode)
                 .setRegionName(regionName)
                 .setRegionCode(regionCode)
+                .setSubregionName(subregionName)
+                .setSubregionCode(subregionCode)
                 .setSalesAmount(salesAmount)
                 .setGlobalSalesRatio(BigDecimal.ZERO)
                 .setRegionSalesRatio(BigDecimal.ZERO)
+                .setSubregionSalesRatio(BigDecimal.ZERO)
                 ;
     }
 
     /**
      * 设置所有占比
      */
-    public void setAllRadio(BigDecimal globalTotal, BigDecimal regionTotal) {
+    public void setAllRadio(BigDecimal globalTotal, BigDecimal regionTotal, BigDecimal subregionTotal) {
         if (0 == this.salesAmount.compareTo(BigDecimal.ZERO)){
             return;
         }
@@ -100,6 +120,12 @@ public class BiCountryAnalyzeDTO {
             BigDecimal regionSalesRadio = this.salesAmount.divide(regionTotal, 4, RoundingMode.HALF_UP)
                     .multiply(new BigDecimal(100));
             this.setRegionSalesRatio(regionSalesRadio);
+        }
+        // 设置区域占比
+        if (0 != subregionTotal.compareTo(BigDecimal.ZERO)){
+            BigDecimal subregionSalesRadio = this.salesAmount.divide(subregionTotal, 4, RoundingMode.HALF_UP)
+                    .multiply(new BigDecimal(100));
+            this.setSubregionSalesRatio(subregionSalesRadio);
         }
     }
 }
