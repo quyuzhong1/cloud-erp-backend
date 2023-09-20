@@ -279,4 +279,10 @@ public interface PlmTaskFeign {
      */
     @PostMapping("/feign/product/getNoInventorySku")
     List<SkuVO> getNoInventorySku( );
+
+    /**
+     * 回填产品包装信息
+     */
+    @PostMapping("/feign/productPack/backFillPackaging")
+    void backFillPackaging(@RequestBody ProductPackDTO productPackDTO);
 }

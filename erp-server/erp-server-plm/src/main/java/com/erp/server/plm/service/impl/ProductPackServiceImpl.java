@@ -215,6 +215,18 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     public List<ProductPackEntity> findBySkuIds(List<String> skuIds) {
         return this.lambdaQuery().in(ProductPackEntity::getSkuId, skuIds).list();
     }
+
+    @Override
+    public void backFillPackaging(ProductPackDTO productPackDTO) {
+        lambdaUpdate()
+                .eq(ProductPackEntity::getSkuId,productPackDTO.getSkuId())
+                .set(ProductPackEntity::getProductSize,productPackDTO.getProductSize())
+                .set(ProductPackEntity::getBoxSize,productPackDTO.getBoxSize())
+                .set(ProductPackEntity::getBoxQty,productPackDTO.getBoxQty())
+                .set(ProductPackEntity::getBoxWeight,productPackDTO.getBoxWeight())
+                .set(ProductPackEntity::getNetWeight,productPackDTO.getNetWeight())
+                .update(new ProductPackEntity());
+    }
 }
 
 

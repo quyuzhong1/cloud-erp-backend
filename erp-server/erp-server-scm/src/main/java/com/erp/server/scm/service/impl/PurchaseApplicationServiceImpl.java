@@ -732,6 +732,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (CollectionUtils.isEmpty(bomChildList)) {
             throw new ServiceException(ApiError.ERROR_98093);
         }
+
+        //供应商信息
+        List<String> supplierIdList = skuList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSupplierId())).map(SkuVO::getSupplierId).collect(Collectors.toList());
+        List<SupplierEntity> supplierList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(supplierIdList)) {
+            supplierList = supplierService.listByIds(supplierIdList);
+        }
         Integer index = MathUtil.ONE;
         List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO> resultList = new ArrayList<>();
         for (PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO viewDTO : list) {
@@ -746,6 +753,9 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //产品信息
             String supplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
             viewDTO.setSupplierId(supplierId);
+            //付款条件
+            String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(supplierId)).map(SupplierEntity::getPaymentCondition).findFirst().orElse("");
+            viewDTO.setPaymentCondition(paymentCondition);
 
             //可下推数量
             viewDTO.setToPushdownQty(viewDTO.getQty() - pushdownQty);

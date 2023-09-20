@@ -22,6 +22,7 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
+import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
@@ -585,6 +586,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 //生成入库单
                 autoStockInBill(billId, qcInfo, purchaseOrderId, warehouseId);
             }
+            //新品首批回填SKU的尺寸信息
+            backFillPackaging(bill);
+
             //异步发送通知
             qcResultService.sendQcResultMsg(Arrays.asList(billId));
             operateLogService.addModuleOperateLog(String.format("新增了一个质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "新增操作");
@@ -592,6 +596,40 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         return result;
     }
 
+    /**
+     * @description:回填产品信息
+     * @author Will
+     * @date: 2023/9/20 11:21
+     * @param qcInfoEntity
+     */
+    private void backFillPackaging (QcInfoEntity qcInfoEntity) {
+        /**
+         * 采购订单为新品首批、并且质检完成后减产品尺寸、外箱尺寸、产品净重、外形重量
+         */
+        if (StringUtils.isBlank(qcInfoEntity.getPurchaseOrderId())) {
+            return;
+        }
+        PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(qcInfoEntity.getPurchaseOrderId());
+        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        if (!purchaseOrderEntity.getIsFirstMassProduct()) {
+            return;
+        }
+        //质检产品信息
+        QcProductDTO.ViewDTO viewDTO = qcProductService.getByMainId(qcInfoEntity.getId());
+        if (ObjectUtils.isEmpty(viewDTO)) {
+            throw new ServiceException(ApiError.ERROR_99015);
+        }
+        ProductPackDTO productPackDTO = new ProductPackDTO();
+        productPackDTO.setSkuId(viewDTO.getSkuId());
+        productPackDTO.setProductSize(StrUtil.format("{}X{}X{}",viewDTO.getProductLength(),viewDTO.getProductWidth(),viewDTO.getProductHeight()));
+        productPackDTO.setBoxSize(StrUtil.format("{}X{}X{}",viewDTO.getBoxLength(),viewDTO.getBoxWidth(),viewDTO.getBoxHeight()));
+        productPackDTO.setBoxQty(new BigDecimal(viewDTO.getBoxQty()));
+        productPackDTO.setBoxWeight(viewDTO.getBoxWeight());
+        productPackDTO.setNetWeight(viewDTO.getProductNetWeight());
+        plmTaskFeign.backFillPackaging(productPackDTO);
+    }
 
     /**
      * 处理相关数据
