@@ -34,9 +34,10 @@ public class BiCountryAreaAnalyzeController extends BaseController {
      */
     @PostMapping("/regionSales")
     public ApiResult<List<BiRegionAnalyzeDTO>> getRegionSales(@RequestBody @Valid BiCountryRegionFilterDTO dto) {
-        List<BiRegionAnalyzeDTO> vo = biComprehensiveAnalyseService.getRegionSales(dto);
+        List<BiRegionAnalyzeDTO> vo = biComprehensiveAnalyseService.getSubRegionSales(dto);
         return success(vo);
     }
+
 
     /**
      * 国家销售额分析
