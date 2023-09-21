@@ -1,6 +1,5 @@
 package com.erp.server.bi.service.impl;
 
-import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -8,7 +7,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.vo.ChartVO;
 import com.common.business.vo.PagingVO;
 import com.common.business.vo.SeriesVO;
@@ -16,12 +14,10 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.*;
-import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.enums.DataSourceCostEnum;
 import com.erp.model.bi.enums.DateSalesTrendSearchTypeEnum;
 import com.erp.model.bi.enums.MetricsEnum;
@@ -31,9 +27,7 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.plm.dto.SkuDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.BiConstant;
@@ -44,7 +38,6 @@ import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,8 +48,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -104,6 +95,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     @Resource
     private BiDataSourceCostService biDataSourceCostService;
+
+    @Resource
+    private BiTargetStaffSettingService biTargetStaffSettingService;
 
 
     @Override
@@ -236,7 +230,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 LocalDate firstOrderDate = skuInfo.getFirstOrderDate();
                 if (firstOrderDate != null) {
                     Integer year = firstOrderDate.getYear();
-                    if(nowYear.equals(year)){
+                    if (nowYear.equals(year)) {
                         item.setIsNewProduct(Boolean.TRUE);
                     }
                 }
@@ -285,6 +279,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 导出sku 销售额
+     *
      * @param params
      * @param response
      * @return
@@ -293,7 +288,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public Boolean exportSkuSalesExcel(SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response) {
         //获取到结算汇率
         String settleRate = getSettleRate(params.getSettleMethod());
-        List<SkuSalesDTO.PagingSalesInfoDTO> resultList = baseMapper.listSkuSalesExcel(params,settleRate);
+        List<SkuSalesDTO.PagingSalesInfoDTO> resultList = baseMapper.listSkuSalesExcel(params, settleRate);
         List<String> skuNoList = resultList.stream().map(SkuSalesDTO.PagingSalesInfoDTO::getSkuNo).collect(Collectors.toList());
 
         LocalDateTime nowTime = LocalDateTime.now();
@@ -318,7 +313,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Integer nowYear = LocalDate.now().getYear();
         //销售信息
         List<SkuDTO.SalesDTO> skuList = plmTaskFeign.listSkuSalesBySkuNos(skuNoList);
-        for(SkuSalesDTO.PagingSalesInfoDTO item : resultList){
+        for (SkuSalesDTO.PagingSalesInfoDTO item : resultList) {
             SkuDTO.SalesDTO skuInfo = skuList.stream().filter(s -> s.getSkuNo().equals(item.getSkuNo())).
                     findFirst().orElse(null);
             if (Objects.nonNull(skuInfo)) {
@@ -326,7 +321,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 LocalDate firstOrderDate = skuInfo.getFirstOrderDate();
                 if (firstOrderDate != null) {
                     Integer year = firstOrderDate.getYear();
-                    if(nowYear.equals(year)){
+                    if (nowYear.equals(year)) {
                         item.setIsNewProductName("是");
                     }
                 }
@@ -375,16 +370,35 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 产品等级销售分析
+     *
      * @param params
      * @return
      */
     @Override
     public StatisticalDataVO productGradeSales(BiFilterDTO params) {
+        StatisticalDataVO statistical = new StatisticalDataVO();
         //获取到结算汇率
         String settleRate = getSettleRate(params.getSettleMethod());
         //产品销售等级销售额
-        List<SkuSalesDTO.ProductGradeSalesDTO>  gradeSalesList=baseMapper.listProductGradeSales(params,settleRate);
-        return null;
+        List<Map<String,Object>> gradeSalesList = baseMapper.listProductGradeSales(params, settleRate);
+        int initSize = CollectionUtils.isNotEmpty(gradeSalesList) ? gradeSalesList.size() : 10;
+
+        statistical.setName("产品等级销售额");
+        statistical.setChartType(ChartType.PIE);
+        ChartVO chartVO = new ChartVO();
+        chartVO.setXAxis(new ArrayList<>());
+        List<SeriesVO<Object>> seriesList = new ArrayList<>(initSize);
+        SeriesVO<Object> series = new SeriesVO();
+        series.setName("平台销售额");
+        List<Object> list = new ArrayList<>(gradeSalesList.size());
+        for (Map<String, Object> map : gradeSalesList) {
+            list.add(map);
+        }
+        series.setData(list);
+        seriesList.add(series);
+        chartVO.setSeries(seriesList);
+        statistical.setData(chartVO);
+        return statistical;
     }
 
     /**
@@ -2634,6 +2648,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 计算销售趋势同比/环比
+     *
      * @param salesList
      * @param lastYearSalesList
      * @param dateTimeFormatter
@@ -2903,7 +2918,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public Boolean newAndOldSalesExportExcel(NewAndOldSalesSearchDTO.SearchDTO dto, HttpServletResponse response) {
         List<NewAndOldSalesSearchDTO.PagingDTO> pagingDTOS = newAndOldSalesAmount(dto);
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/newAndOldSalesExport.xlsx";
+        String excelPath = "excel/biNewAndOldSalesExport.xlsx";
         String name = "新老品销售额";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
@@ -3210,5 +3225,128 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         return resultList;
     }
 
+    @Override
+    public List<CompletionRateRankingDTO.PagingDTO> listCompletionRateRanking(CompletionRateRankingDTO.SearchDTO dto) {
+        TargetMetricsSearchTypeEnum enumByCode = TargetMetricsSearchTypeEnum.getEnumByCode(dto.getSearchType());
+        // 获取当月第一天
+        LocalDateTime firstDay = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay();
+        // 获取下月第一天
+        LocalDateTime lastDay = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().plusMonths(1);
+        dto.setStartTime(firstDay);
+        dto.setEndTime(lastDay);
 
+        switch (enumByCode) {
+            case DEPT:
+                return deptCompletionRateRanking(dto);
+            case USER:
+                return userCompletionRateRanking(dto);
+            default:
+                throw new ServiceException(ApiError.SEARCH_TYPE_EXIST);
+        }
+    }
+
+    /**
+     * 部门完成率排行
+     * @param dto
+     * @return
+     */
+    private List<CompletionRateRankingDTO.PagingDTO> deptCompletionRateRanking(CompletionRateRankingDTO.SearchDTO dto) {
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        LocalDateTime startTime = dto.getStartTime();
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
+        List<CompletionRateRankingDTO.PagingDTO> list = baseMapper.deptCompletionRateRanking(dto, settleRate);
+        TargetFinishDTO.ParamDTO paramDTO = new TargetFinishDTO.ParamDTO ();
+        paramDTO.setYear(dto.getStartTime().getYear() + "");
+        paramDTO.setMetrics(MetricsEnum.SALES_AMOUNT.getCode());
+        List<String> deptIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
+        paramDTO.setDepartment(deptIds);
+        List<TargetFinishDTO.ViewDTO> viewDTOS = biTargetStaffSettingService.listDeptTargetFinish(paramDTO);
+        dto.setStartTime(dto.getEndTime());
+        dto.setEndTime(dto.getEndTime().plusMonths(1));
+        List<CompletionRateRankingDTO.PagingDTO> lastMonthList = baseMapper.deptCompletionRateRanking(dto, settleRate);
+        for (CompletionRateRankingDTO.PagingDTO pagingDTO : list) {
+            SysDepartmentDTO dept = deptList.stream().filter(u -> u.getId().equals(pagingDTO.getName())).findFirst().orElse(null);
+            if (dept != null) {
+                pagingDTO.setName(dept.getName());
+            } else {
+                pagingDTO.setName("无");
+            }
+            //计算本月完成率
+            List<TargetFinishDTO.ViewDTO> targetFinishList = viewDTOS.stream().filter(req -> req.getTypeId().equals(pagingDTO.getName())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(targetFinishList)) {
+                TargetFinishDTO.ViewDTO viewDTO = targetFinishList.stream().filter(req -> req.getTypeId().equals(pagingDTO.getName()) && req.getMonth().equals(startTime.getMonthValue())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(viewDTO)) {
+                    pagingDTO.setMonthCompletionRate(pagingDTO.getMonthSales().divide(viewDTO.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+                }
+            }
+            //获取上月排行
+            CompletionRateRankingDTO.PagingDTO lastPagingDTO = lastMonthList.stream().filter(req -> req.getName().equals(pagingDTO.getName())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(lastPagingDTO)) {
+                pagingDTO.setLastMonthRanking(lastPagingDTO.getRanking());
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 用户完成率排行
+     * @param dto
+     * @return
+     */
+    private List<CompletionRateRankingDTO.PagingDTO> userCompletionRateRanking(CompletionRateRankingDTO.SearchDTO dto) {
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        LocalDateTime startTime = dto.getStartTime();
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
+        List<CompletionRateRankingDTO.PagingDTO> list = baseMapper.userCompletionRateRanking(dto, settleRate);
+        TargetFinishDTO.ParamDTO paramDTO = new TargetFinishDTO.ParamDTO ();
+        paramDTO.setYear(dto.getStartTime().getYear() + "");
+        paramDTO.setMetrics(MetricsEnum.SALES_AMOUNT.getCode());
+        List<String> userIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
+        paramDTO.setUserId(userIds);
+        List<TargetFinishDTO.ViewDTO> viewDTOS = biTargetStaffSettingService.listUserTargetFinish(paramDTO);
+        dto.setStartTime(dto.getEndTime());
+        dto.setEndTime(dto.getEndTime().plusMonths(1));
+        List<CompletionRateRankingDTO.PagingDTO> lastMonthList = baseMapper.userCompletionRateRanking(dto, settleRate);
+        for (CompletionRateRankingDTO.PagingDTO pagingDTO : list) {
+            FindUserDTO findUserDTO = userList.stream().filter(u -> u.getUserId().equals(pagingDTO.getName())).findFirst().orElse(null);
+            if (findUserDTO != null) {
+                pagingDTO.setName(findUserDTO.getUserName());
+            } else {
+                pagingDTO.setName("无");
+            }
+            //计算本月完成率
+            List<TargetFinishDTO.ViewDTO> targetFinishList = viewDTOS.stream().filter(req -> req.getTypeId().equals(pagingDTO.getName())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(targetFinishList)) {
+                TargetFinishDTO.ViewDTO viewDTO = targetFinishList.stream().filter(req -> req.getTypeId().equals(pagingDTO.getName()) && req.getMonth().equals(startTime.getMonthValue())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(viewDTO)) {
+                    pagingDTO.setMonthCompletionRate(pagingDTO.getMonthSales().divide(viewDTO.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+                }
+            }
+            //获取上月排行
+            CompletionRateRankingDTO.PagingDTO lastPagingDTO = lastMonthList.stream().filter(req -> req.getName().equals(pagingDTO.getName())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(lastPagingDTO)) {
+                pagingDTO.setLastMonthRanking(lastPagingDTO.getRanking());
+            }
+        }
+        return list;
+    }
+
+    @Override
+    public Boolean completionRateRankingExportExcel(CompletionRateRankingDTO.SearchDTO dto, HttpServletResponse response) {
+        List<CompletionRateRankingDTO.PagingDTO> pagingDTOS = listCompletionRateRanking(dto);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/biCompletionRateRankingExport.xlsx";
+        String name = "完成率排行榜";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(pagingDTOS, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Boolean.TRUE;
+    }
 }

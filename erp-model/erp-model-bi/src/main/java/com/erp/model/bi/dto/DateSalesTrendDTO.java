@@ -34,7 +34,7 @@ public class DateSalesTrendDTO {
         /**
          * 时间类型：日: DAY; 周: WEEK; 月: MONTH; 季度: QUARTER; 年: YEAR
          */
-        @StateEnumValue( strValues = {"DAY","MONTH","QUARTER","YEAR"} ,message = "时间类型有误")
+        @StateEnumValue( strValues = {"DAY","WEEK","MONTH","QUARTER","YEAR"} ,message = "时间类型有误")
         @NotNull(message = "时间类型不能为空")
         private String dateType;
     }

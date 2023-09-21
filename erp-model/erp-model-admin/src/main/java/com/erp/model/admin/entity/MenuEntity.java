@@ -66,7 +66,10 @@ public class MenuEntity implements Serializable {
 	 */
 	private Boolean disabled;
 
-
+	/**
+	 * 菜单排序
+	 */
+	private Integer index;
 
 
 }

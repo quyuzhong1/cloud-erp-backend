@@ -46,6 +46,10 @@ public class SysMenuDTO  implements Serializable {
 
     private String menuCode;
 
+    /**
+     * 菜单排序
+     */
+    private Integer index;
 
     private List<SysMenuDTO> childrenList;
 
