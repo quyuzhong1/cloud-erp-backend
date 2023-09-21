@@ -19,6 +19,17 @@ import java.math.RoundingMode;
 public class BiRegionAnalyzeDTO {
 
     /**
+     * 子区域名称
+     */
+    private String subregionName;
+
+    /**
+     * 子区域代号
+     */
+    private String subregionCode;
+
+
+    /**
      * 区域名称
      */
     private String regionName;
@@ -39,10 +50,16 @@ public class BiRegionAnalyzeDTO {
     private BigDecimal globalSalesRatio;
 
 
-    public static BiRegionAnalyzeDTO init(String regionName, String regionCode) {
+    public static BiRegionAnalyzeDTO init(String regionName,
+                                          String regionCode,
+                                          String subregionName,
+                                          String subregionCode
+    ) {
         return new BiRegionAnalyzeDTO()
                 .setRegionName(regionName)
                 .setRegionCode(regionCode)
+                .setSubregionName(subregionName)
+                .setSubregionCode(subregionCode)
                 .setSalesAmount(BigDecimal.ZERO)
                 .setGlobalSalesRatio(BigDecimal.ZERO)
                 ;

@@ -1472,7 +1472,7 @@
     <select id="getCountrySales" resultType="com.erp.model.bi.dto.BiCountryAnalyzeDTO">
         SELECT
         doi.country_name_cn AS countryNameCn,
-        SUM(doit.amount_after) AS salesAmount
+        COALESCE(SUM(doit.amount_after),0) AS salesAmount
         FROM dmp_order_info doi
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_sku_info dsi ON dsi.sku_no = doit.sku_no

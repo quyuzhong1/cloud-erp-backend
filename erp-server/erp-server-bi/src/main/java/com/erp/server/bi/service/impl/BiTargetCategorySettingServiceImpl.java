@@ -601,7 +601,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
     /**
      * 新增修改处理数据
      */
-    private void handleData(BiTargetYearEntity targetYear, List<BiTargetCategorySettingDTO.CommonDTO> detailList,LogActionEnum action) {
+    public void handleData(BiTargetYearEntity targetYear, List<BiTargetCategorySettingDTO.CommonDTO> detailList,LogActionEnum action) {
         List<BiTargetCategorySettingDTO.ListDetailDTO> existList = baseMapper.listByYearAndDept(targetYear.getYear(),targetYear.getDeptId());
         List<String> existCategory= Lists.newArrayList();
         for (BiTargetCategorySettingDTO.CommonDTO item : detailList) {

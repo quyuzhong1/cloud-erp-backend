@@ -18,6 +18,8 @@ import com.erp.model.bi.enums.TargetSearchTypeEnum;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.DmpOrderInfoMapper;
 import com.erp.server.bi.mapper.DmpRefundInfoMapper;
@@ -34,6 +36,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Will
@@ -63,7 +66,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
     private DmpOrderInfoMapper dmpOrderInfoMapper;
 
     @Resource
-    private DmpOrderItemService dmpOrderItemService;
+    private SysUserFeign sysUserFeign;
 
     @Resource
     private BiDataSourceCostService biDataSourceCostService;
@@ -87,12 +90,13 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         // 获取月度开始时间和结束时间
         LocalDateTime start = LocalDateTime.of(year,1,1,0,0,0);
         LocalDateTime end = LocalDateTime.of(year,12,31,23,59,59, LocalTime.MAX.getNano());
-
+        dto.setStartTime(start);
+        dto.setEndTime(end);
         //目标数据
         List<TargetFinishDTO.ViewDTO> targetList = listTarget(dto);
 
         //实际数据
-        List<TargetFinishDTO.ViewDTO> realList = listReal(dto,start,end);
+        List<TargetFinishDTO.ViewDTO> realList = listReal(dto);
 
         //表头数据
         headMap.put("typeName",TargetSearchTypeEnum.getByCode(dto.getSearchType()));
@@ -102,6 +106,27 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             headMap.put(monthEnum.getCode(), StrUtil.format("{}年{}月",start.getYear(),monthEnum.getValue()));
         }
         resultMap.put("head",headMap);
+
+        //部门
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
+            List<String> deptDataList = targetList.stream().map(TargetFinishDTO.ViewDTO::getTypeId).collect(Collectors.toList());
+            List<SysDepartmentDTO> deptList = sysUserFeign.listSameLevelDeptIdList(deptDataList);
+            if (CollectionUtils.isNotEmpty(deptList)) {
+                if (CollectionUtils.isNotEmpty(targetList))  {
+                    for (TargetFinishDTO.ViewDTO viewDTO : targetList) {
+                        String typeName = deptList.stream().filter(obj -> obj.getChildrenList().stream().map(SysDepartmentDTO::getName).collect(Collectors.toList()).contains(viewDTO.getTypeName())).map(SysDepartmentDTO::getName).findFirst().orElse("");
+                        viewDTO.setTypeName(typeName);
+                    }
+                }
+                if (CollectionUtils.isNotEmpty(realList)) {
+                    for (TargetFinishDTO.ViewDTO viewDTO : realList) {
+                        String typeName = deptList.stream().filter(obj -> obj.getChildrenList().stream().map(SysDepartmentDTO::getName).collect(Collectors.toList()).contains(viewDTO.getTypeName())).map(SysDepartmentDTO::getName).findFirst().orElse("");
+                        viewDTO.setTypeName(typeName);
+                    }
+                }
+            }
+        }
+
         //列表数据
         List<LinkedHashMap<String, Object>> resultList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(targetList)) {
@@ -233,7 +258,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         List<TargetFinishDTO.ViewDTO> list = new ArrayList<>();
 
         // 获取年度开始时间和结束时间
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(dto.getSearchType()) ) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
             list = biTargetStaffSettingService.listDeptTargetFinish(dto);
         }
@@ -262,11 +287,9 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
      * @author Will
      * @date: 2023/9/18 11:34
      * @param dto
-     * @param start
-     * @param end
      * @return List<ViewDTO>
      */
-    private List<TargetFinishDTO.ViewDTO> listReal(TargetFinishDTO.ParamDTO dto,LocalDateTime start,LocalDateTime end) {
+    private List<TargetFinishDTO.ViewDTO> listReal(TargetFinishDTO.ParamDTO dto) {
 
         List<TargetFinishDTO.ViewDTO> resultList = new ArrayList<>();
         //需要查询订单数据的类型
@@ -274,7 +297,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
                 || MetricsEnum.SALES_QTY.getCode().equals(dto.getMetrics())
                 || MetricsEnum.NET_SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
             //主表数据
-            List<DmpOrderInfoEntity> mainList = listOrderInfo(dto, start, end);
+            List<DmpOrderInfoEntity> mainList = dmpOrderInfoMapper.listBiFilter(dto);
             if (CollectionUtils.isEmpty(mainList)) {
                 return resultList;
             }
@@ -283,7 +306,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType())
                     || TargetSearchTypeEnum.SKU.getCode().equals(dto.getSearchType())
                     || MetricsEnum.SALES_QTY.getCode().equals(dto.getMetrics())) {
-                detailList = listOrderItem(mainList);
+                detailList = mainList.stream().flatMap(obj -> Stream.of(obj.getItemList().stream().toArray(DmpOrderItemEntity[]::new))).collect(Collectors.toList());
             }
             //销售额
             if (MetricsEnum.SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
@@ -344,71 +367,6 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
     }
 
     /**
-     * @description: 字段转换
-     * @author Will
-     * @date: 2023/9/18 11:34
-     * @param searchType
-     * @return String
-     */
-    private String getFieldName (String searchType) {
-
-        String fieldName = "";
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(searchType) ) {
-            fieldName = "dept_id,dept_name";
-        }
-        if (TargetSearchTypeEnum.USER.getCode().equals(searchType)) {
-            fieldName = "charge_id,charge_name";
-        }
-        if (TargetSearchTypeEnum.SHOP.getCode().equals(searchType)) {
-            fieldName = "shop_name";
-        }
-        if (TargetSearchTypeEnum.CATEGORY.getCode().equals(searchType)) {
-            fieldName = "category_id,category_name";
-        }
-        if (TargetSearchTypeEnum.SKU.getCode().equals(searchType)) {
-            fieldName = "sku_No";
-        }
-        return fieldName;
-    }
-
-    /**
-     * @description: 查询主表数据
-     * @author Will
-     * @date: 2023/9/18 11:27
-     * @param dto
-     * @param start
-     * @param end
-     * @return List<DmpOrderInfoEntity>
-     */
-    private List<DmpOrderInfoEntity> listOrderInfo (TargetFinishDTO.ParamDTO dto,LocalDateTime start,LocalDateTime end) {
-        QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
-        if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SKU.getCode().equals(dto.getSearchType())) {
-            qw.select("id", "platform_create_time", "delivery_time","order_fee","currency_rate");
-        } else {
-            qw.select("id", "platform_create_time", "delivery_time","order_fee","currency_rate", getFieldName(dto.getSearchType()));
-        }
-        List<DmpOrderInfoEntity> mainList = getOrderInfoEntities(dto, qw, start, end,null);
-        return mainList;
-    }
-
-    /**
-     * @description: 查询明细数据
-     * @author Will
-     * @date: 2023/9/18 11:27
-     * @param mainList
-     * @return Pair<List<List<DmpOrderItemEntity>>
-     */
-    private  List<DmpOrderItemEntity> listOrderItem (List<DmpOrderInfoEntity> mainList) {
-        if (CollectionUtils.isEmpty(mainList)) {
-            return Collections.EMPTY_LIST;
-        }
-        List<String> orderIds = mainList.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-        List<DmpOrderItemEntity> detailList = dmpOrderItemService.listByOrderInfoIds(orderIds);
-        return detailList;
-    }
-
-
-    /**
      * @description: 分组获得实际数据
      * @author Will
      * @date: 2023/9/18 11:36
@@ -423,12 +381,12 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
         Map<String, BigDecimal> map = new HashMap<>();
 
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(dto.getSearchType()) ) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
              map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getDeptName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.multiply(e.getOrderFee(),e.getCurrencyRate()), BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> e.getItemList().stream().map(obj -> MathUtil.multiply(obj.getAmountAfter(),obj.getCurrencyRate())).reduce(BigDecimal.ZERO,BigDecimal::add), BigDecimal::add))
             );
         }
         if (TargetSearchTypeEnum.USER.getCode().equals(dto.getSearchType())) {
@@ -436,7 +394,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getChargeName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.multiply(e.getOrderFee(),e.getCurrencyRate()), BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> e.getItemList().stream().map(obj -> MathUtil.multiply(obj.getAmountAfter(),obj.getCurrencyRate())).reduce(BigDecimal.ZERO,BigDecimal::add), BigDecimal::add))
             );
 
         }
@@ -445,16 +403,16 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
              map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getShopName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.multiply(e.getOrderFee(),e.getCurrencyRate()), BigDecimal::add))
+                     Collectors.reducing(BigDecimal.ZERO, e -> e.getItemList().stream().map(obj -> MathUtil.multiply(obj.getAmountAfter(),obj.getCurrencyRate())).reduce(BigDecimal.ZERO,BigDecimal::add), BigDecimal::add))
             );
         }
         //根据指标查询品类目标值
         if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType())) {
             Map<String, Integer> monthMap = mainList.stream().collect(Collectors.toMap(obj -> obj.getId(), obj -> (flag ? obj.getPlatformCreateTime() : obj.getDeliveryTime()).getMonthValue()));
-            map = detailList.stream().collect(Collectors.groupingBy(x ->
+            map = detailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getCategoryName())).collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getCategoryName().concat(",").concat(String.valueOf(monthMap.get(x.getOrderId()))),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.multiply(e.getSellPrice(),e.getCurrencyRate()), BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.multiply(e.getAmountAfter(),e.getCurrencyRate()), BigDecimal::add))
             );
         }
         if (TargetSearchTypeEnum.SKU.getCode().equals(dto.getSearchType())) {
@@ -463,7 +421,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             map = detailList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getSkuNo().concat(",").concat(String.valueOf(monthMap.get(x.getOrderId()))),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.multiply(e.getSellPrice(),e.getCurrencyRate()), BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.multiply(e.getAmountAfter(),e.getCurrencyRate()), BigDecimal::add))
             );
         }
         return mapToResultList(map);
@@ -484,7 +442,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
         Map<String, BigDecimal> map = new HashMap<>();
 
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(dto.getSearchType()) ) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
             map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
@@ -496,7 +454,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             //根据指标查询人员目标值
             map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
-                            x.getChargeId().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
+                            x.getChargeName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
                     Collectors.reducing(BigDecimal.ZERO, e -> detailList.stream().filter(obj -> obj.getOrderId().equals(e.getId())).map(obj -> new BigDecimal(obj.getQuantity())).reduce(BigDecimal.ZERO,BigDecimal::add), BigDecimal::add))
             );
 
@@ -512,9 +470,9 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         //根据指标查询品类目标值
         Map<String, Integer> monthMap = mainList.stream().collect(Collectors.toMap(obj -> obj.getId(), obj -> (flag ? obj.getPlatformCreateTime() : obj.getDeliveryTime()).getMonthValue()));
         if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType())) {
-            map = detailList.stream().collect(Collectors.groupingBy(x ->
+            map = detailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getCategoryName())).collect(Collectors.groupingBy(x ->
                             // 按照月分组
-                            x.getCategoryId().concat(",").concat(String.valueOf(monthMap.get(x.getOrderId()))),
+                            x.getCategoryName().concat(",").concat(String.valueOf(monthMap.get(x.getOrderId()))),
                     Collectors.reducing(BigDecimal.ZERO, e -> new BigDecimal(e.getQuantity()), BigDecimal::add))
             );
         }
@@ -545,20 +503,20 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
         Map<String, BigDecimal> map = new HashMap<>();
 
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(dto.getSearchType()) ) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
             map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
-                            x.getDeptId().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract(MathUtil.multiply(e.getOrderFee(),e.getCurrencyRate()),refundList.stream().filter(obj -> obj.getPlatformOrderId().equals(e.getPlatformOrderId())).map(DmpRefundInfoEntity::getRefundAmount).reduce(BigDecimal.ZERO,BigDecimal::add)), BigDecimal::add))
+                            x.getDeptName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract( e.getItemList().stream().map(obj -> MathUtil.multiply(obj.getAmountAfter(),obj.getCurrencyRate())).reduce(BigDecimal.ZERO,BigDecimal::add),refundList.stream().filter(obj -> obj.getPlatformOrderId().equals(e.getPlatformOrderId())).map(DmpRefundInfoEntity::getRefundAmount).reduce(BigDecimal.ZERO,BigDecimal::add)), BigDecimal::add))
             );
         }
         if (TargetSearchTypeEnum.USER.getCode().equals(dto.getSearchType())) {
             //根据指标查询人员目标值
             map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
-                            x.getChargeId().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract(MathUtil.multiply(e.getOrderFee(),e.getCurrencyRate()),refundList.stream().filter(obj -> obj.getPlatformOrderId().equals(e.getPlatformOrderId())).map(DmpRefundInfoEntity::getRefundAmount).reduce(BigDecimal.ZERO,BigDecimal::add)), BigDecimal::add))
+                            x.getChargeName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract( e.getItemList().stream().map(obj -> MathUtil.multiply(obj.getAmountAfter(),obj.getCurrencyRate())).reduce(BigDecimal.ZERO,BigDecimal::add),refundList.stream().filter(obj -> obj.getPlatformOrderId().equals(e.getPlatformOrderId())).map(DmpRefundInfoEntity::getRefundAmount).reduce(BigDecimal.ZERO,BigDecimal::add)), BigDecimal::add))
             );
 
         }
@@ -567,7 +525,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getShopName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract(MathUtil.multiply(e.getOrderFee(),e.getCurrencyRate()),refundList.stream().filter(obj -> obj.getPlatformOrderId().equals(e.getPlatformOrderId())).map(DmpRefundInfoEntity::getRefundAmount).reduce(BigDecimal.ZERO,BigDecimal::add)), BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract( e.getItemList().stream().map(obj -> MathUtil.multiply(obj.getAmountAfter(),obj.getCurrencyRate())).reduce(BigDecimal.ZERO,BigDecimal::add),refundList.stream().filter(obj -> obj.getPlatformOrderId().equals(e.getPlatformOrderId())).map(DmpRefundInfoEntity::getRefundAmount).reduce(BigDecimal.ZERO,BigDecimal::add)), BigDecimal::add))
             );
         }
         return mapToResultList(map);
@@ -592,7 +550,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(dto.getSearchType()) ) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
             map = list.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
@@ -639,7 +597,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(dto.getSearchType()) ) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
             map = list.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
@@ -687,7 +645,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(dto.getSearchType()) ) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
             map = list.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组

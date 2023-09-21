@@ -104,14 +104,14 @@
             tcs.main_id,
             ty.year,
             ty.dept_name,
-            tcs.staff_id,
-            tcs.staff_name,
+            tcs.category_id,
+            tcs.category_name,
             tcs.month,
             tcs.value,
             tcs.metrics
         FROM bi_target_category_setting tcs
         LEFT JOIN bi_target_year ty
-        ON tcs.main_id=ty.id and ty.is_deleted=false
+        ON tcs.main_id=ty.id AND ty.is_deleted=false
         WHERE tcs.is_deleted=false
         AND ty.year=#{year} AND ty.dept_id=#{deptId}
     </select>

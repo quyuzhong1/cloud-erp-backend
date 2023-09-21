@@ -73,7 +73,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     @Autowired
     private BiTargetYearService biTargetYearService;
 
-
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(BiTargetNewProductSettingDTO.AddDTO addDTO) {
@@ -239,6 +239,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     /**
      * 修改
      */
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(BiTargetNewProductSettingDTO.UpdateDTO updateDTO) {
@@ -666,7 +667,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     /**
      * 新增修改处理数据
      */
-    private void handleData(BiTargetYearEntity targetYear, List<BiTargetNewProductSettingDTO.CommonDTO> detailList) {
+    public void handleData(BiTargetYearEntity targetYear, List<BiTargetNewProductSettingDTO.CommonDTO> detailList) {
         //部门id
         String deptId = targetYear.getDeptId();
         //币种符号

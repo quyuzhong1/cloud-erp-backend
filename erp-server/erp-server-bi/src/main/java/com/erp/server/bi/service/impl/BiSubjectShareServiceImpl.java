@@ -186,10 +186,13 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
      */
     @Override
     public void checkAndAddSubjectShare(List<String> shareFlagIdList, String subjectId, String shareFlag) {
-        // 非分享
+        // 私人
         if (DashboardEnum.PERSONAL.getFlag().equals(shareFlag)) {
+            // 移除其他
+            deleteBySubjectId(subjectId);
             return;
         }
+
         // 检查对应身份类型
         BiShareIdentityTypeEnum refTypeEnum = BiShareIdentityTypeEnum.isRoleCheck(shareFlag);
 
@@ -224,13 +227,13 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
     @Override
     public Boolean getShare(String userId, String subjectId, List<String> roleIdList) {
         LambdaQueryWrapper<BiSubjectShareEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(BiSubjectShareEntity::getIdentityId, userId);
+        queryWrapper.eq(BiSubjectShareEntity::getSubjectId, subjectId);
         queryWrapper.and(ww -> ww.or(w->
-                w.eq(BiSubjectShareEntity::getSubjectId, subjectId)
+                w.eq(BiSubjectShareEntity::getIdentityId, userId)
                 .eq(BiSubjectShareEntity::getIdentityType, BiShareIdentityTypeEnum.USER.getCode())
         ).or(sw -> sw
-                .eq(CollectionUtils.isNotEmpty(roleIdList), BiSubjectShareEntity::getSubjectId, subjectId)
-                .eq(CollectionUtils.isNotEmpty(roleIdList), BiSubjectShareEntity::getIdentityType, BiShareIdentityTypeEnum.USER.getCode())
+                .in(CollectionUtils.isNotEmpty(roleIdList), BiSubjectShareEntity::getIdentityId, roleIdList)
+                .eq(CollectionUtils.isNotEmpty(roleIdList), BiSubjectShareEntity::getIdentityType, BiShareIdentityTypeEnum.ROLE.getCode())
                 ));
 
         int count = this.count(queryWrapper);

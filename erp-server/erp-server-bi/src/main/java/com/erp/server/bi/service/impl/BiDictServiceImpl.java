@@ -195,6 +195,7 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
         QueryWrapper<BiDictEntity> queryWrapper = new QueryWrapper<>();
         queryWrapper.select("value AS code","name AS value");
         queryWrapper.eq("type", type);
+        queryWrapper.orderByAsc("order_index");
         return this.listMaps(queryWrapper);
     }
 

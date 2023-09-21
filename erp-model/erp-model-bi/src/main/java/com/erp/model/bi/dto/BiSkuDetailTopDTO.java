@@ -17,6 +17,11 @@ import java.util.List;
 public class BiSkuDetailTopDTO {
 
     /**
+     * 新品标识 ture 为新品 false 为非新品
+     */
+    private boolean hasNewSign = true;
+
+    /**
      * SKU NO
      */
     private String skuNo;
@@ -55,6 +60,21 @@ public class BiSkuDetailTopDTO {
      * 开发员名称
      */
     private String developerName;
+
+    /**
+     * 产品负责人/产品经理id
+     */
+    private String chargeId;
+
+    /**
+     * 产品负责人/产品经理名称
+     */
+    private String chargeName;
+
+    /**
+     * 示意图url
+     */
+    private String imageUrl;
 
     /**
      * 公司首单日期

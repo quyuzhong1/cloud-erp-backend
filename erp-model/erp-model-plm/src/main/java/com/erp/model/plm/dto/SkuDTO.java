@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Date;
 
 /**
@@ -41,7 +42,7 @@ public class SkuDTO implements Serializable {
         /**
          * 公司首单日期
          */
-        private Date firstOrderDate;
+        private LocalDate firstOrderDate;
 
         /**
          * 销售状态

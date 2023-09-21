@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -21,6 +22,7 @@ import java.util.Map;
  */
 @Mapper
 public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity> {
+
     List<SalesFlagVO> getMonthSales(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate,@Param("timeFlag")String timeFlag);
 
     /**
@@ -31,6 +33,13 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      */
     IPage<SkuSalesDTO.PagingSalesInfoDTO> getBySku(Page query, @Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
+    /**
+     * 导出sku 销售额列表
+     * @param params
+     * @param settleRate
+     * @return
+     */
+    List<SkuSalesDTO.PagingSalesInfoDTO> listSkuSalesExcel(@Param("params") SkuSalesDTO.SearchSkuDTO params, @Param("settleRate")String settleRate);
 
     /**
      * 获取最近天数的销售数据
@@ -56,6 +65,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      * @param dto
      * @return
      */
+    @MapKey("platform")
     List<Map<String, Object>> getPlatformSales(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
     /**
@@ -67,6 +77,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
     List<SalesBaseVO> getShopLastDays(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate,@Param("findTime") String findTime);
 
+    @MapKey("shop")
     List<Map<String, Object>> byTopShop(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
     List<ShopSalesVO> byShopCountry(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
@@ -137,6 +148,9 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     List<SalesFlagVO> getByDay(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate);
     List<SalesFlagVO> getByDayCategory(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate);
 
+    List<SalesFlagVO> getByWeek(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate);
+    List<SalesFlagVO> getByWeekCategory(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate);
+
     List<SalesFlagVO> getByMonth(@Param("params") DateSalesTrendDTO.SearchDTO dto,@Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate);
     List<SalesFlagVO> getByMonthCategory(@Param("params") DateSalesTrendDTO.SearchDTO dto,@Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate);
 
@@ -179,4 +193,13 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      * @return
      */
     BigDecimal getMonthAmount(@Param("params") BiTargetYearDTO.SearchDTO dto,@Param("settleRate") String settleRate);
+
+
+    /**
+     * 产品等级的销售额
+     * @param dto
+     * @return
+     */
+    @MapKey("grade")
+    List<Map<String,Object>> listProductGradeSales(@Param("params")BiFilterDTO dto,@Param("settleRate") String settleRate);
 }

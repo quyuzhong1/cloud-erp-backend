@@ -128,7 +128,7 @@ public class BiTargetNewProductSettingDTO implements Serializable {
     public static class CommonDTO extends BiTargetYearDTO.MonthDTO {
 
         /**
-         * 员工id
+         * 员工id 来源 http://172.16.100.11:3002/project/36/interface/api/158
          */
         @NotBlank(message = "员工不能为空")
         private String staffId;
@@ -260,7 +260,6 @@ public class BiTargetNewProductSettingDTO implements Serializable {
      * 部门目标
      */
     @Data
-    @NoArgsConstructor
     public static class UserTargetDTO {
         /**
          * 部门id
@@ -286,6 +285,15 @@ public class BiTargetNewProductSettingDTO implements Serializable {
          * 占比
          */
         private BigDecimal rate;
+
+        public UserTargetDTO() {
+            this.userId = "";
+            this.userName = "";
+            this.month = 0;
+            this.value = BigDecimal.ZERO;
+            this.metrics = "";
+            this.rate = BigDecimal.ZERO;
+        }
     }
 
     /**

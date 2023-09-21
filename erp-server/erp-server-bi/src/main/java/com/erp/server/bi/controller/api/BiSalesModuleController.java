@@ -8,6 +8,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
+import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.server.bi.service.SalesOrderService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -57,16 +60,25 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/queryByPageBySku")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id",
-            menuCode = "bi:module:content",
-            tableAlias = "o"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:module:content",
+//            tableAlias = "o"
+//    )
     public ApiResult<PagingVO<SkuSalesDTO.PagingSalesInfoDTO>> queryByPageBySku(@RequestBody @Validated PagingDTO<SkuSalesDTO.SearchSkuDTO> dto) {
         PagingVO<SkuSalesDTO.PagingSalesInfoDTO> pagingVO = salesOrderService.queryByPageBySku(dto);
         return success(pagingVO);
     }
 
+    /**
+     * 导出 sku 销售额
+     */
+    @PostMapping("/exportSkuSales")
+    public ApiResult exportSkuSales(@RequestBody @Valid SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response) {
+        Boolean result = salesOrderService.exportSkuSalesExcel(params, response);
+        return result ? success() : failure();
+
+    }
 
     /**
      * 销售相关-一级模块-SKU国家销售额
@@ -602,6 +614,19 @@ public class BiSalesModuleController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 新老品销售额-导出excel
+     * @Author Luo_WG
+     * @Date 2023/9/21 9:46
+     * @param dto
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/newAndOldSalesExportExcel")
+    public ApiResult newAndOldSalesExportExcel(@RequestBody NewAndOldSalesSearchDTO.SearchDTO dto, HttpServletResponse response) {
+        Boolean flag = salesOrderService.newAndOldSalesExportExcel(dto, response);
+        return flag ? success() : failure();
+    }
 
     /**
      * 战略目标达成
@@ -614,5 +639,14 @@ public class BiSalesModuleController extends BaseController {
         return success(resultList);
     }
 
+
+    /**
+     * 产品等级销售分析
+     */
+    @PostMapping("/productGradeSales")
+    public ApiResult<StatisticalDataVO> productGradeSales(@RequestBody @Validated BiFilterDTO dto) {
+        StatisticalDataVO result = salesOrderService.productGradeSales(dto);
+        return success(result);
+    }
 
 }

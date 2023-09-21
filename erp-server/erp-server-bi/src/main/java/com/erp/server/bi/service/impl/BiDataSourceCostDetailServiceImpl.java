@@ -32,7 +32,7 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
             return new HashMap<>(0);
         }
         List<BiDataSourceCostDetailEntity> detailEntities = lambdaQuery()
-                .in(BiDataSourceCostDetailEntity::getId, costIds)
+                .in(BiDataSourceCostDetailEntity::getCostId, costIds)
                 .in(BiDataSourceCostDetailEntity::getCostType, dictValues)
                 .list();
 

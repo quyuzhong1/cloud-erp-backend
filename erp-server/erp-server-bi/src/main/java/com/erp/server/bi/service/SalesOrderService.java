@@ -7,6 +7,7 @@ import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -165,6 +166,16 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
     List<NewAndOldSalesSearchDTO.PagingDTO> newAndOldSalesAmount(NewAndOldSalesSearchDTO.SearchDTO dto);
 
     /**
+     * 新老品销售额导出excel
+     * @Author Luo_WG
+     * @Date 2023/9/21 9:46
+     * @param dto
+     * @param response
+     * @return void
+     **/
+    Boolean newAndOldSalesExportExcel(NewAndOldSalesSearchDTO.SearchDTO dto, HttpServletResponse response);
+
+    /**
      * 战略目标达成
      * @author yl
      * @date 2023-09-18 11:01
@@ -172,4 +183,19 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      * @return java.util.List<com.erp.model.bi.dto.BiTargetYearDTO.TargetMetricsFinishDTO>
      */
     List<BiTargetYearDTO.TargetMetricsFinishDTO> listTargetMetrics(BiTargetYearDTO.SearchDTO dto);
+
+    /**
+     * 导出sku 销售额
+     * @param params
+     * @param response
+     * @return
+     */
+    Boolean exportSkuSalesExcel(SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response);
+
+    /**
+     * 产品等级销售分析
+     * @param dto
+     * @return
+     */
+    StatisticalDataVO productGradeSales(BiFilterDTO dto);
 }

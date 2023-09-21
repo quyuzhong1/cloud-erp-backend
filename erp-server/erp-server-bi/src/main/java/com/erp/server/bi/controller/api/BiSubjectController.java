@@ -196,7 +196,7 @@ public class BiSubjectController extends BaseController {
         for (BiBatchShareDTO dto : dtoList) {
             BatchResultDTO submit;
             try {
-                submit = biSubjectService.updateShare(dto.getShareFlagIdList(), dto.getId(), dto.getShareFlag());
+                submit = biSubjectService.updateShare(dto.checkAndGetShareFlagIdList(), dto.getId(), dto.getShareFlag());
             }catch (Exception e){
                 log.error("专题批量设置权限失败:{}", e.getMessage());
                 BiSubjectEntity entity = biSubjectService.getById(dto.getId());

@@ -1,13 +1,12 @@
 package com.erp.model.bi.dto;
 
 import com.common.core.anno.StateEnumValue;
+import com.common.core.exception.ServiceException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.util.CollectionUtils;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
 
@@ -28,12 +27,23 @@ public class BiBatchShareDTO implements Serializable {
      */
     @NotBlank(message = "分享类型不能为空")
     @StateEnumValue(strValues = {"personal","share","role"},message = "分享类型有误")
-    private String shareFlag= "share";
+    private String shareFlag;
 
     /**
      * 分享的身份id列表(用户ID/角色ID)
      */
-    @NotEmpty(message = "分享的身份id列表(shareFlagIdList)不能为空")
-    private List<@NotBlank(message = "分享的身份id不能为空") String> shareFlagIdList;
+//    @NotEmpty(message = "分享的身份id列表(shareFlagIdList)不能为空")
+//    private List<@NotBlank(message = "分享的身份id不能为空") String> shareFlagIdList;
+    private List<String> shareFlagIdList;
+
+    public List<String> checkAndGetShareFlagIdList() {
+        if ("personal".equalsIgnoreCase(this.shareFlag)){
+            return shareFlagIdList;
+        }
+        if (CollectionUtils.isEmpty(this.shareFlagIdList)){
+            throw new ServiceException("shareFlagIdList分享的标识ID列表不能为空");
+        }
+        return shareFlagIdList;
+    }
 
 }

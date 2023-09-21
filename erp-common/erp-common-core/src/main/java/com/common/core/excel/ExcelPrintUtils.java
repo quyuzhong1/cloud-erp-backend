@@ -628,7 +628,7 @@ public class ExcelPrintUtils {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			log.info("导出模板数据异常！");
+			log.info("导出模板数据异常！>>>{}" ,e);
 		} finally {
 			out.flush();
 			out.close();
