@@ -434,45 +434,43 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             //大于等于
             if (BiCompareEnum.GREATER_THAN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
                 name = name.concat("(最新月基础值超过" + entity.getLatestMonthValue().setScale(2));
-                if ((MathUtil.compareTo(entity.getLatestMonthValue(),sumSecondMonthSale) >= 0)) {
+                if (!(MathUtil.compareTo(entity.getLatestMonthValue(),sumSecondMonthSale) >= 0)) {
                     return null;
                 }
             }
             //小于等于
             if (BiCompareEnum.LESS_THAN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
                 name = name.concat("(最新月基础值不超过" + entity.getLatestMonthValue().setScale(2));
-                if ((MathUtil.compareTo(entity.getLatestMonthValue() ,sumSecondMonthSale) > 0)) {
+                if (!(MathUtil.compareTo(entity.getLatestMonthValue() ,sumSecondMonthSale) <= 0)) {
                     return null;
                 }
             }
             //大于
             if (BiCompareEnum.GREATER_THAN.getCode().equals(entity.getLatestMonthCompare())) {
                 name = name.concat("(最新月基础值超过" + entity.getLatestMonthValue().setScale(2));
-                if ((MathUtil.compareTo(entity.getLatestMonthValue(), sumSecondMonthSale) >= 0)) {
+                if (!(MathUtil.compareTo(entity.getLatestMonthValue(), sumSecondMonthSale) > 0)) {
                     return null;
                 }
             }
             //小于
             if (BiCompareEnum.LESS_THAN.getCode().equals(entity.getLatestMonthCompare())) {
                 name = name.concat("(最新月基础值不超过" + entity.getLatestMonthValue().setScale(2));
-                if ((MathUtil.compareTo(sumSecondMonthSale, entity.getLatestMonthValue()) >= 0)) {
+                if (!(MathUtil.compareTo(entity.getLatestMonthValue(),sumSecondMonthSale) < 0)) {
                     return null;
                 }
             }
             //连续两个月大于等于
             if (BiCompareEnum.TOW_MONTH_GREATER_THEN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
                 name = name.concat("(最新月基础值超过" + entity.getLatestMonthValue().setScale(2));
-                if (MathUtil.compareTo(entity.getLatestMonthValue(), sumFirstMonthSale) >= MathUtil.ZERO && MathUtil.compareTo(entity.getLatestMonthValue(), sumSecondMonthSale) >= MathUtil.ZERO) {
+                if (!(MathUtil.compareTo(entity.getLatestMonthValue(), sumFirstMonthSale) >= MathUtil.ZERO && MathUtil.compareTo(entity.getLatestMonthValue(), sumSecondMonthSale) >= MathUtil.ZERO)) {
                     return null;
                 }
             }
             //连续两个月小于等于
             if (BiCompareEnum.TOW_MONTH_LESS_THEN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
                 name = name.concat("(最新月基础值不超过" + entity.getLatestMonthValue().setScale(2));
-                if (MathUtil.compareTo(sumFirstMonthSale, entity.getLatestMonthValue()) > MathUtil.ZERO && MathUtil.compareTo(sumSecondMonthSale, entity.getLatestMonthValue()) > MathUtil.ZERO) {
-                    if ((MathUtil.compareTo(sumSecondMonthSale, entity.getLatestMonthValue()) >= 0)) {
-                        return null;
-                    }
+                if (!(MathUtil.compareTo(entity.getLatestMonthValue(),sumFirstMonthSale) <= MathUtil.ZERO && MathUtil.compareTo(entity.getLatestMonthValue(),sumSecondMonthSale) <= MathUtil.ZERO)) {
+                    return null;
                 }
             }
         }
