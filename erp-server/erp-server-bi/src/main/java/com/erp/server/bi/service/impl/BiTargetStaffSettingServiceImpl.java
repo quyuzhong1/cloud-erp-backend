@@ -461,7 +461,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         Boolean result = this.lambdaUpdate().
                 eq(BiTargetStaffSettingEntity::getStaffId, dto.getStaffId()).
                 eq(BiTargetStaffSettingEntity::getMainId, dto.getId()).
-                eq(BiTargetStaffSettingEntity::getMetrics, dto.getMetricsEnum()).
+                eq(BiTargetStaffSettingEntity::getMetrics, dto.getMetrics()).
                 remove();
         return result;
     }

@@ -1,6 +1,5 @@
 package com.erp.model.bi.dto;
 
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -9,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.commons.collections.CollectionUtils;
 
-import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -32,8 +30,8 @@ public class BiFilterDTO extends SortDTO {
      * 0 -订单时间 1-发货时间
      * 对应枚举 TimeTypeEnum
      */
-    @NotNull(message = "时间类型不能为空")
-    @NotNull(message = "时间类型不能为空", groups = SelectTargetModule.class)
+//    @NotNull(message = "时间类型不能为空")
+//    @NotNull(message = "时间类型不能为空", groups = SelectTargetModule.class)
     private Integer timeType;
 
     /**
@@ -50,7 +48,11 @@ public class BiFilterDTO extends SortDTO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endTime;
 
-
+    /**
+     * 区间类型 1 国内 2国外
+     */
+//    @NotNull(message = "区间类型不能为空")
+    private Integer rangeType;
     /**
      * 1 新品
      * 0 老品
@@ -61,7 +63,7 @@ public class BiFilterDTO extends SortDTO {
      * 0 CNY实时  1 CNY结算  2原币种
      * 对应枚举 SettleMethodEnum
      */
-    @NotNull(message = "结算方式不能为空")
+//    @NotNull(message = "结算方式不能为空")
     private Integer settleMethod;
 
     /**
@@ -126,7 +128,7 @@ public class BiFilterDTO extends SortDTO {
     }
 
     /**
-     * 默认当月结束时间
+     * 默认当月结束时间 + 1
      */
     public LocalDateTime getEndTime() {
         if (null == this.endTime){

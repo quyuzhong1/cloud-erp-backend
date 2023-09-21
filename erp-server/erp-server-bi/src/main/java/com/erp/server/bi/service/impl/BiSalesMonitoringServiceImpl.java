@@ -31,6 +31,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -104,6 +107,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         return resultList;
     }
 
+
     @Override
     public LinkedHashMap<String,Object> listBiSalesMonitoringView(BiSalesMonitoringSearchDTO.ParamDTO dto) {
         //当前登录人
@@ -116,7 +120,14 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         if (CollectionUtils.isEmpty(list)) {
             return map;
         }
-        List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList = this.baseMapper.listBiSalesMonitoringTable(dto);
+        //当前年第一天
+        LocalDateTime firstDayOfMonth = LocalDateTime.of(LocalDate.from(LocalDateTime.now().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
+        //下一年第一天
+        LocalDateTime firstDayOfLastYear = LocalDateTime.of(LocalDate.from(LocalDateTime.now().with(TemporalAdjusters.firstDayOfNextYear())), LocalTime.MIN);
+        //去年最后一个月第一天
+        LocalDateTime firstDayOfLastMonth = firstDayOfMonth.minusMonths(1);
+
+        List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList = this.baseMapper.listBiSalesMonitoringTable(dto,firstDayOfLastYear,firstDayOfLastMonth);
         if (CollectionUtils.isEmpty(biSalesMonitoringTableList)) {
             return map;
         }

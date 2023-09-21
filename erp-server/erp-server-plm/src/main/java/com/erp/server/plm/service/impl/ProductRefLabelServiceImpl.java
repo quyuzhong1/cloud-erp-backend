@@ -3,23 +3,23 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.plm.dto.ProductRefLabelDTO;
 import com.erp.model.plm.entity.ProductRefLabelEntity;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.server.plm.mapper.ProductRefLabelMapper;
-import com.erp.server.plm.service.ProductRefLabelService;
 import com.erp.server.plm.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.server.plm.service.ProductRefLabelService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.plm.dto.ProductRefLabelDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-
-import com.common.core.enums.ApiError;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>
@@ -48,7 +48,7 @@ public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabel
         log.info("开始新增产品便签关系单");
         if (CollectionUtils.isNotEmpty(productRefLabelEntities)) {
             boolean save = super.saveBatch(productRefLabelEntities);
-            if (!save) throw new ServiceException("产品便签关系单保存失败");
+            if (!save) throw new ServiceException(ApiError.ERROR_SAVE_PRODUCT_BASIC_LABEL);
         }
         log.info("结束新增产品便签关系单");
     }
