@@ -206,13 +206,11 @@ public class BiDropDownListController extends BaseController {
         BaseDropDownDTO.CommonDTO cny = new BaseDropDownDTO.CommonDTO();
         cny.setCode(CurrencyEnum.CNY.getCurrencyCode());
         cny.setValue(CurrencyEnum.CNY.getCurrencyName());
-        cny.setDesc(CurrencyEnum.CNY.getCurrencySymbol());
         list.add(cny);
 
         BaseDropDownDTO.CommonDTO usd = new BaseDropDownDTO.CommonDTO();
         usd.setCode(CurrencyEnum.USD.getCurrencyCode());
         usd.setValue(CurrencyEnum.USD.getCurrencyName());
-        usd.setDesc(CurrencyEnum.USD.getCurrencySymbol());
         list.add(usd);
         return success(list);
     }

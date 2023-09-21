@@ -119,14 +119,14 @@ public class SkuSalesDTO implements Serializable {
 
 
     /**
-     * 产品等级销售额
+     * 产品 标识销售
      */
     @Data
-    public static class ProductGradeSalesDTO {
+    public static class ProductFlagSalesDTO {
         /**
-         * 等级
+         * 等级 或者新老品
          */
-        private String grade;
+        private String flag;
 
         /**
          * 销售额
