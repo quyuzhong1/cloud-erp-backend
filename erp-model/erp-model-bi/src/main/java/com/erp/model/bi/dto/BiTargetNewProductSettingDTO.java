@@ -128,7 +128,7 @@ public class BiTargetNewProductSettingDTO implements Serializable {
     public static class CommonDTO extends BiTargetYearDTO.MonthDTO {
 
         /**
-         * 员工id
+         * 员工id 来源 http://172.16.100.11:3002/project/36/interface/api/158
          */
         @NotBlank(message = "员工不能为空")
         private String staffId;

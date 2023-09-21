@@ -647,4 +647,13 @@ public class BiSalesModuleController extends BaseController {
     }
 
 
+    /**
+     * 产品等级销售分析
+     */
+    @PostMapping("/productGradeSales")
+    public ApiResult<StatisticalDataVO> productGradeSales(@RequestBody @Validated BiFilterDTO dto) {
+        StatisticalDataVO result = salesOrderService.productGradeSales(dto);
+        return success(result);
+    }
+
 }
