@@ -662,4 +662,17 @@ public class BiSalesModuleController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 部门完成率排行-导出excel
+     * @Author Luo_WG
+     * @Date 2023/9/21 9:46
+     * @param dto
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/completionRateRankingExportExcel")
+    public ApiResult completionRateRankingExportExcel(@RequestBody CompletionRateRankingDTO.SearchDTO dto, HttpServletResponse response) {
+        Boolean flag = salesOrderService.completionRateRankingExportExcel(dto, response);
+        return flag ? success() : failure();
+    }
 }

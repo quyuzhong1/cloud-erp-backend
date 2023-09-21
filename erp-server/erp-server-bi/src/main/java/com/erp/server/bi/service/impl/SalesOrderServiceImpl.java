@@ -1,6 +1,5 @@
 package com.erp.server.bi.service.impl;
 
-import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -8,7 +7,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.vo.ChartVO;
 import com.common.business.vo.PagingVO;
 import com.common.business.vo.SeriesVO;
@@ -16,13 +14,10 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.*;
-import com.erp.model.bi.entity.BiDataSourceCostEntity;
-import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 import com.erp.model.bi.enums.DataSourceCostEnum;
 import com.erp.model.bi.enums.DateSalesTrendSearchTypeEnum;
 import com.erp.model.bi.enums.MetricsEnum;
@@ -32,9 +27,7 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.plm.dto.SkuDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.BiConstant;
@@ -45,7 +38,6 @@ import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,8 +48,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -2917,7 +2907,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public Boolean newAndOldSalesExportExcel(NewAndOldSalesSearchDTO.SearchDTO dto, HttpServletResponse response) {
         List<NewAndOldSalesSearchDTO.PagingDTO> pagingDTOS = newAndOldSalesAmount(dto);
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/newAndOldSalesExport.xlsx";
+        String excelPath = "excel/biNewAndOldSalesExport.xlsx";
         String name = "新老品销售额";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
@@ -3330,5 +3320,22 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             }
         }
         return list;
+    }
+
+    @Override
+    public Boolean completionRateRankingExportExcel(CompletionRateRankingDTO.SearchDTO dto, HttpServletResponse response) {
+        List<CompletionRateRankingDTO.PagingDTO> pagingDTOS = listCompletionRateRanking(dto);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/biCompletionRateRankingExport.xlsx";
+        String name = "完成率排行榜";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(pagingDTOS, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Boolean.TRUE;
     }
 }
