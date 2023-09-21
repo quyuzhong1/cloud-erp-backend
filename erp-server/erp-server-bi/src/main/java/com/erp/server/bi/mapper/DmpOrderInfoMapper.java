@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.BiSalesFilterDTO;
+import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.vo.DimensionSalesVO;
 import com.erp.model.bi.vo.SalePriceDistributionVO;
 import com.erp.model.dmp.dto.DmpOrderInfoDTO;
@@ -75,6 +76,14 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
      * @return
      */
     Integer countSalesVolume(@Param("params") BiFilterDTO dto);
+    /**
+     * @description: 根据模块条件查询订单及明细数据
+     * @author Will
+     * @date: 2023/9/20 16:29
+     * @param dto
+     * @return List<DmpOrderInfoEntity>
+     */
+    List<DmpOrderInfoEntity> listBiFilter(@Param("params") TargetFinishDTO.ParamDTO dto);
 }
 
 
