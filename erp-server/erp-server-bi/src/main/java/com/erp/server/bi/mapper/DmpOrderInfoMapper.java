@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.BiSalesFilterDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.vo.DimensionSalesVO;
 import com.erp.model.bi.vo.SalePriceDistributionVO;
@@ -67,7 +66,7 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
      * @param dto
      * @return
      */
-    List<SalePriceDistributionVO> salePriceDistribution(@Param("params") BiSalesFilterDTO dto);
+    List<SalePriceDistributionVO> salePriceDistribution(@Param("params") BiFilterDTO dto);
 
     /**
      * 根据不同维度统计销售量

@@ -2,8 +2,13 @@ package com.erp.server.bi.controller.api;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.bi.dto.*;
-import com.erp.model.bi.vo.*;
+import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.BiSkuDetailTopDTO;
+import com.erp.model.bi.dto.SkuDateFilterDTO;
+import com.erp.model.bi.dto.SkuDetailDTO;
+import com.erp.model.bi.vo.SaleDetailVO;
+import com.erp.model.bi.vo.SalesPriceRangeVO;
+import com.erp.model.bi.vo.SkuDateSaleTrendVO;
 import com.erp.server.bi.service.BiComprehensiveAnalyseService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -104,7 +109,7 @@ public class BiComprehensiveAnalyseController extends BaseController {
      **/
     @PostMapping("/salePriceDistribution")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
-    public ApiResult<List<SalesPriceRangeVO>> salePriceDistribution(@RequestBody @Validated BiSalesFilterDTO biFilterDTO) {
+    public ApiResult<List<SalesPriceRangeVO>> salePriceDistribution(@RequestBody @Validated BiFilterDTO biFilterDTO) {
         List<SalesPriceRangeVO> salePriceDistributionVOS = biComprehensiveAnalyseService.salePriceDistribution(biFilterDTO);
         return success(salePriceDistributionVOS);
     }

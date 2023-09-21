@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.BiSalesFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.dto.DmpOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
@@ -43,7 +42,7 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @param dto
      * @return
      */
-    List<SalesPriceRangeVO> salePriceDistribution(BiSalesFilterDTO dto);
+    List<SalesPriceRangeVO> salePriceDistribution(BiFilterDTO dto);
 
     /**
      * 统计销量

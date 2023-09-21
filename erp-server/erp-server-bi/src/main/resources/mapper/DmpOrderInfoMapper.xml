@@ -424,11 +424,8 @@
             </if>
             <include refid="conditionSql"/>
             <!--新品-->
-            <if test="params.hasNewSign != null and params.hasNewSign">
-                AND doit.new_sign = 1
-            </if>
-            <if test="params.hasNewSign != null and !params.hasNewSign">
-                AND doit.new_sign = 0
+            <if test="params.newSign != null">
+                AND doit.new_sign = #{params.newSign}
             </if>
         </where>
     </select>
