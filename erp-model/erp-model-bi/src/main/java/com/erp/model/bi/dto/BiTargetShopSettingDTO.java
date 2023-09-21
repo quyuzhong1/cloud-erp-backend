@@ -144,7 +144,7 @@ public class BiTargetShopSettingDTO implements Serializable {
     public static class CommonDTO  extends BiTargetYearDTO.MonthDTO{
 
         /**
-        * 店铺id
+        * 店铺id 来源 http://172.16.100.11:3002/project/74/interface/api/21571
         */
         @NotBlank(message = "店铺id不能为空")
         private String shopId;
