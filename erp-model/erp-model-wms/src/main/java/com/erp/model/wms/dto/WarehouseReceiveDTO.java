@@ -95,7 +95,6 @@ public class WarehouseReceiveDTO {
         /**
          * 收货人部门id
          */
-        @NotBlank(message = "收货人部门不能为空")
         private String receiveDeptId;
 
         /**
