@@ -162,7 +162,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         resultEntity.setCode(entity.getCode());
 
         //平台来源
-        if (entity.getCode().substring(0,2).equals("SP") || entity.getCode().substring(0,3).equals("FBA")) {
+        if (entity.getCode().startsWith("SP") || entity.getCode().startsWith("FBA") || entity.getCode().startsWith("RVG")) {
             resultEntity.setThirdPartySystem(ThirdPartySystemEnum.ENUM_MB.getCode());
         } else {
             resultEntity.setThirdPartySystem(ThirdPartySystemEnum.ENUM_KINGDEE.getCode());
@@ -258,5 +258,6 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         return resultEntity;
 
     }
+
 }
 

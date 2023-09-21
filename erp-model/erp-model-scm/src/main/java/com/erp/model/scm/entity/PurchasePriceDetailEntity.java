@@ -116,6 +116,11 @@ public class PurchasePriceDetailEntity extends BaseEntity<PurchasePriceDetailEnt
     private String kingdeeDetailId;
 
     /**
+     * 备注
+     */
+    private String remark;
+
+    /**
      *  主单单据状态
      */
     @TableField(exist = false)

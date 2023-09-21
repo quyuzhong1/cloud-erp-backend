@@ -594,6 +594,10 @@ public class QcInfoDTO implements Serializable {
          */
         private String purchaseOrderCode;
 
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
 
         /**
          * SKU no
