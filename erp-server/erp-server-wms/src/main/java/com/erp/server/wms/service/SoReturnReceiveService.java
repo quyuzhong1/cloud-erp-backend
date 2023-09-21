@@ -109,6 +109,15 @@ public interface SoReturnReceiveService extends SuperService<SoReturnReceiveEnti
      * @param ids ids
      * @return java.lang.Boolean
      **/
+    Boolean pdaDisApprove(List<String> ids);
+
+    /**
+     * 批量反审核
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
+     * @param ids ids
+     * @return java.lang.Boolean
+     **/
     BatchResultDTO disApprove(List<String> ids);
 
     /**
