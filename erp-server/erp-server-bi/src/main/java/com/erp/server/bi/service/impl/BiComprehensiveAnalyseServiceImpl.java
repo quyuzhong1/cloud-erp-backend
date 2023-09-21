@@ -1,6 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -51,7 +52,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     private DmpOrderInfoService dmpOrderInfoService;
 
     @Resource
-    private DmpOrderItemService dmpOrderItemService;
+    private DmpSkuInfoService dmpSkuInfoService;
 
     @Resource
     private BiProductDetailService biProductDetailService;
