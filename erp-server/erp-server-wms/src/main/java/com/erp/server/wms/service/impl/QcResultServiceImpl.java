@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -16,6 +17,7 @@ import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.plm.dto.ProductInfoDTO;
+import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.sys.dto.NoticeReceiverDTO;
@@ -53,6 +55,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -391,6 +394,60 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     }
 
     @Override
+    public void sendQcBackFillPackaging(List<ProductPackDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> userIdList = new ArrayList<>();
+        List<String> skuIdList = list.stream().map(ProductPackDTO::getSkuId).collect(Collectors.toList());
+
+        List<NoticeReceiverDTO.InfoDTO> receiverList = sysUserFeign.listNoticeReceiverByNodeKey( NoticeNodeEnum.QC_BACK_FILL_SKU_PACK.getCode());
+        if (CollectionUtils.isEmpty(receiverList)) {
+            return;
+        }
+        List<ProductInfoDTO.ProductRolePeopleDTO> userList = listSendUser(skuIdList, receiverList, userIdList);
+
+        for (ProductPackDTO productPackDTO : list) {
+            NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
+            if (CollectionUtils.isNotEmpty(userList)) {
+                //项目经理
+                long projectCount = receiverList.stream().filter(obj -> NoticeItemRoleEnum.ITEM_MANAGER.getCode().equals(obj.getReceiverType())).count();
+                if (projectCount > 0) {
+                    List<String> projectChargeIdList = userList.stream().filter(obj -> obj.getSkuId().equals(productPackDTO.getSkuId())
+                                    && CollectionUtils.isNotEmpty(obj.getProjectChargeIdList())).flatMap(obj -> Stream.of(obj.getProjectChargeIdList().stream().toArray(String[]::new)))
+                            .distinct().collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(projectChargeIdList)) {
+                        userIdList.addAll(projectChargeIdList);
+                    }
+                }
+                //产品经理
+                long productCount = receiverList.stream().filter(obj -> NoticeItemRoleEnum.PRODUCT_MANAGER.getCode().equals(obj.getReceiverType())).count();
+                if (productCount > 0) {
+                    List<String> productChargeIdList = userList.stream().filter(obj -> obj.getSkuId().equals(productPackDTO.getSkuId())
+                                    && CollectionUtils.isNotEmpty(obj.getProductChargeIdList())).flatMap(obj -> Stream.of(obj.getProjectChargeIdList().stream().toArray(String[]::new)))
+                            .distinct().collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(productChargeIdList)) {
+                        userIdList.addAll(productChargeIdList);
+                    }
+                }
+            }
+            String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
+            noticeMsgInfoDTO.setReceiverUserIds(userIdList);
+            noticeMsgInfoDTO.setTitle(NoticeMsgConstant.QC_BACK_FILL_PACK_HEAD);
+            String msgContent = StrUtil.format(NoticeMsgConstant.QC_BACK_FILL_PACK_CONTENT,productPackDTO.getSkuNo(),productPackDTO.getProductSize(),
+                    productPackDTO.getBoxSize(),productPackDTO.getNetWeight(),productPackDTO.getBoxQty());
+            noticeMsgInfoDTO.setContent(msgContent);
+            noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
+                    noticeMsgInfoDTO, IdUtil.simpleUUID());
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
+            }
+        }
+
+    }
+
+    @Override
     public int getReQcCount() {
         return this.baseMapper.getReQcCount();
     }
@@ -481,5 +538,39 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         }
     }
 
+    /**
+     * @description: 查询需要发送的人员
+     * @author Will
+     * @date: 2023/9/21 12:15
+     * @param skuIdList
+     * @param qcNewProductCode
+     * @param userIdList
+     * @return List<ProductRolePeopleDTO>
+     */
+    private List<ProductInfoDTO.ProductRolePeopleDTO> listSendUser (List<String> skuIdList,List<NoticeReceiverDTO.InfoDTO> receiverList,List<String> userIdList) {
+        if (CollectionUtils.isEmpty(receiverList)) {
+            return Collections.EMPTY_LIST;
+        }
+        //根据sku 获取角色的
+        List<ProductInfoDTO.ProductRolePeopleDTO> rolePeopleList = new ArrayList<>();
+
+        //这个是项目角色
+        String itemRole = NoticeReceiverEnum.ITEM_ROLE.getCode();
+        //其它人员
+        String otherPeople = NoticeReceiverEnum.OTHER_PEOPLE.getCode();
+        List<String> otherUsers = receiverList.stream().filter(r -> otherPeople.equals(r.getReceiverType())).
+                map(NoticeReceiverDTO.InfoDTO::getReceiverValue).collect(Collectors.toList());
+
+        userIdList.addAll(otherUsers);
+        //这个是项目角色的
+        List<String> itemRoles = receiverList.stream().filter(r -> itemRole.equals(r.getReceiverType())).
+                map(NoticeReceiverDTO.InfoDTO::getReceiverValue).collect(Collectors.toList());
+        //当不为空
+        if (CollectionUtils.isNotEmpty(itemRoles)) {
+            //根据sku 获取角色的
+            rolePeopleList = plmTaskFeign.listProductRolePeople(skuIdList);
+        }
+        return rolePeopleList;
+    }
 
 }

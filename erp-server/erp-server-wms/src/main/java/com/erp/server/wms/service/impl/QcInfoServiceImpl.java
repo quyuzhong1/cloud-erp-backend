@@ -587,7 +587,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 autoStockInBill(billId, qcInfo, purchaseOrderId, warehouseId);
             }
             //新品首批回填SKU的尺寸信息
-            backFillPackaging(bill);
+            backFillPackaging(Arrays.asList(billId));
 
             //异步发送通知
             qcResultService.sendQcResultMsg(Arrays.asList(billId));
@@ -600,35 +600,61 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @description:回填产品信息
      * @author Will
      * @date: 2023/9/20 11:21
-     * @param qcInfoEntity
+     * @param billIdList
      */
-    private void backFillPackaging (QcInfoEntity qcInfoEntity) {
+    private void backFillPackaging (List<String> billIdList) {
         /**
          * 采购订单为新品首批、并且质检完成后减产品尺寸、外箱尺寸、产品净重、外形重量
          */
-        if (StringUtils.isBlank(qcInfoEntity.getPurchaseOrderId())) {
+        if (CollectionUtils.isEmpty(billIdList)) {
             return;
         }
-        PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(qcInfoEntity.getPurchaseOrderId());
-        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98025);
-        }
-        if (!purchaseOrderEntity.getIsFirstMassProduct()) {
+        List<QcInfoEntity> qcInfoEntityList = this.listByIds(billIdList);
+        if (CollectionUtils.isEmpty(qcInfoEntityList)) {
             return;
         }
+
+
+        //采购信息
+        List<String> poIdList = qcInfoEntityList.stream().filter(obj -> StringUtils.isNotBlank(obj.getPurchaseOrderId())).map(QcInfoEntity::getPurchaseOrderId).distinct().collect(Collectors.toList());
+        List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(poIdList);
+
         //质检产品信息
-        QcProductDTO.ViewDTO viewDTO = qcProductService.getByMainId(qcInfoEntity.getId());
-        if (ObjectUtils.isEmpty(viewDTO)) {
-            throw new ServiceException(ApiError.ERROR_99015);
+        List<String> qcIdList = qcInfoEntityList.stream().map(QcInfoEntity::getId).collect(Collectors.toList());
+        List<QcProductEntity> qcProductList = qcProductService.getByMainIdList(qcIdList);
+
+        List<ProductPackDTO> productPactList = new ArrayList<>();
+
+        for (QcInfoEntity qcInfoEntity :  qcInfoEntityList) {
+            PurchaseOrderEntity purchaseOrderEntity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(qcInfoEntity.getPurchaseOrderId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+                throw new ServiceException(ApiError.ERROR_98025);
+            }
+            if (!purchaseOrderEntity.getIsFirstMassProduct()) {
+                return;
+            }
+            QcProductEntity qcProductEntity = qcProductList.stream().filter(obj -> obj.getMainId().equals(qcInfoEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(qcProductEntity)) {
+                throw new ServiceException(ApiError.ERROR_99015);
+            }
+
+            ProductPackDTO productPackDTO = new ProductPackDTO();
+            productPackDTO.setSkuId(qcProductEntity.getSkuId());
+            productPackDTO.setSkuNo(qcProductEntity.getSkuNo());
+            productPackDTO.setProductSize(StrUtil.format("{}X{}X{}",qcProductEntity.getProductLength(),qcProductEntity.getProductWidth(),qcProductEntity.getProductHeight()));
+            productPackDTO.setBoxSize(StrUtil.format("{}X{}X{}",qcProductEntity.getBoxLength(),qcProductEntity.getBoxWidth(),qcProductEntity.getBoxHeight()));
+            productPackDTO.setBoxQty(new BigDecimal(qcProductEntity.getBoxQty()));
+            productPackDTO.setBoxWeight(qcProductEntity.getBoxWeight());
+            productPackDTO.setNetWeight(qcProductEntity.getProductNetWeight());
+            plmTaskFeign.backFillPackaging(productPackDTO);
+
+            productPactList.add(productPackDTO);
         }
-        ProductPackDTO productPackDTO = new ProductPackDTO();
-        productPackDTO.setSkuId(viewDTO.getSkuId());
-        productPackDTO.setProductSize(StrUtil.format("{}X{}X{}",viewDTO.getProductLength(),viewDTO.getProductWidth(),viewDTO.getProductHeight()));
-        productPackDTO.setBoxSize(StrUtil.format("{}X{}X{}",viewDTO.getBoxLength(),viewDTO.getBoxWidth(),viewDTO.getBoxHeight()));
-        productPackDTO.setBoxQty(new BigDecimal(viewDTO.getBoxQty()));
-        productPackDTO.setBoxWeight(viewDTO.getBoxWeight());
-        productPackDTO.setNetWeight(viewDTO.getProductNetWeight());
-        plmTaskFeign.backFillPackaging(productPackDTO);
+        if (CollectionUtils.isEmpty(productPactList)){
+            return;
+        }
+        //异步发送通知
+        qcResultService.sendQcBackFillPackaging(productPactList);
     }
 
     /**
@@ -959,6 +985,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //异步发送通知
             qcResultService.sendQcResultMsg(ids);
+
+            //新品首批回填SKU的尺寸信息
+            backFillPackaging(ids);
         }
         return result;
 
