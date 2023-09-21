@@ -99,7 +99,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         log.info("开始新增基础标签单");
         boolean save = super.save(basicLabelEntity);
         if (!save) {
-            throw new ServiceException("基础标签单保存失败");
+            throw new ServiceException(ApiError.ERROR_SAVE_BASIC_LABEL);
         }
         return basicLabelEntity.getId();
     }
