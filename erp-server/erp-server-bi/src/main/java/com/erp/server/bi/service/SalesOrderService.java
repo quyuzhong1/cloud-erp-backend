@@ -181,4 +181,11 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      * @return
      */
     Boolean exportSkuSalesExcel(SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response);
+
+    /**
+     * 产品等级销售分析
+     * @param dto
+     * @return
+     */
+    StatisticalDataVO productGradeSales(BiFilterDTO dto);
 }

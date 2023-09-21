@@ -118,4 +118,23 @@ public class SkuSalesDTO implements Serializable {
     }
 
 
+    /**
+     * 产品等级销售额
+     */
+    @Data
+    public static class ProductGradeSalesDTO {
+        /**
+         * 等级
+         */
+        private String grade;
+
+        /**
+         * 销售额
+         */
+        private BigDecimal sales;
+
+
+    }
+
+
 }

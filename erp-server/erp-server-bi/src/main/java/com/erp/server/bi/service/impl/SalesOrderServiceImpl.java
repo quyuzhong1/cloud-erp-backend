@@ -370,6 +370,21 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         return Boolean.TRUE;
 
     }
+
+    /**
+     * 产品等级销售分析
+     * @param params
+     * @return
+     */
+    @Override
+    public StatisticalDataVO productGradeSales(BiFilterDTO params) {
+        //获取到结算汇率
+        String settleRate = getSettleRate(params.getSettleMethod());
+        //产品销售等级销售额
+        List<SkuSalesDTO.ProductGradeSalesDTO>  gradeSalesList=baseMapper.listProductGradeSales(params,settleRate);
+        return null;
+    }
+
     /**
      * 一级模块 spu 销售额
      *
