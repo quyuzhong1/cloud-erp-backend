@@ -3062,16 +3062,18 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             vo.setOldProductSales(oldProductSales);
             vo.setNewSalesQuantity(newSalesQuantity);
             vo.setOldSalesQuantity(oldSalesQuantity);
+            //新品销售额占比
             if (newProductSales.compareTo(BigDecimal.ZERO) > 0) {
-                vo.setNewProductSalesRatio(newProductSales.add(oldProductSales).divide(newProductSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+                vo.setNewProductSalesRatio(newProductSales.divide(newProductSales.add(oldProductSales), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
             }
+            //老品销售额占比
             if (oldProductSales.compareTo(BigDecimal.ZERO) > 0) {
-                vo.setOldProductSalesRatio(newProductSales.add(oldProductSales).divide(oldProductSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+                vo.setOldProductSalesRatio(oldProductSales.divide(newProductSales.add(oldProductSales), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
             }
             List<BiTargetNewProductSettingDTO.DeptTargetDTO> targetNewProductSettingEntities = deptTargetDTOS.stream().filter(req -> req.getDeptId().equals(deptId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(targetNewProductSettingEntities)) {
-                BiTargetNewProductSettingDTO.DeptTargetDTO targetNewProductSalesAmount = targetNewProductSettingEntities.stream().filter(req -> MetricsEnum.SALES_AMOUNT.getCode().equals(req.getMetrics())).findFirst().orElse(null);
-                BiTargetNewProductSettingDTO.DeptTargetDTO targetNewProductSalesQty = targetNewProductSettingEntities.stream().filter(req -> MetricsEnum.SALES_QTY.getCode().equals(req.getMetrics())).findFirst().orElse(null);
+                BiTargetNewProductSettingDTO.DeptTargetDTO targetNewProductSalesAmount = targetNewProductSettingEntities.stream().filter(req -> MetricsEnum.SALES_AMOUNT.getCode().equals(req.getMetrics())).findFirst().orElse(new BiTargetNewProductSettingDTO.DeptTargetDTO());
+                BiTargetNewProductSettingDTO.DeptTargetDTO targetNewProductSalesQty = targetNewProductSettingEntities.stream().filter(req -> MetricsEnum.SALES_QTY.getCode().equals(req.getMetrics())).findFirst().orElse(new BiTargetNewProductSettingDTO.DeptTargetDTO());
                 if (targetNewProductSalesAmount.getValue() != null && targetNewProductSalesAmount.getValue().compareTo(BigDecimal.ZERO) > 0) {
                     vo.setNewSalesAmountFinishRate(newProductSales.divide(targetNewProductSalesAmount.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
                 }
