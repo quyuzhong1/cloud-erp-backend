@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.List;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -104,6 +105,7 @@ public class BiTargetCategorySettingDTO implements Serializable {
 
         @Size(min = 1, message = "目标设置不能为空")
         @NotNull(message = "目标设置不能为空")
+        @Valid
         private List<CommonDTO> detailList;
     }
 
@@ -116,6 +118,7 @@ public class BiTargetCategorySettingDTO implements Serializable {
 
         @Size(min = 1, message = "目标设置不能为空")
         @NotNull(message = "目标设置不能为空")
+        @Valid
         private List<CommonDTO> detailList;
 
     }
