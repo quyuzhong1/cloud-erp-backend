@@ -89,7 +89,12 @@ public class BiSalesMonitoringTableDTO {
     /**
      * 商品售价
      */
-    private BigDecimal sellPrice;
+    private BigDecimal amountAfter;
+
+    /**
+     * 汇率
+     */
+    private BigDecimal currencyRate;
 
     /**
      * 新品标识 1为新品 0 为非新品
