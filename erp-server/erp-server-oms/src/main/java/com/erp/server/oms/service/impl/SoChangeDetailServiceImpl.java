@@ -583,6 +583,15 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         if (CollectionUtils.isNotEmpty(detailList)) {
             //刪除
             String deleteCode = SoChangeTypeEnum.DELETE.getCode();
+            List<SoChangeDetailDTO.AddDTO> notDeleteList = detailList.stream().filter(d -> !d.getChangeType().getCode().equals(deleteCode)).collect(Collectors.toList());
+            long qtyCount= notDeleteList.stream().filter(n->n.getQty()<=0).count();
+            if(qtyCount>0){
+              throw new ServiceException("销售数量不能小于0");
+            }
+            long priceCount= notDeleteList.stream().filter(n->n.getPrice().compareTo(BigDecimal.ZERO)<=0).count();
+            if(priceCount>0){
+                throw new ServiceException("单价不能小于0");
+            }
             List<SoChangeDetailDTO.AddDTO> deleteDetailList = detailList.stream().filter(d -> d.getChangeType().getCode().equals(deleteCode)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(deleteDetailList)) {
                 List<String> soDetailIdList = deleteDetailList.stream().
@@ -611,7 +620,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 for (SoChangeDetailDTO.AddDTO item : updateDetailList) {
                     Integer qty = item.getQty();
                     Integer deliveryQty = soDeliveryNoticeDetailList.stream().filter(s -> s.getSourceDetailId().
-                            equals(item.getSoDetailId()) && !s.getInvalidStatus()).
+                                    equals(item.getSoDetailId()) && !s.getInvalidStatus()).
                             mapToInt(SoDeliveryNoticeDetailEntity::getDeliveryQty).sum();
                     if (qty < deliveryQty) {
                         throw new ServiceException(ApiError.ERROR_92049);
@@ -623,7 +632,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 for (SoChangeDetailDTO.AddDTO item : updateDetailList) {
                     Integer qty = item.getQty();
                     Integer deliveryQty = deliveryQtyList.stream().filter(s -> s.getSoDetailId().
-                            equals(item.getSoDetailId())).
+                                    equals(item.getSoDetailId())).
                             mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
                     if (qty < deliveryQty) {
                         throw new ServiceException(ApiError.ERROR_92050);
