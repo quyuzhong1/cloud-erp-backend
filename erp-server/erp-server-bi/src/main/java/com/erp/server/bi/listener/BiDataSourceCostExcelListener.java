@@ -1,5 +1,6 @@
 package com.erp.server.bi.listener;
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -149,7 +150,11 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
                 errorMsgList.add("销售事业部不能为空");
             } else {
                 String deptId = deptList.stream().filter(obj -> obj.getName().equals(entity.getDeptName())).map(SysDepartmentDTO::getId).findFirst().orElse("");
-                entity.setDeptId(deptId);
+                if (StringUtils.isBlank(deptId)) {
+                    errorMsgList.add(StrUtil.format("部门{}不存在",entity.getDeptName()));
+                } else {
+                    entity.setDeptId(deptId);
+                }
             }
             if (StringUtils.isBlank(entity.getPlatformName())) {
                 errorMsgList.add("平台名称不能为空");
