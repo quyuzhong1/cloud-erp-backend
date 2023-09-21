@@ -2535,9 +2535,14 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public StatisticalDataVO byDate(DateSalesTrendDTO.SearchDTO dto) {
+        //如果查询客单价
+        if (DateSalesTrendSearchTypeEnum.FINANCE_SALES_QUANTITY.getCode().equals(dto.getSearchType())) {
+            return this.byDateFinanceSales(dto);
+        }
+
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售趋势");
-        statistical.setChartType(ChartType.PIE);
+        statistical.setChartType(ChartType.BAR);
         String dateType = dto.getDateType();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
@@ -2545,6 +2550,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String timeFlag = "delivery_time";
         if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {
             timeFlag = "platform_create_time";
+        }
+        if (CollectionUtils.isNotEmpty(dto.getCategory())) {
+            return this.byDateStackedColumnChart(dto, timeFlag, settleRate);
         }
         List<SalesFlagVO> salesList = new ArrayList();
         List<SalesFlagVO> lastYearSalesList = new ArrayList();
