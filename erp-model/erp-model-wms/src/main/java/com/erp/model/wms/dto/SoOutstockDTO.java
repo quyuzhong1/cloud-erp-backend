@@ -792,6 +792,11 @@ public class SoOutstockDTO implements Serializable {
          */
         private LocalDate billDate;
 
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
+
         private List<SoOutstockDetailDTO.ViewDTO> detailList;
 
     }
@@ -902,6 +907,11 @@ public class SoOutstockDTO implements Serializable {
          */
         @NotNull(message = "出库日期不能为空")
         private LocalDate billDate;
+
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
 
         /**
          * 详情
