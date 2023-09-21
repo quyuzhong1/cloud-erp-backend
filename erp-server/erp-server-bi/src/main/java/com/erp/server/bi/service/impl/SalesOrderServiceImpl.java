@@ -380,7 +380,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //获取到结算汇率
         String settleRate = getSettleRate(params.getSettleMethod());
         //产品销售等级销售额
-        List<Map<String,Object>> gradeSalesList = baseMapper.listProductGradeSales(params, settleRate);
+        List<Map<String, Object>> gradeSalesList = baseMapper.listProductGradeSales(params, settleRate);
         int initSize = CollectionUtils.isNotEmpty(gradeSalesList) ? gradeSalesList.size() : 10;
 
         statistical.setName("产品等级销售额");
@@ -3244,6 +3244,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 部门完成率排行
+     *
      * @param dto
      * @return
      */
@@ -3253,7 +3254,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
         List<CompletionRateRankingDTO.PagingDTO> list = baseMapper.deptCompletionRateRanking(dto, settleRate);
-        TargetFinishDTO.ParamDTO paramDTO = new TargetFinishDTO.ParamDTO ();
+        TargetFinishDTO.ParamDTO paramDTO = new TargetFinishDTO.ParamDTO();
         paramDTO.setYear(dto.getStartTime().getYear() + "");
         paramDTO.setMetrics(MetricsEnum.SALES_AMOUNT.getCode());
         List<String> deptIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
@@ -3288,6 +3289,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 用户完成率排行
+     *
      * @param dto
      * @return
      */
@@ -3297,7 +3299,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
         List<CompletionRateRankingDTO.PagingDTO> list = baseMapper.userCompletionRateRanking(dto, settleRate);
-        TargetFinishDTO.ParamDTO paramDTO = new TargetFinishDTO.ParamDTO ();
+        TargetFinishDTO.ParamDTO paramDTO = new TargetFinishDTO.ParamDTO();
         paramDTO.setYear(dto.getStartTime().getYear() + "");
         paramDTO.setMetrics(MetricsEnum.SALES_AMOUNT.getCode());
         List<String> userIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
@@ -3345,5 +3347,24 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             e.printStackTrace();
         }
         return Boolean.TRUE;
+    }
+
+
+    /**
+     * 毛利额 毛利率 模块
+     *
+     * @param dto
+     * @return com.erp.model.bi.vo.StatisticalDataVO
+     * @author yl
+     * @date 2023-09-21 17:18
+     */
+    @Override
+    public StatisticalDataVO grossProfit(BiDataSourceCostDTO.GrossProfitDTO dto) {
+        StatisticalDataVO statistical = new StatisticalDataVO();
+        String dateType = dto.getDateType();
+        switch (dateType) {
+
+        }
+        return null;
     }
 }
