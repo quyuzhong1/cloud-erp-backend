@@ -202,4 +202,20 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      */
     @MapKey("grade")
     List<Map<String,Object>> listProductGradeSales(@Param("params")BiFilterDTO dto,@Param("settleRate") String settleRate);
+
+    /**
+     * 部门销售额排行榜
+     * @param dto
+     * @param settleRate
+     * @return
+     */
+    List<CompletionRateRankingDTO.PagingDTO> deptCompletionRateRanking(@Param("params") CompletionRateRankingDTO.SearchDTO dto, @Param("settleRate") String settleRate);
+
+    /**
+     * 用户销售额排行榜
+     * @param dto
+     * @param settleRate
+     * @return
+     */
+    List<CompletionRateRankingDTO.PagingDTO> userCompletionRateRanking(@Param("params") CompletionRateRankingDTO.SearchDTO dto, @Param("settleRate") String settleRate);
 }
