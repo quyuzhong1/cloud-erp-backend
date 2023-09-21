@@ -15,8 +15,6 @@ public enum TargetFinishViewTypeEnum implements EnumMessage {
     FINISH_RATE("finishRate","完成率"),
     RATIO("ratio","占比")
     ;
-
-
     TargetFinishViewTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
