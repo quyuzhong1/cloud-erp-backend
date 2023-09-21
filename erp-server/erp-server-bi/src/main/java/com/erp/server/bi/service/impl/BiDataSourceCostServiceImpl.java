@@ -28,6 +28,7 @@ import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.BiDataSourceCostEnum;
 import com.erp.server.bi.enums.DictEnum;
@@ -386,10 +387,12 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         List<DmpShopInfoEntity> shopList = dmpShopInfoService.list();
         //查人员数据
         List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //部门
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
         //查询成本字典数据
         List<BiDictEntity> dictList = biDictService.listEntityByType(DictEnum.DATASOURCECOST.getType());
 
-        BiDataSourceCostExcelListener excelListenerUtil = new BiDataSourceCostExcelListener(this,biDataSourceCostDetailService,shopList,userList,dictList);
+        BiDataSourceCostExcelListener excelListenerUtil = new BiDataSourceCostExcelListener(this,biDataSourceCostDetailService,shopList,userList,dictList,deptList);
         try {
             EasyExcel.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
             List<Map<Integer, String>> list = excelListenerUtil.getDateList();

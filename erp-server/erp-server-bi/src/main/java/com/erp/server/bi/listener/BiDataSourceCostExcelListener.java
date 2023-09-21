@@ -14,6 +14,7 @@ import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.server.bi.enums.BiDataSourceCostEnum;
 import com.erp.server.bi.service.BiDataSourceCostDetailService;
 import com.erp.server.bi.service.BiDataSourceCostService;
@@ -41,6 +42,8 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
 
     private List<BiDictEntity> dictList;
 
+    private List<SysDepartmentDTO> deptList;
+
     private  List<Map<Integer,String>> list ;
 
     private Map<Integer,String> headMap;
@@ -48,12 +51,13 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
     private List<String> headList;
 
     public BiDataSourceCostExcelListener(BiDataSourceCostService biDataSourceCostService,BiDataSourceCostDetailService biDataSourceCostDetailService,
-                                         List<DmpShopInfoEntity> shopList,List<FindUserDTO> userList,List<BiDictEntity> dictList) {
+                                         List<DmpShopInfoEntity> shopList,List<FindUserDTO> userList,List<BiDictEntity> dictList,List<SysDepartmentDTO> deptList) {
         this.biDataSourceCostService = biDataSourceCostService;
         this.biDataSourceCostDetailService = biDataSourceCostDetailService;
         this.shopList = shopList;
         this.userList = userList;
         this.dictList = dictList;
+        this.deptList = deptList;
         this.list = new ArrayList<>();
     }
 
@@ -143,6 +147,9 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
             }
             if (StringUtils.isBlank(entity.getDeptName())) {
                 errorMsgList.add("销售事业部不能为空");
+            } else {
+                String deptId = deptList.stream().filter(obj -> obj.getName().equals(entity.getDeptName())).map(SysDepartmentDTO::getId).findFirst().orElse("");
+                entity.setDeptId(deptId);
             }
             if (StringUtils.isBlank(entity.getPlatformName())) {
                 errorMsgList.add("平台名称不能为空");
