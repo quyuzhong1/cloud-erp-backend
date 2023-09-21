@@ -478,7 +478,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
         Boolean result = this.lambdaUpdate().
                 eq(BiTargetNewProductSettingEntity::getStaffId, dto.getStaffId()).
                 eq(BiTargetNewProductSettingEntity::getMainId, dto.getId()).
-                eq(BiTargetNewProductSettingEntity::getMetrics, dto.getMetricsEnum()).
+                eq(BiTargetNewProductSettingEntity::getMetrics, dto.getMetrics()).
                 remove();
         return result;
     }
