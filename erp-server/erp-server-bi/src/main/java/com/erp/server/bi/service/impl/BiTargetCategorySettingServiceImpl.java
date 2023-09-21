@@ -331,7 +331,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
                 common.setDecember(pullView(metrics, december, dbList));
                 categoryList.add(common);
             }
-            detail.setCategorySettingList(categoryList);
+            detail.setSettingList(categoryList);
             detailList.add(detail);
         }
         view.setDetailList(detailList);
@@ -409,7 +409,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
             BiTargetCategorySettingDTO.DetailDTO detail = new BiTargetCategorySettingDTO.DetailDTO();
             detail.setMetrics(item.getKey());
             detail.setMetricsName(item.getKey().getName());
-            detail.setCategorySettingList(item.getValue());
+            detail.setSettingList(item.getValue());
             detailList.add(detail);
         }
         result.setSuccessList(detailList);
