@@ -99,11 +99,14 @@ public class BiSalesFilterDTO extends PermissionsDTO {
     }
 
     /**
-     * 默认当月结束时间
+     * 默认当月结束时间 + 1
      */
     public LocalDateTime getEndTime() {
         if (null == this.endTime){
-            return LocalDateTime.now(ZoneId.systemDefault()).with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX);
+            return LocalDateTime.now(ZoneId.systemDefault())
+                    .with(TemporalAdjusters.lastDayOfMonth())
+                    .plusDays(1)
+                    .with(LocalTime.MIN);
         }
         return LocalDateTime.of(endTime.plusDays(1).toLocalDate(), LocalTime.MIN);
     }
