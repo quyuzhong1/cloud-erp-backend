@@ -56,6 +56,11 @@ public class TargetFinishDTO implements Serializable {
     public static class ViewDTO {
 
         /**
+         * 类型Id(仅部门类型时后端使用)
+         */
+        private String typeId;
+
+        /**
          * 类型名称 （部门、人员、店铺、品类、SKU）
          */
         private String typeName;

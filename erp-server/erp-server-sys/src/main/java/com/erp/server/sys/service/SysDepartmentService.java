@@ -122,5 +122,13 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
      * @return java.util.List<java.lang.String>
      */
     List<String> listLeadByUserIdList(List<String> userIdList);
+    /**
+     * @description: 根据部门名称查询最高级别部门及下级
+     * @author Will
+     * @date: 2023/9/20 18:55
+     * @param deptNameList
+     * @return List<SysDepartmentDTO>
+     */
+    List<SysDepartmentDTO> listSameLevelDeptIdList(List<String> deptNameList);
 }
 
