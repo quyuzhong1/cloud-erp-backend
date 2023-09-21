@@ -621,7 +621,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     @Override
     public List<BiRegionAnalyzeDTO> getSubRegionSales(BiCountryRegionFilterDTO dto) {
         // 国家列表
-        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList()
+                .stream()
+                // 过滤其他
+                .filter(e-> StringUtils.isNotBlank(e.getRegionCode()))
+                .collect(Collectors.toList());;
         // 国家销售额
         List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto);
 
@@ -699,7 +703,12 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     @Override
     public List<BiCountryAnalyzeDTO> getCountrySales(BiCountryRegionFilterDTO dto) {
         // 国家列表
-        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList()
+                .stream()
+                // 过滤其他
+                .filter(e-> StringUtils.isNotBlank(e.getRegionCode()))
+                .collect(Collectors.toList());
+                ;
         // 国家销售额
         List<BiCountryAnalyzeDTO> countrySalesList = baseMapper.getCountrySales(dto);
 
@@ -752,10 +761,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
 
         return resultList.stream()
                 // 过滤得到要求的区域
-                .filter(e -> StringUtils.isBlank(dto.getRegionCode()) ||
-                        (StringUtils.isNotBlank(dto.getRegionCode()) && e.getRegionCode().equalsIgnoreCase(dto.getRegionCode())) ||
-                        (StringUtils.isNotBlank(dto.getSubregionCode()) && e.getSubregionCode().equalsIgnoreCase(dto.getSubregionCode()))
-                )
+                .filter(dto::filterRegion)
                 .collect(Collectors.toList());
     }
 
