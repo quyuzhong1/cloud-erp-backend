@@ -22,6 +22,7 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
+import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 import com.erp.model.bi.enums.DataSourceCostEnum;
 import com.erp.model.bi.enums.DateSalesTrendSearchTypeEnum;
 import com.erp.model.bi.enums.MetricsEnum;
@@ -104,6 +105,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     @Resource
     private BiDataSourceCostService biDataSourceCostService;
+
+    @Resource
+    private BiTargetStaffSettingService biTargetStaffSettingService;
 
 
     @Override
@@ -3220,5 +3224,111 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         return resultList;
     }
 
+    @Override
+    public List<CompletionRateRankingDTO.PagingDTO> listCompletionRateRanking(CompletionRateRankingDTO.SearchDTO dto) {
+        TargetMetricsSearchTypeEnum enumByCode = TargetMetricsSearchTypeEnum.getEnumByCode(dto.getSearchType());
+        // 获取当月第一天
+        LocalDateTime firstDay = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay();
+        // 获取下月第一天
+        LocalDateTime lastDay = LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()).atStartOfDay().plusMonths(1);
+        dto.setStartTime(firstDay);
+        dto.setEndTime(lastDay);
 
+        switch (enumByCode) {
+            case DEPT:
+                return deptCompletionRateRanking(dto);
+            case USER:
+                return userCompletionRateRanking(dto);
+            default:
+                throw new ServiceException(ApiError.SEARCH_TYPE_EXIST);
+        }
+    }
+
+    /**
+     * 部门完成率排行
+     * @param dto
+     * @return
+     */
+    private List<CompletionRateRankingDTO.PagingDTO> deptCompletionRateRanking(CompletionRateRankingDTO.SearchDTO dto) {
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        LocalDateTime startTime = dto.getStartTime();
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
+        List<CompletionRateRankingDTO.PagingDTO> list = baseMapper.deptCompletionRateRanking(dto, settleRate);
+        TargetFinishDTO.ParamDTO paramDTO = new TargetFinishDTO.ParamDTO ();
+        paramDTO.setYear(dto.getStartTime().getYear() + "");
+        paramDTO.setMetrics(MetricsEnum.SALES_AMOUNT.getCode());
+        List<String> deptIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
+        paramDTO.setDepartment(deptIds);
+        List<TargetFinishDTO.ViewDTO> viewDTOS = biTargetStaffSettingService.listDeptTargetFinish(paramDTO);
+        dto.setStartTime(dto.getEndTime());
+        dto.setEndTime(dto.getEndTime().plusMonths(1));
+        List<CompletionRateRankingDTO.PagingDTO> lastMonthList = baseMapper.deptCompletionRateRanking(dto, settleRate);
+        for (CompletionRateRankingDTO.PagingDTO pagingDTO : list) {
+            SysDepartmentDTO dept = deptList.stream().filter(u -> u.getId().equals(pagingDTO.getName())).findFirst().orElse(null);
+            if (dept != null) {
+                pagingDTO.setName(dept.getName());
+            } else {
+                pagingDTO.setName("无");
+            }
+            //计算本月完成率
+            List<TargetFinishDTO.ViewDTO> targetFinishList = viewDTOS.stream().filter(req -> req.getTypeId().equals(pagingDTO.getName())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(targetFinishList)) {
+                TargetFinishDTO.ViewDTO viewDTO = targetFinishList.stream().filter(req -> req.getTypeId().equals(pagingDTO.getName()) && req.getMonth().equals(startTime.getMonthValue())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(viewDTO)) {
+                    pagingDTO.setMonthCompletionRate(pagingDTO.getMonthSales().divide(viewDTO.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+                }
+            }
+            //获取上月排行
+            CompletionRateRankingDTO.PagingDTO lastPagingDTO = lastMonthList.stream().filter(req -> req.getName().equals(pagingDTO.getName())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(lastPagingDTO)) {
+                pagingDTO.setLastMonthRanking(lastPagingDTO.getRanking());
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 用户完成率排行
+     * @param dto
+     * @return
+     */
+    private List<CompletionRateRankingDTO.PagingDTO> userCompletionRateRanking(CompletionRateRankingDTO.SearchDTO dto) {
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        LocalDateTime startTime = dto.getStartTime();
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
+        List<CompletionRateRankingDTO.PagingDTO> list = baseMapper.userCompletionRateRanking(dto, settleRate);
+        TargetFinishDTO.ParamDTO paramDTO = new TargetFinishDTO.ParamDTO ();
+        paramDTO.setYear(dto.getStartTime().getYear() + "");
+        paramDTO.setMetrics(MetricsEnum.SALES_AMOUNT.getCode());
+        List<String> userIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
+        paramDTO.setUserId(userIds);
+        List<TargetFinishDTO.ViewDTO> viewDTOS = biTargetStaffSettingService.listUserTargetFinish(paramDTO);
+        dto.setStartTime(dto.getEndTime());
+        dto.setEndTime(dto.getEndTime().plusMonths(1));
+        List<CompletionRateRankingDTO.PagingDTO> lastMonthList = baseMapper.userCompletionRateRanking(dto, settleRate);
+        for (CompletionRateRankingDTO.PagingDTO pagingDTO : list) {
+            FindUserDTO findUserDTO = userList.stream().filter(u -> u.getUserId().equals(pagingDTO.getName())).findFirst().orElse(null);
+            if (findUserDTO != null) {
+                pagingDTO.setName(findUserDTO.getUserName());
+            } else {
+                pagingDTO.setName("无");
+            }
+            //计算本月完成率
+            List<TargetFinishDTO.ViewDTO> targetFinishList = viewDTOS.stream().filter(req -> req.getTypeId().equals(pagingDTO.getName())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(targetFinishList)) {
+                TargetFinishDTO.ViewDTO viewDTO = targetFinishList.stream().filter(req -> req.getTypeId().equals(pagingDTO.getName()) && req.getMonth().equals(startTime.getMonthValue())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(viewDTO)) {
+                    pagingDTO.setMonthCompletionRate(pagingDTO.getMonthSales().divide(viewDTO.getValue(), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+                }
+            }
+            //获取上月排行
+            CompletionRateRankingDTO.PagingDTO lastPagingDTO = lastMonthList.stream().filter(req -> req.getName().equals(pagingDTO.getName())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(lastPagingDTO)) {
+                pagingDTO.setLastMonthRanking(lastPagingDTO.getRanking());
+            }
+        }
+        return list;
+    }
 }

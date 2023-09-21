@@ -649,4 +649,17 @@ public class BiSalesModuleController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 部门完成率排行
+     * @Author Luo_WG
+     * @Date 2023/9/21 10:37
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.bi.dto.CompletionRateRankingDTO.PagingDTO>>
+     **/
+    @PostMapping("/productGradeSales")
+    public ApiResult<List<CompletionRateRankingDTO.PagingDTO>> listCompletionRateRanking(@RequestBody @Validated CompletionRateRankingDTO.SearchDTO dto) {
+        List<CompletionRateRankingDTO.PagingDTO> result = salesOrderService.listCompletionRateRanking(dto);
+        return success(result);
+    }
+
 }
