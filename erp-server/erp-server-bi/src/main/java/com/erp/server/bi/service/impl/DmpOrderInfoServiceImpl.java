@@ -27,7 +27,6 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.BiSalesFilterDTO;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
 import com.erp.model.bi.enums.SaleContryTypeEnum;
@@ -151,7 +150,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    public List<SalesPriceRangeVO> salePriceDistribution(BiSalesFilterDTO dto) {
+    public List<SalesPriceRangeVO> salePriceDistribution(BiFilterDTO dto) {
         List<SalePriceDistributionVO> salePriceDistributionVOS = baseMapper.salePriceDistribution(dto);
         //获取区间列表
         List<SalesPriceRangeVO> rangeVOS = getRangeList(dto.getRangeType());

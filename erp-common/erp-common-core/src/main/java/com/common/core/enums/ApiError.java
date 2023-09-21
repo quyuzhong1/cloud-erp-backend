@@ -462,6 +462,8 @@ public enum ApiError implements Serializable {
     ERROR_EXIST_BASIC_LABEL(95253, "基础标签单{}已存在"),
     NOT_EXIST_BASIC_LABEL_LEVEL(95254, "基础标签单级别{}不存在"),
     ERROR_EXIST_BASIC_LABEL_NAME(95255, "基础标签单标签名称{}数据重复"),
+    ERROR_SAVE_BASIC_LABEL(95256, "基础标签单保存失败"),
+    ERROR_SAVE_PRODUCT_BASIC_LABEL(95257, "产品便签关系保存失败"),
 
 
     /**
@@ -505,12 +507,13 @@ public enum ApiError implements Serializable {
     SEARCH_TYPE_EXIST(97034, "搜索类型不存在"),
     ERROR_DATE_TYPE(97035, "财务销售额只支持月，季，年维度查询"),
 
-    ERROR_HAS_EXIST_DICT_VALUE(97035, "系统字典表值{}数据重复"),
-    ERROR_EXIST_DICT_VALUE(97036, "系统字典表值{}已存在"),
-    ERROR_EMPTY_DICT_TYPE(97037, "系统字典类型不能为空"),
-    ERROR_EMPTY_LIST(97038, "请求参数不能为空"),
-    ERROR_DATE_RANGE_THIRTY_ONE(97039, "日范围不能大于31天"),
-    ERROR_DATE_RANGE_WEEK_DAY(97039, "日范围不能大于62天"),
+    ERROR_HAS_EXIST_DICT_VALUE(97036, "系统字典表值{}数据重复"),
+    ERROR_EXIST_DICT_VALUE(97037, "系统字典表值{}已存在"),
+    ERROR_EMPTY_DICT_TYPE(97038, "系统字典类型不能为空"),
+    ERROR_EMPTY_LIST(97039, "请求参数不能为空"),
+    ERROR_DATE_RANGE_THIRTY_ONE(97040, "日范围不能大于31天"),
+    ERROR_DATE_RANGE_WEEK_DAY(97041, "日范围不能大于62天"),
+    ERROR_SALE_RANGE_EXIST(97041, "区间类型不能为空"),
 
     /**
      * SCM 错误

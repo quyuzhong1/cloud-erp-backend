@@ -7,6 +7,7 @@ import com.erp.model.bi.entity.BiSalesMonitoringEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -24,5 +25,5 @@ public interface BiSalesMonitoringMapper extends BaseMapper<BiSalesMonitoringEnt
      * @param dto
      * @return List<BiSalesMonitoringTableDTO>
      */
-    List<BiSalesMonitoringTableDTO> listBiSalesMonitoringTable(@Param("dto") BiSalesMonitoringSearchDTO.ParamDTO dto);
+    List<BiSalesMonitoringTableDTO> listBiSalesMonitoringTable(@Param("dto") BiSalesMonitoringSearchDTO.ParamDTO dto,@Param("firstDayOfLastYear") LocalDateTime firstDayOfLastYear,@Param("firstDayOfLastMonth") LocalDateTime firstDayOfLastMonth);
 }
