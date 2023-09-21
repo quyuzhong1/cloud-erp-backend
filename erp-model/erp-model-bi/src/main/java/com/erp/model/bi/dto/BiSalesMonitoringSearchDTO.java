@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author Will
@@ -32,8 +33,8 @@ public class BiSalesMonitoringSearchDTO extends PermissionsDTO {
         /**
          * 搜索类型（二级部门 dept、人员 user、店铺 shop,、品类 category、SKU sku、平台 platform、国家 country）
          */
-        @NotBlank(message = "搜索类型不能为空")
-        private String searchType;
+        @NotNull(message = "搜索类型不能为空")
+        private Integer searchType;
     }
 
 }
