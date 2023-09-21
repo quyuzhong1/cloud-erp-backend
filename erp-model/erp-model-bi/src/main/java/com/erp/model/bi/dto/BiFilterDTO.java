@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.ToString;
 import org.apache.commons.collections.CollectionUtils;
 
-import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
