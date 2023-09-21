@@ -43,10 +43,7 @@ public class BaseDropDownDTO implements Serializable {
          */
         private String value;
 
-        /**
-         * 描述
-         */
-        private String desc;
+
     }
 
     @Data
