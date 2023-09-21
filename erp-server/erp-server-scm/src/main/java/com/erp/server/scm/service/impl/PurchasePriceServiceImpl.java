@@ -111,6 +111,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private PurchasePriceDetailService purchasePriceDetailService;
 
     /**
      * 添加采购价目表
@@ -939,6 +941,15 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             list.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
+    }
+
+    @Override
+    public Boolean updateDetailRemark(List<String> ids,String remark) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Boolean.TRUE;
+        }
+        purchasePriceDetailService.updateDetailRemark(ids,remark);
+        return Boolean.TRUE;
     }
 
     /**
