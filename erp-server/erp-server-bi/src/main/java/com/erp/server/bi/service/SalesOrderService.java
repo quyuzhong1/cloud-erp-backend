@@ -166,6 +166,16 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
     List<NewAndOldSalesSearchDTO.PagingDTO> newAndOldSalesAmount(NewAndOldSalesSearchDTO.SearchDTO dto);
 
     /**
+     * 新老品销售额导出excel
+     * @Author Luo_WG
+     * @Date 2023/9/21 9:46
+     * @param dto
+     * @param response
+     * @return void
+     **/
+    Boolean newAndOldSalesExportExcel(NewAndOldSalesSearchDTO.SearchDTO dto, HttpServletResponse response);
+
+    /**
      * 战略目标达成
      * @author yl
      * @date 2023-09-18 11:01

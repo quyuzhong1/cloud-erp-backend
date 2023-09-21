@@ -8,6 +8,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
+import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.server.bi.service.SalesOrderService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -613,6 +614,26 @@ public class BiSalesModuleController extends BaseController {
         return success(result);
     }
 
+    /**
+     *  退货数据-导出
+     * @author Will
+     * @date: 2022/12/15 11:45
+     * @param dto
+     * @param response
+     */
+    /**
+     * 新老品销售额
+     * @Author Luo_WG
+     * @Date 2023/9/21 9:46
+     * @param dto
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/newAndOldSalesExportExcel")
+    public ApiResult newAndOldSalesExportExcel(@RequestBody NewAndOldSalesSearchDTO.SearchDTO dto, HttpServletResponse response) {
+        Boolean flag = salesOrderService.newAndOldSalesExportExcel(dto, response);
+        return flag ? success() : failure();
+    }
 
     /**
      * 战略目标达成
