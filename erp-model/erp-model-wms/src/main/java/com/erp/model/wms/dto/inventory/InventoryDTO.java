@@ -971,22 +971,22 @@ public class InventoryDTO implements Serializable {
         /**
          * 可用数量
          */
-        private Integer usableQty;
+        private Long usableQty;
 
         /**
          * 今日出库数量
          */
-        private Integer todayDeliveryQty;
+        private Long todayDeliveryQty;
 
         /**
          * 今日入库数量
          */
-        private Integer todayStockInQty;
+        private Long todayStockInQty;
 
         public  PdaHomeInventoryBalanceDTO() {
-            this.usableQty = MathUtil.ZERO;
-            this.todayDeliveryQty = MathUtil.ZERO;
-            this.todayStockInQty = MathUtil.ZERO;
+            this.usableQty = 0L;
+            this.todayDeliveryQty = 0L;
+            this.todayStockInQty = 0L;
         }
     }
 
