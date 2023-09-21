@@ -207,4 +207,14 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      * @return java.util.List<com.erp.model.bi.dto.CompletionRateRankingDTO.PagingDTO>
      **/
     List<CompletionRateRankingDTO.PagingDTO> listCompletionRateRanking(CompletionRateRankingDTO.SearchDTO dto);
+
+    /**
+     *
+     * @Author Luo_WG
+     * @Date 2023/9/21 15:57
+     * @param dto
+     * @param response
+     * @return java.lang.Boolean
+     **/
+    Boolean completionRateRankingExportExcel(CompletionRateRankingDTO.SearchDTO dto, HttpServletResponse response);
 }
