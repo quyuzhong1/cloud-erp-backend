@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.vo.ChartVO;
 import com.common.business.vo.PagingVO;
 import com.common.business.vo.SeriesVO;
@@ -30,6 +31,7 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.plm.dto.SkuDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -2886,6 +2888,22 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
     }
 
+    @Override
+    public Boolean newAndOldSalesExportExcel(NewAndOldSalesSearchDTO.SearchDTO dto, HttpServletResponse response) {
+        List<NewAndOldSalesSearchDTO.PagingDTO> pagingDTOS = newAndOldSalesAmount(dto);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/newAndOldSalesExport.xlsx";
+        String name = "新老品销售额";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(pagingDTOS, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Boolean.TRUE;
+    }
 
     /**
      * 战略目标达成
