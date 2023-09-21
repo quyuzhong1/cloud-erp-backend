@@ -411,6 +411,51 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
+    public List<SysDepartmentDTO> listSameLevelDeptIdList(List<String> deptIdList) {
+        if (CollectionUtils.isEmpty(deptIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SysDepartmentTreeDTO> treeList = baseMapper.findTree();
+        if (CollectionUtils.isEmpty(treeList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SysDepartmentDTO> resultList = new LinkedList<>();
+        for (String deptId : deptIdList) {
+            List<SysDepartmentTreeDTO> deptList = treeList.stream().filter(obj -> obj.getPath().contains(deptId)).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(deptList)) {
+                continue;
+            }
+            SysDepartmentDTO departmentDTO = new SysDepartmentDTO();
+            SysDepartmentTreeDTO deptDTO = getBest(treeList, deptId);
+            if (ObjectUtils.isEmpty(deptDTO)) {
+                continue;
+            }
+            departmentDTO.setId(deptDTO.getId());
+            departmentDTO.setName(deptDTO.getName());
+            List<SysDepartmentDTO> childList = BeanMapperUtils.copyList(SysDepartmentDTO.class, deptList);
+            departmentDTO.setChildrenList(childList);
+            resultList.add(departmentDTO);
+        }
+        return resultList;
+    }
+    
+    /**
+     * 查找部门最上级
+     */
+    private SysDepartmentTreeDTO getBest (List<SysDepartmentTreeDTO> treeList,String deptId) {
+        SysDepartmentTreeDTO sysDepartmentTreeDTO = treeList.stream().filter(obj -> obj.getId().equals(deptId)).findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(sysDepartmentTreeDTO)) {
+            return null;
+        }
+        if ("0".equals(sysDepartmentTreeDTO.getParentId())) {
+            return sysDepartmentTreeDTO;
+        } else {
+            SysDepartmentTreeDTO best = getBest(treeList, sysDepartmentTreeDTO.getParentId());
+            return best;
+        }
+    }
+
+    @Override
     public List<SysUserDeptDTO> getByDeptNames(List<String> deptNames) {
         return this.baseMapper.getByDeptNames(deptNames);
     }

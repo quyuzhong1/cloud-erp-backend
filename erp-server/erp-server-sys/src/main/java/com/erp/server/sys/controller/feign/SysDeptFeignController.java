@@ -94,4 +94,17 @@ public class SysDeptFeignController extends BaseController {
         return list;
     }
 
+
+    /**
+     * 根据部门名称查询最高级别部门及下级
+     * @author Will
+     * @date: 2023/9/20 18:54
+     * @param deptNameList
+     * @return List<String>
+     */
+    @PostMapping("/listSameLevelDeptIdList")
+    public List<SysDepartmentDTO> listSameLevelDeptIdList(@RequestBody List<String> deptNameList) {
+        List<SysDepartmentDTO> list = departmentService.listSameLevelDeptIdList(deptNameList);
+        return list;
+    }
 }

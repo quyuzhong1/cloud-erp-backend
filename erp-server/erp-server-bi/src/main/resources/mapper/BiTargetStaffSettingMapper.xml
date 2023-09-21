@@ -119,6 +119,7 @@
 
     <select id="listDeptTargetFinish" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
         select
+            bty.dept_id as typeId,
             bty.dept_name as typeName,
             btss.month,
             sum(btss.value) as value

@@ -480,4 +480,14 @@ public interface SysUserFeign {
      **/
     @PostMapping("feign/user/listUserByDept")
     List<SysUserInfoEntity> listUserByDept(@RequestBody String deptName);
+
+    /**
+     * @description: 根据部门名称查询最高级别部门及下级
+     * @author Will
+     * @date: 2023/9/20 18:52
+     * @param deptNameList
+     * @return List<SysDepartmentDTO>
+     */
+    @PostMapping("feign/dept/listSameLevelDeptIdList")
+    List<SysDepartmentDTO> listSameLevelDeptIdList(@RequestBody List<String> deptNameList);
 }
