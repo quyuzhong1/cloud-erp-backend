@@ -20,35 +20,34 @@ public class BiSalesMonitoringTableVO {
     public static class CommonDTO {
 
         /**
-         * 排名
-         */
-        private Integer seq;
-
-        /**
          * 品名
          */
         private String itemName;
 
         /**
-         * 年累计销售额（或销量）
-         */
-        private BigDecimal sumYearSale;
-
-        /**
-         * 上个月累计销售额（或销量）
+         * 本期
          */
         private BigDecimal sumFirstMonthSale;
 
         /**
-         * 下个月累计销售额（或销量）
+         * 上期
          */
         private BigDecimal sumSecondMonthSale;
 
         /**
-         * 环比
+         * 上上期
+         */
+        private BigDecimal sumLastMonthSale;
+
+        /**
+         * 本期环比
          */
         private String relativeRatioName;
 
+        /**
+         * 上期环比
+         */
+        private String lastRelativeRatioName;
     }
 
 
