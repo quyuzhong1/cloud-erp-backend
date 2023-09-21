@@ -15,6 +15,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * BI 筛选条件
@@ -23,7 +24,6 @@ import java.util.List;
  */
 @Data
 @ToString
-@NoArgsConstructor
 public class BiFilterDTO extends SortDTO {
 
 
@@ -38,26 +38,22 @@ public class BiFilterDTO extends SortDTO {
     /**
      * 开始日期
      */
-    @NotNull(message = "开始时间不能为空")
-    @NotNull(message = "开始时间不能为空", groups = SelectTargetModule.class)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startTime;
-
 
 
     /**
      * 结束日期
      */
-    @NotNull(message = "开始时间不能为空")
-    @NotNull(message = "开始时间不能为空", groups = SelectTargetModule.class)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endTime;
+
 
     /**
      * 1 新品
      * 0 老品
      */
-    private Integer productSign;
+    private Integer newSign;
 
     /**
      * 0 CNY实时  1 CNY结算  2原币种
@@ -121,7 +117,7 @@ public class BiFilterDTO extends SortDTO {
      * 默认当月开始时间
      */
     public LocalDateTime getStartTime() {
-        if (null == this.startTime){
+        if (null == this.startTime) {
             return LocalDateTime.now(ZoneId.systemDefault()).with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN);
         }
         return startTime;
@@ -131,7 +127,7 @@ public class BiFilterDTO extends SortDTO {
      * 默认当月结束时间
      */
     public LocalDateTime getEndTime() {
-        if (null == this.endTime){
+        if (null == this.endTime) {
             return LocalDateTime.now(ZoneId.systemDefault()).with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX);
         }
         return LocalDateTime.of(endTime.plusDays(1).toLocalDate(), LocalTime.MIN);
@@ -141,6 +137,18 @@ public class BiFilterDTO extends SortDTO {
      * 是否为新品 bool
      */
     private Boolean hasNewSign;
+
+    public Integer getNewSign() {
+        if (Objects.nonNull(this.hasNewSign)) {
+            if (hasNewSign) {
+                return 1;
+            } else {
+                return 0;
+            }
+
+        }
+        return null;
+    }
 
     /**
      * 排行数量
