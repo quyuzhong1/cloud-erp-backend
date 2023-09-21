@@ -108,7 +108,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         resultMap.put("head",headMap);
 
         //部门
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(dto.getSearchType())) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             List<String> deptDataList = targetList.stream().map(TargetFinishDTO.ViewDTO::getTypeId).collect(Collectors.toList());
             List<SysDepartmentDTO> deptList = sysUserFeign.listSameLevelDeptIdList(deptDataList);
             if (CollectionUtils.isNotEmpty(deptList)) {
@@ -258,7 +258,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         List<TargetFinishDTO.ViewDTO> list = new ArrayList<>();
 
         // 获取年度开始时间和结束时间
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(dto.getSearchType()) ) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) ) {
             //根据指标查询部门目标值
             list = biTargetStaffSettingService.listDeptTargetFinish(dto);
         }
@@ -381,7 +381,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
         Map<String, BigDecimal> map = new HashMap<>();
 
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(dto.getSearchType()) ) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
              map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
@@ -442,7 +442,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
         Map<String, BigDecimal> map = new HashMap<>();
 
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(dto.getSearchType()) ) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
             map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
@@ -503,7 +503,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
         Map<String, BigDecimal> map = new HashMap<>();
 
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(dto.getSearchType()) ) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
             map = mainList.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
@@ -550,7 +550,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(dto.getSearchType()) ) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
             map = list.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
@@ -597,7 +597,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(dto.getSearchType()) ) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
             map = list.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
@@ -645,7 +645,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
-        if (TargetSearchTypeEnum.DEPT.getCode().equals(dto.getSearchType()) ) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
             map = list.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组

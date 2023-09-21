@@ -15,7 +15,8 @@ import java.util.Optional;
  */
 public enum TargetSearchTypeEnum implements EnumMessage {
 
-    DEPT("dept","部门"),
+    FIRST_LEVEL_DEPT("first_level_dept","部门"),
+    SECOND_LEVEL_DEPT("second_level_dept","二级部门"),
     USER("user","人员"),
     SHOP("shop","店铺"),
     CATEGORY("category","品类"),
