@@ -39,8 +39,6 @@ public class BiFilterDTO extends SortDTO {
     /**
      * 开始日期
      */
-    @NotNull(message = "开始时间不能为空")
-    @NotNull(message = "开始时间不能为空", groups = SelectTargetModule.class)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startTime;
 
@@ -49,16 +47,15 @@ public class BiFilterDTO extends SortDTO {
     /**
      * 结束日期
      */
-    @NotNull(message = "结束时间不能为空")
-    @NotNull(message = "结束时间不能为空", groups = SelectTargetModule.class)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endTime;
+
 
     /**
      * 1 新品
      * 0 老品
      */
-    private Integer productSign;
+    private Integer newSign;
 
     /**
      * 0 CNY实时  1 CNY结算  2原币种
@@ -129,7 +126,7 @@ public class BiFilterDTO extends SortDTO {
     }
 
     /**
-     * 默认当月结束时间 + 1
+     * 默认当月结束时间
      */
     public LocalDateTime getEndTime() {
         if (null == this.endTime){
@@ -145,6 +142,18 @@ public class BiFilterDTO extends SortDTO {
      * 是否为新品 bool
      */
     private Boolean hasNewSign;
+
+    public Integer getNewSign() {
+        if (Objects.nonNull(this.hasNewSign)) {
+            if (hasNewSign) {
+                return 1;
+            } else {
+                return 0;
+            }
+
+        }
+        return null;
+    }
 
     /**
      * 排行数量

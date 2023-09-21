@@ -60,11 +60,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/queryByPageBySku")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id",
-            menuCode = "bi:module:content",
-            tableAlias = "o"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:module:content",
+//            tableAlias = "o"
+//    )
     public ApiResult<PagingVO<SkuSalesDTO.PagingSalesInfoDTO>> queryByPageBySku(@RequestBody @Validated PagingDTO<SkuSalesDTO.SearchSkuDTO> dto) {
         PagingVO<SkuSalesDTO.PagingSalesInfoDTO> pagingVO = salesOrderService.queryByPageBySku(dto);
         return success(pagingVO);
@@ -649,4 +649,30 @@ public class BiSalesModuleController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 部门完成率排行
+     * @Author Luo_WG
+     * @Date 2023/9/21 10:37
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.bi.dto.CompletionRateRankingDTO.PagingDTO>>
+     **/
+    @PostMapping("/listCompletionRateRanking")
+    public ApiResult<List<CompletionRateRankingDTO.PagingDTO>> listCompletionRateRanking(@RequestBody @Validated CompletionRateRankingDTO.SearchDTO dto) {
+        List<CompletionRateRankingDTO.PagingDTO> result = salesOrderService.listCompletionRateRanking(dto);
+        return success(result);
+    }
+
+    /**
+     * 部门完成率排行-导出excel
+     * @Author Luo_WG
+     * @Date 2023/9/21 9:46
+     * @param dto
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/completionRateRankingExportExcel")
+    public ApiResult completionRateRankingExportExcel(@RequestBody CompletionRateRankingDTO.SearchDTO dto, HttpServletResponse response) {
+        Boolean flag = salesOrderService.completionRateRankingExportExcel(dto, response);
+        return flag ? success() : failure();
+    }
 }

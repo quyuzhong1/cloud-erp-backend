@@ -71,4 +71,10 @@ public class SysMenuVO implements Serializable {
      * 禁用
      */
     private Boolean disabled;
+
+
+    /**
+     * 菜单排序
+     */
+    private Integer index;
 }

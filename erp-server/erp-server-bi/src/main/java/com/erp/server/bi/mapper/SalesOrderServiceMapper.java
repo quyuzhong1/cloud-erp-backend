@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -64,6 +65,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      * @param dto
      * @return
      */
+    @MapKey("platform")
     List<Map<String, Object>> getPlatformSales(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
     /**
@@ -75,6 +77,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
     List<SalesBaseVO> getShopLastDays(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate,@Param("findTime") String findTime);
 
+    @MapKey("shop")
     List<Map<String, Object>> byTopShop(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
     List<ShopSalesVO> byShopCountry(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
@@ -197,5 +200,22 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      * @param dto
      * @return
      */
-    List<SkuSalesDTO.ProductGradeSalesDTO> listProductGradeSales(@Param("params")BiFilterDTO dto,@Param("settleRate") String settleRate);
+    @MapKey("grade")
+    List<Map<String,Object>> listProductGradeSales(@Param("params")BiFilterDTO dto,@Param("settleRate") String settleRate);
+
+    /**
+     * 部门销售额排行榜
+     * @param dto
+     * @param settleRate
+     * @return
+     */
+    List<CompletionRateRankingDTO.PagingDTO> deptCompletionRateRanking(@Param("params") CompletionRateRankingDTO.SearchDTO dto, @Param("settleRate") String settleRate);
+
+    /**
+     * 用户销售额排行榜
+     * @param dto
+     * @param settleRate
+     * @return
+     */
+    List<CompletionRateRankingDTO.PagingDTO> userCompletionRateRanking(@Param("params") CompletionRateRankingDTO.SearchDTO dto, @Param("settleRate") String settleRate);
 }
