@@ -3363,6 +3363,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         StatisticalDataVO statistical = new StatisticalDataVO();
         String dateType = dto.getDateType();
         switch (dateType) {
+            case "":
 
         }
         return null;
