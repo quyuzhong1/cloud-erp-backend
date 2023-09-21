@@ -106,7 +106,7 @@
 
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpRefundInfoDTO">
         select
-        dri.refund_code as refundId
+        dri.refund_code as refundId,
         dri.platform_order_id,
         dri.platform_name,
         dri.shop_name,

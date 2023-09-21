@@ -275,7 +275,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         if (CollectionUtils.isEmpty(shopNameList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(DmpShopInfoEntity::getName).list();
+        return this.lambdaQuery().in(DmpShopInfoEntity::getName,shopNameList).list();
     }
 
     private List<DmpShopInfoEntity> getSiteShopList() {
