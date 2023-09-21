@@ -192,4 +192,10 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     BigDecimal getMonthAmount(@Param("params") BiTargetYearDTO.SearchDTO dto,@Param("settleRate") String settleRate);
 
 
+    /**
+     * 产品等级的销售额
+     * @param dto
+     * @return
+     */
+    List<SkuSalesDTO.ProductGradeSalesDTO> listProductGradeSales(@Param("params")BiFilterDTO dto,@Param("settleRate") String settleRate);
 }

@@ -2,9 +2,12 @@ package com.erp.server.bi.controller.api;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SalesPlatformEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.MathUtil;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.SalesPlatformEnumVO;
@@ -59,14 +62,15 @@ public class BiDropDownListController extends BaseController {
      */
     @GetMapping("/platform/list")
     public ApiResult<List<SalesPlatformEnumVO>> listPlatformDropDown() {
-        List<SalesPlatformEnumVO> result = Arrays.stream(SalesPlatformEnum.values())
-                .map(x -> new SalesPlatformEnumVO(x.getCode(),x.getName(),x.getDesc()))
+        List<SalesPlatformEnumVO> result = Arrays.stream(PlatformDictEnum.values())
+                .map(x -> new SalesPlatformEnumVO(x.getCode(), x.getName(), x.getDesc()))
                 .collect(Collectors.toList());
         return success(result);
     }
 
     /**
      * 站点下拉列表
+     *
      * @return
      */
     @GetMapping("/site/list")
@@ -74,7 +78,7 @@ public class BiDropDownListController extends BaseController {
         List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
                 .eq(DmpShopInfoEntity::getStatus, 1)
                 .list();
-        if(CollectionUtil.isEmpty(list)){
+        if (CollectionUtil.isEmpty(list)) {
             return success(new ArrayList<>());
         }
         List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream()
@@ -87,6 +91,7 @@ public class BiDropDownListController extends BaseController {
 
     /**
      * 启用禁用下拉框
+     *
      * @return
      */
     @GetMapping("/state/list")
@@ -99,6 +104,7 @@ public class BiDropDownListController extends BaseController {
 
     /**
      * 店铺标识下拉框
+     *
      * @return
      */
     @GetMapping("/storeSign/list")
@@ -111,6 +117,7 @@ public class BiDropDownListController extends BaseController {
 
     /**
      * 订单状态下拉框
+     *
      * @return
      */
     @GetMapping("/orderStatus/list")
@@ -123,6 +130,7 @@ public class BiDropDownListController extends BaseController {
 
     /**
      * 退货状态下拉框
+     *
      * @return
      */
     @GetMapping("/ReturnStatus/list")
@@ -136,6 +144,7 @@ public class BiDropDownListController extends BaseController {
 
     /**
      * 退款状态下拉框
+     *
      * @return
      */
     @GetMapping("/RefundStatus/list")
@@ -148,30 +157,33 @@ public class BiDropDownListController extends BaseController {
 
     /**
      * 时间类型下拉列表
+     *
      * @return
      */
     @GetMapping("/time/type/list")
     public ApiResult<List<SelectShowVO>> listTimeTypeDropDown() {
         List<SelectShowVO> result = Arrays.stream(TimeTypeEnum.values())
-                .map(x -> new SelectShowVO(x.getCode(),x.getName(),x.getDesc()))
+                .map(x -> new SelectShowVO(x.getCode(), x.getName(), x.getDesc()))
                 .collect(Collectors.toList());
         return success(result);
     }
 
     /**
      * 结算类型下拉列表
+     *
      * @return
      */
     @GetMapping("/settle/method/list")
     public ApiResult<List<SelectShowVO>> listSettleMethodDropDown() {
         List<SelectShowVO> result = Arrays.stream(SettleMethodEnum.values())
-                .map(x -> new SelectShowVO(x.getCode(),x.getName(),x.getDesc()))
+                .map(x -> new SelectShowVO(x.getCode(), x.getName(), x.getDesc()))
                 .collect(Collectors.toList());
         return success(result);
     }
 
     /**
      * 币种下拉列表
+     *
      * @return
      */
     @GetMapping("/currency/list")
@@ -184,27 +196,51 @@ public class BiDropDownListController extends BaseController {
     }
 
     /**
+     * 目标币种下拉列表
+     *
+     * @return
+     */
+    @GetMapping("target/currency/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listTargetCurrencyDropDown() {
+        List<BaseDropDownDTO.CommonDTO> list = new ArrayList<>(2);
+        BaseDropDownDTO.CommonDTO cny = new BaseDropDownDTO.CommonDTO();
+        cny.setCode(CurrencyEnum.CNY.getCurrencyCode());
+        cny.setValue(CurrencyEnum.CNY.getCurrencyName());
+        cny.setDesc(CurrencyEnum.CNY.getCurrencySymbol());
+        list.add(cny);
+
+        BaseDropDownDTO.CommonDTO usd = new BaseDropDownDTO.CommonDTO();
+        usd.setCode(CurrencyEnum.USD.getCurrencyCode());
+        usd.setValue(CurrencyEnum.USD.getCurrencyName());
+        usd.setDesc(CurrencyEnum.USD.getCurrencySymbol());
+        list.add(usd);
+        return success(list);
+    }
+
+    /**
      * 模块配置-数据来源下拉列表
+     *
      * @return
      */
     @GetMapping("/dataSource/list")
     public ApiResult<List<SelectShowVO>> listDataSourceDropDown() {
         List<SelectShowVO> result = Arrays.stream(DataTypeEnum.values())
-                .map(x -> new SelectShowVO(x.getCode(),x.getName(),x.getDesc()))
+                .map(x -> new SelectShowVO(x.getCode(), x.getName(), x.getDesc()))
                 .collect(Collectors.toList());
         return success(result);
     }
 
     /**
      * 模块配置-数据指标下拉列表
+     *
      * @return
      */
     @GetMapping("/targetName/list")
-    public ApiResult<List<SelectShowVO>> listTargetNameDropDown(@RequestParam("dataSource") Integer dataSource,@RequestParam("dataDimension") Integer dataDimension) {
+    public ApiResult<List<SelectShowVO>> listTargetNameDropDown(@RequestParam("dataSource") Integer dataSource, @RequestParam("dataDimension") Integer dataDimension) {
         List<SelectShowVO> result = new ArrayList<>();
-        List<String> list = biDataSourceCustomService.listTargetNameByDataSource(dataSource,dataDimension);
+        List<String> list = biDataSourceCustomService.listTargetNameByDataSource(dataSource, dataDimension);
         if (CollectionUtils.isNotEmpty(list)) {
-             result = list.stream().map(x -> new SelectShowVO().setName(x).setDesc(x))
+            result = list.stream().map(x -> new SelectShowVO().setName(x).setDesc(x))
                     .collect(Collectors.toList());
         }
         return success(result);
@@ -212,18 +248,20 @@ public class BiDropDownListController extends BaseController {
 
     /**
      * 模块配置-数据维度下拉列表
+     *
      * @return
      */
     @GetMapping("/dataDimension/list")
     public ApiResult<List<SelectShowVO>> listDataDimensionDropDown() {
         List<SelectShowVO> result = Arrays.stream(BiDataSourceCustomTypeEnum.values())
-                .map(x -> new SelectShowVO(x.getCode(),x.getName(),x.getDesc()))
+                .map(x -> new SelectShowVO(x.getCode(), x.getName(), x.getDesc()))
                 .collect(Collectors.toList());
         return success(result);
     }
 
     /**
      * 指标分类-指标名称下拉列表
+     *
      * @return
      */
     @GetMapping("/all/targetName/list")
@@ -239,6 +277,7 @@ public class BiDropDownListController extends BaseController {
 
     /**
      * 指标分类-指标分类下拉列表
+     *
      * @return
      */
     @GetMapping("/all/targetType/list")
@@ -256,12 +295,12 @@ public class BiDropDownListController extends BaseController {
      * 店铺下拉框(status,1启用，2禁用，默认空返回全部数据)
      */
     @GetMapping("/shop/list")
-    public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listShopDropDown(@RequestParam(value = "status",required = false) Integer status) {
+    public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listShopDropDown(@RequestParam(value = "status", required = false) Integer status) {
         List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
-                .eq(DmpShopInfoEntity::getIsVijim,Boolean.TRUE)
+                .eq(DmpShopInfoEntity::getIsVijim, Boolean.TRUE)
                 .eq(null != status, DmpShopInfoEntity::getStatus, status)
                 .list();
-        if(CollectionUtil.isEmpty(list)){
+        if (CollectionUtil.isEmpty(list)) {
             return success(new ArrayList<>());
         }
         List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream()
@@ -275,16 +314,16 @@ public class BiDropDownListController extends BaseController {
      * 所有店铺下拉框(status,1启用，2禁用，默认空返回全部数据)
      */
     @GetMapping("/shop/listAll")
-    public ApiResult<List<ShopDropDownVO.ShopDropDownIdVO>> listAllShopDropDown(@RequestParam(value = "status",required = false) Integer status) {
+    public ApiResult<List<ShopDropDownVO.ShopDropDownIdVO>> listAllShopDropDown(@RequestParam(value = "status", required = false) Integer status) {
         List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
-                .eq(DmpShopInfoEntity::getIsVijim,Boolean.TRUE)
+                .eq(DmpShopInfoEntity::getIsVijim, Boolean.TRUE)
                 .eq(null != status, DmpShopInfoEntity::getStatus, status)
                 .list();
-        if(CollectionUtil.isEmpty(list)){
+        if (CollectionUtil.isEmpty(list)) {
             return success(new ArrayList<>());
         }
         List<ShopDropDownVO.ShopDropDownIdVO> result = list.stream()
-                .map(x -> new ShopDropDownVO.ShopDropDownIdVO(x.getId(),x.getName(), MathUtil.ONE.equals(x.getStatus()) ? false : true ))
+                .map(x -> new ShopDropDownVO.ShopDropDownIdVO(x.getId(), x.getName(), MathUtil.ONE.equals(x.getStatus()) ? false : true))
                 .distinct()
                 .collect(Collectors.toList());
         return success(result);
@@ -296,7 +335,7 @@ public class BiDropDownListController extends BaseController {
     @GetMapping("/category/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listCategoryDropDown() {
         List<DmpSkuInfoEntity> list = dmpSkuInfoService.list();
-        if(CollectionUtil.isEmpty(list)){
+        if (CollectionUtil.isEmpty(list)) {
             return success(new ArrayList<>());
         }
         List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream().map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getParentCategoryName()))
@@ -312,7 +351,7 @@ public class BiDropDownListController extends BaseController {
     @GetMapping("/brand/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listBrandDropDown() {
         List<DmpSkuInfoEntity> list = dmpSkuInfoService.list();
-        if(CollectionUtil.isEmpty(list)){
+        if (CollectionUtil.isEmpty(list)) {
             return success(new ArrayList<>());
         }
         List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream().map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getBrandName()))
@@ -324,6 +363,7 @@ public class BiDropDownListController extends BaseController {
 
     /**
      * 销售监控-类型下拉列表
+     *
      * @return
      */
     @GetMapping("/biSalesMonitoring/type/list")
@@ -337,6 +377,7 @@ public class BiDropDownListController extends BaseController {
 
     /**
      * 销售监控-比较符下拉列表
+     *
      * @return
      */
     @GetMapping("/compare/list")

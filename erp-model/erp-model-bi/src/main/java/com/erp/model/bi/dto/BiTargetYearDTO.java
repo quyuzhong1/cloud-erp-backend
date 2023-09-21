@@ -283,7 +283,7 @@ public class BiTargetYearDTO implements Serializable {
         private Integer year;
 
         /**
-         *
+         *来源 http://172.16.100.11:3002/project/74/interface/api/23668
          */
         @NotBlank(message = "货币不能为空")
         private String currency;

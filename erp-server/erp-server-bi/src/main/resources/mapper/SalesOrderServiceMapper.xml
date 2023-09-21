@@ -4549,4 +4549,9 @@
 
         </include>
     </select>
+
+    <!--产品等级销售额-->
+    <select id="listProductGradeSales" resultType="com.erp.model.bi.dto.SkuSalesDTO$ProductGradeSalesDTO">
+
+    </select>
 </mapper>

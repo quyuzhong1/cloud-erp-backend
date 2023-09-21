@@ -124,7 +124,7 @@ public class BiTargetCategorySettingDTO implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO extends BiTargetYearDTO.MonthDTO{
         /**
-         * 店铺id
+         * 分类id 来源 http://172.16.100.11:3002/project/47/interface/api/9961  grade=1
          */
         @NotBlank(message = "分类名")
         private String categoryId;
