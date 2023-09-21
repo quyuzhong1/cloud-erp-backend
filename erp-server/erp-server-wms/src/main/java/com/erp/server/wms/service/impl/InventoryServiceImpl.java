@@ -791,9 +791,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         InventoryDTO.PdaHomeInventoryBalanceDTO pdaHomeInventoryBalanceDTO = new InventoryDTO.PdaHomeInventoryBalanceDTO();
         List<InventoryDTO.PdaHomeInventoryBalanceDTO> inventory = baseMapper.getInventoryByWarehouseId(warehouseId, InventoryStatusEnum.USABLE.getCode());
         if (StringUtils.isBlank(warehouseId)) {
-            Integer usableQty = 0 ;
-            Integer todayDeliveryQty = 0;
-            Integer todayStockInQty = 0;
+            Long usableQty = 0L ;
+            Long todayDeliveryQty = 0L;
+            Long todayStockInQty = 0L;
 
             for (InventoryDTO.PdaHomeInventoryBalanceDTO homeInventoryBalanceDTO : inventory) {
                 if (homeInventoryBalanceDTO.getUsableQty() != null) {
