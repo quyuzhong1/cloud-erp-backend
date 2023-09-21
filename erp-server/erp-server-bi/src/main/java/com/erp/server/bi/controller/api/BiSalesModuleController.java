@@ -615,14 +615,7 @@ public class BiSalesModuleController extends BaseController {
     }
 
     /**
-     *  退货数据-导出
-     * @author Will
-     * @date: 2022/12/15 11:45
-     * @param dto
-     * @param response
-     */
-    /**
-     * 新老品销售额
+     * 新老品销售额-导出excel
      * @Author Luo_WG
      * @Date 2023/9/21 9:46
      * @param dto
