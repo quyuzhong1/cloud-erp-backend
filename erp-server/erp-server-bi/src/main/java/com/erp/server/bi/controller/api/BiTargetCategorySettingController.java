@@ -141,7 +141,7 @@ public class BiTargetCategorySettingController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/importFile")
+    @PostMapping("/importFile")
     @LogAction(value = LogActionEnum.IMPORT, desc = "分类目标设置导入")
     public ApiResult<BiTargetCategorySettingDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         BiTargetCategorySettingDTO.ImportDTO result = biTargetCategorySettingService.importFile(excelFile, response);

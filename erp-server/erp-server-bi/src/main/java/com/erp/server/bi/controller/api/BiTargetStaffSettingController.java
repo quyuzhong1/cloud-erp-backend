@@ -143,7 +143,7 @@ public class BiTargetStaffSettingController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/importFile")
+    @PostMapping("/importFile")
     @LogAction(value = LogActionEnum.IMPORT, desc = "人员目标设置导入")
     public ApiResult<BiTargetStaffSettingDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         BiTargetStaffSettingDTO.ImportDTO result = biTargetStaffSettingService.importFile(excelFile, response);
