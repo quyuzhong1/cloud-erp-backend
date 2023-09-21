@@ -258,7 +258,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         List<TargetFinishDTO.ViewDTO> list = new ArrayList<>();
 
         // 获取年度开始时间和结束时间
-        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) ) {
+        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
             list = biTargetStaffSettingService.listDeptTargetFinish(dto);
         }
