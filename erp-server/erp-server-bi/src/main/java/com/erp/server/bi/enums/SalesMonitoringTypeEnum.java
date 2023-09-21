@@ -8,7 +8,7 @@ package com.erp.server.bi.enums;
  */
 public enum SalesMonitoringTypeEnum {
 
-    DEPT(0, "二级部门","二级部门"),
+    DEPT(0, "部门","部门"),
     USER(1, "人员","人员"),
     SHOP(2, "店铺","店铺"),
     CATEGORY(3, "品类","品类"),

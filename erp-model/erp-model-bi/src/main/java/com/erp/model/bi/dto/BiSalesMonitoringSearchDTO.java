@@ -21,7 +21,7 @@ public class BiSalesMonitoringSearchDTO extends PermissionsDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class ParamDTO {
+    public static class ParamDTO extends PermissionsDTO{
 
         /**
          * 考核维度（销售额 salesAmount、销量 salesQty）

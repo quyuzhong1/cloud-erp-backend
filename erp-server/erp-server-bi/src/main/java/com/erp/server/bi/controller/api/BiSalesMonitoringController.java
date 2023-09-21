@@ -42,7 +42,7 @@ public class BiSalesMonitoringController extends BaseController {
     }
 
     /**
-     * 销售监控-批量新增销售监控
+     * 销售监控-批量修改销售监控
      * @author Will
      * @date: 2022/12/29 16:54
      * @param list
