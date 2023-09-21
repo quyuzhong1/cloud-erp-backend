@@ -186,7 +186,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         if (CollectionUtils.isNotEmpty(treeList)) {
             for (SysDepartmentTreeDTO vo : treeList) {
                 //如果路径包含了 就说有
-                if (vo.getPath().contains(departmentId)) {
+                if (StringUtils.isNotBlank(departmentId) && vo.getPath().contains(departmentId)) {
                     resultList.add(vo.getId());
                 }
             }
@@ -403,9 +403,9 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
 
         List<SysDepartmentUserNumberDTO> deptUserList = sysDepartmentUserService.listDeptUserByUserIdList(userIdList);
         //父部门id s
-        List<String>  deptPidList=deptUserList.stream().map(SysDepartmentUserNumberDTO::getDeptPid).collect(Collectors.toList());
-        List<SysDepartmentUserEntity>  departmentUserList=  sysDepartmentUserService.listByDepartmentIds(deptPidList);
-        List<String> resultList=departmentUserList.stream().filter(d-> SysConstant.YES_STATE.equals(d.getLeadState())).
+        List<String> deptPidList = deptUserList.stream().map(SysDepartmentUserNumberDTO::getDeptPid).collect(Collectors.toList());
+        List<SysDepartmentUserEntity> departmentUserList = sysDepartmentUserService.listByDepartmentIds(deptPidList);
+        List<String> resultList = departmentUserList.stream().filter(d -> SysConstant.YES_STATE.equals(d.getLeadState())).
                 map(SysDepartmentUserEntity::getUserId).collect(Collectors.toList());
         return resultList;
     }
@@ -438,11 +438,11 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         }
         return resultList;
     }
-    
+
     /**
      * 查找部门最上级
      */
-    private SysDepartmentTreeDTO getBest (List<SysDepartmentTreeDTO> treeList,String deptId) {
+    private SysDepartmentTreeDTO getBest(List<SysDepartmentTreeDTO> treeList, String deptId) {
         SysDepartmentTreeDTO sysDepartmentTreeDTO = treeList.stream().filter(obj -> obj.getId().equals(deptId)).findFirst().orElse(null);
         if (ObjectUtils.isEmpty(sysDepartmentTreeDTO)) {
             return null;
