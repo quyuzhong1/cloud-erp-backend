@@ -18,7 +18,6 @@ import com.erp.model.bi.dto.BiSalesMonitoringSearchDTO;
 import com.erp.model.bi.dto.BiSalesMonitoringTableDTO;
 import com.erp.model.bi.entity.BiSalesMonitoringEntity;
 import com.erp.model.bi.enums.MetricsEnum;
-import com.erp.model.bi.enums.SalesMonitoringSearchTypeEnum;
 import com.erp.model.bi.vo.BiSalesMonitoringTableVO;
 import com.erp.server.bi.enums.BiCompareEnum;
 import com.erp.server.bi.enums.SalesMonitoringTypeEnum;
@@ -139,7 +138,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                 this.listSalesMonitoring(biSalesMonitoringTableList,entity,seriesVO,dto.getMetrics(),null);
             }
         }
-        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.DEPT.getDesc())) {
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.DEPT.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
                 this.listDeptNameMonitoring(biSalesMonitoringTableList, entity, seriesVO,dto.getMetrics());
             }
@@ -439,7 +438,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     private LinkedHashMap<String,Object> handleHand (BiSalesMonitoringSearchDTO.ParamDTO dto) {
         LinkedHashMap<String,Object> head = new LinkedHashMap<>();
         head.put("seq","排名");
-        head.put(dto.getSearchType(), SalesMonitoringSearchTypeEnum.getByCode(dto.getSearchType()));
+        head.put(SalesMonitoringTypeEnum.getName(dto.getSearchType()), SalesMonitoringTypeEnum.getDesc(dto.getSearchType()));
         if (MetricsEnum.SALES_QTY.getCode().equals(dto.getMetrics())) {
             head.put("sumYearSale","年累计销量");
             head.put("sumFirstMonthSale","上个月销量");
@@ -596,6 +595,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     public List<BiSalesMonitoringEntity> listByChargeId(String chargeId) {
         LambdaQueryWrapper<BiSalesMonitoringEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiSalesMonitoringEntity::getChargeId,chargeId);
+        queryWrapper.orderByAsc(BiSalesMonitoringEntity::getId);
         return this.list(queryWrapper);
     }
 

@@ -22,8 +22,8 @@
         doio.shop_name,
         doio.source_platform,
         doio.country_name_cn
-        from dmp_order_item doi
-        left join dmp_order_info doio on doi.order_id = doio.id
+        from dmp_order_info doio
+        inner join dmp_order_item doi on doi.order_id = doio.id
         where doio.platform_create_time >= #{firstDayOfLastMonth} and #{firstDayOfLastYear} > doio.platform_create_time
         <if test="dto.permissionSql != null and dto.permissionSql != ''">
             ${dto.permissionSql }
