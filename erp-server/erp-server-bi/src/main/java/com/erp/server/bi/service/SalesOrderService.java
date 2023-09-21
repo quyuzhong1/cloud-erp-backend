@@ -198,4 +198,13 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      * @return
      */
     StatisticalDataVO productGradeSales(BiFilterDTO dto);
+
+    /**
+     * 部门完成率排行
+     * @Author Luo_WG
+     * @Date 2023/9/21 10:37
+     * @param dto
+     * @return java.util.List<com.erp.model.bi.dto.CompletionRateRankingDTO.PagingDTO>
+     **/
+    List<CompletionRateRankingDTO.PagingDTO> listCompletionRateRanking(CompletionRateRankingDTO.SearchDTO dto);
 }
