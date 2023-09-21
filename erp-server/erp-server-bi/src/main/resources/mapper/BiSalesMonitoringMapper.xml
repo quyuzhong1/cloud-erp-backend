@@ -24,9 +24,7 @@
         doio.country_name_cn
         from dmp_order_item doi
         left join dmp_order_info doio on doi.order_id = doio.id
-        where doio.platform_create_time is not null
-          and (to_char(doio.platform_create_time,'YYYY') = to_char(CURRENT_DATE,'YYYY')
-          or to_char(doio.platform_create_time,'YYYYMM') = to_char(CURRENT_DATE + INTERVAL '-1 MONTH','YYYYMM'))
+        where doio.platform_create_time >= #{firstDayOfLastMonth} and #{firstDayOfLastYear} > doio.platform_create_time
         <if test="dto.permissionSql != null and dto.permissionSql != ''">
             ${dto.permissionSql }
         </if>
