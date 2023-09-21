@@ -3765,8 +3765,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto) {
-       /* Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        dto.setStatus(state);*/
+        Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+        dto.setStatus(state);
         List<SkuVO> skuVOS = baseMapper.pdaSearchSku(dto);
         if (CollectionUtils.isEmpty(skuVOS)) {
             throw new ServiceException(ApiError.ERROR_95107);
