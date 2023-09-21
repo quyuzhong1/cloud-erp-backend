@@ -139,7 +139,7 @@ public class BiTargetSkuSettingController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/importFile")
+    @PostMapping("/importFile")
     @LogAction(value = LogActionEnum.IMPORT, desc = "单品目标设置导入")
     public ApiResult<BiTargetSkuSettingDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         BiTargetSkuSettingDTO.ImportDTO result = biTargetSkuSettingService.importFile(excelFile, response);
