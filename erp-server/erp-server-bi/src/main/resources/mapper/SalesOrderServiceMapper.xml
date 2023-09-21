@@ -479,7 +479,7 @@
             </if>
             <!-- 是否新品 -->
             <if test="params.newSign!=null" >
-                AND i.new_sign =#{newSign}
+                AND i.new_sign =#{params.newSign}
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
