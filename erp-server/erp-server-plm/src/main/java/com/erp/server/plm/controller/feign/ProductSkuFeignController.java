@@ -95,6 +95,16 @@ public class ProductSkuFeignController {
     }
 
     /**
+     * 通过子类id或名称获取到父级的分类
+     * @author Jim
+     */
+    @PostMapping("/parentCategory")
+    public BasicCategoryDTO getParentCategoryByParam(@RequestBody Map<String, String> params) {
+        return basicCategoryService.getParentCategoryByParam(params);
+    }
+
+
+    /**
      * @param params
      * @return ProductDetailDTO
      * @description: 查询sku

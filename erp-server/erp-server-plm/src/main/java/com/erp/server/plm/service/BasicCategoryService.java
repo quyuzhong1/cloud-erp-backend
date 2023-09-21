@@ -85,4 +85,9 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
      * @return java.util.List<com.erp.model.plm.entity.BasicCategoryEntity>
      */
     List<BasicCategoryEntity> listParentCategory();
+
+    /**
+     * 通过子类id或名称获取到父级的分类
+     */
+    BasicCategoryDTO getParentCategoryByParam(Map<String, String> params);
 }
