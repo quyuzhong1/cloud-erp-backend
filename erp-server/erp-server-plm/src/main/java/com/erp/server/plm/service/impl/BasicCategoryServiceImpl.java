@@ -405,6 +405,37 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     }
 
     /**
+     * 通过子类id或名称获取到父级的分类
+     */
+    @Override
+    public BasicCategoryDTO getParentCategoryByParam(Map<String, String> params) {
+        if (null == params || params.isEmpty()) {
+            return null;
+        }
+        String id = params.get("id");
+        String name = params.get("name");
+        BasicCategoryEntity entity = lambdaQuery()
+                .eq(StringUtils.isNotBlank(id), BasicCategoryEntity::getId, id)
+                .eq(StringUtils.isNotBlank(name), BasicCategoryEntity::getName, name)
+                .last("limit 1")
+                .one();
+        if (null == entity){
+            return null;
+        }
+        if (StringUtils.isBlank(entity.getPid()) || "0".equals(entity.getPid())){
+            return null;
+        }
+        BasicCategoryEntity parentEntity = getById(entity.getPid());
+        if (null == parentEntity){
+            return null;
+        }
+        BasicCategoryDTO dto = new BasicCategoryDTO();
+        BeanUtils.copyProperties(parentEntity, dto);
+        return dto;
+
+    }
+
+    /**
      * list加入父级品类
      */
     private void setParentEntity(String pid, List<BasicCategoryEntity> list) {

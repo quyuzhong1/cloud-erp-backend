@@ -17,8 +17,13 @@ import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.entity.BiProductInfoEntity;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
+import com.erp.model.plm.dto.BasicCategoryDTO;
+import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.dto.SkuDTO;
+import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.BasicLabelEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductRefLabelVO;
@@ -49,7 +54,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     private DmpOrderInfoService dmpOrderInfoService;
 
     @Resource
-    private DmpSkuInfoService dmpSkuInfoService;
+    private DmpOrderItemService dmpOrderItemService;
 
     @Resource
     private BiProductDetailService biProductDetailService;
@@ -566,52 +571,74 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
 
     @Override
     public BiSkuDetailTopDTO skuDetailTop(SkuDetailDTO dto) {
-        DmpSkuInfoEntity entity = dmpSkuInfoService.getBySkuNo(dto.getSkuNo(), null);
-        if (null == entity) {
-            throw new ServiceException(ApiError.ERROR_92051);
-        }
         // 商品详情
         BiProductDetailEntity detailEntity = biProductDetailService.getBySkuNo(dto.getSkuNo());
-        // 商品信息
-        BiProductInfoEntity productEntity = null;
-        if (null != detailEntity){
-            productEntity = biProductInfoService.getById(detailEntity.getProductId());
+        if(null == detailEntity){
+            throw new ServiceException(ApiError.ERROR_92051);
         }
+        // 商品信息
+        BiProductInfoEntity productEntity = biProductInfoService.getById(detailEntity.getProductId());
+        // 商品销售信息
+        List<SkuDTO.SalesDTO> salesDTOS = plmTaskFeign.listSkuSalesBySkuNos(Collections.singletonList(dto.getSkuNo()));
+        SkuDTO.SalesDTO salesDTO = salesDTOS.stream().findFirst().orElse(null);
 
-        // 公司首单
-        DmpOrderInfoEntity orderInfoEntity = dmpOrderInfoService.firstOrderBySkuNo(dto.getSkuNo());
+        //根据名称查询品类
+        Map<String,String> categoryParams = new HashMap<>();
+        categoryParams.put("id", productEntity.getCategoryId());
+        BasicCategoryDTO category = plmTaskFeign.getParent(categoryParams);
+
         // 各平台首单时间
         // Map<平台, 订单>
         Map<String, DmpOrderInfoEntity> orderMap = dmpOrderInfoService.mapFirstOrderBySkuNo(dto.getSkuNo());
 
+        // 销售状态
+        Integer scalesStatus = null;
+        if (null != salesDTO){
+            scalesStatus = salesDTO.getSaleState();
+        }
+
         //组合
-        BiSkuDetailTopDTO resultDto = new BiSkuDetailTopDTO();
-        BeanUtils.copyProperties(entity, resultDto);
-        if (null != orderInfoEntity) {
-            // 平台首次下单时间
-            LocalDate platformCreateDate = orderInfoEntity.getPlatformCreateTime().toLocalDate();
+        BiSkuDetailTopDTO resultDto = new BiSkuDetailTopDTO(detailEntity,
+                productEntity,
+                scalesStatus
+        );
+        // 设置父类名称
+        if (null != category){
+            resultDto.setParentCategoryName(category.getName());
+        }
+
+        // 最新订单
+        DmpOrderItemEntity orderItemEntity = dmpOrderItemService.lambdaQuery()
+                .eq(DmpOrderItemEntity::getSkuNo, dto.getSkuNo())
+                .orderByDesc(DmpOrderItemEntity::getId)
+                .last("LIMIT 1")
+                .one();
+        if(null != orderItemEntity){
+            // 设置最新名称
+           resultDto.setNameCn(orderItemEntity.getItemName());
+        }
+
+        // 平台首次下单时间
+        if (null != salesDTO && null != salesDTO.getFirstOrderDate()){
+            LocalDate platformCreateDate = salesDTO.getFirstOrderDate();
             resultDto.setFirstOrderDate(platformCreateDate.toString());
             // 超过一年认为非新品
             if (LocalDate.now(ZoneId.systemDefault()).isAfter(platformCreateDate.plusYears(1))){
                 resultDto.setHasNewSign(false);
             }
         }
-        // 图片
-        resultDto.setImageUrl(null == productEntity ? "" : productEntity.getImageUrl());
-        // 产品经理
-        resultDto.setChargeId(null == detailEntity ? "" : detailEntity.getChargeId());
-        resultDto.setChargeName(null == detailEntity ? "" : detailEntity.getChargeName());
 
         if (!orderMap.isEmpty()) {
             // 各平台首单时间
             List<String> platformFistOrderList = orderMap.entrySet()
                     .stream()
+                    .filter(e-> StringUtils.isNotBlank(e.getKey()))
                     .map(e -> e.getKey().concat(":").concat(e.getValue().getCreateTime().toLocalDate().toString()))
                     .collect(Collectors.toList());
             resultDto.setPlatformFirstOrderDate(platformFistOrderList);
         }
         //增加标签列表
-        List<ProductRefLabelVO> productRefLabelVOS = plmTaskFeign.getProductRelLabel(entity.getId());
+        List<ProductRefLabelVO> productRefLabelVOS = plmTaskFeign.getProductRelLabel(dto.getSkuNo());
         if (CollectionUtils.isNotEmpty(productRefLabelVOS)) {
             resultDto.setLabels(BeanMapperUtils.copyList(LabelVO.class, productRefLabelVOS));
         }

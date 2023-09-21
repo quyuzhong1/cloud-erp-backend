@@ -343,4 +343,10 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/getProductRelLabelBySkuId")
     List<ProductRefLabelVO> getProductRelLabel(String skuId);
+
+    /**
+     * 通过子类id或名称获取到父级的分类
+     */
+    @GetMapping("feign/product/parentCategory")
+    BasicCategoryDTO getParent(Map<String, String> categoryParams);
 }
