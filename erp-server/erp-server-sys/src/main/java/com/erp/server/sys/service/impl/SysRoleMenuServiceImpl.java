@@ -1,15 +1,14 @@
 package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.constant.CommonConstants;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysMenuEntity;
 import com.erp.model.sys.entity.SysRoleMenuEntity;
+import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.mapper.SysRoleMenuMapper;
 import com.erp.server.sys.service.SysMenuService;
@@ -20,10 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -137,8 +133,9 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
             menuIds = baseMapper.findMenuIdsByRoleIds(roleIds);
         }
         List<SysMenuVO> resultList = menuList.stream().
-                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId())).
-                map(item -> {
+                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId()))
+                .sorted(Comparator.comparing(SysMenuVO::getIndex))
+                .map(item -> {
                     item.setParentName("");
                     item.setChildrenList(getRoleChildrenList(item, menuList, menuIds));
                     return item;
@@ -163,8 +160,9 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
         List<String> menuIds = allList.stream().map(s -> s.getMenuId()).collect(Collectors.toList());
         List<SysMenuVO> resultList = menuList.stream().
-                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId())).
-                map(item -> {
+                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId()))
+                .sorted(Comparator.comparing(SysMenuVO::getIndex))
+                .map(item -> {
                     item.setParentName("");
                     item.setChildrenList(getRoleChildrenList(item, menuList, menuIds));
                     return item;
@@ -262,8 +260,9 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
 
         List<RoleMenuTreeDTO> menuList = BeanMapperUtils.copyList(RoleMenuTreeDTO.class, allList);
         List<RoleMenuTreeDTO> treeList = menuList.stream().
-                filter(item -> "0".equals(item.getParentId())).
-                map(item -> {
+                filter(item -> "0".equals(item.getParentId()))
+                .sorted(Comparator.comparing(RoleMenuTreeDTO::getIndex))
+                .peek(item -> {
                     SysRoleMenuEntity sysRoleMenuEntity = sysRoleMenuEntityList.stream().filter(roleMenu -> item.getMenuId().equals(roleMenu.getMenuId())).findFirst().orElse(null);
                     if (ObjectUtils.isNotEmpty(sysRoleMenuEntity)) {
                         item.setDataScope(sysRoleMenuEntity.getDataScope());
@@ -273,7 +272,6 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                     item.setParentName("");
                     item.setSelectState(false);
                     item.setChildrenList(getChildrenList(item, menuList, menuIds, sysRoleMenuEntityList));
-                    return item;
                 }).collect(Collectors.toList());
 
         roleMenuVO.setSysRoleMenuTrees(treeList);
@@ -308,8 +306,9 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
             menuIds = baseMapper.findMenuIdsByRoleIds(roleIds);
         }
         List<SysMenuVO> resultList = menuList.stream().
-                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId())).
-                map(item -> {
+                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId()))
+                .sorted(Comparator.comparing(SysMenuVO::getIndex))
+                .map(item -> {
                     item.setParentName("");
                     item.setChildrenList(getRoleChildrenLeftList(item, menuList, menuIds, SysConstant.FUNCTION_TYPE, SysConstant.BUTTON_TYPE));
                     return item;
@@ -334,8 +333,9 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
         List<String> menuIds = allList.stream().map(s -> s.getMenuId()).collect(Collectors.toList());
         List<SysMenuVO> resultList = menuList.stream().
-                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId())).
-                map(item -> {
+                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId()))
+                .sorted(Comparator.comparing(SysMenuVO::getIndex))
+                .map(item -> {
                     item.setParentName("");
                     item.setChildrenList(getRoleChildrenLeftList(item, menuList, menuIds, SysConstant.FUNCTION_TYPE, SysConstant.BUTTON_TYPE));
                     return item;
@@ -381,8 +381,9 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      * @date 2022-09-26 9:54
      */
     private List<SysMenuVO> getRoleChildrenLeftList(SysMenuVO item, List<SysMenuVO> treeList, List<String> menuIds, Integer functionType, Integer buttonType) {
-        List<SysMenuVO> collectList = treeList.stream().filter(menu -> (item.getMenuId().equals(menu.getParentId()) && menuIds.contains(menu.getMenuId()) && menu.getType() != functionType && menu.getType() != buttonType)).
-                map(m -> {
+        List<SysMenuVO> collectList = treeList.stream().filter(menu -> (item.getMenuId().equals(menu.getParentId()) && menuIds.contains(menu.getMenuId()) && menu.getType() != functionType && menu.getType() != buttonType))
+                .sorted(Comparator.comparing(SysMenuVO::getIndex))
+                .map(m -> {
                     m.setParentName(item.getMenuName());
                     m.setChildrenList(getRoleChildrenLeftList(m, treeList, menuIds, functionType, buttonType));
                     return m;
@@ -404,8 +405,9 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      */
     private List<SysMenuVO> getRoleChildrenList(SysMenuVO item, List<SysMenuVO> treeList, List<String> menuIds) {
         //menu.getType() != SysConstant.FUNCTION_TYPE
-        List<SysMenuVO> collectList = treeList.stream().filter(menu -> (item.getMenuId().equals(menu.getParentId()) && menuIds.contains(menu.getMenuId()))).
-                map(m -> {
+        List<SysMenuVO> collectList = treeList.stream().filter(menu -> (item.getMenuId().equals(menu.getParentId()) && menuIds.contains(menu.getMenuId())))
+                .sorted(Comparator.comparing(SysMenuVO::getIndex))
+                .map(m -> {
                     m.setParentName(item.getMenuName());
                     m.setChildrenList(getRoleChildrenList(m, treeList, menuIds));
                     return m;
@@ -416,6 +418,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
 
     private List<RoleMenuTreeDTO> getChildrenList(RoleMenuTreeDTO item, List<RoleMenuTreeDTO> menuList, List<String> menuIds, List<SysRoleMenuEntity> sysRoleMenuEntityList) {
         List<RoleMenuTreeDTO> collectList = menuList.stream().filter(menu -> item.getMenuId().equals(menu.getParentId()))
+                .sorted(Comparator.comparing(RoleMenuTreeDTO::getIndex))
                 .map(m -> {
                     m.setParentName(item.getMenuName());
                     String selectFlag = menuIds.stream().filter(r -> r.equals(m.getMenuId())).findFirst().orElse("0");
