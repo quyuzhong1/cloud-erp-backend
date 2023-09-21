@@ -52,7 +52,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     private DmpOrderInfoService dmpOrderInfoService;
 
     @Resource
-    private DmpSkuInfoService dmpSkuInfoService;
+    private DmpOrderItemService dmpOrderItemService;
 
     @Resource
     private BiProductDetailService biProductDetailService;
