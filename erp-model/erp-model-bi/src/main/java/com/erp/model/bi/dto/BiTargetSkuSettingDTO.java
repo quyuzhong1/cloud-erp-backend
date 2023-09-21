@@ -91,7 +91,7 @@ public class BiTargetSkuSettingDTO implements Serializable {
         /**
          * 人员设置列表
          */
-        private List<CommonDTO> skuSettingList;
+        private List<CommonDTO> settingList;
 
     }
     /**

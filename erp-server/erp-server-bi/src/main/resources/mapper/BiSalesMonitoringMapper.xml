@@ -25,7 +25,7 @@
         doio.country_name_cn
         from dmp_order_info doio
         inner join dmp_order_item doi on doi.order_id = doio.id
-        where doio.platform_create_time >= #{firstDayOfLastMonth} and #{firstDayOfLastYear} > doio.platform_create_time
+        where doio.platform_create_time >= #{lastsMonth}
         <if test="dto.permissionSql != null and dto.permissionSql != ''">
             ${dto.permissionSql }
         </if>

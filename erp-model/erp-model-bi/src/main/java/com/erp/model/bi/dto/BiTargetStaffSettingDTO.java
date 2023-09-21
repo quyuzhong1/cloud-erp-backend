@@ -94,7 +94,7 @@ public class BiTargetStaffSettingDTO implements Serializable {
         /**
          * 人员设置列表
          */
-        private List<CommonDTO> staffSettingList;
+        private List<CommonDTO> settingList;
 
     }
 

@@ -92,7 +92,7 @@ public class BiTargetCategorySettingDTO implements Serializable {
         /**
          * 人员设置列表
          */
-        private List<CommonDTO> categorySettingList;
+        private List<CommonDTO> settingList;
 
     }
 

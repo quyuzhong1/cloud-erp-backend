@@ -217,4 +217,14 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      * @return java.lang.Boolean
      **/
     Boolean completionRateRankingExportExcel(CompletionRateRankingDTO.SearchDTO dto, HttpServletResponse response);
+
+    
+    /**
+     * 毛利额 毛利率 模块
+     * @author yl
+     * @date 2023-09-21 17:18
+     * @param dto
+     * @return com.erp.model.bi.vo.StatisticalDataVO
+     */
+    StatisticalDataVO grossProfit(BiDataSourceCostDTO.GrossProfitDTO dto);
 }

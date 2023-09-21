@@ -365,7 +365,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
                 common.setDecemberRate(pullView(metrics, december, dbList, rateStr));
                 staffList.add(common);
             }
-            detail.setNewProductSettingList(staffList);
+            detail.setSettingList(staffList);
             detailList.add(detail);
         }
         view.setDetailList(detailList);
@@ -450,7 +450,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
             BiTargetNewProductSettingDTO.DetailDTO detail = new BiTargetNewProductSettingDTO.DetailDTO();
             detail.setMetrics(item.getKey());
             detail.setMetricsName(item.getKey().getName());
-            detail.setNewProductSettingList(item.getValue());
+            detail.setSettingList(item.getValue());
             detailList.add(detail);
         }
         result.setSuccessList(detailList);

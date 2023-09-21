@@ -353,7 +353,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
                 staffList.add(common);
 
             }
-            detail.setStaffSettingList(staffList);
+            detail.setSettingList(staffList);
             detailList.add(detail);
 
         }
@@ -432,7 +432,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
             BiTargetStaffSettingDTO.DetailDTO detail = new BiTargetStaffSettingDTO.DetailDTO();
             detail.setMetrics(item.getKey());
             detail.setMetricsName(item.getKey().getName());
-            detail.setStaffSettingList(item.getValue());
+            detail.setSettingList(item.getValue());
             detailList.add(detail);
         }
         result.setSuccessList(detailList);

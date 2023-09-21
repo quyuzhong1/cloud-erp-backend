@@ -616,11 +616,12 @@ public class BiSalesModuleController extends BaseController {
 
     /**
      * 新老品销售额-导出excel
-     * @Author Luo_WG
-     * @Date 2023/9/21 9:46
+     *
      * @param dto
      * @param response
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/9/21 9:46
      **/
     @PostMapping(value = "/newAndOldSalesExportExcel")
     public ApiResult newAndOldSalesExportExcel(@RequestBody NewAndOldSalesSearchDTO.SearchDTO dto, HttpServletResponse response) {
@@ -651,10 +652,11 @@ public class BiSalesModuleController extends BaseController {
 
     /**
      * 部门完成率排行
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.bi.dto.CompletionRateRankingDTO.PagingDTO>>
      * @Author Luo_WG
      * @Date 2023/9/21 10:37
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.bi.dto.CompletionRateRankingDTO.PagingDTO>>
      **/
     @PostMapping("/listCompletionRateRanking")
     public ApiResult<List<CompletionRateRankingDTO.PagingDTO>> listCompletionRateRanking(@RequestBody @Validated CompletionRateRankingDTO.SearchDTO dto) {
@@ -664,15 +666,31 @@ public class BiSalesModuleController extends BaseController {
 
     /**
      * 部门完成率排行-导出excel
-     * @Author Luo_WG
-     * @Date 2023/9/21 9:46
+     *
      * @param dto
      * @param response
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/9/21 9:46
      **/
     @PostMapping(value = "/completionRateRankingExportExcel")
     public ApiResult completionRateRankingExportExcel(@RequestBody CompletionRateRankingDTO.SearchDTO dto, HttpServletResponse response) {
         Boolean flag = salesOrderService.completionRateRankingExportExcel(dto, response);
         return flag ? success() : failure();
     }
+
+    /**
+     * 毛利润&毛利率 模块
+     *
+     * @param dto
+     * @return
+     * @author yl
+     * @date 2023-09-21 17:13
+     */
+    @PostMapping("grossProfit")
+    public ApiResult<StatisticalDataVO> grossProfit(@RequestBody @Validated BiDataSourceCostDTO.GrossProfitDTO dto) {
+        StatisticalDataVO statistical = salesOrderService.grossProfit(dto);
+        return success(statistical);
+    }
+
 }
