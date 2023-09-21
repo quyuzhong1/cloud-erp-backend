@@ -3,6 +3,8 @@ package com.erp.model.bi.dto;
 import com.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.commons.collections.CollectionUtils;
 
@@ -124,11 +126,14 @@ public class BiFilterDTO extends SortDTO {
     }
 
     /**
-     * 默认当月结束时间
+     * 默认当月结束时间 + 1
      */
     public LocalDateTime getEndTime() {
-        if (null == this.endTime) {
-            return LocalDateTime.now(ZoneId.systemDefault()).with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX);
+        if (null == this.endTime){
+            return LocalDateTime.now(ZoneId.systemDefault())
+                    .with(TemporalAdjusters.lastDayOfMonth())
+                    .plusDays(1)
+                    .with(LocalTime.MIN);
         }
         return LocalDateTime.of(endTime.plusDays(1).toLocalDate(), LocalTime.MIN);
     }
