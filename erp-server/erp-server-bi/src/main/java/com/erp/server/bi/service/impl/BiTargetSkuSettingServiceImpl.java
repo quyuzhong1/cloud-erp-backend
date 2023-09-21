@@ -448,7 +448,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
         Boolean result = this.lambdaUpdate().
                 eq(BiTargetSkuSettingEntity::getSkuId, dto.getSkuId()).
                 eq(BiTargetSkuSettingEntity::getMainId, dto.getId()).
-                eq(BiTargetSkuSettingEntity::getMetrics, dto.getMetricsEnum()).
+                eq(BiTargetSkuSettingEntity::getMetrics, dto.getMetrics()).
                 remove();
         return result;
 

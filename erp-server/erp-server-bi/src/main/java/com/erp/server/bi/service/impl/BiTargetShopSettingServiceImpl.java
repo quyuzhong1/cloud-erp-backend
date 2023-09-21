@@ -685,7 +685,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         Boolean result = this.lambdaUpdate().
                 eq(BiTargetShopSettingEntity::getShopId, dto.getShopId()).
                 eq(BiTargetShopSettingEntity::getMainId,dto.getId()).
-                eq(BiTargetShopSettingEntity::getMetrics,dto.getMetricsEnum()).
+                eq(BiTargetShopSettingEntity::getMetrics,dto.getMetrics()).
                 remove();
         return result;
     }
