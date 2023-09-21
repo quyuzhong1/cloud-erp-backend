@@ -205,7 +205,7 @@ public class BiTargetSkuSettingDTO implements Serializable {
          * 指标
          */
         @NotNull(message = "指标不能为空")
-        private MetricsEnum metricsEnum;
+        private MetricsEnum metrics;
 
         /**
          * sku id

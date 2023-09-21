@@ -436,7 +436,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
         Boolean result = this.lambdaUpdate().
                 eq(BiTargetCategorySettingEntity::getCategoryId, dto.getCategoryId()).
                 eq(BiTargetCategorySettingEntity::getMainId,dto.getId()).
-                eq(BiTargetCategorySettingEntity::getMetrics,dto.getMetricsEnum()).
+                eq(BiTargetCategorySettingEntity::getMetrics,dto.getMetrics()).
                 remove();
         return result;
 
