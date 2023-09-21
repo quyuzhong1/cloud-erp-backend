@@ -111,7 +111,7 @@ public class BiTargetShopSettingDTO implements Serializable {
         /**
          * 人员设置列表
          */
-        private List<BiTargetShopSettingDTO.CommonDTO> shopSettingList;
+        private List<BiTargetShopSettingDTO.CommonDTO> settingList;
 
     }
 

@@ -331,7 +331,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
                 common.setDecember(pullView(metrics, december, dbList));
                 shopList.add(common);
             }
-            detail.setShopSettingList(shopList);
+            detail.setSettingList(shopList);
             detailList.add(detail);
         }
         view.setDetailList(detailList);
@@ -658,7 +658,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
             BiTargetShopSettingDTO.DetailDTO detail = new BiTargetShopSettingDTO.DetailDTO();
             detail.setMetrics(item.getKey());
             detail.setMetricsName(item.getKey().getName());
-            detail.setShopSettingList(item.getValue());
+            detail.setSettingList(item.getValue());
             detailList.add(detail);
         }
         result.setSuccessList(detailList);

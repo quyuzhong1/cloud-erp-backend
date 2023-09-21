@@ -1,9 +1,11 @@
 package com.erp.model.bi.dto;
 
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -91,6 +93,23 @@ public class BiDataSourceCostDTO {
          */
         @NotEmpty(message = "成本数据不呢个为空")
         private List<String> costTypeList;
+    }
+
+
+    /**
+     * 毛利率 ，毛利额 模块 入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GrossProfitDTO extends BiFilterDTO{
+
+        /**
+         * 时间类型： 月: MONTH; 季度: QUARTER; 年: YEAR
+         */
+        @StateEnumValue( strValues = {"MONTH","QUARTER","YEAR"} ,message = "时间类型有误")
+        @NotNull(message = "时间类型不能为空")
+        private String dateType;
+
     }
 
 }

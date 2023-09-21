@@ -95,7 +95,7 @@ public class BiTargetNewProductSettingDTO implements Serializable {
         /**
          * 人员设置列表
          */
-        private List<CommonDTO> newProductSettingList;
+        private List<CommonDTO> settingList;
 
     }
 
