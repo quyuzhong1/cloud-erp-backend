@@ -51,7 +51,7 @@
             AND ty.id IN (
             SELECT main_id FROM bi_target_shop_setting
             WHERE is_deleted=FALSE
-            AND metrics = #{params。metrics}
+            AND metrics = #{params.metrics}
             )
         </if>
         <if test="params.name !=null and params.name!=''">
