@@ -236,7 +236,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 LocalDate firstOrderDate = skuInfo.getFirstOrderDate();
                 if (firstOrderDate != null) {
                     Integer year = firstOrderDate.getYear();
-                    if(nowYear.equals(year)){
+                    if (nowYear.equals(year)) {
                         item.setIsNewProduct(Boolean.TRUE);
                     }
                 }
@@ -285,6 +285,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 导出sku 销售额
+     *
      * @param params
      * @param response
      * @return
@@ -293,7 +294,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public Boolean exportSkuSalesExcel(SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response) {
         //获取到结算汇率
         String settleRate = getSettleRate(params.getSettleMethod());
-        List<SkuSalesDTO.PagingSalesInfoDTO> resultList = baseMapper.listSkuSalesExcel(params,settleRate);
+        List<SkuSalesDTO.PagingSalesInfoDTO> resultList = baseMapper.listSkuSalesExcel(params, settleRate);
         List<String> skuNoList = resultList.stream().map(SkuSalesDTO.PagingSalesInfoDTO::getSkuNo).collect(Collectors.toList());
 
         LocalDateTime nowTime = LocalDateTime.now();
@@ -318,7 +319,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Integer nowYear = LocalDate.now().getYear();
         //销售信息
         List<SkuDTO.SalesDTO> skuList = plmTaskFeign.listSkuSalesBySkuNos(skuNoList);
-        for(SkuSalesDTO.PagingSalesInfoDTO item : resultList){
+        for (SkuSalesDTO.PagingSalesInfoDTO item : resultList) {
             SkuDTO.SalesDTO skuInfo = skuList.stream().filter(s -> s.getSkuNo().equals(item.getSkuNo())).
                     findFirst().orElse(null);
             if (Objects.nonNull(skuInfo)) {
@@ -326,7 +327,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 LocalDate firstOrderDate = skuInfo.getFirstOrderDate();
                 if (firstOrderDate != null) {
                     Integer year = firstOrderDate.getYear();
-                    if(nowYear.equals(year)){
+                    if (nowYear.equals(year)) {
                         item.setIsNewProductName("是");
                     }
                 }
@@ -375,16 +376,35 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 产品等级销售分析
+     *
      * @param params
      * @return
      */
     @Override
     public StatisticalDataVO productGradeSales(BiFilterDTO params) {
+        StatisticalDataVO statistical = new StatisticalDataVO();
         //获取到结算汇率
         String settleRate = getSettleRate(params.getSettleMethod());
         //产品销售等级销售额
-        List<SkuSalesDTO.ProductGradeSalesDTO>  gradeSalesList=baseMapper.listProductGradeSales(params,settleRate);
-        return null;
+        List<Map<String,Object>> gradeSalesList = baseMapper.listProductGradeSales(params, settleRate);
+        int initSize = CollectionUtils.isNotEmpty(gradeSalesList) ? gradeSalesList.size() : 10;
+
+        statistical.setName("产品等级销售额");
+        statistical.setChartType(ChartType.PIE);
+        ChartVO chartVO = new ChartVO();
+        chartVO.setXAxis(new ArrayList<>());
+        List<SeriesVO<Object>> seriesList = new ArrayList<>(initSize);
+        SeriesVO<Object> series = new SeriesVO();
+        series.setName("平台销售额");
+        List<Object> list = new ArrayList<>(gradeSalesList.size());
+        for (Map<String, Object> map : gradeSalesList) {
+            list.add(map);
+        }
+        series.setData(list);
+        seriesList.add(series);
+        chartVO.setSeries(seriesList);
+        statistical.setData(chartVO);
+        return statistical;
     }
 
     /**
@@ -2634,6 +2654,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 计算销售趋势同比/环比
+     *
      * @param salesList
      * @param lastYearSalesList
      * @param dateTimeFormatter
