@@ -142,7 +142,7 @@ public class BiTargetShopSettingController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/importFile")
+    @PostMapping("/importFile")
     public ApiResult<BiTargetShopSettingDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         BiTargetShopSettingDTO.ImportDTO result = biTargetShopSettingService.importFile(excelFile, response);
         return success(result);
