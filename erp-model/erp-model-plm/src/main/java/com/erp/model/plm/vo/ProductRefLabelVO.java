@@ -48,11 +48,6 @@ public class ProductRefLabelVO implements Serializable {
     private String skuNo;
 
     /**
-     * skuNo
-     */
-    private String skuNo;
-
-    /**
      * 产品id
      */
     private String productId;
