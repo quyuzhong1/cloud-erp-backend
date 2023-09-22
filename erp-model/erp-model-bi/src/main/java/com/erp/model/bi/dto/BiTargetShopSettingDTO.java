@@ -3,10 +3,12 @@ package com.erp.model.bi.dto;
 import java.math.BigDecimal;
 
 import com.erp.model.bi.enums.MetricsEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -52,6 +54,16 @@ public class BiTargetShopSettingDTO implements Serializable {
          */
         private String deptName;
 
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createTime;
         /**
          * 详情信息
          */
