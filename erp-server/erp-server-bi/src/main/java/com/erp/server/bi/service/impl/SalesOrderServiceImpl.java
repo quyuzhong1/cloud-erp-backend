@@ -2558,11 +2558,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public StatisticalDataVO byDate(DateSalesTrendDTO.SearchDTO dto) {
+        dto.setEndTime(dto.getEndTime(), 1);
         //如果查询财务销售额
         if (DateSalesTrendSearchTypeEnum.FINANCE_SALES_QUANTITY.getCode().equals(dto.getSearchType())) {
             return this.byDateFinanceSales(dto);
         }
-
 
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售趋势");
