@@ -6,12 +6,10 @@ import com.erp.model.bi.dto.BiCountryAnalyzeDTO;
 import com.erp.model.bi.dto.BiCountryRegionFilterDTO;
 import com.erp.model.bi.dto.BiRegionAnalyzeDTO;
 import com.erp.server.bi.service.BiComprehensiveAnalyseService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
 
@@ -48,5 +46,13 @@ public class BiCountryAreaAnalyzeController extends BaseController {
         return success(vo);
     }
 
+    /**
+     * 导出区域/国家销售额
+     */
+    @PostMapping("/exportCountrySales")
+    public ApiResult<?> exportCountrySales(@RequestBody @Valid BiCountryRegionFilterDTO dto, HttpServletResponse response) {
+        Boolean result = biComprehensiveAnalyseService.exportCountryExcel(dto, response);
+        return result ? success() : failure();
+    }
 
 }
