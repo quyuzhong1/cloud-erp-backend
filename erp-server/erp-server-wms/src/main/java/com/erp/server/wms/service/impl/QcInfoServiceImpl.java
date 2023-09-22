@@ -52,6 +52,7 @@ import com.erp.server.wms.mapper.QcInfoMapper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.QcUtils;
 import com.google.common.collect.Lists;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -505,6 +506,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean finish(QcInfoDTO.SaveOrUpdateDTO dto) {
         String id = dto.getId();
         QcInfoEntity bill = this.getById(id);
@@ -609,7 +611,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             serviceClass = QcInfoService.class,
             keyIdName = "billIdList"
     )
-    private void updateProductPack (List<String> billIdList) {
+    @Override
+    public void updateProductPack (List<String> billIdList) {
         /**
          * 采购订单为新品首批、并且质检完成后减产品尺寸、外箱尺寸、产品净重、外形重量
          */
@@ -958,6 +961,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean batchFinish(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
