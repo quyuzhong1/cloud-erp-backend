@@ -17,7 +17,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.enums.DataSourceCostEnum;
 import com.erp.model.bi.enums.DateSalesTrendSearchTypeEnum;
@@ -195,7 +194,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         SkuSalesDTO.SearchSkuDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         LocalDateTime paramsEndTime = params.getEndTime();
-        params.setEndTime(paramsEndTime,1);
+        params.setEndTime(paramsEndTime, 1);
         LocalDate nowDate = LocalDate.now();
         //获取到结算汇率
         String settleRate = getSettleRate(params.getSettleMethod());
@@ -205,7 +204,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
-
         LocalDateTime nowTime = LocalDateTime.now();
         LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 30);
         params.setStartTime(beforeThirtyDays);
@@ -219,27 +217,23 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 7);
         params.setStartTime(beforeSevenDays);
         params.setEndTime(nowTime);
-
         //查询进七天信息
         List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(params, settleRate, findTime);
         List<String> skuNoList = list.stream().map(SkuSalesDTO.PagingSalesInfoDTO::getSkuNo).collect(Collectors.toList());
         Integer nowYear = LocalDate.now().getYear();
-        //标签
-        List<SkuDetailVO> skuDetailVOList = productDetailService.getSkuIdBySkuNo(skuNoList);
-        Map<String, List<LabelVO>> skuLabelMap = null;
-        if (CollectionUtils.isNotEmpty(skuDetailVOList)){
-            //增加标签列表
-            List<ProductRefLabelVO> productRefLabelVOS = plmTaskFeign.getProductRelLabelBySkuIds(skuDetailVOList.stream()
-                    .map(SkuDetailVO::getSkuId).collect(Collectors.toList()));
-            if (CollectionUtils.isNotEmpty(productRefLabelVOS)) {
-                List<LabelVO> labelVOS = BeanMapperUtils.copyList(LabelVO.class, productRefLabelVOS);
-                Map<String, List<LabelVO>> labelMap = labelVOS.stream().collect(Collectors.groupingBy(LabelVO::getSkuId));
-                skuDetailVOList.forEach(skuDetailVO -> skuDetailVO.setLabelVOS(labelMap.get(skuDetailVO.getSkuId())));
-                skuLabelMap = skuDetailVOList.stream().filter(skuDetailVO -> StringUtils.isNotBlank(skuDetailVO.getSkuNo()) &&StringUtils.isNotBlank(skuDetailVO.getSkuId()) && CollectionUtils.isNotEmpty(skuDetailVO.getLabelVOS())).collect(Collectors.toMap(SkuDetailVO::getSkuNo, SkuDetailVO::getLabelVOS));
-            }
-        }
         //销售信息
         List<SkuDTO.SalesDTO> skuList = plmTaskFeign.listSkuSalesBySkuNos(skuNoList);
+        //标签
+        Map<String, List<LabelVO>> labelMap = null;
+        if (CollectionUtils.isNotEmpty(skuList)) {
+            Set<String> skuIds = skuList.stream().map(SkuDTO.SalesDTO::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toSet());
+            List<ProductRefLabelVO> productRefLabelVOS = plmTaskFeign.getProductRelLabelBySkuIds(skuIds);
+            if (CollectionUtils.isNotEmpty(productRefLabelVOS)) {
+                List<LabelVO> labels = BeanMapperUtils.copyList(LabelVO.class, productRefLabelVOS);
+                labelMap = labels.stream().filter(labelVO ->
+                        StringUtils.isNotBlank(labelVO.getSkuNo())).collect(Collectors.groupingBy(LabelVO::getSkuNo));
+            }
+        }
         for (SkuSalesDTO.PagingSalesInfoDTO item : list) {
             SkuDTO.SalesDTO skuInfo = skuList.stream().filter(s -> s.getSkuNo().equals(item.getSkuNo())).
                     findFirst().orElse(null);
@@ -291,8 +285,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 item.setPerCustomerTransaction(perCustomerTransaction);
             }
             //增加标签
-            if (Objects.nonNull(skuLabelMap)){
-                item.setLabels(skuLabelMap.get(item.getSkuNo()));
+            if (Objects.nonNull(labelMap)) {
+                item.setLabels(labelMap.get(item.getSkuNo()));
             }
 
         }
@@ -549,7 +543,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         // 设置占比
         BigDecimal finalSumNumber = sumNumber;
-        list.forEach(o->{
+        list.forEach(o -> {
             o.setRadioBySumSumNumber(finalSumNumber);
         });
 
