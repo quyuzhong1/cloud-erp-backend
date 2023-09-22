@@ -122,8 +122,9 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
                         findFirst().map(DmpShopInfoEntity::getName).orElse("");
                 item.setShopName(shopName);
             }
+            this.saveBatch(addList);
         }
-        this.saveBatch(addList);
+
     }
 
     /**
