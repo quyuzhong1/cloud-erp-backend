@@ -1026,10 +1026,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         String qcStatus = QcBillStatusEnum.WAIT_QC.getCode();
         List<QcInfoEntity> qcList = this.listByIds(ids);
-        long count = qcList.stream().filter(s -> !s.getQcStatus().getCode().equals(qcStatus)).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_99020);
-        }
+//        long count = qcList.stream().filter(s -> !s.getQcStatus().getCode().equals(qcStatus)).count();
+//        if (count > 0) {
+//            throw new ServiceException(ApiError.ERROR_99020);
+//        }
         //批量检查
         batchCheckQcQty(qcList, true);
         LocalDateTime now = LocalDateTime.now();
