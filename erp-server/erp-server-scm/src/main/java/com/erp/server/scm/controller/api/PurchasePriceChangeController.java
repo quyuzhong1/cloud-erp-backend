@@ -19,6 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -234,5 +235,20 @@ public class PurchasePriceChangeController extends BaseController {
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchasePriceChangeService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
+    }
+
+    /**
+     * 更新明细备注
+     */
+    @PostMapping("/updateDetailRemark")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "adjust_user_id",
+            menuCode = "scm:purchase:price:change:cancelProcess",
+            serviceClass = PurchasePriceChangeService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult updateDetailRemark(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto) {
+        Boolean result = purchasePriceChangeService.updateDetailRemark(dto.getIds(),dto.getRemark());
+        return result ? success() : failure();
     }
 }

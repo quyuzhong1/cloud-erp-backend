@@ -87,4 +87,12 @@ public interface PurchasePriceChangeDetailService extends SuperService<PurchaseP
      * @return List<PurchasePriceChangeDetailEntity>
      */
     List<PurchasePriceChangeDetailEntity> listByPurchasePriceChangeId(String purchasePriceChangeId);
+    /**
+     * @description: 更新明细备注
+     * @author Will
+     * @date: 2023/9/22 15:09
+     * @param ids
+     * @param remark
+     */
+    void updateDetailRemark(List<String> ids, String remark);
 }

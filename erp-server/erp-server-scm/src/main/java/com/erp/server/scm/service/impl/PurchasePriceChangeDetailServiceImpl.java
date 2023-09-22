@@ -475,6 +475,17 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         return baseMapper.listByPurchasePriceChangeId(purchasePriceChangeId);
     }
 
+    @Override
+    public void updateDetailRemark(List<String> ids, String remark) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return ;
+        }
+        this.lambdaUpdate()
+                .in(PurchasePriceChangeDetailEntity::getId,ids)
+                .set(PurchasePriceChangeDetailEntity::getRemark,remark)
+                .update(new PurchasePriceChangeDetailEntity());
+    }
+
 
     /**
      * 获取删除的id集合

@@ -3,7 +3,10 @@ package com.erp.model.scm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -89,6 +92,11 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          */
         private Boolean disabled;
 
+        /**
+         * 备注
+         */
+        private String remark;
+
     }
 
     /**
@@ -164,6 +172,11 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          * false 启用
          */
         private Boolean disabled;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
 
@@ -256,7 +269,10 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         private BigDecimal oldTaxRate;
 
 
-
+        /**
+         * 备注
+         */
+        private String remark;
 
         /**
          * 禁用状态
