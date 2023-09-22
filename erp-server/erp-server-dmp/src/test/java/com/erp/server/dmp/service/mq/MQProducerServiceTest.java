@@ -2,12 +2,16 @@ package com.erp.server.dmp.service.mq;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.constant.MongoTableNameContant;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
-import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
+import com.erp.server.dmp.pull.mapper.DmpOrderItemMapper;
 import com.erp.server.dmp.pull.mongo.MongoService;
+import com.erp.server.dmp.service.DmpOrderItemService;
+import com.erp.server.dmp.service.DmpSkuCostService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -55,7 +59,7 @@ public  class MQProducerServiceTest {
     @Test
     public void testSendBatch() {
         List<DmpOrderItemEntity> itemEntityList = dmpOrderItemService.listByIds(Arrays.asList("1679163638713159686"));
-        List<DmpOrderItemEntity> itemEntityList1 = dmpOrderItemService.splitOrderItem(itemEntityList);
+        List<DmpOrderItemEntity> itemEntityList1 = dmpOrderItemService.splitOrderItem(itemEntityList, PlatformEnum.MABANG.getDesc());
         System.out.println(itemEntityList1);
 
 //
