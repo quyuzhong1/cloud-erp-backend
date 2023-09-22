@@ -403,7 +403,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 itemListAll.add(splitSkuDTO);
                 DmpSplitErrorLogEntity errorLogEntity = new DmpSplitErrorLogEntity();
                 errorLogEntity.setBomId(dmpBomEntity.getId());
-                errorLogEntity.setItemId(splitSkuDTO.getId());
+                errorLogEntity.setItemId(StrUtil.isNotBlank(splitSkuDTO.getId()) ? splitSkuDTO.getId() : "");
                 errorLogEntity.setFinancialCode(dmpBomEntity.getFinancialCode());
                 errorLogEntity.setSkuNo(splitSkuDTO.getSkuNo());
                 errorLogEntity.setMsg(String.format(ApiError.CLEAN_SPLIT_FINANCIAL_EXIST.msg, splitSkuDTO.getSkuNo()));
@@ -423,7 +423,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             itemListAll.add(splitSkuDTO);
             DmpSplitErrorLogEntity errorLogEntity = new DmpSplitErrorLogEntity();
             errorLogEntity.setBomId(ObjectUtil.isEmpty(dmpBomEntity) ? "" : dmpBomEntity.getId());
-            errorLogEntity.setItemId(splitSkuDTO.getId());
+            errorLogEntity.setItemId(StrUtil.isNotBlank(splitSkuDTO.getId()) ? splitSkuDTO.getId() : "");
             errorLogEntity.setFinancialCode(ObjectUtil.isEmpty(dmpBomEntity) ? "" : dmpBomEntity.getFinancialCode());
             errorLogEntity.setSkuNo(splitSkuDTO.getSkuNo());
             errorLogEntity.setMsg(String.format(ApiError.ERP_BOM_EXIST.msg, ObjectUtil.isEmpty(dmpBomEntity) ? "" : dmpBomEntity.getFinancialCode()));

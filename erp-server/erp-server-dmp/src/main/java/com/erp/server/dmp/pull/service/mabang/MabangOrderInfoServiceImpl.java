@@ -165,6 +165,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
         List<OrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
         if (CollectionUtil.isEmpty(mongoData)) {
+            log.warn("马帮需要清洗订单为空 tableName ={} size = {}",tableName,size);
             return;
         }
         for (OrderEntity mongoDatum : mongoData) {
