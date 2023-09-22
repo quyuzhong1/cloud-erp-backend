@@ -134,11 +134,11 @@ public class DmpReturnOrderItemServiceImpl extends ServiceImpl<DmpReturnOrderIte
                 insertList.add(orderItemBean);
             }
         }
-        if(CollectionUtil.isNotEmpty(insertList)){
-            batchAdd(insertList, platformSign);
+        if (CollectionUtil.isNotEmpty(insertList)) {
+            this.batchAdd(insertList, platformSign);
         }
         if(CollectionUtil.isNotEmpty(updateList)){
-            batchUpdate(updateList, platformSign);
+            this.batchUpdate(updateList, platformSign);
         }
     }
 

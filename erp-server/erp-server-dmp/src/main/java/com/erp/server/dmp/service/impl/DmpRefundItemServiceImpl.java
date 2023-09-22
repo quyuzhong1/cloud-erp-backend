@@ -62,7 +62,7 @@ public class DmpRefundItemServiceImpl extends ServiceImpl<DmpRefundItemMapper, D
     @Override
     public Boolean batchAdd(List<DmpRefundItemEntity> dmpRefundItemEntityList, String platformSign) {
         List<DmpRefundItemEntity> dmpRefundItemEntities = splitOrderItem(dmpRefundItemEntityList, platformSign);
-        return this.saveBatch(dmpRefundItemEntities);
+        return this.saveBatch(dmpRefundItemEntities, 500);
     }
 
     /**
@@ -113,11 +113,11 @@ public class DmpRefundItemServiceImpl extends ServiceImpl<DmpRefundItemMapper, D
                 insertList.add(orderItemBean);
             }
         }
-        if(CollectionUtil.isNotEmpty(insertList)){
-            saveBatch(insertList, 500);
+        if (CollectionUtil.isNotEmpty(insertList)) {
+            this.batchAdd(insertList, platformSign);
         }
         if(CollectionUtil.isNotEmpty(updateList)){
-            batchUpdate(updateList, platformSign);
+            this.batchUpdate(updateList, platformSign);
         }
     }
 
