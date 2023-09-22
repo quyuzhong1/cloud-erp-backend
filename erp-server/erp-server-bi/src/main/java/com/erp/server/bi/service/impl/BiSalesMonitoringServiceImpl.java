@@ -557,7 +557,8 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             vo.setSumSecondMonthSale(sumSecondMonthSale);
             vo.setSumFirstMonthSale(sumFirstMonthSale);
             vo.setSumLastMonthSale(sumLastMonthSale);
-            vo.setRelativeRatioName(radio.toPlainString().concat("%"));
+            vo.setRelativeRatioName(radio.stripTrailingZeros().toPlainString().concat("%"));
+            vo.setLastRelativeRatioName(lastRadio.stripTrailingZeros().toPlainString().concat("%"));
             name = StringUtils.isNotBlank(name) ? name.concat(")") : name;
             return new Pair<>(name, vo);
         }
