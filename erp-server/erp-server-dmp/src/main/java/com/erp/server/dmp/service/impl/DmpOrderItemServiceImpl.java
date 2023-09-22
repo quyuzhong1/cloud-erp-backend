@@ -123,6 +123,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     public DmpOrderItemEntity getByErpOrderItemId(String erpOrderItemId) {
         LambdaQueryWrapper<DmpOrderItemEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpOrderItemEntity::getErpOrderItemId, erpOrderItemId);
+        lambdaQueryWrapper.last("limit 1");
         return this.getOne(lambdaQueryWrapper);
     }
 
