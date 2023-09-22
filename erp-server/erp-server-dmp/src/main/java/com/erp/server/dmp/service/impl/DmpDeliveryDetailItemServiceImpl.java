@@ -111,17 +111,24 @@ public class DmpDeliveryDetailItemServiceImpl extends ServiceImpl<DmpDeliveryDet
         for (DmpDeliveryDetailItemEntity dmpDeliveryDetailItemEntity : itemEntityList) {
             //设置通用参数
             SplitSkuDTO splitSkuDTO = new SplitSkuDTO();
+            splitSkuDTO.setPlatformSign(platformSign);
             splitSkuDTO.setId(dmpDeliveryDetailItemEntity.getId());
             splitSkuDTO.setCleanCostPrice(dmpDeliveryDetailItemEntity.getCleanCostPrice());
             splitSkuDTO.setIsSplitSku(dmpDeliveryDetailItemEntity.getIsSplitSku());
             splitSkuDTO.setOriginalSkuNo(dmpDeliveryDetailItemEntity.getOriginalSkuNo());
             splitSkuDTO.setSkuNo(dmpDeliveryDetailItemEntity.getSkuNo());
             splitSkuDTO.setQuantity(dmpDeliveryDetailItemEntity.getQuantity());
+            if (dmpDeliveryDetailItemEntity.getIsGift() != null) {
+                splitSkuDTO.setIsGift(dmpDeliveryDetailItemEntity.getIsGift());
+            } else {
+                splitSkuDTO.setIsGift(2);
+            }
+            splitSkuDTO.setAmountAfter(dmpDeliveryDetailItemEntity.getAmount());
             //拆单
             List<SplitSkuDTO> splitSkuDTOS = dmpOrderItemService.splitSku(splitSkuDTO, machining, allBomList, allSkuCostList);
             for (SplitSkuDTO skuDTO : splitSkuDTOS) {
                 DmpDeliveryDetailItemEntity entity = new DmpDeliveryDetailItemEntity();
-                BeanMapper.copy(skuDTO, entity);
+                BeanMapper.copy(dmpDeliveryDetailItemEntity, entity);
                 entity.setIsSplitSku(skuDTO.getIsSplitSku());
                 entity.setAmount(skuDTO.getAmountAfter());
                 entity.setCleanCostPrice(skuDTO.getCleanCostPrice());

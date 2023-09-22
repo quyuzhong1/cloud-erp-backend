@@ -15,10 +15,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.SplitSkuDTO;
-import com.erp.model.dmp.entity.DmpBomEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.model.dmp.entity.DmpSkuCostEntity;
-import com.erp.model.dmp.entity.DmpSplitErrorLogEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.NewProductDTO;
@@ -78,8 +75,10 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
      * @Date 2022/11/14 21:10
      **/
     @Override
-    public Boolean add(DmpOrderItemEntity dmpOrderInfoEntity) {
-        return this.save(dmpOrderInfoEntity);
+    public Boolean add(DmpOrderItemEntity dmpOrderInfoEntity, String platformSign) {
+        //拆单
+        List<DmpOrderItemEntity> itemEntityList = splitOrderItem(Arrays.asList(dmpOrderInfoEntity), platformSign);
+        return this.saveBatch(itemEntityList);
     }
 
     /**
@@ -91,8 +90,25 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
      * @Date 2022/11/14 21:10
      **/
     @Override
-    public Boolean batchAdd(List<DmpOrderItemEntity> dmpOrderInfoEntityList) {
-        return this.saveBatch(dmpOrderInfoEntityList, 500);
+    public Boolean batchAdd(List<DmpOrderItemEntity> dmpOrderInfoEntityList, String platformSign) {
+        //拆单
+        List<DmpOrderItemEntity> itemEntityList = splitOrderItem(dmpOrderInfoEntityList, platformSign);
+        return this.saveBatch(itemEntityList, 500);
+    }
+
+    /**
+     * 批量修改订单商品详细信息
+     *
+     * @param dmpOrderInfoEntityList 订单商品信息集合
+     * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:10
+     **/
+    @Override
+    public Boolean batchUpdate(List<DmpOrderItemEntity> dmpOrderInfoEntityList, String platformSign) {
+        //拆单
+        List<DmpOrderItemEntity> itemEntityList = splitOrderItem(dmpOrderInfoEntityList, platformSign);
+        return this.saveOrUpdateBatch(itemEntityList, 500);
     }
 
     /**
@@ -150,11 +166,9 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void checkOrderItem(List<DmpOrderItemEntity> orderItem, LocalDate platformCreateTime, String platformSign) {
-        //拆单
-        List<DmpOrderItemEntity> itemEntityList = splitOrderItem(orderItem, platformSign);
-
         List<DmpOrderItemEntity> insertList = new ArrayList<>();
-        for (DmpOrderItemEntity orderItemBean : itemEntityList) {
+        List<DmpOrderItemEntity> updateList = new ArrayList<>();
+        for (DmpOrderItemEntity orderItemBean : orderItem) {
             if(StrUtil.isBlank(orderItemBean.getSkuNo())){
                 continue;
             }
@@ -179,7 +193,9 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 //如果数据有变动需要更新数据库订单商品信息
                 if (!dmpOrderItemEntity.toString().equals(orderItemBean.toString())) {
                     orderItemBean.setId(dmpOrderItemEntity.getId());
-                    updateById(orderItemBean);
+//                    updateById(orderItemBean);
+                    baseMapper.deleteById(dmpOrderItemEntity.getId());
+                    updateList.add(orderItemBean);
                 }
             } else {
                 insertList.add(orderItemBean);
@@ -187,6 +203,9 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         }
         if (CollectionUtil.isNotEmpty(insertList)) {
             saveBatch(insertList);
+        }
+        if(CollectionUtil.isNotEmpty(updateList)){
+            batchUpdate(updateList, platformSign);
         }
     }
 
@@ -320,17 +339,24 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         for (DmpOrderItemEntity dmpOrderItemEntity : itemEntityList) {
             //设置通用参数
             SplitSkuDTO splitSkuDTO = new SplitSkuDTO();
+            splitSkuDTO.setPlatformSign(platformSign);
             splitSkuDTO.setId(dmpOrderItemEntity.getId());
             splitSkuDTO.setCleanCostPrice(dmpOrderItemEntity.getCleanCostPrice());
             splitSkuDTO.setIsSplitSku(dmpOrderItemEntity.getIsSplitSku());
             splitSkuDTO.setOriginalSkuNo(dmpOrderItemEntity.getOriginalSkuNo());
             splitSkuDTO.setSkuNo(dmpOrderItemEntity.getSkuNo());
             splitSkuDTO.setQuantity(dmpOrderItemEntity.getQuantity());
+            if (dmpOrderItemEntity.getIsGift() != null) {
+                splitSkuDTO.setIsGift(dmpOrderItemEntity.getIsGift());
+            } else {
+                splitSkuDTO.setIsGift(2);
+            }
+            splitSkuDTO.setAmountAfter(dmpOrderItemEntity.getAmountAfter());
             //拆单
             List<SplitSkuDTO> splitSkuDTOS = this.splitSku(splitSkuDTO, machining, allBomList, allSkuCostList);
             for (SplitSkuDTO skuDTO : splitSkuDTOS) {
                 DmpOrderItemEntity entity = new DmpOrderItemEntity();
-                BeanMapper.copy(skuDTO, entity);
+                BeanMapper.copy(dmpOrderItemEntity, entity);
                 entity.setIsSplitSku(skuDTO.getIsSplitSku());
                 entity.setAmountAfter(skuDTO.getAmountAfter());
                 entity.setCleanCostPrice(skuDTO.getCleanCostPrice());
@@ -346,10 +372,10 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
 
     /**
      * 拆分sku
-     * @param splitSkuDTO
-     * @param machining
-     * @param allBomList
-     * @param allSkuCostList
+     * @param splitSkuDTO 基础信息
+     * @param machining 加工单bom
+     * @param allBomList ERP的bom
+     * @param allSkuCostList 成本信息
      * @return
      */
     @Override
@@ -402,6 +428,13 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             errorLogEntity.setSkuNo(splitSkuDTO.getSkuNo());
             errorLogEntity.setMsg(String.format(ApiError.ERP_BOM_EXIST.msg, ObjectUtil.isEmpty(dmpBomEntity) ? "" : dmpBomEntity.getFinancialCode()));
             dmpSplitErrorLogService.save(errorLogEntity);
+            return itemListAll;
+        }
+
+        //如果sku能直接匹配成本，那么就不拆单直接返回
+        List<DmpSkuCostEntity> costEntities = allSkuCostList.stream().filter(req -> req.getSkuNo().equals(splitSkuDTO.getSkuNo())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(costEntities)) {
+            itemListAll.add(splitSkuDTO);
             return itemListAll;
         }
 

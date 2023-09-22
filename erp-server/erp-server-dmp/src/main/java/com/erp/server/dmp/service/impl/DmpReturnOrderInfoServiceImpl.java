@@ -121,7 +121,7 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
         }
         String orderId = returnOrderId;
         itemList.stream().peek(entity -> entity.setReturnOrderId(orderId)).collect(Collectors.toList());
-        dmpReturnOrderItemService.checkOrderItem(itemList);
+        dmpReturnOrderItemService.checkOrderItem(itemList, returnOrderInfoEntity.getPlatformSign());
         return returnOrderId;
     }
 
