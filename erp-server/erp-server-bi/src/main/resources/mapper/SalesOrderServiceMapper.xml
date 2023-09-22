@@ -3311,7 +3311,7 @@
             round(SUM (i.amount_after * 1),2) AS sales,
             round(SUM (i.amount_after * 1) / SUM ( i.quantity ),2) AS salesPrice,
         </if>
-        concat(date_trunc('week', doi.platform_create_time::timestamp)::date, '~', (date_trunc('week', doi.platform_create_time::timestamp)+ '6 days'::interval)::date) AS name,
+        concat(date_trunc('week', o.platform_create_time::timestamp)::date, '~', (date_trunc('week', o.platform_create_time::timestamp)+ '6 days'::interval)::date) AS name,
         SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
@@ -3719,7 +3719,9 @@
             round(SUM (i.amount_after * 1) / SUM ( i.quantity ),2) AS salesPrice,
         </if>
         to_char(o.${timeFlag},'yyyy-mm-dd') AS name,
-        pi.category,
+        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
+             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
+             ELSE ${groupName} END AS category,
         SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -3808,7 +3810,9 @@
             </if>
         </where>
         group by to_char(o.${timeFlag},'yyyy-mm-dd'),
-        pi.category
+        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
+             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
+             ELSE ${groupName} END
         order by name asc
     </select>
 
@@ -3823,7 +3827,9 @@
             round(SUM (i.amount_after * 1) / SUM ( i.quantity ),2) AS salesPrice,
         </if>
         concat(date_trunc('week', o.platform_create_time::timestamp)::date, '~', (date_trunc('week', o.platform_create_time::timestamp)+ '6 days'::interval)::date) AS name,
-        pi.category,
+        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
+             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
+             ELSE ${groupName} END AS category,
         SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -3916,7 +3922,10 @@
         </where>
         group by
         concat(date_trunc('week', o.platform_create_time::timestamp)::date, '!', (date_trunc('week', o.platform_create_time::timestamp)+ '6 days'::interval)::date),
-        pi.category order by name asc
+        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
+             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
+             ELSE ${groupName} END
+        order by name asc
     </select>
 
     <select id="getByMonthCategory" resultType="com.erp.model.bi.vo.SalesFlagVO">
@@ -3930,7 +3939,9 @@
             round(SUM (i.amount_after * 1) / SUM ( i.quantity ),2) AS salesPrice,
         </if>
         to_char(o.${timeFlag},'yyyy-mm') AS name,
-        pi.category,
+        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
+             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
+             ELSE ${groupName} END AS category,
         SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -4019,7 +4030,9 @@
             </if>
         </where>
         group by to_char(o.${timeFlag},'yyyy-mm'),
-        pi.category
+        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
+             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
+             ELSE ${groupName} END
         order by name asc
     </select>
 
@@ -4034,7 +4047,9 @@
             round(SUM (i.amount_after * 1) / SUM ( i.quantity ),2) AS salesPrice,
         </if>
         to_char(date_trunc('QUARTER',o.${timeFlag}),'yyyy-mm') AS name,
-        pi.category,
+        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
+             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
+             ELSE ${groupName} END AS category,
         SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -4123,7 +4138,9 @@
             </if>
         </where>
         group by to_char(date_trunc('QUARTER',o.${timeFlag}),'yyyy-mm'),
-        pi.category
+        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
+             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
+             ELSE ${groupName} END
         order by name asc
 
     </select>
@@ -4139,7 +4156,9 @@
             round(SUM (i.amount_after * 1) / SUM ( i.quantity ),2) AS salesPrice,
         </if>
         to_char(o.${timeFlag},'yyyy') as name,
-        pi.category,
+        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
+             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
+             ELSE ${groupName} END AS category,
         SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -4228,7 +4247,9 @@
             </if>
         </where>
         group by to_char(o.${timeFlag},'yyyy'),
-        pi.category
+        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
+             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
+             ELSE ${groupName} END
         order by name asc
 
     </select>

@@ -56,7 +56,9 @@
             ty.id,
             ty.year,
             ty.dept_id,
-            ty.dept_name
+            ty.dept_name,
+            ty.create_user_name,
+            ty.create_time
         FROM bi_target_year ty
         WHERE ty.is_deleted=false
         <if test="params.year !=null and params.year!=''">

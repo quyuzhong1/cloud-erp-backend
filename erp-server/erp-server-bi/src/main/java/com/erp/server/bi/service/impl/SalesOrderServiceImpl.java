@@ -42,6 +42,7 @@ import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -87,6 +88,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     @Resource
     private BiTargetYearService biTargetYearService;
+
+    @Resource
+    private BiDataSourceCostDetailService biDataSourceCostDetailService;
 
 
     @Autowired
@@ -195,7 +199,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         SkuSalesDTO.SearchSkuDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         LocalDateTime paramsEndTime = params.getEndTime();
-        params.setEndTime(paramsEndTime,1);
+        params.setEndTime(paramsEndTime, 1);
         LocalDate nowDate = LocalDate.now();
         //获取到结算汇率
         String settleRate = getSettleRate(params.getSettleMethod());
@@ -227,7 +231,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //标签
         List<SkuDetailVO> skuDetailVOList = productDetailService.getSkuIdBySkuNo(skuNoList);
         Map<String, List<LabelVO>> skuLabelMap = null;
-        if (CollectionUtils.isNotEmpty(skuDetailVOList)){
+        if (CollectionUtils.isNotEmpty(skuDetailVOList)) {
             //增加标签列表
             List<ProductRefLabelVO> productRefLabelVOS = plmTaskFeign.getProductRelLabelBySkuIds(skuDetailVOList.stream()
                     .map(SkuDetailVO::getSkuId).collect(Collectors.toList()));
@@ -235,7 +239,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 List<LabelVO> labelVOS = BeanMapperUtils.copyList(LabelVO.class, productRefLabelVOS);
                 Map<String, List<LabelVO>> labelMap = labelVOS.stream().collect(Collectors.groupingBy(LabelVO::getSkuId));
                 skuDetailVOList.forEach(skuDetailVO -> skuDetailVO.setLabelVOS(labelMap.get(skuDetailVO.getSkuId())));
-                skuLabelMap = skuDetailVOList.stream().filter(skuDetailVO -> StringUtils.isNotBlank(skuDetailVO.getSkuNo()) &&StringUtils.isNotBlank(skuDetailVO.getSkuId()) && CollectionUtils.isNotEmpty(skuDetailVO.getLabelVOS())).collect(Collectors.toMap(SkuDetailVO::getSkuNo, SkuDetailVO::getLabelVOS));
+                skuLabelMap = skuDetailVOList.stream().filter(skuDetailVO -> StringUtils.isNotBlank(skuDetailVO.getSkuNo()) && StringUtils.isNotBlank(skuDetailVO.getSkuId()) && CollectionUtils.isNotEmpty(skuDetailVO.getLabelVOS())).collect(Collectors.toMap(SkuDetailVO::getSkuNo, SkuDetailVO::getLabelVOS));
             }
         }
         //销售信息
@@ -291,7 +295,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 item.setPerCustomerTransaction(perCustomerTransaction);
             }
             //增加标签
-            if (Objects.nonNull(skuLabelMap)){
+            if (Objects.nonNull(skuLabelMap)) {
                 item.setLabels(skuLabelMap.get(item.getSkuNo()));
             }
 
@@ -2293,7 +2297,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @author yl
      * @date 2023-01-06 11:19
      */
-    private StatisticalDataVO byDateStackedColumnChart(DateSalesTrendDTO.SearchDTO dto, String timeFlag, String settleRate) {
+    private StatisticalDataVO byDateStackedColumnChart(DateSalesTrendDTO.SearchDTO dto, String timeFlag, String settleRate, String groupName) {
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售趋势");
         statistical.setChartType(ChartType.PIE);
@@ -2302,16 +2306,16 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesFlagVO> salesList = new ArrayList();
         switch (dateType) {
             case "DAY":
-                salesList = baseMapper.getByDayCategory(dto, timeFlag, settleRate);
+                salesList = baseMapper.getByDayCategory(dto, timeFlag, settleRate, groupName);
                 break;
             case "MONTH":
-                salesList = baseMapper.getByMonthCategory(dto, timeFlag, settleRate);
+                salesList = baseMapper.getByMonthCategory(dto, timeFlag, settleRate, groupName);
                 break;
             case "QUARTER":
-                salesList = baseMapper.getByQuarterCategory(dto, timeFlag, settleRate);
+                salesList = baseMapper.getByQuarterCategory(dto, timeFlag, settleRate, groupName);
                 break;
             case "YEAR":
-                salesList = baseMapper.getByYearCategory(dto, timeFlag, settleRate);
+                salesList = baseMapper.getByYearCategory(dto, timeFlag, settleRate, groupName);
                 break;
             default:
                 salesList = new ArrayList<>();
@@ -2400,7 +2404,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                         Collectors.toMap(DateCostVO::getCostType, DateCostVO::getCostValue)));
         switch (dateType) {
             case "DAY":
-                throw new ServiceException(ApiError.ERROR_DATE_TYPE);
             case "WEEK":
                 throw new ServiceException(ApiError.ERROR_DATE_TYPE);
             case "MONTH":
@@ -2570,11 +2573,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public StatisticalDataVO byDate(DateSalesTrendDTO.SearchDTO dto) {
+        dto.setEndTime(dto.getEndTime(), 1);
         //如果查询财务销售额
         if (DateSalesTrendSearchTypeEnum.FINANCE_SALES_QUANTITY.getCode().equals(dto.getSearchType())) {
             return this.byDateFinanceSales(dto);
         }
-
 
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售趋势");
@@ -2587,9 +2590,54 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {
             timeFlag = "platform_create_time";
         }
+        String groupName = "";
         //类别查询
         if (CollectionUtils.isNotEmpty(dto.getCategory())) {
-            return this.byDateStackedColumnChart(dto, timeFlag, settleRate);
+            groupName = "category";
+        }
+
+        //部门查询
+        if (CollectionUtils.isNotEmpty(dto.getDepartment())) {
+            groupName = "dept_id";
+        }
+
+        //用户查询
+        if (CollectionUtils.isNotEmpty(dto.getUserId())) {
+            groupName = "charge_id";
+        }
+
+        //店铺查询
+        if (CollectionUtils.isNotEmpty(dto.getShopName())) {
+            groupName = "shop_name";
+        }
+
+        //sku查询
+        if (CollectionUtils.isNotEmpty(dto.getSku())) {
+            groupName = "sku_no";
+        }
+
+        //新/老品查询
+        if (dto.getNewSign() != null) {
+            groupName = "new_sign";
+        }
+
+        //产品属性id查询
+        if (CollectionUtils.isNotEmpty(dto.getPropertyIdList())) {
+            groupName = "property_id";
+        }
+
+        //平台查询
+        if (CollectionUtils.isNotEmpty(dto.getPlatform())) {
+            groupName = "source_platform";
+        }
+
+        //站点查询
+        if (CollectionUtils.isNotEmpty(dto.getSite())) {
+            groupName = "site";
+        }
+
+        if (StringUtils.isNotBlank(groupName)) {
+            return this.byDateStackedColumnChart(dto, timeFlag, settleRate, groupName);
         }
 
         List<SalesFlagVO> salesList = new ArrayList();
@@ -3041,10 +3089,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 }
             }
         }
-        //为空就是所有
+        //为空就是员工的
         if (Objects.isNull(strategy)) {
-            strategy = context.getBean(AllTargetValueStrategy.class);
-            yearMonthValueList = strategy.ListYearMonthValue(year, metrics, Collections.emptyList());
+            strategy = context.getBean(StaffTargetValueStrategy.class);
+            if (Objects.nonNull(strategy)) {
+                yearMonthValueList = strategy.ListYearMonthValue(year, metrics, Collections.emptyList());
+            }
         }
         if (Objects.isNull(strategy)) {
             throw new ServiceException("条件未匹配");
@@ -3400,10 +3450,57 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public StatisticalDataVO grossProfit(BiDataSourceCostDTO.GrossProfitDTO dto) {
         StatisticalDataVO statistical = new StatisticalDataVO();
         String dateType = dto.getDateType();
+        //毛利额
+        String grossProfit = MetricsEnum.GROSS_PROFIT.getCode();
+        //毛利率
+        String grossProfitRate = MetricsEnum.GROSS_PROFIT_RATE.getCode();
+
+        List<BiDataSourceCostDTO.DataValueDTO> dataValueList = Collections.emptyList();
         switch (dateType) {
-            case "":
+            //月
+            case "MONTH":
+                dataValueList = biDataSourceCostDetailService.listGrossMonth(dto);
+                break;
+            //季度
+            case "QUARTER":
+                dataValueList = biDataSourceCostDetailService.listGrossQuarter(dto);
+                break;
+            //年
+            case "YEAR":
+                dataValueList= biDataSourceCostDetailService.listGrossYear(dto);
+                break;
 
         }
-        return null;
+
+        statistical.setName("毛利额&毛利率");
+        ChartVO chartVO = new ChartVO();
+        List<String> dataStrList = dataValueList.stream().filter(d -> d.getType().
+                        equals(grossProfit)).map(BiDataSourceCostDTO.DataValueDTO::getDateStr).
+                sorted().collect(Collectors.toList());
+        chartVO.setXAxis(dataStrList);
+        //对应值
+        List<SeriesVO> seriesList = new ArrayList<>(2);
+        //毛利额
+        SeriesVO grossProfitSeries = new SeriesVO();
+        grossProfitSeries.setName(MetricsEnum.GROSS_PROFIT.getName());
+        grossProfitSeries.setType(ChartType.BAR);
+        List<BigDecimal> grossProfitValueList= dataValueList.stream().filter(d -> d.getType().
+                        equals(grossProfit)).map(BiDataSourceCostDTO.DataValueDTO::getValue).
+                sorted().collect(Collectors.toList());
+        grossProfitSeries.setData(grossProfitValueList);
+        seriesList.add(grossProfitSeries);
+
+        //毛利率
+        SeriesVO grossProfitRateSeries = new SeriesVO();
+        grossProfitRateSeries.setName(MetricsEnum.GROSS_PROFIT_RATE.getName());
+        grossProfitRateSeries.setType(ChartType.LINE);
+        List<BigDecimal> grossProfitRateValueList= dataValueList.stream().filter(d -> d.getType().
+                        equals(grossProfitRate)).map(BiDataSourceCostDTO.DataValueDTO::getValue).
+                sorted().collect(Collectors.toList());
+        grossProfitRateSeries.setData(grossProfitRateValueList);
+        seriesList.add(grossProfitRateSeries);
+        chartVO.setSeries(seriesList);
+        statistical.setData(chartVO);
+        return statistical;
     }
 }

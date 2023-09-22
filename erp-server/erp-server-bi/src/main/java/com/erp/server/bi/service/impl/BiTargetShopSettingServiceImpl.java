@@ -406,7 +406,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
                 List<BiTargetShopSettingEntity> shopDbList = shop.getValue();
                 BiTargetShopSettingDTO.CommonDTO common = new BiTargetShopSettingDTO.CommonDTO();
                 common.setShopId(shopId);
-                common.setShopName(dbList.get(0).getShopName());
+                common.setShopName(shopDbList.get(0).getShopName());
                 //一月
                 Integer january = MonthEnum.JANUARY.getValue();
                 common.setJanuary(pullView(metrics, january, dbList));
