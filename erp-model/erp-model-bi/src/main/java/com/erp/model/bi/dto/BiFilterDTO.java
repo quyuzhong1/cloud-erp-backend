@@ -19,7 +19,6 @@ import java.util.Objects;
  * @author Cloud
  */
 @Data
-@ToString
 public class BiFilterDTO extends SortDTO {
 
 

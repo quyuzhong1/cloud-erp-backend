@@ -3,6 +3,7 @@ package com.erp.server.bi.service;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 public interface BiComprehensiveAnalyseService {
@@ -111,4 +112,9 @@ public interface BiComprehensiveAnalyseService {
      * 国家销售分析
      */
     List<BiCountryAnalyzeDTO> getCountrySales(BiCountryRegionFilterDTO dto);
+
+    /**
+     * 导出区域/国家销售额
+     */
+    Boolean exportCountryExcel(BiCountryRegionFilterDTO dto, HttpServletResponse response);
 }

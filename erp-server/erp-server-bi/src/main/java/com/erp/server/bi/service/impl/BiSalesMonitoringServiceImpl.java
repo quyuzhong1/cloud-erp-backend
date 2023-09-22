@@ -494,7 +494,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                     } else {
                         name = name.concat("(环比超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
                     }
-                    if ((MathUtil.compareTo(radio, entity.getRelativeRatio()) < 0)) {
+                    if (!(MathUtil.compareTo(entity.getRelativeRatio(),radio) >= 0)) {
                         return null;
                     }
                 }
@@ -505,7 +505,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                     } else {
                         name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
                     }
-                    if ((MathUtil.compareTo(radio, entity.getRelativeRatio()) > 0)) {
+                    if (!(MathUtil.compareTo(entity.getRelativeRatio(),radio) <= 0)) {
                         return null;
                     }
                 }
@@ -516,7 +516,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                     } else {
                         name = name.concat("(环比超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
                     }
-                    if ((MathUtil.compareTo(entity.getRelativeRatio(), radio) >= 0)) {
+                    if (!(MathUtil.compareTo(entity.getRelativeRatio(), radio) > 0)) {
                         return null;
                     }
                 }
@@ -527,7 +527,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                     } else {
                         name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
                     }
-                    if ((MathUtil.compareTo(radio, entity.getRelativeRatio()) >= 0)) {
+                    if (!(MathUtil.compareTo(entity.getRelativeRatio(),radio) < 0)) {
                         return null;
                     }
                 }
@@ -538,12 +538,20 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                     } else {
                         name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
                     }
-                    if ((MathUtil.compareTo(radio, entity.getRelativeRatio()) >= 0) ) {
+                    if (!(MathUtil.compareTo(radio, entity.getRelativeRatio()) >= 0 && MathUtil.compareTo(lastRadio, entity.getRelativeRatio()) >= 0) ) {
                         return null;
                     }
                 }
                 //连续两个月小于等于
                 if (BiCompareEnum.TOW_MONTH_LESS_THEN_EQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
+                    if (StringUtils.isNotBlank(name)) {
+                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
+                    } else {
+                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
+                    }
+                    if (!(MathUtil.compareTo(radio, entity.getRelativeRatio()) <= 0 && MathUtil.compareTo(lastRadio, entity.getRelativeRatio()) <= 0) ) {
+                        return null;
+                    }
                 }
             }
             vo.setSumSecondMonthSale(sumSecondMonthSale);

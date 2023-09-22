@@ -122,6 +122,8 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
                 item.setCategoryName(categoryName);
             }
 
+            this.saveBatch(addList);
+
         }
     }
 

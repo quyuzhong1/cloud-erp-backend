@@ -122,6 +122,8 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
                         findFirst().map(BiProductDetailEntity::getSkuNo).orElse("");
                 item.setSkuNo(skuNo);
             }
+
+            this.saveBatch(addList);
         }
     }
 

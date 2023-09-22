@@ -7,8 +7,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.bi.dto.*;
+import com.erp.model.bi.dto.excel.BiCountryRegionImportExcelDTO;
 import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.entity.BiProductInfoEntity;
 import com.erp.model.bi.vo.*;
@@ -27,6 +29,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -785,6 +788,26 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 // 过滤得到要求的区域
                 .filter(dto::filterRegion)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 导出区域/国家销售额
+     */
+    @Override
+    public Boolean exportCountryExcel(BiCountryRegionFilterDTO dto, HttpServletResponse response) {
+        List<BiCountryAnalyzeDTO> analyzeList = this.getCountrySales(dto);
+        List<BiCountryRegionImportExcelDTO> resultList = analyzeList.stream().map(e -> {
+            BiCountryRegionImportExcelDTO excelDto = new BiCountryRegionImportExcelDTO();
+            BeanUtils.copyProperties(e, excelDto);
+            return excelDto;
+        }).collect(Collectors.toList());
+        String fileName = "区域国家销售额数据" + dto.convertFileParams();
+        try {
+            ExcelUtil.export(fileName, "区域-国家销售额数据", resultList, BiCountryRegionImportExcelDTO.class, response);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+        return Boolean.TRUE;
     }
 
 

@@ -2357,6 +2357,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     private StatisticalDataVO byDateFinanceSales(DateSalesTrendDTO.SearchDTO dto) {
 
+
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售趋势");
         statistical.setChartType(ChartType.BAR);
@@ -2556,10 +2557,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public StatisticalDataVO byDate(DateSalesTrendDTO.SearchDTO dto) {
-        //如果查询客单价
+        //如果查询财务销售额
         if (DateSalesTrendSearchTypeEnum.FINANCE_SALES_QUANTITY.getCode().equals(dto.getSearchType())) {
             return this.byDateFinanceSales(dto);
         }
+
+
 
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售趋势");
@@ -2572,9 +2575,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {
             timeFlag = "platform_create_time";
         }
+        //类别查询
         if (CollectionUtils.isNotEmpty(dto.getCategory())) {
             return this.byDateStackedColumnChart(dto, timeFlag, settleRate);
         }
+
         List<SalesFlagVO> salesList = new ArrayList();
         List<SalesFlagVO> lastYearSalesList = new ArrayList();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");

@@ -253,7 +253,7 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
             return Collections.emptyMap();
         }
         return lambdaQuery()
-                .eq(BiSubjectShareEntity::getSubjectId, subjectIds)
+                .in(BiSubjectShareEntity::getSubjectId, subjectIds)
                 .list()
                 .stream()
                 .collect(Collectors.groupingBy(BiSubjectShareEntity::getSubjectId))
