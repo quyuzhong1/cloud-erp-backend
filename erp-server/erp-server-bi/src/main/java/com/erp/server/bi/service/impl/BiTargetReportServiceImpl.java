@@ -95,8 +95,11 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         //目标数据
         List<TargetFinishDTO.ViewDTO> targetList = listTarget(dto);
 
+        // TOOD 临时注释
         //实际数据
-        List<TargetFinishDTO.ViewDTO> realList = listReal(dto);
+//        List<TargetFinishDTO.ViewDTO> realList = listReal(dto);
+        List<TargetFinishDTO.ViewDTO> realList = Collections.emptyList();
+
 
         //表头数据
         headMap.put("typeName",TargetSearchTypeEnum.getByCode(dto.getSearchType()));
