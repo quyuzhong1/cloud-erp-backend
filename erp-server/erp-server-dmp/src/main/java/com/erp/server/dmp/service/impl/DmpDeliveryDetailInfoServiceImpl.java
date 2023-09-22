@@ -142,7 +142,8 @@ public class DmpDeliveryDetailInfoServiceImpl extends ServiceImpl<DmpDeliveryDet
         String orderId = deliveryDetailId;
         itemList.stream().peek(entity -> entity.setDeliveryDetailId(orderId)).collect(Collectors.toList());
         dmpDeliveryDetailItemService.deleteDeliveryDetailItemByDetailId(deliveryDetailId);
-        dmpDeliveryDetailItemService.batchAdd(itemList);
+
+        dmpDeliveryDetailItemService.batchAdd(itemList, dmpDeliveryDetailInfoEntity.getPlatformSign());
         return deliveryDetailId;
     }
 
