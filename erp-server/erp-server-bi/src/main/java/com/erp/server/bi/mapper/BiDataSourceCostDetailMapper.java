@@ -1,12 +1,14 @@
 package com.erp.server.bi.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @author Will
@@ -33,4 +35,6 @@ public interface BiDataSourceCostDetailMapper extends BaseMapper<BiDataSourceCos
      * @return
      */
     BigDecimal monthByCostType(@Param("yearMonth") String yearMonthStr, @Param("type")String costType,@Param("params") BiFilterDTO dto);
+
+    List<BiDataSourceCostDTO.DataValueDTO> listMonthByCostType(@Param("costType") String costType, @Param("params") BiFilterDTO dto,@Param("limitNum") Integer limitNum);
 }
