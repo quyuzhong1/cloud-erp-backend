@@ -3446,8 +3446,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         List<BiDataSourceCostDTO.DataValueDTO> dataValueList = Collections.emptyList();
         switch (dateType) {
+            //月
             case "MONTH":
                 dataValueList = biDataSourceCostDetailService.listGrossMonth(dto);
+            //年
+            case "YEAR":
+                dataValueList= biDataSourceCostDetailService.listGrossYear(dto);
 
         }
 

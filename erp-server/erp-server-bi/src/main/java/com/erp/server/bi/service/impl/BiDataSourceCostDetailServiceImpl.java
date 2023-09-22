@@ -135,7 +135,66 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
                     findFirst().map(BiDataSourceCostDTO.DataValueDTO::getValue).orElse(BigDecimal.ZERO);
             //毛利额
             BigDecimal grossProfitValue = MathUtil.subtract(mainIncome, cost);
-            BigDecimal grossProfitRateValue = MathUtil.divide(grossProfitValue, mainIncome, 2);
+            BigDecimal grossProfitRateValue = MathUtil.divide(grossProfitValue, mainIncome, 4);
+            grossProfitRateValue = MathUtil.multiply(grossProfitRateValue, MathUtil.BigDecimal_100);
+            profitRateResult.setValue(grossProfitRateValue);
+            resultList.add(profitRateResult);
+        }
+
+        return resultList;
+    }
+
+    /**
+     * 获取年度毛利值
+     *
+     * @param dto
+     * @return java.util.List<com.erp.model.bi.dto.BiDataSourceCostDTO.DataValueDTO>
+     * @author yl
+     * @date 2023-09-22 14:39
+     */
+    @Override
+    public List<BiDataSourceCostDTO.DataValueDTO> listGrossYear(BiDataSourceCostDTO.GrossProfitDTO dto) {
+        //主营业务收入
+        String mainBusinessIncome = DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode();
+        List<BiDataSourceCostDTO.DataValueDTO> mainIncomeList = baseMapper.listYearByCostType(mainBusinessIncome, dto, 12);
+        //成本合计
+        String totalcost = DataSourceCostEnum.COST_TOTALCOST.getCode();
+        //成本的
+        List<BiDataSourceCostDTO.DataValueDTO> costList = baseMapper.listYearByCostType(totalcost, dto, 12);
+
+        List<BiDataSourceCostDTO.DataValueDTO> resultList = new ArrayList<>(mainIncomeList.size());
+        //毛利额
+        String grossProfit = MetricsEnum.GROSS_PROFIT.getCode();
+        for (BiDataSourceCostDTO.DataValueDTO item : mainIncomeList) {
+            //毛利额
+            BiDataSourceCostDTO.DataValueDTO profitResult = new BiDataSourceCostDTO.DataValueDTO();
+            String dataStr = item.getDateStr();
+            profitResult.setType(grossProfit);
+            profitResult.setDateStr(item.getDateStr());
+            BigDecimal mainIncome = item.getValue();
+            BigDecimal cost = costList.stream().filter(c -> c.getDateStr().equals(dataStr)).
+                    findFirst().map(BiDataSourceCostDTO.DataValueDTO::getValue).orElse(BigDecimal.ZERO);
+            profitResult.setValue(MathUtil.subtract(mainIncome, cost));
+            resultList.add(profitResult);
+        }
+
+        //毛利率
+        String grossProfitRate = MetricsEnum.GROSS_PROFIT_RATE.getCode();
+        for (BiDataSourceCostDTO.DataValueDTO item : mainIncomeList) {
+            //毛利率
+            BiDataSourceCostDTO.DataValueDTO profitRateResult = new BiDataSourceCostDTO.DataValueDTO();
+            String dataStr = item.getDateStr();
+            profitRateResult.setType(grossProfitRate);
+            profitRateResult.setDateStr(item.getDateStr());
+            // 主营业务收入
+            BigDecimal mainIncome = item.getValue();
+            // 成本合计
+            BigDecimal cost = costList.stream().filter(c -> c.getDateStr().equals(dataStr)).
+                    findFirst().map(BiDataSourceCostDTO.DataValueDTO::getValue).orElse(BigDecimal.ZERO);
+            //毛利额
+            BigDecimal grossProfitValue = MathUtil.subtract(mainIncome, cost);
+            BigDecimal grossProfitRateValue = MathUtil.divide(grossProfitValue, mainIncome, 4);
+            grossProfitRateValue = MathUtil.multiply(grossProfitRateValue, MathUtil.BigDecimal_100);
             profitRateResult.setValue(grossProfitRateValue);
             resultList.add(profitRateResult);
         }
