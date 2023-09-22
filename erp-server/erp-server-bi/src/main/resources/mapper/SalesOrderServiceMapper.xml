@@ -3311,7 +3311,7 @@
             round(SUM (i.amount_after * 1),2) AS sales,
             round(SUM (i.amount_after * 1) / SUM ( i.quantity ),2) AS salesPrice,
         </if>
-        concat(date_trunc('week', doi.platform_create_time::timestamp)::date, '~', (date_trunc('week', doi.platform_create_time::timestamp)+ '6 days'::interval)::date) AS name,
+        concat(date_trunc('week', o.platform_create_time::timestamp)::date, '~', (date_trunc('week', o.platform_create_time::timestamp)+ '6 days'::interval)::date) AS name,
         SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
