@@ -117,8 +117,9 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
                         findFirst().map(FindUserDTO::getUserName).orElse("");
                 item.setStaffName(staffName);
             }
-        }
         this.saveBatch(addList);
+    }
+
     }
 
 
