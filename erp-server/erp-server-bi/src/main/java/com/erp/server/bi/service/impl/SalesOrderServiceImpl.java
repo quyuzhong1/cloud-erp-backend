@@ -3449,9 +3449,15 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             //月
             case "MONTH":
                 dataValueList = biDataSourceCostDetailService.listGrossMonth(dto);
+                break;
+            //季度
+            case "QUARTER":
+                dataValueList = biDataSourceCostDetailService.listGrossQuarter(dto);
+                break;
             //年
             case "YEAR":
                 dataValueList= biDataSourceCostDetailService.listGrossYear(dto);
+                break;
 
         }
 

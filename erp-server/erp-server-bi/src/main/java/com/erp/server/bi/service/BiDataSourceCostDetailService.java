@@ -73,4 +73,11 @@ public interface BiDataSourceCostDetailService  extends IService<BiDataSourceCos
      * @return java.util.List<com.erp.model.bi.dto.BiDataSourceCostDTO.DataValueDTO>
      */
     List<BiDataSourceCostDTO.DataValueDTO> listGrossYear(BiDataSourceCostDTO.GrossProfitDTO dto);
+
+    /**
+     * 获取季度值
+     * @param dto
+     * @return
+     */
+    List<BiDataSourceCostDTO.DataValueDTO> listGrossQuarter(BiDataSourceCostDTO.GrossProfitDTO dto);
 }

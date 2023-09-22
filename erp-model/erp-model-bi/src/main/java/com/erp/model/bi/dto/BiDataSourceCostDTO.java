@@ -118,7 +118,7 @@ public class BiDataSourceCostDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class DataValueDTO extends BiFilterDTO {
+    public static class DataValueDTO  {
 
         /**
          * 时间 如2023-1  2023 第一季度
