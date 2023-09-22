@@ -36,5 +36,21 @@ public interface BiDataSourceCostDetailMapper extends BaseMapper<BiDataSourceCos
      */
     BigDecimal monthByCostType(@Param("yearMonth") String yearMonthStr, @Param("type")String costType,@Param("params") BiFilterDTO dto);
 
+    /**
+     * 获取月份对应的值
+     * @param costType
+     * @param dto
+     * @param limitNum
+     * @return
+     */
     List<BiDataSourceCostDTO.DataValueDTO> listMonthByCostType(@Param("costType") String costType, @Param("params") BiFilterDTO dto,@Param("limitNum") Integer limitNum);
+
+    /**
+     * 获取年份对应的值
+     * @param costType
+     * @param dto
+     * @param limitNum
+     * @return
+     */
+    List<BiDataSourceCostDTO.DataValueDTO> listYearByCostType(@Param("costType") String costType, @Param("params")BiDataSourceCostDTO.GrossProfitDTO dto, @Param("limitNum")Integer limitNum);
 }
