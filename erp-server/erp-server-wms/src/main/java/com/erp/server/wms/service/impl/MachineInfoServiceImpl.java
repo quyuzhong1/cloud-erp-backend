@@ -320,6 +320,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             Map<String,MachineSubComponentsDTO.ViewDTO> subMap = subList.stream().collect(Collectors.toMap(MachineSubComponentsDTO.ViewDTO::getSkuId, Function.identity()));
             subComponentsList.stream().forEach(sub-> {
                 MachineSubComponentsDTO.ViewDTO subView = subMap.get(sub.getSkuId());
+                if (ObjectUtils.isEmpty(subView)) {
+                    throw new ServiceException(ApiError.ERROR_95173,viewDetailDTO.getSkuNo());
+                }
                 sub.setItemQty(subView.getQty());
             });
             viewDetailDTO.setSubComponentsList(subComponentsList);
