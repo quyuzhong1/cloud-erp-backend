@@ -66,6 +66,7 @@
         SELECT
         prd.id,
         prd.sku_id,
+        pd.sku_no AS skuNo,
         prd.product_id,
         prd.label_id,
         bl."name",
@@ -74,6 +75,7 @@
         FROM
         product_ref_label prd
         LEFT JOIN basic_label bl ON bl.id = prd.label_id and bl.is_deleted = false
+        LEFT JOIN product_detail pd ON pd.id = prd.sku_id
         WHERE prd.is_deleted = false
         <if test="userId != null and userId != ''">
             AND (bl.level = 'company' OR (bl.level = 'private' and bl.create_user_id = #{userId}))
