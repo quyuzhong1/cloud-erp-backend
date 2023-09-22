@@ -40,4 +40,11 @@ public class BiCountryRegionFilterDTO extends BiFilterDTO {
         // 区域过滤
         return e.getRegionCode().equalsIgnoreCase(this.getRegionCode());
     }
+
+    /**
+     * 组合文件名参数
+     */
+    public String convertFileParams() {
+        return super.getStartTime().toLocalDate().toString() + '到' + super.getEndTime().toLocalDate().minusDays(1);
+    }
 }
