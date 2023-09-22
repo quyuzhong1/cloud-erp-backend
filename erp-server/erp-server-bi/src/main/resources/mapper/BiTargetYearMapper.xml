@@ -90,11 +90,7 @@
 
     <select id="ListDeptTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
         SELECT
-        month,
-        SUM(value) AS metricsValue
-        FROM (
-        SELECT
-        month ,SUM(value) AS value
+            month ,SUM(value) AS metricsValue
         FROM bi_target_staff_setting tss
         LEFT JOIN bi_target_year ty
         ON tss.main_id=ty.id and ty.is_deleted=false
@@ -107,79 +103,6 @@
             </foreach>
         </if>
         GROUP BY month
-
-        UNION ALL
-
-        SELECT
-        month ,SUM(value) AS value
-        FROM bi_target_shop_setting tss
-        LEFT JOIN bi_target_year ty
-        ON tss.main_id=ty.id and ty.is_deleted=false
-        WHERE tss.is_deleted=false
-        AND ty.year=#{year}
-        AND tss.metrics=#{metrics}
-        <if test="deptIdList!=null and deptIdList.size>0">
-            AND ty.dept_id IN
-            <foreach collection="deptIdList" item="deptId" open="(" separator="," close=")">
-                #{deptId}
-            </foreach>
-        </if>
-        GROUP BY month
-
-        UNION ALL
-
-        SELECT
-        month ,SUM(value) AS value
-        FROM bi_target_category_setting tcs
-        LEFT JOIN bi_target_year ty
-        ON tcs.main_id=ty.id and ty.is_deleted=false
-        WHERE tcs.is_deleted=false AND ty.year=#{year}
-        AND tcs.metrics=#{metrics}
-        <if test="deptIdList!=null and deptIdList.size>0">
-            AND ty.dept_id IN
-            <foreach collection="deptIdList" item="deptId" open="(" separator="," close=")">
-                #{deptId}
-            </foreach>
-        </if>
-        GROUP BY month
-
-        UNION ALL
-
-        SELECT
-        month ,SUM(value) AS value
-        FROM bi_target_sku_setting tss
-        LEFT JOIN bi_target_year ty
-        ON tss.main_id=ty.id and ty.is_deleted=false
-        WHERE tss.is_deleted=false AND ty.year=#{year}
-        AND tss.metrics=#{metrics}
-        <if test="deptIdList!=null and deptIdList.size>0">
-            AND ty.dept_id IN
-            <foreach collection="deptIdList" item="deptId" open="(" separator="," close=")">
-                #{deptId}
-            </foreach>
-        </if>
-        GROUP BY month
-
-        UNION ALL
-
-        SELECT
-        month ,SUM(value) AS value
-        FROM bi_target_new_product_setting tnp
-        LEFT JOIN bi_target_year ty
-        ON tnp.main_id=ty.id and ty.is_deleted=false
-        WHERE tnp.is_deleted=false AND ty.year=#{year}
-        AND tnp.metrics=#{metrics}
-        <if test="deptIdList!=null and deptIdList.size>0">
-            AND ty.dept_id IN
-            <foreach collection="deptIdList" item="deptId" open="(" separator="," close=")">
-                #{deptId}
-            </foreach>
-        </if>
-        GROUP BY month
-
-
-        ) temp
-        GROUP BY temp.month
     </select>
 
     <select id="ListStaffTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
