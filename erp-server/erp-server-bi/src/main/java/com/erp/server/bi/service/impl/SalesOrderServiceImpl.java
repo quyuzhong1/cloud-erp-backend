@@ -194,6 +194,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public PagingVO<SkuSalesDTO.PagingSalesInfoDTO> queryByPageBySku(PagingDTO<SkuSalesDTO.SearchSkuDTO> dto) {
         SkuSalesDTO.SearchSkuDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
+        LocalDateTime paramsEndTime = params.getEndTime();
+        params.setEndTime(paramsEndTime,1);
         LocalDate nowDate = LocalDate.now();
         //获取到结算汇率
         String settleRate = getSettleRate(params.getSettleMethod());
@@ -205,7 +207,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
 
         LocalDateTime nowTime = LocalDateTime.now();
-        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 29);
+        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 30);
         params.setStartTime(beforeThirtyDays);
         params.setEndTime(nowTime);
         String findTime = "delivery_time";
@@ -214,7 +216,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         //查询进三十天信息
         List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(params, settleRate, findTime);
-        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
+        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 7);
         params.setStartTime(beforeSevenDays);
         params.setEndTime(nowTime);
 
@@ -2561,7 +2563,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (DateSalesTrendSearchTypeEnum.FINANCE_SALES_QUANTITY.getCode().equals(dto.getSearchType())) {
             return this.byDateFinanceSales(dto);
         }
-
 
 
         StatisticalDataVO statistical = new StatisticalDataVO();
