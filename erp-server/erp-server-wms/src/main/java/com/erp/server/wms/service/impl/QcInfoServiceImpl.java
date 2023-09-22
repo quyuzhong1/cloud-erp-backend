@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataPermission;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
@@ -587,7 +588,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 autoStockInBill(billId, qcInfo, purchaseOrderId, warehouseId);
             }
             //新品首批回填SKU的尺寸信息
-            backFillPackaging(Arrays.asList(billId));
+            updateProductPack(Arrays.asList(billId));
 
             //异步发送通知
             qcResultService.sendQcResultMsg(Arrays.asList(billId));
@@ -602,7 +603,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @date: 2023/9/20 11:21
      * @param billIdList
      */
-    private void backFillPackaging (List<String> billIdList) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcBill:updateProductPack",
+            serviceClass = QcInfoService.class,
+            keyIdName = "billIdList"
+    )
+    private void updateProductPack (List<String> billIdList) {
         /**
          * 采购订单为新品首批、并且质检完成后减产品尺寸、外箱尺寸、产品净重、外形重量
          */
@@ -614,9 +621,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             return;
         }
 
-
         //采购信息
         List<String> poIdList = qcInfoEntityList.stream().filter(obj -> StringUtils.isNotBlank(obj.getPurchaseOrderId())).map(QcInfoEntity::getPurchaseOrderId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(poIdList)) {
+            return;
+        }
         List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(poIdList);
 
         //质检产品信息
@@ -628,10 +637,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         for (QcInfoEntity qcInfoEntity :  qcInfoEntityList) {
             PurchaseOrderEntity purchaseOrderEntity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(qcInfoEntity.getPurchaseOrderId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-                throw new ServiceException(ApiError.ERROR_98025);
+                continue;
             }
             if (!purchaseOrderEntity.getIsFirstMassProduct()) {
-                return;
+                continue;
             }
             QcProductEntity qcProductEntity = qcProductList.stream().filter(obj -> obj.getMainId().equals(qcInfoEntity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(qcProductEntity)) {
@@ -987,7 +996,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcResultService.sendQcResultMsg(ids);
 
             //新品首批回填SKU的尺寸信息
-            backFillPackaging(ids);
+            updateProductPack(ids);
         }
         return result;
 
