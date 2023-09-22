@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * <p>
@@ -72,7 +73,7 @@ public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabel
     }
 
     @Override
-    public List<ProductRefLabelVO> getLabelListByIds(List<String> productIds, List<String> labelIds, List<String> skuIds) {
+    public List<ProductRefLabelVO> getLabelListByIds(Set<String> productIds, Set<String> labelIds, Set<String> skuIds) {
         String userId = null;
         LoginUser user = commonService.getUserInfo();
         if(Objects.nonNull(user)){
