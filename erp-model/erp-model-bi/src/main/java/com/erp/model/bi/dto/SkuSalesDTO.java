@@ -1,5 +1,6 @@
 package com.erp.model.bi.dto;
 
+import com.erp.model.bi.vo.LabelVO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,7 +9,6 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -44,6 +44,10 @@ public class SkuSalesDTO implements Serializable {
          * sku
          */
         private String skuNo;
+        /**
+         * sku
+         */
+        private String skuId;
 
         /**
          * 公司首单日期
@@ -102,6 +106,11 @@ public class SkuSalesDTO implements Serializable {
          * 销售趋势
          */
         private List<Integer> salesTrend;
+
+        /**
+         * 标签列表
+         */
+        private List<LabelVO> labels;
 
         /**
          * 是否新品 true 是 false 不是

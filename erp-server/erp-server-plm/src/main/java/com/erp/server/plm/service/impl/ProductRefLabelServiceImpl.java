@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.ProductRefLabelDTO;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -61,12 +63,22 @@ public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabel
 
     @Override
     public List<ProductRefLabelVO> getLabelList(String productId, String labelId, String skuId) {
-        return baseMapper.getLabelList(productId, labelId, skuId);
+        String userId = null;
+        LoginUser user = commonService.getUserInfo();
+        if(Objects.nonNull(user)){
+            userId = user.getUid();
+        }
+        return baseMapper.getLabelList(productId, labelId, skuId,userId);
     }
 
     @Override
     public List<ProductRefLabelVO> getLabelListByIds(List<String> productIds, List<String> labelIds, List<String> skuIds) {
-        return baseMapper.getLabelListByIds(productIds, labelIds, skuIds);
+        String userId = null;
+        LoginUser user = commonService.getUserInfo();
+        if(Objects.nonNull(user)){
+            userId = user.getUid();
+        }
+        return baseMapper.getLabelListByIds(productIds, labelIds, skuIds, userId);
     }
 
 

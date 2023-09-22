@@ -5,7 +5,7 @@ import com.erp.model.bi.dto.BiCategoryDTO;
 import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.entity.BiProductInfoEntity;
 import com.erp.model.bi.vo.SkuCategoryVO;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.model.bi.vo.SkuDetailVO;
 import com.erp.server.bi.mapper.BiProductDetailMapper;
 import com.erp.server.bi.service.BiProductDetailService;
 import com.erp.server.bi.service.BiProductInfoService;
@@ -146,5 +146,14 @@ public class BiProductDetailServiceImpl extends SuperServiceImpl<BiProductDetail
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(BiProductDetailEntity::getSkuNo, skuNoList).list();
+    }
+
+
+    @Override
+    public List<SkuDetailVO> getSkuIdBySkuNo(List<String> skuNos) {
+        if (CollectionUtils.isEmpty(skuNos)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getSkuIdBySkuNo(skuNos);
     }
 }

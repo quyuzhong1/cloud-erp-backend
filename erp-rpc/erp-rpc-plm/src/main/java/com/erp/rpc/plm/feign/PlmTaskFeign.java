@@ -342,8 +342,16 @@ public interface PlmTaskFeign {
      * @return
      */
     @PostMapping("feign/product/getProductRelLabelBySkuId")
-    List<ProductRefLabelVO> getProductRelLabel(String skuId);
+    List<ProductRefLabelVO> getProductRelLabelBySkuId(String skuId);
 
+    /**
+     * 根据sku获取标签列表
+     *
+     * @param skuIds
+     * @return
+     */
+    @PostMapping("feign/product/getProductRelLabelBySkuIds")
+    List<ProductRefLabelVO> getProductRelLabelBySkuIds(List<String> skuIds);
     /**
      * 通过子类id或名称获取到父级的分类
      */

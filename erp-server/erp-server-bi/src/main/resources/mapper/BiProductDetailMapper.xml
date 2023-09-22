@@ -21,4 +21,10 @@
           </foreach>
         </if>
     </select>
+    <select id="getSkuIdBySkuNo" resultType="com.erp.model.bi.vo.SkuDetailVO">
+        select id AS skuId, sku_no AS skuNo from product_detail where sku_no in
+        <foreach collection="skuNos" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
 </mapper>
