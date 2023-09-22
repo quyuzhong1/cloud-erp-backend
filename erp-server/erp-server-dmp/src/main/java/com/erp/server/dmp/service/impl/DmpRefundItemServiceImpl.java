@@ -5,10 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.SplitSkuDTO;
-import com.erp.model.dmp.entity.DmpBomEntity;
-import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
-import com.erp.model.dmp.entity.DmpRefundItemEntity;
-import com.erp.model.dmp.entity.DmpSkuCostEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -22,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -49,8 +47,9 @@ public class DmpRefundItemServiceImpl extends ServiceImpl<DmpRefundItemMapper, D
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean add(DmpRefundItemEntity dmpRefundItemEntity) {
-        return this.save(dmpRefundItemEntity);
+    public Boolean add(DmpRefundItemEntity dmpRefundItemEntity, String platformSign) {
+        List<DmpRefundItemEntity> dmpRefundItemEntities = splitOrderItem(Arrays.asList(dmpRefundItemEntity), platformSign);
+        return this.saveBatch(dmpRefundItemEntities);
     }
 
     /**
@@ -61,8 +60,22 @@ public class DmpRefundItemServiceImpl extends ServiceImpl<DmpRefundItemMapper, D
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean batchAdd(List<DmpRefundItemEntity> dmpRefundItemEntityList) {
-        return this.saveBatch(dmpRefundItemEntityList);
+    public Boolean batchAdd(List<DmpRefundItemEntity> dmpRefundItemEntityList, String platformSign) {
+        List<DmpRefundItemEntity> dmpRefundItemEntities = splitOrderItem(dmpRefundItemEntityList, platformSign);
+        return this.saveBatch(dmpRefundItemEntities);
+    }
+
+    /**
+     * 批量修改退款商品详细信息
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:10
+     * @param dmpRefundItemEntityList 退款列表信息
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean batchUpdate(List<DmpRefundItemEntity> dmpRefundItemEntityList, String platformSign) {
+        List<DmpRefundItemEntity> dmpRefundItemEntities = splitOrderItem(dmpRefundItemEntityList, platformSign);
+        return this.saveOrUpdateBatch(dmpRefundItemEntities);
     }
 
     /**
@@ -81,8 +94,9 @@ public class DmpRefundItemServiceImpl extends ServiceImpl<DmpRefundItemMapper, D
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void checkOrderItem(List<DmpRefundItemEntity> itemList) {
+    public void checkOrderItem(List<DmpRefundItemEntity> itemList, String platformSign) {
         List<DmpRefundItemEntity> insertList = new ArrayList<>();
+        List<DmpRefundItemEntity> updateList = new ArrayList<>();
         for (DmpRefundItemEntity orderItemBean : itemList) {
             Optional<DmpRefundItemEntity> dmpRefundItemEntity = lambdaQuery()
                     .eq(DmpRefundItemEntity::getErpOrderItemId, orderItemBean.getErpOrderItemId())
@@ -91,7 +105,9 @@ public class DmpRefundItemServiceImpl extends ServiceImpl<DmpRefundItemMapper, D
                 //如果数据有变动需要更新数据库订单商品信息
                 if (!dmpRefundItemEntity.get().toString().equals(orderItemBean.toString())) {
                     orderItemBean.setId(dmpRefundItemEntity.get().getId());
-                    updateById(orderItemBean);
+//                    updateById(orderItemBean);
+                    baseMapper.deleteById(dmpRefundItemEntity.get().getId());
+                    updateList.add(orderItemBean);
                 }
             } else {
                 insertList.add(orderItemBean);
@@ -99,6 +115,9 @@ public class DmpRefundItemServiceImpl extends ServiceImpl<DmpRefundItemMapper, D
         }
         if(CollectionUtil.isNotEmpty(insertList)){
             saveBatch(insertList, 500);
+        }
+        if(CollectionUtil.isNotEmpty(updateList)){
+            batchUpdate(updateList, platformSign);
         }
     }
 
@@ -129,17 +148,24 @@ public class DmpRefundItemServiceImpl extends ServiceImpl<DmpRefundItemMapper, D
         for (DmpRefundItemEntity itemEntity : itemEntityList) {
             //设置通用参数
             SplitSkuDTO splitSkuDTO = new SplitSkuDTO();
+            splitSkuDTO.setPlatformSign(platformSign);
             splitSkuDTO.setId(itemEntity.getId());
             splitSkuDTO.setCleanCostPrice(itemEntity.getCleanCostPrice());
             splitSkuDTO.setIsSplitSku(itemEntity.getIsSplitSku());
             splitSkuDTO.setOriginalSkuNo(itemEntity.getOriginalSkuNo());
             splitSkuDTO.setSkuNo(itemEntity.getSkuNo());
             splitSkuDTO.setQuantity(itemEntity.getRefundNum());
+            if (itemEntity.getIsGift() != null) {
+                splitSkuDTO.setIsGift(itemEntity.getIsGift());
+            } else {
+                splitSkuDTO.setIsGift(2);
+            }
+            splitSkuDTO.setAmountAfter(itemEntity.getAmountAfter());
             //拆单
             List<SplitSkuDTO> splitSkuDTOS = dmpOrderItemService.splitSku(splitSkuDTO, machining, allBomList, allSkuCostList);
             for (SplitSkuDTO skuDTO : splitSkuDTOS) {
                 DmpRefundItemEntity entity = new DmpRefundItemEntity();
-                BeanMapper.copy(skuDTO, entity);
+                BeanMapper.copy(itemEntity, entity);
                 entity.setIsSplitSku(skuDTO.getIsSplitSku());
                 entity.setAmountAfter(skuDTO.getAmountAfter());
                 entity.setCleanCostPrice(skuDTO.getCleanCostPrice());

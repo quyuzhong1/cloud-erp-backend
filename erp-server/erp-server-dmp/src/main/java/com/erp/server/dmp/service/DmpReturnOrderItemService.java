@@ -16,7 +16,7 @@ public interface DmpReturnOrderItemService extends IService<DmpReturnOrderItemEn
      * @param dmpReturnOrderItemEntity 订单商品信息
      * @return java.lang.Boolean
      **/
-    Boolean add(DmpReturnOrderItemEntity dmpReturnOrderItemEntity);
+    Boolean add(DmpReturnOrderItemEntity dmpReturnOrderItemEntity, String platformSign);
 
     /**
      * 批量添加退货订单商品详细信息
@@ -25,7 +25,16 @@ public interface DmpReturnOrderItemService extends IService<DmpReturnOrderItemEn
      * @param dmpOrderInfoEntityList 退货订单商品信息集合
      * @return java.lang.Boolean
      **/
-    Boolean batchAdd(List<DmpReturnOrderItemEntity> dmpOrderInfoEntityList);
+    Boolean batchAdd(List<DmpReturnOrderItemEntity> dmpOrderInfoEntityList, String platformSign);
+
+    /**
+     * 批量修改退货订单商品详细信息
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:10
+     * @param dmpOrderInfoEntityList 退货订单商品信息集合
+     * @return java.lang.Boolean
+     **/
+    Boolean batchUpdate(List<DmpReturnOrderItemEntity> dmpOrderInfoEntityList, String platformSign);
 
     /**
      * 根据退货订单表id查询退货订单商品信息
@@ -50,5 +59,14 @@ public interface DmpReturnOrderItemService extends IService<DmpReturnOrderItemEn
      *
      * @param itemList
      */
-    void checkOrderItem(List<DmpReturnOrderItemEntity> itemList);
+    void checkOrderItem(List<DmpReturnOrderItemEntity> itemList, String platformSign);
+
+    /**
+     * 采购订单sku拆分
+     * @Author Luo_WG
+     * @Date 2023/9/13 14:01
+     * @param itemEntityList
+     * @return java.util.List<com.erp.model.dmp.entity.DmpOrderItemEntity>
+     **/
+    List<DmpReturnOrderItemEntity> splitOrderItem(List<DmpReturnOrderItemEntity> itemEntityList, String platformSign);
 }
