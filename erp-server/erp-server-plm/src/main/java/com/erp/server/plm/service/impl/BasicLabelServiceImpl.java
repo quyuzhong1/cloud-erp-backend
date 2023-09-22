@@ -69,7 +69,8 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
             queryWrapper.and(labelEntityLambdaQueryWrapper -> labelEntityLambdaQueryWrapper.eq(BasicLabelEntity::getLevel, "company")
                     .or().eq(BasicLabelEntity::getLevel, "private").eq(BasicLabelEntity::getCreateUserId, commonService.getUserInfo().getUid()));
         }
-        queryWrapper.select(BasicLabelEntity::getId, BasicLabelEntity::getName, BasicLabelEntity::getColor, BasicLabelEntity::getLevel);
+        queryWrapper.orderByAsc(BasicLabelEntity::getIndex);
+        queryWrapper.select(BasicLabelEntity::getId, BasicLabelEntity::getName, BasicLabelEntity::getColor, BasicLabelEntity::getLevel, BasicLabelEntity::getIndex);
         return this.list(queryWrapper);
     }
 
@@ -139,6 +140,12 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
             //存在不在定义范围内的等级
             throw new ServiceException(ApiError.NOT_EXIST_BASIC_LABEL_LEVEL, labelNames);
         }
+        //index reset
+        int i = 1;
+        for (BasicLabelEntity basicLabelEntity : basicLabelEntities) {
+            basicLabelEntity.setIndex(i);
+            i += 1;
+        }
         return this.saveOrUpdateBatch(basicLabelEntities, basicLabelEntities.size());
     }
 
@@ -198,6 +205,22 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         //颜色无值时，默认灰色
         if (StringUtils.isBlank(basicLabelEntity.getColor())) {
             basicLabelEntity.setColor(LabelColorEnum.GREY.getCode());
+        }
+        //set index
+        if (Objects.isNull(basicLabelEntity.getIndex())) {
+            basicLabelEntity.setIndex(getMaxIndex());
+        }
+    }
+
+    private int getMaxIndex() {
+        LambdaQueryWrapper<BasicLabelEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.orderByDesc(BasicLabelEntity::getIndex);
+        queryWrapper.last("limit 1");
+        BasicLabelEntity basicLabelEntity = baseMapper.selectOne(queryWrapper);
+        if (Objects.isNull(basicLabelEntity)) {
+            return 1;
+        } else {
+            return basicLabelEntity.getIndex() + 1;
         }
     }
 
