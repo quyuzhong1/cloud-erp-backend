@@ -1,6 +1,7 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
@@ -56,4 +57,11 @@ public interface BiDataSourceCostDetailService  extends IService<BiDataSourceCos
      * @return
      */
     BigDecimal monthByCostType(String yearMonthStr, String costType, BiFilterDTO dto);
+
+    /**
+     * 获取月份的目标值
+     * @param dto
+     * @return
+     */
+    List<BiDataSourceCostDTO.DataValueDTO> listGrossMonth(BiFilterDTO dto);
 }

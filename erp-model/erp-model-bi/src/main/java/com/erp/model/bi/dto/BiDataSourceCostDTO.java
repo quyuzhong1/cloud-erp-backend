@@ -84,11 +84,11 @@ public class BiDataSourceCostDTO {
 
     @Data
     @NoArgsConstructor
-    public static class GroupDTO extends BiFilterDTO{
+    public static class GroupDTO extends BiFilterDTO {
 
         /**
          * 成本类型集合
-         *
+         * <p>
          * +
          */
         @NotEmpty(message = "成本数据不呢个为空")
@@ -101,14 +101,41 @@ public class BiDataSourceCostDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class GrossProfitDTO extends BiFilterDTO{
+    public static class GrossProfitDTO extends BiFilterDTO {
 
         /**
          * 时间类型： 月: MONTH; 季度: QUARTER; 年: YEAR
          */
-        @StateEnumValue( strValues = {"MONTH","QUARTER","YEAR"} ,message = "时间类型有误")
+        @StateEnumValue(strValues = {"MONTH", "QUARTER", "YEAR"}, message = "时间类型有误")
         @NotNull(message = "时间类型不能为空")
         private String dateType;
+
+    }
+
+
+    /**
+     * 值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DataValueDTO extends BiFilterDTO {
+
+        /**
+         * 时间 如2023-1  2023 第一季度
+         */
+        private String dateStr;
+
+        /**
+         * 对应值
+         */
+        private BigDecimal value;
+
+        /**
+         * 类型
+         * grossProfit  毛利额
+         * grossProfitRate 毛利率
+         */
+        private String type;
 
     }
 
