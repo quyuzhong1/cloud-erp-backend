@@ -8,13 +8,13 @@ package com.erp.server.bi.enums;
  */
 public enum SalesMonitoringTypeEnum {
 
-    DEPT(0, "dept","部门"),
-    USER(1, "user","人员"),
-    SHOP(2, "shop","店铺"),
-    CATEGORY(3, "category","品类"),
-    SKU(4, "sku","SKU"),
+    DEPT(0, "deptName","部门"),
+    USER(1, "chargeName","人员"),
+    SHOP(2, "shopName","店铺"),
+    CATEGORY(3, "categoryName","品类"),
+    SKU(4, "skuNo","SKU"),
     PLATFORM(5, "platform","平台"),
-    COUNTRY(6, "country","国家");
+    COUNTRY(6, "countryName","国家");
 
     private Integer code;
     private String name;
