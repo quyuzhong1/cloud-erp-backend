@@ -1,11 +1,12 @@
 package com.erp.server.plm.service;
 
-import com.erp.model.plm.entity.ProductRefLabelEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.plm.dto.ProductRefLabelDTO;
+import com.erp.model.plm.entity.ProductRefLabelEntity;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -52,5 +53,5 @@ public interface ProductRefLabelService extends SuperService<ProductRefLabelEnti
      * @param skuIds
      * @return
      */
-    List<ProductRefLabelVO> getLabelListByIds(List<String> productIds, List<String> labelIds, List<String> skuIds);
+    List<ProductRefLabelVO> getLabelListByIds(Set<String> productIds, Set<String> labelIds, Set<String> skuIds);
 }

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * plm 远程调用接口
@@ -351,7 +352,7 @@ public interface PlmTaskFeign {
      * @return
      */
     @PostMapping("feign/product/getProductRelLabelBySkuIds")
-    List<ProductRefLabelVO> getProductRelLabelBySkuIds(List<String> skuIds);
+    List<ProductRefLabelVO> getProductRelLabelBySkuIds(Set<String> skuIds);
     /**
      * 通过子类id或名称获取到父级的分类
      */

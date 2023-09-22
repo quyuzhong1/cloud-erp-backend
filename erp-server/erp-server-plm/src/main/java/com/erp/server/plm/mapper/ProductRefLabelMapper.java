@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -47,6 +48,6 @@ public interface ProductRefLabelMapper extends BaseMapper<ProductRefLabelEntity>
      * @param skuIds
      * @return
      */
-    List<ProductRefLabelVO> getLabelListByIds(@Param("productIds") List<String> productIds, @Param("labelIds") List<String> labelIds,
-                                              @Param("skuIds") List<String> skuIds, @Param("userId") String userId);
+    List<ProductRefLabelVO> getLabelListByIds(@Param("productIds") Set<String> productIds, @Param("labelIds") Set<String> labelIds,
+                                              @Param("skuIds") Set<String> skuIds, @Param("userId") String userId);
 }
