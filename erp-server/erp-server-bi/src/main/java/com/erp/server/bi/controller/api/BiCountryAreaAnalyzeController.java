@@ -32,6 +32,8 @@ public class BiCountryAreaAnalyzeController extends BaseController {
      */
     @PostMapping("/regionSales")
     public ApiResult<List<BiRegionAnalyzeDTO>> getRegionSales(@RequestBody @Valid BiCountryRegionFilterDTO dto) {
+        // 设置结束时间+1
+        dto.setEndTime(dto.getEndTime(), 1);
         List<BiRegionAnalyzeDTO> vo = biComprehensiveAnalyseService.getSubRegionSales(dto);
         return success(vo);
     }
@@ -42,6 +44,8 @@ public class BiCountryAreaAnalyzeController extends BaseController {
      */
     @PostMapping("/countrySales")
     public ApiResult<List<BiCountryAnalyzeDTO>> getCountrySales(@RequestBody @Valid BiCountryRegionFilterDTO dto) {
+        // 设置结束时间+1
+        dto.setEndTime(dto.getEndTime(), 1);
         List<BiCountryAnalyzeDTO> vo = biComprehensiveAnalyseService.getCountrySales(dto);
         return success(vo);
     }
