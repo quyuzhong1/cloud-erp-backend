@@ -3,7 +3,8 @@ package com.erp.model.bi.dto;
 import com.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
-import lombok.ToString;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
 
 import java.time.LocalDateTime;
@@ -20,7 +21,6 @@ import java.util.Objects;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@ToString
 @NoArgsConstructor
 public class BiFilterDTO extends SortDTO {
 
