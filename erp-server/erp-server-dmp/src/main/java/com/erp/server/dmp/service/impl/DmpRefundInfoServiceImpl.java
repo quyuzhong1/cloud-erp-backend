@@ -119,7 +119,7 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
         }
         String orderId = refundInfoId;
         itemList.stream().peek(entity -> entity.setRefundId(orderId)).collect(Collectors.toList());
-        dmpRefundItemService.checkOrderItem(itemList);
+        dmpRefundItemService.checkOrderItem(itemList, returnOrderInfoEntity.getPlatformSign());
         return refundInfoId;
     }
 

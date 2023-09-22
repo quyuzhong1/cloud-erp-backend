@@ -17,7 +17,7 @@ public interface DmpRefundItemService extends IService<DmpRefundItemEntity> {
      * @param dmpRefundItemEntity 退款列表信息
      * @return java.lang.Boolean
      **/
-    Boolean add(DmpRefundItemEntity dmpRefundItemEntity);
+    Boolean add(DmpRefundItemEntity dmpRefundItemEntity, String platformSign);
 
     /**
      * 批量添加退款商品详细信息
@@ -26,7 +26,16 @@ public interface DmpRefundItemService extends IService<DmpRefundItemEntity> {
      * @param dmpRefundItemEntityList 退款列表信息
      * @return java.lang.Boolean
      **/
-    Boolean batchAdd(List<DmpRefundItemEntity> dmpRefundItemEntityList);
+    Boolean batchAdd(List<DmpRefundItemEntity> dmpRefundItemEntityList, String platformSign);
+
+    /**
+     * 批量修改退款商品详细信息
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:10
+     * @param dmpRefundItemEntityList 退款列表信息
+     * @return java.lang.Boolean
+     **/
+    Boolean batchUpdate(List<DmpRefundItemEntity> dmpRefundItemEntityList, String platformSign);
 
     /**
      * 根据退货订单表id删除退款商品信息
@@ -41,7 +50,7 @@ public interface DmpRefundItemService extends IService<DmpRefundItemEntity> {
      * 处理退款订单详情数据
      * @param itemList
      */
-    void checkOrderItem(List<DmpRefundItemEntity> itemList);
+    void checkOrderItem(List<DmpRefundItemEntity> itemList, String platformSign);
 
     /**
      * 采购订单sku拆分

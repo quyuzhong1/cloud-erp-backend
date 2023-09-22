@@ -25,7 +25,7 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      * @Author Luo_WG
      * @Date 2022/11/14 21:10
      **/
-    Boolean add(DmpOrderItemEntity dmpOrderInfoEntity);
+    Boolean add(DmpOrderItemEntity dmpOrderInfoEntity, String platformSign);
 
     /**
      * 批量添加订单商品详细信息
@@ -35,7 +35,17 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      * @Author Luo_WG
      * @Date 2022/11/14 21:10
      **/
-    Boolean batchAdd(List<DmpOrderItemEntity> dmpOrderInfoEntityList);
+    Boolean batchAdd(List<DmpOrderItemEntity> dmpOrderInfoEntityList, String platformSign);
+
+    /**
+     * 批量修改订单商品详细信息
+     *
+     * @param dmpOrderInfoEntityList 订单商品信息集合
+     * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:10
+     **/
+    Boolean batchUpdate(List<DmpOrderItemEntity> dmpOrderInfoEntityList, String platformSign);
 
     /**
      * 根据erp平台商品id查询订单商品信息
