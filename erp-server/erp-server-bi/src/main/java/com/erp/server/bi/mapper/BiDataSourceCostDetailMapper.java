@@ -53,4 +53,16 @@ public interface BiDataSourceCostDetailMapper extends BaseMapper<BiDataSourceCos
      * @return
      */
     List<BiDataSourceCostDTO.DataValueDTO> listYearByCostType(@Param("costType") String costType, @Param("params")BiDataSourceCostDTO.GrossProfitDTO dto, @Param("limitNum")Integer limitNum);
+
+    /**
+     * 获取季度值
+     * @author yl
+     * @date 2023-09-22 15:18
+     * @param costType
+     * @param dto
+     * @param limitNum
+     * @return java.util.List<com.erp.model.bi.dto.BiDataSourceCostDTO.DataValueDTO>
+     */
+
+    List<BiDataSourceCostDTO.DataValueDTO> listQuarterByCostType(@Param("costType") String costType, @Param("params")BiDataSourceCostDTO.GrossProfitDTO dto, @Param("limitNum")Integer limitNum);
 }
