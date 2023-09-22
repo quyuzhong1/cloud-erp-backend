@@ -3,15 +3,28 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.dmp.dto.SplitSkuDTO;
+import com.erp.model.dmp.entity.DmpBomEntity;
+import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
 import com.erp.model.dmp.entity.DmpRefundItemEntity;
+import com.erp.model.dmp.entity.DmpSkuCostEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.pull.mapper.DmpRefundItemMapper;
+import com.erp.server.dmp.service.DmpBomService;
+import com.erp.server.dmp.service.DmpOrderItemService;
 import com.erp.server.dmp.service.DmpRefundItemService;
+import com.erp.server.dmp.service.DmpSkuCostService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 退款商品列表服务类
@@ -19,6 +32,15 @@ import java.util.Optional;
 @Service
 public class DmpRefundItemServiceImpl extends ServiceImpl<DmpRefundItemMapper, DmpRefundItemEntity>
     implements DmpRefundItemService {
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private DmpBomService dmpBomService;
+    @Resource
+    private DmpSkuCostService dmpSkuCostService;
+    @Resource
+    private DmpOrderItemService dmpOrderItemService;
+
     /**
      * 添加退款商品信息
      * @Author Luo_WG
@@ -78,6 +100,57 @@ public class DmpRefundItemServiceImpl extends ServiceImpl<DmpRefundItemMapper, D
         if(CollectionUtil.isNotEmpty(insertList)){
             saveBatch(insertList, 500);
         }
+    }
+
+    /**
+     * 采购订单sku拆分
+     * @Author Luo_WG
+     * @Date 2023/9/13 14:01
+     * @param itemEntityList
+     * @return java.util.List<com.erp.model.dmp.entity.DmpOrderItemEntity>
+     **/
+    @Override
+    public List<DmpRefundItemEntity> splitOrderItem(List<DmpRefundItemEntity> itemEntityList, String platformSign) {
+        List<DmpRefundItemEntity> itemListAll = new ArrayList<>();
+        //1、根据sku查询马帮bom检查是否有bom，有就需要拆单
+        List<String> skuList = itemEntityList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        //根据财务编码查询ERP的bom
+        List<BomChildrenSkuDTO> allBomList = plmTaskFeign.listBomChildBySkuNos(new ArrayList<>());
+        //根据sku查询加工件
+        List<DmpBomEntity> machining = dmpBomService.listFindBomBySkuList(skuList, PlatformEnum.MABANG.getDesc(), "machining");
+        //获取财务编码
+        List<String> financialCodeList = machining.stream().map(req -> req.getFinancialCode()).distinct().collect(Collectors.toList());
+        if (PlatformEnum.MABANG.getDesc().equals(platformSign)) {
+            allBomList = plmTaskFeign.listBomChildBySkuNos(financialCodeList);
+        }
+        //获取所有成本
+        List<DmpSkuCostEntity> allSkuCostList = dmpSkuCostService.list();
+        //遍历订单详情
+        for (DmpRefundItemEntity itemEntity : itemEntityList) {
+            //设置通用参数
+            SplitSkuDTO splitSkuDTO = new SplitSkuDTO();
+            splitSkuDTO.setId(itemEntity.getId());
+            splitSkuDTO.setCleanCostPrice(itemEntity.getCleanCostPrice());
+            splitSkuDTO.setIsSplitSku(itemEntity.getIsSplitSku());
+            splitSkuDTO.setOriginalSkuNo(itemEntity.getOriginalSkuNo());
+            splitSkuDTO.setSkuNo(itemEntity.getSkuNo());
+            splitSkuDTO.setQuantity(itemEntity.getRefundNum());
+            //拆单
+            List<SplitSkuDTO> splitSkuDTOS = dmpOrderItemService.splitSku(splitSkuDTO, machining, allBomList, allSkuCostList);
+            for (SplitSkuDTO skuDTO : splitSkuDTOS) {
+                DmpRefundItemEntity entity = new DmpRefundItemEntity();
+                BeanMapper.copy(skuDTO, entity);
+                entity.setIsSplitSku(skuDTO.getIsSplitSku());
+                entity.setAmountAfter(skuDTO.getAmountAfter());
+                entity.setCleanCostPrice(skuDTO.getCleanCostPrice());
+                entity.setSkuNo(skuDTO.getSkuNo());
+                entity.setOriginalSkuNo(skuDTO.getOriginalSkuNo());
+                entity.setIsGift(skuDTO.getIsGift());
+                entity.setQuantity(skuDTO.getQuantity());
+                itemListAll.add(entity);
+            }
+        }
+        return itemListAll;
     }
 }
 

@@ -42,4 +42,13 @@ public interface DmpRefundItemService extends IService<DmpRefundItemEntity> {
      * @param itemList
      */
     void checkOrderItem(List<DmpRefundItemEntity> itemList);
+
+    /**
+     * 采购订单sku拆分
+     * @Author Luo_WG
+     * @Date 2023/9/13 14:01
+     * @param itemEntityList
+     * @return java.util.List<com.erp.model.dmp.entity.DmpOrderItemEntity>
+     **/
+    List<DmpRefundItemEntity> splitOrderItem(List<DmpRefundItemEntity> itemEntityList, String platformSign);
 }

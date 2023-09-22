@@ -2,6 +2,7 @@ package com.erp.server.dmp.controller.api;
 
 
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.service.DmpOrderItemService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +42,7 @@ public class DmpPushTaskController extends BaseController {
     @PostMapping("/test")
     public void test(){
         List<DmpOrderItemEntity> itemEntityList = dmpOrderItemService.listByIds(Arrays.asList("1679163638713159686"));
-        List<DmpOrderItemEntity> itemEntityList1 = dmpOrderItemService.splitOrderItem(itemEntityList);
+        List<DmpOrderItemEntity> itemEntityList1 = dmpOrderItemService.splitOrderItem(itemEntityList, PlatformEnum.MABANG.getDesc());
         System.out.println(itemEntityList1);
     }
 
