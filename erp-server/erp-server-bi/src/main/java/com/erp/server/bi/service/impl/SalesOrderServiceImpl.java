@@ -13,6 +13,7 @@ import com.common.business.vo.SeriesVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -27,6 +28,7 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.plm.dto.SkuDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
+import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -220,6 +222,20 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(params, settleRate, findTime);
         List<String> skuNoList = list.stream().map(SkuSalesDTO.PagingSalesInfoDTO::getSkuNo).collect(Collectors.toList());
         Integer nowYear = LocalDate.now().getYear();
+        //标签
+        List<SkuDetailVO> skuDetailVOList = productDetailService.getSkuIdBySkuNo(skuNoList);
+        Map<String, List<LabelVO>> skuLabelMap = null;
+        if (CollectionUtils.isNotEmpty(skuDetailVOList)){
+            //增加标签列表
+            List<ProductRefLabelVO> productRefLabelVOS = plmTaskFeign.getProductRelLabelBySkuIds(skuDetailVOList.stream()
+                    .map(SkuDetailVO::getSkuId).collect(Collectors.toList()));
+            if (CollectionUtils.isNotEmpty(productRefLabelVOS)) {
+                List<LabelVO> labelVOS = BeanMapperUtils.copyList(LabelVO.class, productRefLabelVOS);
+                Map<String, List<LabelVO>> labelMap = labelVOS.stream().collect(Collectors.groupingBy(LabelVO::getSkuId));
+                skuDetailVOList.forEach(skuDetailVO -> skuDetailVO.setLabelVOS(labelMap.get(skuDetailVO.getSkuId())));
+                skuLabelMap = skuDetailVOList.stream().filter(skuDetailVO -> StringUtils.isNotBlank(skuDetailVO.getSkuNo()) &&StringUtils.isNotBlank(skuDetailVO.getSkuId()) && CollectionUtils.isNotEmpty(skuDetailVO.getLabelVOS())).collect(Collectors.toMap(SkuDetailVO::getSkuNo, SkuDetailVO::getLabelVOS));
+            }
+        }
         //销售信息
         List<SkuDTO.SalesDTO> skuList = plmTaskFeign.listSkuSalesBySkuNos(skuNoList);
         for (SkuSalesDTO.PagingSalesInfoDTO item : list) {
@@ -272,6 +288,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 BigDecimal perCustomerTransaction = sales.divide(new BigDecimal(orderCount), 2, BigDecimal.ROUND_HALF_UP);
                 item.setPerCustomerTransaction(perCustomerTransaction);
             }
+            //增加标签
+            if (Objects.nonNull(skuLabelMap)){
+                item.setLabels(skuLabelMap.get(item.getSkuNo()));
+            }
+
         }
         return new PagingVO<>(pageData);
     }

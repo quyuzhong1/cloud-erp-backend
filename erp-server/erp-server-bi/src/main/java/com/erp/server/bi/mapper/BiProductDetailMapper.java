@@ -3,6 +3,7 @@ package com.erp.server.bi.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.bi.dto.BiCategoryDTO;
 import com.erp.model.bi.entity.BiProductDetailEntity;
+import com.erp.model.bi.vo.SkuDetailVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -25,4 +26,12 @@ public interface BiProductDetailMapper extends BaseMapper<BiProductDetailEntity>
      * @return
      */
     List<BiCategoryDTO.ProductCategoryDTO> listByCategoryIds(@Param("categoryIdList") List<String> categoryIdList);
+
+    /**
+     * 根据编码获取skuId
+     *
+     * @param skuNos
+     * @return
+     */
+    List<SkuDetailVO> getSkuIdBySkuNo(@Param("skuNos") List<String> skuNos);
 }

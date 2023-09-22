@@ -10,7 +10,6 @@ import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.plm.service.*;
@@ -20,7 +19,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -309,5 +311,10 @@ public class ProductSkuFeignController {
     @PostMapping("/getProductRelLabelBySkuId")
     public List<ProductRefLabelVO> getProductRelLabel(@RequestBody String skuId) {
         return productRefLabelService.getLabelList(null, null, skuId);
+    }
+
+    @PostMapping("/getProductRelLabelBySkuIds")
+    public List<ProductRefLabelVO> getProductRelLabel(@RequestBody List<String> skuIds) {
+        return productRefLabelService.getLabelListByIds(null, null, skuIds);
     }
 }
