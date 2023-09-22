@@ -42,6 +42,10 @@ public class ProductRefLabelVO implements Serializable {
      * sku id
      */
     private String skuId;
+    /**
+     * skuNo
+     */
+    private String skuNo;
 
     /**
      * 产品id

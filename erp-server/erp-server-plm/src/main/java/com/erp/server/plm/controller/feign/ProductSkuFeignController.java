@@ -19,10 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -314,7 +311,10 @@ public class ProductSkuFeignController {
     }
 
     @PostMapping("/getProductRelLabelBySkuIds")
-    public List<ProductRefLabelVO> getProductRelLabel(@RequestBody List<String> skuIds) {
+    public List<ProductRefLabelVO> getProductRelLabel(@RequestBody Set<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
         return productRefLabelService.getLabelListByIds(null, null, skuIds);
     }
 }
