@@ -107,6 +107,11 @@ public class BiFilterDTO extends SortDTO {
     private List<String> userId;
 
     /**
+     * 产品属性id
+     */
+    private List<String> propertyIdList;
+
+    /**
      * 是否可以支持源币种
      *
      * @param dto
