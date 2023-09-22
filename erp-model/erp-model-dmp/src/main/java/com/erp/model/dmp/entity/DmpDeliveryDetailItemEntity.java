@@ -119,6 +119,21 @@ public class DmpDeliveryDetailItemEntity implements Serializable {
     @TableField(value = "platform_order_id")
     private String platformOrderId;
 
+    /**
+     * 原始sku
+     */
+    private String originalSkuNo;
+
+    /**
+     * 清洗后成本价
+     */
+    private BigDecimal cleanCostPrice;
+
+    /**
+     * 是否拆分订单 1.拆分 2.非拆分
+     */
+    private Integer isSplitSku;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
