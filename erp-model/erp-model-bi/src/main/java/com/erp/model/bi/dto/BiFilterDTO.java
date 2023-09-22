@@ -3,9 +3,11 @@ package com.erp.model.bi.dto;
 import com.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
-import lombok.ToString;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -19,6 +21,8 @@ import java.util.Objects;
  * @author Cloud
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
 public class BiFilterDTO extends SortDTO {
 
 
@@ -123,16 +127,18 @@ public class BiFilterDTO extends SortDTO {
     }
 
     /**
-     * 默认当月结束时间 + 1
+     * 默认当月结束时间
      */
     public LocalDateTime getEndTime() {
         if (null == this.endTime){
             return LocalDateTime.now(ZoneId.systemDefault())
                     .with(TemporalAdjusters.lastDayOfMonth())
-                    .plusDays(1)
                     .with(LocalTime.MIN);
         }
-        return LocalDateTime.of(endTime.plusDays(1).toLocalDate(), LocalTime.MIN);
+        return LocalDateTime.of(endTime.toLocalDate(), LocalTime.MIN);
+    }
+    public void setEndTime(LocalDateTime endTime, Integer day) {
+        this.endTime = endTime.plusDays(day);
     }
 
     /**
