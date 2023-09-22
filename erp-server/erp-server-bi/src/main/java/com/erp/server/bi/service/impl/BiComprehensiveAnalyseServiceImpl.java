@@ -18,13 +18,8 @@ import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
-import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.model.plm.dto.BasicCategoryDTO;
-import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.SkuDTO;
-import com.erp.model.plm.entity.BasicCategoryEntity;
-import com.erp.model.plm.entity.BasicLabelEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -32,7 +27,6 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.mapper.BiComprehensiveAnalyseMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -640,7 +634,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             resultDto.setPlatformFirstOrderDate(platformFistOrderList);
         }
         //增加标签列表
-        List<ProductRefLabelVO> productRefLabelVOS = plmTaskFeign.getProductRelLabel(dto.getSkuNo());
+        List<ProductRefLabelVO> productRefLabelVOS = plmTaskFeign.getProductRelLabelBySkuId(detailEntity.getId());
         if (CollectionUtils.isNotEmpty(productRefLabelVOS)) {
             resultDto.setLabels(BeanMapperUtils.copyList(LabelVO.class, productRefLabelVOS));
         }

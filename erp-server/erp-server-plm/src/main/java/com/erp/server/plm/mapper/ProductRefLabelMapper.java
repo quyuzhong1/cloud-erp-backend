@@ -1,9 +1,7 @@
 package com.erp.server.plm.mapper;
 
-import com.erp.model.plm.dto.ProductRefLabelDTO;
-import com.erp.model.plm.entity.ProductRefLabelEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
+import com.erp.model.plm.entity.ProductRefLabelEntity;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -35,9 +33,11 @@ public interface ProductRefLabelMapper extends BaseMapper<ProductRefLabelEntity>
      * @param productId
      * @param labelId
      * @param skuId
+     * @param userId
      * @return
      */
-    List<ProductRefLabelVO> getLabelList(@Param("productId") String productId, @Param("labelId") String labelId, @Param("skuId") String skuId);
+    List<ProductRefLabelVO> getLabelList(@Param("productId") String productId, @Param("labelId") String labelId,
+                                         @Param("skuId") String skuId, @Param("userId") String userId);
 
     /**
      * 获取标签列表
@@ -47,5 +47,6 @@ public interface ProductRefLabelMapper extends BaseMapper<ProductRefLabelEntity>
      * @param skuIds
      * @return
      */
-    List<ProductRefLabelVO> getLabelListByIds(@Param("productIds") List<String> productIds, @Param("labelIds") List<String> labelIds, @Param("skuIds") List<String> skuIds);
+    List<ProductRefLabelVO> getLabelListByIds(@Param("productIds") List<String> productIds, @Param("labelIds") List<String> labelIds,
+                                              @Param("skuIds") List<String> skuIds, @Param("userId") String userId);
 }

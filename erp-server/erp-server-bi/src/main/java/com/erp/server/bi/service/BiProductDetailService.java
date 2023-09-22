@@ -3,6 +3,7 @@ package com.erp.server.bi.service;
 import com.common.business.service.SuperService;
 import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.vo.SkuCategoryVO;
+import com.erp.model.bi.vo.SkuDetailVO;
 
 import java.util.List;
 
@@ -57,4 +58,11 @@ public interface BiProductDetailService extends SuperService<BiProductDetailEnti
      * @return
      */
     List<BiProductDetailEntity> listBySkuNoList(List<String> skuNoList);
+
+    /**
+     * 通过编码获取skuId集合
+     * @param skuNos
+     * @return
+     */
+    List<SkuDetailVO> getSkuIdBySkuNo(List<String> skuNos);
 }
