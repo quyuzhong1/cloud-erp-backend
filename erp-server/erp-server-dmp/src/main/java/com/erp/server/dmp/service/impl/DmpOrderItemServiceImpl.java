@@ -202,10 +202,10 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             }
         }
         if (CollectionUtil.isNotEmpty(insertList)) {
-            saveBatch(insertList);
+            this.batchAdd(insertList, platformSign);
         }
         if(CollectionUtil.isNotEmpty(updateList)){
-            batchUpdate(updateList, platformSign);
+            this.batchUpdate(updateList, platformSign);
         }
     }
 
