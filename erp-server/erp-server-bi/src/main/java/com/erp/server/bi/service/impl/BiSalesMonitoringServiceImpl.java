@@ -417,7 +417,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         head.put(SalesMonitoringTypeEnum.getName(dto.getSearchType()), SalesMonitoringTypeEnum.getDesc(dto.getSearchType()));
         head.put("sumFirstMonthSale","本期");
         head.put("sumSecondMonthSale","上期");
-        head.put("sumSecondMonthSale","上上期");
+        head.put("sumLastMonthSale","上上期");
         head.put("relativeRatioName","本期环比");
         head.put("lastRelativeRatioName","上期环比");
         return head;
@@ -557,7 +557,8 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             vo.setSumSecondMonthSale(sumSecondMonthSale);
             vo.setSumFirstMonthSale(sumFirstMonthSale);
             vo.setSumLastMonthSale(sumLastMonthSale);
-            vo.setRelativeRatioName(radio.toPlainString().concat("%"));
+            vo.setRelativeRatioName(radio.stripTrailingZeros().toPlainString().concat("%"));
+            vo.setLastRelativeRatioName(lastRadio.stripTrailingZeros().toPlainString().concat("%"));
             name = StringUtils.isNotBlank(name) ? name.concat(")") : name;
             return new Pair<>(name, vo);
         }

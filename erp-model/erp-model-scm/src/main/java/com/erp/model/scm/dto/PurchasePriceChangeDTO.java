@@ -373,7 +373,10 @@ public class PurchasePriceChangeDTO implements Serializable {
          */
         private LocalDateTime createTime;
 
-
+        /**
+         * 备注
+         */
+        private String detailRemark;
 
     }
 

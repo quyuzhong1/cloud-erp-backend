@@ -225,7 +225,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
                 .set(ProductPackEntity::getBoxQty,productPackDTO.getBoxQty())
                 .set(ProductPackEntity::getBoxWeight,productPackDTO.getBoxWeight())
                 .set(ProductPackEntity::getNetWeight,productPackDTO.getNetWeight())
-                .update(new ProductPackEntity());
+                .update();
     }
 }
 
