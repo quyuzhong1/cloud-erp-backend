@@ -528,7 +528,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
                 List<BiTargetCategorySettingEntity> categoryDbList = category.getValue();
                 BiTargetCategorySettingDTO.CommonDTO common = new BiTargetCategorySettingDTO.CommonDTO();
                 common.setCategoryId(categoryId);
-                common.setCategoryName(dbList.get(0).getCategoryName());
+                common.setCategoryName(categoryDbList.get(0).getCategoryName());
                 //一月
                 Integer january = MonthEnum.JANUARY.getValue();
                 common.setJanuary(pullView(metrics, january, dbList));
