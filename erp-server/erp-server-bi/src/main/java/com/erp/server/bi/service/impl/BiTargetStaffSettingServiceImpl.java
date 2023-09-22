@@ -563,7 +563,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
                 List<BiTargetStaffSettingEntity> staffDbList = staff.getValue();
                 BiTargetStaffSettingDTO.CommonDTO common = new BiTargetStaffSettingDTO.CommonDTO();
                 common.setStaffId(staffId);
-                common.setStaffName(dbList.get(0).getStaffName());
+                common.setStaffName(staffDbList.get(0).getStaffName());
                 //一月
                 Integer january = MonthEnum.JANUARY.getValue();
                 common.setJanuary(pullView(metrics, january, dbList));

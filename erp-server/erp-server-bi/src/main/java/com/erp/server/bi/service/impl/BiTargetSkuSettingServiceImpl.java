@@ -544,7 +544,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
                 List<BiTargetSkuSettingEntity> skuDbList = sku.getValue();
                 BiTargetSkuSettingDTO.CommonDTO common = new BiTargetSkuSettingDTO.CommonDTO();
                 common.setSkuId(skuId);
-                common.setSkuNo(dbList.get(0).getSkuNo());
+                common.setSkuNo(skuDbList.get(0).getSkuNo());
                 //一月
                 Integer january = MonthEnum.JANUARY.getValue();
                 common.setJanuary(pullView(metrics, january, dbList));

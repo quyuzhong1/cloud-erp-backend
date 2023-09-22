@@ -571,7 +571,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
                 List<BiTargetNewProductSettingEntity> staffDbList = staff.getValue();
                 BiTargetNewProductSettingDTO.CommonDTO common = new BiTargetNewProductSettingDTO.CommonDTO();
                 common.setStaffId(staffId);
-                common.setStaffName(dbList.get(0).getStaffName());
+                common.setStaffName(staffDbList.get(0).getStaffName());
                 //一月
                 Integer january = MonthEnum.JANUARY.getValue();
                 common.setJanuary(pullView(metrics, january, dbList, valueStr));
