@@ -2282,7 +2282,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @author yl
      * @date 2023-01-06 11:19
      */
-    private StatisticalDataVO byDateStackedColumnChart(DateSalesTrendDTO.SearchDTO dto, String timeFlag, String settleRate) {
+    private StatisticalDataVO byDateStackedColumnChart(DateSalesTrendDTO.SearchDTO dto, String timeFlag, String settleRate, String groupName) {
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售趋势");
         statistical.setChartType(ChartType.PIE);
@@ -2291,16 +2291,16 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesFlagVO> salesList = new ArrayList();
         switch (dateType) {
             case "DAY":
-                salesList = baseMapper.getByDayCategory(dto, timeFlag, settleRate);
+                salesList = baseMapper.getByDayCategory(dto, timeFlag, settleRate, groupName);
                 break;
             case "MONTH":
-                salesList = baseMapper.getByMonthCategory(dto, timeFlag, settleRate);
+                salesList = baseMapper.getByMonthCategory(dto, timeFlag, settleRate, groupName);
                 break;
             case "QUARTER":
-                salesList = baseMapper.getByQuarterCategory(dto, timeFlag, settleRate);
+                salesList = baseMapper.getByQuarterCategory(dto, timeFlag, settleRate, groupName);
                 break;
             case "YEAR":
-                salesList = baseMapper.getByYearCategory(dto, timeFlag, settleRate);
+                salesList = baseMapper.getByYearCategory(dto, timeFlag, settleRate, groupName);
                 break;
             default:
                 salesList = new ArrayList<>();
@@ -2389,7 +2389,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                         Collectors.toMap(DateCostVO::getCostType, DateCostVO::getCostValue)));
         switch (dateType) {
             case "DAY":
-                throw new ServiceException(ApiError.ERROR_DATE_TYPE);
             case "WEEK":
                 throw new ServiceException(ApiError.ERROR_DATE_TYPE);
             case "MONTH":
@@ -2576,9 +2575,54 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {
             timeFlag = "platform_create_time";
         }
+        String groupName = "";
         //类别查询
         if (CollectionUtils.isNotEmpty(dto.getCategory())) {
-            return this.byDateStackedColumnChart(dto, timeFlag, settleRate);
+            groupName = "category";
+        }
+
+        //部门查询
+        if (CollectionUtils.isNotEmpty(dto.getDepartment())) {
+            groupName = "dept_id";
+        }
+
+        //用户查询
+        if (CollectionUtils.isNotEmpty(dto.getUserId())) {
+            groupName = "charge_id";
+        }
+
+        //店铺查询
+        if (CollectionUtils.isNotEmpty(dto.getShopName())) {
+            groupName = "shop_name";
+        }
+
+        //sku查询
+        if (CollectionUtils.isNotEmpty(dto.getSku())) {
+            groupName = "sku_no";
+        }
+
+        //新/老品查询
+        if (dto.getNewSign() != null) {
+            groupName = "new_sign";
+        }
+
+        //产品属性id查询
+        if (CollectionUtils.isNotEmpty(dto.getPropertyIdList())) {
+            groupName = "property_id";
+        }
+
+        //平台查询
+        if (CollectionUtils.isNotEmpty(dto.getPlatform())) {
+            groupName = "source_platform";
+        }
+
+        //站点查询
+        if (CollectionUtils.isNotEmpty(dto.getSite())) {
+            groupName = "site";
+        }
+
+        if (StringUtils.isNotBlank(groupName)) {
+            return this.byDateStackedColumnChart(dto, timeFlag, settleRate, groupName);
         }
 
         List<SalesFlagVO> salesList = new ArrayList();
