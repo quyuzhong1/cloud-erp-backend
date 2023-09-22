@@ -4,12 +4,14 @@ import java.math.BigDecimal;
 
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.bi.enums.MetricsEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import org.checkerframework.checker.units.qual.C;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -50,6 +52,17 @@ public class BiTargetStaffSettingDTO implements Serializable {
          * 部门id
          */
         private String deptName;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createTime;
 
         /**
          * 详情信息
