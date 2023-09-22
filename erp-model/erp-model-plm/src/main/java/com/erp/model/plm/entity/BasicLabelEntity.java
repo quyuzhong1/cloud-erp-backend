@@ -1,13 +1,13 @@
 package com.erp.model.plm.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -17,7 +17,7 @@ import com.common.business.enums.ApproveStatusEnum;
  *
  * @author Lambda
  * @since 2023-09-13
-*/
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
@@ -25,21 +25,26 @@ import com.common.business.enums.ApproveStatusEnum;
 public class BasicLabelEntity extends BaseEntity<BasicLabelEntity> {
 
     /**
-    * 标签名称
-    */
+     * 标签名称
+     */
     @TableField("name")
     private String name;
     /**
-    * 颜色
-    */
+     * 颜色
+     */
     @TableField("color")
     private String color;
     /**
-    * 标签级别 private 私有，company 公司
-    */
+     * 标签级别 private 私有，company 公司
+     */
     @TableField("level")
     private String level;
 
+    /**
+     * 标签级别 private 私有，company 公司
+     */
+    @TableField("index")
+    private Integer index;
 
     public static final String NAME = "name";
 

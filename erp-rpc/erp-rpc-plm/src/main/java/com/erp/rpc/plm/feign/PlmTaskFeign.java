@@ -345,6 +345,7 @@ public interface PlmTaskFeign {
     @PostMapping("feign/product/getProductRelLabelBySkuId")
     List<ProductRefLabelVO> getProductRelLabelBySkuId(String skuId);
 
+
     /**
      * 根据sku获取标签列表
      *
