@@ -153,7 +153,7 @@ public class BiTargetSkuSettingController extends BaseController {
      */
     @PostMapping("/remove")
     @LogAction(value = LogActionEnum.DELETE, desc = "单品目标设置删除")
-    public ApiResult remove(@RequestBody BiTargetSkuSettingDTO.RemoveDTO dto) {
+    public ApiResult remove(@RequestBody @Validated BiTargetSkuSettingDTO.RemoveDTO dto) {
         Boolean result = biTargetSkuSettingService.delete(dto);
         return result ? success() : failure();
     }
