@@ -319,15 +319,21 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     public Boolean update(WarehouseReceiveDTO.UpdateDTO dto) {
         //根据用户id获取用户信息
         SysUserDTO sysUserDTO = sysUserFeign.getSysUserById(dto.getReceiveUserId());
+
         //获取用户部门
-        SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(dto.getReceiveDeptId());
+        SysDepartmentDTO departmentDTO = null;
+        if (StringUtils.isNotBlank(dto.getReceiveDeptId())) {
+            departmentDTO = sysUserFeign.getUserDeptById(dto.getReceiveDeptId());
+        }
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getDeliveryWarehouseId());
 
         WarehouseReceiveEntity entity = new WarehouseReceiveEntity();
         BeanMapperUtils.copy(dto, entity);
         entity.setReceiveUserName(sysUserDTO.getUserName());
-        entity.setReceiveDeptName(departmentDTO.getName());
+        if (departmentDTO != null) {
+            entity.setReceiveDeptName(departmentDTO.getName());
+        }
         entity.setDeliveryWarehouseName(warehouseEntity.getName());
         //更新收货单主表信息
         this.updateById(entity);
