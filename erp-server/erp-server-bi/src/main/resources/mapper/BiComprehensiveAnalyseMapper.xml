@@ -788,7 +788,7 @@
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
-        LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
+
         <where>
             <if test="params.timeType == 0">
                 <if test="params.startTime != null">
@@ -839,7 +839,7 @@
 
             <!--sku-->
             <if test="params.sku!=null and params.sku.size>0">
-                AND sku.sku_no IN
+                AND doit.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
