@@ -653,8 +653,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             ProductPackDTO productPackDTO = new ProductPackDTO();
             productPackDTO.setSkuId(qcProductEntity.getSkuId());
             productPackDTO.setSkuNo(qcProductEntity.getSkuNo());
-            productPackDTO.setProductSize(StrUtil.format("{}X{}X{}",qcProductEntity.getProductLength(),qcProductEntity.getProductWidth(),qcProductEntity.getProductHeight()));
-            productPackDTO.setBoxSize(StrUtil.format("{}X{}X{}",qcProductEntity.getBoxLength(),qcProductEntity.getBoxWidth(),qcProductEntity.getBoxHeight()));
+            productPackDTO.setProductSize(StrUtil.format("{}X{}X{}",qcProductEntity.getProductLength().stripTrailingZeros().toPlainString(),qcProductEntity.getProductWidth().stripTrailingZeros().toPlainString(),qcProductEntity.getProductHeight().stripTrailingZeros().toPlainString()));
+            productPackDTO.setBoxSize(StrUtil.format("{}X{}X{}",qcProductEntity.getBoxLength().stripTrailingZeros().toPlainString(),qcProductEntity.getBoxWidth().stripTrailingZeros().toPlainString(),qcProductEntity.getBoxHeight().stripTrailingZeros().toPlainString()));
             productPackDTO.setBoxQty(new BigDecimal(qcProductEntity.getBoxQty()));
             productPackDTO.setBoxWeight(qcProductEntity.getBoxWeight());
             productPackDTO.setNetWeight(qcProductEntity.getProductNetWeight());
