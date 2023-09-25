@@ -132,4 +132,24 @@ public class SkuVO implements Serializable {
      * 仓位
      */
     private String warehouseLocation;
+
+    /**
+     * 一级供应商
+     */
+    private String mainSupplier;
+
+    /**
+     * 一级供应商名称
+     */
+    private String mainSupplierName;
+
+    /**
+     * 二级供应商
+     */
+    private String secondSupplier;
+
+    /**
+     * 二级供应商名称
+     */
+    private String secondSupplierName;
 }
