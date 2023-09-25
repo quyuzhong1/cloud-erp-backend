@@ -1472,10 +1472,11 @@
     <select id="getCountrySales" resultType="com.erp.model.bi.dto.BiCountryAnalyzeDTO">
         SELECT
         doi.country_name_cn AS countryNameCn,
-        COALESCE(SUM(doit.amount_after),0) AS salesAmount
+        COALESCE(SUM ( doit.amount_after * doit.currency_rate), 0) AS salesAmount
         FROM dmp_order_info doi
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
-        LEFT JOIN dmp_sku_info dsi ON dsi.sku_no = doit.sku_no
+        LEFT JOIN product_detail pd ON pd.sku_no = doit.sku_no
+        LEFT JOIN product_info pi ON pd.product_id = pi.id
         LEFT JOIN dmp_shop_info shop ON shop.platform_shop_no = doi.shop_no
         WHERE shop."name" IS NOT NULL
         <if test="params.timeType == 0">
@@ -1483,7 +1484,7 @@
                 AND doi.platform_create_time >= #{params.startTime}
             </if>
             <if test="params.endTime != null">
-                AND doi.platform_create_time &lt;= #{params.endTime}
+                AND doi.platform_create_time &lt; #{params.endTime}
             </if>
         </if>
         <if test="params.timeType == 1">
@@ -1534,14 +1535,14 @@
         </if>
         <!--品类-->
         <if test="params.category!=null and params.category.size>0">
-            AND dsi.parent_category_name IN
+            AND pi.category IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
         </if>
         <!--品牌-->
         <if test="params.brand!=null and params.brand.size>0">
-            AND dsi.brand_name IN
+            AND pi.brand_name IN
             <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                 #{brand}
             </foreach>
