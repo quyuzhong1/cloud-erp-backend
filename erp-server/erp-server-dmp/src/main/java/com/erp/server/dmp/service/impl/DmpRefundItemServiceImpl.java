@@ -149,7 +149,7 @@ public class DmpRefundItemServiceImpl extends ServiceImpl<DmpRefundItemMapper, D
             //设置通用参数
             SplitSkuDTO splitSkuDTO = new SplitSkuDTO();
             splitSkuDTO.setPlatformSign(platformSign);
-            splitSkuDTO.setId(itemEntity.getId());
+            splitSkuDTO.setId(itemEntity.getErpOrderItemId());
             splitSkuDTO.setCleanCostPrice(itemEntity.getCleanCostPrice());
             splitSkuDTO.setIsSplitSku(itemEntity.getIsSplitSku());
             splitSkuDTO.setOriginalSkuNo(itemEntity.getOriginalSkuNo());

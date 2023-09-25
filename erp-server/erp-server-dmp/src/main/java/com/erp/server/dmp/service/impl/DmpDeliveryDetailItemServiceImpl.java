@@ -112,7 +112,7 @@ public class DmpDeliveryDetailItemServiceImpl extends ServiceImpl<DmpDeliveryDet
             //设置通用参数
             SplitSkuDTO splitSkuDTO = new SplitSkuDTO();
             splitSkuDTO.setPlatformSign(platformSign);
-            splitSkuDTO.setId(dmpDeliveryDetailItemEntity.getId());
+            splitSkuDTO.setId(dmpDeliveryDetailItemEntity.getItemId());
             splitSkuDTO.setCleanCostPrice(dmpDeliveryDetailItemEntity.getCleanCostPrice());
             splitSkuDTO.setIsSplitSku(dmpDeliveryDetailItemEntity.getIsSplitSku());
             splitSkuDTO.setOriginalSkuNo(dmpDeliveryDetailItemEntity.getOriginalSkuNo());
