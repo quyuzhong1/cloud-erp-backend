@@ -35,6 +35,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
+import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
@@ -198,7 +199,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Autowired
     private ScmTaskFeign scmTaskFeign;
-
+    @Resource
+    private ProductRefLabelService productRefLabelService;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -238,8 +240,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-
-
+        //标签列表
+        List<String> labelIds = pagingDTO.getParams().getLabelIds();
+        List<String> labelProductIds = null;
+        if (CollectionUtils.isNotEmpty(labelIds)) {
+            List<ProductRefLabelVO> productRefLabelVOS = productRefLabelService.getLabelListByIds(null, new HashSet<>(labelIds), null);
+            if (CollectionUtils.isNotEmpty(productRefLabelVOS)) {
+                labelProductIds = productRefLabelVOS.stream().map(ProductRefLabelVO::getProductId).collect(Collectors.toList());
+                pagingDTO.getParams().setLabelProductIds(labelProductIds);
+            }
+        }
         IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams());
         List<ProductDetailShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
