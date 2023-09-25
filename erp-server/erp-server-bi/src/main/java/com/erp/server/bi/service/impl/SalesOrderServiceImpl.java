@@ -2825,7 +2825,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             if ("WEEK".equals(dateType)) {
                 String[] split = salesList.get(i).getName().split("~");
                 parse = LocalDate.parse(split[0], dateTimeFormatter).minusDays(7) + "~" + LocalDate.parse(split[0], dateTimeFormatter).minusDays(1);
-                prevYearDate = lastYearSalesList.get(i).getName();
+                if (ObjectUtil.isNotEmpty(lastYearSalesList.get(i))) {
+                    prevYearDate = lastYearSalesList.get(i).getName();
+                }
             }
             if ("MONTH".equals(dateType)) {
                 Date date = DateUtil.strToDate(salesList.get(i).getName(), DateUtil.fmt_month);
