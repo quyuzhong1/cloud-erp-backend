@@ -691,6 +691,15 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_97000);
         }
+        // 主表状态更新
+        if (!entity.getShareFlag().equalsIgnoreCase(shareFlag)){
+            entity.setShareFlag(shareFlag);
+            boolean updateResult = updateById(entity);
+            if (!updateResult) {
+                throw new ServiceException("主题更新失败");
+            }
+        }
+
         subjectShareService.checkAndAddSubjectShare(shareFlagIdList, mainId, shareFlag);
         return BatchResultDTO.success(entity.getId(), "", OperationTypeEnum.PERMISSION);
     }

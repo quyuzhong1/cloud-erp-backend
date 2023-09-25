@@ -3,7 +3,7 @@ package com.erp.model.plm.vo;
 import lombok.*;
 import lombok.experimental.Accessors;
 
-import java.util.List;
+import java.io.Serializable;
 
 /**
  * @author zdy
@@ -18,8 +18,9 @@ import java.util.List;
 @EqualsAndHashCode
 @ToString
 @Accessors(chain = true)
-public class LabelLevelTreeVO {
+public class LabelBasicVO implements Serializable {
 
+    private String id;
     /**
      * 标签名称
      */
@@ -34,8 +35,7 @@ public class LabelLevelTreeVO {
     private String level;
 
     /**
-     * 子集
+     * 标签级别 private 私有，company 公司
      */
-    private List<LabelBasicVO> children;
-
+    private Integer index;
 }
