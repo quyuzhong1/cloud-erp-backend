@@ -42,7 +42,7 @@ public class BiTargetNewProductSettingExcelListener extends AnalysisEventListene
      */
     private List<TargetNewProductSettingImportExcelDTO> errorList = new ArrayList<>();
 
-    public BiTargetNewProductSettingExcelListener(List<String> metricsNameList, List<FindUserDTO> dictList) {
+    public BiTargetNewProductSettingExcelListener(List<String> metricsNameList, List<FindUserDTO> userList) {
         this.metricsNameList = metricsNameList;
         this.userList = userList;
     }
