@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * @Classname SkuVO
@@ -132,6 +133,26 @@ public class SkuVO implements Serializable {
      * 仓位
      */
     private String warehouseLocation;
+
+    /**
+     * 毛重
+     */
+    private BigDecimal grossWeight;
+
+    /**
+     * 目标含税成本
+     */
+    private BigDecimal targetTaxCost;
+
+    /**
+     * 实际含税成本
+     */
+    private BigDecimal actualTaxCost;
+
+    /**
+     * 标准零售价
+     */
+    private BigDecimal retailPrice;
 
     /**
      * 一级供应商
