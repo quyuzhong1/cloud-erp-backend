@@ -218,11 +218,12 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         }
         subject.setCategoryId(categoryId);
         subject.setCategoryName(categoryName);
+        subject.setShareFlag(dto.getShareFlag());
         boolean updateResult = subjectService.updateById(subject);
         if (!updateResult) {
             return "";
         }
-        List<String> userList = dto.getShareUserIdList();
+        List<String> userList = dto.getShareFlagIdList();
         //添加专题的分享用户
         subjectShareService.checkAndAddSubjectShare(userList, subjectId, subject.getShareFlag());
 
