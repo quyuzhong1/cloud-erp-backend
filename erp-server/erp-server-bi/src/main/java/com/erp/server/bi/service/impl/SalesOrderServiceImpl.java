@@ -2825,7 +2825,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 String[] split = salesFlagVO.getName().split("~");
                 String start = LocalDate.parse(split[0], dateTimeFormatter).minusYears(1) + "";
                 String end = LocalDate.parse(split[1], dateTimeFormatter).minusYears(1) + "";
-                parse = LocalDate.parse(split[0], dateTimeFormatter).minusDays(6) + "~" + split[0];
+                parse = LocalDate.parse(split[0], dateTimeFormatter).minusDays(7) + "~" + LocalDate.parse(split[0], dateTimeFormatter).minusDays(1);
                 prevYearDate = start + "~" + end;
             }
             if ("MONTH".equals(dateType)) {
@@ -2875,7 +2875,16 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
             //获取销售同比
             String finalPrevYearDate = prevYearDate;
-            SalesFlagVO lastYearSalesFlag = lastYearSalesList.stream().filter(req -> req.getName().equals(finalPrevYearDate)).findFirst().orElse(null);
+            SalesFlagVO lastYearSalesFlag = null;
+            if ("WEEK".equals(dateType)) {
+                /*String[] split = finalPrevYearDate.split("~");
+                lastYearSalesList.stream().filter(req -> LocalDate.parse(req.getName()).compareTo(LocalDate.parse(split[0])) >= 0
+                        && LocalDate.parse(req.getName()).compareTo(LocalDate.parse(split[1])) < 0 ).map*/
+            } else {
+                lastYearSalesFlag = lastYearSalesList.stream().filter(req -> req.getName().equals(finalPrevYearDate)).findFirst().orElse(null);
+            }
+
+
             if (ObjectUtils.isNotEmpty(lastYearSalesFlag) && lastYearSalesFlag.getSales().compareTo(BigDecimal.ZERO) > 0) {
                 salesFlagVO.setSalesBasisRatio(salesFlagVO.getSales()
                         .subtract(lastYearSalesFlag.getSales())
