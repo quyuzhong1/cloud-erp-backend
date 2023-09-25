@@ -20,11 +20,6 @@ public class BiSalesMonitoringTableVO {
     public static class CommonDTO {
 
         /**
-         * 品名
-         */
-        private String itemName;
-
-        /**
          * 本期
          */
         private BigDecimal sumFirstMonthSale;

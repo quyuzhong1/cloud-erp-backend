@@ -1,5 +1,7 @@
 package com.erp.model.bi.dto;
 
+import com.common.business.dto.base.PermissionsDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -105,4 +107,42 @@ public class BiSalesMonitoringTableDTO {
      * 订单日期
      */
     private LocalDate platformCreateTime;
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GroupViewDTO extends PermissionsDTO {
+
+        /**
+         * 分组数据
+         */
+        private String groupData;
+
+        /**
+         * 显示数据
+         */
+        private String viewData;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+         * 类型名称 （部门、人员、店铺、品类、SKU）
+         */
+        private String typeName;
+
+        /**
+         * 月份
+         */
+        private Integer month;
+
+        /**
+         * 对应值
+         */
+        private BigDecimal value;
+    }
+
 }
