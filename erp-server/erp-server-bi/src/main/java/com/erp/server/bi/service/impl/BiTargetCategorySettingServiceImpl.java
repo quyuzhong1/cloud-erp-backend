@@ -13,6 +13,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.dto.excel.TargetCategorySettingImportExcelDTO;
 import com.erp.model.bi.dto.excel.TargetSkuSettingImportExcelDTO;
@@ -215,6 +216,9 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
         entity.setCategoryId(categorgId);
         entity.setValue(value);
         entity.setMetrics(metrics);
+        if (MetricsEnum.GROSS_PROFIT_RATE.equals(metrics)) {
+            entity.setValue(MathUtil.divide(value, MathUtil.BigDecimal_100, 2));
+        }
         return entity;
     }
 
@@ -452,31 +456,32 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
     @Override
     public BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto) {
         List<BiTargetYearDTO.MonthValueDTO> list = baseMapper.pagingTotal(dto);
+        String metrics = dto.getMetrics();
         BiTargetYearDTO.PagingTotalDTO pagingTotal = new BiTargetYearDTO.PagingTotalDTO();
         //一月
-        pagingTotal.setJanuaryTotal(getMonthValue(MonthEnum.JANUARY, list));
+        pagingTotal.setJanuaryTotal(getMonthValue(MonthEnum.JANUARY, list, metrics));
         //二月
-        pagingTotal.setFebruaryTotal(getMonthValue(MonthEnum.FEBRUARY, list));
+        pagingTotal.setFebruaryTotal(getMonthValue(MonthEnum.FEBRUARY, list, metrics));
         //三月
-        pagingTotal.setMarchTotal(getMonthValue(MonthEnum.MARCH, list));
+        pagingTotal.setMarchTotal(getMonthValue(MonthEnum.MARCH, list, metrics));
         // 四月
-        pagingTotal.setAprilTotal(getMonthValue(MonthEnum.APRIL, list));
+        pagingTotal.setAprilTotal(getMonthValue(MonthEnum.APRIL, list, metrics));
         //五月
-        pagingTotal.setMayTotal(getMonthValue(MonthEnum.MAY, list));
+        pagingTotal.setMayTotal(getMonthValue(MonthEnum.MAY, list, metrics));
         // 六月
-        pagingTotal.setJuneTotal(getMonthValue(MonthEnum.JUNE, list));
+        pagingTotal.setJuneTotal(getMonthValue(MonthEnum.JUNE, list, metrics));
         //七月
-        pagingTotal.setJulyTotal(getMonthValue(MonthEnum.JULY, list));
+        pagingTotal.setJulyTotal(getMonthValue(MonthEnum.JULY, list, metrics));
         //八月
-        pagingTotal.setAugustTotal(getMonthValue(MonthEnum.AUGUST, list));
+        pagingTotal.setAugustTotal(getMonthValue(MonthEnum.AUGUST, list, metrics));
         //九月
-        pagingTotal.setSeptemberTotal(getMonthValue(MonthEnum.SEPTEMBER, list));
+        pagingTotal.setSeptemberTotal(getMonthValue(MonthEnum.SEPTEMBER, list, metrics));
         //十月
-        pagingTotal.setOctoberTotal(getMonthValue(MonthEnum.OCTOBER, list));
+        pagingTotal.setOctoberTotal(getMonthValue(MonthEnum.OCTOBER, list, metrics));
         //十一月
-        pagingTotal.setNovemberTotal(getMonthValue(MonthEnum.NOVEMBER, list));
+        pagingTotal.setNovemberTotal(getMonthValue(MonthEnum.NOVEMBER, list, metrics));
         //十二月
-        pagingTotal.setDecemberTotal(getMonthValue(MonthEnum.DECEMBER, list));
+        pagingTotal.setDecemberTotal(getMonthValue(MonthEnum.DECEMBER, list, metrics));
         return pagingTotal;
     }
     /**
@@ -484,10 +489,13 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
      *
      * @return
      */
-    public BigDecimal getMonthValue(MonthEnum monthEnum, List<BiTargetYearDTO.MonthValueDTO> list) {
-        return list.stream().filter(m -> m.getMonth().equals(monthEnum.getValue())).
+    public BigDecimal getMonthValue(MonthEnum monthEnum, List<BiTargetYearDTO.MonthValueDTO> list,String metrics) {
+        BigDecimal value = list.stream().filter(m -> m.getMonth().equals(monthEnum.getValue())).
                 findFirst().map(BiTargetYearDTO.MonthValueDTO::getValue).orElse(BigDecimal.ZERO);
-
+        if (MetricsEnum.GROSS_PROFIT_RATE.getCode().equals(metrics)) {
+            value = MathUtil.multiply(value, MathUtil.NUMBER_100);
+        }
+        return value;
     }
 
     /**
@@ -588,6 +596,9 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
     private BigDecimal pullView(String metrics, Integer month, List<BiTargetCategorySettingEntity> dbList) {
         BigDecimal value = dbList.stream().filter(d -> d.getMonth().equals(month)).findFirst().
                 map(BiTargetCategorySettingEntity::getValue).orElse(null);
+        if (value != null && MetricsEnum.GROSS_PROFIT_RATE.getCode().equals(metrics)) {
+            value = MathUtil.multiply(value, MathUtil.NUMBER_100);
+        }
         return value;
     }
 

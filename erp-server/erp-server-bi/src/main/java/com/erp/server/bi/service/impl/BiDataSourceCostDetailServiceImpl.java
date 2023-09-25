@@ -10,11 +10,14 @@ import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 import com.erp.model.bi.enums.DataSourceCostEnum;
 import com.erp.model.bi.enums.MetricsEnum;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.server.bi.mapper.BiDataSourceCostDetailMapper;
 import com.erp.server.bi.service.BiDataSourceCostDetailService;
+import com.erp.server.bi.service.DmpShopInfoService;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,6 +33,10 @@ import java.util.stream.Collectors;
 @Service
 public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceCostDetailMapper, BiDataSourceCostDetailEntity>
         implements BiDataSourceCostDetailService {
+
+    @Resource
+    private DmpShopInfoService shopInfoService;
+
     @Override
     public HashMap<String, Map<String, BigDecimal>> convertListByCostIds(List<String> costIds, List<String> dictValues) {
         if (CollectionUtils.isEmpty(costIds) || CollectionUtils.isEmpty(dictValues)) {
@@ -84,7 +91,10 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
      */
     @Override
     public BigDecimal monthByCostType(String yearMonthStr, String costType, BiFilterDTO dto) {
-        return baseMapper.monthByCostType(yearMonthStr, costType, dto);
+        List<String> shopNameList = dto.getShopName();
+        List<DmpShopInfoEntity> shopInfoList = shopInfoService.listByNames(shopNameList);
+        List<String> shopIdList = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
+        return baseMapper.monthByCostType(yearMonthStr, costType, dto,shopIdList);
     }
 
 
@@ -266,6 +276,9 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
      */
     @Override
     public BigDecimal yearByCostType(String year, String costType, BiFilterDTO dto) {
-        return baseMapper.yearByCostType(year, costType, dto);
+        List<String> shopNameList = dto.getShopName();
+        List<DmpShopInfoEntity> shopInfoList = shopInfoService.listByNames(shopNameList);
+        List<String> shopIdList = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
+        return baseMapper.yearByCostType(year, costType, dto,shopIdList);
     }
 }
