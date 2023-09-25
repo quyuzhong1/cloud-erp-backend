@@ -115,6 +115,12 @@
                 #{state}
             </foreach>
         </if>
+        <if test="params.labelProductIds !=null and params.labelProductIds.size>0">
+            AND pi.id IN
+            <foreach collection="params.labelProductIds" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
         <if test="params.categoryIds != null and params.categoryIds.size > 0  ">
             AND pi.category_id in
             <foreach collection="params.categoryIds" item="category" open="(" separator="," close=")">
