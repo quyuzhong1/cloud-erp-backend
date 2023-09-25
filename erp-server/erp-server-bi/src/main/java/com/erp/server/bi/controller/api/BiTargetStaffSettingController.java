@@ -158,7 +158,7 @@ public class BiTargetStaffSettingController extends BaseController {
      */
     @PostMapping("/remove")
     @LogAction(value = LogActionEnum.DELETE, desc = "人员目标设置删除")
-    public ApiResult remove(@RequestBody BiTargetStaffSettingDTO.RemoveDTO dto) {
+    public ApiResult remove(@RequestBody @Validated BiTargetStaffSettingDTO.RemoveDTO dto) {
         Boolean result = biTargetStaffSettingService.delete(dto);
         return result ? success() : failure();
     }

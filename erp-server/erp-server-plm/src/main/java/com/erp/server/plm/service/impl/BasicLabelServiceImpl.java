@@ -15,6 +15,7 @@ import com.erp.model.plm.dto.BasicLabelDTO;
 import com.erp.model.plm.entity.BasicLabelEntity;
 import com.erp.model.plm.enums.LabelColorEnum;
 import com.erp.model.plm.enums.LabelLevelEnum;
+import com.erp.model.plm.vo.LabelBasicVO;
 import com.erp.model.plm.vo.LabelLevelTreeVO;
 import com.erp.server.plm.mapper.BasicLabelMapper;
 import com.erp.server.plm.mapper.ProductRefLabelMapper;
@@ -57,29 +58,35 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
      * @return List<BasicLabelEntity>
      */
     @Override
-    public List<BasicLabelEntity> listByCondition(BasicLabelDTO.SearchDTO dto) {
+    public List<LabelBasicVO> listByCondition(BasicLabelDTO.SearchDTO dto) {
         //获取通用的全部和自己创建的私有标签
-        LambdaQueryWrapper<BasicLabelEntity> queryWrapper = new LambdaQueryWrapper<>();
-        if (Objects.nonNull(dto) && StringUtils.isNotBlank(dto.getSearchKeyword())) {
-            queryWrapper.like(BasicLabelEntity::getName, dto.getSearchKeyword());
-        }
-        if (Objects.nonNull(dto) && StringUtils.isNotBlank(dto.getLevel())) {
-            queryWrapper.eq(BasicLabelEntity::getLevel, dto.getLevel());
-        } else {
-            queryWrapper.and(labelEntityLambdaQueryWrapper -> labelEntityLambdaQueryWrapper.eq(BasicLabelEntity::getLevel, "company")
-                    .or().eq(BasicLabelEntity::getLevel, "private").eq(BasicLabelEntity::getCreateUserId, commonService.getUserInfo().getUid()));
-        }
-        queryWrapper.select(BasicLabelEntity::getId, BasicLabelEntity::getName, BasicLabelEntity::getColor, BasicLabelEntity::getLevel);
-        return this.list(queryWrapper);
+        dto.setCreateUserId(commonService.getUserInfo().getUid());
+        return baseMapper.listByCondition(dto);
+//        LambdaQueryWrapper<BasicLabelEntity> queryWrapper = new LambdaQueryWrapper<>();
+//        if (Objects.nonNull(dto) && StringUtils.isNotBlank(dto.getSearchKeyword())) {
+//            queryWrapper.like(BasicLabelEntity::getName, dto.getSearchKeyword());
+//        }
+//        if (Objects.nonNull(dto) && StringUtils.isNotBlank(dto.getLevel())) {
+//            if (StringUtils.equals(dto.getLevel(), LabelLevelEnum.PRIVATE.getCode())){
+//                queryWrapper.eq(BasicLabelEntity::getCreateUserId, commonService.getUserInfo().getUid());
+//            }
+//            queryWrapper.eq(BasicLabelEntity::getLevel, dto.getLevel());
+//        } else {
+//            queryWrapper.and(labelEntityLambdaQueryWrapper -> labelEntityLambdaQueryWrapper.eq(BasicLabelEntity::getLevel, "company")
+//                    .or(wrapper -> wrapper.eq(BasicLabelEntity::getLevel, "private").eq(BasicLabelEntity::getCreateUserId, commonService.getUserInfo().getUid())));
+//        }
+//        queryWrapper.orderByAsc(BasicLabelEntity::getIndex);
+//        queryWrapper.select(BasicLabelEntity::getId, BasicLabelEntity::getName, BasicLabelEntity::getColor, BasicLabelEntity::getLevel, BasicLabelEntity::getIndex);
+//        return this.list(queryWrapper);
     }
 
     @Override
     public List<LabelLevelTreeVO> listByTree() {
         List<LabelLevelTreeVO> treeVOS = new ArrayList<>(2);
         //用户当前标签列表
-        List<BasicLabelEntity> list = listByCondition(null);
+        List<LabelBasicVO> list = listByCondition(null);
         if (CollectionUtils.isNotEmpty(list)) {
-            Map<String, List<BasicLabelEntity>> map = list.stream().collect(Collectors.groupingBy(BasicLabelEntity::getLevel));
+            Map<String, List<LabelBasicVO>> map = list.stream().collect(Collectors.groupingBy(LabelBasicVO::getLevel));
             treeVOS.add(new LabelLevelTreeVO().setName(LabelLevelEnum.COMPANY.getName())
                     .setLevel(LabelLevelEnum.COMPANY.getCode()).setChildren(map.get(LabelLevelEnum.COMPANY.getCode())));
             treeVOS.add(new LabelLevelTreeVO().setName(LabelLevelEnum.PRIVATE.getName())
@@ -139,6 +146,12 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
             //存在不在定义范围内的等级
             throw new ServiceException(ApiError.NOT_EXIST_BASIC_LABEL_LEVEL, labelNames);
         }
+        //index reset
+        int i = 1;
+        for (BasicLabelEntity basicLabelEntity : basicLabelEntities) {
+            basicLabelEntity.setIndex(i);
+            i += 1;
+        }
         return this.saveOrUpdateBatch(basicLabelEntities, basicLabelEntities.size());
     }
 
@@ -164,7 +177,13 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
 
     @Override
     public void removeBasicLabelById(String id) {
-        Optional.ofNullable(this.getById(id)).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "基础标签单"));
+        BasicLabelEntity basicLabelEntity = this.getById(id);
+        Optional.ofNullable(basicLabelEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "基础标签单"));
+        LoginUser user = commonService.getUserInfo();
+        Optional.ofNullable(user).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "当前登录用户"));
+        if (!StringUtils.equalsIgnoreCase(basicLabelEntity.getCreateUserId(), user.getUid())){
+            throw new ServiceException("只能删除自己创建的标签");
+        }
         int count = productRefLabelMapper.countByLabelId(id);
         if (count > 0) throw new ServiceException("基础标签存在关联,不能删除");
         super.removeById(id);
@@ -198,6 +217,22 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
         //颜色无值时，默认灰色
         if (StringUtils.isBlank(basicLabelEntity.getColor())) {
             basicLabelEntity.setColor(LabelColorEnum.GREY.getCode());
+        }
+        //set index
+        if (Objects.isNull(basicLabelEntity.getIndex())) {
+            basicLabelEntity.setIndex(getMaxIndex());
+        }
+    }
+
+    private int getMaxIndex() {
+        LambdaQueryWrapper<BasicLabelEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.orderByDesc(BasicLabelEntity::getIndex);
+        queryWrapper.last("limit 1");
+        BasicLabelEntity basicLabelEntity = baseMapper.selectOne(queryWrapper);
+        if (Objects.isNull(basicLabelEntity)) {
+            return 1;
+        } else {
+            return basicLabelEntity.getIndex() + 1;
         }
     }
 

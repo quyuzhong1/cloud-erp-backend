@@ -119,7 +119,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
                         findFirst().map(FindUserDTO::getUserName).orElse("");
                 item.setStaffName(staffName);
             }
-        this.saveBatch(addList);
+            this.saveBatch(addList);
         }
 
 
@@ -294,7 +294,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
                 collect(Collectors.groupingBy(BiTargetNewProductSettingEntity::getMetrics));
         //详情
         List<BiTargetNewProductSettingDTO.DetailDTO> detailList = new ArrayList<>(map.size());
-        String valueStr = "";
+        String valueStr = "value";
         String rateStr = "";
         for (Map.Entry<MetricsEnum, List<BiTargetNewProductSettingEntity>> item : map.entrySet()) {
             BiTargetNewProductSettingDTO.DetailDTO detail = new BiTargetNewProductSettingDTO.DetailDTO();
@@ -389,7 +389,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         List<BiTargetNewProductSettingDTO.PagingViewDTO> list = pageData.getRecords();
-        pullPaging(list,metrics);
+        pullPaging(list, metrics);
         return new PagingVO<>(pageData);
     }
 
@@ -537,13 +537,13 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
      *
      * @param list
      */
-    private void pullPaging(List<BiTargetNewProductSettingDTO.PagingViewDTO> list,String metrics) {
+    private void pullPaging(List<BiTargetNewProductSettingDTO.PagingViewDTO> list, String metrics) {
 
         List<String> mainIdList = list.stream().map(BiTargetNewProductSettingDTO.PagingViewDTO::getId).collect(Collectors.toList());
         List<BiTargetNewProductSettingEntity> staffSettingDbList = this.listBaseByMainIdList(mainIdList);
         for (BiTargetNewProductSettingDTO.PagingViewDTO item : list) {
             List<BiTargetNewProductSettingEntity> dbList = staffSettingDbList.stream().
-                    filter(s -> s.getMainId().equals(item.getId())&&
+                    filter(s -> s.getMainId().equals(item.getId()) &&
                             s.getMetrics().getCode().equals(metrics)
                     ).collect(Collectors.toList());
             List<BiTargetNewProductSettingDTO.CommonDTO> commonList = getCommon(dbList);
@@ -571,7 +571,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
                 List<BiTargetNewProductSettingEntity> staffDbList = staff.getValue();
                 BiTargetNewProductSettingDTO.CommonDTO common = new BiTargetNewProductSettingDTO.CommonDTO();
                 common.setStaffId(staffId);
-                common.setStaffName(dbList.get(0).getStaffName());
+                common.setStaffName(staffDbList.get(0).getStaffName());
                 //一月
                 Integer january = MonthEnum.JANUARY.getValue();
                 common.setJanuary(pullView(metrics, january, dbList, valueStr));
