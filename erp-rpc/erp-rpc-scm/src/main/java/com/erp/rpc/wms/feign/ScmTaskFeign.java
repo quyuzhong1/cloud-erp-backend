@@ -87,6 +87,16 @@ public interface ScmTaskFeign {
     List<SupplierEntity> getSupplierByIdList(@RequestBody List<String> supplierIds);
 
     /**
+     * 根据供应商名称 获取供应商
+     * @author yl
+     * @date 2023-09-22 19:49
+     * @param supplierNames
+     * @return java.util.List<com.erp.model.scm.entity.SupplierEntity>
+     */
+    @PostMapping("feign/supplier/listBySupplierByNames")
+    List<SupplierEntity> listBySupplierByNames(@RequestBody List<String> supplierNames);
+
+    /**
      * 根据联系人id查询供应商联系人信息
      * @Author Luo_WG
      * @Date 2023/4/17 11:00
