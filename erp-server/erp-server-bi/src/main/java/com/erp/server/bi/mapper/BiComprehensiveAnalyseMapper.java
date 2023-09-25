@@ -139,14 +139,15 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
     /**
      * 查询sku年销售额
      *
-     * @param startTime startDate
-     * @param endTime   endDate
+     * @param startTime    startDate
+     * @param endTime      endDate
      * @param dateType
+     * @param settleMethod
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      * @Author Luo_WG
      * @Date 2022/12/27 10:41
      **/
-    List<SkuYearSaleAmountVO> dateYearSaleAmountBySku(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime, @Param("sku") String sku, @Param("dateType") String dateType);
+    List<SkuYearSaleAmountVO> dateYearSaleAmountBySku(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime, @Param("sku") String sku, @Param("dateType") String dateType, @Param("settleMethod") Integer settleMethod);
 
     /**
      * 根据sku查询年销售额
@@ -161,14 +162,15 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
     /**
      * 根据时间查询退货金额
      *
-     * @param startTime startDate
-     * @param endTime   endDate
+     * @param startTime    startDate
+     * @param endTime      endDate
      * @param dateType
+     * @param settleMethod
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      * @Author Luo_WG
      * @Date 2022/12/27 10:41
      **/
-    List<SkuYearSaleAmountVO> dateReturnOrderAmountByDate(@Param("startTime") String startTime, @Param("endTime") String endTime, @Param("sku") String sku,@Param("dateType") String dateType);
+    List<SkuYearSaleAmountVO> dateReturnOrderAmountByDate(@Param("startTime") String startTime, @Param("endTime") String endTime, @Param("sku") String sku, @Param("dateType") String dateType,@Param("settleMethod") Integer settleMethod);
 
     /**
      * SKU日期销售额趋势图-日
