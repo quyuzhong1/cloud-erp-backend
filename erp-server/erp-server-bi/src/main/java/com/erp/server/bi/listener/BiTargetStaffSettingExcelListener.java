@@ -40,7 +40,7 @@ public class BiTargetStaffSettingExcelListener extends AnalysisEventListener<Tar
      */
     private List<TargetStaffSettingImportExcelDTO> errorList = new ArrayList<>();
 
-    public BiTargetStaffSettingExcelListener(List<String> metricsNameList, List<FindUserDTO> dictList) {
+    public BiTargetStaffSettingExcelListener(List<String> metricsNameList, List<FindUserDTO> userList) {
         this.metricsNameList = metricsNameList;
         this.userList = userList;
     }
