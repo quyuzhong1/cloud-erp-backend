@@ -65,9 +65,83 @@ public class BiTargetShopSettingDTO implements Serializable {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
         /**
-         * 详情信息
+         * 店铺名
          */
-        private List<CommonDTO> detailList;
+        private String shopName;
+
+        /**
+         * 指标维度
+         */
+        private MetricsEnum metrics;
+
+        private String metricsName;
+
+
+        /**
+         * 一月值
+         */
+        private BigDecimal january;
+
+        /**
+         * 二月值
+         */
+        private BigDecimal february;
+
+        /**
+         * 三月
+         */
+        private BigDecimal march;
+
+
+        /**
+         * 四月值
+         */
+        private BigDecimal april;
+
+        /**
+         * 五月值
+         */
+        private BigDecimal may;
+
+
+        /**
+         * 六月值
+         */
+        private BigDecimal june;
+
+
+        /**
+         * 七月值
+         */
+        private BigDecimal july;
+
+
+        /**
+         * 八月值
+         */
+        private BigDecimal august;
+
+
+        /**
+         * 九月值
+         */
+        private BigDecimal september;
+
+
+        /**
+         * 十月值
+         */
+        private BigDecimal october;
+
+        /**
+         * 十一月值
+         */
+        private BigDecimal november;
+
+        /**
+         * 十二月值
+         */
+        private BigDecimal december;
 
 
     }
