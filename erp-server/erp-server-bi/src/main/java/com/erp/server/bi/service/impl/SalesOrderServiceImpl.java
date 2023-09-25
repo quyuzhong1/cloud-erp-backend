@@ -220,7 +220,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(params, settleRate, findTime);
 
 
-
         LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
         params.setStartTime(beforeSevenDays);
         params.setEndTime(nowTime);
@@ -559,7 +558,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         // 设置占比
         BigDecimal finalSumNumber = sumNumber;
-        list.forEach(o->{
+        list.forEach(o -> {
             o.setRadioBySumSumNumber(finalSumNumber);
         });
 
@@ -3542,7 +3541,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 break;
             //年
             case "YEAR":
-                dataValueList= biDataSourceCostDetailService.listGrossYear(dto);
+                dataValueList = biDataSourceCostDetailService.listGrossYear(dto);
                 break;
 
         }
@@ -3559,7 +3558,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         SeriesVO grossProfitSeries = new SeriesVO();
         grossProfitSeries.setName(MetricsEnum.GROSS_PROFIT.getName());
         grossProfitSeries.setType(ChartType.BAR);
-        List<BigDecimal> grossProfitValueList= dataValueList.stream().filter(d -> d.getType().
+        List<BigDecimal> grossProfitValueList = dataValueList.stream().filter(d -> d.getType().
                         equals(grossProfit)).map(BiDataSourceCostDTO.DataValueDTO::getValue).
                 sorted().collect(Collectors.toList());
         grossProfitSeries.setData(grossProfitValueList);
@@ -3569,7 +3568,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         SeriesVO grossProfitRateSeries = new SeriesVO();
         grossProfitRateSeries.setName(MetricsEnum.GROSS_PROFIT_RATE.getName());
         grossProfitRateSeries.setType(ChartType.LINE);
-        List<BigDecimal> grossProfitRateValueList= dataValueList.stream().filter(d -> d.getType().
+        List<BigDecimal> grossProfitRateValueList = dataValueList.stream().filter(d -> d.getType().
                         equals(grossProfitRate)).map(BiDataSourceCostDTO.DataValueDTO::getValue).
                 sorted().collect(Collectors.toList());
         grossProfitRateSeries.setData(grossProfitRateValueList);

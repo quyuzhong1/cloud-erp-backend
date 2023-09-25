@@ -25,7 +25,7 @@ public interface BiDataSourceCostDetailMapper extends BaseMapper<BiDataSourceCos
      * @param type
      * @return
      */
-    BigDecimal yearByCostType(@Param("year") String year, @Param("type")String type, @Param("params") BiFilterDTO dto);
+    BigDecimal yearByCostType(@Param("year") String year, @Param("type")String type, @Param("params") BiFilterDTO dto,@Param("shopIdList") List<String> shopIdList);
 
     /**
      * 获取月的
@@ -34,7 +34,7 @@ public interface BiDataSourceCostDetailMapper extends BaseMapper<BiDataSourceCos
      * @param dto
      * @return
      */
-    BigDecimal monthByCostType(@Param("yearMonth") String yearMonthStr, @Param("type")String costType,@Param("params") BiFilterDTO dto);
+    BigDecimal monthByCostType(@Param("yearMonth") String yearMonthStr, @Param("type")String costType,@Param("params") BiFilterDTO dto,@Param("shopIdList") List<String> shopIdList);
 
     /**
      * 获取月份对应的值
