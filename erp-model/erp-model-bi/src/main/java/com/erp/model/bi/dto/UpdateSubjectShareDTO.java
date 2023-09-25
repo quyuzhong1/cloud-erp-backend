@@ -54,9 +54,13 @@ public class UpdateSubjectShareDTO implements Serializable {
         if ("personal".equalsIgnoreCase(this.shareFlag)){
             return shareFlagIdList;
         }
-        if (CollectionUtils.isEmpty(this.shareFlagIdList)){
-            throw new ServiceException("shareFlagIdList分享的标识ID列表不能为空");
+        if (!CollectionUtils.isEmpty(this.shareFlagIdList)){
+            return shareFlagIdList;
         }
-        return shareFlagIdList;
+        // 兼容旧字段
+        if (!CollectionUtils.isEmpty(this.shareUserIdList)){
+            return shareUserIdList;
+        }
+        throw new ServiceException("shareFlagIdList分享的标识ID列表不能为空");
     }
 }
