@@ -47,8 +47,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
     @Resource
     private DmpRefundInfoService dmpRefundInfoService;
 
-    @Resource
-    private DmpShopInfoService shopInfoService;
+
 
     @Resource
     private BiDataSourceCostDetailService biDataSourceCostDetailService;
@@ -146,17 +145,12 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                 }
                 //财务销售额
             case FINANCE_SALES_AMOUNT:
-
-                List<String> shopNameList = dto.getShopName();
-                List<DmpShopInfoEntity> shopInfoList = shopInfoService.listByNames(shopNameList);
-                List<String> shopIdList = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
-                dto.setShopName(shopIdList);
                 //年
                 if (yearFlag.equals(flagStr)) {
-                    return biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
+                    return biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(),dto);
                 } else {
                     //月
-                    return biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
+                    return biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(),dto);
                 }
                 //毛利额
             case GROSS_PROFIT:

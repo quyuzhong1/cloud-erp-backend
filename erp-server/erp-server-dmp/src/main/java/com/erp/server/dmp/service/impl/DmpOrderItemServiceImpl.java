@@ -341,7 +341,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             //设置通用参数
             SplitSkuDTO splitSkuDTO = new SplitSkuDTO();
             splitSkuDTO.setPlatformSign(platformSign);
-            splitSkuDTO.setId(dmpOrderItemEntity.getId());
+            splitSkuDTO.setId(dmpOrderItemEntity.getItemId());
             splitSkuDTO.setCleanCostPrice(dmpOrderItemEntity.getCleanCostPrice());
             splitSkuDTO.setIsSplitSku(dmpOrderItemEntity.getIsSplitSku());
             splitSkuDTO.setOriginalSkuNo(dmpOrderItemEntity.getOriginalSkuNo());
