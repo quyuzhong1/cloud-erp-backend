@@ -1,5 +1,6 @@
 package com.erp.model.bi.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -114,6 +115,21 @@ public class TargetFinishDTO implements Serializable {
         private BigDecimal rate;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GroupViewDTO {
+
+        /**
+         * 分组数据
+         */
+        private String groupData;
+
+        /**
+         * 显示数据
+         */
+        private String viewData;
+    }
 
 
 }

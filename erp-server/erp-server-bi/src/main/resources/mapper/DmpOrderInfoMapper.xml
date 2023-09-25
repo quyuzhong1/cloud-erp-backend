@@ -7,50 +7,11 @@
     <resultMap id="DmpOrderInfoMap" type="com.erp.model.dmp.entity.DmpOrderInfoEntity">
         <id column="id" property="id"/>
         <result column="platform_order_id" property="platformOrderId" />
-        <result column="order_state" property="orderStatus" />
-        <result column="correction_status" property="correctionStatus" />
-        <result column="buyer_user_id" property="buyerUserId" />
-        <result column="buyer_name" property="buyerName" />
         <result column="shop_no" property="shopNo" />
         <result column="shop_name" property="shopName" />
-        <result column="order_cost" property="orderCost" />
-        <result column="can_send" property="canSend" />
-        <result column="is_returned" property="isReturned" />
-        <result column="is_refund" property="isRefund" />
-        <result column="paid_time" property="paidTime" />
-        <result column="sales_record_number" property="salesRecordNumber" />
-        <result column="platform_order_status" property="platformOrderStatus" />
-        <result column="order_fee" property="orderFee" />
         <result column="source_platform" property="sourcePlatform" />
-        <result column="is_union" property="isUnion" />
-        <result column="is_split" property="isSplit" />
-        <result column="is_resend" property="isResend" />
-        <result column="has_goods" property="hasGoods" />
-        <result column="district" property="district" />
-        <result column="city" property="city" />
-        <result column="province" property="province" />
-        <result column="man_street" property="manStreet" />
-        <result column="second_street" property="secondStreet" />
-        <result column="close_date" property="closeDate" />
-        <result column="man_phone" property="manPhone" />
-        <result column="second_phone" property="secondPhone" />
-        <result column="fba_flag" property="fbaFlag" />
-        <result column="seller_message" property="sellerMessage" />
-        <result column="currency_code" property="currencyCode" />
         <result column="currency_rate" property="currencyRate" />
-        <result column="item_total" property="itemTotal" />
-        <result column="shipping_fee" property="shippingFee" />
-        <result column="platform_fee" property="platformFee" />
-        <result column="shipping_total_origin" property="shippingTotalOrigin" />
-        <result column="item_total_origin" property="itemTotalOrigin" />
-        <result column="item_total_cost" property="itemTotalCost" />
-        <result column="subsidy_amount" property="subsidyAmount" />
-        <result column="country_name_en" property="countryNameEn" />
         <result column="country_name_cn" property="countryNameCn" />
-        <result column="platform_sign" property="platformSign" />
-        <result column="company_id" property="companyId" />
-        <result column="company_name" property="companyName" />
-        <result column="create_time" property="createTime" />
         <result column="platform_create_time" property="platformCreateTime" />
         <result column="dept_name" property="deptName" />
         <result column="site" property="site" />
@@ -63,37 +24,15 @@
             <id column="detailId" property="id"/>
             <result column="order_id" property="orderId"/>
             <result column="item_id" property="itemId"/>
-            <result column="platform_sku" property="platformSku"/>
-            <result column="platform_quantity" property="platformQuantity"/>
             <result column="item_name" property="itemName"/>
-            <result column="picture_url" property="pictureUrl"/>
-            <result column="cost_price" property="costPrice"/>
-            <result column="sell_price_origin" property="sellPriceOrigin"/>
-            <result column="sell_price" property="sellPrice"/>
             <result column="quantity" property="quantity"/>
-            <result column="product_unit" property="productUnit"/>
-            <result column="is_gift" property="isGift"/>
-            <result column="detail_has_goods" property="hasGoods"/>
-            <result column="is_combo" property="isCombo"/>
-            <result column="item_remark" property="itemRemark"/>
-            <result column="specifics" property="specifics"/>
-            <result column="status" property="status"/>
-            <result column="stock_grid" property="stockGrid"/>
             <result column="sku_no" property="skuNo"/>
-            <result column="stock_status" property="stockStatus"/>
-            <result column="stock_warehouse_id" property="stockWarehouseId"/>
-            <result column="erp_order_item_id" property="erpOrderItemId"/>
             <result column="category_id" property="categoryId"/>
             <result column="category_name" property="categoryName"/>
             <result column="brand_id" property="brandId"/>
             <result column="brand_name" property="brandName"/>
             <result column="detail_currency_rate" property="currencyRate"/>
-            <result column="new_sign" property="newSign"/>
             <result column="amount_after" property="amountAfter"/>
-            <result column="detail_shipping_fee" property="shippingFee"/>
-            <result column="original_sku_no" property="originalSkuNo"/>
-            <result column="clean_cost_price" property="cleanCostPrice"/>
-            <result column="is_split_sku" property="isSplitSku"/>
         </collection>
 
     </resultMap>
@@ -114,6 +53,30 @@
         shipping_fee,platform_fee,shipping_total_origin,
         item_total_origin,item_total_cost,subsidy_amount,
         country_name_en,country_name_cn
+    </sql>
+
+    <sql id="base_where_sql">
+        <if test="params.timeType == 0">
+            and doi.platform_create_time  is not null
+        </if>
+        <if test="params.timeType == 1">
+            and doi.delivery_time  is not null
+        </if>
+        <if test="params.searchType == 'first_level_dept' || params.searchType == 'second_level_dept'">
+            and doi.dept_id != '' and doi.dept_id is not null
+        </if>
+        <if test="params.searchType == 'user'">
+            and doi.charge_id != '' and doi.charge_id is not null
+        </if>
+        <if test="params.searchType == 'shop'">
+            and doi.shop_name != '' and doi.shop_name is not null
+        </if>
+        <if test="params.searchType == 'category'">
+            and pi.category_id != '' and pi.category_id is not null
+        </if>
+        <if test="params.searchType == 'sku'">
+            and pd.sku_no != '' and pd.sku_no is not null
+        </if>
     </sql>
 
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpOrderInfoDTO">
@@ -441,60 +404,49 @@
         </where>
     </select>
 
-    <select id="listBiFilter" resultMap="DmpOrderInfoMap" >
+    <select id="listSalesAmountBiFilter" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
         select
-            doi.id,doi.platform_order_id,
-            doi.order_state,doi.correction_status,
-            doi.buyer_user_id,doi.buyer_name,
-            doi.shop_no,doi.shop_name,
-            doi.order_cost,doi.can_send,
-            doi.is_returned,doi.is_refund,
-            doi.paid_time,doi.sales_record_number,
-            doi.platform_order_status, doi.order_fee,
-            doi.source_platform,doi.is_union,
-            doi.is_split,doi.is_resend,
-            doi.has_goods,doi.district,
-            doi.city,doi.province,
-            doi.man_street,doi.second_street,
-            doi.close_date,doi.man_phone,
-            doi.second_phone,doi.fba_flag,
-            doi.seller_message,doi.currency_code,
-            doi.currency_rate,doi.item_total,
-            doi.shipping_fee,doi.platform_fee,
-            doi.shipping_total_origin,doi.item_total_origin,
-            doi.item_total_cost,doi.subsidy_amount,
-            doi.country_name_en,doi.country_name_cn,
-            doi.platform_sign,doi.company_id,
-            doi.company_name,doi.create_time,
-            doi.platform_create_time,doi.dept_name,
-            doi.site,doi.charge_name,
-            doi.cny_settle_rate,doi.delivery_time,
-            doi.dept_id,doi.charge_id,
-            doit.id as detailId,doit.order_id,
-            doit.item_id,doit.platform_sku,
-            doit.platform_quantity,doit.item_name,
-            doit.picture_url,doit.cost_price,
-            doit.sell_price_origin,doit.sell_price,
-            doit.quantity,doit.product_unit,
-            doit.is_gift,doit.has_goods as detail_has_goods,
-            doit.is_combo,doit.item_remark,
-            doit.specifics,doit.status,
-            doit.stock_grid,doit.sku_no,
-            doit.stock_status,doit.stock_warehouse_id,
-            doit.erp_order_item_id,pi.category_id,
-            pi.category as category_name,pi.brand_id,
-            pi.brand_name,doit.currency_rate as detail_currency_rate,
-            doit.new_sign,doit.amount_after,
-            doit.shipping_fee as detail_shipping_fee,doit.original_sku_no,
-            doit.clean_cost_price,doit.is_split_sku
+             ${viewParams.viewData},
+             sum(COALESCE(doit.quantity,0) * COALESCE(doit.amount_after,0) * COALESCE(doit.currency_rate,1))as value
         from dmp_order_info doi
         left join dmp_order_item doit on doi.id = doit.order_id
         left join product_detail AS pd on doit.sku_no = pd.sku_no
         left join product_info AS pi on pi.id = pd.product_id
         <where>
+            <include refid="base_where_sql"/>
             <include refid="conditionSql"/>
         </where>
+        group by ${viewParams.groupData}
     </select>
 
+    <select id="listSalesQtyBiFilter" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
+        select
+        ${viewParams.viewData},
+        sum(COALESCE(doit.quantity,0)) as value
+        from dmp_order_info doi
+        left join dmp_order_item doit on doi.id = doit.order_id
+        left join product_detail AS pd on doit.sku_no = pd.sku_no
+        left join product_info AS pi on pi.id = pd.product_id
+        <where>
+            <include refid="base_where_sql"/>
+            <include refid="conditionSql"/>
+        </where>
+        group by ${viewParams.groupData}
+    </select>
 
+    <select id="listNetSalesAmountBiFilter" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
+        select
+        ${viewParams.viewData},
+        sum(doit.totalAmount - COALESCE(dri.refund_amount, 0) * COALESCE(dri.currency_rate,1)) as value
+        from dmp_order_info doi
+        inner join (
+            select order_id,sum(COALESCE(quantity,0) * COALESCE(amount_after,0) * COALESCE(currency_rate,1)) as totalAmount from dmp_order_item  group by order_id) doit on doi.id = doit.order_id
+        left join dmp_refund_info dri on doi.platform_order_id = dri.platform_order_id
+        <where>
+            <include refid="base_where_sql"/>
+
+            <include refid="conditionSql"/>
+        </where>
+        group by ${viewParams.groupData}
+    </select>
 </mapper>
