@@ -52,19 +52,20 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         Map<String, Object> resultMap = new HashMap<>();
 
         //更新同步状态为待同步
-        bomInfoService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(),"");
+        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"",SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+        bomInfoService.updateSyncKingdeeStatus(kingdeeDTO);
 
 
         List<Map<String, Object>> mapList = new ArrayList<>();
-
-        List<BomSkuDTO> bomList = bomSkuService.getByBomId(entity.getId());
-        if (CollectionUtils.isEmpty(bomList)) {
-            return;
-        }
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
+
+        List<BomSkuDTO> bomList = bomSkuService.getByBomId(entity.getId());
+        if (CollectionUtils.isEmpty(bomList)) {
+            bomList = entity.getBomList();
+        }
         //父级物料
         BomSkuDTO parent = bomList.get(0);
         //父级sku编码
@@ -72,7 +73,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         //父级sku编码
         resultMap.put("parentSkuNo",parent.getSkuNo());
         //版本
-        resultMap.put("version",parent.getSkuNo().concat("_").concat(entity.getVersion().toString()));
+        resultMap.put("version",parent.getSkuNo().concat("_").concat(entity.getBomVersion().toString()));
 
         //子级物料
         List<BomChildrenSkuDTO> childrenList = parent.getChildren();
@@ -91,10 +92,16 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_BOM_INFO_TAG.getName(), resultMap, entity.getId());
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
+                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"",SyncKingdeeStatusEnum.IN_SYNC.getCode());
                 //mq发送成更新业务表状态及时间
-                return bomInfoService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(),"");
+                return bomInfoService.updateSyncKingdeeStatus(syncKingdeeDTO);
             }
             return Boolean.TRUE;
         });
+    }
+
+
+    private void operateDelete () {
+
     }
 }

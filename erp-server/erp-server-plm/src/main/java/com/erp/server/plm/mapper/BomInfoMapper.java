@@ -3,6 +3,7 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.plm.dto.ChangeInfoDTO;
 import com.erp.model.plm.dto.SearchPagingDTO;
@@ -35,5 +36,7 @@ public interface BomInfoMapper  extends BaseMapper<BomInfoEntity> {
     IPage<BomSkuPageDTO.ListDTO> skuPaging(Page query, @Param("params") BomSkuPageDTO.PagingParamDTO params);
 
     List<BomSkuPageDTO.ChildDTO> listBomSkuByBomIds(@Param("bomIds") List<String> bomIds);
+
+    void updateSyncKingdeeStatus(@Param("params")PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 }
 

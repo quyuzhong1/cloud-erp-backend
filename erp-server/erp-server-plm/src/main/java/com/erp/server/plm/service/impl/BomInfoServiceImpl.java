@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
@@ -55,7 +56,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -219,13 +219,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId) {
-        return  this.lambdaUpdate()
-                .eq(BomInfoEntity::getId,id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),BomInfoEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),BomInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId),BomInfoEntity::getSyncKingdeeId,syncKingdeeId)
-                .update();
+    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
+        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
+        return Boolean.TRUE;
     }
 
     @Override
@@ -638,13 +634,22 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-13 8:56
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean deleteById(String bomId) {
+        BomInfoEntity bomInfoEntity = this.getById(bomId);
+        if (ObjectUtils.isEmpty(bomInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_95163);
+        }
+        List<BomSkuDTO> bomList = bomSkuService.getByBomId(bomInfoEntity.getId());
+        bomInfoEntity.setBomList(bomList);
         boolean flag = this.removeById(bomId);
         if (flag) {
             bomSkuService.deleteByBomId(bomId);
             productBomHistoryService.deleteByBomId(bomId);
             String operateContent = BomOperateContent.DELETE;
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.DELETE.getType(), operateContent);
+            //更新金蝶
+            syncKingdeeBomInfoService.syncDataToKingdee(bomInfoEntity,SyncKingdeeOperateEnum.OPERATE_DELETE.getCode());
         }
         return flag;
     }
@@ -852,6 +857,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-29 16:43
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean removeArchive(String bomId) {
         BomInfoEntity bom = this.getById(bomId);
         if (Objects.isNull(bom)) {
@@ -871,6 +877,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (result) {
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_PASS.getName(), BomStateEnum.WAIT_SUBMIT_AUDIT.getName());
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+            //bom反审核
+            syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return result;
     }
