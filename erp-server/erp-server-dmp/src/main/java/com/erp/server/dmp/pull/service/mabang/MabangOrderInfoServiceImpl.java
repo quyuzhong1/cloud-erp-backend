@@ -215,13 +215,13 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         if (orderEntity.getOrderFee().compareTo(BigDecimal.ZERO) <= 0) {
             return null;
         }
-        if (orderEntity.getIsResend().equals(1)) {
+        if (null != orderEntity.getIsResend() && ObjectUtil.equals(orderEntity.getIsResend(),1)) {
             orderEntity.setOrderFee(BigDecimal.ZERO);
         }
-        if (orderEntity.getOrderStatus().equals(2) && orderEntity.getCanSend().equals(2) && orderEntity.getPlatform().equals("Amazon")) {
+        if (ObjectUtil.equals(orderEntity.getOrderStatus(),2) && ObjectUtil.equals(orderEntity.getCanSend(),2) && ObjectUtil.equals(orderEntity.getPlatform(), "Amazon")) {
             return null;
         }
-        if (orderEntity.getOrderStatus().equals(5) && (StringUtils.isBlank(orderEntity.getBeforeStatus()) || orderEntity.getBeforeStatus().equals(2))) {
+        if (ObjectUtil.equals(orderEntity.getOrderStatus(),5) && (StringUtils.isBlank(orderEntity.getBeforeStatus()) || orderEntity.getBeforeStatus().equals(2))) {
             return null;
         }
 
