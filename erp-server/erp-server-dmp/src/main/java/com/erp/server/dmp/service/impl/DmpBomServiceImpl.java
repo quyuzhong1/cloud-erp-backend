@@ -51,8 +51,8 @@ public class DmpBomServiceImpl extends SuperServiceImpl<DmpBomMapper, DmpBomEnti
                 .list();
         // 已存在数据进行删除
         if (CollectionUtil.isNotEmpty(bomList)) {
-            //如果数据有变动需要更新数据库订单信息
-            this.removeByIds(bomList.stream().map(DmpBomEntity::getId).collect(Collectors.toList()));
+            //如果数据有变动需要更新数据库订单信息 此处使用物理删除避免出现大量重复数
+            baseMapper.deletePhysicalBatchIds(bomList.stream().map(DmpBomEntity::getId).collect(Collectors.toList()));
         }
         this.saveBatch(bomEntityList);
         // 预警
