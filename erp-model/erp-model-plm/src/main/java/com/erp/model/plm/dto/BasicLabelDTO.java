@@ -81,6 +81,7 @@ public class BasicLabelDTO implements Serializable {
          */
         private String level;
 
+        private String createUserId;
     }
 
     /**

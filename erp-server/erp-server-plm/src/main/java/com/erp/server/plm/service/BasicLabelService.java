@@ -1,12 +1,12 @@
 package com.erp.server.plm.service;
-import com.erp.model.plm.entity.BasicLabelEntity;
+
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.plm.dto.BasicLabelDTO;
+import com.erp.model.plm.entity.BasicLabelEntity;
+import com.erp.model.plm.vo.LabelBasicVO;
 import com.erp.model.plm.vo.LabelLevelTreeVO;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * <p>
@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public interface BasicLabelService extends SuperService<BasicLabelEntity> {
 
-    List<BasicLabelEntity> listByCondition(BasicLabelDTO.SearchDTO dto);
+    List<LabelBasicVO> listByCondition(BasicLabelDTO.SearchDTO dto);
 
     /**
      *

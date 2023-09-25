@@ -1,8 +1,13 @@
 package com.erp.server.plm.mapper;
-import com.erp.model.plm.entity.BasicLabelEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.plm.dto.BasicLabelDTO;
+import com.erp.model.plm.entity.BasicLabelEntity;
+import com.erp.model.plm.vo.LabelBasicVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +21,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface BasicLabelMapper extends BaseMapper<BasicLabelEntity> {
 
+    List<LabelBasicVO> listByCondition(@Param("params") BasicLabelDTO.SearchDTO dto);
 }
