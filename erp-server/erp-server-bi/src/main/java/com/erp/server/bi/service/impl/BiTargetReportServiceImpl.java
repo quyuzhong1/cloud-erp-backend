@@ -9,14 +9,12 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.bi.dto.BiDataSourceCostDTO;
-import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
 import com.erp.model.bi.enums.TargetFinishViewTypeEnum;
 import com.erp.model.bi.enums.TargetSearchTypeEnum;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -36,7 +34,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Will
@@ -292,41 +289,23 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
     private List<TargetFinishDTO.ViewDTO> listReal(TargetFinishDTO.ParamDTO dto) {
 
         List<TargetFinishDTO.ViewDTO> resultList = new ArrayList<>();
-        //需要查询订单数据的类型
-        if (MetricsEnum.SALES_AMOUNT.getCode().equals(dto.getMetrics())
-                || MetricsEnum.SALES_QTY.getCode().equals(dto.getMetrics())
-                || MetricsEnum.NET_SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
-            //主表数据
-            List<DmpOrderInfoEntity> mainList = dmpOrderInfoMapper.listBiFilter(dto);
-            if (CollectionUtils.isEmpty(mainList)) {
+
+        TargetFinishDTO.GroupViewDTO groupViewDTO = handleGroupData(dto);
+        //销售额
+        if (MetricsEnum.SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
+            resultList = dmpOrderInfoMapper.listSalesAmountBiFilter(dto, groupViewDTO);
+        }
+        //销量
+        if (MetricsEnum.SALES_QTY.getCode().equals(dto.getMetrics())) {
+            resultList = dmpOrderInfoMapper.listSalesQtyBiFilter(dto, groupViewDTO);
+        }
+        //净销售额
+        if (MetricsEnum.NET_SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
+            //品类和SKU无需显示（现马帮数据退款明细无金额暂不计算财务销售额·6）
+            if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SKU.getCode().equals(dto.getSearchType())) {
                 return resultList;
             }
-            //明细数据 (搜索类型为品类、sku、销量需要查询明细)
-            List<DmpOrderItemEntity> detailList = new ArrayList<>();
-            if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType())
-                    || TargetSearchTypeEnum.SKU.getCode().equals(dto.getSearchType())
-                    || MetricsEnum.SALES_QTY.getCode().equals(dto.getMetrics())) {
-                detailList = mainList.stream().flatMap(obj -> Stream.of(obj.getItemList().stream().toArray(DmpOrderItemEntity[]::new))).collect(Collectors.toList());
-            }
-            //销售额
-            if (MetricsEnum.SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
-                resultList = groupOrderSalesAmount(mainList, detailList, dto);
-            }
-            //销量
-            if (MetricsEnum.SALES_QTY.getCode().equals(dto.getMetrics())) {
-                resultList = groupOrderSalesVolume(mainList, detailList, dto);
-            }
-            //净销售额
-            if (MetricsEnum.NET_SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
-                //品类和SKU无需显示（现马帮数据退款明细无金额暂不计算财务销售额·6）
-                if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SKU.getCode().equals(dto.getSearchType())) {
-                    return resultList;
-                }
-                //退款数据
-                List<DmpRefundInfoEntity> refundList = listReturnOrderInfo(mainList);
-                resultList = groupNetSalesAmount(mainList, refundList, dto);
-            }
-            return resultList;
+            resultList = dmpOrderInfoMapper.listNetSalesAmountBiFilter(dto, groupViewDTO);
         }
         // 财务销售额(主营收入)
         if (MetricsEnum.FINANCE_SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
@@ -370,165 +349,41 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
      * @description: 分组获得实际数据
      * @author Will
      * @date: 2023/9/18 11:36
-     * @param mainList
-     * @param detailList
      * @param dto
      * @return List<ViewDTO>
      */
-    private List<TargetFinishDTO.ViewDTO> groupOrderSalesAmount (List<DmpOrderInfoEntity> mainList,List<DmpOrderItemEntity> detailList,TargetFinishDTO.ParamDTO dto) {
+    private TargetFinishDTO.GroupViewDTO handleGroupData (TargetFinishDTO.ParamDTO dto) {
 
         boolean flag = TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType();
 
-        Map<String, BigDecimal> map = new HashMap<>();
+        String timeGroupStr =  flag ? "to_char(doi.platform_create_time,'MM')" : "to_char(doi.delivery_time,'MM')";
+        String timeViewStr =  flag ? "to_char(doi.platform_create_time,'MM') as month" : "to_char(doi.delivery_time,'MM') as month";
+
+        String viewStr = "";
+        String groupStr = "";
 
         if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
-            //根据指标查询部门目标值
-             map = mainList.stream().collect(Collectors.groupingBy(x ->
-                            // 按照月分组
-                            x.getDeptName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> e.getItemList().stream().map(obj -> MathUtil.multiply(obj.getAmountAfter(),obj.getCurrencyRate())).reduce(BigDecimal.ZERO,BigDecimal::add), BigDecimal::add))
-            );
+            viewStr = "doi.dept_id as typeId,doi.dept_name as typeName,".concat(timeViewStr);
+            groupStr = "doi.dept_id,doi.dept_name,".concat(timeGroupStr);
         }
         if (TargetSearchTypeEnum.USER.getCode().equals(dto.getSearchType())) {
-            //根据指标查询人员目标值
-            map = mainList.stream().collect(Collectors.groupingBy(x ->
-                            // 按照月分组
-                            x.getChargeName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> e.getItemList().stream().map(obj -> MathUtil.multiply(obj.getAmountAfter(),obj.getCurrencyRate())).reduce(BigDecimal.ZERO,BigDecimal::add), BigDecimal::add))
-            );
-
+            viewStr = "doi.charge_name as typeName,".concat(timeViewStr);
+            groupStr = "doi.charge_name,".concat(timeGroupStr);
         }
         if (TargetSearchTypeEnum.SHOP.getCode().equals(dto.getSearchType())) {
-            //根据指标查询店铺目标值
-             map = mainList.stream().collect(Collectors.groupingBy(x ->
-                            // 按照月分组
-                            x.getShopName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                     Collectors.reducing(BigDecimal.ZERO, e -> e.getItemList().stream().map(obj -> MathUtil.multiply(obj.getAmountAfter(),obj.getCurrencyRate())).reduce(BigDecimal.ZERO,BigDecimal::add), BigDecimal::add))
-            );
+            viewStr = "doi.shop_name as typeName,".concat(timeViewStr);
+            groupStr = "doi.shop_name,".concat(timeGroupStr);
         }
         //根据指标查询品类目标值
         if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType())) {
-            Map<String, Integer> monthMap = mainList.stream().collect(Collectors.toMap(obj -> obj.getId(), obj -> (flag ? obj.getPlatformCreateTime() : obj.getDeliveryTime()).getMonthValue()));
-            map = detailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getCategoryName())).collect(Collectors.groupingBy(x ->
-                            // 按照月分组
-                            x.getCategoryName().concat(",").concat(String.valueOf(monthMap.get(x.getOrderId()))),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.multiply(e.getAmountAfter(),e.getCurrencyRate()), BigDecimal::add))
-            );
+            viewStr = "pi.category as typeName,".concat(timeViewStr);
+            groupStr = "pi.category,".concat(timeGroupStr);
         }
         if (TargetSearchTypeEnum.SKU.getCode().equals(dto.getSearchType())) {
-            Map<String, Integer> monthMap = mainList.stream().collect(Collectors.toMap(obj -> obj.getId(), obj -> (flag ? obj.getPlatformCreateTime() : obj.getDeliveryTime()).getMonthValue()));
-            //根据指标查询SKU目标值
-            map = detailList.stream().collect(Collectors.groupingBy(x ->
-                            // 按照月分组
-                            x.getSkuNo().concat(",").concat(String.valueOf(monthMap.get(x.getOrderId()))),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.multiply(e.getAmountAfter(),e.getCurrencyRate()), BigDecimal::add))
-            );
+            viewStr = "doit.sku_no as typeName,".concat(timeViewStr);
+            groupStr = "doit.sku_no,".concat(timeGroupStr);
         }
-        return mapToResultList(map);
-    }
-
-    /**
-     * @description: 查询实际销量
-     * @author Will
-     * @date: 2023/9/18 12:00
-     * @param mainList
-     * @param detailList
-     * @param dto
-     * @return List<ViewDTO>
-     */
-    private List<TargetFinishDTO.ViewDTO> groupOrderSalesVolume (List<DmpOrderInfoEntity> mainList,List<DmpOrderItemEntity> detailList,TargetFinishDTO.ParamDTO dto) {
-
-        boolean flag = TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType();
-
-        Map<String, BigDecimal> map = new HashMap<>();
-
-        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
-            //根据指标查询部门目标值
-            map = mainList.stream().collect(Collectors.groupingBy(x ->
-                            // 按照月分组
-                            x.getDeptId().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> detailList.stream().filter(obj -> obj.getOrderId().equals(e.getId())).map(obj -> new BigDecimal(obj.getQuantity())).reduce(BigDecimal.ZERO,BigDecimal::add), BigDecimal::add))
-            );
-        }
-        if (TargetSearchTypeEnum.USER.getCode().equals(dto.getSearchType())) {
-            //根据指标查询人员目标值
-            map = mainList.stream().collect(Collectors.groupingBy(x ->
-                            // 按照月分组
-                            x.getChargeName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> detailList.stream().filter(obj -> obj.getOrderId().equals(e.getId())).map(obj -> new BigDecimal(obj.getQuantity())).reduce(BigDecimal.ZERO,BigDecimal::add), BigDecimal::add))
-            );
-
-        }
-        if (TargetSearchTypeEnum.SHOP.getCode().equals(dto.getSearchType())) {
-            //根据指标查询店铺目标值
-            map = mainList.stream().collect(Collectors.groupingBy(x ->
-                            // 按照月分组
-                            x.getShopName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> detailList.stream().filter(obj -> obj.getOrderId().equals(e.getId())).map(obj -> new BigDecimal(obj.getQuantity())).reduce(BigDecimal.ZERO,BigDecimal::add), BigDecimal::add))
-            );
-        }
-        //根据指标查询品类目标值
-        Map<String, Integer> monthMap = mainList.stream().collect(Collectors.toMap(obj -> obj.getId(), obj -> (flag ? obj.getPlatformCreateTime() : obj.getDeliveryTime()).getMonthValue()));
-        if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType())) {
-            map = detailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getCategoryName())).collect(Collectors.groupingBy(x ->
-                            // 按照月分组
-                            x.getCategoryName().concat(",").concat(String.valueOf(monthMap.get(x.getOrderId()))),
-                    Collectors.reducing(BigDecimal.ZERO, e -> new BigDecimal(e.getQuantity()), BigDecimal::add))
-            );
-        }
-        if (TargetSearchTypeEnum.SKU.getCode().equals(dto.getSearchType())) {
-            //根据指标查询SKU目标值
-            map = detailList.stream().collect(Collectors.groupingBy(x ->
-                            // 按照月分组
-                            x.getSkuNo().concat(",").concat(String.valueOf(monthMap.get(x.getOrderId()))),
-                    Collectors.reducing(BigDecimal.ZERO, e -> new BigDecimal(e.getQuantity()), BigDecimal::add))
-            );
-        }
-        return mapToResultList(map);
-    }
-
-
-    /**
-     * @description: 净销售额
-     * @author Will
-     * @date: 2023/9/19 11:17
-     * @param mainList
-     * @param refundList
-     * @param dto
-     * @return List<ViewDTO>
-     */
-    private List<TargetFinishDTO.ViewDTO> groupNetSalesAmount (List<DmpOrderInfoEntity> mainList,List<DmpRefundInfoEntity> refundList,TargetFinishDTO.ParamDTO dto) {
-
-        boolean flag = TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType();
-
-        Map<String, BigDecimal> map = new HashMap<>();
-
-        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
-            //根据指标查询部门目标值
-            map = mainList.stream().collect(Collectors.groupingBy(x ->
-                            // 按照月分组
-                            x.getDeptName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract( e.getItemList().stream().map(obj -> MathUtil.multiply(obj.getAmountAfter(),obj.getCurrencyRate())).reduce(BigDecimal.ZERO,BigDecimal::add),refundList.stream().filter(obj -> obj.getPlatformOrderId().equals(e.getPlatformOrderId())).map(DmpRefundInfoEntity::getRefundAmount).reduce(BigDecimal.ZERO,BigDecimal::add)), BigDecimal::add))
-            );
-        }
-        if (TargetSearchTypeEnum.USER.getCode().equals(dto.getSearchType())) {
-            //根据指标查询人员目标值
-            map = mainList.stream().collect(Collectors.groupingBy(x ->
-                            // 按照月分组
-                            x.getChargeName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract( e.getItemList().stream().map(obj -> MathUtil.multiply(obj.getAmountAfter(),obj.getCurrencyRate())).reduce(BigDecimal.ZERO,BigDecimal::add),refundList.stream().filter(obj -> obj.getPlatformOrderId().equals(e.getPlatformOrderId())).map(DmpRefundInfoEntity::getRefundAmount).reduce(BigDecimal.ZERO,BigDecimal::add)), BigDecimal::add))
-            );
-
-        }
-        if (TargetSearchTypeEnum.SHOP.getCode().equals(dto.getSearchType())) {
-            //根据指标查询店铺目标值
-            map = mainList.stream().collect(Collectors.groupingBy(x ->
-                            // 按照月分组
-                            x.getShopName().concat(",").concat(String.valueOf((flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract( e.getItemList().stream().map(obj -> MathUtil.multiply(obj.getAmountAfter(),obj.getCurrencyRate())).reduce(BigDecimal.ZERO,BigDecimal::add),refundList.stream().filter(obj -> obj.getPlatformOrderId().equals(e.getPlatformOrderId())).map(DmpRefundInfoEntity::getRefundAmount).reduce(BigDecimal.ZERO,BigDecimal::add)), BigDecimal::add))
-            );
-        }
-        return mapToResultList(map);
+        return new TargetFinishDTO.GroupViewDTO(groupStr,viewStr);
     }
 
     /**
@@ -699,28 +554,4 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         return resultList;
     }
 
-
-    /**
-     * @description: 查询订单数据
-     * @author Will
-     * @date: 2023/9/18 9:50
-     * @param dto
-     * @param qw
-     * @param start
-     * @param end
-     * @param groupStr
-     * @return List<DmpOrderInfoEntity>
-     */
-    private List<DmpOrderInfoEntity> getOrderInfoEntities(BiFilterDTO dto, QueryWrapper<DmpOrderInfoEntity> qw, LocalDateTime start, LocalDateTime end, String groupStr) {
-        boolean flag1 = TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType();
-        boolean flag2 = TimeTypeEnum.DELIVERY_TIME.getCode() == dto.getTimeType();
-        qw.ge(flag1, "platform_create_time", start)
-                .le(flag1, "platform_create_time", end)
-                .ge(flag2, "delivery_time", start)
-                .le(flag2, "delivery_time", end)
-                .groupBy(StringUtils.isNotBlank(groupStr), groupStr)
-                .last(StringUtils.isNotBlank(dto.getPermissionSql()), dto.getPermissionSql());
-        List<DmpOrderInfoEntity> entityList = dmpOrderInfoMapper.selectList(qw);
-        return entityList;
-    }
 }
