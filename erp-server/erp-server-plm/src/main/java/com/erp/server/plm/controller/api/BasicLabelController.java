@@ -1,8 +1,6 @@
 package com.erp.server.plm.controller.api;
 
 
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -111,11 +109,6 @@ public class BasicLabelController extends BaseController {
      */
     @PostMapping("/remove")
     @LogAction(value = LogActionEnum.DELETE, desc = "删除基础标签")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "plm:basicLabel:remove",
-            serviceClass = BasicLabelService.class,
-            keyIdName = "id")
     public ApiResult delete(@RequestBody @Validated BasicLabelDTO.DeleteDTO dto) {
         basicLabelService.removeBasicLabelById(dto.getId());
         return success();

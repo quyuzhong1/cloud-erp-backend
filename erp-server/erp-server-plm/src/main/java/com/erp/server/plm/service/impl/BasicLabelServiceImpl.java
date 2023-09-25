@@ -177,7 +177,13 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
 
     @Override
     public void removeBasicLabelById(String id) {
-        Optional.ofNullable(this.getById(id)).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "基础标签单"));
+        BasicLabelEntity basicLabelEntity = this.getById(id);
+        Optional.ofNullable(basicLabelEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "基础标签单"));
+        LoginUser user = commonService.getUserInfo();
+        Optional.ofNullable(user).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "当前登录用户"));
+        if (!StringUtils.equalsIgnoreCase(basicLabelEntity.getCreateUserId(), user.getUid())){
+            throw new ServiceException("只能删除自己创建的标签");
+        }
         int count = productRefLabelMapper.countByLabelId(id);
         if (count > 0) throw new ServiceException("基础标签存在关联,不能删除");
         super.removeById(id);
