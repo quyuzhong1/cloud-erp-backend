@@ -3719,9 +3719,17 @@
             round(SUM (i.amount_after * 1) / SUM ( i.quantity ),2) AS salesPrice,
         </if>
         to_char(o.${timeFlag},'yyyy-mm-dd') AS name,
-        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
-             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
-             ELSE ${groupName} END AS category,
+        <choose>
+            <when test="groupName == 'charge_id'">
+                o.${groupName} AS category,
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName} AS category,
+            </when>
+            <otherwise>
+                ${groupName} AS category,
+            </otherwise>
+        </choose>
         SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -3810,9 +3818,17 @@
             </if>
         </where>
         group by to_char(o.${timeFlag},'yyyy-mm-dd'),
-        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
-             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
-             ELSE ${groupName} END
+        <choose>
+            <when test="groupName == 'charge_id'">
+                o.${groupName}
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName}
+            </when>
+            <otherwise>
+                ${groupName}
+            </otherwise>
+        </choose>
         order by name asc
     </select>
 
@@ -3827,9 +3843,18 @@
             round(SUM (i.amount_after * 1) / SUM ( i.quantity ),2) AS salesPrice,
         </if>
         concat(date_trunc('week', o.platform_create_time::timestamp)::date, '~', (date_trunc('week', o.platform_create_time::timestamp)+ '6 days'::interval)::date) AS name,
-        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
-             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
-             ELSE ${groupName} END AS category,
+        <choose>
+            <when test="groupName == 'charge_id'">
+                o.${groupName} AS category,
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName} AS category,
+            </when>
+            <otherwise>
+                ${groupName} AS category,
+            </otherwise>
+        </choose>
+
         SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -3922,9 +3947,17 @@
         </where>
         group by
         concat(date_trunc('week', o.platform_create_time::timestamp)::date, '!', (date_trunc('week', o.platform_create_time::timestamp)+ '6 days'::interval)::date),
-        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
-             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
-             ELSE ${groupName} END
+        <choose>
+            <when test="groupName == 'charge_id'">
+                o.${groupName}
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName}
+            </when>
+            <otherwise>
+                ${groupName}
+            </otherwise>
+        </choose>
         order by name asc
     </select>
 
@@ -3939,9 +3972,17 @@
             round(SUM (i.amount_after * 1) / SUM ( i.quantity ),2) AS salesPrice,
         </if>
         to_char(o.${timeFlag},'yyyy-mm') AS name,
-        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
-             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
-             ELSE ${groupName} END AS category,
+        <choose>
+            <when test="groupName == 'charge_id'">
+                o.${groupName} AS category,
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName} AS category,
+            </when>
+            <otherwise>
+                ${groupName} AS category,
+            </otherwise>
+        </choose>
         SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -4030,9 +4071,17 @@
             </if>
         </where>
         group by to_char(o.${timeFlag},'yyyy-mm'),
-        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
-             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
-             ELSE ${groupName} END
+        <choose>
+            <when test="groupName == 'charge_id'">
+                o.${groupName}
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName}
+            </when>
+            <otherwise>
+                ${groupName}
+            </otherwise>
+        </choose>
         order by name asc
     </select>
 
@@ -4047,9 +4096,17 @@
             round(SUM (i.amount_after * 1) / SUM ( i.quantity ),2) AS salesPrice,
         </if>
         to_char(date_trunc('QUARTER',o.${timeFlag}),'yyyy-mm') AS name,
-        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
-             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
-             ELSE ${groupName} END AS category,
+        <choose>
+            <when test="groupName == 'charge_id'">
+                o.${groupName} AS category,
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName} AS category,
+            </when>
+            <otherwise>
+                ${groupName} AS category,
+            </otherwise>
+        </choose>
         SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -4138,9 +4195,17 @@
             </if>
         </where>
         group by to_char(date_trunc('QUARTER',o.${timeFlag}),'yyyy-mm'),
-        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
-             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
-             ELSE ${groupName} END
+        <choose>
+            <when test="groupName == 'charge_id'">
+                o.${groupName}
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName}
+            </when>
+            <otherwise>
+                ${groupName}
+            </otherwise>
+        </choose>
         order by name asc
 
     </select>
@@ -4156,9 +4221,17 @@
             round(SUM (i.amount_after * 1) / SUM ( i.quantity ),2) AS salesPrice,
         </if>
         to_char(o.${timeFlag},'yyyy') as name,
-        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
-             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
-             ELSE ${groupName} END AS category,
+        <choose>
+            <when test="groupName == 'charge_id'">
+                o.${groupName} AS category,
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName} AS category,
+            </when>
+            <otherwise>
+                ${groupName} AS category,
+            </otherwise>
+        </choose>
         SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -4247,9 +4320,17 @@
             </if>
         </where>
         group by to_char(o.${timeFlag},'yyyy'),
-        CASE WHEN ${groupName} = 'charge_id' THEN o.${groupName}
-             WHEN ${groupName} = 'sku_no' THEN i.${groupName}
-             ELSE ${groupName} END
+        <choose>
+            <when test="groupName == 'charge_id'">
+                o.${groupName}
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName}
+            </when>
+            <otherwise>
+                ${groupName}
+            </otherwise>
+        </choose>
         order by name asc
 
     </select>
