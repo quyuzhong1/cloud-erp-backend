@@ -209,7 +209,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
 
         LocalDateTime nowTime = LocalDateTime.now();
-        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 30);
+        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 29);
         params.setStartTime(beforeThirtyDays);
         params.setEndTime(nowTime);
         String findTime = "delivery_time";
@@ -221,7 +221,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
 
 
-        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 7);
+        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
         params.setStartTime(beforeSevenDays);
         params.setEndTime(nowTime);
         //查询进七天信息
@@ -319,7 +319,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<String> skuNoList = resultList.stream().map(SkuSalesDTO.PagingSalesInfoDTO::getSkuNo).collect(Collectors.toList());
 
         LocalDateTime nowTime = LocalDateTime.now();
-        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 30);
+        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 29);
         params.setStartTime(beforeThirtyDays);
         params.setEndTime(nowTime);
         String findTime = "delivery_time";
@@ -330,7 +330,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(params, settleRate, findTime);
 
 
-        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 7);
+        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
         params.setStartTime(beforeSevenDays);
         params.setEndTime(nowTime);
         //查询进七天信息
@@ -644,12 +644,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         dto.setEndTime(paramsEndTime, 1);
         List<ShopSalesVO> resultList = baseMapper.getByShop(dto, settleRate);
         LocalDateTime nowTime = LocalDateTime.now();
-        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 30);
+        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 29);
         dto.setStartTime(beforeThirtyDays);
         dto.setEndTime(nowTime);
         //查询进三十天信息
         List<SalesBaseVO> lastThirtyList = baseMapper.getShopLastDays(dto, settleRate, findTime);
-        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 7);
+        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
 
         dto.setStartTime(beforeSevenDays);
         dto.setEndTime(nowTime);
