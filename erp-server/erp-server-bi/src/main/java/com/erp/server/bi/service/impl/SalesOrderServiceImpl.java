@@ -2490,14 +2490,20 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 // 季度分组数据销售毛利率
                 Map<Integer, BigDecimal> quarterMap = costMap.keySet().stream().collect(Collectors.groupingBy(e -> (e.getMonthValue() - 1) / 3 + 1, MathUtil.summingBigDecimal(v -> {
                     Map<String, BigDecimal> tempMap = costMap.get(v);
-                    BigDecimal costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+                    BigDecimal costMainBusinessIncome = BigDecimal.ZERO;
+                    if (ObjectUtil.isNotEmpty(tempMap)) {
+                        costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+                    }
                     return costMainBusinessIncome;
                 })));
 
                 // 去年季度分组数据销售毛利率
                 Map<Integer, BigDecimal> lastYearQuarterMap = lastYearCostMap.keySet().stream().collect(Collectors.groupingBy(e -> (e.getMonthValue() - 1) / 3 + 1, MathUtil.summingBigDecimal(v -> {
                     Map<String, BigDecimal> tempMap = costMap.get(v);
-                    BigDecimal costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+                    BigDecimal costMainBusinessIncome = BigDecimal.ZERO;
+                    if (ObjectUtil.isNotEmpty(tempMap)) {
+                        costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+                    }
                     return costMainBusinessIncome;
                 })));
                 dateList = IntStream.rangeClosed(1, 4).mapToObj(x -> StrUtil.format(format, x)).collect(Collectors.toList());
@@ -2509,14 +2515,20 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 // 年分组数据销售毛利率
                 Map<Integer, BigDecimal> yearMap = costMap.keySet().stream().collect(Collectors.groupingBy(e -> e.getYear(), MathUtil.summingBigDecimal(v -> {
                     Map<String, BigDecimal> tempMap = costMap.get(v);
-                    BigDecimal costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+                    BigDecimal costMainBusinessIncome = BigDecimal.ZERO;
+                    if (ObjectUtil.isNotEmpty(tempMap)) {
+                        costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+                    }
                     return costMainBusinessIncome;
                 })));
 
                 // 去年年分组数据销售毛利率
                 Map<Integer, BigDecimal> lastYearYearMap = lastYearCostMap.keySet().stream().collect(Collectors.groupingBy(e -> e.getYear(), MathUtil.summingBigDecimal(v -> {
                     Map<String, BigDecimal> tempMap = costMap.get(v);
-                    BigDecimal costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+                    BigDecimal costMainBusinessIncome = BigDecimal.ZERO;
+                    if (ObjectUtil.isNotEmpty(tempMap)) {
+                        costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+                    }
                     return costMainBusinessIncome;
                 })));
                 list = yearMap.keySet().stream().collect(Collectors.toList());
