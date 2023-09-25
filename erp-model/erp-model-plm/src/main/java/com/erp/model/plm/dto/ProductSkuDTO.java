@@ -35,11 +35,19 @@ public class ProductSkuDTO extends PermissionsDTO {
      * 产品SPU表id
      */
     private String productId;
+    /**
+     * 标签关联的产品列表
+     */
+    private List<String> labelProductIds;
 
     /**
      * 是否变更（0否，1是）
      */
     private Integer isChange;
+    /**
+     * 标签列表
+     */
+    private List<String> labelIds;
 
     /**
      * 用于列表界面的（所有产品，带我审核产品，已审核产品） 0待审核，1审核中，2审核通过，3审核不通过，4待提交
@@ -84,7 +92,6 @@ public class ProductSkuDTO extends PermissionsDTO {
     private List<String> brandList;
 
 
-
     /**
      * 产品 经理
      */
@@ -102,8 +109,6 @@ public class ProductSkuDTO extends PermissionsDTO {
     private List<String> propertyList;
 
 
-
-
     /**
      * 开始时间
      */
@@ -115,10 +120,9 @@ public class ProductSkuDTO extends PermissionsDTO {
     private LocalDate endTime;
 
 
-
     /**
      * sku 审核状态
-     *  0待审核，1审核中，2审核通过，3审核不通过，4待提交
+     * 0待审核，1审核中，2审核通过，3审核不通过，4待提交
      */
     private List<Integer> skuStateList;
 
