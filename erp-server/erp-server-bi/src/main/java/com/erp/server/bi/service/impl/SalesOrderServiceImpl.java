@@ -2403,14 +2403,20 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 // 月度分组数据销售毛利率
                 Map<Integer, BigDecimal> monthMap = costMap.keySet().stream().collect(Collectors.groupingBy(e -> e.getMonthValue(), MathUtil.summingBigDecimal(v -> {
                     Map<String, BigDecimal> tempMap = costMap.get(v);
-                    BigDecimal costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+                    BigDecimal costMainBusinessIncome = BigDecimal.ZERO;
+                    if (ObjectUtil.isNotEmpty(tempMap)) {
+                        costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+                    }
                     return costMainBusinessIncome;
                 })));
 
                 // 去年月度分组数据销售毛利率
                 Map<Integer, BigDecimal> lastYearMonthMap = lastYearCostMap.keySet().stream().collect(Collectors.groupingBy(e -> e.getMonthValue(), MathUtil.summingBigDecimal(v -> {
                     Map<String, BigDecimal> tempMap = costMap.get(v);
-                    BigDecimal costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+                    BigDecimal costMainBusinessIncome = BigDecimal.ZERO;
+                    if (ObjectUtil.isNotEmpty(tempMap)) {
+                        costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+                    }
                     return costMainBusinessIncome;
                 })));
                 dateList = IntStream.rangeClosed(1, 12).mapToObj(x -> StrUtil.format(format, x)).collect(Collectors.toList());
@@ -2509,7 +2515,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         basisRatio.setType("line");
         List<Object> basisRatioList = new ArrayList<>();
         for (Integer date : dateList) {
-            if (lastYearMonthMap.get(date) != null) {
+            if (lastYearMonthMap.get(date) != null && lastYearMonthMap.get(date).compareTo(BigDecimal.ZERO) > 0) {
                 basisRatioList.add(monthMap.get(date)
                         .subtract(lastYearMonthMap.get(date))
                         .divide(lastYearMonthMap.get(date), 2, BigDecimal.ROUND_HALF_UP)
@@ -2530,7 +2536,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         for (int i = 0; i < dateList.size(); i++) {
             if (i == 0) {
                 if (lastYearMonthMap.get(dateList.get(dateList.size() - 1)) != null) {
-                    chainRelativeRatioList.add(monthMap.get(dateList.get(i))
+                    chainRelativeRatioList.add(monthMap.get(dateList.get(i)) == null ? BigDecimal.ZERO : monthMap.get(dateList.get(i))
                             .subtract(lastYearMonthMap.get(dateList.get(dateList.size() - 1)))
                             .divide(lastYearMonthMap.get(dateList.get(dateList.size() - 1)), 2, BigDecimal.ROUND_HALF_UP)
                             .multiply(MathUtil.BigDecimal_100)
@@ -2540,7 +2546,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 }
             } else {
                 if (monthMap.get(dateList.get(i - 1)) != null) {
-                    chainRelativeRatioList.add(monthMap.get(dateList.get(i))
+                    chainRelativeRatioList.add(monthMap.get(dateList.get(i)) == null ? BigDecimal.ZERO : monthMap.get(dateList.get(i))
                             .subtract(monthMap.get(dateList.get(i - 1)))
                             .divide(monthMap.get(dateList.get(i - 1)), 2, BigDecimal.ROUND_HALF_UP)
                             .multiply(MathUtil.BigDecimal_100)

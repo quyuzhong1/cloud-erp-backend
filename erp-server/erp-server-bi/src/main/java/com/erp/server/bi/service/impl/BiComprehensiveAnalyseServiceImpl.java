@@ -683,6 +683,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         // 国家销量Map<国家名称, 国家销量>
         Map<String, BigDecimal> countrySalesMap = countrySalesList
                 .stream()
+                .filter(e-> StringUtils.isNotBlank(e.getCountryNameCn()))
                 .collect(Collectors.toMap(BiCountryAnalyzeDTO::getCountryNameCn, BiCountryAnalyzeDTO::getSalesAmount));
 
         // 全球总销量
