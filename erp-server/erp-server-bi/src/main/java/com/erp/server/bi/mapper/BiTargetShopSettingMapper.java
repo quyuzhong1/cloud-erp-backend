@@ -46,5 +46,5 @@ public interface BiTargetShopSettingMapper extends BaseMapper<BiTargetShopSettin
      * @param dto
      * @return
      */
-    List<BiTargetYearDTO.MonthValueDTO> pagingTotal(@Param("params") BiTargetYearDTO.PagingParamDTO dto);
+    BiTargetYearDTO.PagingTotalDTO pagingTotal(@Param("params") BiTargetYearDTO.PagingParamDTO dto);
 }
