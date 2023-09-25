@@ -2349,7 +2349,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     private StatisticalDataVO byDateStackedColumnChart(DateSalesTrendDTO.SearchDTO dto, String timeFlag, String settleRate, String groupName) {
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售趋势");
-        statistical.setChartType(ChartType.PIE);
+        statistical.setChartType(ChartType.BAR);
         String dateType = dto.getDateType();
 
         List<SalesFlagVO> salesList = new ArrayList();
@@ -2359,6 +2359,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 break;
             case "MONTH":
                 salesList = baseMapper.getByMonthCategory(dto, timeFlag, settleRate, groupName);
+                break;
+            case "WEEK":
+                salesList = baseMapper.getByWeekCategory(dto, timeFlag, settleRate, groupName);
                 break;
             case "QUARTER":
                 salesList = baseMapper.getByQuarterCategory(dto, timeFlag, settleRate, groupName);
@@ -2388,6 +2391,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             DateSalesTrendDTO.StackedColumnChartDTO columnChartDTO = new DateSalesTrendDTO.StackedColumnChartDTO();
             List<BigDecimal> list = new ArrayList<>();
             sales.setName(category);
+            sales.setType(ChartType.BAR);
             columnChartDTO.setCategory(category);
 
             for (Map.Entry<String, List<SalesFlagVO>> stringListEntry : listDateMap.entrySet()) {
@@ -2542,7 +2546,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         SeriesVO<Object> sales = new SeriesVO();
         sales.setName("今年销售额");
-        sales.setType("bar");
+        sales.setType(ChartType.BAR);
         List<Object> orderSalesList = new ArrayList<>();
         for (Integer date : dateList) {
             if (monthMap.get(date) != null) {
@@ -2556,7 +2560,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         SeriesVO<Object> lastYearSales = new SeriesVO();
         lastYearSales.setName("去年销售额");
-        lastYearSales.setType("bar");
+        lastYearSales.setType(ChartType.BAR);
         List<Object> lastYearOrderSalesList = new ArrayList<>();
         for (Integer date : dateList) {
             if (lastYearMonthMap.get(date) != null) {
@@ -2570,7 +2574,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         SeriesVO<Object> basisRatio = new SeriesVO();
         basisRatio.setName("同比");
-        basisRatio.setType("line");
+        basisRatio.setType(ChartType.LINE);
         List<Object> basisRatioList = new ArrayList<>();
         for (Integer date : dateList) {
             if (lastYearMonthMap.get(date) != null && lastYearMonthMap.get(date).compareTo(BigDecimal.ZERO) > 0) {
@@ -2589,7 +2593,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         SeriesVO<Object> chainRelativeRatio = new SeriesVO();
         chainRelativeRatio.setName("环比");
-        chainRelativeRatio.setType("line");
+        chainRelativeRatio.setType(ChartType.LINE);
         List<Object> chainRelativeRatioList = new ArrayList<>();
         for (int i = 0; i < dateList.size(); i++) {
             if (i == 0) {
@@ -2640,6 +2644,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String dateType = dto.getDateType();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
+
         //查找的日期
         String timeFlag = "delivery_time";
         if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {
@@ -2900,28 +2905,28 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     private void dateSalesTrendSalesAmount(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, List<SeriesVO<Object>> seriesList) {
         SeriesVO<Object> sales = new SeriesVO();
         sales.setName("今年销售额");
-        sales.setType("bar");
+        sales.setType(ChartType.BAR);
         List<Object> orderSalesList = salesList.stream().map(SalesFlagVO::getSales).collect(Collectors.toList());
         sales.setData(orderSalesList);
         seriesList.add(sales);
 
         SeriesVO<Object> lastYearSales = new SeriesVO();
         lastYearSales.setName("去年销售额");
-        lastYearSales.setType("bar");
+        lastYearSales.setType(ChartType.BAR);
         List<Object> salesAmountList = lastYearSalesList.stream().map(SalesFlagVO::getSales).collect(Collectors.toList());
         lastYearSales.setData(salesAmountList);
         seriesList.add(lastYearSales);
 
         SeriesVO<Object> salesBasisRatio = new SeriesVO();
         salesBasisRatio.setName("同比");
-        salesBasisRatio.setType("line");
+        salesBasisRatio.setType(ChartType.LINE);
         List<Object> salesBasisRatioList = salesList.stream().map(SalesFlagVO::getSalesBasisRatio).collect(Collectors.toList());
         salesBasisRatio.setData(salesBasisRatioList);
         seriesList.add(salesBasisRatio);
 
         SeriesVO<Object> salesChainRelativeRatio = new SeriesVO();
         salesChainRelativeRatio.setName("环比");
-        salesChainRelativeRatio.setType("line");
+        salesChainRelativeRatio.setType(ChartType.LINE);
         List<Object> salesChainRelativeRatioList = salesList.stream().map(SalesFlagVO::getSalesChainRelativeRatio).collect(Collectors.toList());
         salesChainRelativeRatio.setData(salesChainRelativeRatioList);
         seriesList.add(salesChainRelativeRatio);
@@ -2937,28 +2942,28 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     private void dateSalesTrendSalesQuantity(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, List<SeriesVO<Object>> seriesList) {
         SeriesVO<Object> salesQuantity = new SeriesVO();
         salesQuantity.setName("今年销量");
-        salesQuantity.setType("bar");
+        salesQuantity.setType(ChartType.BAR);
         List<Object> salesQuantityList = salesList.stream().map(SalesFlagVO::getSalesQuantity).collect(Collectors.toList());
         salesQuantity.setData(salesQuantityList);
         seriesList.add(salesQuantity);
 
         SeriesVO<Object> lastYearSalesQuantity = new SeriesVO();
         lastYearSalesQuantity.setName("去年销量");
-        lastYearSalesQuantity.setType("bar");
+        lastYearSalesQuantity.setType(ChartType.BAR);
         List<Object> lastYearSalesQuantityList = lastYearSalesList.stream().map(SalesFlagVO::getSalesQuantity).collect(Collectors.toList());
         lastYearSalesQuantity.setData(lastYearSalesQuantityList);
         seriesList.add(lastYearSalesQuantity);
 
         SeriesVO<Object> basisRatio = new SeriesVO();
         basisRatio.setName("同比");
-        basisRatio.setType("line");
+        basisRatio.setType(ChartType.LINE);
         List<Object> basisRatioList = salesList.stream().map(SalesFlagVO::getSalesQuantityBasisRatio).collect(Collectors.toList());
         basisRatio.setData(basisRatioList);
         seriesList.add(basisRatio);
 
         SeriesVO<Object> chainRelativeRatio = new SeriesVO();
         chainRelativeRatio.setName("环比");
-        chainRelativeRatio.setType("line");
+        chainRelativeRatio.setType(ChartType.LINE);
         List<Object> chainRelativeRatioList = salesList.stream().map(SalesFlagVO::getSalesQuantityChainRelativeRatio).collect(Collectors.toList());
         chainRelativeRatio.setData(chainRelativeRatioList);
         seriesList.add(chainRelativeRatio);
@@ -2974,28 +2979,28 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     private void dateSalesTrendSalesPrice(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, List<SeriesVO<Object>> seriesList) {
         SeriesVO<Object> salesQuantity = new SeriesVO();
         salesQuantity.setName("今年客单价");
-        salesQuantity.setType("bar");
+        salesQuantity.setType(ChartType.BAR);
         List<Object> salesQuantityList = salesList.stream().map(SalesFlagVO::getSalesPrice).collect(Collectors.toList());
         salesQuantity.setData(salesQuantityList);
         seriesList.add(salesQuantity);
 
         SeriesVO<Object> lastYearSalesQuantity = new SeriesVO();
         lastYearSalesQuantity.setName("去年客单价");
-        lastYearSalesQuantity.setType("bar");
+        lastYearSalesQuantity.setType(ChartType.BAR);
         List<Object> lastYearSalesQuantityList = lastYearSalesList.stream().map(SalesFlagVO::getSalesPrice).collect(Collectors.toList());
         lastYearSalesQuantity.setData(lastYearSalesQuantityList);
         seriesList.add(lastYearSalesQuantity);
 
         SeriesVO<Object> basisRatio = new SeriesVO();
         basisRatio.setName("同比");
-        basisRatio.setType("line");
+        basisRatio.setType(ChartType.LINE);
         List<Object> basisRatioList = salesList.stream().map(SalesFlagVO::getSalesPriceBasisRatio).collect(Collectors.toList());
         basisRatio.setData(basisRatioList);
         seriesList.add(basisRatio);
 
         SeriesVO<Object> chainRelativeRatio = new SeriesVO();
         chainRelativeRatio.setName("环比");
-        chainRelativeRatio.setType("line");
+        chainRelativeRatio.setType(ChartType.LINE);
         List<Object> chainRelativeRatioList = salesList.stream().map(SalesFlagVO::getSalesPriceChainRelativeRatio).collect(Collectors.toList());
         chainRelativeRatio.setData(chainRelativeRatioList);
         seriesList.add(chainRelativeRatio);
