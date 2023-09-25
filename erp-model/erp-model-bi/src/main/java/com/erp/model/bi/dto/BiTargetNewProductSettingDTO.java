@@ -67,11 +67,150 @@ public class BiTargetNewProductSettingDTO implements Serializable {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
 
-        /**
-         * 详情信息
-         */
-        private List<CommonDTO> detailList;
+        private String staffName;
 
+
+
+        /**
+         * 指标维度
+         */
+        private MetricsEnum metrics;
+
+        private String metricsName;
+
+
+        /**
+         * 一月值
+         */
+        private BigDecimal january;
+
+        /**
+         * 二月值
+         */
+        private BigDecimal february;
+
+        /**
+         * 三月
+         */
+        private BigDecimal march;
+
+
+        /**
+         * 四月值
+         */
+        private BigDecimal april;
+
+        /**
+         * 五月值
+         */
+        private BigDecimal may;
+
+
+        /**
+         * 六月值
+         */
+        private BigDecimal june;
+
+
+        /**
+         * 七月值
+         */
+        private BigDecimal july;
+
+
+        /**
+         * 八月值
+         */
+        private BigDecimal august;
+
+
+        /**
+         * 九月值
+         */
+        private BigDecimal september;
+
+
+        /**
+         * 十月值
+         */
+        private BigDecimal october;
+
+        /**
+         * 十一月值
+         */
+        private BigDecimal november;
+
+        /**
+         * 十二月值
+         */
+        private BigDecimal december;
+
+
+        /**
+         * 一月占比
+         */
+        private BigDecimal januaryRate;
+
+        /**
+         * 二月占比
+         */
+        private BigDecimal februaryRate;
+
+        /**
+         * 三月占比
+         */
+        private BigDecimal marchRate;
+
+
+        /**
+         * 四月占比
+         */
+        private BigDecimal aprilRate;
+
+        /**
+         * 五月占比
+         */
+        private BigDecimal mayRate;
+
+
+        /**
+         * 六月占比
+         */
+        private BigDecimal juneRate;
+
+
+        /**
+         * 七月占比
+         */
+        private BigDecimal julyRate;
+
+
+        /**
+         * 八月占比
+         */
+        private BigDecimal augustRate;
+
+
+        /**
+         * 九月占比
+         */
+        private BigDecimal septemberRate;
+
+
+        /**
+         * 十月占比
+         */
+        private BigDecimal octoberRate;
+
+        /**
+         * 十一月占比
+         */
+        private BigDecimal novemberRate;
+
+        /**
+         * 十二月占比
+         */
+        private BigDecimal decemberRate;
 
     }
 

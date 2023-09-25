@@ -388,11 +388,10 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     public PagingVO<BiTargetNewProductSettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto) {
         BiTargetYearDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        String metrics = params.getMetrics();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         List<BiTargetNewProductSettingDTO.PagingViewDTO> list = pageData.getRecords();
-        pullPaging(list, metrics);
+        list.forEach(s->s.setMetricsName(s.getMetrics().getName()));
         return new PagingVO<>(pageData);
     }
 
@@ -496,33 +495,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
 
     @Override
     public BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto) {
-        List<BiTargetYearDTO.MonthValueDTO> list = baseMapper.pagingTotal(dto);
-        String metrics = dto.getMetrics();
-        BiTargetYearDTO.PagingTotalDTO pagingTotal = new BiTargetYearDTO.PagingTotalDTO();
-        //一月
-        pagingTotal.setJanuaryTotal(getMonthValue(MonthEnum.JANUARY, list, metrics));
-        //二月
-        pagingTotal.setFebruaryTotal(getMonthValue(MonthEnum.FEBRUARY, list, metrics));
-        //三月
-        pagingTotal.setMarchTotal(getMonthValue(MonthEnum.MARCH, list, metrics));
-        // 四月
-        pagingTotal.setAprilTotal(getMonthValue(MonthEnum.APRIL, list, metrics));
-        //五月
-        pagingTotal.setMayTotal(getMonthValue(MonthEnum.MAY, list, metrics));
-        // 六月
-        pagingTotal.setJuneTotal(getMonthValue(MonthEnum.JUNE, list, metrics));
-        //七月
-        pagingTotal.setJulyTotal(getMonthValue(MonthEnum.JULY, list, metrics));
-        //八月
-        pagingTotal.setAugustTotal(getMonthValue(MonthEnum.AUGUST, list, metrics));
-        //九月
-        pagingTotal.setSeptemberTotal(getMonthValue(MonthEnum.SEPTEMBER, list, metrics));
-        //十月
-        pagingTotal.setOctoberTotal(getMonthValue(MonthEnum.OCTOBER, list, metrics));
-        //十一月
-        pagingTotal.setNovemberTotal(getMonthValue(MonthEnum.NOVEMBER, list, metrics));
-        //十二月
-        pagingTotal.setDecemberTotal(getMonthValue(MonthEnum.DECEMBER, list, metrics));
+        BiTargetYearDTO.PagingTotalDTO pagingTotal = baseMapper.pagingTotal(dto);
         return pagingTotal;
     }
 
@@ -540,24 +513,6 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
         return value;
     }
 
-    /**
-     * 填充分页数据
-     *
-     * @param list
-     */
-    private void pullPaging(List<BiTargetNewProductSettingDTO.PagingViewDTO> list, String metrics) {
-
-        List<String> mainIdList = list.stream().map(BiTargetNewProductSettingDTO.PagingViewDTO::getId).collect(Collectors.toList());
-        List<BiTargetNewProductSettingEntity> staffSettingDbList = this.listBaseByMainIdList(mainIdList);
-        for (BiTargetNewProductSettingDTO.PagingViewDTO item : list) {
-            List<BiTargetNewProductSettingEntity> dbList = staffSettingDbList.stream().
-                    filter(s -> s.getMainId().equals(item.getId()) &&
-                            s.getMetrics().getCode().equals(metrics)
-                    ).collect(Collectors.toList());
-            List<BiTargetNewProductSettingDTO.CommonDTO> commonList = getCommon(dbList);
-            item.setDetailList(commonList);
-        }
-    }
 
     private List<BiTargetNewProductSettingDTO.CommonDTO> getCommon(List<BiTargetNewProductSettingEntity> dbList) {
         List<BiTargetNewProductSettingDTO.CommonDTO> resultList = new ArrayList<>(10);

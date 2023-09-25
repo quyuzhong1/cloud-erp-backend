@@ -54,5 +54,5 @@ public interface BiTargetStaffSettingMapper extends BaseMapper<BiTargetStaffSett
      * @param dto
      * @return
      */
-    List<BiTargetYearDTO.MonthValueDTO> pagingTotal(@Param("params")BiTargetYearDTO.PagingParamDTO dto);
+    BiTargetYearDTO.PagingTotalDTO pagingTotal(@Param("params")BiTargetYearDTO.PagingParamDTO dto);
 }
