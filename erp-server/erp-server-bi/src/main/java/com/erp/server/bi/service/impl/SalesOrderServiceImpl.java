@@ -220,7 +220,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(params, settleRate, findTime);
 
 
-
         LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
         params.setStartTime(beforeSevenDays);
         params.setEndTime(nowTime);
@@ -559,7 +558,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         // 设置占比
         BigDecimal finalSumNumber = sumNumber;
-        list.forEach(o->{
+        list.forEach(o -> {
             o.setRadioBySumSumNumber(finalSumNumber);
         });
 
@@ -1315,8 +1314,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         for (SkuCategoryVO item : skuCategoryList) {
             List<String> skuList = item.getSkuList();
             BigDecimal totalSales = list.stream().filter(
-                    s -> skuList.contains(s.getFlagNo()) && s.getSales() != null
-            ).map(SalesBaseVO::getSales).
+                            s -> skuList.contains(s.getFlagNo()) && s.getSales() != null
+                    ).map(SalesBaseVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
 
             dataList.add(totalSales);
@@ -3542,7 +3541,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 break;
             //年
             case "YEAR":
-                dataValueList= biDataSourceCostDetailService.listGrossYear(dto);
+                dataValueList = biDataSourceCostDetailService.listGrossYear(dto);
                 break;
 
         }
@@ -3550,7 +3549,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         statistical.setName("毛利额&毛利率");
         ChartVO chartVO = new ChartVO();
         List<String> dataStrList = dataValueList.stream().filter(d -> d.getType().
-                equals(grossProfit)).map(BiDataSourceCostDTO.DataValueDTO::getDateStr).
+                        equals(grossProfit)).map(BiDataSourceCostDTO.DataValueDTO::getDateStr).
                 sorted().collect(Collectors.toList());
         chartVO.setXAxis(dataStrList);
         //对应值
@@ -3559,8 +3558,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         SeriesVO grossProfitSeries = new SeriesVO();
         grossProfitSeries.setName(MetricsEnum.GROSS_PROFIT.getName());
         grossProfitSeries.setType(ChartType.BAR);
-        List<BigDecimal> grossProfitValueList= dataValueList.stream().filter(d -> d.getType().
-                equals(grossProfit)).map(BiDataSourceCostDTO.DataValueDTO::getValue).
+        List<BigDecimal> grossProfitValueList = dataValueList.stream().filter(d -> d.getType().
+                        equals(grossProfit)).map(BiDataSourceCostDTO.DataValueDTO::getValue).
                 sorted().collect(Collectors.toList());
         grossProfitSeries.setData(grossProfitValueList);
         seriesList.add(grossProfitSeries);
@@ -3569,8 +3568,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         SeriesVO grossProfitRateSeries = new SeriesVO();
         grossProfitRateSeries.setName(MetricsEnum.GROSS_PROFIT_RATE.getName());
         grossProfitRateSeries.setType(ChartType.LINE);
-        List<BigDecimal> grossProfitRateValueList= dataValueList.stream().filter(d -> d.getType().
-                equals(grossProfitRate)).map(BiDataSourceCostDTO.DataValueDTO::getValue).
+        List<BigDecimal> grossProfitRateValueList = dataValueList.stream().filter(d -> d.getType().
+                        equals(grossProfitRate)).map(BiDataSourceCostDTO.DataValueDTO::getValue).
                 sorted().collect(Collectors.toList());
         grossProfitRateSeries.setData(grossProfitRateValueList);
         seriesList.add(grossProfitRateSeries);

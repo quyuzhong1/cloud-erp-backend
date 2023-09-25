@@ -27,9 +27,9 @@
             </foreach>
         </if>
         <!-- 店铺id -->
-        <if test="params.shopName!=null and params.shopName.size>0">
+        <if test="shopIdList!=null and shopIdList.size>0">
             AND dsc.shop_id IN
-            <foreach collection="params.shopName" item="shopId" open="(" separator="," close=")">
+            <foreach collection="shopIdList" item="shopId" open="(" separator="," close=")">
                 #{shopId}
             </foreach>
         </if>
@@ -67,9 +67,9 @@
             </foreach>
         </if>
         <!-- 店铺id -->
-        <if test="params.shopName!=null and params.shopName.size>0">
+        <if test="shopIdList !=null and shopIdList.size>0">
             AND dsc.shop_id IN
-            <foreach collection="params.shopName" item="shopId" open="(" separator="," close=")">
+            <foreach collection="shopIdList" item="shopId" open="(" separator="," close=")">
                 #{shopId}
             </foreach>
         </if>
