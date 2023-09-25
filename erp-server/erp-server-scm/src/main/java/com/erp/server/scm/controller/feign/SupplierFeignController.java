@@ -3,6 +3,7 @@ package com.erp.server.scm.controller.feign;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.core.controller.BaseController;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.scm.service.SupplierService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,5 +47,20 @@ public class SupplierFeignController extends BaseController {
     public Boolean supplierApprove(@RequestBody BaseApproveParamDTO dto) {
         return supplierService.approve(dto);
     }
+
+
+    /**
+     * 根据供应商名称获取供应商
+     * @author yl
+     * @date 2023-09-22 19:50
+     * @param supplierNames
+     * @return java.lang.Boolean
+     */
+    @PostMapping("/listBySupplierByNames")
+    public List<SupplierEntity> listBySupplierByNames(@RequestBody List<String> supplierNames) {
+        return supplierService.listBySupplierByNames(supplierNames);
+    }
+
+
 
 }
