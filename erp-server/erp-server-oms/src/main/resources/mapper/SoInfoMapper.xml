@@ -438,7 +438,8 @@
         sd.sku_id,
         sd.sku_no,
         sd.is_close,
-        sd.qty AS salesQty
+        sd.qty AS salesQty,
+        sd.remark
         FROM so_info si
         LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
         WHERE sd.is_deleted = FALSE
