@@ -283,6 +283,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         for (Map.Entry<MetricsEnum, List<BiTargetShopSettingEntity>> item : map.entrySet()) {
             BiTargetShopSettingDTO.DetailDTO detail = new BiTargetShopSettingDTO.DetailDTO();
             MetricsEnum metricsEnum = item.getKey();
+            String metricsFlag = metricsEnum.getCode();
             detail.setMetrics(metricsEnum);
             detail.setMetricsName(metricsEnum.getName());
             List<BiTargetShopSettingEntity> shopSettingList = item.getValue();
@@ -298,42 +299,42 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
                 common.setShopName(dbList.get(0).getShopName());
                 //一月
                 Integer january = MonthEnum.JANUARY.getValue();
-                common.setJanuary(pullView(metrics, january, dbList));
+                common.setJanuary(pullView(metricsFlag, january, dbList));
                 //二月
                 Integer february = MonthEnum.FEBRUARY.getValue();
-                common.setFebruary(pullView(metrics, february, dbList));
+                common.setFebruary(pullView(metricsFlag, february, dbList));
                 //三月
                 Integer march = MonthEnum.MARCH.getValue();
-                common.setMarch(pullView(metrics, march, dbList));
+                common.setMarch(pullView(metricsFlag, march, dbList));
                 //四月
                 Integer april = MonthEnum.APRIL.getValue();
-                common.setApril(pullView(metrics, april, dbList));
+                common.setApril(pullView(metricsFlag, april, dbList));
                 //五月
                 Integer may = MonthEnum.MAY.getValue();
-                common.setMay(pullView(metrics, may, dbList));
+                common.setMay(pullView(metricsFlag, may, dbList));
                 //六月
                 Integer june = MonthEnum.JUNE.getValue();
-                common.setJune(pullView(metrics, june, dbList));
+                common.setJune(pullView(metricsFlag, june, dbList));
                 //七月
                 Integer july = MonthEnum.JULY.getValue();
-                common.setJuly(pullView(metrics, july, dbList));
+                common.setJuly(pullView(metricsFlag, july, dbList));
                 //八月
                 Integer august = MonthEnum.AUGUST.getValue();
-                common.setAugust(pullView(metrics, august, dbList));
+                common.setAugust(pullView(metricsFlag, august, dbList));
                 //九月
                 Integer september = MonthEnum.SEPTEMBER.getValue();
-                common.setSeptember(pullView(metrics, september, dbList));
+                common.setSeptember(pullView(metricsFlag, september, dbList));
                 //十月
                 Integer october = MonthEnum.OCTOBER.getValue();
-                common.setOctober(pullView(metrics, october, dbList));
+                common.setOctober(pullView(metricsFlag, october, dbList));
 
                 //十一月
                 Integer november = MonthEnum.NOVEMBER.getValue();
-                common.setNovember(pullView(metrics, november, dbList));
+                common.setNovember(pullView(metricsFlag, november, dbList));
 
                 //十二月
                 Integer december = MonthEnum.DECEMBER.getValue();
-                common.setDecember(pullView(metrics, december, dbList));
+                common.setDecember(pullView(metricsFlag, december, dbList));
                 shopList.add(common);
             }
             detail.setSettingList(shopList);
@@ -424,7 +425,68 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         for (BiTargetShopSettingDTO.CommonDTO item : detailList) {
             String shopId = item.getShopId();
             MetricsEnum metrics = item.getMetrics();
-            putListDetailDTO(existList, shopId, metrics, existShop, action);
+            //一月
+            BigDecimal january = item.getJanuary();
+            if (Objects.nonNull(january)) {
+                Integer januaryMoth = MonthEnum.JANUARY.getValue();
+                putListDetailDTO(existList, shopId, metrics, januaryMoth, existShop,action);
+            }
+            //二月
+            BigDecimal february = item.getFebruary();
+            if (Objects.nonNull(february)) {
+                Integer februaryMoth = MonthEnum.FEBRUARY.getValue();
+                putListDetailDTO(existList, shopId, metrics, februaryMoth, existShop,action);
+            }
+            //三月
+            BigDecimal march = item.getMarch();
+            if (Objects.nonNull(march)) {
+                Integer marchMoth = MonthEnum.MARCH.getValue();
+                putListDetailDTO(existList, shopId, metrics, marchMoth, existShop,action);
+            }
+            //四月
+            BigDecimal april = item.getApril();
+            if (Objects.nonNull(april)) {
+                Integer aprilMoth = MonthEnum.APRIL.getValue();
+                putListDetailDTO(existList, shopId, metrics, aprilMoth, existShop,action);
+            }
+            //五月
+            BigDecimal may = item.getMay();
+            if (Objects.nonNull(may)) {
+                Integer mayMoth = MonthEnum.MAY.getValue();
+                putListDetailDTO(existList, shopId, metrics, mayMoth, existShop,action);
+            }
+            //六月
+            BigDecimal june = item.getJune();
+            if (Objects.nonNull(june)) {
+                Integer juneMoth = MonthEnum.JUNE.getValue();
+                putListDetailDTO(existList, shopId, metrics, juneMoth, existShop,action);
+            }
+            //七月
+            BigDecimal july = item.getJuly();
+            if (Objects.nonNull(july)) {
+                Integer julyMoth = MonthEnum.JULY.getValue();
+                putListDetailDTO(existList, shopId, metrics, julyMoth, existShop,action);
+            }
+            //八月
+            BigDecimal august = item.getAugust();
+            if (Objects.nonNull(august)) {
+                Integer augustMoth = MonthEnum.AUGUST.getValue();
+                putListDetailDTO(existList, shopId, metrics, augustMoth, existShop,action);
+            }
+            //九月
+            BigDecimal september = item.getSeptember();
+            if (Objects.nonNull(september)) {
+                Integer septemberMoth = MonthEnum.SEPTEMBER.getValue();
+                putListDetailDTO(existList, shopId, metrics, septemberMoth, existShop,action);
+            }
+            //十月
+            BigDecimal october = item.getOctober();
+            if (Objects.nonNull(october)) {
+                Integer octoberMoth = MonthEnum.OCTOBER.getValue();
+                putListDetailDTO(existList, shopId, metrics, octoberMoth, existShop,action);
+            }
+
+
 
         }
         if (CollectionUtils.isNotEmpty(existShop)) {
@@ -447,7 +509,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
 
     }
 
-    private void putListDetailDTO(List<BiTargetShopSettingDTO.ListDetailDTO> existList, String shopId, MetricsEnum metrics, List<String> existShop, LogActionEnum action) {
+    private void putListDetailDTO(List<BiTargetShopSettingDTO.ListDetailDTO> existList, String shopId, MetricsEnum metrics,Integer month ,List<String> existShop, LogActionEnum action) {
         //添加的
         if (LogActionEnum.INSERT.equals(action)) {
             BiTargetShopSettingDTO.ListDetailDTO exist = existList.stream().filter(e ->
@@ -461,7 +523,8 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
             //修改的
             List<BiTargetShopSettingDTO.ListDetailDTO> list = existList.stream().filter(e ->
                     e.getShopId().equals(shopId) &&
-                            e.getMetrics().equals(metrics)
+                            e.getMetrics().equals(metrics)&&
+                            e.getMonth().equals(month)
                            ).collect(Collectors.toList());
             if (list.size() > 1) {
                 existShop.add(list.get(0).getShopName());

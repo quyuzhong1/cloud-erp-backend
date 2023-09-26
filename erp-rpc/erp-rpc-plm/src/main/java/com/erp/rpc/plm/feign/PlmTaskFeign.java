@@ -323,6 +323,16 @@ public interface PlmTaskFeign {
     List<BasicCategoryEntity> listCategoryByIds(@RequestBody List<String> idList);
 
     /**
+     * 获取分类数结构
+     * @author yl
+     * @date 2023-09-26 16:51
+     * @param
+     * @return java.util.List<com.erp.model.plm.dto.BasicCategoryDTO>
+     */
+    @GetMapping("feign/category/tree")
+    List<BasicCategoryDTO> listCategoryTree();
+
+    /**
      * 获取到父级的分类
      *
      * @return
