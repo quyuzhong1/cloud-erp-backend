@@ -71,6 +71,7 @@ public class BiTargetSkuSettingDTO implements Serializable {
          */
         private String skuNo;
 
+        private String skuId;
 
         /**
          * 指标维度

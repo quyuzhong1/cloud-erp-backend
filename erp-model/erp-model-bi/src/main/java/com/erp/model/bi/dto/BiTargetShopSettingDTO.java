@@ -69,6 +69,8 @@ public class BiTargetShopSettingDTO implements Serializable {
          */
         private String shopName;
 
+        private String shopId;
+
         /**
          * 指标维度
          */
