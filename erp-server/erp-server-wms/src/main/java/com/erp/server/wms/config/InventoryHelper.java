@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -73,30 +74,6 @@ public class InventoryHelper {
 
     public AbstractInventoryServiceImpl getInventoryService(InventoryBizTypeEnum inventoryBizTypeEnum) {
         return (AbstractInventoryServiceImpl)inventoryServiceMap.get(inventoryBizTypeEnum);
-    }
-
-    /**
-     * 通用业务验证
-     * @param sourceTypeEnum
-     * @param sourceId
-     * @param billDate
-     */
-    public void checkCommonBiz(InventorySourceTypeEnum sourceTypeEnum, String sourceId, LocalDate billDate) {
-        log.info("开始检查是否关闭账套，单据类型：【{}】，单据id：【{}】，单据日期：【{}】", sourceTypeEnum.getName(), sourceId, billDate);
-        // TODO 1.检查是否关账
-        log.info("通过检查是否关闭账套，单据类型：【{}】，单据id：【{}】，单据日期：【{}】", sourceTypeEnum.getName(), sourceId, billDate);
-    }
-
-    /**
-     * 业务验证（盘点中，可能精确到SKU级别）
-     * @param sourceTypeEnum
-     * @param warehouseId
-     * @param skuNo
-     */
-    public void checkAllowTrade(InventorySourceTypeEnum sourceTypeEnum, String warehouseId, String skuNo) {
-        // TODO 检查是否盘点中
-        log.info("开始检查是否盘点中，仓库：【{}】，单据类型：【{}】，SKU：【{}】", warehouseId, sourceTypeEnum.getName(), skuNo);
-        log.info("通过检查是否盘点中，仓库：【{}】，单据类型：【{}】，SKU：【{}】", warehouseId, sourceTypeEnum.getName(), skuNo);
     }
 
     /**

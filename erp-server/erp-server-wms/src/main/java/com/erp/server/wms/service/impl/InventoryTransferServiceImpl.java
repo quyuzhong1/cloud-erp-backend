@@ -49,6 +49,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
         Map<String, WarehouseLocationEntity> warehouseLocationMap = Maps.newHashMap();
         // 判断是否需要忽略计算库存的sku
         List<String>  ignoreInventorySkuIds = inventoryHelper.getIgnoreSkuIds();
+
         for(InventoryStockBaseDTO baseParam : paramList) {
             if(baseParam instanceof TransferDTO) { // 调拨走交易规则
                 TransferDTO param = (TransferDTO)baseParam;
@@ -97,10 +98,6 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                         throw new ServiceException("仓位信息不存在");
                     }
                 }
-
-                inventoryHelper.checkCommonBiz(param.getSourceType(), param.getSourceId(), param.getBillDate());// 通用检查
-                inventoryHelper.checkAllowTrade(param.getSourceType(), param.getCurWarehouseId(), param.getSkuNo());// 当前仓关账检查
-                inventoryHelper.checkAllowTrade(param.getSourceType(), param.getTargetWarehouseId(), param.getSkuNo());// 目的仓关账检查
 
                 InventoryBaseInfoDTO currInventoryBaseInfoDTO = new InventoryBaseInfoDTO();
                 currInventoryBaseInfoDTO.setSourceType(param.getSourceType());
