@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -25,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -383,13 +383,9 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String categoryId, String syncKingdeeStatus, String syncKingdeeId) {
-        return  this.lambdaUpdate()
-                .eq(BasicCategoryEntity::getId,categoryId)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),BasicCategoryEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),BasicCategoryEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId),BasicCategoryEntity::getSyncKingdeeId,syncKingdeeId)
-                .update();
+    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
+        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
+        return Boolean.TRUE;
     }
 
     /**

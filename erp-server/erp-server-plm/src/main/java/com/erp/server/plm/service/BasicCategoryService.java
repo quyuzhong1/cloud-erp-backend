@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.BasicCategoryTreeDTO;
 import com.erp.model.plm.dto.SaveBasicCategoryDTO;
@@ -75,8 +76,7 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
     /**
      * 更新金蝶同步状态
      */
-    Boolean updateSyncKingdeeStatus(String categoryId, String syncKingdeeStatus,String syncKingdeeId);
-
+    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
     /**
      * 获取到父级分类
      * @author yl

@@ -3,6 +3,7 @@ package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -75,7 +76,8 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     public void syncDataToKingdee(ProductDetailEntity entity,String operate) {
 
         //更新同步状态为待同步
-        productDetailService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(),"");
+        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"",SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+        productDetailService.updateSyncKingdeeStatus(kingdeeDTO);
 
         //产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
@@ -259,7 +261,8 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PRODUCT_DETAIL_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return productDetailService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(),"");
+                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"",SyncKingdeeStatusEnum.IN_SYNC.getCode());
+                return productDetailService.updateSyncKingdeeStatus(syncKingdeeDTO);
             }
            return Boolean.TRUE;
         });

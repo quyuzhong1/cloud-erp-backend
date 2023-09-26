@@ -16,6 +16,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SkuApproveConfigureEnum;
 import com.common.business.enums.SyncOperateEnum;
@@ -67,7 +68,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -2630,20 +2630,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId) {
-        Boolean flag = this.lambdaUpdate()
-                .eq(ProductDetailEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductDetailEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId), ProductDetailEntity::getSyncKingdeeId, syncKingdeeId)
-                .update();
-        ProductDetailEntity byId = this.getById(id);
+    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
+
+        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
+        ProductDetailEntity byId = this.getById(kingdeeDTO.getBusinessId());
         //同步到SCM
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(byId), IdUtil.simpleUUID());
         //同步到WMS
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(byId), IdUtil.simpleUUID());
 
-        return flag;
+        return Boolean.TRUE;
     }
 
 
