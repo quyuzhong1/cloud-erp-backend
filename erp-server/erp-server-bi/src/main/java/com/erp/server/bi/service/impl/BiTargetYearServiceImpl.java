@@ -133,7 +133,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                     BigDecimal yearOrderAmount = salesOrderServiceMapper.getYearSalesAmountByYear(dto, yearStr, settleRate);
                     //年退款金额
                     BigDecimal yearRefundOrderAmount = dmpRefundInfoService.getYearRefundOrderAmount(dto, yearStr);
-                    return yearOrderAmount.subtract(yearRefundOrderAmount);
+                    return  MathUtil.subtract(yearOrderAmount,yearRefundOrderAmount);
                 } else {
                     //退款金额
                     BigDecimal refundOrderAmount = dmpRefundInfoService.getRefundOrderAmount(dto);
@@ -141,7 +141,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                     if (Objects.isNull(monthAmount)) {
                         monthAmount = BigDecimal.ZERO;
                     }
-                    return monthAmount.subtract(refundOrderAmount);
+                    return  MathUtil.subtract(monthAmount,refundOrderAmount);
                 }
                 //财务销售额
             case FINANCE_SALES_AMOUNT:
@@ -160,12 +160,12 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                     BigDecimal mainBusinessIncome = biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
                     //成本合计
                     BigDecimal costTotalCost = biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_TOTALCOST.getCode(), dto);
-                    return mainBusinessIncome.subtract(costTotalCost);
+                    return MathUtil.subtract(mainBusinessIncome,costTotalCost);
                 } else {
                     //月
                     BigDecimal monthMainBusinessIncome = biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
                     BigDecimal monthCostTotalCost = biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_TOTALCOST.getCode(), dto);
-                    return monthMainBusinessIncome.subtract(monthCostTotalCost);
+                    return MathUtil.subtract(monthMainBusinessIncome,monthCostTotalCost);
                 }
 
                 //毛利率

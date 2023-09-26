@@ -26,7 +26,7 @@ public enum MetricsEnum implements EnumMessage {
     FINANCE_SALES_AMOUNT("financeSalesAmount", "财务销售额"),
     NET_SALES_AMOUNT("netSalesAmount", "净销售额"),
     SALES_QTY("salesQty", "销量"),
-    GROSS_PROFIT("grossProfit", "毛利额度"),
+    GROSS_PROFIT("grossProfit", "毛利润"),
     GROSS_PROFIT_RATE("grossProfitRate", "毛利率");
 
     /**

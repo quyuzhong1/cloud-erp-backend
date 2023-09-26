@@ -378,7 +378,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(params.getMetrics());
-        IPage pageData = baseMapper.paging(query, params,multiplyNum);
+        IPage pageData = baseMapper.paging(query, params, multiplyNum);
         List<BiTargetStaffSettingDTO.PagingViewDTO> list = pageData.getRecords();
         list.forEach(s -> s.setMetricsName(s.getMetrics().getName()));
         return new PagingVO<>(pageData);
@@ -496,7 +496,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
     public BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto) {
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(dto.getMetrics());
-        BiTargetYearDTO.PagingTotalDTO result = baseMapper.pagingTotal(dto,multiplyNum);
+        BiTargetYearDTO.PagingTotalDTO result = baseMapper.pagingTotal(dto, multiplyNum);
         return result;
     }
 
@@ -610,80 +610,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         for (BiTargetStaffSettingDTO.CommonDTO item : detailList) {
             String staffId = item.getStaffId();
             MetricsEnum metrics = item.getMetrics();
-            //一月
-            BigDecimal january = item.getJanuary();
-            if (Objects.nonNull(january)) {
-                Integer januaryMoth = MonthEnum.JANUARY.getValue();
-                putListDetailDTO(existList, staffId, metrics, januaryMoth, existStaff, action);
-            }
-            //二月
-            BigDecimal february = item.getFebruary();
-            if (Objects.nonNull(february)) {
-                Integer februaryMoth = MonthEnum.FEBRUARY.getValue();
-                putListDetailDTO(existList, staffId, metrics, februaryMoth, existStaff, action);
-            }
-            //三月
-            BigDecimal march = item.getMarch();
-            if (Objects.nonNull(march)) {
-                Integer marchMoth = MonthEnum.MARCH.getValue();
-                putListDetailDTO(existList, staffId, metrics, marchMoth, existStaff, action);
-            }
-            //四月
-            BigDecimal april = item.getApril();
-            if (Objects.nonNull(april)) {
-                Integer aprilMoth = MonthEnum.APRIL.getValue();
-                putListDetailDTO(existList, staffId, metrics, aprilMoth, existStaff, action);
-            }
-            //五月
-            BigDecimal may = item.getMay();
-            if (Objects.nonNull(may)) {
-                Integer mayMoth = MonthEnum.MAY.getValue();
-                putListDetailDTO(existList, staffId, metrics, mayMoth, existStaff, action);
-            }
-            //六月
-            BigDecimal june = item.getJune();
-            if (Objects.nonNull(june)) {
-                Integer juneMoth = MonthEnum.JUNE.getValue();
-                putListDetailDTO(existList, staffId, metrics, juneMoth, existStaff, action);
-            }
-            //七月
-            BigDecimal july = item.getJuly();
-            if (Objects.nonNull(july)) {
-                Integer julyMoth = MonthEnum.JULY.getValue();
-                putListDetailDTO(existList, staffId, metrics, julyMoth, existStaff, action);
-            }
-            //八月
-            BigDecimal august = item.getAugust();
-            if (Objects.nonNull(august)) {
-                Integer augustMoth = MonthEnum.AUGUST.getValue();
-                putListDetailDTO(existList, staffId, metrics, augustMoth, existStaff, action);
-            }
-            //九月
-            BigDecimal september = item.getSeptember();
-            if (Objects.nonNull(september)) {
-                Integer septemberMoth = MonthEnum.SEPTEMBER.getValue();
-                putListDetailDTO(existList, staffId, metrics, septemberMoth, existStaff, action);
-            }
-            //十月
-            BigDecimal october = item.getOctober();
-            if (Objects.nonNull(october)) {
-                Integer octoberMoth = MonthEnum.OCTOBER.getValue();
-                putListDetailDTO(existList, staffId, metrics, octoberMoth, existStaff, action);
-            }
-
-            //十一月
-            BigDecimal november = item.getNovember();
-            if (Objects.nonNull(november)) {
-                Integer novemberMoth = MonthEnum.NOVEMBER.getValue();
-                putListDetailDTO(existList, staffId, metrics, novemberMoth, existStaff, action);
-            }
-
-            //十二月
-            BigDecimal december = item.getDecember();
-            if (Objects.nonNull(december)) {
-                Integer decemberMoth = MonthEnum.DECEMBER.getValue();
-                putListDetailDTO(existList, staffId, metrics, decemberMoth, existStaff, action);
-            }
+            putListDetailDTO(existList, staffId, metrics, existStaff, action);
         }
         if (CollectionUtils.isNotEmpty(existStaff)) {
             String existStaffName = existStaff.stream().collect(Collectors.joining(","));
@@ -708,13 +635,13 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
     }
 
 
-    private void putListDetailDTO(List<BiTargetStaffSettingDTO.ListDetailDTO> existList, String staffId, MetricsEnum metrics, Integer month, List<String> existStaff, LogActionEnum action) {
+    private void putListDetailDTO(List<BiTargetStaffSettingDTO.ListDetailDTO> existList, String staffId, MetricsEnum metrics, List<String> existStaff, LogActionEnum action) {
         //添加的
         if (LogActionEnum.INSERT.equals(action)) {
             BiTargetStaffSettingDTO.ListDetailDTO exist = existList.stream().filter(e ->
                     e.getStaffId().equals(staffId) &&
-                            e.getMetrics().equals(metrics) &&
-                            e.getMonth().equals(month)).findFirst().orElse(null);
+                            e.getMetrics().equals(metrics)
+            ).findFirst().orElse(null);
             if (exist != null) {
                 existStaff.add(exist.getStaffName());
             }
@@ -722,8 +649,8 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
             //修改的
             List<BiTargetStaffSettingDTO.ListDetailDTO> list = existList.stream().filter(e ->
                     e.getStaffId().equals(staffId) &&
-                            e.getMetrics().equals(metrics) &&
-                            e.getMonth().equals(month)).collect(Collectors.toList());
+                            e.getMetrics().equals(metrics)
+            ).collect(Collectors.toList());
             if (list.size() > 1) {
                 existStaff.add(list.get(0).getStaffName());
             }
