@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -23,7 +24,7 @@ import java.util.List;
 @Mapper
 public interface BiTargetNewProductSettingMapper extends BaseMapper<BiTargetNewProductSettingEntity> {
 
-    IPage<BiTargetNewProductSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params);
+    IPage<BiTargetNewProductSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params,@Param("multiplyNum") BigDecimal multiplyNum);
 
     /**
      * 查询部门新品目标
@@ -47,5 +48,5 @@ public interface BiTargetNewProductSettingMapper extends BaseMapper<BiTargetNewP
      * @param dto
      * @return
      */
-    List<BiTargetYearDTO.MonthValueDTO> pagingTotal(@Param("params") BiTargetYearDTO.PagingParamDTO dto);
+    BiTargetYearDTO.PagingTotalDTO pagingTotal(@Param("params") BiTargetYearDTO.PagingParamDTO dto,@Param("multiplyNum") BigDecimal multiplyNum);
 }

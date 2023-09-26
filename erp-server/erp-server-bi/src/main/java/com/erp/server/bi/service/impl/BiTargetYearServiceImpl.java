@@ -47,8 +47,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
     @Resource
     private DmpRefundInfoService dmpRefundInfoService;
 
-    @Resource
-    private DmpShopInfoService shopInfoService;
+
 
     @Resource
     private BiDataSourceCostDetailService biDataSourceCostDetailService;
@@ -134,7 +133,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                     BigDecimal yearOrderAmount = salesOrderServiceMapper.getYearSalesAmountByYear(dto, yearStr, settleRate);
                     //年退款金额
                     BigDecimal yearRefundOrderAmount = dmpRefundInfoService.getYearRefundOrderAmount(dto, yearStr);
-                    return yearOrderAmount.subtract(yearRefundOrderAmount);
+                    return  MathUtil.subtract(yearOrderAmount,yearRefundOrderAmount);
                 } else {
                     //退款金额
                     BigDecimal refundOrderAmount = dmpRefundInfoService.getRefundOrderAmount(dto);
@@ -142,21 +141,16 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                     if (Objects.isNull(monthAmount)) {
                         monthAmount = BigDecimal.ZERO;
                     }
-                    return monthAmount.subtract(refundOrderAmount);
+                    return  MathUtil.subtract(monthAmount,refundOrderAmount);
                 }
                 //财务销售额
             case FINANCE_SALES_AMOUNT:
-
-                List<String> shopNameList = dto.getShopName();
-                List<DmpShopInfoEntity> shopInfoList = shopInfoService.listByNames(shopNameList);
-                List<String> shopIdList = shopInfoList.stream().map(DmpShopInfoEntity::getId).collect(Collectors.toList());
-                dto.setShopName(shopIdList);
                 //年
                 if (yearFlag.equals(flagStr)) {
-                    return biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
+                    return biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(),dto);
                 } else {
                     //月
-                    return biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
+                    return biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(),dto);
                 }
                 //毛利额
             case GROSS_PROFIT:
@@ -166,12 +160,12 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                     BigDecimal mainBusinessIncome = biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
                     //成本合计
                     BigDecimal costTotalCost = biDataSourceCostDetailService.yearByCostType(yearStr, DataSourceCostEnum.COST_TOTALCOST.getCode(), dto);
-                    return mainBusinessIncome.subtract(costTotalCost);
+                    return MathUtil.subtract(mainBusinessIncome,costTotalCost);
                 } else {
                     //月
                     BigDecimal monthMainBusinessIncome = biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), dto);
                     BigDecimal monthCostTotalCost = biDataSourceCostDetailService.monthByCostType(yearMonthStr, DataSourceCostEnum.COST_TOTALCOST.getCode(), dto);
-                    return monthMainBusinessIncome.subtract(monthCostTotalCost);
+                    return MathUtil.subtract(monthMainBusinessIncome,monthCostTotalCost);
                 }
 
                 //毛利率

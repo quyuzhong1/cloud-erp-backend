@@ -467,11 +467,11 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         LocalDateTime startTime = LocalDateTime.of(LocalDateTime.now().minusYears(1).toLocalDate(), LocalTime.MIN);
         LocalDateTime endTime = LocalDateTime.of(LocalDateTime.now().minusYears(1).toLocalDate(), LocalTime.MAX);
         biFilterDTO.setDateType(StrUtil.isNotBlank(biFilterDTO.getDateType()) ? biFilterDTO.getDateType() : "DAY");
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS = baseMapper.dateYearSaleAmountBySku(startTime, endTime, biFilterDTO.getSkuNo(), biFilterDTO.getDateType());
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS = baseMapper.dateYearSaleAmountBySku(startTime, endTime, biFilterDTO.getSkuNo(), biFilterDTO.getDateType(), biFilterDTO.getSettleMethod());
         BigDecimal yearSakeAmount = baseMapper.yearSaleAmountBySku(startTime, endTime, biFilterDTO.getSkuNo());
 
         //查询前年sku销售信息
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOST = baseMapper.dateYearSaleAmountBySku(startTime.minusYears(1), endTime.minusYears(1), biFilterDTO.getSkuNo(), biFilterDTO.getDateType());
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOST = baseMapper.dateYearSaleAmountBySku(startTime.minusYears(1), endTime.minusYears(1), biFilterDTO.getSkuNo(), biFilterDTO.getDateType(), biFilterDTO.getSettleMethod());
         BigDecimal yearSakeAmountT = baseMapper.yearSaleAmountBySku(startTime.minusYears(1), endTime.minusYears(1), biFilterDTO.getSkuNo());
 
         Date endDate = Date.from(biFilterDTO.getEndTime().atZone(ZoneId.systemDefault()).toInstant());
@@ -479,7 +479,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         String start = DateUtil.getRingRatioDate(endDate, startDate);
         //设置时间格式
         SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS1 = baseMapper.dateReturnOrderAmountByDate(start, f.format(startDate), biFilterDTO.getSkuNo(), biFilterDTO.getDateType());
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS1 = baseMapper.dateReturnOrderAmountByDate(start, f.format(startDate), biFilterDTO.getSkuNo(), biFilterDTO.getDateType(), biFilterDTO.getSettleMethod());
 
         //组装近两年销售额信息
         List<SaleDetailVO> saleDetailList = baseMapper.saleDetailDate(biFilterDTO);
@@ -619,7 +619,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             LocalDate platformCreateDate = salesDTO.getFirstOrderDate();
             resultDto.setFirstOrderDate(platformCreateDate.toString());
             // 超过一年认为非新品
-            if (LocalDate.now(ZoneId.systemDefault()).isAfter(platformCreateDate.plusYears(1))){
+            if (LocalDate.now(ZoneId.systemDefault()).getYear() >= (platformCreateDate.getYear() + 1)){
                 resultDto.setHasNewSign(false);
             }
         }
@@ -629,7 +629,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             List<String> platformFistOrderList = orderMap.entrySet()
                     .stream()
                     .filter(e-> StringUtils.isNotBlank(e.getKey()))
-                    .map(e -> e.getKey().concat(":").concat(e.getValue().getCreateTime().toLocalDate().toString()))
+                    .map(e -> e.getKey().concat(":").concat(e.getValue().getPlatformCreateTime().toLocalDate().toString()))
                     .collect(Collectors.toList());
             resultDto.setPlatformFirstOrderDate(platformFistOrderList);
         }

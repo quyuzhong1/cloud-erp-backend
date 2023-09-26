@@ -41,8 +41,28 @@
         ty.dept_id,
         ty.dept_name,
         ty.create_user_name,
-        ty.create_time
-        FROM bi_target_year ty
+        ty.create_time,
+        temp.*
+        FROM
+        (
+        SELECT metrics,category_name,main_id,
+        COALESCE(SUM ( CASE WHEN month = 1 THEN value ELSE NULL END )*${multiplyNum},NULL) AS january,
+        COALESCE(SUM ( CASE WHEN month = 2 THEN value ELSE NULL END )*${multiplyNum},NULL) AS february,
+        COALESCE(SUM ( CASE WHEN month = 3 THEN value ELSE NULL END )*${multiplyNum},NULL) AS march,
+        COALESCE(SUM ( CASE WHEN month = 4 THEN value ELSE NULL END )*${multiplyNum},NULL) AS april,
+        COALESCE(SUM ( CASE WHEN month = 5 THEN value ELSE NULL END )*${multiplyNum},NULL) AS may,
+        COALESCE(SUM ( CASE WHEN month = 6 THEN value ELSE NULL END )*${multiplyNum},NULL) AS june,
+        COALESCE(SUM ( CASE WHEN month = 7 THEN value ELSE NULL END )*${multiplyNum},NULL) AS july,
+        COALESCE(SUM ( CASE WHEN month = 8 THEN value ELSE NULL END )*${multiplyNum},NULL) AS august,
+        COALESCE(SUM ( CASE WHEN month = 9 THEN value ELSE NULL END )*${multiplyNum},NULL) AS september,
+        COALESCE(SUM ( CASE WHEN month = 10 THEN value ELSE NULL END )*${multiplyNum},NULL) AS october,
+        COALESCE(SUM ( CASE WHEN month = 11 THEN value ELSE NULL END )*${multiplyNum},NULL) AS november,
+        COALESCE(SUM ( CASE WHEN month = 12 THEN value ELSE NULL END )*${multiplyNum},NULL) AS december
+        FROM   bi_target_category_setting
+        WHERE  metrics=#{params.metrics}
+        AND is_deleted = FALSE
+        GROUP BY metrics,category_name,main_id
+        ) temp LEFT JOIN bi_target_year ty ON temp.main_id = ty.id
         WHERE ty.is_deleted=false
         <if test="params.year !=null and params.year!=''">
             AND ty.year =#{params.year}
@@ -50,19 +70,9 @@
         <if test="params.deptId !=null and params.deptId!=''">
             AND ty.dept_id =#{params.deptId}
         </if>
-        <if test="params.metrics !=null and params.metrics!=''">
-            AND ty.id IN (
-            SELECT main_id FROM bi_target_category_setting
-            WHERE is_deleted=FALSE
-              AND metrics = #{params.metrics}
-            )
-        </if>
         <if test="params.name !=null and params.name!=''">
-            AND ty.id IN (
-            SELECT main_id FROM bi_target_category_setting
-            WHERE is_deleted=FALSE AND category_name
+            AND temp.category_name
             ILIKE concat('%', #{params.name} ,'%')
-            )
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
@@ -117,14 +127,40 @@
         WHERE tcs.is_deleted=false
         AND ty.year=#{year} AND ty.dept_id=#{deptId}
     </select>
-    <select id="pagingTotal" resultType="com.erp.model.bi.dto.BiTargetYearDTO$MonthValueDTO">
+    <select id="pagingTotal" resultType="com.erp.model.bi.dto.BiTargetYearDTO$PagingTotalDTO">
         SELECT
-        month,
-        SUM(tss.value) AS  value
+        COALESCE(sum(january)*${multiplyNum},0) AS januaryTotal,
+        COALESCE(sum(february)*${multiplyNum},0) AS februaryTotal,
+        COALESCE(sum(march)*${multiplyNum},0) AS marchTotal,
+        COALESCE(sum(april)*${multiplyNum},0) AS aprilTotal,
+        COALESCE(sum(may)*${multiplyNum},0) AS mayTotal,
+        COALESCE(sum(june)*${multiplyNum},0) AS juneTotal,
+        COALESCE(sum(july)*${multiplyNum},0) AS julyTotal,
+        COALESCE(sum(august)*${multiplyNum},0) AS augustTotal,
+        COALESCE(sum(september)*${multiplyNum},0) AS septemberTotal,
+        COALESCE(sum(october)*${multiplyNum},0) AS octoberTotal,
+        COALESCE(sum(november)*${multiplyNum},0) AS novemberTotal,
+        COALESCE(sum(december)*${multiplyNum},0) AS decemberTotal
         FROM
-        bi_target_year ty
-        INNER JOIN bi_target_category_setting tcs
-        ON ty.id=tss.main_id and tcs.is_deleted=false
+        (
+        SELECT metrics,main_id,
+        SUM ( CASE WHEN month = 1 THEN value ELSE 0 END ) AS january,
+        SUM ( CASE WHEN month = 2 THEN value ELSE 0 END ) AS february,
+        SUM ( CASE WHEN month = 3 THEN value ELSE 0 END ) AS march,
+        SUM ( CASE WHEN month = 4 THEN value ELSE 0 END ) AS april,
+        SUM ( CASE WHEN month = 5 THEN value ELSE 0 END ) AS may,
+        SUM ( CASE WHEN month = 6 THEN value ELSE 0 END ) AS june,
+        SUM ( CASE WHEN month = 7 THEN value ELSE 0 END ) AS july,
+        SUM ( CASE WHEN month = 8 THEN value ELSE 0 END ) AS august,
+        SUM ( CASE WHEN month = 9 THEN value ELSE 0 END ) AS september,
+        SUM ( CASE WHEN month = 10 THEN value ELSE 0 END ) AS october,
+        SUM ( CASE WHEN month = 11 THEN value ELSE 0 END ) AS november,
+        SUM ( CASE WHEN month = 12 THEN value ELSE 0 END ) AS december
+        FROM   bi_target_category_setting
+        WHERE  metrics=#{params.metrics}
+        AND is_deleted = FALSE
+        GROUP BY metrics,main_id
+        ) temp LEFT JOIN bi_target_year ty ON temp.main_id = ty.id
         WHERE ty.is_deleted=false
         <if test="params.year !=null and params.year!=''">
             AND ty.year =#{params.year}
@@ -132,18 +168,14 @@
         <if test="params.deptId !=null and params.deptId!=''">
             AND ty.dept_id =#{params.deptId}
         </if>
-        <if test="params.metrics !=null and params.metrics!=''">
-            AND tcs.metrics = #{params.metrics}
-        </if>
         <if test="params.name !=null and params.name!=''">
-            AND  tcs.category_name
+            AND  temp.category_name
             ILIKE concat('%', #{params.name} ,'%')
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        GROUP BY month
     </select>
 
 

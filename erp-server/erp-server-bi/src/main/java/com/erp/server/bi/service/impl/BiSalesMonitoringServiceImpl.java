@@ -123,9 +123,24 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         //上上个月第一天
         LocalDateTime lastsMonth = currentMonth.minusMonths(2);
 
+        BiSalesMonitoringTableDTO.GroupViewDTO groupViewDTO = handleGroupData(dto);
 
-        List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList = this.baseMapper.listBiSalesMonitoringTable(dto,lastsMonth);
-        if (CollectionUtils.isEmpty(biSalesMonitoringTableList)) {
+        List<BiSalesMonitoringTableDTO.ViewDTO> resultList = new ArrayList<>();
+        if (MetricsEnum.SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
+            if (dto.getSearchType().equals(SalesMonitoringTypeEnum.CATEGORY.getCode())) {
+                resultList = this.baseMapper.listBiSalesMonitoringSkuSalesAmount(groupViewDTO,lastsMonth);
+            } else {
+                resultList = this.baseMapper.listBiSalesMonitoringSalesAmount(groupViewDTO,lastsMonth);
+            }
+
+        } else {
+            if (dto.getSearchType().equals(SalesMonitoringTypeEnum.CATEGORY.getCode())) {
+                resultList = this.baseMapper.listBiSalesMonitoringSalesQty(groupViewDTO,lastsMonth);
+            } else {
+                resultList = this.baseMapper.listBiSalesMonitoringSkuSalesQty(groupViewDTO,lastsMonth);
+            }
+        }
+        if (CollectionUtils.isEmpty(resultList)) {
             return map;
         }
         SeriesVO seriesVO = new SeriesVO<>();
@@ -133,38 +148,38 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
 
         if (dto.getSearchType().equals(SalesMonitoringTypeEnum.SKU.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
-                this.listSalesMonitoring(biSalesMonitoringTableList,entity,seriesVO,dto.getMetrics(),null);
+                this.listSalesMonitoring(resultList,entity,seriesVO,dto.getMetrics(),null);
             }
         }
         if (dto.getSearchType().equals(SalesMonitoringTypeEnum.DEPT.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
-                this.listDeptNameMonitoring(biSalesMonitoringTableList, entity, seriesVO,dto.getMetrics());
+                this.listDeptNameMonitoring(resultList, entity, seriesVO,dto.getMetrics());
             }
         }
         if (dto.getSearchType().equals(SalesMonitoringTypeEnum.CATEGORY.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
-                this.listCategoryMonitoring(biSalesMonitoringTableList, entity, seriesVO,dto.getMetrics());
+                this.listCategoryMonitoring(resultList, entity, seriesVO,dto.getMetrics());
             }
         }
         if (dto.getSearchType().equals(SalesMonitoringTypeEnum.USER.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
-                this.listChargeNameMonitoring( biSalesMonitoringTableList, entity, seriesVO,dto.getMetrics());
+                this.listChargeNameMonitoring( resultList, entity, seriesVO,dto.getMetrics());
             }
         }
         if (dto.getSearchType().equals(SalesMonitoringTypeEnum.SHOP.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
-                this.listShopMonitoring(biSalesMonitoringTableList, entity, seriesVO,dto.getMetrics());
+                this.listShopMonitoring(resultList, entity, seriesVO,dto.getMetrics());
             }
         }
         if (dto.getSearchType().equals(SalesMonitoringTypeEnum.PLATFORM.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
-                this.listPlatformMonitoring(biSalesMonitoringTableList, entity, seriesVO,dto.getMetrics());
+                this.listPlatformMonitoring(resultList, entity, seriesVO,dto.getMetrics());
             }
         }
         if (dto.getSearchType().equals(SalesMonitoringTypeEnum.COUNTRY.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
 
-                this.listCountryMonitoring(biSalesMonitoringTableList, entity, seriesVO,dto.getMetrics());
+                this.listCountryMonitoring(resultList, entity, seriesVO,dto.getMetrics());
             }
         }
         LinkedHashMap<String,Object> head = handleHand(dto);
@@ -173,23 +188,65 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         return map;
     }
 
+
+    /**
+     * @description: 分组获得实际数据
+     * @author Will
+     * @date: 2023/9/18 11:36
+     * @param dto
+     * @return List<ViewDTO>
+     */
+    private BiSalesMonitoringTableDTO.GroupViewDTO handleGroupData (BiSalesMonitoringSearchDTO.ParamDTO dto) {
+
+        String timeGroupStr = "to_char(doi.platform_create_time,'MM')";
+        String timeViewStr =  "to_char(doi.platform_create_time,'MM') as month";
+        String viewStr = "";
+        String groupStr = "";
+
+        if (SalesMonitoringTypeEnum.DEPT.getCode().equals(dto.getSearchType())) {
+            viewStr = "doi.dept_id as typeId,doi.dept_name as typeName,".concat(timeViewStr);
+            groupStr = "doi.dept_id,doi.dept_name,".concat(timeGroupStr);
+        }
+        if (SalesMonitoringTypeEnum.USER.getCode().equals(dto.getSearchType())) {
+            viewStr = "doi.charge_name as typeName,".concat(timeViewStr);
+            groupStr = "doi.charge_name,".concat(timeGroupStr);
+        }
+        if (SalesMonitoringTypeEnum.SHOP.getCode().equals(dto.getSearchType())) {
+            viewStr = "doi.shop_name as typeName,".concat(timeViewStr);
+            groupStr = "doi.shop_name,".concat(timeGroupStr);
+        }
+        //根据指标查询品类目标值
+        if (SalesMonitoringTypeEnum.CATEGORY.getCode().equals(dto.getSearchType())) {
+            viewStr = "pi.category as typeName,".concat(timeViewStr);
+            groupStr = "pi.category,".concat(timeGroupStr);
+        }
+        if (SalesMonitoringTypeEnum.SKU.getCode().equals(dto.getSearchType())) {
+            viewStr = "doit.sku_no as typeName,".concat(timeViewStr);
+            groupStr = "doit.sku_no,".concat(timeGroupStr);
+        }
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.PLATFORM.getCode())) {
+            viewStr = "doi.source_platform as typeName,".concat(timeViewStr);
+            groupStr = "doi.source_platform,".concat(timeGroupStr);
+        }
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.COUNTRY.getCode())) {
+            viewStr = "doi.country_name_cn as typeName,".concat(timeViewStr);
+            groupStr = "doi.country_name_cn,".concat(timeGroupStr);
+        }
+        return new BiSalesMonitoringTableDTO.GroupViewDTO(groupStr,viewStr);
+    }
+
     /**
      * 销量或销售额监控设置数据查询
      */
-    private void listSalesMonitoring(List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics,Integer isNewProduct) {
+    private void listSalesMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics,Integer isNewProduct) {
         //type:1代表销量,2代表销售额
-        Map<String, List<BiSalesMonitoringTableDTO>> listMap = biSalesMonitoringTableList.stream()
-                .filter(obj ->
-                        StringUtils.isNotBlank(obj.getSkuNo())
-                        && StringUtils.isNotBlank(obj.getItemName())
-                        && ObjectUtils.isNotEmpty(obj.getPlatformCreateTime())
-                        && (ObjectUtils.isNotEmpty(isNewProduct) ? isNewProduct.equals(obj.getNewSign()) : true)
-                )
-                .collect(Collectors.groupingBy(obj -> obj.getSkuNo().concat(",").concat(obj.getItemName())));
+        Map<String, List<BiSalesMonitoringTableDTO.ViewDTO>> listMap = list.stream()
+                .filter(obj ->StringUtils.isNotBlank(obj.getTypeName()))
+                .collect(Collectors.groupingBy(obj -> obj.getTypeName()));
         List<BiSalesMonitoringTableVO.SkuDTO> resultList = new ArrayList<>();
         String name = "";
-        for (Map.Entry<String, List<BiSalesMonitoringTableDTO>> entry: listMap.entrySet()) {
-            List<BiSalesMonitoringTableDTO> value = entry.getValue();
+        for (Map.Entry<String, List<BiSalesMonitoringTableDTO.ViewDTO>> entry: listMap.entrySet()) {
+            List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
             BiSalesMonitoringTableVO.SkuDTO vo = new BiSalesMonitoringTableVO.SkuDTO();
             //获取结果集
             Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
@@ -199,8 +256,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                     name = pair.getKey();
                 }
                 BeanUtils.copyProperties(biSalesMonitoringTableVO,vo);
-                vo.setSkuNo(value.get(0).getSkuNo());
-                vo.setItemName(value.get(0).getItemName());
+                vo.setSkuNo(value.get(0).getTypeName());
                 resultList.add(vo);
             }
         }
@@ -211,12 +267,14 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     /**
      * 部门销售额监控设置数据查询
      */
-    private void listDeptNameMonitoring(List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
-        Map<String, List<BiSalesMonitoringTableDTO>> listMap = biSalesMonitoringTableList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getDeptId()) && ObjectUtils.isNotEmpty(obj.getPlatformCreateTime())).collect(Collectors.groupingBy(obj -> obj.getDeptId()));
+    private void listDeptNameMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
+        Map<String, List<BiSalesMonitoringTableDTO.ViewDTO>> listMap = list.stream()
+                .filter(obj ->StringUtils.isNotBlank(obj.getTypeName()))
+                .collect(Collectors.groupingBy(obj -> obj.getTypeName()));
         List<BiSalesMonitoringTableVO.DeptDTO> resultList = new ArrayList<>();
         String name = "";
-        for (Map.Entry<String, List<BiSalesMonitoringTableDTO>> entry: listMap.entrySet()) {
-            List<BiSalesMonitoringTableDTO> value = entry.getValue();
+        for (Map.Entry<String, List<BiSalesMonitoringTableDTO.ViewDTO>> entry: listMap.entrySet()) {
+            List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
             BiSalesMonitoringTableVO.DeptDTO vo = new BiSalesMonitoringTableVO.DeptDTO();
             //获取结果集
             Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
@@ -226,7 +284,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                     name = pair.getKey();
                 }
                 BeanUtils.copyProperties(biSalesMonitoringTableVO,vo);
-                vo.setDeptName(value.get(0).getDeptName());
+                vo.setDeptName(value.get(0).getTypeName());
                 resultList.add(vo);
             }
         }
@@ -237,12 +295,14 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     /**
      * 品类销售额监控设置数据查询
      */
-    private void listCategoryMonitoring(List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
-        Map<String, List<BiSalesMonitoringTableDTO>> listMap = biSalesMonitoringTableList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getCategoryId()) && ObjectUtils.isNotEmpty(obj.getPlatformCreateTime())).collect(Collectors.groupingBy(obj -> obj.getCategoryId()));
+    private void listCategoryMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
+        Map<String, List<BiSalesMonitoringTableDTO.ViewDTO>> listMap = list.stream()
+                .filter(obj ->StringUtils.isNotBlank(obj.getTypeName()))
+                .collect(Collectors.groupingBy(obj -> obj.getTypeName()));
         List<BiSalesMonitoringTableVO.CategoryDTO> resultList = new ArrayList<>();
         String name = "";
-        for (Map.Entry<String, List<BiSalesMonitoringTableDTO>> entry: listMap.entrySet()) {
-            List<BiSalesMonitoringTableDTO> value = entry.getValue();
+        for (Map.Entry<String, List<BiSalesMonitoringTableDTO.ViewDTO>> entry: listMap.entrySet()) {
+            List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
             BiSalesMonitoringTableVO.CategoryDTO vo = new BiSalesMonitoringTableVO.CategoryDTO();
             BeanUtils.copyProperties(value.get(0),vo);
             //获取结果集
@@ -254,7 +314,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                     name = pair.getKey();
                 }
                 BeanUtils.copyProperties(biSalesMonitoringTableVO,vo);
-                vo.setCategoryName(value.get(0).getCategory());
+                vo.setCategoryName(value.get(0).getTypeName());
                 resultList.add(vo);
             }
         }
@@ -265,12 +325,14 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     /**
      * 品牌销售额监控设置数据查询
      */
-    private void listChargeNameMonitoring(List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
-        Map<String, List<BiSalesMonitoringTableDTO>> listMap = biSalesMonitoringTableList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getChargeId()) && ObjectUtils.isNotEmpty(obj.getPlatformCreateTime())).collect(Collectors.groupingBy(obj -> obj.getChargeId()));
+    private void listChargeNameMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
+        Map<String, List<BiSalesMonitoringTableDTO.ViewDTO>> listMap = list.stream()
+                .filter(obj ->StringUtils.isNotBlank(obj.getTypeName()))
+                .collect(Collectors.groupingBy(obj -> obj.getTypeName()));
         List<BiSalesMonitoringTableVO.ChargeDTO> resultList = new ArrayList<>();
         String name = "";
-        for (Map.Entry<String, List<BiSalesMonitoringTableDTO>> entry: listMap.entrySet()) {
-            List<BiSalesMonitoringTableDTO> value = entry.getValue();
+        for (Map.Entry<String, List<BiSalesMonitoringTableDTO.ViewDTO>> entry: listMap.entrySet()) {
+            List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
             BiSalesMonitoringTableVO.ChargeDTO vo = new BiSalesMonitoringTableVO.ChargeDTO();
             BeanUtils.copyProperties(value.get(0),vo);
             //获取结果集
@@ -281,7 +343,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                     name = pair.getKey();
                 }
                 BeanUtils.copyProperties(biSalesMonitoringTableVO,vo);
-                vo.setChargeName(value.get(0).getChargeName());
+                vo.setChargeName(value.get(0).getTypeName());
                 resultList.add(vo);
             }
         }
@@ -292,12 +354,14 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     /**
      * 品牌销售额监控设置数据查询
      */
-    private void listShopMonitoring(List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
-        Map<String, List<BiSalesMonitoringTableDTO>> listMap = biSalesMonitoringTableList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getChargeId()) && ObjectUtils.isNotEmpty(obj.getPlatformCreateTime())).collect(Collectors.groupingBy(obj -> obj.getChargeId()));
+    private void listShopMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
+        Map<String, List<BiSalesMonitoringTableDTO.ViewDTO>> listMap = list.stream()
+                .filter(obj ->StringUtils.isNotBlank(obj.getTypeName()))
+                .collect(Collectors.groupingBy(obj -> obj.getTypeName()));
         List<BiSalesMonitoringTableVO.ShopDTO> resultList = new ArrayList<>();
         String name = "";
-        for (Map.Entry<String, List<BiSalesMonitoringTableDTO>> entry: listMap.entrySet()) {
-            List<BiSalesMonitoringTableDTO> value = entry.getValue();
+        for (Map.Entry<String, List<BiSalesMonitoringTableDTO.ViewDTO>> entry: listMap.entrySet()) {
+            List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
             BiSalesMonitoringTableVO.ShopDTO vo = new BiSalesMonitoringTableVO.ShopDTO();
             BeanUtils.copyProperties(value.get(0),vo);
             //获取结果集
@@ -308,7 +372,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                     name = pair.getKey();
                 }
                 BeanUtils.copyProperties(biSalesMonitoringTableVO,vo);
-                vo.setShopName(value.get(0).getShopName());
+                vo.setShopName(value.get(0).getTypeName());
                 resultList.add(vo);
             }
         }
@@ -319,12 +383,14 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     /**
      * 品牌销售额监控设置数据查询
      */
-    private void listPlatformMonitoring(List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
-        Map<String, List<BiSalesMonitoringTableDTO>> listMap = biSalesMonitoringTableList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getSourcePlatform()) && ObjectUtils.isNotEmpty(obj.getPlatformCreateTime())).collect(Collectors.groupingBy(obj -> obj.getSourcePlatform()));
+    private void listPlatformMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
+        Map<String, List<BiSalesMonitoringTableDTO.ViewDTO>> listMap = list.stream()
+                .filter(obj ->StringUtils.isNotBlank(obj.getTypeName()))
+                .collect(Collectors.groupingBy(obj -> obj.getTypeName()));
         List<BiSalesMonitoringTableVO.PlatformDTO> resultList = new ArrayList<>();
         String name = "";
-        for (Map.Entry<String, List<BiSalesMonitoringTableDTO>> entry: listMap.entrySet()) {
-            List<BiSalesMonitoringTableDTO> value = entry.getValue();
+        for (Map.Entry<String, List<BiSalesMonitoringTableDTO.ViewDTO>> entry: listMap.entrySet()) {
+            List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
             BiSalesMonitoringTableVO.PlatformDTO vo = new BiSalesMonitoringTableVO.PlatformDTO();
             BeanUtils.copyProperties(value.get(0),vo);
             //获取结果集
@@ -335,7 +401,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                     name = pair.getKey();
                 }
                 BeanUtils.copyProperties(biSalesMonitoringTableVO,vo);
-                vo.setPlatform(value.get(0).getSourcePlatform());
+                vo.setPlatform(value.get(0).getTypeName());
                 resultList.add(vo);
             }
         }
@@ -346,13 +412,15 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     /**
      * 品牌销售额监控设置数据查询
      */
-    private void listCountryMonitoring(List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
-        Map<String, List<BiSalesMonitoringTableDTO>> listMap = biSalesMonitoringTableList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getCountryNameCn()) && ObjectUtils.isNotEmpty(obj.getPlatformCreateTime())).collect(Collectors.groupingBy(obj -> obj.getCountryNameCn()));
+    private void listCountryMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
+        Map<String, List<BiSalesMonitoringTableDTO.ViewDTO>> listMap = list.stream()
+                .filter(obj ->StringUtils.isNotBlank(obj.getTypeName()))
+                .collect(Collectors.groupingBy(obj -> obj.getTypeName()));
 
         List<BiSalesMonitoringTableVO.CountryDTO> resultList = new ArrayList<>();
         String name = "";
-        for (Map.Entry<String, List<BiSalesMonitoringTableDTO>> entry: listMap.entrySet()) {
-            List<BiSalesMonitoringTableDTO> value = entry.getValue();
+        for (Map.Entry<String, List<BiSalesMonitoringTableDTO.ViewDTO>> entry: listMap.entrySet()) {
+            List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
             BiSalesMonitoringTableVO.CountryDTO vo = new BiSalesMonitoringTableVO.CountryDTO();
             BeanUtils.copyProperties(value.get(0),vo);
             //获取结果集
@@ -363,7 +431,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                     name = pair.getKey();
                 }
                 BeanUtils.copyProperties(biSalesMonitoringTableVO,vo);
-                vo.setCountryName(value.get(0).getChargeName());
+                vo.setCountryName(value.get(0).getTypeName());
                 resultList.add(vo);
             }
         }
@@ -380,25 +448,25 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
      * @param metrics
      * @return Pair<CommonDTO>
      */
-    private Pair<String, BiSalesMonitoringTableVO.CommonDTO> handleMonitoring (List<BiSalesMonitoringTableDTO> value,BiSalesMonitoringEntity entity,String metrics) {
+    private Pair<String, BiSalesMonitoringTableVO.CommonDTO> handleMonitoring (List<BiSalesMonitoringTableDTO.ViewDTO> value,BiSalesMonitoringEntity entity,String metrics) {
 
         LocalDate now = LocalDate.now();
         //当前时间年月
-        String month = String.valueOf(now.getYear()) + now.getMonth();
+        Integer month = now.getMonthValue();
         //上月
-        String lastMonth =  String.valueOf(now.minusMonths(1).getYear()) + now.minusMonths(1).getMonth();
+        Integer lastMonth =now.minusMonths(1).getMonthValue();
         //上上月
-        String lastsMonth =  String.valueOf(now.minusMonths(2).getYear()) + now.minusMonths(2).getMonth();
+        Integer lastsMonth =  now.minusMonths(2).getMonthValue();
 
         //本月销售额
-        BigDecimal sumSecondMonthSale =  value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
-                .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getAmountAfter()),obj.getCurrencyRate()) ).findFirst().orElse(BigDecimal.ZERO);
+        BigDecimal sumSecondMonthSale =  value.stream().filter(obj -> month.equals(obj.getMonth()))
+                .map(BiSalesMonitoringTableDTO.ViewDTO::getValue).findFirst().orElse(BigDecimal.ZERO);
         //上月销售额
-        BigDecimal sumFirstMonthSale =  value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
-                .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getAmountAfter()),obj.getCurrencyRate())).findFirst().orElse(BigDecimal.ZERO);
+        BigDecimal sumFirstMonthSale =  value.stream().filter(obj -> lastMonth.equals(obj.getMonth()))
+                .map(BiSalesMonitoringTableDTO.ViewDTO::getValue).findFirst().orElse(BigDecimal.ZERO);
         //上上月销售额
-        BigDecimal sumLastMonthSale =  value.stream().filter(obj -> lastsMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
-                .map(obj-> MetricsEnum.SALES_QTY.getCode().equals(metrics)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getAmountAfter()),obj.getCurrencyRate())).findFirst().orElse(BigDecimal.ZERO);
+        BigDecimal sumLastMonthSale =  value.stream().filter(obj -> lastsMonth.equals(obj.getMonth()))
+                .map(BiSalesMonitoringTableDTO.ViewDTO::getValue).findFirst().orElse(BigDecimal.ZERO);
 
         Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = setBiSalesMonitoringTableVO(entity, sumSecondMonthSale, sumFirstMonthSale,sumLastMonthSale);
 
@@ -482,7 +550,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             //上期环比
             BigDecimal lastRadio = BigDecimal.ZERO;
             if (MathUtil.compareTo(sumFirstMonthSale, BigDecimal.ZERO) != 0) {
-                radio = MathUtil.divide(MathUtil.subtract(sumSecondMonthSale, sumLastMonthSale), sumLastMonthSale).multiply(MathUtil.BigDecimal_100);
+                lastRadio = MathUtil.divide(MathUtil.subtract(sumSecondMonthSale, sumLastMonthSale), sumLastMonthSale).multiply(MathUtil.BigDecimal_100);
             }
 
             //比较环比

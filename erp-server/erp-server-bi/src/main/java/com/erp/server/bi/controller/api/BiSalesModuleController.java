@@ -60,11 +60,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/queryByPageBySku")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:module:content",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<PagingVO<SkuSalesDTO.PagingSalesInfoDTO>> queryByPageBySku(@RequestBody @Validated PagingDTO<SkuSalesDTO.SearchSkuDTO> dto) {
         PagingVO<SkuSalesDTO.PagingSalesInfoDTO> pagingVO = salesOrderService.queryByPageBySku(dto);
         return success(pagingVO);
@@ -239,11 +239,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byCategory")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id",
-            menuCode = "bi:module:content",
-            tableAlias = "o"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:module:content",
+//            tableAlias = "o"
+//    )
     public ApiResult<StatisticalDataVO> byCategory(@RequestBody @Validated BiCategoryDTO.FirstCategoryParamsDTO dto) {
         StatisticalDataVO result = salesOrderService.byCategory(dto);
         return success(result);
