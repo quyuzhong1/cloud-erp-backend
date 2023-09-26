@@ -280,4 +280,13 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return List<SupplierEntity>
      */
     List<SupplierEntity> listByCodes(List<String> supplierCodes);
+
+    /**
+     * 根据名称获取供应商
+     * @author yl
+     * @date 2023-09-22 19:51
+     * @param supplierNames
+     * @return java.util.List<com.erp.model.scm.entity.SupplierEntity>
+     */
+    List<SupplierEntity> listBySupplierByNames(List<String> supplierNames);
 }

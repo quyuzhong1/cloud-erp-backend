@@ -3754,6 +3754,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         dto.setStatus(state);
         List<SkuVO> skuVOS = baseMapper.pdaSearchSku(dto);
+        List<String> mainSupplierIds = skuVOS.stream().map(SkuVO::getMainSupplier).distinct().collect(Collectors.toList());
+        List<String> secondSupplierIds = skuVOS.stream().map(SkuVO::getSecondSupplier).distinct().collect(Collectors.toList());
+        mainSupplierIds.addAll(secondSupplierIds);
+        List<String> supplierIds = mainSupplierIds.stream().distinct().collect(Collectors.toList());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+        skuVOS.forEach(req -> {
+            // 一级供应商名称
+            if (StrUtils.isNotEmpty(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
+                req.setMainSupplierName(supplierMap.get(req.getMainSupplier()).getName());
+            }
+
+            // 二级供应商名称
+            if (StrUtils.isNotEmpty(req.getSecondSupplier()) && supplierMap.containsKey(req.getSecondSupplier())) {
+                req.setSecondSupplierName(supplierMap.get(req.getSecondSupplier()).getName());
+            }
+        });
         if (CollectionUtils.isEmpty(skuVOS)) {
             throw new ServiceException(ApiError.ERROR_95107);
         }
@@ -3790,6 +3806,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             view.setSpuNo("");
             view.setSpuName("");
         }
+
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(Arrays.asList(view.getMainSupplier(), view.getSecondSupplier()));
+        // 一级供应商名称
+        if (StrUtils.isNotEmpty(view.getMainSupplier()) && supplierMap.containsKey(view.getMainSupplier())) {
+            view.setMainSupplierName(supplierMap.get(view.getMainSupplier()).getName());
+        }
+
+        // 二级供应商名称
+        if (StrUtils.isNotEmpty(view.getSecondSupplier()) && supplierMap.containsKey(view.getSecondSupplier())) {
+            view.setSecondSupplierName(supplierMap.get(view.getSecondSupplier()).getName());
+        }
+
         //查询子sku
         List<BomChildrenSkuDTO> sonSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(productIdBySku.getId()));
         if (CollectionUtils.isNotEmpty(sonSkuList)) {

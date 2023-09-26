@@ -93,6 +93,26 @@ public class PdaProductDetailDTO implements Serializable {
         private String accessories;
 
         /**
+         * 一级供应商
+         */
+        private String mainSupplier;
+
+        /**
+         * 一级供应商名称
+         */
+        private String mainSupplierName;
+
+        /**
+         * 二级供应商
+         */
+        private String secondSupplier;
+
+        /**
+         * 二级供应商名称
+         */
+        private String secondSupplierName;
+
+        /**
          * bom父级sku
          */
         private List<ParentSkuDTO> parentSkuDTOList;

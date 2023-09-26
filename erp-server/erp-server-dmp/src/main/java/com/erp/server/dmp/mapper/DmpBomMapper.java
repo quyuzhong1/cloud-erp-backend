@@ -3,6 +3,9 @@ import com.erp.model.dmp.entity.DmpBomEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,5 +19,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface DmpBomMapper extends BaseMapper<DmpBomEntity> {
 
+
+    /**
+     * 根据id进行物理删除
+     * @param ids
+     * @return
+     */
+    Boolean deletePhysicalBatchIds(@Param("ids") List<String> ids);
 
 }
