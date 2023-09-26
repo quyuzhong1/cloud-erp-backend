@@ -8,7 +8,6 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -139,25 +138,20 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
     /**
      * 查询sku年销售额
      *
-     * @param startTime    startDate
-     * @param endTime      endDate
-     * @param dateType
-     * @param settleMethod
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      * @Author Luo_WG
      * @Date 2022/12/27 10:41
      **/
-    List<SkuYearSaleAmountVO> dateYearSaleAmountBySku(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime, @Param("sku") String sku, @Param("dateType") String dateType, @Param("settleMethod") Integer settleMethod);
+    List<SkuYearSaleAmountVO> dateYearSaleAmountBySku(@Param("params") SkuDateFilterDTO biFilterDTO);
 
     /**
      * 根据sku查询年销售额
+     *
+     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      * @Author Luo_WG
      * @Date 2022/12/27 10:41
-     * @param startTime startDate
-     * @param endTime endDate
-     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
-    BigDecimal yearSaleAmountBySku(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime, @Param("sku") String sku);
+    BigDecimal yearSaleAmountBySku(@Param("params") BiFilterDTO biFilterDTO);
 
     /**
      * 根据时间查询退货金额
@@ -226,4 +220,15 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
      * @return java.util.List<com.erp.model.bi.dto.BiCountryAnalyzeDTO>
      **/
     List<BiCountryAnalyzeDTO> getCountrySales(@Param("params") BiCountryRegionFilterDTO dto);
+
+
+    /**
+     * 每日退货信息
+     */
+    List<SkuYearSaleAmountVO> dateReturnOrder(@Param("params") SkuDateFilterDTO biFilterDTO);
+
+    /**
+     * 每日退款信息
+     */
+    List<SaleDetailVO> dateRefund(@Param("params")SkuDateFilterDTO biFilterDTO);
 }
