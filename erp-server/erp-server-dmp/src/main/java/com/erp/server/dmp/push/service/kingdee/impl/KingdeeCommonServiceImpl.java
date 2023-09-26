@@ -212,15 +212,18 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
 
         String syncKingdeeId = (String) map.get("syncKingdeeId");
-        Integer createOrgId = Integer.valueOf((String) map.get("createOrgId"));
+        Object createOrgId = map.get("createOrgId");
 
         if (StringUtils.isNotBlank(syncKingdeeId)) {
             viewMap.put("ids", syncKingdeeId);
         } else {
             viewMap.put("numbers", Arrays.asList(number));
         }
-        //创建组织
-        viewMap.put("CreateOrgId", ObjectUtils.isEmpty(createOrgId) ? MathUtil.ZERO : createOrgId);
+        if (ObjectUtils.isNotEmpty(createOrgId)) {
+            //创建组织
+            viewMap.put("CreateOrgId", Integer.valueOf(createOrgId.toString()));
+        }
+
         //金蝶操作编码
         String operateNumber = SyncKingdeeOperateEnum.getNameByCode(operate);
 
