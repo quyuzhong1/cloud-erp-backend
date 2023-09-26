@@ -22,7 +22,7 @@ public enum PlatformDictEnum implements EnumMessage {
     TAO_BAO("TaoBao", "淘宝", "淘宝", "005"),
     ALIBABA("Alibaba", "阿里巴巴", "Alibaba", "008"),
     YOU_ZAN("YouZan", "有赞微商城", "有赞微商城", "015"),
-    OTHER_PLATFORM("Other", "其他", "其他平台", "999"),
+    OTHER_PLATFORM("Other", "Other", "其他平台", "999"),
     B2B_INTERNAL("B2B_INTERNAL", "B2B线下-国内", "B2B线下-国内", "020"),
     B2B_FOREIGN("B2B_FOREIGN", "B2B线下-国外", "B2B线下-国内", "021"),
     LITTLE_RED_BOOK("RedBook", "小红书", "RED", "014"),
