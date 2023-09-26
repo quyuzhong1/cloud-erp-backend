@@ -45,13 +45,8 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void executeConsumer(Map<String, Object> map) {
-
         //模块类型
         Integer type = ApiModuleTypeEnum.SO_OUTSTOCK.getCode();
-
-        //业务id
-        String  businessId = String.valueOf(map.get("id"));
-
         //业务编码
         String code = (String) map.get("code");
 
@@ -61,7 +56,6 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
         }
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
-
 
         //操作项
         String operate = (String) map.get("operate");
@@ -84,8 +78,18 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
             operateApprove(apiUtils,platformEntity, map,type);
         }
 
+        /**
+         * 删除
+         */
+        if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            operateDelete(apiUtils,platformEntity,map,operate);
+        }
+
     }
 
+    /**
+     * 审核
+     */
     public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
         //业务id
         String  businessId = String.valueOf(map.get("id"));
@@ -132,6 +136,9 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
         }
     }
 
+    /**
+     * 作废
+     */
     public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type, String code,String operate) {
         //判断金蝶系统是否已存在该数据
         JSONObject model;
@@ -156,6 +163,9 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
         return;
     }
 
+    /**
+     * 反审核
+     */
     public void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
         String syncKingdeeId = (String) map.get("syncKingdeeId");
         if (StringUtils.isBlank(syncKingdeeId)) {
@@ -163,6 +173,15 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
         }
         //反审核
         kingdeeCommonService.unAudit(platformEntity, map, apiUtils, syncKingdeeId, type);
+        return;
+    }
+
+    /**
+     * 删除
+     */
+    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
+        //删除
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.SO_OUTSTOCK.getCode(),operate);
         return;
     }
 

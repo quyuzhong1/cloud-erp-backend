@@ -4,6 +4,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
@@ -44,8 +45,7 @@ public class KingdeeProductDetailConsumerServiceImpl implements KingdeeProductDe
 
         //同步模块类型
         Integer type = ApiModuleTypeEnum.PRODUCT_DETAIL.getCode();
-        //业务id
-        String  businessId = String.valueOf(map.get("id"));
+
         //编码转换
         map.put("code",map.get("skuNo"));
 
@@ -55,6 +55,43 @@ public class KingdeeProductDetailConsumerServiceImpl implements KingdeeProductDe
         }
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_MATERIAL.getCode());
+        //操作项
+        String operate = (String) map.get("operate");
+
+        /**
+         * 反审核
+         */
+        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+            operateDisapprove(apiUtils,platformEntity, map,type);
+        }
+        /**
+         * 审核
+         */
+        if (SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+            operateApprove(apiUtils,platformEntity, map,type);
+        }
+        /**
+         * 删除
+         */
+        if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            operateDelete(apiUtils,platformEntity,map,operate);
+        }
+
+
+    }
+
+    /**
+     * @description: 审核
+     * @author Will
+     * @date: 2023/9/26 11:56
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     */
+    public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //业务id
+        String  businessId = String.valueOf(map.get("id"));
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map,platformEntity.getId(),type);
@@ -128,6 +165,36 @@ public class KingdeeProductDetailConsumerServiceImpl implements KingdeeProductDe
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
         }
+    }
 
+    /**
+     * @description: 反审核
+     * @author Will
+     * @date: 2023/9/26 11:58
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     */
+    public void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        String syncKingdeeId = (String) map.get("syncKingdeeId");
+        //反审核
+        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, syncKingdeeId, type);
+        return;
+    }
+
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2023/9/26 12:00
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param operate
+     */
+    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
+        //删除
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.PRODUCT_DETAIL.getCode(),operate);
+        return;
     }
 }

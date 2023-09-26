@@ -80,11 +80,18 @@ public class KingdeeStockInConsumerServiceImpl implements KingdeeStockInConsumer
         if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
             operateApprove(apiUtils,platformEntity, map,type);
         }
-
+        /**
+         * 删除
+         */
+        if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            operateDelete(apiUtils,platformEntity,map,operate);
+        }
 
     }
 
-
+    /**
+     * 作废
+     */
     public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type, String code,String operate) {
         //判断金蝶系统是否已存在该数据
         JSONObject model;
@@ -109,6 +116,9 @@ public class KingdeeStockInConsumerServiceImpl implements KingdeeStockInConsumer
         return;
     }
 
+    /**
+     * 反审核
+     */
     public void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
         String syncKingdeeId = (String) map.get("syncKingdeeId");
         if (StringUtils.isBlank(syncKingdeeId)) {
@@ -119,6 +129,9 @@ public class KingdeeStockInConsumerServiceImpl implements KingdeeStockInConsumer
         return;
     }
 
+    /**
+     * 审核
+     */
     public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
         //业务id
         String  businessId = String.valueOf(map.get("id"));
@@ -176,6 +189,15 @@ public class KingdeeStockInConsumerServiceImpl implements KingdeeStockInConsumer
                 updateKingdeeDetailId(jsonArray);
             }
         }
+    }
+
+    /**
+     * 删除
+     */
+    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
+        //删除
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.PURCHASE_STOCK_IN.getCode(),operate);
+        return;
     }
 
     /**

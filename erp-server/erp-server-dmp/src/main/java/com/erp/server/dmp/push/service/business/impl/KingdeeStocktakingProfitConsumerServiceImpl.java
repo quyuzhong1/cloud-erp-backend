@@ -45,8 +45,7 @@ public class KingdeeStocktakingProfitConsumerServiceImpl implements KingdeeStock
     public void executeConsumer(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.STOCKTAKING_PROFIT.getCode();
-        //业务id
-        String businessId = String.valueOf(map.getOrDefault("id",""));
+        String operate = (String) map.get("operate");
         //业务编码
         String code = (String) map.getOrDefault("code","");
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
@@ -55,6 +54,61 @@ public class KingdeeStocktakingProfitConsumerServiceImpl implements KingdeeStock
         }
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_STOCKCOUNTGAIN.getCode());
+
+        /**
+         * 作废
+         */
+        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+            operateInvalid(apiUtils,platformEntity,map,type);
+        }
+        /**
+         * 反审核
+         */
+        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+            operateDisapprove(apiUtils,platformEntity, map,type);
+        }
+        /**
+         * 审核
+         */
+        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+            operateApprove(apiUtils,platformEntity, map,type);
+        }
+        /**
+         * 删除
+         */
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            operateDelete(apiUtils,platformEntity,map,operate);
+        }
+    }
+
+    /**
+     * 作废
+     */
+    public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //业务编码
+        String code = (String) map.getOrDefault("code","");
+        String operate = (String) map.get("operate");
+        //作废
+        kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
+        return;
+    }
+
+    /**
+     * 反审核
+     */
+    public void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        String syncKingdeeId = (String) map.get("syncKingdeeId");
+        //反审核
+        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, syncKingdeeId, type);
+        return;
+    }
+
+    /**
+     * 审核
+     */
+    public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //业务id
+        String businessId = String.valueOf(map.getOrDefault("id",""));
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
         //未配置发送字段
@@ -80,25 +134,6 @@ public class KingdeeStocktakingProfitConsumerServiceImpl implements KingdeeStock
         String documentStatus = (String) model.getOrDefault("DocumentStatus","");
         String id = String.valueOf(model.getOrDefault("Id",""));
         Boolean flag = Boolean.FALSE;
-
-        //操作项
-        String operate = (String) map.getOrDefault("operate","");
-        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-
-            //作废
-            kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
-            return;
-        }
-        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            //审核中或已审核则要先反审
-            if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-                flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
-            }else{
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "已经反审核", type, ApiSendStatusEnum.SUCCESS.getCode());
-            }
-            return;
-        }
-
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
@@ -114,6 +149,14 @@ public class KingdeeStocktakingProfitConsumerServiceImpl implements KingdeeStock
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
         }
+    }
 
+    /**
+     * 删除
+     */
+    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
+        //删除
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.STOCKTAKING_LOSS.getCode(),operate);
+        return;
     }
 }

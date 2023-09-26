@@ -115,6 +115,10 @@ public class KingdeePurchaseOrderConsumerServiceImpl implements KingdeePurchaseO
         if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate) && !isAdd) {
             approve(platformEntity,map,apiUtils,id,documentStatus,json);
         }
+        //删除
+        if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            operateDelete(apiUtils,platformEntity,map,operate);
+        }
     }
 
 
@@ -167,6 +171,15 @@ public class KingdeePurchaseOrderConsumerServiceImpl implements KingdeePurchaseO
         }
         //作废
         kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,ApiModuleTypeEnum.PURCHASE_ORDER.getCode(),(String) map.get("code"),(String) map.get("operate"));
+    }
+
+    /**
+     * 删除
+     */
+    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
+        //删除
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.PURCHASE_ORDER.getCode(),operate);
+        return;
     }
 
     /**
