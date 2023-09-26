@@ -247,10 +247,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<ProductRefLabelVO> productRefLabelVOS = productRefLabelService.getLabelListByIds(null, new HashSet<>(labelIds), null);
             if (CollectionUtils.isNotEmpty(productRefLabelVOS)) {
                 labelProductIds = productRefLabelVOS.stream().map(ProductRefLabelVO::getProductId).collect(Collectors.toList());
-                pagingDTO.getParams().setLabelProductIds(labelProductIds);
             }else {
+                labelProductIds = new ArrayList<>();
                 labelProductIds.add("-1");
             }
+            pagingDTO.getParams().setLabelProductIds(labelProductIds);
         }
         IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams());
         List<ProductDetailShowDTO> list = pageData.getRecords();
