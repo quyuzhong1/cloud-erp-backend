@@ -211,6 +211,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
             resultMap.put("salesOrgCode", salesOrgCode);
         }
+        if (soInfoById.getDiscountAmount() != null) {
+            resultMap.put("FAllDisCount", soInfoById.getDiscountAmount().intValue());
+        }
+
         List<String> soDetailIds = soDetailEntitieList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(soDetailIds);
         //发货通知详情id
@@ -230,6 +234,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             map.put("salesQty", soDetailEntity.getQty());
             map.put("planQty", detailEntity.getPlanQty());
             map.put("price", soDetailEntity.getPrice());
+
             //含税单价
             BigDecimal flagTaxRate = MathUtil.divide(soDetailEntity.getTaxRate(), MathUtil.BigDecimal_100);
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
