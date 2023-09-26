@@ -49,4 +49,12 @@ public interface BiTargetNewProductSettingMapper extends BaseMapper<BiTargetNewP
      * @return
      */
     BiTargetYearDTO.PagingTotalDTO pagingTotal(@Param("params") BiTargetYearDTO.PagingParamDTO dto,@Param("multiplyNum") BigDecimal multiplyNum);
+
+    /**
+     * 根据年和部门查询数据
+     * @param year
+     * @param deptId
+     * @return
+     */
+    List<BiTargetNewProductSettingDTO.ListDetailDTO> listByYearAndDept(@Param("year") Integer year, @Param("deptId")String deptId);
 }

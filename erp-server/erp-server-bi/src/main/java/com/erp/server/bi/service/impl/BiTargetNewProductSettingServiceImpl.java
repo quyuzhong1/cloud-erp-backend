@@ -9,9 +9,8 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
-import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
-import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.bi.dto.*;
 import com.erp.model.bi.dto.excel.TargetNewProductSettingImportExcelDTO;
 import com.erp.model.bi.dto.excel.TargetSkuSettingImportExcelDTO;
 import com.erp.model.bi.entity.BiTargetNewProductSettingEntity;
@@ -30,6 +29,7 @@ import com.erp.server.bi.service.BiTargetNewProductSettingService;
 import com.common.core.exception.ServiceException;
 import com.erp.server.bi.service.BiTargetYearService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.compress.utils.Lists;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +39,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
 
 import java.io.File;
 import java.io.InputStream;
@@ -83,7 +82,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
         targetYear.setMetrics(metricsList.stream().collect(Collectors.joining(",")));
         List<BiTargetNewProductSettingDTO.CommonDTO> detailList = addDTO.getDetailList();
         // 数据处理
-        handleData(targetYear, detailList);
+        handleData(targetYear, detailList, LogActionEnum.INSERT);
         boolean save = biTargetYearService.save(targetYear);
         if (!save) {
             throw new ServiceException("新品目标设置单保存失败");
@@ -254,7 +253,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
         List<String> metricsList = updateDTO.getMetricsList();
         targetYear.setMetrics(metricsList.stream().collect(Collectors.joining(",")));
         List<BiTargetNewProductSettingDTO.CommonDTO> detailList = updateDTO.getDetailList();
-        handleData(targetYear, detailList);
+        handleData(targetYear, detailList,LogActionEnum.UPDATE);
         boolean result = biTargetYearService.updateById(targetYear);
         if (!result) {
             throw new ServiceException("新品目标设置单保存失败");
@@ -553,7 +552,19 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     /**
      * 新增修改处理数据
      */
-    public void handleData(BiTargetYearEntity targetYear, List<BiTargetNewProductSettingDTO.CommonDTO> detailList) {
+    public void handleData(BiTargetYearEntity targetYear, List<BiTargetNewProductSettingDTO.CommonDTO> detailList,LogActionEnum action) {
+
+        List<BiTargetNewProductSettingDTO.ListDetailDTO> existList = baseMapper.listByYearAndDept(targetYear.getYear(),targetYear.getDeptId());
+        List<String> existStaffList= Lists.newArrayList();
+        for (BiTargetNewProductSettingDTO.CommonDTO item : detailList) {
+            String staffId = item.getStaffId();
+            MetricsEnum metrics = item.getMetrics();
+            putListDetailDTO(existList, staffId, metrics, existStaffList,action);
+        }
+        if (CollectionUtils.isNotEmpty(existStaffList)) {
+            String existCategoryName = existStaffList.stream().collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.YEAR_METRICS_EXIST, existCategoryName);
+        }
         //部门id
         String deptId = targetYear.getDeptId();
         //币种符号
@@ -567,6 +578,29 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
             targetYear.setCurrencySymbol(currencyList.get(0).getSymbol());
         }
     }
+
+    private void putListDetailDTO(List<BiTargetNewProductSettingDTO.ListDetailDTO> existList, String staffId, MetricsEnum metrics, List<String> existStaffList, LogActionEnum action) {
+        //添加的
+        if(LogActionEnum.INSERT.equals(action)){
+            BiTargetNewProductSettingDTO.ListDetailDTO exist = existList.stream().filter(e ->
+                    e.getStaffId().equals(staffId) &&
+                            e.getMetrics().equals(metrics)
+            ).findFirst().orElse(null);
+            if (exist != null) {
+                existStaffList.add(exist.getStaffName());
+            }
+        }else{
+            //修改的
+            List<BiTargetNewProductSettingDTO.ListDetailDTO> list = existList.stream().filter(e ->
+                    e.getStaffId().equals(staffId) &&
+                            e.getMetrics().equals(metrics)
+            ).collect(Collectors.toList());
+            if (list.size()>1) {
+                existStaffList.add(list.get(0).getStaffName());
+            }
+        }
+    }
+
 
     @Override
     public List<BiTargetNewProductSettingDTO.DeptTargetDTO> listDeptTarget(BiTargetNewProductSettingDTO.TargetParamDTO dto) {
