@@ -135,9 +135,9 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
 
         } else {
             if (dto.getSearchType().equals(SalesMonitoringTypeEnum.CATEGORY.getCode())) {
-                resultList = this.baseMapper.listBiSalesMonitoringSalesQty(groupViewDTO,lastsMonth);
-            } else {
                 resultList = this.baseMapper.listBiSalesMonitoringSkuSalesQty(groupViewDTO,lastsMonth);
+            } else {
+                resultList = this.baseMapper.listBiSalesMonitoringSalesQty(groupViewDTO,lastsMonth);
             }
         }
         if (CollectionUtils.isEmpty(resultList)) {
