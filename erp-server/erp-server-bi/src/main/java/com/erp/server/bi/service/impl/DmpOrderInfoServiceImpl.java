@@ -1396,7 +1396,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         String subSql = StrUtil.format(" select order_id from dmp_order_item where sku_no = '{}' ", skuNo);
 
         List<DmpOrderInfoEntity> list = query()
-                .select("MIN(create_time) as create_time",
+                .select("MIN(platform_create_time) as platform_create_time",
                         "source_platform as source_platform")
                 .inSql(BaseEntity.ID, subSql)
                 .groupBy(DmpOrderInfoEntity.SOURCE_PLATFORM)
