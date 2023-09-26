@@ -226,6 +226,44 @@ public class BiTargetNewProductSettingDTO implements Serializable {
         List<DetailDTO> detailList;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ListDetailDTO {
+
+        private String id;
+
+        private String mainId;
+
+        private String year;
+
+        private String deptName;
+
+
+        /**
+         * 人员id
+         */
+        private String staffId;
+
+        /**
+         * 人员名
+         */
+        private String staffName;
+
+
+        /**
+         * 月
+         */
+
+        private Integer month;
+
+
+        private BigDecimal value;
+
+
+        private MetricsEnum metrics;
+
+
+    }
     /**
      *
      */

@@ -46,29 +46,29 @@
         FROM (
                  SELECT metrics,staff_name,main_id,
                     COALESCE(SUM ( CASE WHEN month = 1 THEN value ELSE NULL END )*${multiplyNum},NULL) AS january,
-                    SUM ( CASE WHEN month = 1 THEN rate ELSE NULL END ) AS januaryRate,
+                    COALESCE(SUM ( CASE WHEN month = 1 THEN rate ELSE NULL END )*100,NULL) AS januaryRate,
                     COALESCE(SUM ( CASE WHEN month = 2 THEN value ELSE NULL END )*${multiplyNum},NULL) AS february,
-                    SUM ( CASE WHEN month = 2 THEN rate ELSE NULL END ) AS februaryRate,
+                    COALESCE(SUM ( CASE WHEN month = 2 THEN rate ELSE NULL END )*100,NULL) AS februaryRate,
                     COALESCE(SUM ( CASE WHEN month = 3 THEN value ELSE NULL END )*${multiplyNum},NULL) AS march,
-                    SUM ( CASE WHEN month = 3 THEN rate ELSE NULL END ) AS marchRate,
+                    COALESCE(SUM ( CASE WHEN month = 3 THEN rate ELSE NULL END )*100,NULL) AS marchRate,
                     COALESCE(SUM ( CASE WHEN month = 4 THEN value ELSE NULL END )*${multiplyNum},NULL) AS april,
-                    SUM ( CASE WHEN month = 4 THEN rate ELSE NULL END ) AS aprilRate,
+                    COALESCE(SUM ( CASE WHEN month = 4 THEN rate ELSE NULL END )*100,NULL) AS aprilRate,
                     COALESCE( SUM ( CASE WHEN month = 5 THEN value ELSE NULL END )*${multiplyNum},NULL) AS may,
-                    SUM ( CASE WHEN month = 5 THEN rate ELSE NULL END ) AS mayRate,
+                    COALESCE(SUM ( CASE WHEN month = 5 THEN rate ELSE NULL END )*100,NULL) AS mayRate,
                     COALESCE(SUM ( CASE WHEN month = 6 THEN value ELSE NULL END )*${multiplyNum},NULL) AS june,
-                    SUM ( CASE WHEN month = 6 THEN rate ELSE NULL END ) AS juneRate,
+                    COALESCE( SUM ( CASE WHEN month = 6 THEN rate ELSE NULL END )*100,NULL) AS juneRate,
                     COALESCE(SUM ( CASE WHEN month = 7 THEN value ELSE NULL END )*${multiplyNum},NULL) AS july,
-                    SUM ( CASE WHEN month = 7 THEN rate ELSE NULL END ) AS julyRate,
+                    COALESCE(SUM ( CASE WHEN month = 7 THEN rate ELSE NULL END )*100,NULL) AS julyRate,
                     COALESCE(SUM ( CASE WHEN month = 8 THEN value ELSE NULL END ) *${multiplyNum},NULL)AS august,
-                    SUM ( CASE WHEN month = 8 THEN rate ELSE NULL END ) AS augustRate,
+                    COALESCE(SUM ( CASE WHEN month = 8 THEN rate ELSE NULL END )*100,NULL) AS augustRate,
                     COALESCE(SUM ( CASE WHEN month = 9 THEN value ELSE NULL END )*${multiplyNum},NULL) AS september,
-                    SUM ( CASE WHEN month = 9 THEN rate ELSE NULL END ) AS septemberRate,
+                    COALESCE(SUM ( CASE WHEN month = 9 THEN rate ELSE NULL END )*100,NULL) AS septemberRate,
                     COALESCE(SUM ( CASE WHEN month = 10 THEN value ELSE NULL END )*${multiplyNum},NULL) AS october,
-                    SUM ( CASE WHEN month = 10 THEN rate ELSE NULL END ) AS octoberRate,
+                    COALESCE(SUM ( CASE WHEN month = 10 THEN rate ELSE NULL END )*100,NULL) AS octoberRate,
                     COALESCE(SUM ( CASE WHEN month = 11 THEN value ELSE NULL END )*${multiplyNum},NULL) AS november,
-                    SUM ( CASE WHEN month = 11 THEN rate ELSE NULL END ) AS novemberRate,
+                    COALESCE(SUM ( CASE WHEN month = 11 THEN rate ELSE NULL END )*100,NULL) AS novemberRate,
                     COALESCE(SUM ( CASE WHEN month = 12 THEN value ELSE NULL END )*${multiplyNum},NULL) AS december,
-                    SUM ( CASE WHEN month = 12 THEN value ELSE NULL END ) AS decemberRate
+                    COALESCE(SUM ( CASE WHEN month = 12 THEN value ELSE NULL END )*100,NULL) AS decemberRate
                  FROM   bi_target_new_product_setting
                  WHERE  metrics=#{params.metrics} AND is_deleted = FALSE
                  GROUP BY metrics,staff_name,main_id
@@ -222,5 +222,24 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+    </select>
+    <select id="listByYearAndDept"
+            resultType="com.erp.model.bi.dto.BiTargetNewProductSettingDTO$ListDetailDTO">
+        SELECT
+            tps.id,
+            tps.main_id,
+            ty.year,
+            ty.dept_name,
+            tps.staff_id,
+            tps.staff_name,
+            tps.month,
+            tps.value,
+            tps.metrics
+        FROM bi_target_new_product_setting tps
+        LEFT JOIN bi_target_year ty
+        ON tps.main_id=ty.id AND ty.is_deleted=false
+        WHERE tps.is_deleted=false
+        AND ty.year=#{year} AND
+        ty.dept_id=#{deptId}
     </select>
 </mapper>
