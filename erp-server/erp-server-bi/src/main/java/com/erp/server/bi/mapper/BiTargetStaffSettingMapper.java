@@ -10,6 +10,7 @@ import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -31,7 +32,7 @@ public interface BiTargetStaffSettingMapper extends BaseMapper<BiTargetStaffSett
      */
     List<BiTargetStaffSettingDTO.ListDetailDTO> listByYear(@Param("year") Integer year);
 
-    IPage<BiTargetStaffSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params);
+    IPage<BiTargetStaffSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params,@Param("multiplyNum") BigDecimal multiplyNum);
     /**
      * @description: 根据指标查询人员目标值
      * @author Will
@@ -54,5 +55,5 @@ public interface BiTargetStaffSettingMapper extends BaseMapper<BiTargetStaffSett
      * @param dto
      * @return
      */
-    BiTargetYearDTO.PagingTotalDTO pagingTotal(@Param("params")BiTargetYearDTO.PagingParamDTO dto);
+    BiTargetYearDTO.PagingTotalDTO pagingTotal(@Param("params")BiTargetYearDTO.PagingParamDTO dto,@Param("multiplyNum") BigDecimal multiplyNum);
 }

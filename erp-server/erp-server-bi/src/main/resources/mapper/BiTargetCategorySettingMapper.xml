@@ -46,18 +46,18 @@
         FROM
         (
         SELECT metrics,category_name,main_id,
-        SUM ( CASE WHEN month = 1 THEN value ELSE NULL END ) AS january,
-        SUM ( CASE WHEN month = 2 THEN value ELSE NULL END ) AS february,
-        SUM ( CASE WHEN month = 3 THEN value ELSE NULL END ) AS march,
-        SUM ( CASE WHEN month = 4 THEN value ELSE NULL END ) AS april,
-        SUM ( CASE WHEN month = 5 THEN value ELSE NULL END ) AS may,
-        SUM ( CASE WHEN month = 6 THEN value ELSE NULL END ) AS june,
-        SUM ( CASE WHEN month = 7 THEN value ELSE NULL END ) AS july,
-        SUM ( CASE WHEN month = 8 THEN value ELSE NULL END ) AS august,
-        SUM ( CASE WHEN month = 9 THEN value ELSE NULL END ) AS september,
-        SUM ( CASE WHEN month = 10 THEN value ELSE NULL END ) AS october,
-        SUM ( CASE WHEN month = 11 THEN value ELSE NULL END ) AS november,
-        SUM ( CASE WHEN month = 12 THEN value ELSE NULL END ) AS december
+        COALESCE(SUM ( CASE WHEN month = 1 THEN value ELSE NULL END )*${multiplyNum},NULL) AS january,
+        COALESCE(SUM ( CASE WHEN month = 2 THEN value ELSE NULL END )*${multiplyNum},NULL) AS february,
+        COALESCE(SUM ( CASE WHEN month = 3 THEN value ELSE NULL END )*${multiplyNum},NULL) AS march,
+        COALESCE(SUM ( CASE WHEN month = 4 THEN value ELSE NULL END )*${multiplyNum},NULL) AS april,
+        COALESCE(SUM ( CASE WHEN month = 5 THEN value ELSE NULL END )*${multiplyNum},NULL) AS may,
+        COALESCE(SUM ( CASE WHEN month = 6 THEN value ELSE NULL END )*${multiplyNum},NULL) AS june,
+        COALESCE(SUM ( CASE WHEN month = 7 THEN value ELSE NULL END )*${multiplyNum},NULL) AS july,
+        COALESCE(SUM ( CASE WHEN month = 8 THEN value ELSE NULL END )*${multiplyNum},NULL) AS august,
+        COALESCE(SUM ( CASE WHEN month = 9 THEN value ELSE NULL END )*${multiplyNum},NULL) AS september,
+        COALESCE(SUM ( CASE WHEN month = 10 THEN value ELSE NULL END )*${multiplyNum},NULL) AS october,
+        COALESCE(SUM ( CASE WHEN month = 11 THEN value ELSE NULL END )*${multiplyNum},NULL) AS november,
+        COALESCE(SUM ( CASE WHEN month = 12 THEN value ELSE NULL END )*${multiplyNum},NULL) AS december
         FROM   bi_target_category_setting
         WHERE  metrics=#{params.metrics}
         AND is_deleted = FALSE
@@ -129,18 +129,18 @@
     </select>
     <select id="pagingTotal" resultType="com.erp.model.bi.dto.BiTargetYearDTO$PagingTotalDTO">
         SELECT
-        COALESCE(sum(january),0) AS januaryTotal,
-        COALESCE(sum(february),0) AS februaryTotal,
-        COALESCE(sum(march),0) AS marchTotal,
-        COALESCE(sum(april),0) AS aprilTotal,
-        COALESCE(sum(may),0) AS mayTotal,
-        COALESCE(sum(june),0) AS juneTotal,
-        COALESCE(sum(july),0) AS julyTotal,
-        COALESCE(sum(august),0) AS augustTotal,
-        COALESCE(sum(september),0) AS septemberTotal,
-        COALESCE(sum(october),0) AS octoberTotal,
-        COALESCE(sum(november),0) AS novemberTotal,
-        COALESCE(sum(december),0) AS decemberTotal
+        COALESCE(sum(january)*${multiplyNum},0) AS januaryTotal,
+        COALESCE(sum(february)*${multiplyNum},0) AS februaryTotal,
+        COALESCE(sum(march)*${multiplyNum},0) AS marchTotal,
+        COALESCE(sum(april)*${multiplyNum},0) AS aprilTotal,
+        COALESCE(sum(may)*${multiplyNum},0) AS mayTotal,
+        COALESCE(sum(june)*${multiplyNum},0) AS juneTotal,
+        COALESCE(sum(july)*${multiplyNum},0) AS julyTotal,
+        COALESCE(sum(august)*${multiplyNum},0) AS augustTotal,
+        COALESCE(sum(september)*${multiplyNum},0) AS septemberTotal,
+        COALESCE(sum(october)*${multiplyNum},0) AS octoberTotal,
+        COALESCE(sum(november)*${multiplyNum},0) AS novemberTotal,
+        COALESCE(sum(december)*${multiplyNum},0) AS decemberTotal
         FROM
         (
         SELECT metrics,main_id,

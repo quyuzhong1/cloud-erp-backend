@@ -10,6 +10,7 @@ import com.erp.model.bi.entity.BiTargetShopSettingEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -30,7 +31,7 @@ public interface BiTargetShopSettingMapper extends BaseMapper<BiTargetShopSettin
      * @param params
      * @return
      */
-    IPage<BiTargetShopSettingDTO.PagingViewDTO> paging(Page query,@Param("params") BiTargetYearDTO.PagingParamDTO params);
+    IPage<BiTargetShopSettingDTO.PagingViewDTO> paging(Page query,@Param("params") BiTargetYearDTO.PagingParamDTO params,@Param("multiplyNum") BigDecimal multiplyNum);
 
     List<TargetFinishDTO.ViewDTO> listTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
 
@@ -46,5 +47,5 @@ public interface BiTargetShopSettingMapper extends BaseMapper<BiTargetShopSettin
      * @param dto
      * @return
      */
-    BiTargetYearDTO.PagingTotalDTO pagingTotal(@Param("params") BiTargetYearDTO.PagingParamDTO dto);
+    BiTargetYearDTO.PagingTotalDTO pagingTotal(@Param("params") BiTargetYearDTO.PagingParamDTO dto,@Param("multiplyNum") BigDecimal multiplyNum);
 }
