@@ -357,86 +357,36 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         BiTargetYearDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         String metrics = params.getMetrics();
+        //乘的值
+        BigDecimal multiplyNum = getMultiplyNum(metrics);
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
+        IPage pageData = baseMapper.paging(query, params,multiplyNum);
         List<BiTargetShopSettingDTO.PagingViewDTO> list = pageData.getRecords();
         list.forEach(s -> s.setMetricsName(s.getMetrics().getName()));
         return new PagingVO<>(pageData);
 
     }
 
+    /**
+     * 获取到乘的值
+     *
+     * @return
+     */
+    private BigDecimal getMultiplyNum(String metrics) {
+        //乘的值
+        BigDecimal multiplyNum = MathUtil.BigDecimal_1;
+        if (MetricsEnum.GROSS_PROFIT_RATE.getCode().equals(metrics)) {
+            multiplyNum = MathUtil.BigDecimal_100;
+        }
+        return multiplyNum;
+    }
     @Override
     public List<TargetFinishDTO.ViewDTO> listTargetFinish(TargetFinishDTO.ParamDTO dto) {
         return baseMapper.listTargetFinish(dto);
     }
 
 
-    private List<BiTargetShopSettingDTO.CommonDTO> getCommon(List<BiTargetShopSettingEntity> dbList) {
-        List<BiTargetShopSettingDTO.CommonDTO> resultList = new ArrayList<>(10);
-        //根据指标分组
-        Map<MetricsEnum, List<BiTargetShopSettingEntity>> map = dbList.stream().
-                collect(Collectors.groupingBy(BiTargetShopSettingEntity::getMetrics));
 
-        for (Map.Entry<MetricsEnum, List<BiTargetShopSettingEntity>> item : map.entrySet()) {
-            MetricsEnum metricsEnum = item.getKey();
-            String metrics = metricsEnum.getCode();
-            List<BiTargetShopSettingEntity> shopSettingList = item.getValue();
-            //根据人分组
-            Map<String, List<BiTargetShopSettingEntity>> staffMap = shopSettingList.stream().
-                    collect(Collectors.groupingBy(BiTargetShopSettingEntity::getShopId));
-            for (Map.Entry<String, List<BiTargetShopSettingEntity>> shop : staffMap.entrySet()) {
-                String shopId = shop.getKey();
-                List<BiTargetShopSettingEntity> shopDbList = shop.getValue();
-                BiTargetShopSettingDTO.CommonDTO common = new BiTargetShopSettingDTO.CommonDTO();
-                common.setShopId(shopId);
-                common.setShopName(shopDbList.get(0).getShopName());
-                //一月
-                Integer january = MonthEnum.JANUARY.getValue();
-                common.setJanuary(pullView(metrics, january, dbList));
-                //二月
-                Integer february = MonthEnum.FEBRUARY.getValue();
-                common.setFebruary(pullView(metrics, february, dbList));
-                //三月
-                Integer march = MonthEnum.MARCH.getValue();
-                common.setMarch(pullView(metrics, march, dbList));
-                //四月
-                Integer april = MonthEnum.APRIL.getValue();
-                common.setApril(pullView(metrics, april, dbList));
-                //五月
-                Integer may = MonthEnum.MAY.getValue();
-                common.setMay(pullView(metrics, may, dbList));
-                //六月
-                Integer june = MonthEnum.JUNE.getValue();
-                common.setJune(pullView(metrics, june, dbList));
-                //七月
-                Integer july = MonthEnum.JULY.getValue();
-                common.setJuly(pullView(metrics, july, dbList));
-                //八月
-                Integer august = MonthEnum.AUGUST.getValue();
-                common.setAugust(pullView(metrics, august, dbList));
-                //九月
-                Integer september = MonthEnum.SEPTEMBER.getValue();
-                common.setSeptember(pullView(metrics, september, dbList));
-                //十月
-                Integer october = MonthEnum.OCTOBER.getValue();
-                common.setOctober(pullView(metrics, october, dbList));
-
-                //十一月
-                Integer november = MonthEnum.NOVEMBER.getValue();
-                common.setNovember(pullView(metrics, november, dbList));
-
-                //十二月
-                Integer december = MonthEnum.DECEMBER.getValue();
-                common.setDecember(pullView(metrics, december, dbList));
-                common.setMetrics(metricsEnum);
-                common.setMetricsName(metricsEnum.getName());
-                resultList.add(common);
-            }
-
-        }
-
-        return resultList;
-    }
 
     /**
      * 填充显示的数据
@@ -686,7 +636,9 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
      */
     @Override
     public BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto) {
-        BiTargetYearDTO.PagingTotalDTO pagingTotal = baseMapper.pagingTotal(dto);
+        //乘的值
+        BigDecimal multiplyNum = getMultiplyNum(dto.getMetrics());
+        BiTargetYearDTO.PagingTotalDTO pagingTotal = baseMapper.pagingTotal(dto,multiplyNum);
         return pagingTotal;
     }
 

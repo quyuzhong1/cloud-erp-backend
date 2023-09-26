@@ -211,7 +211,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         entity.setValue(value);
         entity.setMetrics(metrics);
         if (MetricsEnum.GROSS_PROFIT_RATE.equals(metrics)) {
-            entity.setValue(MathUtil.divide(value, MathUtil.BigDecimal_100, 2));
+            entity.setValue(MathUtil.divide(value, MathUtil.BigDecimal_100, 4));
         }
         return entity;
     }
@@ -376,10 +376,27 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         BiTargetYearDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
+        //乘的值
+        BigDecimal multiplyNum = getMultiplyNum(params.getMetrics());
+        IPage pageData = baseMapper.paging(query, params,multiplyNum);
         List<BiTargetStaffSettingDTO.PagingViewDTO> list = pageData.getRecords();
-        list.forEach(s->s.setMetricsName(s.getMetrics().getName()));
+        list.forEach(s -> s.setMetricsName(s.getMetrics().getName()));
         return new PagingVO<>(pageData);
+    }
+
+
+    /**
+     * 获取到乘的值
+     *
+     * @return
+     */
+    private BigDecimal getMultiplyNum(String metrics) {
+        //乘的值
+        BigDecimal multiplyNum = MathUtil.BigDecimal_1;
+        if (MetricsEnum.GROSS_PROFIT_RATE.getCode().equals(metrics)) {
+            multiplyNum = MathUtil.BigDecimal_100;
+        }
+        return multiplyNum;
     }
 
     @Override
@@ -477,7 +494,9 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
      */
     @Override
     public BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto) {
-        BiTargetYearDTO.PagingTotalDTO result = baseMapper.pagingTotal(dto);
+        //乘的值
+        BigDecimal multiplyNum = getMultiplyNum(dto.getMetrics());
+        BiTargetYearDTO.PagingTotalDTO result = baseMapper.pagingTotal(dto,multiplyNum);
         return result;
     }
 
@@ -491,7 +510,6 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
     public List<TargetFinishDTO.ViewDTO> listUserTargetFinish(TargetFinishDTO.ParamDTO dto) {
         return baseMapper.listUserTargetFinish(dto);
     }
-
 
 
     private List<BiTargetStaffSettingDTO.CommonDTO> getCommon(List<BiTargetStaffSettingEntity> dbList) {
