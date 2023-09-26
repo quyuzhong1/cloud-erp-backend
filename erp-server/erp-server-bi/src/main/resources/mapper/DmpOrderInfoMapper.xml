@@ -407,7 +407,7 @@
     <select id="listSalesAmountBiFilter" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
         select
              ${viewParams.viewData},
-             sum(COALESCE(doit.quantity,0) * COALESCE(doit.amount_after,0) * COALESCE(doit.currency_rate,1))as value
+             sum(COALESCE(doit.amount_after,0) * COALESCE(doit.currency_rate,1))as value
         from dmp_order_info doi
         left join dmp_order_item doit on doi.id = doit.order_id
         left join product_detail AS pd on doit.sku_no = pd.sku_no
@@ -440,7 +440,7 @@
         sum(doit.totalAmount - COALESCE(dri.refund_amount, 0) * COALESCE(dri.currency_rate,1)) as value
         from dmp_order_info doi
         inner join (
-            select order_id,sum(COALESCE(quantity,0) * COALESCE(amount_after,0) * COALESCE(currency_rate,1)) as totalAmount from dmp_order_item  group by order_id) doit on doi.id = doit.order_id
+            select order_id,sum(COALESCE(amount_after,0) * COALESCE(currency_rate,1)) as totalAmount from dmp_order_item  group by order_id) doit on doi.id = doit.order_id
         left join dmp_refund_info dri on doi.platform_order_id = dri.platform_order_id
         <where>
             <include refid="base_where_sql"/>
