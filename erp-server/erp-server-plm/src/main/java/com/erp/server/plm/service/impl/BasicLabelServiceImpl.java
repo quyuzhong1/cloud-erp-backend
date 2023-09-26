@@ -60,24 +60,11 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     @Override
     public List<LabelBasicVO> listByCondition(BasicLabelDTO.SearchDTO dto) {
         //获取通用的全部和自己创建的私有标签
+        if(Objects.isNull(dto)){
+            dto = new BasicLabelDTO.SearchDTO();
+        }
         dto.setCreateUserId(commonService.getUserInfo().getUid());
         return baseMapper.listByCondition(dto);
-//        LambdaQueryWrapper<BasicLabelEntity> queryWrapper = new LambdaQueryWrapper<>();
-//        if (Objects.nonNull(dto) && StringUtils.isNotBlank(dto.getSearchKeyword())) {
-//            queryWrapper.like(BasicLabelEntity::getName, dto.getSearchKeyword());
-//        }
-//        if (Objects.nonNull(dto) && StringUtils.isNotBlank(dto.getLevel())) {
-//            if (StringUtils.equals(dto.getLevel(), LabelLevelEnum.PRIVATE.getCode())){
-//                queryWrapper.eq(BasicLabelEntity::getCreateUserId, commonService.getUserInfo().getUid());
-//            }
-//            queryWrapper.eq(BasicLabelEntity::getLevel, dto.getLevel());
-//        } else {
-//            queryWrapper.and(labelEntityLambdaQueryWrapper -> labelEntityLambdaQueryWrapper.eq(BasicLabelEntity::getLevel, "company")
-//                    .or(wrapper -> wrapper.eq(BasicLabelEntity::getLevel, "private").eq(BasicLabelEntity::getCreateUserId, commonService.getUserInfo().getUid())));
-//        }
-//        queryWrapper.orderByAsc(BasicLabelEntity::getIndex);
-//        queryWrapper.select(BasicLabelEntity::getId, BasicLabelEntity::getName, BasicLabelEntity::getColor, BasicLabelEntity::getLevel, BasicLabelEntity::getIndex);
-//        return this.list(queryWrapper);
     }
 
     @Override

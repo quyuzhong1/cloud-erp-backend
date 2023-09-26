@@ -248,6 +248,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (CollectionUtils.isNotEmpty(productRefLabelVOS)) {
                 labelProductIds = productRefLabelVOS.stream().map(ProductRefLabelVO::getProductId).collect(Collectors.toList());
                 pagingDTO.getParams().setLabelProductIds(labelProductIds);
+            }else {
+                labelProductIds.add("-1");
             }
         }
         IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams());
