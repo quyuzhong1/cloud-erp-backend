@@ -850,7 +850,9 @@
             pi.grade,
             pd.charge_name,
             pi.materials,
-            t.accessories
+            t.accessories,
+            pp.main_supplier,
+            pp.second_supplier
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pd.id = pp.sku_id AND pp.is_deleted = FALSE

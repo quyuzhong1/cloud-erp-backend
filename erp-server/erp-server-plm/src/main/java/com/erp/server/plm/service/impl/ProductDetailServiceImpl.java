@@ -3830,6 +3830,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             view.setSpuNo("");
             view.setSpuName("");
         }
+
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(Arrays.asList(view.getMainSupplierName(), view.getSecondSupplier()));
+        // 一级供应商名称
+        if (StrUtils.isNotEmpty(view.getMainSupplier()) && supplierMap.containsKey(view.getMainSupplier())) {
+            view.setMainSupplierName(supplierMap.get(view.getMainSupplier()).getName());
+        }
+
+        // 二级供应商名称
+        if (StrUtils.isNotEmpty(view.getSecondSupplier()) && supplierMap.containsKey(view.getSecondSupplier())) {
+            view.setSecondSupplierName(supplierMap.get(view.getSecondSupplier()).getName());
+        }
+
         //查询子sku
         List<BomChildrenSkuDTO> sonSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(productIdBySku.getId()));
         if (CollectionUtils.isNotEmpty(sonSkuList)) {
