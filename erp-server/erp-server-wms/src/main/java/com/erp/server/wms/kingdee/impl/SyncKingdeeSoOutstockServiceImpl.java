@@ -184,8 +184,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("warehouseKeeperCode", userKingdeePostInfoList.get(0).getKingdeeUserCode());
         }
 
-        //仓管员
-        resultMap.put("trackNo", entity.getWarehouseKeeperId());
         //运输单号
         resultMap.put("trackNo", entity.getTrackNo());
         //销售单号
