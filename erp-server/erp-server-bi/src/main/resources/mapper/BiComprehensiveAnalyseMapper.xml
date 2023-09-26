@@ -918,9 +918,17 @@
         AS saleAmount
         FROM dmp_order_item doit
         LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
-        left join product_detail AS pd on doit.sku_no = pd.sku_no
-        left join product_info AS pi on pi.id = pd.product_id
-        <include refid="bi_filter_condition_params"/>
+        <where>
+            <if test="params.startTime != null">
+                AND doi.platform_create_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND doi.platform_create_time &lt; #{params.endTime}
+            </if>
+            <if test="params.sku != null">
+                AND doit.sku_no = #{params.skuNo}
+            </if>
+        </where>
     </select>
 
     <sql id="date_type_condition">
