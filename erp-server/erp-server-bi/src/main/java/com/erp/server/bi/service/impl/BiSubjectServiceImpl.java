@@ -532,6 +532,16 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
 //        List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
         List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
         List<String> subjectIdList = subjectShareService.findSubjectId(userId, roleIdList);
+        // 查询自己创建
+        List<BiSubjectEntity> mySubjectList = this.lambdaQuery()
+                .eq(BiSubjectEntity::getCreateUserId, userId)
+                .eq(BiSubjectEntity::getState, 1)
+                .list();
+        if (CollectionUtils.isNotEmpty(mySubjectList)){
+            List<String> mySubjectIds = mySubjectList.stream().map(BiSubjectEntity::getId).collect(Collectors.toList());
+            subjectIdList.addAll(mySubjectIds);
+//            subjectIdList = subjectIdList.stream().distinct().collect(Collectors.toList());
+        }
         List<SubjectDTO> subjectList = baseMapper.getByIds(subjectIdList, searchKeyword);
 
         // 模板IDS
