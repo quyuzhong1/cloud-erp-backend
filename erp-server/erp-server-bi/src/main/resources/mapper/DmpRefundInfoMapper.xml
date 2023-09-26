@@ -208,7 +208,7 @@
         coalesce(SUM(refund_amount*dri.currency_rate),0)
         FROM dmp_refund_info dri
         INNER JOIN dmp_order_info o
-        ON dri.platform_order_id=o.id
+        ON dri.platform_order_id=o.platform_order_id
         INNER JOIN dmp_order_item i
         ON i.order_id=o.id
         <include refid="condition"></include>
@@ -219,7 +219,7 @@
         coalesce(SUM(refund_amount*dri.currency_rate),0)
         FROM dmp_refund_info dri
             INNER JOIN dmp_order_info o
-                ON dri.platform_order_id = o.id
+                ON dri.platform_order_id = o.platform_order_id
             INNER JOIN dmp_order_item i
                 ON i.order_id = o.id
         <where>
