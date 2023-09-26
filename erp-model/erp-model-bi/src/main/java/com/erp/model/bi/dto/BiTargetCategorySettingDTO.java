@@ -65,6 +65,7 @@ public class BiTargetCategorySettingDTO implements Serializable {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
 
+        private String categoryId;
         private String categoryName;
 
 
