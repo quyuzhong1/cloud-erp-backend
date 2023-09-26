@@ -303,6 +303,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         for (Map.Entry<MetricsEnum, List<BiTargetStaffSettingEntity>> item : map.entrySet()) {
             BiTargetStaffSettingDTO.DetailDTO detail = new BiTargetStaffSettingDTO.DetailDTO();
             MetricsEnum metricsEnum = item.getKey();
+            String metricsFlag = metricsEnum.getCode();
             detail.setMetrics(metricsEnum);
             detail.setMetricsName(metricsEnum.getName());
             List<BiTargetStaffSettingEntity> staffSettingList = item.getValue();
@@ -318,42 +319,42 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
                 common.setStaffName(dbList.get(0).getStaffName());
                 //一月
                 Integer january = MonthEnum.JANUARY.getValue();
-                common.setJanuary(pullView(metrics, january, dbList));
+                common.setJanuary(pullView(metricsFlag, january, dbList));
                 //二月
                 Integer february = MonthEnum.FEBRUARY.getValue();
-                common.setFebruary(pullView(metrics, february, dbList));
+                common.setFebruary(pullView(metricsFlag, february, dbList));
                 //三月
                 Integer march = MonthEnum.MARCH.getValue();
-                common.setMarch(pullView(metrics, march, dbList));
+                common.setMarch(pullView(metricsFlag, march, dbList));
                 //四月
                 Integer april = MonthEnum.APRIL.getValue();
-                common.setApril(pullView(metrics, april, dbList));
+                common.setApril(pullView(metricsFlag, april, dbList));
                 //五月
                 Integer may = MonthEnum.MAY.getValue();
-                common.setMay(pullView(metrics, may, dbList));
+                common.setMay(pullView(metricsFlag, may, dbList));
                 //六月
                 Integer june = MonthEnum.JUNE.getValue();
-                common.setJune(pullView(metrics, june, dbList));
+                common.setJune(pullView(metricsFlag, june, dbList));
                 //七月
                 Integer july = MonthEnum.JULY.getValue();
-                common.setJuly(pullView(metrics, july, dbList));
+                common.setJuly(pullView(metricsFlag, july, dbList));
                 //八月
                 Integer august = MonthEnum.AUGUST.getValue();
-                common.setAugust(pullView(metrics, august, dbList));
+                common.setAugust(pullView(metricsFlag, august, dbList));
                 //九月
                 Integer september = MonthEnum.SEPTEMBER.getValue();
-                common.setSeptember(pullView(metrics, september, dbList));
+                common.setSeptember(pullView(metricsFlag, september, dbList));
                 //十月
                 Integer october = MonthEnum.OCTOBER.getValue();
-                common.setOctober(pullView(metrics, october, dbList));
+                common.setOctober(pullView(metricsFlag, october, dbList));
 
                 //十一月
                 Integer november = MonthEnum.NOVEMBER.getValue();
-                common.setNovember(pullView(metrics, november, dbList));
+                common.setNovember(pullView(metricsFlag, november, dbList));
 
                 //十月
                 Integer december = MonthEnum.DECEMBER.getValue();
-                common.setDecember(pullView(metrics, december, dbList));
+                common.setDecember(pullView(metricsFlag, december, dbList));
                 staffList.add(common);
 
             }
@@ -512,79 +513,6 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
     }
 
 
-    private List<BiTargetStaffSettingDTO.CommonDTO> getCommon(List<BiTargetStaffSettingEntity> dbList) {
-        List<BiTargetStaffSettingDTO.CommonDTO> resultList = new ArrayList<>(10);
-        //根据指标分组
-        Map<MetricsEnum, List<BiTargetStaffSettingEntity>> map = dbList.stream().
-                collect(Collectors.groupingBy(BiTargetStaffSettingEntity::getMetrics));
-
-        for (Map.Entry<MetricsEnum, List<BiTargetStaffSettingEntity>> item : map.entrySet()) {
-            MetricsEnum metricsEnum = item.getKey();
-            String metrics = metricsEnum.getCode();
-            List<BiTargetStaffSettingEntity> staffSettingList = item.getValue();
-            //根据人分组
-            Map<String, List<BiTargetStaffSettingEntity>> staffMap = staffSettingList.stream().
-                    collect(Collectors.groupingBy(BiTargetStaffSettingEntity::getStaffId));
-            for (Map.Entry<String, List<BiTargetStaffSettingEntity>> staff : staffMap.entrySet()) {
-                String staffId = staff.getKey();
-                List<BiTargetStaffSettingEntity> staffDbList = staff.getValue();
-                BiTargetStaffSettingDTO.CommonDTO common = new BiTargetStaffSettingDTO.CommonDTO();
-                common.setStaffId(staffId);
-                common.setStaffName(staffDbList.get(0).getStaffName());
-                //一月
-                Integer january = MonthEnum.JANUARY.getValue();
-                common.setJanuary(pullView(metrics, january, dbList));
-                //二月
-                Integer february = MonthEnum.FEBRUARY.getValue();
-                common.setFebruary(pullView(metrics, february, dbList));
-                //三月
-                Integer march = MonthEnum.MARCH.getValue();
-                common.setMarch(pullView(metrics, march, dbList));
-                //四月
-                Integer april = MonthEnum.APRIL.getValue();
-                common.setApril(pullView(metrics, april, dbList));
-                //五月
-                Integer may = MonthEnum.MAY.getValue();
-                common.setMay(pullView(metrics, may, dbList));
-                //六月
-                Integer june = MonthEnum.JUNE.getValue();
-                common.setJune(pullView(metrics, june, dbList));
-                //七月
-                Integer july = MonthEnum.JULY.getValue();
-                common.setJuly(pullView(metrics, july, dbList));
-                //八月
-                Integer august = MonthEnum.AUGUST.getValue();
-                common.setAugust(pullView(metrics, august, dbList));
-                //九月
-                Integer september = MonthEnum.SEPTEMBER.getValue();
-                common.setSeptember(pullView(metrics, september, dbList));
-                //十月
-                Integer october = MonthEnum.OCTOBER.getValue();
-                common.setOctober(pullView(metrics, october, dbList));
-
-                //十一月
-                Integer november = MonthEnum.NOVEMBER.getValue();
-                common.setNovember(pullView(metrics, november, dbList));
-
-                //十二月
-                Integer december = MonthEnum.DECEMBER.getValue();
-                common.setDecember(pullView(metrics, december, dbList));
-                common.setMetrics(metricsEnum);
-                common.setMetricsName(metricsEnum.getName());
-                resultList.add(common);
-            }
-
-        }
-
-        return resultList;
-    }
-
-    private List<BiTargetStaffSettingEntity> listBaseByMainIdList(List<String> mainIdList) {
-        if (CollectionUtils.isEmpty(mainIdList)) {
-            return Collections.emptyList();
-        }
-        return this.lambdaQuery().in(BiTargetStaffSettingEntity::getMainId, mainIdList).list();
-    }
 
 
     /**
@@ -610,7 +538,83 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         for (BiTargetStaffSettingDTO.CommonDTO item : detailList) {
             String staffId = item.getStaffId();
             MetricsEnum metrics = item.getMetrics();
-            putListDetailDTO(existList, staffId, metrics, existStaff, action);
+
+            //一月
+            BigDecimal january = item.getJanuary();
+            if (Objects.nonNull(january)) {
+                Integer januaryMoth = MonthEnum.JANUARY.getValue();
+                putListDetailDTO(existList, staffId, metrics, januaryMoth, existStaff,action);
+            }
+            //二月
+            BigDecimal february = item.getFebruary();
+            if (Objects.nonNull(february)) {
+                Integer februaryMoth = MonthEnum.FEBRUARY.getValue();
+                putListDetailDTO(existList, staffId, metrics, februaryMoth, existStaff,action);
+            }
+            //三月
+            BigDecimal march = item.getMarch();
+            if (Objects.nonNull(march)) {
+                Integer marchMoth = MonthEnum.MARCH.getValue();
+                putListDetailDTO(existList, staffId, metrics, marchMoth, existStaff,action);
+            }
+            //四月
+            BigDecimal april = item.getApril();
+            if (Objects.nonNull(april)) {
+                Integer aprilMoth = MonthEnum.APRIL.getValue();
+                putListDetailDTO(existList, staffId, metrics, aprilMoth, existStaff,action);
+            }
+            //五月
+            BigDecimal may = item.getMay();
+            if (Objects.nonNull(may)) {
+                Integer mayMoth = MonthEnum.MAY.getValue();
+                putListDetailDTO(existList, staffId, metrics, mayMoth, existStaff,action);
+            }
+            //六月
+            BigDecimal june = item.getJune();
+            if (Objects.nonNull(june)) {
+                Integer juneMoth = MonthEnum.JUNE.getValue();
+                putListDetailDTO(existList, staffId, metrics, juneMoth, existStaff,action);
+            }
+            //七月
+            BigDecimal july = item.getJuly();
+            if (Objects.nonNull(july)) {
+                Integer julyMoth = MonthEnum.JULY.getValue();
+                putListDetailDTO(existList, staffId, metrics, julyMoth, existStaff,action);
+            }
+            //八月
+            BigDecimal august = item.getAugust();
+            if (Objects.nonNull(august)) {
+                Integer augustMoth = MonthEnum.AUGUST.getValue();
+                putListDetailDTO(existList, staffId, metrics, augustMoth, existStaff,action);
+            }
+            //九月
+            BigDecimal september = item.getSeptember();
+            if (Objects.nonNull(september)) {
+                Integer septemberMoth = MonthEnum.SEPTEMBER.getValue();
+                putListDetailDTO(existList, staffId, metrics, septemberMoth, existStaff,action);
+            }
+            //十月
+            BigDecimal october = item.getOctober();
+            if (Objects.nonNull(october)) {
+                Integer octoberMoth = MonthEnum.OCTOBER.getValue();
+                putListDetailDTO(existList, staffId, metrics, octoberMoth, existStaff,action);
+            }
+
+            //十一月
+            BigDecimal november = item.getNovember();
+            if (Objects.nonNull(november)) {
+                Integer novemberMoth = MonthEnum.NOVEMBER.getValue();
+                putListDetailDTO(existList, staffId, metrics, novemberMoth, existStaff,action);
+            }
+
+            //十二月
+            BigDecimal december = item.getDecember();
+            if (Objects.nonNull(december)) {
+                Integer decemberMoth = MonthEnum.DECEMBER.getValue();
+                putListDetailDTO(existList, staffId, metrics, decemberMoth, existStaff,action);
+            }
+
+
         }
         if (CollectionUtils.isNotEmpty(existStaff)) {
             String existStaffName = existStaff.stream().collect(Collectors.joining(","));
@@ -635,7 +639,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
     }
 
 
-    private void putListDetailDTO(List<BiTargetStaffSettingDTO.ListDetailDTO> existList, String staffId, MetricsEnum metrics, List<String> existStaff, LogActionEnum action) {
+    private void putListDetailDTO(List<BiTargetStaffSettingDTO.ListDetailDTO> existList, String staffId, MetricsEnum metrics,Integer month, List<String> existStaff, LogActionEnum action) {
         //添加的
         if (LogActionEnum.INSERT.equals(action)) {
             BiTargetStaffSettingDTO.ListDetailDTO exist = existList.stream().filter(e ->
@@ -649,7 +653,8 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
             //修改的
             List<BiTargetStaffSettingDTO.ListDetailDTO> list = existList.stream().filter(e ->
                     e.getStaffId().equals(staffId) &&
-                            e.getMetrics().equals(metrics)
+                            e.getMetrics().equals(metrics)&&
+                            e.getMonth().equals(month)
             ).collect(Collectors.toList());
             if (list.size() > 1) {
                 existStaff.add(list.get(0).getStaffName());
