@@ -168,6 +168,8 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                 .in(CollectionUtil.isNotEmpty(dto.getPlatform()), BiDataSourceCostEntity::getPlatformName, dto.getPlatform())
                 .in(CollectionUtil.isNotEmpty(dto.getShopName()), BiDataSourceCostEntity::getShopName, dto.getShopName())
                 .in(CollectionUtil.isNotEmpty(dto.getUserId()), BiDataSourceCostEntity::getChargeId, dto.getUserId())
+                .ge(BiDataSourceCostEntity::getMonth,dto.getStartTime())
+                .le(BiDataSourceCostEntity::getMonth,dto.getEndTime())
                 .last(StrUtil.isNotBlank(dto.getPermissionSql()), dto.getPermissionSql())
                 .list();
         return dataSourceCostList;
