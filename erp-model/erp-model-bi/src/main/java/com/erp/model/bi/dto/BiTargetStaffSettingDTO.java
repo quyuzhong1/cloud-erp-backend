@@ -67,6 +67,8 @@ public class BiTargetStaffSettingDTO implements Serializable {
 
         private String staffName;
 
+        private String staffId;
+
 
         /**
          * 指标维度
@@ -143,7 +145,6 @@ public class BiTargetStaffSettingDTO implements Serializable {
         private BigDecimal december;
 
     }
-
 
 
     /**
