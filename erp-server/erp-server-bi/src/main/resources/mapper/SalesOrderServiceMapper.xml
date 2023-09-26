@@ -1553,15 +1553,6 @@
                 </foreach>
                 )
             </if>
-            <if test="params.categoryIdList!=null and params.categoryIdList.size>0">
-                AND i.sku_no IN
-                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category_id IN
-                <foreach collection="params.categoryIdList" item="categoryId" open="(" separator="," close=")">
-                    #{categoryId}
-                </foreach>
-                )
-            </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
                 AND i.sku_no IN

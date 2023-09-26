@@ -1293,6 +1293,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public StatisticalDataVO byCategory(BiCategoryDTO.FirstCategoryParamsDTO dto) {
         //获取到一级类目列表
         List<BasicCategoryEntity> categoryList = plmTaskFeign.listParentCategory();
+
         List<String> categoryIdList = categoryList.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
         dto.setCategoryIdList(categoryIdList);
         //查询sku 分类以及分类下对应的skuno
