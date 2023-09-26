@@ -3314,8 +3314,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        LocalDateTime paramsEndTime = dto.getEndTime();
-        dto.setEndTime(paramsEndTime, 1);
         //新品
         Integer newFlag = BiConstant.NEW;
         //老品
@@ -3327,8 +3325,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         paramDTO.setYear(startTime.getYear());
         paramDTO.setMonth(startTime.getMonthValue());
         paramDTO.setMetricsList(Arrays.asList(MetricsEnum.SALES_AMOUNT.getCode(), MetricsEnum.SALES_QTY.getCode()));
-        List<String> deptIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
-        paramDTO.setDeptIdList(deptIds);
+        List<String> userIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
+        paramDTO.setUserIdList(userIds);
 
         List<BiTargetNewProductSettingDTO.UserTargetDTO> userTargetDTOS = biTargetNewProductSettingService.listUserTarget(paramDTO);
 
