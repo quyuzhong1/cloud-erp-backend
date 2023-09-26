@@ -6,7 +6,7 @@
     <select id="listBiSalesMonitoringSalesAmount" resultType="com.erp.model.bi.dto.BiSalesMonitoringTableDTO$ViewDTO">
         select
             ${params.viewData},
-            sum(doit.amount_after * doit.currency_rate * doit.quantity) as value
+            sum(doit.amount_after * doit.currency_rate) as value
         from dmp_order_info doi
         inner join dmp_order_item doit on doit.order_id = doi.id
         where doi.platform_create_time >= #{lastsMonth}
@@ -34,7 +34,7 @@
             resultType="com.erp.model.bi.dto.BiSalesMonitoringTableDTO$ViewDTO">
         select
         ${params.viewData},
-        sum(doit.amount_after * doit.currency_rate * doit.quantity) as value
+        sum(doit.amount_after * doit.currency_rate) as value
         from dmp_order_info doi
         inner join dmp_order_item doit on doit.order_id = doi.id
         inner join product_detail pd on pd.is_deleted = false and doit.sku_no = pd.sku_no
