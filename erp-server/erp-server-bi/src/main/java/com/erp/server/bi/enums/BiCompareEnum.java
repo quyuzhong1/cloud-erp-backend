@@ -10,7 +10,7 @@ public enum BiCompareEnum {
 
 
     GREATER_THAN_EQUAL("单次>=", "大于等于"),
-    LESS_THAN_EQUAL("<单次=", "小于等于"),
+    LESS_THAN_EQUAL("单次<=", "小于等于"),
     GREATER_THAN("单次>", "大于"),
     LESS_THAN("单次<", "小于"),
     TOW_MONTH_GREATER_THEN_EQUAL("连续两个月>=", "连续两个月大于等于"),
