@@ -4,7 +4,6 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
@@ -164,9 +163,8 @@ public class KingdeeBomInfoConsumerServiceImpl implements KingdeeBomInfoConsumer
      * @param type
      */
     public void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-        String syncKingdeeId = (String) map.get("syncKingdeeId");
         //反审核
-        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, syncKingdeeId, type);
+        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, type);
         return;
     }
 

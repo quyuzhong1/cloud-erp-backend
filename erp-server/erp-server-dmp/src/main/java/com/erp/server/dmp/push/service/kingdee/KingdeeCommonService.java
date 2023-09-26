@@ -134,7 +134,7 @@ public interface KingdeeCommonService {
      * @param type
      * @return Boolean
      */
-    Boolean handleUnAudit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type);
+    Boolean handleUnAudit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, Integer type);
 
     /**
      * 反审核
@@ -142,7 +142,6 @@ public interface KingdeeCommonService {
      * @param platformEntity
      * @param map
      * @param apiUtils
-     * @param id
      * @return String
      * @author Will
      * @date: 2023/3/3 14:07

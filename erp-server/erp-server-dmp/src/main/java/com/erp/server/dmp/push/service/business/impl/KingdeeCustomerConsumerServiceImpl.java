@@ -80,23 +80,23 @@ public class KingdeeCustomerConsumerServiceImpl implements KingdeeCustomerConsum
         }
 
         /**
-         * 审核
+         * 反审核
          */
-        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             operateDisapprove(apiUtils,platformEntity, map,type,json);
         }
 
         /**
          * 禁用/反禁用
          */
-        if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
             operateEnable(apiUtils,platformEntity, map,type,json);
         }
 
         /**
          * 删除
          */
-        if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
             operateDelete(apiUtils,platformEntity, map,type,json);
         }
 
@@ -117,11 +117,11 @@ public class KingdeeCustomerConsumerServiceImpl implements KingdeeCustomerConsum
         String operate = null;
         //启用
         if (!(Boolean) disabled) {
-            operate = SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
+            operate = SyncOperateEnum.OPERATE_ENABLE.getCode();
         }
         //禁用
         if ((Boolean) disabled) {
-            operate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
+            operate = SyncOperateEnum.OPERATE_DISABLE.getCode();
         }
         if (StringUtils.isNotBlank(operate)) {
             kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);

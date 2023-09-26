@@ -519,7 +519,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean handleUnAudit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type) {
+    public Boolean handleUnAudit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, Integer type) {
         //根据状态反审核
         return this.updateApproved(apiUtils,platformEntity,map,type,KingdeeDocStatusEnum.REAPPROVE,Boolean.TRUE);
     }

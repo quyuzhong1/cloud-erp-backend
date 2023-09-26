@@ -104,9 +104,8 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
      * 反审核
      */
     public void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-        String syncKingdeeId = (String) map.get("syncKingdeeId");
         //反审核
-        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, syncKingdeeId, type);
+        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, type);
         return;
     }
 

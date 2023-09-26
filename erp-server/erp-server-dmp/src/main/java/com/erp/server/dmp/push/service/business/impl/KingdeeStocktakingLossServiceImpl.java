@@ -97,9 +97,8 @@ public class KingdeeStocktakingLossServiceImpl implements KingdeeStocktakingLoss
      * 反审核
      */
     public void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-        String syncKingdeeId = (String) map.get("syncKingdeeId");
         //反审核
-        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, syncKingdeeId, type);
+        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, type);
         return;
     }
 
@@ -135,7 +134,7 @@ public class KingdeeStocktakingLossServiceImpl implements KingdeeStocktakingLoss
         Boolean flag = Boolean.FALSE;
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils,id, type);
         }
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
