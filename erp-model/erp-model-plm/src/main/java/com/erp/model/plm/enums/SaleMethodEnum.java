@@ -6,13 +6,12 @@ import com.common.core.constant.EnumMessage;
  * @Description 销售方式枚举
  * @Author Luo_WG
  * @Date 2022/9/26 9:17
- * @param
- * @return
  **/
 public enum SaleMethodEnum implements EnumMessage {
     GOODS(1, "商品"),
     GIFT(2, "赠品"),
-    PACKAGING_MATERIALS(3, "包材");
+    PACKAGING_MATERIALS(3, "包材"),
+    SEMI_FINISHED(4, "半成品");
 
     private Integer code;
     private String name;
