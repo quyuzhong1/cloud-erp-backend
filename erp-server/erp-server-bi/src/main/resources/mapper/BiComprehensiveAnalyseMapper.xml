@@ -1712,11 +1712,12 @@
 
         <!--店铺-->
         <if test="params.shopName!=null and params.shopName.size>0">
-            AND doi.shop_no IN
+            AND doi.shop_name IN
             <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
                 #{shopNo}
             </foreach>
         </if>
+
 
         <!--sku-->
         <if test="params.sku!=null and params.sku.size>0">
