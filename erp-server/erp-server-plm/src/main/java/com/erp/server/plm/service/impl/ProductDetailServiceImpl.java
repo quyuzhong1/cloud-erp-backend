@@ -3831,7 +3831,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             view.setSpuName("");
         }
 
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(Arrays.asList(view.getMainSupplierName(), view.getSecondSupplier()));
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(Arrays.asList(view.getMainSupplier(), view.getSecondSupplier()));
         // 一级供应商名称
         if (StrUtils.isNotEmpty(view.getMainSupplier()) && supplierMap.containsKey(view.getMainSupplier())) {
             view.setMainSupplierName(supplierMap.get(view.getMainSupplier()).getName());
