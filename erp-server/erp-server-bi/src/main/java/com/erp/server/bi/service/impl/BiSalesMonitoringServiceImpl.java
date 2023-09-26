@@ -550,7 +550,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             //上期环比
             BigDecimal lastRadio = BigDecimal.ZERO;
             if (MathUtil.compareTo(sumFirstMonthSale, BigDecimal.ZERO) != 0) {
-                radio = MathUtil.divide(MathUtil.subtract(sumSecondMonthSale, sumLastMonthSale), sumLastMonthSale).multiply(MathUtil.BigDecimal_100);
+                lastRadio = MathUtil.divide(MathUtil.subtract(sumSecondMonthSale, sumLastMonthSale), sumLastMonthSale).multiply(MathUtil.BigDecimal_100);
             }
 
             //比较环比
