@@ -212,7 +212,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("salesOrgCode", salesOrgCode);
         }
         if (soInfoById.getDiscountAmount() != null) {
-            resultMap.put("FAllDisCount", soInfoById.getDiscountAmount().intValue());
+            resultMap.put("FAllDisCount", soInfoById.getDiscountAmount());
         }
 
         List<String> soDetailIds = soDetailEntitieList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
