@@ -12,9 +12,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public enum PlatformDictEnum implements EnumMessage {
     OFFLINECELEBRITY("Offlinecelebrity","线下发网红","","023"),
-    AMAZON("Amazon", "亚马逊", "亚马逊", "100"),
+    AMAZON("Amazon", "Amazon", "亚马逊", "100"),
     SHOPIFY("Shopify", "Shopify", "Shopify", "004"),
-    ALI_EXPRESS("AliExpress", "速卖通", "AliExpress", "002"),
+    ALI_EXPRESS("AliExpress", "AliExpress", "AliExpress", "002"),
     SHOPEE("Shopee", "Shopee", "虾皮", "003"),
     NASDAQ_JD("JD", "京东", "京东", "007"),
     WALMART("Walmart", "Walmart", "沃尔玛", "018"),

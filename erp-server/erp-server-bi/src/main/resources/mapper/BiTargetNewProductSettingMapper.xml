@@ -44,7 +44,7 @@
             ty.create_time,
             temp.*
         FROM (
-                 SELECT metrics,main_id,min(staff_name) AS staffName,
+                 SELECT metrics,main_id,staff_id,min(staff_name) AS staffName,
                     COALESCE(SUM ( CASE WHEN month = 1 THEN value ELSE NULL END )*${multiplyNum},NULL) AS january,
                     COALESCE(SUM ( CASE WHEN month = 1 THEN rate ELSE NULL END )*100,NULL) AS januaryRate,
                     COALESCE(SUM ( CASE WHEN month = 2 THEN value ELSE NULL END )*${multiplyNum},NULL) AS february,
