@@ -3178,10 +3178,16 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         monthMetrics.setMetricsName(metricsName);
         Integer finalMonth = month;
         Integer finalYear = year;
+        //是否毛利率 true 是
+        Boolean isGrossProfitRate = MetricsEnum.GROSS_PROFIT_RATE.equals(metricsEnum);
         //月度目标值
         BigDecimal monthMetricsValue = yearMonthValueList.stream().
                 filter(y -> y.getMonth().equals(finalMonth) && y.getYear().equals(finalYear)).
                 findFirst().map(BiTargetYearDTO.YearMonthValueDTO::getMetricsValue).orElse(BigDecimal.ZERO);
+        BigDecimal multiplyValue = MathUtil.BigDecimal_100;
+        if (isGrossProfitRate) {
+            monthMetricsValue = MathUtil.multiply(monthMetricsValue, multiplyValue, 2);
+        }
         monthMetrics.setMetricsValue(monthMetricsValue);
         //完成值
         BigDecimal monthFinishValue = biTargetYearService.getMetricsFinishValue(dto, "month", year, month, settleRate);
@@ -3202,6 +3208,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //年度目标值
         BigDecimal yearMetricsValue = yearMonthValueList.stream().map(BiTargetYearDTO.YearMonthValueDTO::getMetricsValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (isGrossProfitRate) {
+            yearMetricsValue = MathUtil.multiply(yearMetricsValue, multiplyValue, 2);
+        }
         yearMetrics.setMetricsValue(yearMetricsValue);
         BigDecimal yearFinishValue = biTargetYearService.getMetricsFinishValue(dto, "year", year, month, settleRate);
         if (Objects.isNull(yearFinishValue)) {
