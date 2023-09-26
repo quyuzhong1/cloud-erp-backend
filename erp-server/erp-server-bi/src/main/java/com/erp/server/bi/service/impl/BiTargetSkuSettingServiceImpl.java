@@ -352,12 +352,28 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
     public PagingVO<BiTargetSkuSettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto) {
         BiTargetYearDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
+        //乘的值
+        BigDecimal multiplyNum = getMultiplyNum(params.getMetrics());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
+        IPage pageData = baseMapper.paging(query, params,multiplyNum);
         List<BiTargetSkuSettingDTO.PagingViewDTO> list = pageData.getRecords();
         list.forEach(s->s.setMetricsName(s.getMetrics().getName()));
         return new PagingVO<>(pageData);
 
+    }
+
+    /**
+     * 获取到乘的值
+     *
+     * @return
+     */
+    private BigDecimal getMultiplyNum(String metrics) {
+        //乘的值
+        BigDecimal multiplyNum = MathUtil.BigDecimal_1;
+        if (MetricsEnum.GROSS_PROFIT_RATE.getCode().equals(metrics)) {
+            multiplyNum = MathUtil.BigDecimal_100;
+        }
+        return multiplyNum;
     }
 
     @Override
@@ -467,7 +483,9 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
      */
     @Override
     public BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto) {
-        BiTargetYearDTO.PagingTotalDTO pagingTotal = baseMapper.pagingTotal(dto);
+        //乘的值
+        BigDecimal multiplyNum = getMultiplyNum(dto.getMetrics());
+        BiTargetYearDTO.PagingTotalDTO pagingTotal = baseMapper.pagingTotal(dto,multiplyNum);
         return pagingTotal;
 
     }

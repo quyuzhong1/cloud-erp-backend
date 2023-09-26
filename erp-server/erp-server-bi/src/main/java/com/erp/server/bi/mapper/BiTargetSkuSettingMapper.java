@@ -10,6 +10,7 @@ import com.erp.model.bi.entity.BiTargetSkuSettingEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -24,7 +25,7 @@ import java.util.List;
 @Mapper
 public interface BiTargetSkuSettingMapper extends BaseMapper<BiTargetSkuSettingEntity> {
 
-    IPage<BiTargetSkuSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params);
+    IPage<BiTargetSkuSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params,@Param("multiplyNum") BigDecimal multiplyNum);
     /**
      * @description: 根据指标查询SKU目标值
      * @author Will
@@ -46,5 +47,5 @@ public interface BiTargetSkuSettingMapper extends BaseMapper<BiTargetSkuSettingE
      * @param dto
      * @return
      */
-    BiTargetYearDTO.PagingTotalDTO pagingTotal(@Param("params") BiTargetYearDTO.PagingParamDTO dto);
+    BiTargetYearDTO.PagingTotalDTO pagingTotal(@Param("params") BiTargetYearDTO.PagingParamDTO dto,@Param("multiplyNum") BigDecimal multiplyNum);
 }

@@ -389,13 +389,27 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
         BiTargetYearDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
+        //乘的值
+        BigDecimal multiplyNum = getMultiplyNum(params.getMetrics());
+        IPage pageData = baseMapper.paging(query, params,multiplyNum);
         List<BiTargetNewProductSettingDTO.PagingViewDTO> list = pageData.getRecords();
         list.forEach(s->s.setMetricsName(s.getMetrics().getName()));
         return new PagingVO<>(pageData);
     }
 
-
+    /**
+     * 获取到乘的值
+     *
+     * @return
+     */
+    private BigDecimal getMultiplyNum(String metrics) {
+        //乘的值
+        BigDecimal multiplyNum = MathUtil.BigDecimal_1;
+        if (MetricsEnum.GROSS_PROFIT_RATE.getCode().equals(metrics)) {
+            multiplyNum = MathUtil.BigDecimal_100;
+        }
+        return multiplyNum;
+    }
     /**
      * 下载模板
      *
@@ -495,108 +509,13 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
 
     @Override
     public BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto) {
-        BiTargetYearDTO.PagingTotalDTO pagingTotal = baseMapper.pagingTotal(dto);
+        //乘的值
+        BigDecimal multiplyNum = getMultiplyNum(dto.getMetrics());
+        BiTargetYearDTO.PagingTotalDTO pagingTotal = baseMapper.pagingTotal(dto,multiplyNum);
         return pagingTotal;
     }
 
-    /**
-     * 获取月份值
-     *
-     * @return
-     */
-    public BigDecimal getMonthValue(MonthEnum monthEnum, List<BiTargetYearDTO.MonthValueDTO> list, String metrics) {
-        BigDecimal value = list.stream().filter(m -> m.getMonth().equals(monthEnum.getValue())).
-                findFirst().map(BiTargetYearDTO.MonthValueDTO::getValue).orElse(BigDecimal.ZERO);
-        if (MetricsEnum.GROSS_PROFIT_RATE.getCode().equals(metrics)) {
-            value = MathUtil.multiply(value, MathUtil.NUMBER_100);
-        }
-        return value;
-    }
 
-
-    private List<BiTargetNewProductSettingDTO.CommonDTO> getCommon(List<BiTargetNewProductSettingEntity> dbList) {
-        List<BiTargetNewProductSettingDTO.CommonDTO> resultList = new ArrayList<>(10);
-        String valueStr = "";
-        String rateStr = "";
-        //根据指标分组
-        Map<MetricsEnum, List<BiTargetNewProductSettingEntity>> map = dbList.stream().
-                collect(Collectors.groupingBy(BiTargetNewProductSettingEntity::getMetrics));
-
-        for (Map.Entry<MetricsEnum, List<BiTargetNewProductSettingEntity>> item : map.entrySet()) {
-            MetricsEnum metricsEnum = item.getKey();
-            String metrics = metricsEnum.getCode();
-            List<BiTargetNewProductSettingEntity> staffSettingList = item.getValue();
-            //根据人分组
-            Map<String, List<BiTargetNewProductSettingEntity>> staffMap = staffSettingList.stream().
-                    collect(Collectors.groupingBy(BiTargetNewProductSettingEntity::getStaffId));
-            for (Map.Entry<String, List<BiTargetNewProductSettingEntity>> staff : staffMap.entrySet()) {
-                String staffId = staff.getKey();
-                List<BiTargetNewProductSettingEntity> staffDbList = staff.getValue();
-                BiTargetNewProductSettingDTO.CommonDTO common = new BiTargetNewProductSettingDTO.CommonDTO();
-                common.setStaffId(staffId);
-                common.setStaffName(staffDbList.get(0).getStaffName());
-                //一月
-                Integer january = MonthEnum.JANUARY.getValue();
-                common.setJanuary(pullView(metrics, january, dbList, valueStr));
-                common.setJanuaryRate(pullView(metrics, january, dbList, rateStr));
-
-                //二月
-                Integer february = MonthEnum.FEBRUARY.getValue();
-                common.setFebruary(pullView(metrics, february, dbList, valueStr));
-                common.setFebruaryRate(pullView(metrics, february, dbList, rateStr));
-
-                //三月
-                Integer march = MonthEnum.MARCH.getValue();
-                common.setMarch(pullView(metrics, march, dbList, valueStr));
-                common.setMarchRate(pullView(metrics, march, dbList, rateStr));
-                //四月
-                Integer april = MonthEnum.APRIL.getValue();
-                common.setApril(pullView(metrics, april, dbList, valueStr));
-                common.setAprilRate(pullView(metrics, april, dbList, rateStr));
-                //五月
-                Integer may = MonthEnum.MAY.getValue();
-                common.setMay(pullView(metrics, may, dbList, valueStr));
-                common.setMayRate(pullView(metrics, may, dbList, rateStr));
-                //六月
-                Integer june = MonthEnum.JUNE.getValue();
-                common.setJune(pullView(metrics, june, dbList, valueStr));
-                common.setJuneRate(pullView(metrics, june, dbList, rateStr));
-                //七月
-                Integer july = MonthEnum.JULY.getValue();
-                common.setJuly(pullView(metrics, july, dbList, valueStr));
-                common.setJulyRate(pullView(metrics, july, dbList, rateStr));
-                //八月
-                Integer august = MonthEnum.AUGUST.getValue();
-                common.setAugust(pullView(metrics, august, dbList, valueStr));
-                common.setAugustRate(pullView(metrics, august, dbList, rateStr));
-                //九月
-                Integer september = MonthEnum.SEPTEMBER.getValue();
-                common.setSeptember(pullView(metrics, september, dbList, valueStr));
-                common.setSeptemberRate(pullView(metrics, september, dbList, rateStr));
-                //十月
-                Integer october = MonthEnum.OCTOBER.getValue();
-                common.setOctober(pullView(metrics, october, dbList, valueStr));
-                common.setOctoberRate(pullView(metrics, october, dbList, rateStr));
-
-                //十一月
-                Integer november = MonthEnum.NOVEMBER.getValue();
-                common.setNovember(pullView(metrics, november, dbList, valueStr));
-                common.setNovemberRate(pullView(metrics, november, dbList, rateStr));
-
-                //十二月
-                Integer december = MonthEnum.DECEMBER.getValue();
-                common.setDecember(pullView(metrics, december, dbList, valueStr));
-                common.setDecemberRate(pullView(metrics, december, dbList, rateStr));
-
-                common.setMetrics(metricsEnum);
-                common.setMetricsName(metricsEnum.getName());
-                resultList.add(common);
-            }
-
-        }
-
-        return resultList;
-    }
 
     /**
      * 填充显示的数据

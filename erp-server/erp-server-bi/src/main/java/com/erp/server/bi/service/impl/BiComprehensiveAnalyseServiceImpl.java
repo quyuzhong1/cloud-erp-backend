@@ -620,7 +620,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             LocalDate platformCreateDate = salesDTO.getFirstOrderDate();
             resultDto.setFirstOrderDate(platformCreateDate.toString());
             // 超过一年认为非新品
-            if (LocalDate.now(ZoneId.systemDefault()).isAfter(platformCreateDate.plusYears(1))){
+            if (LocalDate.now(ZoneId.systemDefault()).getYear() >= (platformCreateDate.getYear() + 1)){
                 resultDto.setHasNewSign(false);
             }
         }
@@ -630,7 +630,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             List<String> platformFistOrderList = orderMap.entrySet()
                     .stream()
                     .filter(e-> StringUtils.isNotBlank(e.getKey()))
-                    .map(e -> e.getKey().concat(":").concat(e.getValue().getCreateTime().toLocalDate().toString()))
+                    .map(e -> e.getKey().concat(":").concat(e.getValue().getPlatformCreateTime().toLocalDate().toString()))
                     .collect(Collectors.toList());
             resultDto.setPlatformFirstOrderDate(platformFistOrderList);
         }
