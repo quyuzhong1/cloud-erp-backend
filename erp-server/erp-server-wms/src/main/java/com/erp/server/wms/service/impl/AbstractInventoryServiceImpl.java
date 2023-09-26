@@ -24,10 +24,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -65,6 +67,9 @@ public abstract class AbstractInventoryServiceImpl {
     private RedisUtil  redisUtil;
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
+    @Value("${inventory.closed.time:2023-09-01}")
+    private String closedTime;
 
     /**
      *
@@ -147,8 +152,8 @@ public abstract class AbstractInventoryServiceImpl {
                 .thenComparing(x -> StrUtil.isNotEmpty(x.getDictInventoryStatus()) ? x.getDictInventoryStatus() : "");
         txnFlows = txnFlows.stream().sorted(comparing).collect(Collectors.toList());
         txnFlows.stream().forEach(txnFlow->{
-            // 检测是否允许库存交易
-            checkAllowTransaction(txnFlow.getOrgId(),txnFlow.getWarehouseId(),txnFlow.getWarehouseLocation(),txnFlow.getSkuId(),txnFlow.getSkuNo(),txnFlow.getDictInventoryStatus());
+            // 检测是否允许库存交易=
+            checkAllowTransaction(txnFlow.getOrgId(),txnFlow.getWarehouseId(),txnFlow.getWarehouseLocation(),txnFlow.getSkuId(),txnFlow.getSkuNo(),txnFlow.getDictInventoryStatus(),txnFlow.getBillDate());
 
             // 获取单据业务类型
             InventoryBusinessTypeEnum businessTypeEnum = InventoryBusinessTypeEnum.getByCode(txnFlow.getDictBizType());// 取原交易流水的业务类型
@@ -223,14 +228,22 @@ public abstract class AbstractInventoryServiceImpl {
 
     /**
      * 检查库存交易的否允许
-     * @param skuId     SKU
-     * @param orgId     组织
-     * @param warehouseId   仓库
-     * @param warehouseLocation 仓位
-     * @param dictInventoryStatus   库存状态
+     *
+     * @param orgId               组织
+     * @param warehouseId         仓库
+     * @param warehouseLocation   仓位
+     * @param skuId               SKU
+     * @param dictInventoryStatus 库存状态
+     * @param billDate
      */
-    private void checkAllowTransaction(String orgId, String warehouseId, String warehouseLocation, String skuId,String skuNo, String dictInventoryStatus) {
+    private void checkAllowTransaction(String orgId, String warehouseId, String warehouseLocation, String skuId, String skuNo, String dictInventoryStatus, LocalDate billDate) {
         //TODO 今后需要做 库存关账 等检测
+        if(StrUtil.isNotBlank(closedTime)){
+            LocalDate closeDate = LocalDate.parse(closedTime);
+            if (billDate.compareTo(closeDate) < 0) {
+                throw new ServiceException(ApiError.ERROR_INVENTORY_CLOSED, closeDate.format(DateTimeFormatter.ISO_DATE));
+            }
+        }
         // 盘点冻结
         String redisKey = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, "*", orgId, warehouseId, warehouseLocation, skuId, dictInventoryStatus);
         Collection<String> keys = redisUtil.keys(redisKey);
@@ -321,7 +334,7 @@ public abstract class AbstractInventoryServiceImpl {
         if(Objects.isNull(warehouseInfo) || StrUtil.isEmpty(warehouseInfo.getId())) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
-        checkAllowTransaction(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(),param.getSkuNo(), inventoryStatusEnum.getCode());
+        checkAllowTransaction(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(),param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate());
         log.warn("交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走入库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName());
 
         // 按照仓库+仓位+库存状态+SKU 进行锁定
@@ -374,7 +387,7 @@ public abstract class AbstractInventoryServiceImpl {
         if(Objects.isNull(warehouseInfo) || StrUtil.isEmpty(warehouseInfo.getId())) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
-        checkAllowTransaction(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode());
+        checkAllowTransaction(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate());
         // 待出库数量
         Integer waitOutQty = param.getQty();
         log.info("交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走出库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), inventoryStatusEnum.getName(), param.getSkuNo());

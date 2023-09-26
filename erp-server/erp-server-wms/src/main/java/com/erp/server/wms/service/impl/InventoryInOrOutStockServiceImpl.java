@@ -10,10 +10,8 @@ import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
-import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.*;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.config.InventoryHelper;
 import com.erp.server.wms.service.InventoryStockService;
 import com.erp.server.wms.service.WarehouseLocationService;
@@ -82,9 +80,6 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
                         throw new ServiceException("仓位信息不存在");
                     }
                 }
-
-                inventoryHelper.checkCommonBiz(param.getSourceType(), param.getSourceId(), param.getBillDate());// 通用检查
-                inventoryHelper.checkAllowTrade(param.getSourceType(), param.getWarehouseId(), param.getSkuNo());// 关账检查
 
                 InventoryBaseInfoDTO inventoryBaseInfoDTO = new InventoryBaseInfoDTO();
                 inventoryBaseInfoDTO.setSourceType(param.getSourceType());
