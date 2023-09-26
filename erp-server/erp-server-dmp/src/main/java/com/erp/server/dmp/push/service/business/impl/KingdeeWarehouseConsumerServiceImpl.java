@@ -81,6 +81,13 @@ public class KingdeeWarehouseConsumerServiceImpl implements KingdeeWarehouseCons
             operateApprove(apiUtils, platformEntity, map, type);
         }
 
+        /**
+         * 删除
+         */
+        if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            operateDelete(apiUtils,platformEntity,map,operate);
+        }
+
     }
 
 
@@ -134,12 +141,8 @@ public class KingdeeWarehouseConsumerServiceImpl implements KingdeeWarehouseCons
      * @date: 2023/5/24 17:57
      */
     public void operateDisapprove(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type) {
-        String syncKingdeeId = (String) map.get("syncKingdeeId");
-        if (StringUtils.isBlank(syncKingdeeId)) {
-            return;
-        }
         //反审核
-        kingdeeCommonService.unAudit(platformEntity, map, apiUtils, syncKingdeeId, type);
+        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, type);
         return;
     }
 
@@ -206,4 +209,12 @@ public class KingdeeWarehouseConsumerServiceImpl implements KingdeeWarehouseCons
         }
     }
 
+    /**
+     * 删除
+     */
+    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
+        //删除
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.WAREHOUSE_INFO.getCode(),operate);
+        return;
+    }
 }
