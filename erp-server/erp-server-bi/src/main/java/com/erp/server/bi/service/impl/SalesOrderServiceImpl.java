@@ -2382,14 +2382,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SeriesVO<Object>> seriesList = new ArrayList<>();
         List<String> categoryList = salesList.stream().map(SalesFlagVO::getCategory).distinct().collect(Collectors.toList());
         List<String> dateList = salesList.stream().map(SalesFlagVO::getName).distinct().collect(Collectors.toList());
-        Map<String, List<SalesFlagVO>> listDateMap = salesList.stream().collect(Collectors.groupingBy(SalesFlagVO::getName));
         for (String category : categoryList) {
             SeriesVO<Object> sales = new SeriesVO();
-            DateSalesTrendDTO.StackedColumnChartDTO columnChartDTO = new DateSalesTrendDTO.StackedColumnChartDTO();
-            List<BigDecimal> list = new ArrayList<>();
+            List<Object> list = new ArrayList<>();
             sales.setName(category);
             sales.setType(ChartType.BAR);
-            columnChartDTO.setCategory(category);
 
             List<SalesFlagVO> salesFlagVOList = salesList.stream().filter(req -> req.getCategory().equals(category)).collect(Collectors.toList());
             for (String date : dateList) {
@@ -2400,8 +2397,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     list.add(BigDecimal.ZERO);
                 }
             }
-            columnChartDTO.setDate(list);
-            sales.setData(Collections.singletonList(list));
+            sales.setData(list);
             seriesList.add(sales);
         }
         ChartVO chartVO = new ChartVO();
