@@ -55,6 +55,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -442,7 +444,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             noticeMsgInfoDTO.setReceiverUserIds(userIdList);
             noticeMsgInfoDTO.setTitle(NoticeMsgConstant.QC_BACK_FILL_PACK_HEAD);
             String msgContent = StrUtil.format(NoticeMsgConstant.QC_BACK_FILL_PACK_CONTENT,productPackDTO.getSkuNo(),productPackDTO.getProductSize(),
-                    productPackDTO.getBoxSize(),productPackDTO.getNetWeight(),productPackDTO.getBoxQty());
+                    productPackDTO.getBoxSize(),productPackDTO.getNetWeight(),productPackDTO.getBoxQty(), LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             noticeMsgInfoDTO.setContent(msgContent);
             noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
