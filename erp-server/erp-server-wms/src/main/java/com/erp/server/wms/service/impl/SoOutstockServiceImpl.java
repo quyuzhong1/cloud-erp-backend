@@ -164,16 +164,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_92029);
         }
-        //来源明细id  来源发货通知单
-        List<String> sourceDetailIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSourceDetailId).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(sourceDetailIdList)) {
-            throw new ServiceException("来源明细不能为空");
-        }
-        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listByIds(sourceDetailIdList);
-        //这个是销售订单详情id
-        List<String> soDetailIdList = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).collect(Collectors.toList());
         //销售订单详情集合
-        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(soDetailIdList);
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(dto.getSoId()));
         if (CollectionUtils.isEmpty(soDetailList)) {
             throw new ServiceException("销售订单详情不存在");
         }
@@ -188,7 +180,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.ERROR_92003);
         }
         //销售订单的总金额
-        BigDecimal soAmount = soDetailList.stream().map(SoDetailEntity::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal soAmount = BigDecimal.ZERO;
+        for (SoDetailEntity soDetail : soDetailList) {
+            soAmount = soAmount.add(MathUtil.multiply(soDetail.getPrice(), soDetail.getQty()));
+        }
         //出库金额
         BigDecimal outStockAmount = BigDecimal.ZERO;
         for (SoOutstockDetailDTO.AddDTO item : detailList) {
@@ -982,16 +977,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (StringUtils.isBlank(sourceType)) {
             sourceType = SourceTypeEnum.SELF_ADD.getCode();
         }
-        //来源明细id  来源发货通知单
-        List<String> sourceDetailIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSourceDetailId).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(sourceDetailIdList)) {
-            throw new ServiceException("来源明细不能为空");
-        }
-        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listByIds(sourceDetailIdList);
-        //这个是销售订单详情id
-        List<String> soDetailIdList = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).collect(Collectors.toList());
+
         //销售订单详情集合
-        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(soDetailIdList);
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(dto.getSoId()));
         if (CollectionUtils.isEmpty(soDetailList)) {
             throw new ServiceException("销售订单详情不存在");
         }
@@ -1011,7 +999,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         //销售订单的总金额
-        BigDecimal soAmount = soDetailList.stream().map(SoDetailEntity::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal soAmount = BigDecimal.ZERO;
+        for (SoDetailEntity soDetail : soDetailList) {
+            soAmount = soAmount.add(MathUtil.multiply(soDetail.getPrice(), soDetail.getQty()));
+        }
         //出库金额
         BigDecimal outStockAmount = BigDecimal.ZERO;
         for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
