@@ -68,6 +68,10 @@
                 </foreach>
                 )
             </if>
+            <!-- 是否新品 -->
+            <if test="params.newSign!=null" >
+                AND i.new_sign =#{params.newSign}
+            </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
                 AND i.sku_no IN
@@ -144,6 +148,10 @@
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
+            </if>
+            <!-- 是否新品 -->
+            <if test="params.newSign!=null" >
+                AND i.new_sign =#{params.newSign}
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">

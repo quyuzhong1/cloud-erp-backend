@@ -2,6 +2,8 @@ package com.erp.model.bi.dto;
 
 import java.math.BigDecimal;
 
+import com.common.business.validator.AddGroup;
+import com.common.business.validator.UpdateGroup;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -228,7 +230,7 @@ public class BiTargetSkuSettingDTO implements Serializable {
         /**
          * 是否汇总品类  true 汇总 false 不汇总
          */
-        @NotNull(message = "是否汇总品类不能为空")
+        @NotNull(message = "是否汇总品类不能为空",groups = AddGroup.class)
         private Boolean isGatherCategory;
 
 

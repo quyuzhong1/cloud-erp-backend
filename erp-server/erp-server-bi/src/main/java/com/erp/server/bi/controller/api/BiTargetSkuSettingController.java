@@ -4,6 +4,7 @@ package com.erp.server.bi.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.UpdateGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogViewService;
@@ -82,7 +83,7 @@ public class BiTargetSkuSettingController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "SKU目标设置添加")
-    public ApiResult<String> add(@RequestBody @Validated BiTargetSkuSettingDTO.AddDTO dto) {
+    public ApiResult<String> add(@RequestBody @Validated(value = {UpdateGroup.class})   BiTargetSkuSettingDTO.AddDTO dto) {
         return success(biTargetSkuSettingService.add(dto));
     }
 
