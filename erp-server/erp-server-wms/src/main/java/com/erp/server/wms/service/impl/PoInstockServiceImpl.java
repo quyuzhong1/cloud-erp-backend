@@ -1413,7 +1413,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     if (MathUtil.compareTo(parentQty,hasInstockInQty) == MathUtil.ZERO) {
                         //领料超出数量
                         Integer  exceedQty =  subDetail.getDeliveryQty() - childQty;
-                        thisChildQty = thisChildQty + exceedQty;
+                        thisChildQty = thisChildQty + (MathUtil.compareTo(exceedQty,MathUtil.ZERO) > MathUtil.ZERO ? exceedQty : MathUtil.ZERO);
                     }
                 }
                 //操作请求实体
