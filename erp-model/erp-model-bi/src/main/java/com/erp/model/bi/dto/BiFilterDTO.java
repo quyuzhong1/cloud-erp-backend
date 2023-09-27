@@ -7,7 +7,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -52,6 +51,10 @@ public class BiFilterDTO extends SortDTO {
      */
 //    @NotNull(message = "区间类型不能为空")
     private Integer rangeType;
+    /**
+     * 数据类型  1销售额 2销量
+     */
+    private Integer dataType;
     /**
      * 1 新品
      * 0 老品

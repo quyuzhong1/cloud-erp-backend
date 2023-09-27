@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 /**
- *
  * @Author Cloud
  * @Date 2023/2/6 12:04
  **/
@@ -32,7 +31,7 @@ public class GyyPullServiceTest {
 
 
     @Test
-    public void pullDeliveryTest(){
+    public void pullDeliveryTest() {
         GyyDeliveryDetailServiceImpl gyyOrderInfoService = new GyyDeliveryDetailServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_DELIVERY_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
@@ -56,7 +55,7 @@ public class GyyPullServiceTest {
     }
 
     @Test
-    public void pullSalesTest(){
+    public void pullSalesTest() {
         GyyOrderInfoServiceImpl gyyOrderInfoService = new GyyOrderInfoServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_HISTORY_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
@@ -79,8 +78,35 @@ public class GyyPullServiceTest {
         }
     }
 
+    /**
+     * 近7天数据拉取
+     */
     @Test
-    public void pullRefundSalesTest(){
+    public void pullOrderTest() {
+        GyyOrderInfoServiceImpl gyyOrderInfoService = new GyyOrderInfoServiceImpl();
+        PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_GET;
+        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+        jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
+        jobTaskDTO.setPlatformApiId("7");
+        jobTaskDTO.setApiName("管易云查询订单列表");
+        jobTaskDTO.setId("32");
+        jobTaskDTO.setIntervalTime(1800);
+        jobTaskDTO.setLastTime(LocalDateTime.of(2023, 9, 25, 0, 0));
+        jobTaskDTO.setNextTime(LocalDateTime.of(2023, 9, 26, 0, 0));
+        jobTaskDTO.setDictPlatform("1");
+        jobTaskDTO.setStatus(1);
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setPlatformApiEnum(platformApiEnum);
+        requestDTO.setJobTaskDTO(jobTaskDTO);
+        try {
+            gyyOrderInfoService.pullDataSave(requestDTO);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void pullRefundSalesTest() {
         GyyRefundServiceImpl gyyOrderInfoService = new GyyRefundServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_REFUND_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
@@ -105,7 +131,7 @@ public class GyyPullServiceTest {
 
 
     @Test
-    public void pullReturnSalesTest(){
+    public void pullReturnSalesTest() {
         GyyReturnOrderInfoServiceImpl gyyOrderInfoService = new GyyReturnOrderInfoServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_RETURN_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
@@ -129,7 +155,7 @@ public class GyyPullServiceTest {
     }
 
     @Test
-    public void pullKingdeeDeliveryTest(){
+    public void pullKingdeeDeliveryTest() {
         GyyDeliveryDetailServiceImpl gyyOrderInfoService = new GyyDeliveryDetailServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.SAL_OUTSTOCK;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
@@ -153,7 +179,7 @@ public class GyyPullServiceTest {
     }
 
     @Test
-    public void pullKingdeeEccShopTest(){
+    public void pullKingdeeEccShopTest() {
         KingdeeEccShopServiceImpl shopService = new KingdeeEccShopServiceImpl();
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(PlatformApiEnum.ECC_SHOP.getTaskName());
@@ -171,16 +197,17 @@ public class GyyPullServiceTest {
         try {
             List<KingdeeEccShopEntity> kingdeeEccShopEntities = shopService.pullDate(requestDTO);
             System.out.println("kingdeeEccShopEntities = " + kingdeeEccShopEntities);
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Resource(name = "pullErpOpenApi")
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+
     @Test
-    public void testTreadPool(){
-        IntStream.range(0, 500).forEach(x -> threadPoolTaskExecutor.execute(() ->{
+    public void testTreadPool() {
+        IntStream.range(0, 500).forEach(x -> threadPoolTaskExecutor.execute(() -> {
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
