@@ -15,7 +15,9 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.RedisService;
+import com.common.business.vo.ChartVO;
 import com.common.business.vo.PagingVO;
+import com.common.business.vo.SeriesVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -39,6 +41,7 @@ import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.bi.constant.ChartType;
 import com.erp.server.bi.enums.OrderStateEnum;
 import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.listener.DmpOrderInfoExcelListener;
@@ -150,14 +153,32 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    public List<SalesPriceRangeVO> salePriceDistribution(BiFilterDTO dto) {
+    public StatisticalDataVO salePriceDistribution(BiFilterDTO dto) {
+        StatisticalDataVO statistical = new StatisticalDataVO();
+        statistical.setChartType(ChartType.BAR);
+        statistical.setName("销售单价分布");
+        Integer dataType;
+        if (Objects.isNull(dto.getDataType())){
+            dataType = 1;
+        } else {
+            dataType = dto.getDataType();
+        }
+        ChartVO chart = new ChartVO();
         List<SalePriceDistributionVO> salePriceDistributionVOS = baseMapper.salePriceDistribution(dto);
         //获取区间列表
         List<SalesPriceRangeVO> rangeVOS = getRangeList(dto.getRangeType());
-        BigDecimal totalSaleAmount = salePriceDistributionVOS.stream().filter(v -> Objects.nonNull(v.getSaleAmount()))
-                .map(SalePriceDistributionVO::getSaleAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        int totalSalesQuantity = salePriceDistributionVOS.stream().filter(v -> 0 != v.getSalesQuantity()).mapToInt(SalePriceDistributionVO::getSalesQuantity).sum();
+        List<String> xAxisList = rangeVOS.stream().map(e -> e.getStartValue() + "," + e.getEndValue()).collect(Collectors.toList());
+//        BigDecimal totalSaleAmount = salePriceDistributionVOS.stream().filter(v -> Objects.nonNull(v.getSaleAmount()))
+//                .map(SalePriceDistributionVO::getSaleAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+//        int totalSalesQuantity = salePriceDistributionVOS.stream().filter(v -> 0 != v.getSalesQuantity()).mapToInt(SalePriceDistributionVO::getSalesQuantity).sum();
         BigDecimal maxSellPrice = salePriceDistributionVOS.stream().map(SalePriceDistributionVO::getSellPrice).max(BigDecimal::compareTo).get();
+        SeriesVO series = new SeriesVO();
+        if (2 == dataType){
+            series.setName("销量");
+        }else {
+            series.setName("销售额");
+        }
+        List<String> dataList = new ArrayList<>(rangeVOS.size());
         //根据区间进行汇总
         rangeVOS.forEach(salesPriceRangeVO -> {
             //防止最后范围统计不到最大单价
@@ -167,20 +188,30 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             List<SalePriceDistributionVO> vos = salePriceDistributionVOS.stream().filter(v -> Objects.nonNull(v.getSellPrice()))
                     .filter(v -> (v.getSellPrice().intValue() >= salesPriceRangeVO.getStartValue()
                             && v.getSellPrice().intValue() < salesPriceRangeVO.getEndValue())).collect(Collectors.toList());
-            salesPriceRangeVO.setSaleAmount(vos.stream().filter(v -> v.getSaleAmount().compareTo(BigDecimal.ZERO) != 0).map(SalePriceDistributionVO::getSaleAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
-            if (totalSaleAmount.compareTo(BigDecimal.ZERO) != 0) {
-                salesPriceRangeVO.setSaleAmountRate(salesPriceRangeVO.getSaleAmount().divide(totalSaleAmount, 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString() + "%");
-            } else {
-                salesPriceRangeVO.setSaleAmountRate("0%");
+            if (2 == dataType){
+                int count = vos.stream().mapToInt(SalePriceDistributionVO::getSalesQuantity).sum();
+                dataList.add(String.valueOf(count));
+            }else {
+                BigDecimal count = vos.stream().map(SalePriceDistributionVO::getSaleAmount).filter(saleAmount -> saleAmount.compareTo(BigDecimal.ZERO) != 0).reduce(BigDecimal.ZERO, BigDecimal::add);
+                dataList.add(count.stripTrailingZeros().toPlainString());
             }
-            salesPriceRangeVO.setSalesQuantity(vos.stream().mapToInt(SalePriceDistributionVO::getSalesQuantity).sum());
-            if (0 != totalSalesQuantity) {
-                salesPriceRangeVO.setSalesQuantityRate(BigDecimal.valueOf(salesPriceRangeVO.getSalesQuantity()).divide(BigDecimal.valueOf(totalSalesQuantity), 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString() + "%");
-            } else {
-                salesPriceRangeVO.setSalesQuantityRate("0%");
-            }
+//            salesPriceRangeVO.setSaleAmount(vos.stream().filter(v -> v.getSaleAmount().compareTo(BigDecimal.ZERO) != 0).map(SalePriceDistributionVO::getSaleAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
+//            if (totalSaleAmount.compareTo(BigDecimal.ZERO) != 0) {
+//                salesPriceRangeVO.setSaleAmountRate(salesPriceRangeVO.getSaleAmount().divide(totalSaleAmount, 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString() + "%");
+//            } else {
+//                salesPriceRangeVO.setSaleAmountRate("0%");
+//            }
+//            salesPriceRangeVO.setSalesQuantity(vos.stream().mapToInt(SalePriceDistributionVO::getSalesQuantity).sum());
+//            if (0 != totalSalesQuantity) {
+//                salesPriceRangeVO.setSalesQuantityRate(BigDecimal.valueOf(salesPriceRangeVO.getSalesQuantity()).divide(BigDecimal.valueOf(totalSalesQuantity), 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString() + "%");
+//            } else {
+//                salesPriceRangeVO.setSalesQuantityRate("0%");
+//            }
         });
-        return rangeVOS;
+        chart.setSeries(dataList);
+        chart.setXAxis(xAxisList);
+        statistical.setData(chart);
+        return statistical;
     }
 
     private List<SalesPriceRangeVO> getRangeList(Integer rangeType) {
