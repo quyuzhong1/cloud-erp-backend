@@ -24,13 +24,17 @@ import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.plm.dto.BasicCategoryDTO;
+import com.erp.model.plm.entity.ProjectRoleEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.listener.BiTargetShopSettingExcelListener;
 import com.erp.server.bi.listener.BiTargetSkuSettingExcelListener;
 import com.erp.server.bi.mapper.BiTargetSkuSettingMapper;
 import com.erp.server.bi.service.BiProductDetailService;
+import com.erp.server.bi.service.BiTargetCategorySettingService;
 import com.erp.server.bi.service.BiTargetSkuSettingService;
 import com.erp.server.bi.service.BiTargetYearService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -38,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -74,6 +79,12 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
     @Autowired
     private BiProductDetailService biProductDetailService;
 
+    @Autowired
+    private BiTargetCategorySettingService biTargetCategorySettingService;
+
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -89,9 +100,140 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
         if (!save) {
             throw new ServiceException("sku 目标设置单保存失败");
         }
+
         //添加明细
         this.batchAdd(targetYear.getId(), detailList);
+        //是否汇总分类
+        if (addDTO.getIsGatherCategory()) {
+            autoCreateCategorySetting(addDTO);
+        }
         return targetYear.getId();
+    }
+
+    /**
+     * 自动创建分类设置 值
+     *
+     * @param addDTO
+     * @return void
+     * @author yl
+     * @date 2023-09-26 18:21
+     */
+    public void autoCreateCategorySetting(BiTargetSkuSettingDTO.AddDTO addDTO) {
+        BiTargetCategorySettingDTO.AddDTO categorySetting = new BiTargetCategorySettingDTO.AddDTO();
+        BeanMapperUtils.copy(addDTO, categorySetting);
+        //sku 详情
+        List<BiTargetSkuSettingDTO.CommonDTO> skuDetailList = addDTO.getDetailList();
+        List<String> skuIdList = skuDetailList.stream().map(BiTargetSkuSettingDTO.CommonDTO::getSkuId).collect(Collectors.toList());
+        List<SkuSalesDTO.ProductSkuDTO> productSkuList = biProductDetailService.listProductSkuBySkuIdList(skuIdList);
+        Map<MetricsEnum, List<BiTargetSkuSettingDTO.CommonDTO>> map = skuDetailList.stream().
+                collect(Collectors.groupingBy(BiTargetSkuSettingDTO.CommonDTO::getMetrics));
+        //品类集合
+        List<BasicCategoryDTO> categoryList = plmTaskFeign.listCategoryTree();
+        List<BiTargetCategorySettingDTO.CommonDTO> addCategoryDetailList = new ArrayList<>(10);
+        for (BasicCategoryDTO item : categoryList) {
+            String categoryId = item.getId();
+            List<String> categoryIdsList = new ArrayList<>(10);
+            getChildrenCategoryIds(item, categoryIdsList);
+            List<String> categorySkuIdList = productSkuList.stream().filter(p -> categoryIdsList.contains(p.getCategoryId())).
+                    map(SkuSalesDTO.ProductSkuDTO::getSkuId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(categorySkuIdList)) {
+                for (Map.Entry<MetricsEnum, List<BiTargetSkuSettingDTO.CommonDTO>> mapItem : map.entrySet()) {
+                    MetricsEnum metricsEnum = mapItem.getKey();
+                    List<BiTargetSkuSettingDTO.CommonDTO> mapSkuSettingList = mapItem.getValue();
+                    //一月
+                    BigDecimal january = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
+                                    s.getJanuary()!=null).
+                            map(BiTargetSkuSettingDTO.CommonDTO::getJanuary).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BiTargetCategorySettingDTO.CommonDTO addCommon = new BiTargetCategorySettingDTO.CommonDTO();
+                    addCommon.setCategoryId(categoryId);
+                    addCommon.setMetrics(metricsEnum);
+                    addCommon.setJanuary(january);
+                    //二月
+                    BigDecimal february = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
+                                    s.getFebruary()!=null).
+                            map(BiTargetSkuSettingDTO.CommonDTO::getFebruary).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    addCommon.setFebruary(february);
+                    //三月
+                    BigDecimal march = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
+                                    s.getMarch()!=null).
+                            map(BiTargetSkuSettingDTO.CommonDTO::getMarch).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    addCommon.setMarch(march);
+                    //四月
+                    BigDecimal april = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
+                                    s.getApril()!=null).
+                            map(BiTargetSkuSettingDTO.CommonDTO::getApril).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    addCommon.setApril(april);
+                    //五月
+                    BigDecimal may = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
+                                    s.getMay()!=null).
+                            map(BiTargetSkuSettingDTO.CommonDTO::getMay).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    addCommon.setMay(may);
+                    //六月
+                    BigDecimal june = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
+                                    s.getJune()!=null).
+                            map(BiTargetSkuSettingDTO.CommonDTO::getJune).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    addCommon.setJune(june);
+                    //七月
+                    BigDecimal july = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
+                                    s.getJuly()!=null).
+                            map(BiTargetSkuSettingDTO.CommonDTO::getJuly).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    addCommon.setJuly(july);
+                    //八月
+                    BigDecimal august = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
+                                    s.getAugust()!=null).
+                            map(BiTargetSkuSettingDTO.CommonDTO::getAugust).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    addCommon.setAugust(august);
+                    //九月
+                    BigDecimal september = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
+                                    s.getSeptember()!=null).
+                            map(BiTargetSkuSettingDTO.CommonDTO::getSeptember).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    addCommon.setSeptember(september);
+                    //十月
+                    BigDecimal october = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
+                                    s.getOctober()!=null).
+                            map(BiTargetSkuSettingDTO.CommonDTO::getOctober).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    addCommon.setOctober(october);
+                    //十一月
+                    BigDecimal november = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
+                                    s.getNovember()!=null).
+                            map(BiTargetSkuSettingDTO.CommonDTO::getNovember).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    addCommon.setNovember(november);
+                    //十二月
+                    BigDecimal december = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
+                                    s.getDecember()!=null).
+                            map(BiTargetSkuSettingDTO.CommonDTO::getDecember).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    addCommon.setDecember(december);
+
+                    addCategoryDetailList.add(addCommon);
+
+                }
+
+
+            }
+
+        }
+
+
+        categorySetting.setDetailList(addCategoryDetailList);
+        biTargetCategorySettingService.add(categorySetting);
+    }
+
+    /**
+     * 獲取到所有的子类
+     *
+     * @param item
+     * @return
+     */
+    private void getChildrenCategoryIds(BasicCategoryDTO item, List<String> resultList) {
+        List<BasicCategoryDTO> childrenListList = item.getChildrenList();
+        if (CollectionUtils.isNotEmpty(childrenListList)) {
+            List<String> list = childrenListList.stream().map(BasicCategoryDTO::getId).collect(Collectors.toList());
+            resultList.addAll(list);
+            for (BasicCategoryDTO itemChildren : childrenListList) {
+                getChildrenCategoryIds(itemChildren, resultList);
+            }
+        }
+
     }
 
     /**
@@ -534,75 +676,75 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
             BigDecimal january = item.getJanuary();
             if (Objects.nonNull(january)) {
                 Integer januaryMoth = MonthEnum.JANUARY.getValue();
-                putListDetailDTO(existList, skuId, metrics, januaryMoth, existSku,action);
+                putListDetailDTO(existList, skuId, metrics, januaryMoth, existSku, action);
             }
             //二月
             BigDecimal february = item.getFebruary();
             if (Objects.nonNull(february)) {
                 Integer februaryMoth = MonthEnum.FEBRUARY.getValue();
-                putListDetailDTO(existList, skuId, metrics, februaryMoth, existSku,action);
+                putListDetailDTO(existList, skuId, metrics, februaryMoth, existSku, action);
             }
             //三月
             BigDecimal march = item.getMarch();
             if (Objects.nonNull(march)) {
                 Integer marchMoth = MonthEnum.MARCH.getValue();
-                putListDetailDTO(existList, skuId, metrics, marchMoth, existSku,action);
+                putListDetailDTO(existList, skuId, metrics, marchMoth, existSku, action);
             }
             //四月
             BigDecimal april = item.getApril();
             if (Objects.nonNull(april)) {
                 Integer aprilMoth = MonthEnum.APRIL.getValue();
-                putListDetailDTO(existList, skuId, metrics, aprilMoth, existSku,action);
+                putListDetailDTO(existList, skuId, metrics, aprilMoth, existSku, action);
             }
             //五月
             BigDecimal may = item.getMay();
             if (Objects.nonNull(may)) {
                 Integer mayMoth = MonthEnum.MAY.getValue();
-                putListDetailDTO(existList, skuId, metrics, mayMoth, existSku,action);
+                putListDetailDTO(existList, skuId, metrics, mayMoth, existSku, action);
             }
             //六月
             BigDecimal june = item.getJune();
             if (Objects.nonNull(june)) {
                 Integer juneMoth = MonthEnum.JUNE.getValue();
-                putListDetailDTO(existList, skuId, metrics, juneMoth, existSku,action);
+                putListDetailDTO(existList, skuId, metrics, juneMoth, existSku, action);
             }
             //七月
             BigDecimal july = item.getJuly();
             if (Objects.nonNull(july)) {
                 Integer julyMoth = MonthEnum.JULY.getValue();
-                putListDetailDTO(existList, skuId, metrics, julyMoth, existSku,action);
+                putListDetailDTO(existList, skuId, metrics, julyMoth, existSku, action);
             }
             //八月
             BigDecimal august = item.getAugust();
             if (Objects.nonNull(august)) {
                 Integer augustMoth = MonthEnum.AUGUST.getValue();
-                putListDetailDTO(existList, skuId, metrics, augustMoth, existSku,action);
+                putListDetailDTO(existList, skuId, metrics, augustMoth, existSku, action);
             }
             //九月
             BigDecimal september = item.getSeptember();
             if (Objects.nonNull(september)) {
                 Integer septemberMoth = MonthEnum.SEPTEMBER.getValue();
-                putListDetailDTO(existList, skuId, metrics, septemberMoth, existSku,action);
+                putListDetailDTO(existList, skuId, metrics, septemberMoth, existSku, action);
             }
             //十月
             BigDecimal october = item.getOctober();
             if (Objects.nonNull(october)) {
                 Integer octoberMoth = MonthEnum.OCTOBER.getValue();
-                putListDetailDTO(existList, skuId, metrics, octoberMoth, existSku,action);
+                putListDetailDTO(existList, skuId, metrics, octoberMoth, existSku, action);
             }
 
             //十一月
             BigDecimal november = item.getNovember();
             if (Objects.nonNull(november)) {
                 Integer novemberMoth = MonthEnum.NOVEMBER.getValue();
-                putListDetailDTO(existList, skuId, metrics, novemberMoth, existSku,action);
+                putListDetailDTO(existList, skuId, metrics, novemberMoth, existSku, action);
             }
 
             //十二月
             BigDecimal december = item.getDecember();
             if (Objects.nonNull(december)) {
                 Integer decemberMoth = MonthEnum.DECEMBER.getValue();
-                putListDetailDTO(existList, skuId, metrics, decemberMoth, existSku,action);
+                putListDetailDTO(existList, skuId, metrics, decemberMoth, existSku, action);
             }
         }
         if (CollectionUtils.isNotEmpty(existSku)) {
@@ -623,7 +765,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
         }
     }
 
-    private void putListDetailDTO(List<BiTargetSkuSettingDTO.ListDetailDTO> existList, String skuId, MetricsEnum metrics, Integer month,List<String> existSku, LogActionEnum action) {
+    private void putListDetailDTO(List<BiTargetSkuSettingDTO.ListDetailDTO> existList, String skuId, MetricsEnum metrics, Integer month, List<String> existSku, LogActionEnum action) {
         //添加的
         if (LogActionEnum.INSERT.equals(action)) {
             BiTargetSkuSettingDTO.ListDetailDTO exist = existList.stream().filter(e ->
@@ -637,7 +779,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
             //修改的
             List<BiTargetSkuSettingDTO.ListDetailDTO> list = existList.stream().filter(e ->
                     e.getSkuId().equals(skuId) &&
-                            e.getMetrics().equals(metrics)&&
+                            e.getMetrics().equals(metrics) &&
                             e.getMonth().equals(month)
             ).collect(Collectors.toList());
             if (list.size() > 1) {
