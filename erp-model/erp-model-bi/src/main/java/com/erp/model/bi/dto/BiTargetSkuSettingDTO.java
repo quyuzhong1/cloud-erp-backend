@@ -191,11 +191,7 @@ public class BiTargetSkuSettingDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends BiTargetYearDTO.AddDTO {
 
-        /**
-         * 是否汇总品类  true 汇总 false 不汇总
-         */
-        @NotNull(message = "是否汇总品类不能为空")
-        private Boolean isGatherCategory;
+
 
         @Size(min = 1, message = "目标设置不能为空")
         @NotNull(message = "目标设置不能为空")
@@ -228,6 +224,12 @@ public class BiTargetSkuSettingDTO implements Serializable {
         private String skuId;
 
         private String skuNo;
+
+        /**
+         * 是否汇总品类  true 汇总 false 不汇总
+         */
+        @NotNull(message = "是否汇总品类不能为空")
+        private Boolean isGatherCategory;
 
 
     }
