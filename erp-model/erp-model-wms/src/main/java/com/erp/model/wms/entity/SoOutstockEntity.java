@@ -9,6 +9,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -104,6 +105,12 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
      */
     @TableField("pack_date")
     private LocalDate packDate;
+
+    /**
+     * 整单折扣额
+     */
+    @TableField("total_discount_amount")
+    private BigDecimal totalDiscountAmount;
 
     /**
      * 实际发货日期
