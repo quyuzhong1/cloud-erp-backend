@@ -69,6 +69,7 @@ public class BiTargetNewProductSettingDTO implements Serializable {
 
         private String staffName;
 
+        private String staffId;
 
 
         /**

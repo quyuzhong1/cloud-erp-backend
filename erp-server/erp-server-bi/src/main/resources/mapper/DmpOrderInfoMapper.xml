@@ -230,7 +230,7 @@
         </if>
         /*平台*/
         <if test="params.platform!=null and params.platform.size>0">
-            AND doi.platform_name IN
+            AND doi.source_platform IN
             <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
                 #{platform}
             </foreach>
@@ -291,7 +291,7 @@
         </if>
         /*平台*/
         <if test="params.platform!=null and params.platform.size>0">
-            AND doi.platform_name IN
+            AND doi.source_platform IN
             <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
                 #{platform}
             </foreach>
@@ -353,7 +353,7 @@
              COALESCE(SUM(doit.amount_after), 0)
          </if>
          <if test="null != params.settleMethod and params.settleMethod == 1">
-             COALESCE(SUM(doit.amount_after * COALESCE(doit.settle_rate, 0)), 0)
+             COALESCE(SUM(doit.amount_after * COALESCE(doit.cny_settle_rate, 0)), 0)
          </if>
           AS salesAmount
         FROM dmp_order_info  AS doi
@@ -407,7 +407,7 @@
     <select id="listSalesAmountBiFilter" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
         select
              ${viewParams.viewData},
-             sum(COALESCE(doit.quantity,0) * COALESCE(doit.amount_after,0) * COALESCE(doit.currency_rate,1))as value
+             sum(COALESCE(doit.amount_after,0) * COALESCE(doit.currency_rate,1))as value
         from dmp_order_info doi
         left join dmp_order_item doit on doi.id = doit.order_id
         left join product_detail AS pd on doit.sku_no = pd.sku_no
@@ -440,7 +440,7 @@
         sum(doit.totalAmount - COALESCE(dri.refund_amount, 0) * COALESCE(dri.currency_rate,1)) as value
         from dmp_order_info doi
         inner join (
-            select order_id,sum(COALESCE(quantity,0) * COALESCE(amount_after,0) * COALESCE(currency_rate,1)) as totalAmount from dmp_order_item  group by order_id) doit on doi.id = doit.order_id
+            select order_id,sum(COALESCE(amount_after,0) * COALESCE(currency_rate,1)) as totalAmount from dmp_order_item  group by order_id) doit on doi.id = doit.order_id
         left join dmp_refund_info dri on doi.platform_order_id = dri.platform_order_id
         <where>
             <include refid="base_where_sql"/>

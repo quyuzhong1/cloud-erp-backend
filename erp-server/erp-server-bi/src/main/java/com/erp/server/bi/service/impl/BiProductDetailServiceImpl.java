@@ -2,6 +2,7 @@ package com.erp.server.bi.service.impl;
 
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.bi.dto.BiCategoryDTO;
+import com.erp.model.bi.dto.SkuSalesDTO;
 import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.entity.BiProductInfoEntity;
 import com.erp.model.bi.vo.SkuCategoryVO;
@@ -151,9 +152,26 @@ public class BiProductDetailServiceImpl extends SuperServiceImpl<BiProductDetail
 
     @Override
     public List<SkuDetailVO> getSkuIdBySkuNo(List<String> skuNos) {
-        if (CollectionUtils.isEmpty(skuNos)){
+        if (CollectionUtils.isEmpty(skuNos)) {
             return Collections.emptyList();
         }
         return baseMapper.getSkuIdBySkuNo(skuNos);
+    }
+
+
+    /**
+     * 获取到sku信息
+     *
+     * @param skuIdList
+     * @return java.util.List<com.erp.model.bi.dto.SkuSalesDTO.ProductSkuDTO>
+     * @author yl
+     * @date 2023-09-26 18:51
+     */
+    @Override
+    public List<SkuSalesDTO.ProductSkuDTO> listProductSkuBySkuIdList(List<String> skuIdList) {
+        if (CollectionUtils.isEmpty(skuIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listProductSkuBySkuIdList(skuIdList);
     }
 }

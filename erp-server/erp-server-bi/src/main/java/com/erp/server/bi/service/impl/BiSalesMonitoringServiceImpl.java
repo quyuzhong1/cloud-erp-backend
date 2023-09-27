@@ -135,9 +135,9 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
 
         } else {
             if (dto.getSearchType().equals(SalesMonitoringTypeEnum.CATEGORY.getCode())) {
-                resultList = this.baseMapper.listBiSalesMonitoringSalesQty(groupViewDTO,lastsMonth);
-            } else {
                 resultList = this.baseMapper.listBiSalesMonitoringSkuSalesQty(groupViewDTO,lastsMonth);
+            } else {
+                resultList = this.baseMapper.listBiSalesMonitoringSalesQty(groupViewDTO,lastsMonth);
             }
         }
         if (CollectionUtils.isEmpty(resultList)) {
@@ -501,43 +501,43 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         if (MathUtil.compareTo(entity.getLatestMonthValue(), BigDecimal.ZERO) > 0) {
             //大于等于
             if (BiCompareEnum.GREATER_THAN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值超过" + entity.getLatestMonthValue().setScale(2));
-                if (!(MathUtil.compareTo(entity.getLatestMonthValue(),sumSecondMonthSale) >= 0)) {
+                name = name.concat("(最新月基础值超过" + entity.getLatestMonthValue().setScale(2,2));
+                if (!(MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) >= 0)) {
                     return null;
                 }
             }
             //小于等于
             if (BiCompareEnum.LESS_THAN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值不超过" + entity.getLatestMonthValue().setScale(2));
-                if (!(MathUtil.compareTo(entity.getLatestMonthValue() ,sumSecondMonthSale) <= 0)) {
+                name = name.concat("(最新月基础值不超过" + entity.getLatestMonthValue().setScale(2,2));
+                if (!(MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) <= 0)) {
                     return null;
                 }
             }
             //大于
             if (BiCompareEnum.GREATER_THAN.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值超过" + entity.getLatestMonthValue().setScale(2));
-                if (!(MathUtil.compareTo(entity.getLatestMonthValue(), sumSecondMonthSale) > 0)) {
+                name = name.concat("(最新月基础值超过" + entity.getLatestMonthValue().setScale(2,2));
+                if (!(MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) > 0)) {
                     return null;
                 }
             }
             //小于
             if (BiCompareEnum.LESS_THAN.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值不超过" + entity.getLatestMonthValue().setScale(2));
-                if (!(MathUtil.compareTo(entity.getLatestMonthValue(),sumSecondMonthSale) < 0)) {
+                name = name.concat("(最新月基础值不超过" + entity.getLatestMonthValue().setScale(2,2));
+                if (!(MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) < 0)) {
                     return null;
                 }
             }
             //连续两个月大于等于
             if (BiCompareEnum.TOW_MONTH_GREATER_THEN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值超过" + entity.getLatestMonthValue().setScale(2));
-                if (!(MathUtil.compareTo(entity.getLatestMonthValue(), sumFirstMonthSale) >= MathUtil.ZERO && MathUtil.compareTo(entity.getLatestMonthValue(), sumSecondMonthSale) >= MathUtil.ZERO)) {
+                name = name.concat("(最新月基础值超过" + entity.getLatestMonthValue().setScale(2,2));
+                if (!(MathUtil.compareTo(sumFirstMonthSale,entity.getLatestMonthValue()) >= MathUtil.ZERO && MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) >= MathUtil.ZERO)) {
                     return null;
                 }
             }
             //连续两个月小于等于
             if (BiCompareEnum.TOW_MONTH_LESS_THEN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值不超过" + entity.getLatestMonthValue().setScale(2));
-                if (!(MathUtil.compareTo(entity.getLatestMonthValue(),sumFirstMonthSale) <= MathUtil.ZERO && MathUtil.compareTo(entity.getLatestMonthValue(),sumSecondMonthSale) <= MathUtil.ZERO)) {
+                name = name.concat("(最新月基础值不超过" + entity.getLatestMonthValue().setScale(2,2));
+                if (!(MathUtil.compareTo(sumFirstMonthSale,entity.getLatestMonthValue()) <= MathUtil.ZERO && MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) <= MathUtil.ZERO)) {
                     return null;
                 }
             }
@@ -558,53 +558,53 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                 //大于等于
                 if (BiCompareEnum.GREATER_THAN_EQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
                     if (StringUtils.isNotBlank(name)) {
-                        name = name.concat("，环比超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
+                        name = name.concat("，环比超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
-                        name = name.concat("(环比超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
+                        name = name.concat("(环比超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     }
-                    if (!(MathUtil.compareTo(entity.getRelativeRatio(),radio) >= 0)) {
+                    if (!(MathUtil.compareTo(radio,entity.getRelativeRatio()) >= 0)) {
                         return null;
                     }
                 }
                 //小于等于
                 if (BiCompareEnum.LESS_THAN_EQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
                     if (StringUtils.isNotBlank(name)) {
-                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
+                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
-                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
+                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     }
-                    if (!(MathUtil.compareTo(entity.getRelativeRatio(),radio) <= 0)) {
+                    if (!(MathUtil.compareTo(radio,entity.getRelativeRatio()) <= 0)) {
                         return null;
                     }
                 }
                 //大于
                 if (BiCompareEnum.GREATER_THAN.getCode().equals(entity.getRelativeRatioCompare())) {
                     if (StringUtils.isNotBlank(name)) {
-                        name = name.concat("，环比超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
+                        name = name.concat("，环比超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
-                        name = name.concat("(环比超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
+                        name = name.concat("(环比超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     }
-                    if (!(MathUtil.compareTo(entity.getRelativeRatio(), radio) > 0)) {
+                    if (!(MathUtil.compareTo(radio,entity.getRelativeRatio()) > 0)) {
                         return null;
                     }
                 }
                 //小于
                 if (BiCompareEnum.LESS_THAN.getCode().equals(entity.getRelativeRatioCompare())) {
                     if (StringUtils.isNotBlank(name)) {
-                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
+                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
-                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
+                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     }
-                    if (!(MathUtil.compareTo(entity.getRelativeRatio(),radio) < 0)) {
+                    if (!(MathUtil.compareTo(radio,entity.getRelativeRatio()) < 0)) {
                         return null;
                     }
                 }
                 //连续两个月大于等于
                 if (BiCompareEnum.TOW_MONTH_GREATER_THEN_EQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
                     if (StringUtils.isNotBlank(name)) {
-                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
+                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
-                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
+                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     }
                     if (!(MathUtil.compareTo(radio, entity.getRelativeRatio()) >= 0 && MathUtil.compareTo(lastRadio, entity.getRelativeRatio()) >= 0) ) {
                         return null;
@@ -613,9 +613,9 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                 //连续两个月小于等于
                 if (BiCompareEnum.TOW_MONTH_LESS_THEN_EQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
                     if (StringUtils.isNotBlank(name)) {
-                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
+                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
-                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2).toString().concat("%"));
+                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     }
                     if (!(MathUtil.compareTo(radio, entity.getRelativeRatio()) <= 0 && MathUtil.compareTo(lastRadio, entity.getRelativeRatio()) <= 0) ) {
                         return null;

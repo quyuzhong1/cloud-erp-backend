@@ -153,6 +153,9 @@ public class BiComprehensiveAnalyseController extends BaseController {
     @PostMapping("/saleDetailDate")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
     public ApiResult<List<SaleDetailVO>> saleDetailDate(@RequestBody @Validated SkuDateFilterDTO biFilterDTO) {
+        biFilterDTO.setEndTime(biFilterDTO.getEndTime(), 1);
+        biFilterDTO.setTimeType(null == biFilterDTO.getTimeType() ? 0 : biFilterDTO.getTimeType());
+        biFilterDTO.setSettleMethod(null == biFilterDTO.getSettleMethod() ? 0 : biFilterDTO.getSettleMethod());
         List<SaleDetailVO> saleDetailVOList = biComprehensiveAnalyseService.saleDetailDate(biFilterDTO);
         return success(saleDetailVOList);
     }
@@ -167,6 +170,9 @@ public class BiComprehensiveAnalyseController extends BaseController {
     @PostMapping("/skuDateSaleTrend")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
     public ApiResult<List<SkuDateSaleTrendVO>> skuDateSaleTrend(@RequestBody @Validated SkuDateFilterDTO biFilterDTO) {
+        biFilterDTO.setEndTime(biFilterDTO.getEndTime(), 1);
+        biFilterDTO.setTimeType(null == biFilterDTO.getTimeType() ? 0 : biFilterDTO.getTimeType());
+        biFilterDTO.setSettleMethod(null == biFilterDTO.getSettleMethod() ? 0 : biFilterDTO.getSettleMethod());
         List<SkuDateSaleTrendVO> skuDateSaleTrendVOS = biComprehensiveAnalyseService.skuDateSaleTrend(biFilterDTO);
         return success(skuDateSaleTrendVOS);
     }

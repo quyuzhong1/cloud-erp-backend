@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,12 +24,10 @@ import javax.validation.constraints.Digits;
  *
  * @author Lambda
  * @since 2023-09-13
-*/
+ */
 @Data
 @NoArgsConstructor
 public class BiTargetSkuSettingDTO implements Serializable {
-
-
 
 
     /**
@@ -71,6 +70,7 @@ public class BiTargetSkuSettingDTO implements Serializable {
          */
         private String skuNo;
 
+        private String skuId;
 
         /**
          * 指标维度
@@ -151,11 +151,11 @@ public class BiTargetSkuSettingDTO implements Serializable {
     }
 
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO extends BiTargetYearDTO.ViewDTO{
+    public static class ViewDTO extends BiTargetYearDTO.ViewDTO {
 
         List<BiTargetSkuSettingDTO.DetailDTO> detailList;
 
@@ -183,12 +183,16 @@ public class BiTargetSkuSettingDTO implements Serializable {
         private List<CommonDTO> settingList;
 
     }
+
     /**
-    * 新增
-    */
+     * 新增
+     */
     @Data
     @NoArgsConstructor
     public static class AddDTO extends BiTargetYearDTO.AddDTO {
+
+
+
         @Size(min = 1, message = "目标设置不能为空")
         @NotNull(message = "目标设置不能为空")
         @Valid
@@ -197,8 +201,8 @@ public class BiTargetSkuSettingDTO implements Serializable {
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends BiTargetYearDTO.UpdateDTO {
@@ -212,7 +216,7 @@ public class BiTargetSkuSettingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class CommonDTO extends BiTargetYearDTO.MonthDTO{
+    public static class CommonDTO extends BiTargetYearDTO.MonthDTO {
         /**
          * 店铺id
          */
@@ -220,6 +224,12 @@ public class BiTargetSkuSettingDTO implements Serializable {
         private String skuId;
 
         private String skuNo;
+
+        /**
+         * 是否汇总品类  true 汇总 false 不汇总
+         */
+        @NotNull(message = "是否汇总品类不能为空")
+        private Boolean isGatherCategory;
 
 
     }
@@ -233,7 +243,7 @@ public class BiTargetSkuSettingDTO implements Serializable {
     public static class ImportDTO {
 
         /**
-         o      * 成功返回数据
+         * o      * 成功返回数据
          */
         private List<DetailDTO> successList;
 

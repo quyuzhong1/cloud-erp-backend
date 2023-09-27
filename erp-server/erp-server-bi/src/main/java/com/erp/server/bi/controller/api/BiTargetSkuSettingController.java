@@ -10,10 +10,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.bi.dto.BiTargetShopSettingDTO;
-import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
-import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
-import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.bi.dto.*;
 import com.erp.server.bi.service.BiTargetSkuSettingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -157,4 +154,5 @@ public class BiTargetSkuSettingController extends BaseController {
         Boolean result = biTargetSkuSettingService.delete(dto);
         return result ? success() : failure();
     }
+
 }

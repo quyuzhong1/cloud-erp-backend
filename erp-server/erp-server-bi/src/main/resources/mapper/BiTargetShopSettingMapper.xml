@@ -44,7 +44,7 @@
         temp.*
         FROM
         (
-        SELECT metrics,shop_name,main_id,
+        SELECT metrics,shop_id,min(shop_name) AS shopName,main_id,
         COALESCE(SUM ( CASE WHEN month = 1 THEN value ELSE NULL END )*${multiplyNum},NULL) AS january,
         COALESCE(SUM ( CASE WHEN month = 2 THEN value ELSE NULL END )*${multiplyNum},NULL) AS february,
         COALESCE(SUM ( CASE WHEN month = 3 THEN value ELSE NULL END )*${multiplyNum},NULL) AS march,
@@ -60,7 +60,7 @@
         FROM   bi_target_shop_setting
         WHERE  metrics=#{params.metrics}
         AND is_deleted = FALSE
-        GROUP BY metrics,shop_name,main_id
+        GROUP BY metrics,shop_id,main_id
         ) temp LEFT JOIN bi_target_year ty ON temp.main_id = ty.id
         WHERE ty.is_deleted=false
         <if test="params.year !=null and params.year!=''">

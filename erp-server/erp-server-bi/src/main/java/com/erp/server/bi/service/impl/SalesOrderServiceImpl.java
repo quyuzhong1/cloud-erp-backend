@@ -25,6 +25,7 @@ import com.erp.model.bi.enums.TargetMetricsSearchTypeEnum;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.SkuDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.vo.ProductRefLabelVO;
@@ -1291,11 +1292,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     @Override
     public StatisticalDataVO byCategory(BiCategoryDTO.FirstCategoryParamsDTO dto) {
         //获取到一级类目列表
-        List<BasicCategoryEntity> categoryList = plmTaskFeign.listParentCategory();
-        List<String> categoryIdList = categoryList.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
-        dto.setCategoryIdList(categoryIdList);
-        //查询sku 分类以及分类下对应的skuno
-        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList(categoryIdList);
+        List<BasicCategoryDTO> categoryList = plmTaskFeign.listCategoryTree();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
         LocalDateTime paramsEndTime = dto.getEndTime();
@@ -1305,16 +1302,17 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         statistical.setChartType(ChartType.BAR);
         statistical.setName("销售品类排行");
         ChartVO chart = new ChartVO();
-        List<String> xAxisList = categoryList.stream().map(BasicCategoryEntity::getName).collect(Collectors.toList());
+        List<String> xAxisList = categoryList.stream().map(BasicCategoryDTO::getName).collect(Collectors.toList());
         List<SeriesVO<Object>> seriesList = new ArrayList<>(10);
         //只有一个柱子
         SeriesVO<Object> series = new SeriesVO();
         series.setName("品类销售额");
         List<Object> dataList = new ArrayList<>(10);
-        for (SkuCategoryVO item : skuCategoryList) {
-            List<String> skuList = item.getSkuList();
+        for (BasicCategoryDTO item : categoryList) {
+            List<BasicCategoryDTO> childrenList = item.getChildrenList();
+            List<String> categoryIdList=childrenList.stream().map(BasicCategoryDTO::getId).collect(Collectors.toList());
             BigDecimal totalSales = list.stream().filter(
-                            s -> skuList.contains(s.getFlagNo()) && s.getSales() != null
+                            s -> categoryIdList.contains(s.getFlagNo()) && s.getSales() != null
                     ).map(SalesBaseVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -3229,8 +3227,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        LocalDateTime paramsEndTime = dto.getEndTime();
-        dto.setEndTime(paramsEndTime, 1);
         List<SalesFlagVO> list = baseMapper.deptNewAndOldSalesAmount(dto, settleRate);
         LocalDateTime startTime = dto.getStartTime();
         BiTargetNewProductSettingDTO.TargetParamDTO paramDTO = new BiTargetNewProductSettingDTO.TargetParamDTO();
@@ -3313,8 +3309,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        LocalDateTime paramsEndTime = dto.getEndTime();
-        dto.setEndTime(paramsEndTime, 1);
         //新品
         Integer newFlag = BiConstant.NEW;
         //老品
@@ -3326,8 +3320,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         paramDTO.setYear(startTime.getYear());
         paramDTO.setMonth(startTime.getMonthValue());
         paramDTO.setMetricsList(Arrays.asList(MetricsEnum.SALES_AMOUNT.getCode(), MetricsEnum.SALES_QTY.getCode()));
-        List<String> deptIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
-        paramDTO.setDeptIdList(deptIds);
+        List<String> userIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
+        paramDTO.setUserIdList(userIds);
 
         List<BiTargetNewProductSettingDTO.UserTargetDTO> userTargetDTOS = biTargetNewProductSettingService.listUserTarget(paramDTO);
 
