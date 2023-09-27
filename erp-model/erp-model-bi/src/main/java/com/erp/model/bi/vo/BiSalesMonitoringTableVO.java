@@ -22,12 +22,12 @@ public class BiSalesMonitoringTableVO {
         /**
          * 本期
          */
-        private BigDecimal sumFirstMonthSale;
+        private BigDecimal sumSecondMonthSale;
 
         /**
          * 上期
          */
-        private BigDecimal sumSecondMonthSale;
+        private BigDecimal sumFirstMonthSale;
 
         /**
          * 上上期
