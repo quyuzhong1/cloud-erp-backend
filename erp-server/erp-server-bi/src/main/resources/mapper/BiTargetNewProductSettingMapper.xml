@@ -81,7 +81,7 @@
             AND ty.dept_id =#{params.deptId}
         </if>
         <if test="params.name !=null and params.name!=''">
-            AND temp.staff_name
+            AND temp.staffName
             ILIKE concat('%', #{params.name} ,'%')
         </if>
         <!--权限-->
@@ -178,7 +178,7 @@
         COALESCE(sum(november)*${multiplyNum},0) AS novemberTotal,
         COALESCE(sum(december)*${multiplyNum},0) AS decemberTotal
         FROM (
-        SELECT metrics,main_id,
+        SELECT metrics,main_id,min(staff_name) AS staffName,
         SUM ( CASE WHEN month = 1 THEN value ELSE NULL END ) AS january,
         SUM ( CASE WHEN month = 1 THEN rate ELSE NULL END ) AS januaryRate,
         SUM ( CASE WHEN month = 2 THEN value ELSE NULL END ) AS february,
@@ -215,7 +215,7 @@
             AND ty.dept_id =#{params.deptId}
         </if>
         <if test="params.name !=null and params.name!=''">
-            AND temp.staff_name
+            AND temp.staffName
             ILIKE concat('%', #{params.name} ,'%')
         </if>
         <!--权限-->
