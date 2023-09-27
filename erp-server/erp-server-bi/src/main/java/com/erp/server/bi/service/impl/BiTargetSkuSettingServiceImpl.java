@@ -103,10 +103,15 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
 
         //添加明细
         this.batchAdd(targetYear.getId(), detailList);
-        //是否汇总分类
-        if (addDTO.getIsGatherCategory()) {
+        //汇总分类的集合
+        List<BiTargetSkuSettingDTO.CommonDTO> gatherCategoryList = detailList.stream().
+                filter(d -> d.getIsGatherCategory()).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(gatherCategoryList)){
+            addDTO.setDetailList(gatherCategoryList);
             autoCreateCategorySetting(addDTO);
         }
+
+
         return targetYear.getId();
     }
 
@@ -141,66 +146,66 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
                     MetricsEnum metricsEnum = mapItem.getKey();
                     List<BiTargetSkuSettingDTO.CommonDTO> mapSkuSettingList = mapItem.getValue();
                     //一月
-                    BigDecimal january = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
-                                    s.getJanuary()!=null).
+                    BigDecimal january = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId()) &&
+                                    s.getJanuary() != null).
                             map(BiTargetSkuSettingDTO.CommonDTO::getJanuary).reduce(BigDecimal.ZERO, BigDecimal::add);
                     BiTargetCategorySettingDTO.CommonDTO addCommon = new BiTargetCategorySettingDTO.CommonDTO();
                     addCommon.setCategoryId(categoryId);
                     addCommon.setMetrics(metricsEnum);
                     addCommon.setJanuary(january);
                     //二月
-                    BigDecimal february = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
-                                    s.getFebruary()!=null).
+                    BigDecimal february = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId()) &&
+                                    s.getFebruary() != null).
                             map(BiTargetSkuSettingDTO.CommonDTO::getFebruary).reduce(BigDecimal.ZERO, BigDecimal::add);
                     addCommon.setFebruary(february);
                     //三月
-                    BigDecimal march = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
-                                    s.getMarch()!=null).
+                    BigDecimal march = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId()) &&
+                                    s.getMarch() != null).
                             map(BiTargetSkuSettingDTO.CommonDTO::getMarch).reduce(BigDecimal.ZERO, BigDecimal::add);
                     addCommon.setMarch(march);
                     //四月
-                    BigDecimal april = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
-                                    s.getApril()!=null).
+                    BigDecimal april = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId()) &&
+                                    s.getApril() != null).
                             map(BiTargetSkuSettingDTO.CommonDTO::getApril).reduce(BigDecimal.ZERO, BigDecimal::add);
                     addCommon.setApril(april);
                     //五月
-                    BigDecimal may = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
-                                    s.getMay()!=null).
+                    BigDecimal may = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId()) &&
+                                    s.getMay() != null).
                             map(BiTargetSkuSettingDTO.CommonDTO::getMay).reduce(BigDecimal.ZERO, BigDecimal::add);
                     addCommon.setMay(may);
                     //六月
-                    BigDecimal june = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
-                                    s.getJune()!=null).
+                    BigDecimal june = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId()) &&
+                                    s.getJune() != null).
                             map(BiTargetSkuSettingDTO.CommonDTO::getJune).reduce(BigDecimal.ZERO, BigDecimal::add);
                     addCommon.setJune(june);
                     //七月
-                    BigDecimal july = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
-                                    s.getJuly()!=null).
+                    BigDecimal july = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId()) &&
+                                    s.getJuly() != null).
                             map(BiTargetSkuSettingDTO.CommonDTO::getJuly).reduce(BigDecimal.ZERO, BigDecimal::add);
                     addCommon.setJuly(july);
                     //八月
-                    BigDecimal august = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
-                                    s.getAugust()!=null).
+                    BigDecimal august = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId()) &&
+                                    s.getAugust() != null).
                             map(BiTargetSkuSettingDTO.CommonDTO::getAugust).reduce(BigDecimal.ZERO, BigDecimal::add);
                     addCommon.setAugust(august);
                     //九月
-                    BigDecimal september = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
-                                    s.getSeptember()!=null).
+                    BigDecimal september = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId()) &&
+                                    s.getSeptember() != null).
                             map(BiTargetSkuSettingDTO.CommonDTO::getSeptember).reduce(BigDecimal.ZERO, BigDecimal::add);
                     addCommon.setSeptember(september);
                     //十月
-                    BigDecimal october = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
-                                    s.getOctober()!=null).
+                    BigDecimal october = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId()) &&
+                                    s.getOctober() != null).
                             map(BiTargetSkuSettingDTO.CommonDTO::getOctober).reduce(BigDecimal.ZERO, BigDecimal::add);
                     addCommon.setOctober(october);
                     //十一月
-                    BigDecimal november = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
-                                    s.getNovember()!=null).
+                    BigDecimal november = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId()) &&
+                                    s.getNovember() != null).
                             map(BiTargetSkuSettingDTO.CommonDTO::getNovember).reduce(BigDecimal.ZERO, BigDecimal::add);
                     addCommon.setNovember(november);
                     //十二月
-                    BigDecimal december = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId())&&
-                                    s.getDecember()!=null).
+                    BigDecimal december = mapSkuSettingList.stream().filter(s -> categorySkuIdList.contains(s.getSkuId()) &&
+                                    s.getDecember() != null).
                             map(BiTargetSkuSettingDTO.CommonDTO::getDecember).reduce(BigDecimal.ZERO, BigDecimal::add);
                     addCommon.setDecember(december);
 
