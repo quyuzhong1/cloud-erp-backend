@@ -2672,12 +2672,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //部门查询
         if (CollectionUtils.isNotEmpty(dto.getDepartment())) {
-            groupName = "dept_id";
+            groupName = "dept_name";
         }
 
         //用户查询
         if (CollectionUtils.isNotEmpty(dto.getUserId())) {
-            groupName = "charge_id";
+            groupName = "charge_name";
         }
 
         //店铺查询
@@ -2697,7 +2697,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //产品属性id查询
         if (CollectionUtils.isNotEmpty(dto.getPropertyIdList())) {
-            groupName = "property_id";
+            groupName = "property";
         }
 
         //平台查询
@@ -3364,11 +3364,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             vo.setNewSalesQuantity(newItemSalesQuantity);
 
             if (newItemSales.compareTo(BigDecimal.ZERO) > 0) {
-                vo.setNewProductSalesRatio(newItemSales.add(oldItemSales).divide(newItemSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+                vo.setNewProductSalesRatio(newItemSales.divide(newItemSales.add(oldItemSales), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
             }
 
             if (oldItemSales.compareTo(BigDecimal.ZERO) > 0) {
-                vo.setOldProductSalesRatio(newItemSales.add(oldItemSales).divide(oldItemSales, 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
+                vo.setOldProductSalesRatio(oldItemSales.divide(newItemSales.add(oldItemSales), 2, BigDecimal.ROUND_HALF_UP).multiply(MathUtil.BigDecimal_100));
             }
 
             List<BiTargetNewProductSettingDTO.UserTargetDTO> targetNewProductSettingEntities = userTargetDTOS.stream().filter(req -> req.getUserId().equals(userId)).collect(Collectors.toList());
