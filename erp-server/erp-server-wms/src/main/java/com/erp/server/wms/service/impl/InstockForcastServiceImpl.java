@@ -50,9 +50,6 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
     private InstockForcastDetailService instockForcastDetailService;
 
     @Autowired
-    private SysUserFeign sysUserFeign;
-
-    @Autowired
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Autowired
@@ -140,7 +137,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             inOutStockDTO.setQty(instockForcastDetailEntity.getQty());
             inventorySkus.add(inOutStockDTO);
         });
-        inventoryDto.setMembers(inventorySkus);
+        inventoryDto.setParamList(inventorySkus);
         inventoryTransCoreService.approveByType(inventoryDto);
     }
 
@@ -208,7 +205,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             inOutStockDTO.setQty(member.getQty());
             inventorySkus.add(inOutStockDTO);
         });
-        inventoryDto.setMembers(inventorySkus);
+        inventoryDto.setParamList(inventorySkus);
         inventoryTransCoreService.approveByType(inventoryDto);
 
     }
@@ -324,7 +321,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             }
             inOutStockDTO.setQty(changeQty);
             inventorySkus.add(inOutStockDTO);
-            inventoryDto.setMembers(inventorySkus);
+            inventoryDto.setParamList(inventorySkus);
 
             List<TransactionRuleDTO> rules = Lists.newArrayList();
             TransactionRuleDTO transactionRuleDTO = new TransactionRuleDTO();

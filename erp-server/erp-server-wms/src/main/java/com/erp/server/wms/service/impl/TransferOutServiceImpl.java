@@ -745,7 +745,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             transferDTO.setQty(detailEntity.getQty());
             members.add(transferDTO);
         });
-        inventoryTransferDTO.setMembers(members);
+        inventoryTransferDTO.setParamList(members);
         inventoryTransCoreService.approveByType(inventoryTransferDTO);
     }
 

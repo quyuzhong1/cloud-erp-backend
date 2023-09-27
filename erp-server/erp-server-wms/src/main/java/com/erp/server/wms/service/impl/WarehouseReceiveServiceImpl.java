@@ -1217,7 +1217,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             inOutStockDTO.setWarehouseLocation("");
             members.add(inOutStockDTO);
         }
-        inventoryInOutStockDTO.setMembers(members);
+        inventoryInOutStockDTO.setParamList(members);
         inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
     }
 

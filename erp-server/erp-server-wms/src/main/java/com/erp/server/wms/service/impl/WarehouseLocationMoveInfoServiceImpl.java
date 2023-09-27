@@ -73,8 +73,6 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     @Resource
     private WarehouseLocationMoveDetailService warehouseLocationMoveDetailService;
     @Resource
-    private InventoryService inventoryService;
-    @Resource
     private WarehouseService warehouseService;
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
@@ -406,7 +404,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
             List<TransactionRuleDTO> transactionRuleDTOList = new ArrayList<>(2);
             transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK));
             transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryStatusEnum.USABLE, InventoryModeEnum.IN_STOCK));
-            ruleDTO.setMembers(transferDTOList);
+            ruleDTO.setParamList(transferDTOList);
             ruleDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
             ruleDTO.setRules(transactionRuleDTOList);
             inventoryTransCoreService.approveByRule(ruleDTO);

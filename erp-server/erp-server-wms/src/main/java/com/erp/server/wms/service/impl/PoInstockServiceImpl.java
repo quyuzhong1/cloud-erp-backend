@@ -1437,7 +1437,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         //生成领料出库单，需要按比例出库（父级SKU入库数量/父级SKU采购数量）（现没有领料出库单据，则直接调用领料库存变化逻辑）
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        inventoryInOutStockDTO.setMembers(inOutStockList);
+        inventoryInOutStockDTO.setParamList(inOutStockList);
         if (isDelivery) {
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_PICK.getCode());
         } else {
@@ -1522,7 +1522,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
                 receiveMembers.add(inOutStockDTO);
             });
-            receiveInventoryInOutStockDTO.setMembers(receiveMembers);
+            receiveInventoryInOutStockDTO.setParamList(receiveMembers);
             inventoryTransCoreService.approveByType(receiveInventoryInOutStockDTO);
         }
     }
@@ -1553,7 +1553,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
                 noReceiveMembers.add(inOutStockDTO);
             });
-            noReceiveInventoryInOutStockDTO.setMembers(noReceiveMembers);
+            noReceiveInventoryInOutStockDTO.setParamList(noReceiveMembers);
             inventoryTransCoreService.approveByType(noReceiveInventoryInOutStockDTO);
         }
     }

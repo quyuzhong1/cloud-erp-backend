@@ -22,10 +22,10 @@ public class InventoryInOutStockDTO implements Serializable {
     /**
      * 库存交易信息
      */
-    @NotNull(message = "库存交易信息不能为空")
-    @Size(min = 1, message = "请至少传输一个库存交易信息")
+    @NotNull(message = "【出入库】业务参数不能为空")
+    @Size(min = 1, message = "请至少传输一行【出入库】业务参数")
     @Valid
-    private List<InOutStockDTO> members;
+    private List<InOutStockDTO> paramList;
 
     /**
      * 业务类型

@@ -21,10 +21,10 @@ import java.util.List;
 @Data
 public class InventoryTransferRuleDTO implements Serializable {
 
-    @NotNull(message = "sku信息不能为空")
-    @Size(min = 1, message = "请至少传输一个sku信息")
+    @NotNull(message = "【调拨】业务参数不能为空")
+    @Size(min = 1, message = "请至少传输一行【调拨】业务参数")
     @Valid
-    private List<TransferDTO> members;
+    private List<TransferDTO> paramList;
 
     @NotNull(message = "业务类型不能为空")
     @StateEnumValue(clazz = InventoryBusinessTypeEnum.class,message = "业务类型有误")
