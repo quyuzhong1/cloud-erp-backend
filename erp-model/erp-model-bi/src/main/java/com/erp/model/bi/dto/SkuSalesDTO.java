@@ -146,4 +146,18 @@ public class SkuSalesDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class ProductSkuDTO {
+
+        private String skuId;
+
+        private String skuNo;
+
+        private String productId;
+
+        private String categoryId;
+    }
+
+
 }

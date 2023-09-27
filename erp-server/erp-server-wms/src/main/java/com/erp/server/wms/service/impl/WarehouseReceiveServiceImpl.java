@@ -289,10 +289,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         }
         warehouseReceiveEntity.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
         warehouseReceiveEntity.setPurchaseUserName(purchaseOrderEntity.getPurchaseUserName());
-        warehouseReceiveEntity.setCreateUserId(dto.getCreateUserId());
-        warehouseReceiveEntity.setCreateUserName(dto.getCreateUserId());
-        warehouseReceiveEntity.setUpdateUserId(dto.getUpdateUserId());
-        warehouseReceiveEntity.setUpdateUserName(dto.getUpdateUserName());
         //保存主表信息
         this.save(warehouseReceiveEntity);
 
