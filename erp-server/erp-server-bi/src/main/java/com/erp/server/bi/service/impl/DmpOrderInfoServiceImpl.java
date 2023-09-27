@@ -172,6 +172,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 //                .map(SalePriceDistributionVO::getSaleAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 //        int totalSalesQuantity = salePriceDistributionVOS.stream().filter(v -> 0 != v.getSalesQuantity()).mapToInt(SalePriceDistributionVO::getSalesQuantity).sum();
         BigDecimal maxSellPrice = salePriceDistributionVOS.stream().map(SalePriceDistributionVO::getSellPrice).max(BigDecimal::compareTo).get();
+        List<SeriesVO<Object>> seriesList = new ArrayList<>(10);
         SeriesVO series = new SeriesVO();
         if (2 == dataType){
             series.setName("销量");
@@ -208,8 +209,10 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 //                salesPriceRangeVO.setSalesQuantityRate("0%");
 //            }
         });
-        chart.setSeries(dataList);
+        series.setData(dataList);
+        seriesList.add(series);
         chart.setXAxis(xAxisList);
+        chart.setSeries(seriesList);
         statistical.setData(chart);
         return statistical;
     }
