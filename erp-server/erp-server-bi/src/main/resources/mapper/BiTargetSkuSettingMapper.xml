@@ -71,7 +71,7 @@
             AND ty.dept_id =#{params.deptId}
         </if>
         <if test="params.name !=null and params.name!=''">
-            AND  temp.sku_no
+            AND  temp.skuNo
             ILIKE concat('%', #{params.name} ,'%')
         </if>
         <!--权限-->
@@ -144,7 +144,7 @@
         COALESCE(sum(december)*${multiplyNum},0) AS decemberTotal
         FROM
         (
-        SELECT metrics,main_id,
+        SELECT metrics,main_id,min(sku_no) AS skuNo,
         SUM ( CASE WHEN month = 1 THEN value ELSE 0 END ) AS january,
         SUM ( CASE WHEN month = 2 THEN value ELSE 0 END ) AS february,
         SUM ( CASE WHEN month = 3 THEN value ELSE 0 END ) AS march,
@@ -170,7 +170,7 @@
             AND ty.dept_id =#{params.deptId}
         </if>
         <if test="params.name !=null and params.name!=''">
-            AND temp.sku_no
+            AND temp.skuNo
             ILIKE concat('%', #{params.name} ,'%')
         </if>
         <!--权限-->
