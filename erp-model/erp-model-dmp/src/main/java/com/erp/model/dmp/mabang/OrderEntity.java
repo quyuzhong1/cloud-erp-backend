@@ -587,4 +587,16 @@ public class OrderEntity extends CleanBaseDTO {
                 ", extendAttr='" + extendAttr + '\'' +
                 '}';
     }
+
+    /**
+     * 从收获地址设置国家信息
+     */
+    public void setCountryInfo(JSONObject jsonObject) {
+        JSONObject receiverAddressInfoObj = jsonObject.getJSONObject("receiver_address_info");
+        if (null == receiverAddressInfoObj){
+            return;
+        }
+        this.setCountryNameCN(receiverAddressInfoObj.getString("countryNameCN"));
+        this.setCountryNameEN(receiverAddressInfoObj.getString("countryNameEN"));
+    }
 }
