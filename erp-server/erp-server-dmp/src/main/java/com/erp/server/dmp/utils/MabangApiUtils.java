@@ -3,6 +3,8 @@ package com.erp.server.dmp.utils;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.UrlContant;
 import com.common.business.dto.ParamHeaderVO;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 管易API 处理类
@@ -271,7 +274,15 @@ public class MabangApiUtils {
                         UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap)));
             }
             JSONObject dataJson = JSONObject.parseObject(responseMap.getString("data"));
-            List<OrderEntity> dataList = JSONObject.parseArray(dataJson.getString("list"), OrderEntity.class);
+            JSONArray jsonArray = JSONObject.parseArray(dataJson.getString("list"));
+            List<OrderEntity> dataList = jsonArray.stream().map(o -> {
+                JSONObject jsonObject = JSON.parseObject(o.toString());
+                OrderEntity entity = JSONObject.toJavaObject(jsonObject, OrderEntity.class);
+                // 设置国家信息
+                entity.setCountryInfo(jsonObject);
+                return entity;
+            }).collect(Collectors.toList());
+//            List<OrderEntity> dataList = JSONObject.parseArray(dataJson.getString("list"), OrderEntity.class);
             hasNext = null != dataJson.getBoolean("hasNext") ?dataJson.getBoolean("hasNext"):Boolean.FALSE;
             pageIndex = dataJson.getString("nextCursor");
             if(CollectionUtil.isNotEmpty(dataList)){
