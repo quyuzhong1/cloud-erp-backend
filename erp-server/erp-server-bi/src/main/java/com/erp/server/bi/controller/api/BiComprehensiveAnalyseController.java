@@ -1,6 +1,5 @@
 package com.erp.server.bi.controller.api;
 
-import com.alibaba.fastjson.JSON;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.bi.dto.BiFilterDTO;
@@ -110,9 +109,9 @@ public class BiComprehensiveAnalyseController extends BaseController {
      **/
     @PostMapping("/salePriceDistribution")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
-    public ApiResult<String> salePriceDistribution(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+    public ApiResult<StatisticalDataVO> salePriceDistribution(@RequestBody @Validated BiFilterDTO biFilterDTO) {
         StatisticalDataVO statisticalDataVO = biComprehensiveAnalyseService.salePriceDistribution(biFilterDTO);
-        return success(JSON.toJSONString(statisticalDataVO));
+        return success(statisticalDataVO);
     }
 
     /**
