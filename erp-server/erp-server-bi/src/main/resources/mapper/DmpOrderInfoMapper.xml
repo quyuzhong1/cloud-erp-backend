@@ -230,7 +230,7 @@
         </if>
         /*平台*/
         <if test="params.platform!=null and params.platform.size>0">
-            AND doi.platform_name IN
+            AND doi.source_platform IN
             <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
                 #{platform}
             </foreach>
@@ -291,7 +291,7 @@
         </if>
         /*平台*/
         <if test="params.platform!=null and params.platform.size>0">
-            AND doi.platform_name IN
+            AND doi.source_platform IN
             <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
                 #{platform}
             </foreach>
