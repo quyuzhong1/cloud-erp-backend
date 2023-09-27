@@ -3930,7 +3930,7 @@
             </if>
         </where>
         group by
-        concat(date_trunc('week', o.platform_create_time::timestamp)::date, '!', (date_trunc('week', o.platform_create_time::timestamp)+ '6 days'::interval)::date),
+        concat(date_trunc('week', o.platform_create_time::timestamp)::date, '~', (date_trunc('week', o.platform_create_time::timestamp)+ '6 days'::interval)::date),
         <choose>
             <when test="groupName == 'charge_id'">
                 o.${groupName}
