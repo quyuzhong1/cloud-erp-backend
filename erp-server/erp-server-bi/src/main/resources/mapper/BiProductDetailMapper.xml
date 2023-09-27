@@ -5,20 +5,20 @@
 
     <select id="listByCategoryIds" resultType="com.erp.model.bi.dto.BiCategoryDTO$ProductCategoryDTO">
         SELECT
-            pd.id AS skuId,
-            pd.name AS productName,
-            pd.sku_no,
-            pi.category_id
+        pd.id AS skuId,
+        pd.name AS productName,
+        pd.sku_no,
+        pi.category_id
         FROM product_detail pd
         INNER JOIN product_info pi
         ON pd.product_id=pi.id
         AND pi.is_deleted=false
         WHERE pd.is_deleted=FALSE
         <if test="categoryIdList!=null and categoryIdList.size>0">
-           AND  category_id IN
-          <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
-               #{categoryId}
-          </foreach>
+            AND category_id IN
+            <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
+                #{categoryId}
+            </foreach>
         </if>
     </select>
     <select id="getSkuIdBySkuNo" resultType="com.erp.model.bi.vo.SkuDetailVO">
@@ -26,5 +26,23 @@
         <foreach collection="skuNos" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
+    </select>
+    <select id="listProductSkuBySkuIdList" resultType="com.erp.model.bi.dto.SkuSalesDTO$ProductSkuDTO">
+        SELECT
+            pi.id AS productId,
+            pi.category_id,
+            pd.id AS skuId,
+            pd.sku_no
+        FROM product_info pi
+        INNER JOIN product_detail pd
+        ON pi.id = pd.product_id and pd.is_deleted = FALSE
+        WHERE pi.is_deleted = FALSE
+        <if test="skuIdList !=null and skuIdList.size>0">
+          AND pd.id IN
+          <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+               #{skuId}
+          </foreach>
+
+        </if>
     </select>
 </mapper>
