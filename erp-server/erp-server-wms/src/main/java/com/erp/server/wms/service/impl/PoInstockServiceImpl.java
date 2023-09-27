@@ -1402,8 +1402,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 if (ObjectUtils.isEmpty(quantity)) {
                     throw new ServiceException(ApiError.ERROR_95166);
                 }
-                //子级采购数量
-                Integer childQty = subDetail.getQty();
                 //本次出库数量
                 Integer thisChildQty = parentInstockDetail.getStockInQty() * quantity;
 
@@ -1411,8 +1409,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 if (CollectionUtils.isNotEmpty(hasParentDetailList)) {
                     Integer hasInstockInQty = hasParentDetailList.stream().map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (MathUtil.compareTo(parentQty,hasInstockInQty) == MathUtil.ZERO) {
-                        //领料超出数量
-                        Integer  exceedQty =  subDetail.getDeliveryQty() - childQty;
+                        //领料超出数量(子级sku领料数量 - 父级采购数量*用量)
+                        Integer  exceedQty =  subDetail.getDeliveryQty() - parentQty * quantity;
                         thisChildQty = thisChildQty + (MathUtil.compareTo(exceedQty,MathUtil.ZERO) > MathUtil.ZERO ? exceedQty : MathUtil.ZERO);
                     }
                 }
