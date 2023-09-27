@@ -68,7 +68,7 @@
                     COALESCE(SUM ( CASE WHEN month = 11 THEN value ELSE NULL END )*${multiplyNum},NULL) AS november,
                     COALESCE(SUM ( CASE WHEN month = 11 THEN rate ELSE NULL END )*100,NULL) AS novemberRate,
                     COALESCE(SUM ( CASE WHEN month = 12 THEN value ELSE NULL END )*${multiplyNum},NULL) AS december,
-                    COALESCE(SUM ( CASE WHEN month = 12 THEN value ELSE NULL END )*100,NULL) AS decemberRate
+                    COALESCE(SUM ( CASE WHEN month = 12 THEN rate ELSE NULL END )*100,NULL) AS decemberRate
                  FROM   bi_target_new_product_setting
                  WHERE  metrics=#{params.metrics} AND is_deleted = FALSE
                  GROUP BY metrics,staff_id,main_id
