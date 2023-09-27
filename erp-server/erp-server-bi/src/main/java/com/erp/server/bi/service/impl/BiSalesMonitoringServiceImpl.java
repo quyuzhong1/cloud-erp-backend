@@ -483,8 +483,8 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     private LinkedHashMap<String,Object> handleHand (BiSalesMonitoringSearchDTO.ParamDTO dto) {
         LinkedHashMap<String,Object> head = new LinkedHashMap<>();
         head.put(SalesMonitoringTypeEnum.getName(dto.getSearchType()), SalesMonitoringTypeEnum.getDesc(dto.getSearchType()));
-        head.put("sumFirstMonthSale","本期");
-        head.put("sumSecondMonthSale","上期");
+        head.put("sumSecondMonthSale","本期");
+        head.put("sumFirstMonthSale","上期");
         head.put("sumLastMonthSale","上上期");
         head.put("relativeRatioName","本期环比");
         head.put("lastRelativeRatioName","上期环比");
@@ -542,15 +542,15 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                 }
             }
         }
-            //环比（最新月-上个月）/上个月*100%
+            //环比（本期-上期）/上期*100%
             BigDecimal radio = BigDecimal.ZERO;
             if (MathUtil.compareTo(sumFirstMonthSale, BigDecimal.ZERO) != 0) {
-                radio = MathUtil.divide(MathUtil.subtract(sumFirstMonthSale, sumSecondMonthSale), sumSecondMonthSale).multiply(MathUtil.BigDecimal_100);
+                radio = MathUtil.divide(MathUtil.subtract(sumSecondMonthSale,sumFirstMonthSale), sumFirstMonthSale).multiply(MathUtil.BigDecimal_100);
             }
-            //上期环比
+            //上期环比 (上期－上上期）÷上上期×100%
             BigDecimal lastRadio = BigDecimal.ZERO;
-            if (MathUtil.compareTo(sumFirstMonthSale, BigDecimal.ZERO) != 0) {
-                lastRadio = MathUtil.divide(MathUtil.subtract(sumSecondMonthSale, sumLastMonthSale), sumLastMonthSale).multiply(MathUtil.BigDecimal_100);
+            if (MathUtil.compareTo(sumLastMonthSale, BigDecimal.ZERO) != 0) {
+                lastRadio = MathUtil.divide(MathUtil.subtract(sumFirstMonthSale, sumLastMonthSale), sumLastMonthSale).multiply(MathUtil.BigDecimal_100);
             }
 
             //比较环比
