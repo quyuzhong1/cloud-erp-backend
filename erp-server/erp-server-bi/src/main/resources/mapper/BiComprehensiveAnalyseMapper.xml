@@ -1234,8 +1234,7 @@
 
     <select id="skuWeekSaleTrend" resultType="com.erp.model.bi.vo.SkuDateSaleTrendVO">
         SELECT
-        concat(to_char((doi.platform_create_time::DATE - INTERVAL '1 day' - ( EXTRACT ( dow FROM ( doi.platform_create_time::DATE - INTERVAL '1 day' ) ) - 1 || ' day' ) :: INTERVAL ),'yyyy-mm-dd'),
-        '~',to_char(doi.platform_create_time::DATE  +cast(-1*(TO_NUMBER(to_char(doi.platform_create_time::DATE ,'D'),'99')-2) + 6 ||' days' as interval),'yyyy-mm-dd'))as date,
+        concat(date_trunc('week', doi.platform_create_time::timestamp)::date, '~', (date_trunc('week', doi.platform_create_time::timestamp)+ '6 days'::interval)::date)as date,
         COALESCE(sum(doit.quantity), 0)AS salesQuantity,
         <if test="null != params.settleMethod and params.settleMethod == 0">
             COALESCE(SUM(doit.amount_after * COALESCE(doit.currency_rate, 0)), 0)
