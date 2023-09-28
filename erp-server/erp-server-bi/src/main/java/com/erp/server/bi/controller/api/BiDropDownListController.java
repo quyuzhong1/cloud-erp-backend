@@ -380,7 +380,7 @@ public class BiDropDownListController extends BaseController {
     @GetMapping("/compare/list")
     public ApiResult<List<SelectShowVO>> listCmpareDropDown() {
         List<SelectShowVO> result = Arrays.stream(BiCompareEnum.values())
-                .map(x -> new SelectShowVO().setName(x.getCode()).setDesc(x.getCode()))
+                .map(x -> new SelectShowVO().setName(x.getCode()).setDesc(x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }
