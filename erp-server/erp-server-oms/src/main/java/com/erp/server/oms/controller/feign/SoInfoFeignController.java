@@ -138,4 +138,17 @@ public class SoInfoFeignController extends BaseController {
     public Boolean approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         return soInfoService.approve(dto);
     }
+
+ 
+    /**
+     * 获取到销售订单历史数据 折扣额大于0
+     * @author yl
+     * @date 2023-09-28 10:30
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.ListDTO>
+     */
+    @PostMapping("/listRepairHistoryDb")
+    public List<SoInfoDTO.ListDTO> listRepairHistoryDb(){
+        return soInfoService.listRepairHistoryDb();
+    }
 }

@@ -324,4 +324,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.lang.Boolean
      **/
     Boolean pdaUpdateAndSubmit(SoOutstockDTO.UpdateDTO dto);
+
+    /**
+     * 修改线上历史数据
+     * @author yl
+     * @date 2023-09-28 10:20
+     * @param
+     * @return void
+     */
+    void tempRepairHistoryDb();
 }

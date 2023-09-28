@@ -2513,6 +2513,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
 
+    /**
+     * 获取到折扣额大于0的历史数据
+     * @author yl
+     * @date 2023-09-28 10:31
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.ListDTO>
+     */
+    @Override
+    public List<SoInfoDTO.ListDTO> listRepairHistoryDb() {
+        return baseMapper.listRepairHistoryDb();
+    }
+
 
     public SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfitt(SkuCostProfitDTO.SkuCostProfitParam costParam) {
         if (Objects.isNull(costParam.getQty()) || costParam.getQty() < 0) {
