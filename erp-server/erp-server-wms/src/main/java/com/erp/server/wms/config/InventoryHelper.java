@@ -1,6 +1,7 @@
 package com.erp.server.wms.config;
 
 import com.erp.model.wms.enums.inventory.*;
+import com.erp.server.wms.annotation.InventoryHandler;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.service.impl.AbstractInventoryServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -22,20 +23,22 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class InventoryHelper {
     @Resource
-    private ApplicationContext applicationContext;
+    private ApplicationContext context;
 
-    private static Map<InventoryBizTypeEnum, InventoryStockService> inventoryServiceMap;
+    private final Map<InventoryBizTypeEnum, InventoryStockService> handlers=new ConcurrentHashMap<>();
 
     @PostConstruct
     public void init() {
-        Map<String,InventoryStockService> springInventoryServiceMap  = applicationContext.getBeansOfType(InventoryStockService.class);
-        inventoryServiceMap = new ConcurrentHashMap<>();
-        springInventoryServiceMap.forEach((key,value) -> inventoryServiceMap.put(value.handlerType(),value));
+        Map<String, InventoryStockService> beans = context.getBeansOfType(InventoryStockService.class);
+        for (InventoryStockService bean : beans.values()) {
+            InventoryHandler annotation = bean.getClass().getAnnotation(InventoryHandler.class);
+            handlers.put(annotation.value(),bean);
+        }
+
     }
 
-    public AbstractInventoryServiceImpl getInventoryService(InventoryBizTypeEnum inventoryBizTypeEnum) {
-        return (AbstractInventoryServiceImpl)inventoryServiceMap.get(inventoryBizTypeEnum);
+    public InventoryStockService getInventoryService(InventoryBizTypeEnum inventoryBizTypeEnum) {
+        return handlers.get(inventoryBizTypeEnum);
     }
-
 
 }
