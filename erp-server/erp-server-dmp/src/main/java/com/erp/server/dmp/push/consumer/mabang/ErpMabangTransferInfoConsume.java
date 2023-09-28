@@ -3,7 +3,7 @@ package com.erp.server.dmp.push.consumer.mabang;
 import cn.hutool.core.collection.ListUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqConsumerGroup;
@@ -120,12 +120,12 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
 
         List<MabangInOutStockDTO> mabangInOutStockDTOList = Lists.newArrayList();
 
-        String operateName = SyncKingdeeOperateEnum.getNameByCode(operate);
+        String operateName = SyncOperateEnum.getNameByCode(operate);
         for(Map.Entry<String, List<TransferInfoDetailEntity>> inEntry : inTransferInfoMap.entrySet()){
             String inWarehouseCode = inEntry.getKey();
             if(Objects.nonNull(warehouseMap.get(inWarehouseCode)) && monitorWarehouseCodeList.contains(inWarehouseCode) ) {
                 // 审核-手工入库；反审核-手工出库
-                InventoryInOutEnum inventoryInOutEnum = Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), operate) ? InventoryInOutEnum.IN_STOCK : InventoryInOutEnum.OUT_STOCK;
+                InventoryInOutEnum inventoryInOutEnum = Objects.equals(SyncOperateEnum.OPERATE_APPROVE.getCode(), operate) ? InventoryInOutEnum.IN_STOCK : InventoryInOutEnum.OUT_STOCK;
                 log.warn("ERP直接调拨单【{}】【{}】同步到马帮【{}】：仓库【{}】", transferInfo.getCode(), operateName, inventoryInOutEnum.getName(), inWarehouseCode);
                 String inWarehouseName = warehouseMap.get(inWarehouseCode).getWarehouseName();
                 List<TransferInfoDetailEntity> inWarehouseDetailList = inEntry.getValue();
@@ -147,7 +147,7 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
             String outWarehouseCode = outEntry.getKey();
             if(Objects.nonNull(warehouseMap.get(outWarehouseCode)) && monitorWarehouseCodeList.contains(outWarehouseCode) ) {
                 // 审核-手工出库；反审核-手工入库
-                InventoryInOutEnum inventoryInOutEnum = Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), operate) ? InventoryInOutEnum.OUT_STOCK : InventoryInOutEnum.IN_STOCK;
+                InventoryInOutEnum inventoryInOutEnum = Objects.equals(SyncOperateEnum.OPERATE_APPROVE.getCode(), operate) ? InventoryInOutEnum.OUT_STOCK : InventoryInOutEnum.IN_STOCK;
                 log.warn("ERP直接调拨单【{}】【{}】同步到马帮【{}】库：仓库【{}】", transferInfo.getCode(), operateName, inventoryInOutEnum.getName(), outWarehouseCode);
                 String outWarehouseName = warehouseMap.get(outWarehouseCode).getWarehouseName();
                 List<TransferInfoDetailEntity> outWarehouseDetailList = outEntry.getValue();

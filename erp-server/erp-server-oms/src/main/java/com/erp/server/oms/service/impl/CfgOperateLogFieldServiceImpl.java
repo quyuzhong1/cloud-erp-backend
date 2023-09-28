@@ -1,7 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.oms.entity.CfgOperateLogFieldEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.oms.mapper.CfgOperateLogFieldMapper;

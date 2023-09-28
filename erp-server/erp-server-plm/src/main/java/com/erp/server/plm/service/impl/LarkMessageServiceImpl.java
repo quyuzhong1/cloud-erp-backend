@@ -5,7 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.enums.BaseStatusEnum;
-import com.common.business.service.RedisService;
+import com.common.business.service.impl.RedisService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;

@@ -3,7 +3,7 @@ package com.erp.server.dmp.utils;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RedisKeyConstant;
@@ -15,7 +15,6 @@ import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.HashOperations;
 
 import java.util.List;
 import java.util.Map;
@@ -92,9 +91,9 @@ public class MabangUtil {
             RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_FINANCIAL_SKU_LIST_KEY, transferSku.getSkuNo());
             String gridCode = "";
             // 审核
-            if(Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), opType)) {
+            if(Objects.equals(SyncOperateEnum.OPERATE_APPROVE.getCode(), opType)) {
                 gridCode = StrUtils.null2EmptyWithTrim(Objects.equals(inOutType, InventoryInOutEnum.IN_STOCK.getCode() )? StrUtils.null2EmptyWithTrim(transferSku.getInWarehouseLocation()) : StrUtils.null2EmptyWithTrim(transferSku.getOutWarehouseLocation()));
-            } else if(Objects.equals(SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode(), opType)) {
+            } else if(Objects.equals(SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), opType)) {
                 // 反审核
                 gridCode = StrUtils.null2EmptyWithTrim(Objects.equals(inOutType, InventoryInOutEnum.IN_STOCK.getCode() )? StrUtils.null2EmptyWithTrim(transferSku.getOutWarehouseLocation()) : StrUtils.null2EmptyWithTrim(transferSku.getInWarehouseLocation()));
             }

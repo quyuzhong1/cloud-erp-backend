@@ -18,12 +18,11 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SkuApproveConfigureEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.StateEnumValue;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -2068,7 +2067,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //workflowFeign.taskPass(approveProcess);
         //审核通过后发送到金蝶系统
-        syncKingdeeProductDetailService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+        syncKingdeeProductDetailService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         return true;
     }
 
@@ -2551,7 +2550,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productDetailEntity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95126);
         }
-        syncKingdeeProductDetailService.syncDataToKingdee(productDetailEntity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+        syncKingdeeProductDetailService.syncDataToKingdee(productDetailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         return Boolean.TRUE;
     }
 
@@ -3036,7 +3035,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //编辑通过后发送金蝶
-        syncKingdeeProductDetailService.syncDataToKingdee(detailEntity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+        syncKingdeeProductDetailService.syncDataToKingdee(detailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
     }
 
 
@@ -3506,7 +3505,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
                         .setBusinessId(obj.getId()).setOperation("状态变更").setContent("审核SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]，审批意见：" + baseApproveParamDTO.getComment()));
                 //审核通过发送金蝶
-                syncKingdeeProductDetailService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                syncKingdeeProductDetailService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
             });
         } else {
             approveStatus = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();

@@ -17,7 +17,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.mapper.DmpFbaDeliveryMapper;
 import com.erp.server.dmp.service.DmpFbaDeliveryDetailService;
 import com.erp.server.dmp.service.DmpFbaDeliveryService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.dmp.service.DmpSyncTaskService;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
