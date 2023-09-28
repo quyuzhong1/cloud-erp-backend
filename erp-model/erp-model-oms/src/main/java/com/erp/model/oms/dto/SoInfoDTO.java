@@ -17,12 +17,12 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.List;
 
 /**
  * @author Lambda
  * @Classname SoInfoDTO
-
  * @Date 2023-05-10 17:55
  * @Created by yl
  */
@@ -50,8 +50,29 @@ public class SoInfoDTO implements Serializable {
     }
 
     /**
-     * 分页数据
+     * tab list
      */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+
+        private String soId;
+
+        private String skuId;
+
+        private String skuNo;
+
+        private BigDecimal price;
+
+        private Integer qty;
+
+        private BigDecimal discountAmount;
+
+
+    }
+
+
     @Data
     @NoArgsConstructor
     public static class PagingViewDTO {
@@ -262,7 +283,6 @@ public class SoInfoDTO implements Serializable {
          * 销售金额
          */
         private BigDecimal amount;
-
 
 
         /**
@@ -780,7 +800,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 收款金额
          */
-        @Digits(integer = 16,fraction = 4,message = "收款金额整数位最大12位，小数位不能大于4位", groups = {AddGroup.class})
+        @Digits(integer = 16, fraction = 4, message = "收款金额整数位最大12位，小数位不能大于4位", groups = {AddGroup.class})
         private BigDecimal receiveAmount;
 
         /**
@@ -1099,12 +1119,10 @@ public class SoInfoDTO implements Serializable {
     public static class SoPIDTO {
 
 
-
         /**
          * code
          */
         private String code;
-
 
 
         /**
@@ -1188,10 +1206,7 @@ public class SoInfoDTO implements Serializable {
         private String totalFeeStr;
 
 
-
     }
-
-
 
 
     /**
@@ -1203,7 +1218,6 @@ public class SoInfoDTO implements Serializable {
 
         @NotBlank(message = "id不能为空")
         private String id;
-
 
 
         /**
@@ -1353,7 +1367,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 收款金额
          */
-        @Digits(integer = 16,fraction = 4,message = "收款金额整数位最大12位，小数位不能大于4位", groups = {AddGroup.class})
+        @Digits(integer = 16, fraction = 4, message = "收款金额整数位最大12位，小数位不能大于4位", groups = {AddGroup.class})
         private BigDecimal receiveAmount;
 
         /**

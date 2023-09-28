@@ -379,4 +379,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     void updateAddress(String soId, String receiveAddressId, String addressType, String receiverName, String telNumber);
 
 
+    /**
+     * 获取到折扣额大于0的历史数据
+     * @author yl
+     * @date 2023-09-28 10:31
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.ListDTO>
+     */
+    List<SoInfoDTO.ListDTO> listRepairHistoryDb();
 }
