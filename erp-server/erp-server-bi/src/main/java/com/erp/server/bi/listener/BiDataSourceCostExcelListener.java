@@ -132,16 +132,17 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
                         //既不是数值也不是百分比
                         if (!StrUtils.isDigit(value) && !StrUtils.isPercentage(value)) {
                             errorMsgList.add("成本必须是数值或百分比数据");
-                        }
-                        if (StrUtils.isDigit(value)) {
-                            detailEntity.setCostValue(MathUtil.valueOf(value));
-                            detailEntity.setValueType(MathUtil.ZERO);
-                            detailList.add(detailEntity);
                         } else {
-                            detailEntity.setValueType(MathUtil.ONE);
-                            String costValue = value.replace("%", "");
-                            detailEntity.setCostValue(MathUtil.divide(MathUtil.valueOf(costValue),new BigDecimal(100),4));
-                            detailList.add(detailEntity);
+                            if (StrUtils.isDigit(value)) {
+                                detailEntity.setCostValue(MathUtil.valueOf(value));
+                                detailEntity.setValueType(MathUtil.ZERO);
+                                detailList.add(detailEntity);
+                            } else {
+                                detailEntity.setValueType(MathUtil.ONE);
+                                String costValue = value.replace("%", "");
+                                detailEntity.setCostValue(MathUtil.divide(MathUtil.valueOf(costValue),new BigDecimal(100),4));
+                                detailList.add(detailEntity);
+                            }
                         }
                     }
                 }
