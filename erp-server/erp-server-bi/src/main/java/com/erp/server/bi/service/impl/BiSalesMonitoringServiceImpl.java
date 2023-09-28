@@ -59,8 +59,8 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_403);
         }
-        Map<Integer, List<BiSalesMonitoringDTO>> map = list.stream().collect(Collectors.groupingBy(BiSalesMonitoringDTO::getType));
-        for (Map.Entry<Integer, List<BiSalesMonitoringDTO>> entry:map.entrySet()) {
+        Map<String, List<BiSalesMonitoringDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getMetrics().concat(obj.getType().toString())));
+        for (Map.Entry<String, List<BiSalesMonitoringDTO>> entry:map.entrySet()) {
             List<BiSalesMonitoringDTO> value = entry.getValue();
             int size = value.size();
             if (size > 1) {
