@@ -5,6 +5,7 @@ import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.mabang.item.OrderItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -596,7 +597,13 @@ public class OrderEntity extends CleanBaseDTO {
         if (null == receiverAddressInfoObj){
             return;
         }
-        this.setCountryNameCN(receiverAddressInfoObj.getString("countryNameCN"));
-        this.setCountryNameEN(receiverAddressInfoObj.getString("countryNameEN"));
+        String receiverCountryNameCN = receiverAddressInfoObj.getString("countryNameCN");
+        String receiverCountryNameEN = receiverAddressInfoObj.getString("countryNameEN");
+        if (StringUtils.isNotBlank(receiverCountryNameCN)){
+            this.setCountryNameCN(receiverCountryNameCN);
+        }
+        if (StringUtils.isNotBlank(receiverCountryNameEN)){
+            this.setCountryNameEN(receiverCountryNameEN);
+        }
     }
 }
