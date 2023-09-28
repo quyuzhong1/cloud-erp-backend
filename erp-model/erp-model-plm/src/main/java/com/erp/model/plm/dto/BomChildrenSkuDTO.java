@@ -34,6 +34,11 @@ public class BomChildrenSkuDTO  implements Serializable {
     private String parentSkuId;
 
     /**
+     * 父级skuNo
+     */
+    private String parentSkuNo;
+
+    /**
      * sku
      */
     @NotBlank(message = "sku不能为空")

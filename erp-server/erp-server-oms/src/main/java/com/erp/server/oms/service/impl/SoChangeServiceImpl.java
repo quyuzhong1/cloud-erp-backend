@@ -892,7 +892,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         SoChangeEntity soChange = this.getById(id);
         if (Objects.nonNull(soChange)) {
             //同步成功的
-            String successSyncStatus = SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode();
+            String successSyncStatus = SyncStatusEnum.SUCCESS_SYNC.getCode();
             //表示同步成功
             if (successSyncStatus.equals(syncKingdeeStatus)) {
                 Boolean existAdd = soChangeDetailService.existAdd(id);

@@ -6,34 +6,32 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.LocalDateUtil;
 import com.common.business.interceptor.CommonInterceptor;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.SeriesVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.bi.dto.BiSalesMonitoringDTO;
 import com.erp.model.bi.dto.BiSalesMonitoringSearchDTO;
 import com.erp.model.bi.dto.BiSalesMonitoringTableDTO;
-import com.erp.model.bi.entity.BiModuleEntity;
 import com.erp.model.bi.entity.BiSalesMonitoringEntity;
-import com.erp.model.bi.entity.BiSysModuleEntity;
-import com.erp.model.bi.vo.*;
+import com.erp.model.bi.enums.MetricsEnum;
+import com.erp.model.bi.vo.BiSalesMonitoringTableVO;
 import com.erp.server.bi.enums.BiCompareEnum;
 import com.erp.server.bi.enums.SalesMonitoringTypeEnum;
 import com.erp.server.bi.mapper.BiSalesMonitoringMapper;
-import com.erp.server.bi.service.BiModuleService;
 import com.erp.server.bi.service.BiSalesMonitoringService;
-import com.erp.server.bi.service.BiSysModuleService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -50,11 +48,6 @@ import java.util.stream.Collectors;
 public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringMapper, BiSalesMonitoringEntity>
         implements BiSalesMonitoringService {
 
-    @Resource
-    private BiModuleService biModuleService;
-    @Resource
-    private BiSysModuleService biSysModuleService;
-
     @Override
     public Boolean batchAdd(List<BiSalesMonitoringDTO> list) {
         if (CollectionUtils.isEmpty(list) || list.size() == 0) {
@@ -66,8 +59,8 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_403);
         }
-        Map<Integer, List<BiSalesMonitoringDTO>> map = list.stream().collect(Collectors.groupingBy(BiSalesMonitoringDTO::getType));
-        for (Map.Entry<Integer, List<BiSalesMonitoringDTO>> entry:map.entrySet()) {
+        Map<String, List<BiSalesMonitoringDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getMetrics().concat(obj.getType().toString())));
+        for (Map.Entry<String, List<BiSalesMonitoringDTO>> entry:map.entrySet()) {
             List<BiSalesMonitoringDTO> value = entry.getValue();
             int size = value.size();
             if (size > 1) {
@@ -113,137 +106,158 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     }
 
     @Override
-    public LinkedHashMap<String,Object> listBiSalesMonitoringView(BiSalesMonitoringSearchDTO dto) {
-        //模块id
-        String moduleId = dto.getModuleId();
+    public LinkedHashMap<String,Object> listBiSalesMonitoringView(BiSalesMonitoringSearchDTO.ParamDTO dto) {
         //当前登录人
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_403);
         }
         LinkedHashMap<String,Object> map = new LinkedHashMap<>();
-        BiModuleEntity biModuleEntity = biModuleService.getById(moduleId);
-        if (ObjectUtils.isEmpty(biModuleEntity)) {
-            return map;
-        }
-        BiSysModuleEntity biSysModuleEntity = biSysModuleService.getById(biModuleEntity.getSysModuleId());
-        if (ObjectUtils.isEmpty(biSysModuleEntity)) {
-            return map;
-        }
         List<BiSalesMonitoringEntity> list = listByChargeId(loginUser.getUid());
         if (CollectionUtils.isEmpty(list)) {
             return map;
         }
-        List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList = this.baseMapper.listBiSalesMonitoringTable(dto);
-        if (CollectionUtils.isEmpty(biSalesMonitoringTableList)) {
+        //当月第一天
+        LocalDateTime currentMonth = LocalDateTime.of(LocalDate.from(LocalDateTime.now().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
+
+        //上上个月第一天
+        LocalDateTime lastsMonth = currentMonth.minusMonths(2);
+
+        BiSalesMonitoringTableDTO.GroupViewDTO groupViewDTO = handleGroupData(dto);
+
+        List<BiSalesMonitoringTableDTO.ViewDTO> resultList = new ArrayList<>();
+        if (MetricsEnum.SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
+            if (dto.getSearchType().equals(SalesMonitoringTypeEnum.CATEGORY.getCode())) {
+                resultList = this.baseMapper.listBiSalesMonitoringSkuSalesAmount(groupViewDTO,lastsMonth);
+            } else {
+                resultList = this.baseMapper.listBiSalesMonitoringSalesAmount(groupViewDTO,lastsMonth);
+            }
+
+        } else {
+            if (dto.getSearchType().equals(SalesMonitoringTypeEnum.CATEGORY.getCode())) {
+                resultList = this.baseMapper.listBiSalesMonitoringSkuSalesQty(groupViewDTO,lastsMonth);
+            } else {
+                resultList = this.baseMapper.listBiSalesMonitoringSalesQty(groupViewDTO,lastsMonth);
+            }
+        }
+        if (CollectionUtils.isEmpty(resultList)) {
             return map;
         }
-        LinkedHashMap<String,Object> head = new LinkedHashMap<>();
         SeriesVO seriesVO = new SeriesVO<>();
-        if (biSysModuleEntity.getName().equals(SalesMonitoringTypeEnum.SALESQTYMONITORING.getDesc())) {
-            BiSalesMonitoringEntity  entity= list.stream().filter(obj -> obj.getType().equals(SalesMonitoringTypeEnum.SALESQTYMONITORING.getCode())).findFirst().orElse(null);
+        BiSalesMonitoringEntity  entity= list.stream().filter(obj -> obj.getType().equals(dto.getSearchType()) && obj.getMetrics().equals(dto.getMetrics())).findFirst().orElse(null);
+
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.SKU.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
-                this.listSalesMonitoring(head,biSalesMonitoringTableList,entity,seriesVO,MathUtil.ONE,null);
+                this.listSalesMonitoring(resultList,entity,seriesVO,dto.getMetrics(),null);
             }
         }
-        if (biSysModuleEntity.getName().equals(SalesMonitoringTypeEnum.SALESAMOUNTMONITORING.getDesc())) {
-            BiSalesMonitoringEntity entity = list.stream().filter(obj -> obj.getType().equals(SalesMonitoringTypeEnum.SALESAMOUNTMONITORING.getCode())).findFirst().orElse(null);
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.DEPT.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
-                this.listSalesMonitoring(head, biSalesMonitoringTableList, entity, seriesVO, MathUtil.TWO, null);
+                this.listDeptNameMonitoring(resultList, entity, seriesVO,dto.getMetrics());
             }
         }
-        if (biSysModuleEntity.getName().equals(SalesMonitoringTypeEnum.NEWPRODUCTSMONITORING.getDesc())) {
-            BiSalesMonitoringEntity entity = list.stream().filter(obj -> obj.getType().equals(SalesMonitoringTypeEnum.NEWPRODUCTSMONITORING.getCode())).findFirst().orElse(null);
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.CATEGORY.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
-                this.listSalesMonitoring(head,biSalesMonitoringTableList,entity,seriesVO,MathUtil.TWO,null);
+                this.listCategoryMonitoring(resultList, entity, seriesVO,dto.getMetrics());
             }
         }
-        if (biSysModuleEntity.getName().equals(SalesMonitoringTypeEnum.OLDPRODUCTSMONITORING.getDesc())) {
-            BiSalesMonitoringEntity entity = list.stream().filter(obj -> obj.getType().equals(SalesMonitoringTypeEnum.OLDPRODUCTSMONITORING.getCode())).findFirst().orElse(null);
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.USER.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
-                this.listSalesMonitoring(head, biSalesMonitoringTableList, entity, seriesVO, MathUtil.TWO, null);
+                this.listChargeNameMonitoring( resultList, entity, seriesVO,dto.getMetrics());
             }
         }
-        if (biSysModuleEntity.getName().equals(SalesMonitoringTypeEnum.BRANDNAMEMONITORING.getDesc())) {
-            BiSalesMonitoringEntity entity = list.stream().filter(obj -> obj.getType().equals(SalesMonitoringTypeEnum.BRANDNAMEMONITORING.getCode())).findFirst().orElse(null);
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.SHOP.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
-                this.listBrandNameMonitoring(head, biSalesMonitoringTableList, entity, seriesVO);
+                this.listShopMonitoring(resultList, entity, seriesVO,dto.getMetrics());
             }
         }
-        if (biSysModuleEntity.getName().equals(SalesMonitoringTypeEnum.CATEGORYMONITORING.getDesc())) {
-            BiSalesMonitoringEntity entity = list.stream().filter(obj -> obj.getType().equals(SalesMonitoringTypeEnum.CATEGORYMONITORING.getCode())).findFirst().orElse(null);
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.PLATFORM.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
-                this.listCategoryMonitoring(head, biSalesMonitoringTableList, entity, seriesVO);
+                this.listPlatformMonitoring(resultList, entity, seriesVO,dto.getMetrics());
             }
         }
-        if (biSysModuleEntity.getName().equals(SalesMonitoringTypeEnum.CHARGENAMEMONITORING.getDesc())) {
-            BiSalesMonitoringEntity entity = list.stream().filter(obj -> obj.getType().equals(SalesMonitoringTypeEnum.CHARGENAMEMONITORING.getCode())).findFirst().orElse(null);
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.COUNTRY.getCode())) {
             if (ObjectUtils.isNotEmpty(entity)) {
-                this.listChargeNameMonitoring(head, biSalesMonitoringTableList, entity, seriesVO);
+
+                this.listCountryMonitoring(resultList, entity, seriesVO,dto.getMetrics());
             }
         }
+        LinkedHashMap<String,Object> head = handleHand(dto);
         map.put("head",head);
         map.put("data",seriesVO);
         return map;
     }
 
+
+    /**
+     * @description: 分组获得实际数据
+     * @author Will
+     * @date: 2023/9/18 11:36
+     * @param dto
+     * @return List<ViewDTO>
+     */
+    private BiSalesMonitoringTableDTO.GroupViewDTO handleGroupData (BiSalesMonitoringSearchDTO.ParamDTO dto) {
+
+        String timeGroupStr = "to_char(doi.platform_create_time,'MM')";
+        String timeViewStr =  "to_char(doi.platform_create_time,'MM') as month";
+        String viewStr = "";
+        String groupStr = "";
+
+        if (SalesMonitoringTypeEnum.DEPT.getCode().equals(dto.getSearchType())) {
+            viewStr = "doi.dept_id as typeId,doi.dept_name as typeName,".concat(timeViewStr);
+            groupStr = "doi.dept_id,doi.dept_name,".concat(timeGroupStr);
+        }
+        if (SalesMonitoringTypeEnum.USER.getCode().equals(dto.getSearchType())) {
+            viewStr = "doi.charge_name as typeName,".concat(timeViewStr);
+            groupStr = "doi.charge_name,".concat(timeGroupStr);
+        }
+        if (SalesMonitoringTypeEnum.SHOP.getCode().equals(dto.getSearchType())) {
+            viewStr = "doi.shop_name as typeName,".concat(timeViewStr);
+            groupStr = "doi.shop_name,".concat(timeGroupStr);
+        }
+        //根据指标查询品类目标值
+        if (SalesMonitoringTypeEnum.CATEGORY.getCode().equals(dto.getSearchType())) {
+            viewStr = "pi.category as typeName,".concat(timeViewStr);
+            groupStr = "pi.category,".concat(timeGroupStr);
+        }
+        if (SalesMonitoringTypeEnum.SKU.getCode().equals(dto.getSearchType())) {
+            viewStr = "doit.sku_no as typeName,".concat(timeViewStr);
+            groupStr = "doit.sku_no,".concat(timeGroupStr);
+        }
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.PLATFORM.getCode())) {
+            viewStr = "doi.source_platform as typeName,".concat(timeViewStr);
+            groupStr = "doi.source_platform,".concat(timeGroupStr);
+        }
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.COUNTRY.getCode())) {
+            viewStr = "doi.country_name_cn as typeName,".concat(timeViewStr);
+            groupStr = "doi.country_name_cn,".concat(timeGroupStr);
+        }
+        return new BiSalesMonitoringTableDTO.GroupViewDTO(groupStr,viewStr);
+    }
+
     /**
      * 销量或销售额监控设置数据查询
      */
-    private void listSalesMonitoring(LinkedHashMap<String,Object> head,List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList,BiSalesMonitoringEntity entity,SeriesVO seriesVO,Integer type,Integer isNewProduct) {
+    private void listSalesMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics,Integer isNewProduct) {
         //type:1代表销量,2代表销售额
-        Map<String, List<BiSalesMonitoringTableDTO>> listMap = biSalesMonitoringTableList.stream()
-                .filter(obj ->
-                        StringUtils.isNotBlank(obj.getSkuNo())
-                        && StringUtils.isNotBlank(obj.getItemName())
-                        && ObjectUtils.isNotEmpty(obj.getPlatformCreateTime())
-                        && (ObjectUtils.isNotEmpty(isNewProduct) ? isNewProduct.equals(obj.getNewSign()) : true)
-                )
-                .collect(Collectors.groupingBy(obj -> obj.getSkuNo().concat(",").concat(obj.getItemName())));
-        LocalDate now = LocalDate.now();
-        //当前时间年月
-        String month = String.valueOf(now.getYear())+ now.getMonth().getValue();
-        String lastMonth = String.valueOf(LocalDateUtil.getLastMonthStart(now).getYear()) + LocalDateUtil.getLastMonthStart(now).getMonth().getValue();
-        String year = String.valueOf(now.getYear());
-        List<BiSalesMonitoringTableVO> resultList = new ArrayList<>();
-        head.put("seq","排名");
-        head.put("skuNo","SKU");
-        head.put("itemName","品名");
-        if (MathUtil.ONE.equals(type)) {
-            head.put("sumYearSale","年累计销量");
-            head.put("sumFirstMonthSale","上个月销量");
-            head.put("sumSecondMonthSale","下个月销量");
-            head.put("relativeRatioName","销量环比");
-        } else {
-            head.put("sumYearSale","年累计销售额");
-            head.put("sumFirstMonthSale","上个月销售额");
-            head.put("sumSecondMonthSale","下个月销售额");
-            head.put("relativeRatioName","销售额环比");
-        }
-        Integer seq = MathUtil.ONE;
+        Map<String, List<BiSalesMonitoringTableDTO.ViewDTO>> listMap = list.stream()
+                .filter(obj ->StringUtils.isNotBlank(obj.getTypeName()))
+                .collect(Collectors.groupingBy(obj -> obj.getTypeName()));
+        List<BiSalesMonitoringTableVO.SkuDTO> resultList = new ArrayList<>();
         String name = "";
-        for (Map.Entry<String, List<BiSalesMonitoringTableDTO>> entry: listMap.entrySet()) {
-            List<BiSalesMonitoringTableDTO> value = entry.getValue();
-            //本月销量
-            BigDecimal sumSecondMonthSale =  value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth().getValue()))
-                    .map(obj-> MathUtil.ONE.equals(type)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //上月销量
-            BigDecimal sumFirstMonthSale =  value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth().getValue()))
-                    .map(obj-> MathUtil.ONE.equals(type)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //全年销量
-            BigDecimal sumYearSale =  value.stream().filter(obj -> year.equals(String.valueOf(obj.getPlatformCreateTime().getYear())))
-                    .map(obj-> MathUtil.ONE.equals(type)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            Pair<String, BiSalesMonitoringTableVO> pair = setBiSalesMonitoringTableVO(entity, sumSecondMonthSale, sumFirstMonthSale, sumYearSale);
+        for (Map.Entry<String, List<BiSalesMonitoringTableDTO.ViewDTO>> entry: listMap.entrySet()) {
+            List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
+            BiSalesMonitoringTableVO.SkuDTO vo = new BiSalesMonitoringTableVO.SkuDTO();
+            //获取结果集
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
             if (ObjectUtils.isNotEmpty(pair)) {
-                BiSalesMonitoringTableVO biSalesMonitoringTableVO = pair.getValue();
+                BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
                 if (StringUtils.isBlank(name)) {
                     name = pair.getKey();
                 }
-                biSalesMonitoringTableVO.setSkuNo(value.get(0).getSkuNo());
-                biSalesMonitoringTableVO.setItemName(value.get(0).getItemName());
-                biSalesMonitoringTableVO.setSeq(seq);
-                resultList.add(biSalesMonitoringTableVO);
-                seq++;
+                BeanUtils.copyProperties(biSalesMonitoringTableVO,vo);
+                vo.setSkuNo(value.get(0).getTypeName());
+                resultList.add(vo);
             }
         }
         seriesVO.setName(name);
@@ -251,47 +265,27 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     }
 
     /**
-     * 品牌销售额监控设置数据查询
+     * 部门销售额监控设置数据查询
      */
-    private void listBrandNameMonitoring(LinkedHashMap<String,Object> head,List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList,BiSalesMonitoringEntity entity,SeriesVO seriesVO) {
-        Map<String, List<BiSalesMonitoringTableDTO>> listMap = biSalesMonitoringTableList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getBrandId()) && ObjectUtils.isNotEmpty(obj.getPlatformCreateTime())).collect(Collectors.groupingBy(obj -> obj.getBrandId()));
-        LocalDate now = LocalDate.now();
-        //当前时间年月
-        String month = String.valueOf(now.getYear())+ now.getMonth();
-        String lastMonth = String.valueOf(LocalDateUtil.getLastMonthStart(now).getYear()) + now.getMonth();
-        String year = String.valueOf(now.getYear());
-        head.put("seq","排名");
-        head.put("brandName","品牌");
-        head.put("sumYearSale","年累计销售额");
-        head.put("sumFirstMonthSale","上个月销售额");
-        head.put("sumSecondMonthSale","下个月销售额");
-        head.put("relativeRatioName","销售额环比");
-        List<BiBrandNameMonitoringTableVO> resultList = new ArrayList<>();
+    private void listDeptNameMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
+        Map<String, List<BiSalesMonitoringTableDTO.ViewDTO>> listMap = list.stream()
+                .filter(obj ->StringUtils.isNotBlank(obj.getTypeName()))
+                .collect(Collectors.groupingBy(obj -> obj.getTypeName()));
+        List<BiSalesMonitoringTableVO.DeptDTO> resultList = new ArrayList<>();
         String name = "";
-        Integer seq = MathUtil.ONE;
-        for (Map.Entry<String, List<BiSalesMonitoringTableDTO>> entry: listMap.entrySet()) {
-            List<BiSalesMonitoringTableDTO> value = entry.getValue();
-            BiBrandNameMonitoringTableVO vo = new BiBrandNameMonitoringTableVO();
-            //本月销售额
-            BigDecimal sumSecondMonthSale =  value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth().getValue()))
-                    .map(obj-> MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //上月销售额
-            BigDecimal sumFirstMonthSale =  value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth().getValue()))
-                    .map(obj-> MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //全年销售额
-            BigDecimal sumYearSale =  value.stream().filter(obj -> year.equals(String.valueOf(obj.getPlatformCreateTime().getYear())))
-                    .map(obj-> MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            Pair<String, BiSalesMonitoringTableVO> pair = setBiSalesMonitoringTableVO(entity, sumSecondMonthSale, sumFirstMonthSale, sumYearSale);
+        for (Map.Entry<String, List<BiSalesMonitoringTableDTO.ViewDTO>> entry: listMap.entrySet()) {
+            List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
+            BiSalesMonitoringTableVO.DeptDTO vo = new BiSalesMonitoringTableVO.DeptDTO();
+            //获取结果集
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
             if (ObjectUtils.isNotEmpty(pair)) {
-                BiSalesMonitoringTableVO biSalesMonitoringTableVO = pair.getValue();
+                BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
                 if (StringUtils.isBlank(name)) {
                     name = pair.getKey();
                 }
                 BeanUtils.copyProperties(biSalesMonitoringTableVO,vo);
-                vo.setBrandName(value.get(0).getBrandName());
-                vo.setSeq(seq);
+                vo.setDeptName(value.get(0).getTypeName());
                 resultList.add(vo);
-                seq++;
             }
         }
         seriesVO.setName(name);
@@ -301,47 +295,27 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     /**
      * 品类销售额监控设置数据查询
      */
-    private void listCategoryMonitoring(LinkedHashMap<String,Object> head,List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList,BiSalesMonitoringEntity entity,SeriesVO seriesVO) {
-        Map<String, List<BiSalesMonitoringTableDTO>> listMap = biSalesMonitoringTableList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getCategoryId()) && ObjectUtils.isNotEmpty(obj.getPlatformCreateTime())).collect(Collectors.groupingBy(obj -> obj.getCategoryId()));
-        LocalDate now = LocalDate.now();
-        //当前时间年月
-        String month = String.valueOf(now.getYear())+ now.getMonth();
-        String lastMonth = String.valueOf(LocalDateUtil.getLastMonthStart(now).getYear()) + now.getMonth();
-        String year = String.valueOf(now.getYear());
-        head.put("seq","排名");
-        head.put("category","品类");
-        head.put("sumYearSale","年累计销售额");
-        head.put("sumFirstMonthSale","上个月销售额");
-        head.put("sumSecondMonthSale","下个月销售额");
-        head.put("relativeRatioName","销售额环比");
-        List<BiCategoryMonitoringTableVO> resultList = new ArrayList<>();
+    private void listCategoryMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
+        Map<String, List<BiSalesMonitoringTableDTO.ViewDTO>> listMap = list.stream()
+                .filter(obj ->StringUtils.isNotBlank(obj.getTypeName()))
+                .collect(Collectors.groupingBy(obj -> obj.getTypeName()));
+        List<BiSalesMonitoringTableVO.CategoryDTO> resultList = new ArrayList<>();
         String name = "";
-        Integer seq = MathUtil.ONE;
-        for (Map.Entry<String, List<BiSalesMonitoringTableDTO>> entry: listMap.entrySet()) {
-            List<BiSalesMonitoringTableDTO> value = entry.getValue();
-            BiCategoryMonitoringTableVO vo = new BiCategoryMonitoringTableVO();
+        for (Map.Entry<String, List<BiSalesMonitoringTableDTO.ViewDTO>> entry: listMap.entrySet()) {
+            List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
+            BiSalesMonitoringTableVO.CategoryDTO vo = new BiSalesMonitoringTableVO.CategoryDTO();
             BeanUtils.copyProperties(value.get(0),vo);
-            //本月销售额
-            BigDecimal sumSecondMonthSale = value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth().getValue()))
-                    .map(obj-> MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //上月销售额
-            BigDecimal sumFirstMonthSale = value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth().getValue()))
-                    .map(obj-> MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //全年销售额
-            BigDecimal sumYearSale = value.stream().filter(obj -> year.equals(String.valueOf(obj.getPlatformCreateTime().getYear())))
-                    .map(obj-> MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            Pair<String, BiSalesMonitoringTableVO> pair = setBiSalesMonitoringTableVO(entity, sumSecondMonthSale, sumFirstMonthSale, sumYearSale);
+            //获取结果集
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
 
             if (ObjectUtils.isNotEmpty(pair)) {
-                BiSalesMonitoringTableVO biSalesMonitoringTableVO = pair.getValue();
+                BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
                 if (StringUtils.isBlank(name)) {
                     name = pair.getKey();
                 }
                 BeanUtils.copyProperties(biSalesMonitoringTableVO,vo);
-                vo.setCategory(value.get(0).getCategory());
-                vo.setSeq(seq);
+                vo.setCategoryName(value.get(0).getTypeName());
                 resultList.add(vo);
-                seq++;
             }
         }
         seriesVO.setName(name);
@@ -351,46 +325,26 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     /**
      * 品牌销售额监控设置数据查询
      */
-    private void listChargeNameMonitoring(LinkedHashMap<String,Object> head,List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList,BiSalesMonitoringEntity entity,SeriesVO seriesVO) {
-        Map<String, List<BiSalesMonitoringTableDTO>> listMap = biSalesMonitoringTableList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getChargeId()) && ObjectUtils.isNotEmpty(obj.getPlatformCreateTime())).collect(Collectors.groupingBy(obj -> obj.getChargeId()));
-        LocalDate now = LocalDate.now();
-        //当前时间年月
-        String month = String.valueOf(now.getYear())+ now.getMonth();
-        String lastMonth = String.valueOf(LocalDateUtil.getLastMonthStart(now).getYear()) + now.getMonth();
-        String year = String.valueOf(now.getYear());
-        head.put("seq","排名");
-        head.put("chargeName","人员");
-        head.put("sumYearSale","年累计销售额");
-        head.put("sumFirstMonthSale","上个月销售额");
-        head.put("sumSecondMonthSale","下个月销售额");
-        head.put("relativeRatioName","销售额环比");
-        List<BiChargeMonitoringTableVO> resultList = new ArrayList<>();
+    private void listChargeNameMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
+        Map<String, List<BiSalesMonitoringTableDTO.ViewDTO>> listMap = list.stream()
+                .filter(obj ->StringUtils.isNotBlank(obj.getTypeName()))
+                .collect(Collectors.groupingBy(obj -> obj.getTypeName()));
+        List<BiSalesMonitoringTableVO.ChargeDTO> resultList = new ArrayList<>();
         String name = "";
-        Integer seq = MathUtil.ONE;
-        for (Map.Entry<String, List<BiSalesMonitoringTableDTO>> entry: listMap.entrySet()) {
-            List<BiSalesMonitoringTableDTO> value = entry.getValue();
-            BiChargeMonitoringTableVO vo = new BiChargeMonitoringTableVO();
+        for (Map.Entry<String, List<BiSalesMonitoringTableDTO.ViewDTO>> entry: listMap.entrySet()) {
+            List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
+            BiSalesMonitoringTableVO.ChargeDTO vo = new BiSalesMonitoringTableVO.ChargeDTO();
             BeanUtils.copyProperties(value.get(0),vo);
-            //本月销售额
-            BigDecimal sumSecondMonthSale =  value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
-                    .map(obj-> MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //上月销售额
-            BigDecimal sumFirstMonthSale =  value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
-                    .map(obj-> MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            //全年销售额
-            BigDecimal sumYearSale = value.stream().filter(obj -> year.equals(String.valueOf(obj.getPlatformCreateTime().getYear())))
-                    .map(obj-> MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
-            Pair<String, BiSalesMonitoringTableVO> pair = setBiSalesMonitoringTableVO(entity, sumSecondMonthSale, sumFirstMonthSale, sumYearSale);
+            //获取结果集
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
             if (ObjectUtils.isNotEmpty(pair)) {
-                BiSalesMonitoringTableVO biSalesMonitoringTableVO = pair.getValue();
+                BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
                 if (StringUtils.isBlank(name)) {
                     name = pair.getKey();
                 }
                 BeanUtils.copyProperties(biSalesMonitoringTableVO,vo);
-                vo.setChargeName(value.get(0).getChargeName());
-                vo.setSeq(seq);
+                vo.setChargeName(value.get(0).getTypeName());
                 resultList.add(vo);
-                seq++;
             }
         }
         seriesVO.setName(name);
@@ -398,101 +352,284 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     }
 
     /**
+     * 品牌销售额监控设置数据查询
+     */
+    private void listShopMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
+        Map<String, List<BiSalesMonitoringTableDTO.ViewDTO>> listMap = list.stream()
+                .filter(obj ->StringUtils.isNotBlank(obj.getTypeName()))
+                .collect(Collectors.groupingBy(obj -> obj.getTypeName()));
+        List<BiSalesMonitoringTableVO.ShopDTO> resultList = new ArrayList<>();
+        String name = "";
+        for (Map.Entry<String, List<BiSalesMonitoringTableDTO.ViewDTO>> entry: listMap.entrySet()) {
+            List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
+            BiSalesMonitoringTableVO.ShopDTO vo = new BiSalesMonitoringTableVO.ShopDTO();
+            BeanUtils.copyProperties(value.get(0),vo);
+            //获取结果集
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
+            if (ObjectUtils.isNotEmpty(pair)) {
+                BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
+                if (StringUtils.isBlank(name)) {
+                    name = pair.getKey();
+                }
+                BeanUtils.copyProperties(biSalesMonitoringTableVO,vo);
+                vo.setShopName(value.get(0).getTypeName());
+                resultList.add(vo);
+            }
+        }
+        seriesVO.setName(name);
+        seriesVO.setData(resultList);
+    }
+
+    /**
+     * 品牌销售额监控设置数据查询
+     */
+    private void listPlatformMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
+        Map<String, List<BiSalesMonitoringTableDTO.ViewDTO>> listMap = list.stream()
+                .filter(obj ->StringUtils.isNotBlank(obj.getTypeName()))
+                .collect(Collectors.groupingBy(obj -> obj.getTypeName()));
+        List<BiSalesMonitoringTableVO.PlatformDTO> resultList = new ArrayList<>();
+        String name = "";
+        for (Map.Entry<String, List<BiSalesMonitoringTableDTO.ViewDTO>> entry: listMap.entrySet()) {
+            List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
+            BiSalesMonitoringTableVO.PlatformDTO vo = new BiSalesMonitoringTableVO.PlatformDTO();
+            BeanUtils.copyProperties(value.get(0),vo);
+            //获取结果集
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
+            if (ObjectUtils.isNotEmpty(pair)) {
+                BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
+                if (StringUtils.isBlank(name)) {
+                    name = pair.getKey();
+                }
+                BeanUtils.copyProperties(biSalesMonitoringTableVO,vo);
+                vo.setPlatform(value.get(0).getTypeName());
+                resultList.add(vo);
+            }
+        }
+        seriesVO.setName(name);
+        seriesVO.setData(resultList);
+    }
+
+    /**
+     * 品牌销售额监控设置数据查询
+     */
+    private void listCountryMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
+        Map<String, List<BiSalesMonitoringTableDTO.ViewDTO>> listMap = list.stream()
+                .filter(obj ->StringUtils.isNotBlank(obj.getTypeName()))
+                .collect(Collectors.groupingBy(obj -> obj.getTypeName()));
+
+        List<BiSalesMonitoringTableVO.CountryDTO> resultList = new ArrayList<>();
+        String name = "";
+        for (Map.Entry<String, List<BiSalesMonitoringTableDTO.ViewDTO>> entry: listMap.entrySet()) {
+            List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
+            BiSalesMonitoringTableVO.CountryDTO vo = new BiSalesMonitoringTableVO.CountryDTO();
+            BeanUtils.copyProperties(value.get(0),vo);
+            //获取结果集
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
+            if (ObjectUtils.isNotEmpty(pair)) {
+                BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
+                if (StringUtils.isBlank(name)) {
+                    name = pair.getKey();
+                }
+                BeanUtils.copyProperties(biSalesMonitoringTableVO,vo);
+                vo.setCountryName(value.get(0).getTypeName());
+                resultList.add(vo);
+            }
+        }
+        seriesVO.setName(name);
+        seriesVO.setData(resultList);
+    }
+
+    /**
+     * @description: 格式化
+     * @author Will
+     * @date: 2023/9/20 9:04
+     * @param value
+     * @param entity
+     * @param metrics
+     * @return Pair<CommonDTO>
+     */
+    private Pair<String, BiSalesMonitoringTableVO.CommonDTO> handleMonitoring (List<BiSalesMonitoringTableDTO.ViewDTO> value,BiSalesMonitoringEntity entity,String metrics) {
+
+        LocalDate now = LocalDate.now();
+        //当前时间年月
+        Integer month = now.getMonthValue();
+        //上月
+        Integer lastMonth =now.minusMonths(1).getMonthValue();
+        //上上月
+        Integer lastsMonth =  now.minusMonths(2).getMonthValue();
+
+        //本月销售额
+        BigDecimal sumSecondMonthSale =  value.stream().filter(obj -> month.equals(obj.getMonth()))
+                .map(BiSalesMonitoringTableDTO.ViewDTO::getValue).findFirst().orElse(BigDecimal.ZERO);
+        //上月销售额
+        BigDecimal sumFirstMonthSale =  value.stream().filter(obj -> lastMonth.equals(obj.getMonth()))
+                .map(BiSalesMonitoringTableDTO.ViewDTO::getValue).findFirst().orElse(BigDecimal.ZERO);
+        //上上月销售额
+        BigDecimal sumLastMonthSale =  value.stream().filter(obj -> lastsMonth.equals(obj.getMonth()))
+                .map(BiSalesMonitoringTableDTO.ViewDTO::getValue).findFirst().orElse(BigDecimal.ZERO);
+
+        Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = setBiSalesMonitoringTableVO(entity, sumSecondMonthSale, sumFirstMonthSale,sumLastMonthSale);
+
+        return pair;
+    }
+
+    /**
+     * @description: 处理列表头数据
+     * @author Will
+     * @date: 2023/9/19 16:09
+     * @param dto
+     * @return LinkedHashMap<Object>
+     */
+    private LinkedHashMap<String,Object> handleHand (BiSalesMonitoringSearchDTO.ParamDTO dto) {
+        LinkedHashMap<String,Object> head = new LinkedHashMap<>();
+        head.put(SalesMonitoringTypeEnum.getName(dto.getSearchType()), SalesMonitoringTypeEnum.getDesc(dto.getSearchType()));
+        head.put("sumSecondMonthSale","本期");
+        head.put("sumFirstMonthSale","上期");
+        head.put("sumLastMonthSale","上上期");
+        head.put("relativeRatioName","本期环比");
+        head.put("lastRelativeRatioName","上期环比");
+        return head;
+    }
+
+    /**
      * 设置
      */
-    private Pair<String,BiSalesMonitoringTableVO> setBiSalesMonitoringTableVO(BiSalesMonitoringEntity entity,BigDecimal sumSecondMonthSale,BigDecimal sumFirstMonthSale,BigDecimal sumYearSale) {
+    private Pair<String,BiSalesMonitoringTableVO.CommonDTO> setBiSalesMonitoringTableVO(BiSalesMonitoringEntity entity,BigDecimal sumSecondMonthSale,BigDecimal sumFirstMonthSale,BigDecimal sumLastMonthSale) {
         String name = "";
-        BiSalesMonitoringTableVO vo =new BiSalesMonitoringTableVO();
+        BiSalesMonitoringTableVO.CommonDTO vo = new BiSalesMonitoringTableVO.CommonDTO();
         //比较最新月基础值
-        if (MathUtil.compareTo(entity.getLatestMonthValue(), BigDecimal.ZERO) > 0 ) {
+        if (MathUtil.compareTo(entity.getLatestMonthValue(), BigDecimal.ZERO) > 0) {
             //大于等于
-            if (BiCompareEnum.GREATERTHANEQUAL.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值超过"+entity.getLatestMonthValue().setScale(2));
-                if ((MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) < 0)) {
+            if (BiCompareEnum.GREATER_THAN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
+                name = name.concat("(最新月基础值超过" + entity.getLatestMonthValue().setScale(2,2));
+                if (!(MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) >= 0)) {
                     return null;
                 }
             }
             //小于等于
-            if (BiCompareEnum.LESSTHANEQUAL.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值不超过"+entity.getLatestMonthValue().setScale(2));
-                if ((MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) > 0)) {
+            if (BiCompareEnum.LESS_THAN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
+                name = name.concat("(最新月基础值不超过" + entity.getLatestMonthValue().setScale(2,2));
+                if (!(MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) <= 0)) {
                     return null;
                 }
             }
             //大于
-            if (BiCompareEnum.GREATERTHAN.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值超过"+entity.getLatestMonthValue().setScale(2));
-                if ((MathUtil.compareTo(entity.getLatestMonthValue(),sumSecondMonthSale) >= 0)) {
+            if (BiCompareEnum.GREATER_THAN.getCode().equals(entity.getLatestMonthCompare())) {
+                name = name.concat("(最新月基础值超过" + entity.getLatestMonthValue().setScale(2,2));
+                if (!(MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) > 0)) {
                     return null;
                 }
             }
             //小于
-            if (BiCompareEnum.LESSTHAN.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值不超过"+entity.getLatestMonthValue().setScale(2));
-                if ((MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) >= 0)) {
+            if (BiCompareEnum.LESS_THAN.getCode().equals(entity.getLatestMonthCompare())) {
+                name = name.concat("(最新月基础值不超过" + entity.getLatestMonthValue().setScale(2,2));
+                if (!(MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) < 0)) {
+                    return null;
+                }
+            }
+            //连续两个月大于等于
+            if (BiCompareEnum.TOW_MONTH_GREATER_THEN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
+                name = name.concat("(最新月基础值超过" + entity.getLatestMonthValue().setScale(2,2));
+                if (!(MathUtil.compareTo(sumFirstMonthSale,entity.getLatestMonthValue()) >= MathUtil.ZERO && MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) >= MathUtil.ZERO)) {
+                    return null;
+                }
+            }
+            //连续两个月小于等于
+            if (BiCompareEnum.TOW_MONTH_LESS_THEN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
+                name = name.concat("(最新月基础值不超过" + entity.getLatestMonthValue().setScale(2,2));
+                if (!(MathUtil.compareTo(sumFirstMonthSale,entity.getLatestMonthValue()) <= MathUtil.ZERO && MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) <= MathUtil.ZERO)) {
                     return null;
                 }
             }
         }
-        //环比（最新月-上个月）/上个月*100%
-        BigDecimal radio = BigDecimal.ZERO;
-        if (MathUtil.compareTo(sumFirstMonthSale,BigDecimal.ZERO) != 0) {
-            radio = MathUtil.divide(MathUtil.subtract(sumSecondMonthSale, sumFirstMonthSale), sumFirstMonthSale).multiply(new BigDecimal(100));
+            //环比（本期-上期）/上期*100%
+            BigDecimal radio = BigDecimal.ZERO;
+            if (MathUtil.compareTo(sumFirstMonthSale, BigDecimal.ZERO) != 0) {
+                radio = MathUtil.divide(MathUtil.subtract(sumSecondMonthSale,sumFirstMonthSale), sumFirstMonthSale).multiply(MathUtil.BigDecimal_100);
+            }
+            //上期环比 (上期－上上期）÷上上期×100%
+            BigDecimal lastRadio = BigDecimal.ZERO;
+            if (MathUtil.compareTo(sumLastMonthSale, BigDecimal.ZERO) != 0) {
+                lastRadio = MathUtil.divide(MathUtil.subtract(sumFirstMonthSale, sumLastMonthSale), sumLastMonthSale).multiply(MathUtil.BigDecimal_100);
+            }
+
+            //比较环比
+            if (MathUtil.compareTo(entity.getRelativeRatio(), BigDecimal.ZERO) > 0) {
+                //大于等于
+                if (BiCompareEnum.GREATER_THAN_EQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
+                    if (StringUtils.isNotBlank(name)) {
+                        name = name.concat("，环比超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                    } else {
+                        name = name.concat("(环比超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                    }
+                    if (!(MathUtil.compareTo(radio,entity.getRelativeRatio()) >= 0)) {
+                        return null;
+                    }
+                }
+                //小于等于
+                if (BiCompareEnum.LESS_THAN_EQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
+                    if (StringUtils.isNotBlank(name)) {
+                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                    } else {
+                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                    }
+                    if (!(MathUtil.compareTo(radio,entity.getRelativeRatio()) <= 0)) {
+                        return null;
+                    }
+                }
+                //大于
+                if (BiCompareEnum.GREATER_THAN.getCode().equals(entity.getRelativeRatioCompare())) {
+                    if (StringUtils.isNotBlank(name)) {
+                        name = name.concat("，环比超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                    } else {
+                        name = name.concat("(环比超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                    }
+                    if (!(MathUtil.compareTo(radio,entity.getRelativeRatio()) > 0)) {
+                        return null;
+                    }
+                }
+                //小于
+                if (BiCompareEnum.LESS_THAN.getCode().equals(entity.getRelativeRatioCompare())) {
+                    if (StringUtils.isNotBlank(name)) {
+                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                    } else {
+                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                    }
+                    if (!(MathUtil.compareTo(radio,entity.getRelativeRatio()) < 0)) {
+                        return null;
+                    }
+                }
+                //连续两个月大于等于
+                if (BiCompareEnum.TOW_MONTH_GREATER_THEN_EQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
+                    if (StringUtils.isNotBlank(name)) {
+                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                    } else {
+                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                    }
+                    if (!(MathUtil.compareTo(radio, entity.getRelativeRatio()) >= 0 && MathUtil.compareTo(lastRadio, entity.getRelativeRatio()) >= 0) ) {
+                        return null;
+                    }
+                }
+                //连续两个月小于等于
+                if (BiCompareEnum.TOW_MONTH_LESS_THEN_EQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
+                    if (StringUtils.isNotBlank(name)) {
+                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                    } else {
+                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                    }
+                    if (!(MathUtil.compareTo(radio, entity.getRelativeRatio()) <= 0 && MathUtil.compareTo(lastRadio, entity.getRelativeRatio()) <= 0) ) {
+                        return null;
+                    }
+                }
+            }
+            vo.setSumSecondMonthSale(sumSecondMonthSale);
+            vo.setSumFirstMonthSale(sumFirstMonthSale);
+            vo.setSumLastMonthSale(sumLastMonthSale);
+            vo.setRelativeRatioName(radio.stripTrailingZeros().toPlainString().concat("%"));
+            vo.setLastRelativeRatioName(lastRadio.stripTrailingZeros().toPlainString().concat("%"));
+            name = StringUtils.isNotBlank(name) ? name.concat(")") : name;
+            return new Pair<>(name, vo);
         }
-        //比较环比
-        if (MathUtil.compareTo(entity.getRelativeRatio(), BigDecimal.ZERO) > 0 ) {
-            //大于等于
-            if (BiCompareEnum.GREATERTHANEQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
-                if (StringUtils.isNotBlank(name)) {
-                    name = name.concat("，环比超过"+entity.getRelativeRatio().setScale(2).toString().concat("%"));
-                } else {
-                    name = name.concat("(环比超过"+entity.getRelativeRatio().setScale(2).toString().concat("%"));
-                }
-                if ((MathUtil.compareTo(radio,entity.getRelativeRatio()) < 0)) {
-                    return null;
-                }
-            }
-            //小于等于
-            if (BiCompareEnum.LESSTHANEQUAL.getCode().equals(entity.getRelativeRatioCompare())) {
-                if (StringUtils.isNotBlank(name)) {
-                    name = name.concat("，环比不超过"+entity.getRelativeRatio().setScale(2).toString().concat("%"));
-                } else {
-                    name = name.concat("(环比不超过"+entity.getRelativeRatio().setScale(2).toString().concat("%"));
-                }
-                if ((MathUtil.compareTo(radio,entity.getRelativeRatio()) > 0)) {
-                    return null;
-                }
-            }
-            //大于
-            if (BiCompareEnum.GREATERTHAN.getCode().equals(entity.getRelativeRatioCompare())) {
-                if (StringUtils.isNotBlank(name)) {
-                    name = name.concat("，环比超过"+entity.getRelativeRatio().setScale(2).toString().concat("%"));
-                } else {
-                    name = name.concat("(环比超过"+entity.getRelativeRatio().setScale(2).toString().concat("%"));
-                }
-                if ((MathUtil.compareTo(entity.getRelativeRatio(),radio) >= 0)) {
-                    return null;
-                }
-            }
-            //小于
-            if (BiCompareEnum.LESSTHAN.getCode().equals(entity.getRelativeRatioCompare())) {
-                if (StringUtils.isNotBlank(name)) {
-                    name = name.concat("，环比不超过"+entity.getRelativeRatio().setScale(2).toString().concat("%"));
-                } else {
-                    name = name.concat("(环比不超过"+entity.getRelativeRatio().setScale(2).toString().concat("%"));
-                }
-                if ((MathUtil.compareTo(radio,entity.getRelativeRatio()) >= 0)) {
-                    return null;
-                }
-            }
-        }
-        vo.setSumSecondMonthSale(sumSecondMonthSale);
-        vo.setSumFirstMonthSale(sumFirstMonthSale);
-        vo.setSumYearSale(sumYearSale);
-        vo.setRelativeRatioName(radio.toString().concat("%"));
-        name =  StringUtils.isNotBlank(name) ? name.concat(")") :name;
-        return new Pair<String,BiSalesMonitoringTableVO>(name,vo);
-    }
 
 
     /**
@@ -517,6 +654,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     public List<BiSalesMonitoringEntity> listByChargeId(String chargeId) {
         LambdaQueryWrapper<BiSalesMonitoringEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiSalesMonitoringEntity::getChargeId,chargeId);
+        queryWrapper.orderByAsc(BiSalesMonitoringEntity::getId);
         return this.list(queryWrapper);
     }
 

@@ -1,9 +1,9 @@
 package com.erp.server.bi.service;
 
-import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.SkuDateFilterDTO;
+import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 public interface BiComprehensiveAnalyseService {
@@ -54,6 +54,15 @@ public interface BiComprehensiveAnalyseService {
     List<SaleDetailVO> saleDetailSku(BiFilterDTO biFilterDTO);
 
     /**
+     * 销售单价分布
+     * @Author Luo_WG
+     * @Date 2022/12/27 10:41
+     * @param biFilterDTO biFilterDTO
+     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     **/
+    StatisticalDataVO salePriceDistribution(BiFilterDTO biFilterDTO);
+
+    /**
      * 销售明细表-店铺
      * @Author Luo_WG
      * @Date 2022/12/27 10:41
@@ -88,4 +97,24 @@ public interface BiComprehensiveAnalyseService {
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
     List<SkuDateSaleTrendVO> skuDateSaleTrend(SkuDateFilterDTO biFilterDTO);
+
+    /**
+     * SKU顶部详情
+     */
+    BiSkuDetailTopDTO skuDetailTop(SkuDetailDTO dto);
+
+    /**
+     * 区域销售分析
+     */
+    List<BiRegionAnalyzeDTO> getSubRegionSales(BiCountryRegionFilterDTO dto);
+
+    /**
+     * 国家销售分析
+     */
+    List<BiCountryAnalyzeDTO> getCountrySales(BiCountryRegionFilterDTO dto);
+
+    /**
+     * 导出区域/国家销售额
+     */
+    Boolean exportCountryExcel(BiCountryRegionFilterDTO dto, HttpServletResponse response);
 }

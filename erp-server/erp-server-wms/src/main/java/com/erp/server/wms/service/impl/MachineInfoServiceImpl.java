@@ -837,7 +837,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                 .set(MachineInfoEntity::getApproveUserName, userInfo.getUserName())
                 .set(MachineInfoEntity::getApproveStatus, approveStatus)
                 .set(MachineInfoEntity::getApproveTime, LocalDateTime.now())
-                .set(ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus), MachineInfoEntity::getSyncKingdeeStatus, SyncKingdeeStatusEnum.TO_BE_SYNC.getCode())
+                .set(ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus), MachineInfoEntity::getSyncKingdeeStatus, SyncStatusEnum.TO_BE_SYNC.getCode())
                 .update();
     }
 

@@ -21,6 +21,8 @@ public class SkuCategoryVO implements Serializable {
      */
     private String name;
 
+    private String categoryId;
+
     private List<String> skuList;
 
 

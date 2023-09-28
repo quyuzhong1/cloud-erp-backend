@@ -23,7 +23,16 @@ public class DateUtil {
 
     }
 
-    public static final String fmt = "yyyy-MM-dd HH:mm:ss", fmt_day = "yyyy-MM-dd", fmt_year_month = "yyyy/MM/dd", fmt_recent = "MM-dd HH:mm", fmt_num = "yyMMdd", fmt_year = "yy", fmt_md = "MMdd", fmt_hms = "HH:mm:ss";
+    public static final String fmt = "yyyy-MM-dd HH:mm:ss",
+            fmt_day = "yyyy-MM-dd",
+            fmt_year_month = "yyyy/MM/dd",
+            fmt_recent = "MM-dd HH:mm",
+            fmt_num = "yyMMdd",
+            fmt_year = "yy",
+            fmt_md = "MMdd",
+            fmt_month = "yyyy-MM",
+
+            fmt_hms = "HH:mm:ss";
 
     public final static String FMT_YEAR4 = "yyyy", DATE_TIME_PATTERN_NO_SEC = "yyyy-MM-dd HH:mm", DATE_PATTERN_SHORT_YEAR_NO_SP = "yyyyMMdd";
 
@@ -401,4 +410,35 @@ public class DateUtil {
 
     }
 
+    /**
+     * 计算日期的上一个月
+     * @Author Luo_WG
+     * @Date 2023/9/19 15:38
+     * @param date 日期
+     * @param fmtReturn 返回的格式
+     * @param n 输出指定日期的上一个月，如果是-1则代表数据下一个月
+     * @return java.lang.String
+     **/
+    public static String getPrevMonthDate(Date date, String fmtReturn, int n) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.MONTH, calendar.get(Calendar.MONTH) - n);
+        return new SimpleDateFormat(fmtReturn).format(calendar.getTime());
+    }
+
+    /**
+     * 计算日期的上一年
+     * @Author Luo_WG
+     * @Date 2023/9/19 15:39
+     * @param date 日期
+     * @param fmtReturn 返回的格式
+     * @param n 输出指定日期的上一个月，如果是-1则代表数据下一年
+     * @return java.lang.String
+     **/
+    public static String getPrevYearDate(Date date, String fmtReturn, int n) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) - n);
+        return new SimpleDateFormat(fmtReturn).format(calendar.getTime());
+    }
 }

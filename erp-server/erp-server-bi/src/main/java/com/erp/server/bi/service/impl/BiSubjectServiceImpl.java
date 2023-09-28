@@ -6,24 +6,20 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.*;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.core.constant.BaseStateConstants;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.bi.entity.*;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseSearchDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.*;
-import com.erp.model.bi.entity.BiDictEntity;
-import com.erp.model.bi.entity.BiSubjectDefaultEntity;
-import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.model.bi.vo.CategorySubjectVO;
 import com.erp.model.bi.vo.SubjectVO;
 import com.erp.server.bi.constant.BiConstant;
-import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiSubjectMapper;
 import com.erp.server.bi.service.*;
@@ -35,11 +31,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 专题表(BiSubject)表服务实现类
@@ -71,6 +65,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     @Resource
     private CommonService commonService;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
+
 
     /**
      * 分页展示对应的数据
@@ -93,8 +90,12 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             if (StringUtils.isBlank(categoryName)) {
                 item.setCategoryName("个人创建");
             }
-
         }
+        List<String> subjectIds = list.stream().map(SubjectPagingDTO::getId).collect(Collectors.toList());
+        Map<String, List<BiSubjectShareEntity>> shareMap = subjectShareService.mapBySubjectIds(subjectIds);
+        // 设置权限信息
+        list.forEach(e-> e.checkAndSetShareFlagIdList(shareMap.get(e.getId())));
+
         return new PagingVO(pageData);
     }
 
@@ -131,14 +132,10 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         subject.setShareFlag(shareFlag);
         subject.setCategoryId(categoryId);
         subject.setCategoryName(categoryName);
-        Boolean result = this.updateById(subject);
+        boolean result = this.updateById(subject);
         if (result) {
-            //如果是分享
-            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
-                List<String> userList = dto.getShareUserIdList();
-                //添加专题的分享用户
-                subjectShareService.addSubjectShare(userList, subjectId);
-            }
+            // 检查和添加分享记录
+            subjectShareService.checkAndAddSubjectShare(dto.getShareFlagIdList(), subjectId, shareFlag);
             return subjectId;
         }
         return "";
@@ -226,11 +223,13 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         List<String> findIdList = new ArrayList<>();
         List<String> myCreateIds = myCreateList.stream().map(DashboardDTO::getId).collect(Collectors.toList());
         findIdList.addAll(myCreateIds);
+        // 用户角色
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
         /**
          * 根据用户id
          * 查询出分享给我的专题id
          */
-        List<String> shareDashboardIds = subjectShareService.getShareToMeDashboardIds(userId);
+        List<String> shareDashboardIds = subjectShareService.findSubjectId(userId, roleIdList);
         findIdList.addAll(shareDashboardIds);
         Integer frequentlyFlag = BiConstant.OK;
 
@@ -292,14 +291,10 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         subject.setCategoryId(categoryId);
         subject.setCategoryName(categoryName);
         subject.setIsFrequently(dto.getIsFrequently());
-        Boolean result = this.save(subject);
+        boolean result = this.save(subject);
         if (result) {
-            //如果是分享
-            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
-                List<String> userList = dto.getShareUserIdList();
-                //添加专题的分享用户
-                subjectShareService.addSubjectShare(userList, subjectId);
-            }
+            // 检查和添加分享记录
+            subjectShareService.checkAndAddSubjectShare(dto.checkAndGetShareFlagIdList(), subjectId, shareFlag);
             return subjectId;
         }
         return "";
@@ -366,12 +361,21 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         List<CategorySubjectVO> resultList = new ArrayList<>(10);
         String userId = commonService.getUserInfo().getUid();
         List<Pair<String, String>> pairList = dictService.getCategory(DictEnum.DASHBOARD.getType());
+        // 查询用户当前角色
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
 
         //分享给我的
-        List<String> shareToMeIds = subjectShareService.getShareToMeDashboardIds(userId);
+        List<String> shareToMeIds = subjectShareService.findSubjectId(userId, roleIdList);
+        // 个人创建
+        List<String> mySubjectIds = this.findByCreatedUserId(userId)
+                .stream()
+                .map(BiSubjectEntity::getId)
+                .collect(Collectors.toList());
 
         //查询到用户可见的专题
-        List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
+        List<String> subjectIdList = Stream.concat(shareToMeIds.stream(), mySubjectIds.stream())
+                .distinct()
+                .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(subjectIdList)) {
             return Collections.emptyList();
         }
@@ -456,12 +460,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         boolean flag = this.save(copySubject);
         //当复制成功的时候
         if (flag) {
-            //如果是分享
-            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
-                List<String> userList = dto.getShareUserIdList();
-                //添加专题的分享用户
-                subjectShareService.addSubjectShare(userList, newSubjectId);
-            }
+            // 检查和添加分享记录
+            subjectShareService.checkAndAddSubjectShare(dto.checkAndGetShareFlagIdList(), newSubjectId, shareFlag);
+
             layoutService.copySubjectLayout(newSubjectId, subjectId);
             return newSubjectId;
         }
@@ -504,14 +505,10 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         subject.setCategoryId(categoryId);
         subject.setCategoryName(categoryName);
         subject.setIsFrequently(dto.getIsFrequently());
-        Boolean result = this.save(subject);
+        boolean result = this.save(subject);
         if (result) {
-            //如果是分享
-            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
-                List<String> userList = dto.getShareUserIdList();
-                //添加专题的分享用户
-                subjectShareService.addSubjectShare(userList, subjectId);
-            }
+            // 检查和添加分享记录
+            subjectShareService.checkAndAddSubjectShare(dto.checkAndGetShareFlagIdList(), subjectId, shareFlag);
             return subjectId;
         }
         return "";
@@ -532,8 +529,27 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         String type = DictEnum.DASHBOARD.getType();
         List<BiDictEntity> dictList = dictService.getByType(type);
         //查询到用户可见的专题
-        List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
+//        List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
+        List<String> subjectIdList = subjectShareService.findSubjectId(userId, roleIdList);
+        // 查询自己创建
+        List<BiSubjectEntity> mySubjectList = this.lambdaQuery()
+                .eq(BiSubjectEntity::getCreateUserId, userId)
+                .eq(BiSubjectEntity::getState, 1)
+                .list();
+        if (CollectionUtils.isNotEmpty(mySubjectList)){
+            List<String> mySubjectIds = mySubjectList.stream().map(BiSubjectEntity::getId).collect(Collectors.toList());
+            subjectIdList.addAll(mySubjectIds);
+//            subjectIdList = subjectIdList.stream().distinct().collect(Collectors.toList());
+        }
         List<SubjectDTO> subjectList = baseMapper.getByIds(subjectIdList, searchKeyword);
+
+        // 模板IDS
+        List<String> subjectIds = subjectList.stream().map(SubjectDTO::getId).distinct().collect(Collectors.toList());
+        Map<String, List<BiSubjectShareEntity>> shareMap = subjectShareService.mapBySubjectIds(subjectIds);
+        // 设置权限信息
+        subjectList.forEach(e -> e.checkAndSetFlagInfo(shareMap.get(e.getId())));
+
         //获取到非仪表盘的列表
         dictList = dictList.stream().filter(d -> StringUtils.isBlank(d.getValue())).collect(Collectors.toList());
         for (BiDictEntity dict : dictList) {
@@ -589,9 +605,11 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         if (StringUtils.isNotBlank(subjectId)) {
             return layoutService.subjectInfo(subjectId);
         }
+        // 当前角色
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
 
         //查询到用户可见的专题
-        List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
+        List<String> subjectIdList = this.allUserVisibleSubjectId(userId, roleIdList);
         if (CollectionUtils.isEmpty(subjectIdList)) {
             return null;
         }
@@ -652,12 +670,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         //当复制成功的时候
         if (flag) {
             copySubjectId = copySubject.getId();
-            //如果是分享
-            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
-                List<String> userList = dto.getShareUserIdList();
-                //添加专题的分享用户
-                subjectShareService.addSubjectShare(userList, newSubjectId);
-            }
+            // 检查和添加分享记录
+            subjectShareService.checkAndAddSubjectShare(dto.getShareFlagIdList(), newSubjectId, shareFlag);
+
             layoutService.copySubjectLayout(newSubjectId, subjectId);
         }
         return copySubjectId;
@@ -677,6 +692,49 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             checkCanHandle(subject, userId);
         }
 
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO updateShare(List<String> shareFlagIdList, String mainId, String shareFlag) {
+        BiSubjectEntity entity = this.getById(mainId);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.ERROR_97000);
+        }
+        // 主表状态更新
+        if (!entity.getShareFlag().equalsIgnoreCase(shareFlag)){
+            entity.setShareFlag(shareFlag);
+            boolean updateResult = updateById(entity);
+            if (!updateResult) {
+                throw new ServiceException("主题更新失败");
+            }
+        }
+
+        subjectShareService.checkAndAddSubjectShare(shareFlagIdList, mainId, shareFlag);
+        return BatchResultDTO.success(entity.getId(), "", OperationTypeEnum.PERMISSION);
+    }
+
+    @Override
+    public List<String> allUserVisibleSubjectId(String userId, List<String> roleIdList) {
+        // 共享的
+        List<String> shareSubjectIds = subjectShareService.findSubjectId(userId, roleIdList);
+
+        // 用户创建的
+        List<String> mySubjectIds = this.findByCreatedUserId(userId)
+                .stream()
+                .map(BiSubjectEntity::getId)
+                .collect(Collectors.toList());
+        // 合并
+        return Stream.concat(shareSubjectIds.stream(), mySubjectIds.stream())
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BiSubjectEntity> findByCreatedUserId(String userId) {
+        return lambdaQuery()
+                .eq(BiSubjectEntity::getCreateUserId, userId)
+                .list();
     }
 
 

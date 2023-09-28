@@ -2,10 +2,7 @@ package com.erp.server.bi.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseSearchDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.BiSubjectEntity;
@@ -151,4 +148,20 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      * @return void
      */
     void checkEditSubject(BaseIdDTO id);
+
+    /**
+     * 设置分享
+     */
+    BatchResultDTO updateShare(List<String> shareFlagIdList, String mainId, String shareFlag);
+
+    /**
+     * 用户所有可见专题
+     * (本人创建和共享)
+     */
+    List<String> allUserVisibleSubjectId(String userId, List<String> roleIdList);
+
+    /**
+     * 用户创建的专题
+     */
+    List<BiSubjectEntity> findByCreatedUserId(String userId);
 }

@@ -634,7 +634,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 .set(OtherInstockEntity::getApproveUserName, userInfo.getUserName())
                 .set(OtherInstockEntity::getApproveStatus, approveStatus)
                 .set(OtherInstockEntity::getApproveTime, LocalDateTime.now())
-                .set(ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus),OtherInstockEntity::getSyncKingdeeStatus, SyncKingdeeStatusEnum.TO_BE_SYNC.getCode())
+                .set(ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus),OtherInstockEntity::getSyncKingdeeStatus, SyncStatusEnum.TO_BE_SYNC.getCode())
                 .update();
     }
 

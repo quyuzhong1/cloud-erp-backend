@@ -361,6 +361,9 @@ public class DmpOrderInfoEntity implements Serializable {
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
+
+    public static final String SOURCE_PLATFORM = "source_platform";
+
     public DmpOrderInfoEntity(DmpOrderInfoEntity entity, BigDecimal exchangeRate) {
         this.id = entity.getId();
         this.cnySettleRate = exchangeRate;

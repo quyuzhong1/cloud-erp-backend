@@ -9,7 +9,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SubcontractTypeEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -85,7 +85,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         Map<String, Object> resultMap = new HashMap<>();
 
         //更新同步状态为待同步
-        purchaseOrderService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        purchaseOrderService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
 
         //如果上游单据未发送成功则无需发送
         SubcontractOrderEntity subcontractOrderEntity = null;
@@ -96,7 +96,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
                 throw new ServiceException(ApiError.ERROR_98073);
             }
-            if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(subcontractOrderEntity.getSyncKingdeeStatus()) && !SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode().equals(subcontractOrderEntity.getSyncKingdeeStatus())) {
+            if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(subcontractOrderEntity.getSyncKingdeeStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(subcontractOrderEntity.getSyncKingdeeStatus())) {
                 log.error("委外订单未推送成功，不支持推送采购订单，委外订单号【{}】",subcontractOrderEntity.getCode());
                 return;
             }
@@ -106,7 +106,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             //委外变更单
             List<SubcontractChangeEntity> subcontractChangeList = subcontractChangeService.listBySourceIds(Arrays.asList(subcontractOrderEntity.getId()));
             if (CollectionUtils.isNotEmpty(subcontractChangeList)) {
-                String changeCodes = subcontractChangeList.stream().filter(obj -> !SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(obj.getSyncKingdeeStatus()) && !SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode().equals(obj.getSyncKingdeeStatus())).map(SubcontractChangeEntity::getCode).collect(Collectors.joining(","));
+                String changeCodes = subcontractChangeList.stream().filter(obj -> !SyncStatusEnum.SUCCESS_SYNC.getCode().equals(obj.getSyncKingdeeStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(obj.getSyncKingdeeStatus())).map(SubcontractChangeEntity::getCode).collect(Collectors.joining(","));
                 if (StringUtils.isNotBlank(changeCodes)) {
                     log.error("委外变更单未推送成功，不支持推送采购订单，委外变更单号【{}】",changeCodes);
                     return;
@@ -242,7 +242,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_ORDER_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return purchaseOrderService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"",operate);
+                return purchaseOrderService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncStatusEnum.IN_SYNC.getCode(),"",operate);
             }
             return Boolean.TRUE;
         });

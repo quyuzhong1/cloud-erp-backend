@@ -1,19 +1,19 @@
 package com.erp.server.bi.controller.api;
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.dto.base.*;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.core.controller.BaseController;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseSearchDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.UpdateGroup;
 import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.*;
+import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.model.bi.vo.CategorySubjectVO;
 import com.erp.server.bi.service.BiSubjectService;
 import com.erp.server.bi.service.BiSubjectShareService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,14 +22,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 专题表(BiSubject)表控制层
+ * 专题管理
  *
  * @author yl
  * @since 2022-12-08 14:31:58
  */
+@Slf4j
 @RestController
 @RequestMapping("subject")
 public class BiSubjectController extends BaseController {
@@ -181,6 +183,34 @@ public class BiSubjectController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 专题批量设置权限
+     * @author Jim
+     * @date:  2023-09-14
+     * @param dtoList
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/batchShare")
+    public ApiResult<List<BatchResultDTO>> batchShare(@RequestBody @Validated List<BiBatchShareDTO> dtoList) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
+        for (BiBatchShareDTO dto : dtoList) {
+            BatchResultDTO submit;
+            try {
+                submit = biSubjectService.updateShare(dto.checkAndGetShareFlagIdList(), dto.getId(), dto.getShareFlag());
+            }catch (Exception e){
+                log.error("专题批量设置权限失败:{}", e.getMessage());
+                BiSubjectEntity entity = biSubjectService.getById(dto.getId());
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(dto.getId(), dto.getId(), "专题不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getId(), "", e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
 }
 

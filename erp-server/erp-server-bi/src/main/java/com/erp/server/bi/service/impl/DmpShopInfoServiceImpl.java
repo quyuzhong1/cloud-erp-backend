@@ -47,7 +47,6 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
-
  * @date 2022/12/14 14:43
  */
 @Service
@@ -146,7 +145,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         }*/
         DmpShopChangeLogEntity logEntity = new DmpShopChangeLogEntity();
         logEntity.setShopId(dto.getId());
-        logEntity.setChargeId(StringUtils.isBlank(dmpShopInfoEntity.getChargeId()) ? "-" :  dmpShopInfoEntity.getChargeId());
+        logEntity.setChargeId(StringUtils.isBlank(dmpShopInfoEntity.getChargeId()) ? "-" : dmpShopInfoEntity.getChargeId());
         logEntity.setChargeName(StringUtils.isBlank(dmpShopInfoEntity.getChargeId()) ? "-" : dmpShopInfoEntity.getChargeName());
         logEntity.setEnableTimeBegin(null == dmpShopInfoEntity.getEnableTime() ? LocalDate.of(2022, 1, 1) : dmpShopInfoEntity.getEnableTime());
         logEntity.setEnableTimeEnd(dto.getEnableTime().minusDays(1L));
@@ -168,7 +167,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
                 sysUserDeptDTO = userDeptList.stream().filter(obj -> dto.getChargeId().equals(obj.getUid())).findFirst().orElse(null);
             }
             //更新启用日期后的店铺业务负责人
-            updateCharge(dmpShopInfoEntity.getId(),dmpShopInfoEntity.getPlatformShopNo(), dto.getEnableTime(), findUserDTO.getUserId(), findUserDTO.getUserName(), sysUserDeptDTO);
+            updateCharge(dmpShopInfoEntity.getId(), dmpShopInfoEntity.getPlatformShopNo(), dto.getEnableTime(), findUserDTO.getUserId(), findUserDTO.getUserName(), sysUserDeptDTO);
 
         }
         return this.updateById(dmpShopInfoEntity);
@@ -193,8 +192,8 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             obj.setDeptName(sysDepartmentDTO.getName());
         });
         //更新启用日期后的店铺业务部门
-        updateChargeDept(dto.getChargeId(),dto.getEnableTime(),sysDepartmentDTO);
-        dmpOrderInfoService.updateBatchById(list,2000);
+        updateChargeDept(dto.getChargeId(), dto.getEnableTime(), sysDepartmentDTO);
+        dmpOrderInfoService.updateBatchById(list, 2000);
         return Boolean.TRUE;
     }
 
@@ -266,7 +265,21 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         if (CollectionUtils.isEmpty(shopNoList)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(DmpShopInfoEntity::getPlatformShopNo,shopNoList).list();
+        return lambdaQuery().in(DmpShopInfoEntity::getPlatformShopNo, shopNoList).list();
+    }
+
+    /**
+     * 根据店铺名查询数据
+     *
+     * @param shopNameList
+     * @return
+     */
+    @Override
+    public List<DmpShopInfoEntity> listByNames(List<String> shopNameList) {
+        if (CollectionUtils.isEmpty(shopNameList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(DmpShopInfoEntity::getName,shopNameList).list();
     }
 
     private List<DmpShopInfoEntity> getSiteShopList() {
@@ -277,28 +290,27 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     }
 
 
-
     /**
-     * @description: mq异步更新单据负责人
-     * @author Will
-     * @date: 2023/4/23 19:11
      * @param id
      * @param shopNo
      * @param enableTime
      * @param userId
      * @param userName
      * @param sysUserDeptDTO
+     * @description: mq异步更新单据负责人
+     * @author Will
+     * @date: 2023/4/23 19:11
      */
-    private void updateCharge(String id,String shopNo, LocalDate enableTime, String userId, String userName, SysUserDeptDTO sysUserDeptDTO) {
+    private void updateCharge(String id, String shopNo, LocalDate enableTime, String userId, String userName, SysUserDeptDTO sysUserDeptDTO) {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.set("id",id);
-        jsonObject.set("shopNo",shopNo);
-        jsonObject.set("enableTime",enableTime);
-        jsonObject.set("userId",userId);
-        jsonObject.set("userName",userName);
+        jsonObject.set("id", id);
+        jsonObject.set("shopNo", shopNo);
+        jsonObject.set("enableTime", enableTime);
+        jsonObject.set("userId", userId);
+        jsonObject.set("userName", userName);
         if (ObjectUtils.isNotEmpty(sysUserDeptDTO)) {
-            jsonObject.set("deptId",sysUserDeptDTO.getDeptId());
-            jsonObject.set("deptName",sysUserDeptDTO.getDeptName());
+            jsonObject.set("deptId", sysUserDeptDTO.getDeptId());
+            jsonObject.set("deptName", sysUserDeptDTO.getDeptName());
         }
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
@@ -306,7 +318,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             return result.getSendStatus();
         });
     }
-    
+
     /**
      * @description: mq异步更新部门
      * @author Will
@@ -314,11 +326,11 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
      */
     private void updateChargeDept(String chargeId, LocalDate enableTime, SysDepartmentDTO sysDepartmentDTO) {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.set("id",sysDepartmentDTO.getId());
-        jsonObject.set("chargeId",chargeId);
-        jsonObject.set("enableTime",enableTime);
-        jsonObject.set("deptId",sysDepartmentDTO.getId());
-        jsonObject.set("deptName",sysDepartmentDTO.getName());
+        jsonObject.set("id", sysDepartmentDTO.getId());
+        jsonObject.set("chargeId", chargeId);
+        jsonObject.set("enableTime", enableTime);
+        jsonObject.set("deptId", sysDepartmentDTO.getId());
+        jsonObject.set("deptName", sysDepartmentDTO.getName());
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_UPDATE_TOPIC, RocketMqTagEnum.SHOP_INFO_CHANGE_DEPT_TAG.getName(), jsonObject, String.valueOf(jsonObject.get("id")));

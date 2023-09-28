@@ -3,8 +3,12 @@ package com.erp.server.bi.controller.api;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.BiSkuDetailTopDTO;
 import com.erp.model.bi.dto.SkuDateFilterDTO;
-import com.erp.model.bi.vo.*;
+import com.erp.model.bi.dto.SkuDetailDTO;
+import com.erp.model.bi.vo.SaleDetailVO;
+import com.erp.model.bi.vo.SkuDateSaleTrendVO;
+import com.erp.model.bi.vo.StatisticalDataVO;
 import com.erp.server.bi.service.BiComprehensiveAnalyseService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -96,6 +100,19 @@ public class BiComprehensiveAnalyseController extends BaseController {
         List<SaleDetailVO> saleDetailVOList = biComprehensiveAnalyseService.saleDetailSku(biFilterDTO);
         return success(saleDetailVOList);
     }
+    /**
+     * 销售单价分布
+     * @Author zdy
+     * @Date 2022/12/27 10:41
+     * @param biFilterDTO biFilterDTO
+     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     **/
+    @PostMapping("/salePriceDistribution")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
+    public ApiResult<StatisticalDataVO> salePriceDistribution(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+        StatisticalDataVO statisticalDataVO = biComprehensiveAnalyseService.salePriceDistribution(biFilterDTO);
+        return success(statisticalDataVO);
+    }
 
     /**
      * 销售明细表-店铺
@@ -135,6 +152,9 @@ public class BiComprehensiveAnalyseController extends BaseController {
     @PostMapping("/saleDetailDate")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
     public ApiResult<List<SaleDetailVO>> saleDetailDate(@RequestBody @Validated SkuDateFilterDTO biFilterDTO) {
+        biFilterDTO.setEndTime(biFilterDTO.getEndTime(), 1);
+        biFilterDTO.setTimeType(null == biFilterDTO.getTimeType() ? 0 : biFilterDTO.getTimeType());
+        biFilterDTO.setSettleMethod(null == biFilterDTO.getSettleMethod() ? 0 : biFilterDTO.getSettleMethod());
         List<SaleDetailVO> saleDetailVOList = biComprehensiveAnalyseService.saleDetailDate(biFilterDTO);
         return success(saleDetailVOList);
     }
@@ -149,7 +169,23 @@ public class BiComprehensiveAnalyseController extends BaseController {
     @PostMapping("/skuDateSaleTrend")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
     public ApiResult<List<SkuDateSaleTrendVO>> skuDateSaleTrend(@RequestBody @Validated SkuDateFilterDTO biFilterDTO) {
+        biFilterDTO.setEndTime(biFilterDTO.getEndTime(), 1);
+        biFilterDTO.setTimeType(null == biFilterDTO.getTimeType() ? 0 : biFilterDTO.getTimeType());
+        biFilterDTO.setSettleMethod(null == biFilterDTO.getSettleMethod() ? 0 : biFilterDTO.getSettleMethod());
         List<SkuDateSaleTrendVO> skuDateSaleTrendVOS = biComprehensiveAnalyseService.skuDateSaleTrend(biFilterDTO);
         return success(skuDateSaleTrendVOS);
+    }
+
+    /**
+     * 单商品-SKU详情顶部信息
+     * @Author Jim
+     * @Date 2023/09/15
+     * @param dto SkuDetailDTO
+     * @return java.util.List<com.erp.model.bi.dto.BiSkuDetailTopVO>
+     **/
+    @PostMapping("/skuDetail")
+    public ApiResult<BiSkuDetailTopDTO> skuDateSaleTrend(@RequestBody @Validated SkuDetailDTO dto) {
+        BiSkuDetailTopDTO vo = biComprehensiveAnalyseService.skuDetailTop(dto);
+        return success(vo);
     }
 }

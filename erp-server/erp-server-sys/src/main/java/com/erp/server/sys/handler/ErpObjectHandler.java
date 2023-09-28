@@ -39,8 +39,8 @@ public class ErpObjectHandler implements MetaObjectHandler {
             this.setFieldValByName("createTime", localDateTime, metaObject);
             this.setFieldValByName("updateTime", localDateTime, metaObject);
         }
-        this.setFieldValByName("createUserId", userId, metaObject);
-        this.setFieldValByName("createUserName", userName, metaObject);
+        this.fillStrategy(metaObject,"createUserId", userId);
+        this.fillStrategy(metaObject,"createUserName", userName);
         this.setFieldValByName("updateUserId", userId, metaObject);
         this.setFieldValByName("updateUserName", userName, metaObject);
     }

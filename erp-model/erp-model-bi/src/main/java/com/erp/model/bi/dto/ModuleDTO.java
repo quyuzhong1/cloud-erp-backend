@@ -1,13 +1,21 @@
 package com.erp.model.bi.dto;
 
 import com.common.business.validator.UpdateGroup;
+import com.common.core.anno.StateEnumValue;
+import com.common.core.exception.ServiceException;
+import com.erp.model.bi.entity.BiModulePermissionEntity;
+import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.util.CollectionUtils;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 模块
@@ -85,7 +93,52 @@ public class ModuleDTO implements Serializable {
     private String code;
 
     /**
-     * 权限人员
+     * 分享的ID, 用户ID/角色ID
      */
+    private List<String> shareFlagIdList;
+
+    /**
+     * 分享标示
+     * personal 私人
+     * share 按多用户ID共享
+     * role 按多角色ID
+     */
+    @StateEnumValue(strValues = {"personal","share","role"},message = "分享类型有误")
+    private String shareFlag;
+
+    /**
+     * 原用户ID列表
+     */
+    @Deprecated
     private List<String> permissionUserIdList;
+
+    public List<String> checkAndGetShareFlagIdList() {
+        if ("personal".equalsIgnoreCase(this.shareFlag)){
+            return shareFlagIdList;
+        }
+        if (CollectionUtils.isEmpty(this.shareFlagIdList)){
+            throw new ServiceException("shareFlagIdList分享的标识ID列表不能为空");
+        }
+        return shareFlagIdList;
+    }
+
+    /**
+     * 设置权限信息
+     */
+    public void checkAndSetFlagInfo(List<BiModulePermissionEntity> permissionList) {
+        String shareFlag = "personal";
+        List<String> shareFlagIdList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(permissionList)){
+            shareFlag = BiShareIdentityTypeEnum.getShareFlag(permissionList.get(0).getIdentityType());
+
+            shareFlagIdList = permissionList
+                    .stream()
+                    .map(BiModulePermissionEntity::getIdentityId)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+        this.setShareFlag(shareFlag);
+        this.setShareFlagIdList(shareFlagIdList);
+        this.setPermissionUserIdList(shareFlagIdList);
+    }
 }

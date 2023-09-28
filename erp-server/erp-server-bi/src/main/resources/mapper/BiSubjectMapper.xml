@@ -46,7 +46,7 @@
     </select>
 
     <select id="getUserVisibleSubjectId" resultType="java.lang.String">
-       SELECT subject_id FROM bi_subject_share WHERE user_id=#{userId} AND is_deleted=false
+       SELECT subject_id FROM bi_subject_share WHERE identity_id=#{userId} AND is_deleted=false
            UNION ALL
        SELECT id FROM bi_subject WHERE create_user_id=#{userId} AND state=1 AND is_deleted=false
     </select>

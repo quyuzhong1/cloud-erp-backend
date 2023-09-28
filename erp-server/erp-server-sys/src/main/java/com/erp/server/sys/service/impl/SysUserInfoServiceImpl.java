@@ -15,7 +15,7 @@ import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.impl.RedisService;
 import com.common.business.vo.LoginUser;
@@ -1257,7 +1257,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             }
             lambdaUpdate().set(SysUserInfoEntity::getSyncKingdeeId, kingdeeId).set(SysUserInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
                     .set(SysUserInfoEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
-                    .set(SysUserInfoEntity::getSyncKingdeeStatus, SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())
+                    .set(SysUserInfoEntity::getSyncKingdeeStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
                     .set(SysUserInfoEntity::getCode, code)
                     .eq(SysUserInfoEntity::getUid, sysUserInfoEntity.getUid())
                     .update();

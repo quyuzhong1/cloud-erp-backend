@@ -9,7 +9,6 @@ import java.io.Serializable;
 /**
  * @author Will
  * @version 1.0
-
  * @date 2023/3/16 16:14
  */
 @Data
@@ -43,11 +42,13 @@ public class BaseDropDownDTO implements Serializable {
          * 值
          */
         private String value;
+
+
     }
 
     @Data
     @NoArgsConstructor
-    public static class DisabledDTO extends CommonDTO{
+    public static class DisabledDTO extends CommonDTO {
 
         /**
          * 启用/禁用
@@ -63,7 +64,7 @@ public class BaseDropDownDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class RemarkDTO extends CommonDTO{
+    public static class RemarkDTO extends CommonDTO {
 
         /**
          * 备注
@@ -75,7 +76,7 @@ public class BaseDropDownDTO implements Serializable {
          */
         private Boolean disabled;
 
-        public RemarkDTO(String code, String value, String remark,Boolean disabled) {
+        public RemarkDTO(String code, String value, String remark, Boolean disabled) {
             this.setCode(code);
             this.setValue(value);
             this.remark = remark;
@@ -84,10 +85,9 @@ public class BaseDropDownDTO implements Serializable {
     }
 
 
-
     @Data
     @NoArgsConstructor
-    public static class QcTypeDTO extends CommonDTO{
+    public static class QcTypeDTO extends CommonDTO {
 
         /**
          * 是否是内部检验  true 是

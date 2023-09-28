@@ -1,8 +1,9 @@
 package com.erp.server.bi.controller.api;
 
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.dto.base.BaseIdDTO;
+import com.erp.model.bi.dto.DictDTO;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.server.bi.service.BiDictService;
 import org.springframework.validation.annotation.Validated;
@@ -84,13 +85,35 @@ public class BiDictController extends BaseController {
      */
     @GetMapping("/list")
     public ApiResult list(String type) {
-        List<Map<String,Object>> list = this.biDictService.listByType(type);
+        List<Map<String, Object>> list = this.biDictService.listByType(type);
+        return success(list);
+    }
+
+    /**
+     * 根据分类查询值和编码
+     *
+     * @param type
+     * @return ApiResult
+     * @author Will
+     * @date: 2023/9/18 16:43
+     */
+    @GetMapping("/listValue")
+    public ApiResult listValue(String type) {
+        List<Map<String, Object>> list = this.biDictService.listValueByType(type);
         return success(list);
     }
 
 
-
-
-
+    /**
+     * 批量新增字典
+     *
+     * @param dictEntities 实体
+     * @return 新增结果
+     */
+    @PostMapping("/batchAdd")
+    public ApiResult batchAdd(@RequestBody @Validated List<DictDTO> dictEntities) {
+        Boolean flag = this.biDictService.batchAdd(dictEntities);
+        return flag ? success() : failure();
+    }
 }
 

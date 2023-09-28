@@ -24,6 +24,7 @@ public enum OperationTypeEnum {
     INVALID("invalid", "作废操作"),
 
     DELETE("delete", "删除操作"),
+    PERMISSION("permission", "设置权限操作"),
     ;
     @JsonValue
     @EnumValue

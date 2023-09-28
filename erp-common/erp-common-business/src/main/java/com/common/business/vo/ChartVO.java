@@ -15,10 +15,14 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class ChartVO<T> implements Serializable {
+    /**
+     * 表头
+     */
+    private List<String> xAxis;
 
-    private List<String> xAxis;     //表头
-
-    //有多少个
-    private List<SeriesVO<T>> series; //数据
+    /**
+     * 数据有多个
+     */
+    private List<SeriesVO<T>> series;
 
 }

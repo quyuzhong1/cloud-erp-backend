@@ -7,8 +7,11 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
@@ -30,6 +33,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
+@LogSystemModule("盘点计划")
 @RequestMapping("/stocktakingPlan")
 public class StocktakingPlanController extends BaseController {
 
@@ -152,6 +156,7 @@ public class StocktakingPlanController extends BaseController {
             menuCode = "wms:stocktakingPlan:submit",
             serviceClass = StocktakingPlanService.class,
             keyIdName = "ids")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "盘点计划提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -296,6 +301,7 @@ public class StocktakingPlanController extends BaseController {
             menuCode = "wms:stocktakingPlan:cancelProcess",
             serviceClass = StocktakingPlanService.class,
             keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "盘点计划撤销")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {

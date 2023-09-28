@@ -2,12 +2,15 @@ package com.erp.rpc.plm.feign;
 
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,16 +20,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * plm 远程调用接口
  *
  * @Classname PlmTaskFeign
-
  * @Date 2022-10-21 9:06
  * @Created by yl
  */
-@FeignClient(name="erp-plm")
+@FeignClient(name = "erp-plm")
 public interface PlmTaskFeign {
 
     /**
@@ -76,68 +79,74 @@ public interface PlmTaskFeign {
     @PostMapping("feign/product/getSkuInfoByIds")
     List<SkuVO> getSkuInfoByIds(@RequestBody List<String> skuIds);
 
-    
+
     /**
      * 根据sku no 获取信息
-     * @author yl
-     * @date 2023-06-27 17:48
+     *
      * @param skuNoList
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-06-27 17:48
      */
     @PostMapping("feign/product/listBySkuNos")
     List<SkuVO> listBySkuNoList(@RequestBody List<String> skuNoList);
 
     /**
+     * @return List<SkuVO>
      * @description: 获取已审核sku
      * @author Will
      * @date: 2023/3/21 14:12
-     * @return List<SkuVO>
      */
     @GetMapping("feign/product/listApproveSku")
     List<SkuVO> listApproveSku();
 
     /**
      * 根据id查询sku信息
-     * @Author Luo_WG
-     * @Date 2023/4/14 15:10
+     *
      * @param ids ids
      * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     * @Author Luo_WG
+     * @Date 2023/4/14 15:10
      **/
     @PostMapping("feign/product/getByIdList")
     List<ProductDetailEntity> getByIdList(@RequestBody List<String> ids);
 
     /**
      * 根据sku id 集合获取到产品包装信息
-     * @author yl
-     * @date 2023-04-17 18:37
+     *
      * @param skuIds
      * @return java.util.List<com.erp.model.plm.vo.ProductVO.ProductPackVO>
+     * @author yl
+     * @date 2023-04-17 18:37
      */
     @PostMapping("feign/product/getProductPackBySkuIds")
     List<ProductVO.ProductPackVO> getProductPackBySkuIds(@RequestBody List<String> skuIds);
 
     /**
      * 根据用户获取各任务阶段数量
-     * @Author Luo_WG
-     * @Date 2023/4/24 9:34
+     *
      * @param optionUserId optionUserId
      * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.StageViewDTO>
+     * @Author Luo_WG
+     * @Date 2023/4/24 9:34
      **/
     @PostMapping("feign/product/stageView")
     List<WorkOptionDTO.StageViewDTO> stageView(@RequestBody String optionUserId);
 
     /**
      * 根据skuid 获取到产品角色的 人员
-     * @author yl
-     * @date 2023-04-28 12:21
+     *
      * @param skuIds
      * @return com.erp.model.plm.dto.ProductInfoDTO.ProductRolePeopleDTO
+     * @author yl
+     * @date 2023-04-28 12:21
      */
     @PostMapping("feign/product/getRolePeople")
     List<ProductInfoDTO.ProductRolePeopleDTO> listProductRolePeople(@RequestBody List<String> skuIds);
 
     /**
      * 根据入参查询单据数量
+     *
      * @Author Luo_WG
      * @Date 2023/4/21 15:34
      **/
@@ -146,6 +155,7 @@ public interface PlmTaskFeign {
 
     /**
      * bom  审核 通过
+     *
      * @param
      * @return 新增结果
      */
@@ -154,6 +164,7 @@ public interface PlmTaskFeign {
 
     /**
      * bom  审核 不通过
+     *
      * @param
      * @return 新增结果
      */
@@ -162,6 +173,7 @@ public interface PlmTaskFeign {
 
     /**
      * 产品信息-状态操作-审核通过
+     *
      * @param dto
      * @return ApiResult
      */
@@ -170,6 +182,7 @@ public interface PlmTaskFeign {
 
     /**
      * 产品信息-状态操作-审核不通过
+     *
      * @param dto
      * @return ApiResult
      */
@@ -178,6 +191,7 @@ public interface PlmTaskFeign {
 
     /**
      * 项目任务-任务分页列表 -状态操作-审核通过
+     *
      * @return
      */
     @PostMapping("feign/plmWorkOption/projectTaskApprovalPass")
@@ -185,6 +199,7 @@ public interface PlmTaskFeign {
 
     /**
      * 项目任务-任务分页列表 -状态操作-审核不通过
+     *
      * @return
      */
     @PostMapping("feign/plmWorkOption/projectTaskApprovalNoPass")
@@ -207,45 +222,59 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/plmWorkOption/productChangeApprovalNoPass")
     void productChangeApprovalNoPass(@RequestBody @Validated AuditParamDTO dto);
+
     /**
+     * @param skuIds
+     * @return List<BomChildrenSkuDTO>
      * @description: 查询bom子件信息
      * @author Will
      * @date: 2023/5/17 9:32
-     * @param skuIds
-     * @return List<BomChildrenSkuDTO>
      */
     @PostMapping("feign/bom/listBomChildBySkuIds")
     List<BomChildrenSkuDTO> listBomChildBySkuIds(@RequestBody List<String> skuIds);
 
     /**
+     * 查询bom子件信息
+     *
+     * @param skuNos
+     * @return java.util.List<com.erp.model.plm.dto.BomChildrenSkuDTO>
+     * @Author Luo_WG
+     * @Date 2023/9/14 12:12
+     **/
+    @PostMapping("feign/bom/listBomChildBySkuNos")
+    List<BomChildrenSkuDTO> listBomChildBySkuNos(@RequestBody List<String> skuNos);
+
+    /**
+     * @param skuIds
+     * @return List<BomChildrenSkuDTO>
      * @description: 查询历史子件信息
      * @author Will
      * @date: 2023/8/21 10:36
-     * @param skuIds
-     * @return List<BomChildrenSkuDTO>
      */
     @PostMapping("feign/bom/listHistoryBomChildBySkuIds")
     List<BomChildrenSkuDTO> listHistoryBomChildBySkuIds(@RequestBody List<String> skuIds);
 
     /**
      * 根据任务id获取产品id
+     *
      * @return
      */
     @PostMapping("feign/plmWorkOption/getProductIdByTaskId")
     ProjectTaskEntity getProductIdByTaskId(@RequestBody String taskId);
 
     /**
+     * @param skuIds
+     * @return List<BomInfoEntity>
      * @description: 根据父级skuIds查询BOM信息
      * @author Will
      * @date: 2023/5/31 10:57
-     * @param skuIds
-     * @return List<BomInfoEntity>
      */
     @PostMapping("feign/bom/listBomByParentSkuIds")
     List<BomInfoEntity> listBomByParentSkuIds(List<String> skuIds);
 
     /**
      * 根据sku id集合获取采购员、供应商信息
+     *
      * @param dto
      * @return
      */
@@ -254,20 +283,21 @@ public interface PlmTaskFeign {
 
     /**
      * 更新不可删除标识
-     * @Author Luo_WG
-     * @Date 2023/6/15 11:32
+     *
      * @param skuIds skuIds
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/6/15 11:32
      **/
     @PostMapping("/feign/product/updateOccupyStatus")
     Boolean updateOccupyStatus(@RequestBody @Validated List<String> skuIds);
 
     /**
+     * @param skuNos
+     * @return List<BomInfoEntity>
      * @description: 根据父级skuNos查询BOM信息
      * @author Will
      * @date: 2023/5/31 10:57
-     * @param skuNos
-     * @return List<BomInfoEntity>
      */
     @PostMapping("feign/bom/listBomByParentSkuNos")
     List<BomInfoEntity> listBomByParentSkuNos(List<String> skuNos);
@@ -275,8 +305,68 @@ public interface PlmTaskFeign {
 
     /**
      * 获取不参与库存操作的sku
+     *
      * @return
      */
     @PostMapping("/feign/product/getNoInventorySku")
-    List<SkuVO> getNoInventorySku( );
+    List<SkuVO> getNoInventorySku();
+
+    @PostMapping("feign/product/listByCreateTimeList")
+    List<ProductDetailEntity> listByCreateTimeList(@Param("createTimeList") List skuCreateTimeList);
+
+    /**
+     * 获取到父级的分类id
+     *
+     * @return
+     */
+    @PostMapping("feign/product/listCategoryByIds")
+    List<BasicCategoryEntity> listCategoryByIds(@RequestBody List<String> idList);
+
+    /**
+     * 获取分类数结构
+     * @author yl
+     * @date 2023-09-26 16:51
+     * @param
+     * @return java.util.List<com.erp.model.plm.dto.BasicCategoryDTO>
+     */
+    @GetMapping("feign/category/tree")
+    List<BasicCategoryDTO> listCategoryTree();
+
+    /**
+     * 获取到父级的分类
+     *
+     * @return
+     */
+    @GetMapping("feign/product/listParentCategory")
+    List<BasicCategoryEntity> listParentCategory();
+
+    /**
+     * 获取到sku 销售信息
+     */
+    @PostMapping("feign/product/listSkuSalesBySkuNos")
+    List<SkuDTO.SalesDTO> listSkuSalesBySkuNos(List<String> skuNoList);
+
+    /**
+     * 根据sku获取标签列表
+     *
+     * @param skuId
+     * @return
+     */
+    @PostMapping("feign/product/getProductRelLabelBySkuId")
+    List<ProductRefLabelVO> getProductRelLabelBySkuId(String skuId);
+
+
+    /**
+     * 根据sku获取标签列表
+     *
+     * @param skuIds
+     * @return
+     */
+    @PostMapping("feign/product/getProductRelLabelBySkuIds")
+    List<ProductRefLabelVO> getProductRelLabelBySkuIds(Set<String> skuIds);
+    /**
+     * 通过子类id或名称获取到父级的分类
+     */
+    @GetMapping("feign/product/parentCategory")
+    BasicCategoryDTO getParent(Map<String, String> categoryParams);
 }

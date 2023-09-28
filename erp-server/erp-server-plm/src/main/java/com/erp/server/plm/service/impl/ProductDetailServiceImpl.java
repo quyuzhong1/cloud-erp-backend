@@ -19,7 +19,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SkuApproveConfigureEnum;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -35,13 +35,16 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
+import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.mapper.ProductDetailMapper;
@@ -194,6 +197,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Autowired
     private BomSkuService bomSkuService;
 
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
+    @Resource
+    private ProductRefLabelService productRefLabelService;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -232,8 +240,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-
-
+        //标签列表
+        List<String> labelIds = pagingDTO.getParams().getLabelIds();
+        List<String> labelProductIds = null;
+        if (CollectionUtils.isNotEmpty(labelIds)) {
+            List<ProductRefLabelVO> productRefLabelVOS = productRefLabelService.getLabelListByIds(null, new HashSet<>(labelIds), null);
+            if (CollectionUtils.isNotEmpty(productRefLabelVOS)) {
+                labelProductIds = productRefLabelVOS.stream().map(ProductRefLabelVO::getProductId).collect(Collectors.toList());
+            }else {
+                labelProductIds = new ArrayList<>();
+                labelProductIds.add("-1");
+            }
+            pagingDTO.getParams().setLabelProductIds(labelProductIds);
+        }
         IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams());
         List<ProductDetailShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
@@ -2148,7 +2167,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         entity.setStatus(ProductDetailStatusEnum.APPROVAL_PASS.getCode());
         entity.setUpdateUserId(loginUser.getUid());
         entity.setUpdateUserName(loginUser.getUserName());
-        entity.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+        entity.setSyncKingdeeStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]"));
@@ -2648,10 +2667,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (CollUtil.isNotEmpty(productPackList)) {
                 productPackMap = productPackList.stream().collect(Collectors.groupingBy(ProductPackEntity::getSkuId));
             }
+
+            List<String> supplierIdList = skuList.stream().map(SkuVO::getSupplierId).collect(Collectors.toList());
+            List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+
             for (SkuVO skuVO : skuList) {
                 if (productPackMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPackMap.get(skuVO.getSkuId()))) {
                     ProductPackEntity packEntity = productPackMap.get(skuVO.getSkuId()).get(0);
                     skuVO.setUnitQty(Objects.nonNull(packEntity.getBoxQty()) ? packEntity.getBoxQty().intValue() : null);
+                }
+                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(skuVO.getSupplierId()) && req.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
+                    //含税价
+                    skuVO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
                 }
             }
         }
@@ -2916,7 +2944,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         addProductDetailLog(detail, oldEntity, detail.getId(), detailEntity.getProductId());
         //2.修改/新增 sku信息
         if (detailEntity != null) {
-            detailEntity.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+            detailEntity.setSyncKingdeeStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
             this.updateById(detailEntity);
             //同步到SCM
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
@@ -3726,7 +3754,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), enumByCode.getCode(), dto.getValues(), enumByCode.getKeyName());
         }
-        if (!flag) {
+        if (flag == Boolean.FALSE) {
             throw new ServiceException(ApiError.ERROR_95243);
         }
         List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getId, dto.getIds()).list();
@@ -3750,25 +3778,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto) {
-        Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        dto.setStatus(state);
+       /* Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+        dto.setStatus(state);*/
         List<SkuVO> skuVOS = baseMapper.pdaSearchSku(dto);
-        List<String> mainSupplierIds = skuVOS.stream().map(SkuVO::getMainSupplier).distinct().collect(Collectors.toList());
-        List<String> secondSupplierIds = skuVOS.stream().map(SkuVO::getSecondSupplier).distinct().collect(Collectors.toList());
-        mainSupplierIds.addAll(secondSupplierIds);
-        List<String> supplierIds = mainSupplierIds.stream().distinct().collect(Collectors.toList());
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
-        skuVOS.forEach(req -> {
-            // 一级供应商名称
-            if (StrUtils.isNotEmpty(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
-                req.setMainSupplierName(supplierMap.get(req.getMainSupplier()).getName());
-            }
-
-            // 二级供应商名称
-            if (StrUtils.isNotEmpty(req.getSecondSupplier()) && supplierMap.containsKey(req.getSecondSupplier())) {
-                req.setSecondSupplierName(supplierMap.get(req.getSecondSupplier()).getName());
-            }
-        });
         if (CollectionUtils.isEmpty(skuVOS)) {
             throw new ServiceException(ApiError.ERROR_95107);
         }
@@ -3805,18 +3817,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             view.setSpuNo("");
             view.setSpuName("");
         }
-
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(Arrays.asList(view.getMainSupplier(), view.getSecondSupplier()));
-        // 一级供应商名称
-        if (StrUtils.isNotEmpty(view.getMainSupplier()) && supplierMap.containsKey(view.getMainSupplier())) {
-            view.setMainSupplierName(supplierMap.get(view.getMainSupplier()).getName());
-        }
-
-        // 二级供应商名称
-        if (StrUtils.isNotEmpty(view.getSecondSupplier()) && supplierMap.containsKey(view.getSecondSupplier())) {
-            view.setSecondSupplierName(supplierMap.get(view.getSecondSupplier()).getName());
-        }
-
         //查询子sku
         List<BomChildrenSkuDTO> sonSkuList = bomSkuService.listBomChildBySkuIds(Arrays.asList(productIdBySku.getId()));
         if (CollectionUtils.isNotEmpty(sonSkuList)) {

@@ -1,6 +1,9 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.bi.dto.BiDataSourceCostDTO;
+import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 
 import java.math.BigDecimal;
@@ -38,4 +41,43 @@ public interface BiDataSourceCostDetailService  extends IService<BiDataSourceCos
      * @param costId
      */
     void removeByCostId(String costId);
+
+    /**
+     * 获取成本根据类型
+     * @param costType
+     * @return
+     */
+    BigDecimal yearByCostType(String year,String costType,BiFilterDTO dto);
+
+    /**
+     * 获取月度的
+     * @param yearMonthStr
+     * @param costType
+     * @param dto
+     * @return
+     */
+    BigDecimal monthByCostType(String yearMonthStr, String costType, BiFilterDTO dto);
+
+    /**
+     * 获取月份的目标值
+     * @param dto
+     * @return
+     */
+    List<BiDataSourceCostDTO.DataValueDTO> listGrossMonth(BiFilterDTO dto);
+
+    /**
+     * 获取年度毛利值
+     * @author yl
+     * @date 2023-09-22 14:39
+     * @param dto
+     * @return java.util.List<com.erp.model.bi.dto.BiDataSourceCostDTO.DataValueDTO>
+     */
+    List<BiDataSourceCostDTO.DataValueDTO> listGrossYear(BiDataSourceCostDTO.GrossProfitDTO dto);
+
+    /**
+     * 获取季度值
+     * @param dto
+     * @return
+     */
+    List<BiDataSourceCostDTO.DataValueDTO> listGrossQuarter(BiDataSourceCostDTO.GrossProfitDTO dto);
 }

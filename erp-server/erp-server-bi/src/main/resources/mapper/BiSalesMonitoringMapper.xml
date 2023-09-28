@@ -3,28 +3,62 @@
 <mapper namespace="com.erp.server.bi.mapper.BiSalesMonitoringMapper">
 
     <!-- 为减少数据量，只需要查询本年度和上个月的订单 -->
-    <select id="listBiSalesMonitoringTable" resultType="com.erp.model.bi.dto.BiSalesMonitoringTableDTO">
+    <select id="listBiSalesMonitoringSalesAmount" resultType="com.erp.model.bi.dto.BiSalesMonitoringTableDTO$ViewDTO">
         select
-        doi.sku_no,
-        doi.item_name,
-        doi.brand_id,
-        doi.brand_name,
-        doi.category_id,
-        doi.category_name,
-        doio.charge_id,
-        doio.charge_name,
-        doi.new_sign,
-        doi.quantity,
-        doi.sell_price,
-        doio.platform_create_time
-        from dmp_order_item doi
-        left join dmp_order_info doio on doi.order_id = doio.id
-        where doio.platform_create_time is not null
-          and (to_char(doio.platform_create_time,'YYYY') = to_char(CURRENT_DATE,'YYYY')
-          or to_char(doio.platform_create_time,'YYYYMM') = to_char(CURRENT_DATE + INTERVAL '-1 MONTH','YYYYMM'))
-        <if test="dto.permissionSql != null and dto.permissionSql != ''">
-            ${dto.permissionSql }
+            ${params.viewData},
+            sum(doit.amount_after * doit.currency_rate) as value
+        from dmp_order_info doi
+        inner join dmp_order_item doit on doit.order_id = doi.id
+        where doi.platform_create_time >= #{lastsMonth}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql }
         </if>
+        group by ${params.groupData}
     </select>
 
+    <select id="listBiSalesMonitoringSalesQty"
+            resultType="com.erp.model.bi.dto.BiSalesMonitoringTableDTO$ViewDTO">
+        select
+            ${params.viewData},
+        sum(doit.quantity) as value
+        from dmp_order_info doi
+        inner join dmp_order_item doit on doit.order_id = doi.id
+        where doi.platform_create_time >= #{lastsMonth}
+        <if test="params.permissionSql != null and dto.permissionSql != ''">
+            ${params.permissionSql }
+        </if>
+        group by ${params.groupData}
+    </select>
+
+    <select id="listBiSalesMonitoringSkuSalesAmount"
+            resultType="com.erp.model.bi.dto.BiSalesMonitoringTableDTO$ViewDTO">
+        select
+        ${params.viewData},
+        sum(doit.amount_after * doit.currency_rate) as value
+        from dmp_order_info doi
+        inner join dmp_order_item doit on doit.order_id = doi.id
+        inner join product_detail pd on pd.is_deleted = false and doit.sku_no = pd.sku_no
+        inner join product_info pi on pi.is_deleted = false and pd.product_id = pi.id
+        where doi.platform_create_time >= #{lastsMonth}
+        <if test="params.permissionSql != null and dto.permissionSql != ''">
+            ${params.permissionSql }
+        </if>
+        group by ${params.groupData}
+    </select>
+
+    <select id="listBiSalesMonitoringSkuSalesQty"
+            resultType="com.erp.model.bi.dto.BiSalesMonitoringTableDTO$ViewDTO">
+        select
+        ${params.viewData},
+        sum(doit.quantity) as value
+        from dmp_order_info doi
+        inner join dmp_order_item doit on doit.order_id = doi.id
+        inner join product_detail pd on pd.is_deleted = false and doit.sku_no = pd.sku_no
+        inner join product_info pi on pi.is_deleted = false and pd.product_id = pi.id
+        where doi.platform_create_time >= #{lastsMonth}
+        <if test="params.permissionSql != null and dto.permissionSql != ''">
+            ${params.permissionSql }
+        </if>
+        group by ${params.groupData}
+    </select>
 </mapper>

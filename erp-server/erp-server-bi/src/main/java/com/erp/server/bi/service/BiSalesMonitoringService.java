@@ -43,5 +43,5 @@ public interface BiSalesMonitoringService extends IService<BiSalesMonitoringEnti
      * @date: 2022/12/30 12:29
      * @return LinkedHashMap<String,Object>
      */
-    LinkedHashMap<String,Object> listBiSalesMonitoringView(BiSalesMonitoringSearchDTO dto);
+    LinkedHashMap<String,Object> listBiSalesMonitoringView(BiSalesMonitoringSearchDTO.ParamDTO dto);
 }

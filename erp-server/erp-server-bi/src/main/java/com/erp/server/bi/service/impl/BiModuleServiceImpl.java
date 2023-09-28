@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.core.constant.BaseStateConstants;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FileUtil;
@@ -20,7 +22,11 @@ import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
 import com.erp.model.bi.entity.BiLayoutRefModuleEntity;
 import com.erp.model.bi.entity.BiModuleEntity;
+import com.erp.model.bi.entity.BiModulePermissionEntity;
+import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 import com.erp.model.bi.vo.LayoutVO;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiModuleMapper;
 import com.erp.server.bi.service.*;
@@ -37,6 +43,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -69,6 +76,8 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     @Resource
     private BiLayoutRefModuleService layoutRefModuleService;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     /**
      * 模块分页
@@ -104,6 +113,11 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
                 item.setMonthUsageCount((int) monthUsageCount);
                 item.setUsageCount((int) usageCount);
             }
+            List<String> moduleIds = list.stream().map(ModulePagingDTO::getId).collect(Collectors.toList());
+            Map<String, List<BiModulePermissionEntity>> permissionMap = modulePermissionService.mapByModuleIds(moduleIds);
+            // 权限设置
+            list.forEach( e -> e.checkAndSetShareFlagInfo(permissionMap.get(e.getId())));
+
         }
 
 
@@ -147,12 +161,17 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     public List<CategoryModuleDTO> categoryList(String searchKeyword) {
         List<CategoryModuleDTO> resultList = new ArrayList<>(10);
         String userId = commonService.getUserInfo().getUid();
-        /**
-         * 根据用户id 查询到可见的模块id 集合
-         */
-        List<String> moduleIdList = baseMapper.getUserVisibleModuleIds(userId);
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
+        //根据用户id 查询到可见的模块id 集合
+        List<String> moduleIdList = modulePermissionService.findModuleId(userId, roleIdList);
         List<Pair<String, String>> pairList = dictService.getCategory(DictEnum.MODULE.getType());
         List<ModuleDTO> moduleList = baseMapper.getByIds(moduleIdList, searchKeyword);
+        // 模板IDS
+        List<String> moduleIds = moduleList.stream().map(ModuleDTO::getId).distinct().collect(Collectors.toList());
+        Map<String, List<BiModulePermissionEntity>> permissionMap = modulePermissionService.mapByModuleIds(moduleIds);
+        // 设置权限信息
+        moduleList.forEach(e -> e.checkAndSetFlagInfo(permissionMap.get(e.getId())));
+
         for (Pair<String, String> pair : pairList) {
             CategoryModuleDTO result = new CategoryModuleDTO();
             String categoryId = pair.getKey();
@@ -173,8 +192,21 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         }
         ModuleDTO result = new ModuleDTO();
         BeanMapper.copy(module, result);
-        List<String> permissionUserIdList = modulePermissionService.getByModuleId(moduleId);
-        result.setPermissionUserIdList(permissionUserIdList);
+//        List<String> permissionUserIdList = modulePermissionService.getByModuleId(moduleId);
+        List<BiModulePermissionEntity> permissionEntityList = modulePermissionService.findByModuleId(moduleId);
+        //  personal 私人 share 按多用户ID共享 role 按多角色ID
+        String shareFlag = "personal";
+        List<String> shareFlagIdList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(permissionEntityList)){
+            shareFlag = BiShareIdentityTypeEnum.getShareFlag(permissionEntityList.get(0).getIdentityType());
+            shareFlagIdList = permissionEntityList
+                    .stream()
+                    .map(BiModulePermissionEntity::getIdentityId)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+        result.setShareFlagIdList(shareFlagIdList);
+        result.setShareFlag(shareFlag);
         return result;
     }
 
@@ -193,6 +225,18 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
             return this.list(queryWrapper);
         }
         return new ArrayList<>();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO updateShare(List<String> shareFlagIdList, String mainId, String shareFlag) {
+        BiModuleEntity entity = this.getById(mainId);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.ERROR_97004);
+        }
+        modulePermissionService.checkAndAddModulePermission(shareFlagIdList, mainId, shareFlag);
+
+        return BatchResultDTO.success(entity.getId(), "", OperationTypeEnum.PERMISSION);
     }
 
     /**
@@ -236,13 +280,14 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         module.setSysModuleId(sysModuleId);
         module.setCode(biModule.getCode());
         checkCode(null, biModule.getCode());
-        List<String> permissionUserIdList = biModule.getPermissionUserIdList();
+        List<String> permissionUserIdList = biModule.checkAndGetShareFlagIdList();
         boolean flag = this.save(module);
         if (flag) {
             //修改系统模块的状态
             sysModuleService.updateAddState(sysModuleId, BaseStateConstants.OPEN_STATE);
             if (CollectionUtils.isNotEmpty(permissionUserIdList)) {
-                modulePermissionService.addModulePermission(module.getId(), permissionUserIdList);
+                BiShareIdentityTypeEnum identityTypeEnum = BiShareIdentityTypeEnum.isRoleCheck(biModule.getShareFlag());
+                modulePermissionService.addModulePermission(module.getId(), permissionUserIdList, identityTypeEnum);
             }
         }
         return flag;
@@ -331,7 +376,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         module.setSysModuleId(sysModuleId);
         module.setCode(biModule.getCode());
 
-        List<String> permissionUserIdList = biModule.getPermissionUserIdList();
+        List<String> permissionUserIdList = biModule.getShareFlagIdList();
         boolean flag = this.updateById(module);
         if (flag) {
             /*
@@ -343,7 +388,8 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
                 sysModuleService.updateAddState(dbSysModuleId, BaseStateConstants.CLOSE_STATE);
             }
             if (CollectionUtils.isNotEmpty(permissionUserIdList)) {
-                modulePermissionService.addModulePermission(module.getId(), permissionUserIdList);
+                BiShareIdentityTypeEnum identityTypeEnum = BiShareIdentityTypeEnum.isRoleCheck(biModule.getShareFlag());
+                modulePermissionService.addModulePermission(module.getId(), permissionUserIdList, identityTypeEnum);
             }
         }
         return flag;

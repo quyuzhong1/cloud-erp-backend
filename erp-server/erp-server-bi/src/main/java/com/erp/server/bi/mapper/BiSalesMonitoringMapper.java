@@ -1,12 +1,12 @@
 package com.erp.server.bi.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.bi.dto.BiSalesMonitoringSearchDTO;
 import com.erp.model.bi.dto.BiSalesMonitoringTableDTO;
 import com.erp.model.bi.entity.BiSalesMonitoringEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -21,8 +21,34 @@ public interface BiSalesMonitoringMapper extends BaseMapper<BiSalesMonitoringEnt
      * @description: 查询订单数据
      * @author Will
      * @date: 2023/1/5 10:11
-     * @param dto
-     * @return List<BiSalesMonitoringTableDTO>
+     * @param groupViewDTO
+     * @return List<BiSalesMonitoringTableDTO.ViewDTO>
      */
-    List<BiSalesMonitoringTableDTO> listBiSalesMonitoringTable(@Param("dto") BiSalesMonitoringSearchDTO dto);
+    List<BiSalesMonitoringTableDTO.ViewDTO> listBiSalesMonitoringSalesAmount(@Param("params") BiSalesMonitoringTableDTO.GroupViewDTO groupViewDTO, @Param("lastsMonth") LocalDateTime lastsMonth);
+
+    /**
+     * @description: 查询订单数据
+     * @author Will
+     * @date: 2023/1/5 10:11
+     * @param groupViewDTO
+     * @return List<BiSalesMonitoringTableDTO.ViewDTO>
+     */
+    List<BiSalesMonitoringTableDTO.ViewDTO> listBiSalesMonitoringSalesQty(@Param("params") BiSalesMonitoringTableDTO.GroupViewDTO groupViewDTO, @Param("lastsMonth") LocalDateTime lastsMonth);
+
+    /**
+     * @description: 查询订单数据
+     * @author Will
+     * @date: 2023/1/5 10:11
+     * @param groupViewDTO
+     * @return List<BiSalesMonitoringTableDTO.ViewDTO>
+     */
+    List<BiSalesMonitoringTableDTO.ViewDTO> listBiSalesMonitoringSkuSalesAmount(@Param("params") BiSalesMonitoringTableDTO.GroupViewDTO groupViewDTO, @Param("lastsMonth") LocalDateTime lastsMonth);
+    /**
+     * @description: 查询订单数据
+     * @author Will
+     * @date: 2023/1/5 10:11
+     * @param groupViewDTO
+     * @return List<BiSalesMonitoringTableDTO.ViewDTO>
+     */
+    List<BiSalesMonitoringTableDTO.ViewDTO> listBiSalesMonitoringSkuSalesQty(@Param("params") BiSalesMonitoringTableDTO.GroupViewDTO groupViewDTO, @Param("lastsMonth") LocalDateTime lastsMonth);
 }

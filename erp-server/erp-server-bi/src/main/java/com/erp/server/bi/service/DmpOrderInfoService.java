@@ -38,6 +38,13 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
     TargetSaleSumVO sumSales(BiFilterDTO dto);
 
     /**
+     * 查询销售单价分布
+     * @param dto
+     * @return
+     */
+    StatisticalDataVO salePriceDistribution(BiFilterDTO dto);
+
+    /**
      * 统计销量
      * @param dto
      * @return
@@ -253,4 +260,14 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
     Map<String, BigDecimal> statisticsSalesByCondition(BiFilterDTO dto, String groupName);
 
     List<DimensionSalesVO> sumSalesByCondition(BiFilterDTO dto, String groupName);
+
+    /**
+     * 通过SKU NO查询首单
+     */
+    DmpOrderInfoEntity firstOrderBySkuNo(String skuNo);
+
+    /**
+     * 通过SKU NO查询各平台首单
+     */
+    Map<String, DmpOrderInfoEntity> mapFirstOrderBySkuNo(String skuNo);
 }
