@@ -2531,8 +2531,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     }
                     return costMainBusinessIncome;
                 })));
-                list = yearMap.keySet().stream().collect(Collectors.toList());
-                dateList = yearMap.entrySet().stream().map(req -> StrUtil.format(format, req.getKey())).collect(Collectors.toList());
+                list = salesList.stream().map(req -> req.getGroupDate().getYear() + "").distinct().collect(Collectors.toList());
+                dateList = list.stream().map(req -> StrUtil.format(format, req)).collect(Collectors.toList());
                 byDateFinanceSalesNumber(yearMap, lastYearYearMap, seriesList, list);
                 break;
             default:
