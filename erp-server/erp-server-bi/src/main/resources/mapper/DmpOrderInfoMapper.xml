@@ -56,26 +56,20 @@
     </sql>
 
     <sql id="base_where_sql">
-        <if test="params.timeType == 0">
-            and doi.platform_create_time  is not null
-        </if>
-        <if test="params.timeType == 1">
-            and doi.delivery_time  is not null
-        </if>
         <if test="params.searchType == 'first_level_dept' || params.searchType == 'second_level_dept'">
-            and doi.dept_id != '' and doi.dept_id is not null
+            and doi.dept_id != ''
         </if>
         <if test="params.searchType == 'user'">
-            and doi.charge_id != '' and doi.charge_id is not null
+            and doi.charge_id != ''
         </if>
         <if test="params.searchType == 'shop'">
-            and doi.shop_name != '' and doi.shop_name is not null
+            and doi.shop_name != ''
         </if>
         <if test="params.searchType == 'category'">
-            and pi.category_id != '' and pi.category_id is not null
+            and pi.category_id != ''
         </if>
         <if test="params.searchType == 'sku'">
-            and pd.sku_no != '' and pd.sku_no is not null
+            and pd.sku_no != ''
         </if>
     </sql>
 
