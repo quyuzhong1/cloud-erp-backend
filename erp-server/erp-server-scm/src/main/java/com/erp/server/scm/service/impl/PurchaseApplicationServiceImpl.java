@@ -724,14 +724,14 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         
         //查询bom信息填充子件信息
         List<String> skuIds = list.stream().map(PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO::getSkuId).collect(Collectors.toList());
-
-        //产品信息
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-
         List<BomChildrenSkuDTO> bomChildList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         if (CollectionUtils.isEmpty(bomChildList)) {
             throw new ServiceException(ApiError.ERROR_98093);
         }
+        List<String> childSkuList = bomChildList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
+        skuIds.addAll(childSkuList);
+        //产品信息
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         //供应商信息
         List<String> supplierIdList = skuList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSupplierId())).map(SkuVO::getSupplierId).collect(Collectors.toList());
