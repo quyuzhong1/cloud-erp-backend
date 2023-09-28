@@ -3,12 +3,13 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SalesPlatformEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -43,7 +44,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -104,7 +104,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         Map<String, Object> resultMap = new HashMap<>();
 
         //更新同步状态为待同步
-        soOutstockService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        soOutstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
 
         //获取销售出库单详情
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
@@ -154,8 +154,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             resultMap.put("customerCode", customerInfoEntity.getCode());
             resultMap.put("customerName", customerInfoEntity.getName());
-            SalesPlatformEnum salesPlatformEnum = SalesPlatformEnum.getByCode(customerInfoEntity.getPlatformType());
-            String salesPlatformCode = salesPlatformEnum != null ? salesPlatformEnum.getKingdeeCode() : "";
+            PlatformDictEnum salesPlatformEnum = PlatformDictEnum.getByCode(customerInfoEntity.getPlatformType());
+            String salesPlatformCode = salesPlatformEnum != null ? salesPlatformEnum.getCode() : "";
             //平台类型
             resultMap.put("platformType", salesPlatformCode);
         }
@@ -281,7 +281,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_OUTSTOCK_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return soOutstockService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "", operate);
+                return soOutstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(), "", operate);
             }
             return Boolean.TRUE;
         });

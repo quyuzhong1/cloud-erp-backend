@@ -1,10 +1,8 @@
 package com.erp.server.dmp.service.mq;
 
 import cn.hutool.extra.spring.SpringUtil;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.common.business.constant.MongoTableNameContant;
+import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
@@ -46,11 +44,11 @@ public  class MQProducerServiceTest {
 
     @Test
     public void syncSendMsg() {
-        List<DmpSkuCostEntity> dmpSkuCostEntities = dmpOrderItemMapper.listDmpSkuCostEntity();
-        dmpSkuCostEntities.forEach(req -> {
-            req.setId(IdWorker.getIdStr());
-        });
-        dmpSkuCostService.saveBatch(dmpSkuCostEntities);
+//        List<DmpSkuCostEntity> dmpSkuCostEntities = dmpOrderItemMapper.listDmpSkuCostEntity();
+//        dmpSkuCostEntities.forEach(req -> {
+//            req.setId(IdWorker.getIdStr());
+//        });
+//        dmpSkuCostService.saveBatch(dmpSkuCostEntities);
 //        mQProducerService.syncSendMsg("testId2", RocketMqTopic.DMP_ERP_ORDER_TOPIC, "tag2", "{'key':'value2'}","dmp jindie");
 
 

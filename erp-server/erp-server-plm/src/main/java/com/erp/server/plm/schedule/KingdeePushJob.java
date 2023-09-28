@@ -2,7 +2,7 @@ package com.erp.server.plm.schedule;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeBomInfoService;
@@ -49,8 +49,8 @@ public class KingdeePushJob {
     @XxlJob("kingdeePushProductDetail")
     public void kingdeePushProductDetail() {
         List<ProductDetailEntity> list = productDetailService.lambdaQuery()
-                .in(ProductDetailEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
-                .or(obj -> obj.eq(ProductDetailEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
+                .in(ProductDetailEntity::getSyncKingdeeStatus, Arrays.asList(SyncStatusEnum.TO_BE_SYNC.getCode(), SyncStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(ProductDetailEntity::getSyncKingdeeStatus, SyncStatusEnum.IN_SYNC.getCode()).le(ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的产品信息");
@@ -72,8 +72,8 @@ public class KingdeePushJob {
     @XxlJob("kingdeePushBomInfo")
     public void kingdeePushBomInfo() {
         List<BomInfoEntity> list = bomInfoService.lambdaQuery()
-                .in(BomInfoEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
-                .or(obj -> obj.eq(BomInfoEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(BomInfoEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
+                .in(BomInfoEntity::getSyncKingdeeStatus, Arrays.asList(SyncStatusEnum.TO_BE_SYNC.getCode(), SyncStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(BomInfoEntity::getSyncKingdeeStatus, SyncStatusEnum.IN_SYNC.getCode()).le(BomInfoEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的bom信息");

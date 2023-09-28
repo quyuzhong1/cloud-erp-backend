@@ -8,7 +8,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -97,7 +97,7 @@ public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, 
         dmpSyncTaskEntity.setSourceId(entity.getFId());
         dmpSyncTaskEntity.setSourceCode(entity.getFBillNo());
         dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.IN_SYNC.getCode());
+        dmpSyncTaskEntity.setStatus(SyncStatusEnum.IN_SYNC.getCode());
         dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
         dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_KINGDEE_RETURN_ORDER_TO_WMS_TAG.getName());
         String mqData = JSONObject.toJSONString(entity);

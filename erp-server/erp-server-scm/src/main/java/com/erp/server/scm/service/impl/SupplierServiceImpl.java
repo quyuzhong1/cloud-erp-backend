@@ -1199,7 +1199,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 obj.setApproveStatus(statusEnum);
                 //审核通过更新金蝶推送状态为待同步
                 if (ApproveStatusEnum.APPROVE.equals(statusEnum)) {
-                    obj.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+                    obj.setSyncKingdeeStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
                 }
             });
             return this.updateBatchById(list);

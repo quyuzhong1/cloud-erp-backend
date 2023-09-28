@@ -9,7 +9,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.business.enums.ThirdPartySystemEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -189,7 +189,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         resultEntity.setBillDate(entity.getBillDate().toLocalDate());
 
         //金蝶同步状态（无需同步）
-        resultEntity.setSyncKingdeeStatus(SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode());
+        resultEntity.setSyncKingdeeStatus(SyncStatusEnum.NO_NEED_SYNC.getCode());
 
         if (CollectionUtils.isNotEmpty(companyList)) {
             //入库组织

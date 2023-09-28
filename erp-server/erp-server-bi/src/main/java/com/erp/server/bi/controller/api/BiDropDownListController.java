@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SalesPlatformEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.CurrencyEnum;

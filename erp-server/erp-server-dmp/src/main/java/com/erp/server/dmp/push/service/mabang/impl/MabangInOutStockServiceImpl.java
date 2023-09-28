@@ -7,7 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -63,7 +63,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         dmpSyncTaskEntity.setSourceId(sourceId);
         dmpSyncTaskEntity.setSourceCode(sourceCode);
         dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.MABANG.getDesc());
-        dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+        dmpSyncTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
         dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
         dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.MABANG_INOUT_STOCK_TAG.getName());
         String mqData = JSONObject.toJSONString(mabangInOutStock);
@@ -104,7 +104,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
             dmpSyncTaskEntity.setSourceId(sourceId);
             dmpSyncTaskEntity.setSourceCode(sourceCode);
             dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.MABANG.getDesc());
-            dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+            dmpSyncTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
             dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
             dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.MABANG_INOUT_STOCK_TAG.getName());
             String mqData = JSONObject.toJSONString(mabangInOutStock);
@@ -150,11 +150,11 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         if(isSuccess) {
             JSONObject resultJson = (JSONObject)resultMap.get("result");
             // 更新出入库同步信息
-            dmpSyncTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(), resultJson.toJSONString());
+            dmpSyncTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), SyncStatusEnum.SUCCESS_SYNC.getCode(), resultJson.toJSONString());
         } else {
             String msg = StrUtils.null2EmptyWithTrim(resultMap.get("msg"));
             // 更新出入库同步信息
-            dmpSyncTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode(), msg);
+            dmpSyncTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), SyncStatusEnum.FAILED_SYNC.getCode(), msg);
 
             String sourceType = dmpSyncTaskEntity.getSourceType();
             String sourceTypeName = StrUtils.null2EmptyWithTrim(SourceTypeEnum.getName(sourceType));

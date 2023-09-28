@@ -214,13 +214,9 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         if (orderEntity.getIsResend().equals(1)) {
             orderEntity.setOrderFee(BigDecimal.ZERO);
         }
-        if (orderEntity.getOrderStatus().equals(2) && orderEntity.getCanSend().equals(2) && orderEntity.getPlatform().equals("Amazon")) {
-            return null;
-        }
         if (orderEntity.getOrderStatus().equals(5) && (StringUtils.isBlank(orderEntity.getBeforeStatus()) || orderEntity.getBeforeStatus().equals(2))) {
             return null;
         }
-
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         BeanUtil.copyProperties(orderEntity, dmpOrderInfoEntity);
         //订单状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
@@ -241,7 +237,13 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         }
         //订单来源平台
         MabangSourcePlatformEnum sourcePlatformEnum = MabangSourcePlatformEnum.getByCode(orderEntity.getPlatformId());
+        if(StrUtil.isNotBlank(orderEntity.getPlatformId()) && orderEntity.getPlatformId().contains("亚马逊")){
+            sourcePlatformEnum = MabangSourcePlatformEnum.AMAZON_FBA;
+        }
         dmpOrderInfoEntity.setSourcePlatform(null != sourcePlatformEnum ? sourcePlatformEnum.getDesc() : orderEntity.getPlatformId());
+        if (orderEntity.getOrderStatus().equals(2) && orderEntity.getCanSend().equals(2) && "Amazon".equals(dmpOrderInfoEntity.getSourcePlatform())) {
+            return null;
+        }
         //买家地址1
         dmpOrderInfoEntity.setManStreet(orderEntity.getStreet1());
         //买家地址2

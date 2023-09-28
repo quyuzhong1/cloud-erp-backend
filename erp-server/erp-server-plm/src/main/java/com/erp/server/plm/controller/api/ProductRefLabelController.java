@@ -1,28 +1,18 @@
 package com.erp.server.plm.controller.api;
 
 
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.enums.LogActionEnum;
-import com.erp.model.plm.dto.BasicLabelDTO;
-import com.erp.server.plm.service.BasicLabelService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.plm.dto.ProductRefLabelDTO;
+import com.erp.server.plm.service.ProductRefLabelService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.annotation.Resource;
-
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.plm.service.ProductRefLabelService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.plm.dto.ProductRefLabelDTO;
-
-import java.util.List;
+import javax.annotation.Resource;
 
 /**
  * 产品便签关系表
@@ -32,7 +22,6 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@LogSystemModule("产品便签关系")
 @RequestMapping("/productRefLabel")
 public class ProductRefLabelController extends BaseController {
 
@@ -48,7 +37,6 @@ public class ProductRefLabelController extends BaseController {
      * @date: 2023-09-13
      */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "新增产品标签关系")
     public ApiResult<String> add(@RequestBody @Validated ProductRefLabelDTO.BatchAddDTO dtos) {
         productRefLabelService.batchAdd(dtos);
         return success();

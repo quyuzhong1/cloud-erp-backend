@@ -4,7 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -49,12 +49,12 @@ public class SyncFbaDeliveryConsumer implements RocketMQListener<DmpSyncMqDTO> {
             DmpFbaDeliveryEntity dmpFbaDeliveryEntity = JSONObject.parseObject(dataJson, DmpFbaDeliveryEntity.class);
             syncFbaDeliveryService.syncFbaDelivery(dmpFbaDeliveryEntity, SourceTypeEnum.MABANG_FBA_DELIVERY.getCode(), dmpSyncMqDTO.getDmpSyncTaskId());
             // 同步成功
-            paramDTO.setSyncStatus(SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode());
+            paramDTO.setSyncStatus(SyncStatusEnum.SUCCESS_SYNC.getCode());
             paramDTO.setResponseMsg("同步成功");
         } catch (Exception e) {
             log.error("马帮FBA发货单同步生成加工单失败",e);
             // 同步失败
-            paramDTO.setSyncStatus(SyncKingdeeStatusEnum.FAILED_SYNC.getCode());
+            paramDTO.setSyncStatus(SyncStatusEnum.FAILED_SYNC.getCode());
             paramDTO.setResponseMsg(e.getMessage());
             // 发送消息通知
             this.sendTaskNotice(dmpSyncMqDTO.getDmpSyncTaskId(),
@@ -65,9 +65,9 @@ public class SyncFbaDeliveryConsumer implements RocketMQListener<DmpSyncMqDTO> {
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.DMP_SYNC_TASK_CALLBACK_TAG.getName(),
                 paramDTO, StrUtil.uuid().toLowerCase());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-            if(Objects.equals(paramDTO.getSyncStatus(), SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())) {
+            if(Objects.equals(paramDTO.getSyncStatus(), SyncStatusEnum.SUCCESS_SYNC.getCode())) {
                 this.sendTaskCallbackNotice(dmpSyncMqDTO.getDmpSyncTaskId(), "FBA发货单生成ERP加工单成功，发送同步状态通知消息异常，需手工修改同步状态");
-            } else if (Objects.equals(paramDTO.getSyncStatus(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode())) {
+            } else if (Objects.equals(paramDTO.getSyncStatus(), SyncStatusEnum.FAILED_SYNC.getCode())) {
                 log.info("FBA发货单生成ERP加工单失败，失败原因：【{}】,同步任务id：【{}】", paramDTO.getDmpSyncTaskId());
                 this.sendTaskCallbackNotice(dmpSyncMqDTO.getDmpSyncTaskId(), "FBA发货单生成ERP加工单失败，发送同步状态通知消息异常，需手工修改同步状态");
             }

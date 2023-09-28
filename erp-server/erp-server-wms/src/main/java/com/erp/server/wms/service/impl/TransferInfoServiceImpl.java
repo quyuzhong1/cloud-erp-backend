@@ -478,7 +478,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             } else {
                 //更新金蝶状态
-                updateSyncKingdeeStatus(ids,SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(),"", SyncOperateEnum.OPERATE_APPROVE.getCode());
+                updateSyncKingdeeStatus(ids, SyncStatusEnum.SUCCESS_SYNC.getCode(),"", SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
             //发送马帮（非马帮平台的才需要推送）
             // TODO 正式上线时需注释掉

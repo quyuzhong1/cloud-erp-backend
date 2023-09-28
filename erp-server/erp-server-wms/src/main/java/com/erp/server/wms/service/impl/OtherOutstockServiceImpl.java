@@ -656,7 +656,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 .set(OtherOutstockEntity::getApproveUserName, userInfo.getUserName())
                 .set(OtherOutstockEntity::getApproveStatus, approveStatus)
                 .set(OtherOutstockEntity::getApproveTime, LocalDateTime.now())
-                .set(ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus), OtherOutstockEntity::getSyncKingdeeStatus, SyncKingdeeStatusEnum.TO_BE_SYNC.getCode())
+                .set(ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus), OtherOutstockEntity::getSyncKingdeeStatus, SyncStatusEnum.TO_BE_SYNC.getCode())
                 .update();
     }
 

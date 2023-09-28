@@ -4,7 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -81,7 +81,7 @@ public class DmpFbaDeliveryServiceImpl extends SuperServiceImpl<DmpFbaDeliveryMa
         dmpSyncTaskEntity.setSourceId(fbaDeliveryEntity.getDeliveryId());
         dmpSyncTaskEntity.setSourceCode(fbaDeliveryEntity.getDeliveryNo());
         dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+        dmpSyncTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
         dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
         dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName());
         String mqData = JSONObject.toJSONString(fbaDeliveryEntity);

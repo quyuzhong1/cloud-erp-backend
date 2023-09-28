@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -62,7 +62,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
         Map<String, Object> resultMap = new HashMap<>();
 
         //更新同步状态为待同步
-        otherInstockService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        otherInstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
 
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -164,7 +164,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_OTHER_INSTOCK_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return otherInstockService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "",operate);
+                return otherInstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(), "",operate);
             }
             return Boolean.TRUE;
         });

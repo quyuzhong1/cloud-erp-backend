@@ -1,21 +1,15 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.common.core.controller.BaseController;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.service.DmpOrderItemService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.dmp.service.DmpPushTaskService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.dmp.dto.DmpPushTaskDTO;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,9 +24,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/dmpPushTask")
 public class DmpPushTaskController extends BaseController {
-
-    @Autowired
-    private DmpPushTaskService dmpPushTaskService;
 
     @Autowired
     private DmpOrderItemService dmpOrderItemService;
