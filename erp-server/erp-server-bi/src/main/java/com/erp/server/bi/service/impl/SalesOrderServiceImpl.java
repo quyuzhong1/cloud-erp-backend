@@ -2394,7 +2394,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             }
             sales.setType(ChartType.BAR);
 
-            List<SalesFlagVO> salesFlagVOList = salesList.stream().filter(req -> req.getCategory().equals(category)).collect(Collectors.toList());
+            List<SalesFlagVO> salesFlagVOList = salesList.stream().filter(req -> req.getCategory() != null && req.getCategory().equals(category) ).collect(Collectors.toList());
             for (String date : dateList) {
                 SalesFlagVO salesFlagVO = salesFlagVOList.stream().filter(req -> req.getName().equals(date)).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(salesFlagVO)) {
@@ -2485,10 +2485,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 format = "Q{}";
 //                list = IntStream.rangeClosed(1, 4).mapToObj(x -> x).collect(Collectors.toList());
 
-                list = salesList.stream().map(req -> req.getGroupDate().getYear() + "-" + StrUtil.format(format, (req.getGroupDate().getMonthValue() - 1) / 3 + 1)).collect(Collectors.toList());
+                list = salesList.stream().map(req -> req.getGroupDate().getYear() + "-" + (req.getGroupDate().getMonthValue() - 1) / 3 + 1).distinct().collect(Collectors.toList());
 
                 // 季度分组数据销售毛利率
-                Map<String, BigDecimal> quarterMap = costMap.keySet().stream().collect(Collectors.groupingBy(e -> e.getYear() + "-" + StrUtil.format(format, (e.getMonthValue() - 1) / 3 + 1), MathUtil.summingBigDecimal(v -> {
+                Map<String, BigDecimal> quarterMap = costMap.keySet().stream().collect(Collectors.groupingBy(e -> e.getYear() + "-" + (e.getMonthValue() - 1) / 3 + 1, MathUtil.summingBigDecimal(v -> {
                     Map<String, BigDecimal> tempMap = costMap.get(v);
                     BigDecimal costMainBusinessIncome = BigDecimal.ZERO;
                     if (ObjectUtil.isNotEmpty(tempMap)) {
@@ -2498,7 +2498,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 })));
 
                 // 去年季度分组数据销售毛利率
-                Map<String, BigDecimal> lastYearQuarterMap = lastYearCostMap.keySet().stream().collect(Collectors.groupingBy(e -> e.getYear() + "-" + StrUtil.format(format, (e.getMonthValue() - 1) / 3 + 1), MathUtil.summingBigDecimal(v -> {
+                Map<String, BigDecimal> lastYearQuarterMap = lastYearCostMap.keySet().stream().collect(Collectors.groupingBy(e -> e.getYear() + "-" + (e.getMonthValue() - 1) / 3 + 1, MathUtil.summingBigDecimal(v -> {
                     Map<String, BigDecimal> tempMap = lastYearCostMap.get(v);
                     BigDecimal costMainBusinessIncome = BigDecimal.ZERO;
                     if (ObjectUtil.isNotEmpty(tempMap)) {
@@ -2507,7 +2507,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     return costMainBusinessIncome;
                 })));
 //                dateList = IntStream.rangeClosed(1, 4).mapToObj(x -> StrUtil.format(format, x)).collect(Collectors.toList());
-                dateList = list;
+
+                dateList = salesList.stream().map(req -> req.getGroupDate().getYear() + "-" + StrUtil.format(format, (req.getGroupDate().getMonthValue() - 1) / 3 + 1)).distinct().collect(Collectors.toList());
                 byDateFinanceSalesNumber(quarterMap, lastYearQuarterMap, seriesList, list);
                 break;
             case "YEAR":
@@ -2580,7 +2581,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             if (split.length > 1) {
                 dateStr = (Integer.valueOf(split[0]) - 1)+ "-" + split[1];
             } else {
-                dateStr = date;
+                dateStr = Integer.valueOf(date) -1 +"";
             }
             if (lastYearMonthMap.get(dateStr) != null) {
                 lastYearOrderSalesList.add(lastYearMonthMap.get(dateStr));
@@ -2601,7 +2602,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             if (split.length > 1) {
                 dateStr = (Integer.valueOf(split[0]) - 1)+ "-" + split[1];
             } else {
-                dateStr = date;
+                dateStr = Integer.valueOf(date) -1 +"";
             }
             if (lastYearMonthMap.get(dateStr) != null && lastYearMonthMap.get(dateStr).compareTo(BigDecimal.ZERO) > 0) {
                 basisRatioList.add(monthMap.get(date)

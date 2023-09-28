@@ -3796,6 +3796,13 @@
                     #{userId}
                 </foreach>
             </if>
+            <!-- 产品属性 -->
+            <if test="params.propertyIdList!=null and params.propertyIdList.size>0">
+                AND pi.property_id IN
+                <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                    #{propertyId}
+                </foreach>
+            </if>
             <!-- 权限 -->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
@@ -3924,6 +3931,13 @@
                     #{userId}
                 </foreach>
             </if>
+            <!-- 产品属性 -->
+            <if test="params.propertyIdList!=null and params.propertyIdList.size>0">
+                AND pi.property_id IN
+                <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                    #{propertyId}
+                </foreach>
+            </if>
             <!-- 权限 -->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
@@ -4047,6 +4061,13 @@
                 AND o.charge_id IN
                 <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
                     #{userId}
+                </foreach>
+            </if>
+            <!-- 产品属性 -->
+            <if test="params.propertyIdList!=null and params.propertyIdList.size>0">
+                AND pi.property_id IN
+                <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                    #{propertyId}
                 </foreach>
             </if>
             <!-- 权限 -->
@@ -4173,6 +4194,13 @@
                     #{userId}
                 </foreach>
             </if>
+            <!-- 产品属性 -->
+            <if test="params.propertyIdList!=null and params.propertyIdList.size>0">
+                AND pi.property_id IN
+                <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                    #{propertyId}
+                </foreach>
+            </if>
             <!-- 权限 -->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
@@ -4296,6 +4324,13 @@
                 AND o.charge_id IN
                 <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
                     #{userId}
+                </foreach>
+            </if>
+            <!-- 产品属性 -->
+            <if test="params.propertyIdList!=null and params.propertyIdList.size>0">
+                AND pi.property_id IN
+                <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                    #{propertyId}
                 </foreach>
             </if>
             <!-- 权限 -->
