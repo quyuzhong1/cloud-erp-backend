@@ -49,4 +49,7 @@ public interface SoInfoFeign {
      **/
     @PostMapping("feign/soInfo/approve")
     Boolean approve(@RequestBody BaseApproveParamDTO dto);
+
+    @PostMapping("feign/soInfo/listRepairHistoryDb")
+    List<SoInfoDTO.ListDTO> listRepairHistoryDb();
 }

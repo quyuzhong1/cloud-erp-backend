@@ -56,4 +56,13 @@ public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>
      **/
     List<SoInfoDTO.GenerateSoReturnView> generateSoReturnView(@Param("ids") List<String> ids);
+
+    /**
+     * 获取折扣额大于0 的
+     * @author yl
+     * @date 2023-09-28 10:32
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.ListDTO>
+     */
+    List<SoInfoDTO.ListDTO> listRepairHistoryDb();
 }
