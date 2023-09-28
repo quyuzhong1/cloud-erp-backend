@@ -88,7 +88,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 //当已存在 就删除以前的  并回滚库存
                 soOutstockService.handleKingdeeToErp(soOutstock, detailList, flagId);
                 InventoryInOutStockRuleDTO inventoryInOutStockDTO = info.getInventoryInOutStockRuleDTO();
-                if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getMembers())) {
+                if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getParamList())) {
                     inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
                 }
                 //扣减库存成功后 更新状态
@@ -217,7 +217,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //扣库存
         InventoryInOutStockRuleDTO inventoryInOutStockRuleDTO = new InventoryInOutStockRuleDTO();
         inventoryInOutStockRuleDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
-        inventoryInOutStockRuleDTO.setMembers(inOutStockList);
+        inventoryInOutStockRuleDTO.setParamList(inOutStockList);
         List<TransactionRuleDTO> ruleList = new ArrayList<>(1);
         TransactionRuleDTO transactionRule = new TransactionRuleDTO();
         transactionRule.setInventoryStatus(InventoryStatusEnum.USABLE);

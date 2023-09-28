@@ -228,6 +228,38 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
 
+        // 产品属性为费用或服务的sku忽略库存计算
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        }
+
+        // 增加库存数量验证（库存退货）
+        String sourceType = dto.getSourceType();
+        if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) {
+            String returnMode = dto.getReturnMode();
+            List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+            List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+            List<PurchaseReturnOrderDetailDTO.AddDTO> purchasePriceDetailList = dto.getPurchasePriceDetailList();
+            for(PurchaseReturnOrderDetailDTO.AddDTO detail : purchasePriceDetailList) {
+                if(ignoreInventorySkuIds.contains(detail.getSkuId())) {
+                    log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detail.getSkuId(), detail.getSkuNo());
+                    continue;
+                }
+                //获取sku信息
+                ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detail.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+                Integer usableQty = inventoryService.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), detail.getSkuId(), detail.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
+                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())
+                        && usableQty < detail.getReplenishQty()) {
+                    throw new ServiceException(ApiError.ERROR_99070, productDetailEntity.getSkuNo());
+                } else if (Objects.equals(returnMode, ReturnModeEnum.DEDUCTION.getCode())
+                        && usableQty < detail.getDeductAmountQty()) {
+                    throw new ServiceException(ApiError.ERROR_99070, productDetailEntity.getSkuNo());
+                }
+            }
+        }
+
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGTH, BusinessNoTypeEnum.CODE_CGTH.getCode()));
         //设置收货单主表
@@ -300,6 +332,38 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             long count = dto.getPurchasePriceDetailList().stream().filter(obj -> MathUtil.compareTo(obj.getReturnPrice(), MathUtil.ZERO) == MathUtil.ZERO).count();
             if (count > MathUtil.ZERO) {
                 throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL);
+            }
+        }
+
+        // 产品属性为费用或服务的sku忽略库存计算
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        }
+
+        // 增加库存数量验证（库存退货）
+        String sourceType = dto.getSourceType();
+        if(!Objects.equals(sourceType, ReturnOrderSourceEnum.QC.getCode())) {
+            String returnMode = dto.getReturnMode();
+            List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+            List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+            List<PurchaseReturnOrderDetailDTO.UpdateDTO> purchasePriceDetailList = dto.getPurchasePriceDetailList();
+            for (PurchaseReturnOrderDetailDTO.UpdateDTO detail : purchasePriceDetailList) {
+                if(ignoreInventorySkuIds.contains(detail.getSkuId())) {
+                    log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detail.getSkuId(), detail.getSkuNo());
+                    continue;
+                }
+                //获取sku信息
+                ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detail.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+                Integer usableQty = inventoryService.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), detail.getSkuId(), detail.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
+                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())
+                        && usableQty < detail.getReplenishQty()) {
+                    throw new ServiceException(ApiError.ERROR_99070, productDetailEntity.getSkuNo());
+                } else if (Objects.equals(returnMode, ReturnModeEnum.DEDUCTION.getCode())
+                        && usableQty < detail.getDeductAmountQty()) {
+                    throw new ServiceException(ApiError.ERROR_99070, productDetailEntity.getSkuNo());
+                }
             }
         }
 
@@ -1332,14 +1396,14 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 InOutStockDTO inStockDTO = InOutStockDTO.initByReturnOrder(purchaseReturnOrderEntity, detail, InventorySourceTypeEnum.PURCHASE_RETURN_ORDER, detail.getReplenishQty(), InventoryStatusEnum.IN_TRANSIT);
                 InventoryInOutStockRuleDTO inTransitRule = new InventoryInOutStockRuleDTO();
                 inTransitRule.setBusinessType(InventoryBusinessTypeEnum.PO_RETURN_REP.getCode());
-                inTransitRule.setMembers(Lists.newArrayList(inStockDTO));
+                inTransitRule.setParamList(Lists.newArrayList(inStockDTO));
                 inTransitRule.setRules(Lists.newArrayList(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.IN_TRANSIT, InventoryModeEnum.IN_STOCK)));
                 inventoryTransCoreService.approveByRule(inTransitRule);
                 // 使用实退数量 减少可用
                 InventoryInOutStockRuleDTO usableRule = new InventoryInOutStockRuleDTO();
                 usableRule.setBusinessType(InventoryBusinessTypeEnum.PO_RETURN_REP.getCode());
                 InOutStockDTO inOutStockDTO = InOutStockDTO.initByReturnOrder(purchaseReturnOrderEntity, detail, InventorySourceTypeEnum.PURCHASE_RETURN_ORDER, detail.getReturnQty(), InventoryStatusEnum.USABLE);
-                usableRule.setMembers(Lists.newArrayList(inOutStockDTO));
+                usableRule.setParamList(Lists.newArrayList(inOutStockDTO));
                 usableRule.setRules(Lists.newArrayList(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK)));
                 inventoryTransCoreService.approveByRule(usableRule);
             });
@@ -1374,7 +1438,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
                 receiveMembers.add(inOutStockDTO);
             });
-            receiveInventoryInOutStockDTO.setMembers(receiveMembers);
+            receiveInventoryInOutStockDTO.setParamList(receiveMembers);
             inventoryTransCoreService.approveByType(receiveInventoryInOutStockDTO);
         }
     }
@@ -1394,14 +1458,14 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 InOutStockDTO inStockDTO = InOutStockDTO.initByReturnOrder(purchaseReturnOrderEntity, detail, InventorySourceTypeEnum.PURCHASE_RETURN_ORDER, detail.getReplenishQty(), InventoryStatusEnum.IN_TRANSIT);
                 InventoryInOutStockRuleDTO inTransitRule = new InventoryInOutStockRuleDTO();
                 inTransitRule.setBusinessType(InventoryBusinessTypeEnum.PO_RETURN_QC.getCode());
-                inTransitRule.setMembers(Lists.newArrayList(inStockDTO));
+                inTransitRule.setParamList(Lists.newArrayList(inStockDTO));
                 inTransitRule.setRules(Lists.newArrayList(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.IN_TRANSIT, InventoryModeEnum.IN_STOCK)));
                 inventoryTransCoreService.approveByRule(inTransitRule);
                 // 使用实退数量 减少待检
                 InOutStockDTO outStockDTO = InOutStockDTO.initByReturnOrder(purchaseReturnOrderEntity, detail, InventorySourceTypeEnum.PURCHASE_RETURN_ORDER, detail.getReturnQty(), InventoryStatusEnum.WAIT_QC);
                 InventoryInOutStockRuleDTO waitQcRule = new InventoryInOutStockRuleDTO();
                 waitQcRule.setBusinessType(InventoryBusinessTypeEnum.PO_RETURN_QC.getCode());
-                waitQcRule.setMembers(Lists.newArrayList(outStockDTO));
+                waitQcRule.setParamList(Lists.newArrayList(outStockDTO));
                 waitQcRule.setRules(Lists.newArrayList(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.WAIT_QC, InventoryModeEnum.OUT_STOCK)));
                 inventoryTransCoreService.approveByRule(waitQcRule);
             });
@@ -1436,7 +1500,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
                 receiveMembers.add(inOutStockDTO);
             });
-            receiveInventoryInOutStockDTO.setMembers(receiveMembers);
+            receiveInventoryInOutStockDTO.setParamList(receiveMembers);
             inventoryTransCoreService.approveByType(receiveInventoryInOutStockDTO);
         }
     }
@@ -1446,15 +1510,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<String> unApproveIds = Lists.newArrayList();
         for (PurchaseReturnOrderEntity purchaseReturnOrder : purchaseReturnOrderEntityList) {
             String sourceType = purchaseReturnOrder.getSourceType();
-            if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) {
-                // 库存退货
+            if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) { // 库存退货
                 unApproveIds.add(purchaseReturnOrder.getId());
             } else { // 质检退货
-                String returnMode = purchaseReturnOrder.getReturnMode();
-                // 退货方式
+                String returnMode = purchaseReturnOrder.getReturnMode(); // 退货方式
                 /*
-                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())) {
-                // 退货补货
+                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())) { // 退货补货
                     unApproveIds.add(purchaseReturnOrder.getId());
                 }
                  */
@@ -1618,7 +1679,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
                 receiveMembers.add(inOutStockDTO);
             });
-            receiveInventoryInOutStockDTO.setMembers(receiveMembers);
+            receiveInventoryInOutStockDTO.setParamList(receiveMembers);
             inventoryTransCoreService.approveByType(receiveInventoryInOutStockDTO);
         }
     }

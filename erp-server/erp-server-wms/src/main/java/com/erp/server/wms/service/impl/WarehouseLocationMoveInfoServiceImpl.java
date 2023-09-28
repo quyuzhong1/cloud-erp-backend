@@ -80,9 +80,9 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     @Resource
     private PlmTaskFeign plmTaskFeign;
     @Resource
-    private SysUserFeign sysUserFeign;
-    @Resource
     private WarehouseLocationService warehouseLocationService;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -405,7 +405,7 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
             List<TransactionRuleDTO> transactionRuleDTOList = new ArrayList<>(2);
             transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK));
             transactionRuleDTOList.add(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryStatusEnum.USABLE, InventoryModeEnum.IN_STOCK));
-            ruleDTO.setMembers(transferDTOList);
+            ruleDTO.setParamList(transferDTOList);
             ruleDTO.setBusinessType(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
             ruleDTO.setRules(transactionRuleDTOList);
             inventoryTransCoreService.approveByRule(ruleDTO);
@@ -515,9 +515,9 @@ public class WarehouseLocationMoveInfoServiceImpl extends SuperServiceImpl<Wareh
     */
     private void fillList(List<WarehouseLocationMoveInfoDTO.PdaListDTO> list) {
         if(CollUtil.isEmpty(list)) {
-            return;
+           return;
         }
-        //主键id
+       //主键id
         List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
         //查询详情
         List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(ids);

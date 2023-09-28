@@ -23,6 +23,7 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.StateEnumValue;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -3754,7 +3755,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), enumByCode.getCode(), dto.getValues(), enumByCode.getKeyName());
         }
-        if (flag == Boolean.FALSE) {
+        if (!flag) {
             throw new ServiceException(ApiError.ERROR_95243);
         }
         List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getId, dto.getIds()).list();

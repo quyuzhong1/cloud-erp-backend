@@ -83,9 +83,6 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private DictBasicService dictBasicService;
-
-    @Resource
     private OperateLogService operateLogService;
 
     @Resource
@@ -511,7 +508,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         }
         //其他入库增加库存
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        inventoryInOutStockDTO.setMembers(inOutStockList);
+        inventoryInOutStockDTO.setParamList(inOutStockList);
         inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.OTHER_IN.getCode());
         inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
 

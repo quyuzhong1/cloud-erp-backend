@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-import com.common.business.validator.AddGroup;
 import com.common.business.validator.ValidGroup;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.dto.inventory.*;
@@ -26,52 +25,44 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     @Resource
     private InventoryHelper inventoryHelper;
 
-    /**
-     * 出入库业务，按业务类型（走配置的交易规则）
-     * @param dto
-     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void approveByType(InventoryInOutStockDTO dto) {
         ValidatorUtil.validateEntity(dto);
         AbstractInventoryServiceImpl inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
-        inventoryService.approve(dto.getMembers(), null, InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), true);
+        inventoryService.approve(dto.getParamList(), null, InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), true);
     }
 
-    /**
-     * 调拨业务，按业务类型（走配置的交易规则）
-     * @param dto
-     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void approveByType(InventoryTransferDTO dto) {
         ValidatorUtil.validateEntity(dto);
         AbstractInventoryServiceImpl inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.TRANSFER_STOCK);
-        inventoryService.approve(dto.getMembers(), null, InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), true);
+        inventoryService.approve(dto.getParamList(), null, InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), true);
     }
 
-    /**
-     * 调拨业务，自定义规则
-     * @param dto
-     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void approveByRule(InventoryTransferRuleDTO dto) {
         ValidatorUtil.validateEntity(dto);
         AbstractInventoryServiceImpl inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.TRANSFER_STOCK);
-        inventoryService.approve(dto.getMembers(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
+        inventoryService.approve(dto.getParamList(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
     }
 
-    /**
-     * 出入库业务，自定义规则
-     * @param dto
-     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void approveByRule(InventoryInOutStockRuleDTO dto) {
         ValidatorUtil.validateEntity(dto, ValidGroup.Update.class);
         AbstractInventoryServiceImpl inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
-        inventoryService.approve(dto.getMembers(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
+        inventoryService.approve(dto.getParamList(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void approveByRule(InventoryTransferRuleDTO dto, InventoryBizTypeEnum bizTypeEnum) {
+        ValidatorUtil.validateEntity(dto, ValidGroup.Update.class);
+        AbstractInventoryServiceImpl inventoryService = inventoryHelper.getInventoryService(bizTypeEnum);
+        inventoryService.approve(dto.getParamList(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
     }
 
     /**

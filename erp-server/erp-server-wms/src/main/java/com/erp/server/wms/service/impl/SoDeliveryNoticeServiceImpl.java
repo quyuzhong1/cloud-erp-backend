@@ -464,7 +464,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
@@ -754,7 +754,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             WarehouseEntity warehouseEntity = warehouseEntityList.stream().filter(req -> req.getId().equals(entity.getWarehouseId())).findFirst().orElse(new WarehouseEntity());
 
             List<String> ignoreInventorySkuIds = Lists.newArrayList();
-            if (CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
                 ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
             }
 
@@ -766,7 +766,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                         entity.getWarehouseName(), detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getDeliveryQty());
 
                 List<InventoryEntity> inventoryList = Lists.newArrayList();
-                if (ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
+                if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
                     InventoryEntity inventoryEntity = new InventoryEntity();
                     inventoryEntity.setWarehouseId(dto.getWarehouseId());
                     inventoryEntity.setOrgId(dto.getOrgId());
@@ -809,7 +809,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 addList.addAll(pickingDetailList);
                 //添加冻结库存
                 InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-                inventoryInOutStockDTO.setMembers(inOutStockList);
+                inventoryInOutStockDTO.setParamList(inOutStockList);
                 inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_DELIVERY_NOTICE.getCode());
                 //更新库存
                 inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
@@ -836,7 +836,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         // 产品属性为费用或服务的sku忽略库存计算
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = Lists.newArrayList();
-        if (CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
             ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
         }
 
@@ -851,7 +851,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 add.setPlanDeliveryDate(view.getPlanDeliveryDate());
                 SoDeliveryNoticeDetailDTO.Add detailAdd = new SoDeliveryNoticeDetailDTO.Add();
 
-                if (ignoreInventorySkuIds.contains(view.getSkuId())) {
+                if(ignoreInventorySkuIds.contains(view.getSkuId())) {
                     log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", view.getSkuId(), view.getSkuNo());
                 } else {
                     //即时库存
@@ -928,8 +928,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    public Map<String, Long> getPushDownDeliveryNoticeCnt(List<String> soIds) {
-        if (CollUtil.isEmpty(soIds)) {
+    public Map<String,Long> getPushDownDeliveryNoticeCnt(List<String> soIds) {
+        if(CollUtil.isEmpty(soIds)) {
             return Maps.newHashMap();
         }
         List<SoDeliveryNoticeEntity> deliveryNoticeList = this.lambdaQuery()
@@ -937,7 +937,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 .eq(SoDeliveryNoticeEntity::getSourceType, SourceTypeEnum.SO_INFO.getCode())
                 .eq(SoDeliveryNoticeEntity::getInvalidStatus, Boolean.FALSE).list();
 
-        if (CollUtil.isEmpty(deliveryNoticeList)) {
+        if(CollUtil.isEmpty(deliveryNoticeList)) {
             return Maps.newHashMap();
         }
         return deliveryNoticeList.stream().collect(Collectors.groupingBy(SoDeliveryNoticeEntity::getSourceId, Collectors.counting()));
@@ -983,7 +983,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeList.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
         return soDeliveryNoticeList;
     }
-
     /**
      * 根据来源ids 获取数据
      *

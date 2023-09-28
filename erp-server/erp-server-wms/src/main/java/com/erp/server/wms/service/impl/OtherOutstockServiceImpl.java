@@ -541,7 +541,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         }
         //其他出库减少库存
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        inventoryInOutStockDTO.setMembers(inOutStockList);
+        inventoryInOutStockDTO.setParamList(inOutStockList);
         inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.OTHER_OUT.getCode());
         inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
     }

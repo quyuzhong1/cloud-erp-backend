@@ -1064,7 +1064,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
                 //减少可用库存，添加冻结库存
                 InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-                inventoryInOutStockDTO.setMembers(inOutStockList);
+                inventoryInOutStockDTO.setParamList(inOutStockList);
                 inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.TRANSFER_APPLY.getCode());
                 //更新库存
                 inventoryTransCoreService.approveByType(inventoryInOutStockDTO);

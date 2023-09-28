@@ -28,7 +28,6 @@ public enum ApiError implements Serializable {
 
 
     /**
-    /**
      * 通用错误
      */
     ERROR_405(405, "方法不被允许"),
@@ -752,15 +751,15 @@ public enum ApiError implements Serializable {
     ERROR_RETURN_ORDER_PUSHED(99089, "已下推退货入库单，不能反审核"),
     ERROR_WAREHOUSE_NOT_EXIST_ORG(99090, "仓库【{}】下未发现库存组织"),
     ERROR_SO_RETURN_INSTOCK_NOT_GENERATE(99090,"退货入库单【{}】未审核通过，不支持下推"),
-    ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL(99091,"采购退货单退货扣款类型退款单价必填"),
 
+    ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL(99091,"采购退货单退货扣款类型退款单价必填"),
     STOCKTAKING_TASK_EXIST(99090 , "仓库【{}】库位【{}】 SKU【{}】 已存在盘点任务"),
     LOCATION_MOVE_DETAIL_ADD(99091 , "仓位移动明细单保存失败"),
     LOCATION_MOVE_QTY_ERROR(99091 , "sku【{}】仓位移动数量不能大于可用库存数量"),
     SO_RETURN_RECEIVE_SKU_NOT_EXIST(99092 , "sku【{}】在退货签收单中不存在"),
     CURRENT_TARGET_WAREHOUSE_SAME(99039,"仓位移动当前仓和目的仓必须相同"),
     PURCHASE_SKU_NOT_EXIST(99092 , "sku【{}】在采购单中不存在"),
-
+    ERROR_INVENTORY_CLOSED(99093,"库存已关账不允许操作【{}】之前单据"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -885,6 +884,7 @@ public enum ApiError implements Serializable {
 
 
 
+    ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),
