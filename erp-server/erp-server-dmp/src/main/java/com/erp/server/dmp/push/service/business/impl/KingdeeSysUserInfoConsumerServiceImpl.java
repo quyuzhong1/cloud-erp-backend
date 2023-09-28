@@ -4,7 +4,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
@@ -64,11 +64,11 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
         String enableOperate = null;
         //启用
         if (String.valueOf(MathUtil.ONE).equals(String.valueOf(userState))) {
-            enableOperate = SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
+            enableOperate = SyncOperateEnum.OPERATE_ENABLE.getCode();
         }
         //禁用
         if (String.valueOf(MathUtil.ZERO).equals(String.valueOf(userState))) {
-            enableOperate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
+            enableOperate = SyncOperateEnum.OPERATE_DISABLE.getCode();
         }
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
@@ -126,7 +126,7 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
 
         //操作项
         String operate = (String) map.get("operate");
-        if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
             //如果是一致就不处理
             if (erpForbidStatus.equals(kingdeeForbidStatus)) {
                 log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}], 无需{}，跳过{}操作", forbidStatus, map.get("disabled"), operate, operate);
@@ -156,7 +156,7 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
             //删除
-            if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
                 kingdeeCommonService.delete(apiUtils, platformEntity, map, type, code);
                 return;
             }

@@ -10,7 +10,7 @@ import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CcStatusEnum;
 import com.erp.server.workflow.mapper.ProcessTaskCcMapper;
 import com.erp.server.workflow.service.ProcessTaskCcService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -16,7 +16,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoReturnNoticeDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoReturnNoticeDetailService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;

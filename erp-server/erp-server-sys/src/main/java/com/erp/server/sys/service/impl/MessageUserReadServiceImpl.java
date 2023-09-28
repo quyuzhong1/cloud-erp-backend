@@ -3,7 +3,7 @@ package com.erp.server.sys.service.impl;
 import com.erp.model.sys.entity.MessageUserReadEntity;
 import com.erp.server.sys.mapper.MessageUserReadMapper;
 import com.erp.server.sys.service.MessageUserReadService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

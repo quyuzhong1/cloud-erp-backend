@@ -13,7 +13,7 @@ import com.erp.model.sys.enums.MessageTypeEnum;
 import com.erp.model.sys.enums.SysTypeEnum;
 import com.erp.server.sys.mapper.PdaVersionMapper;
 import com.erp.server.sys.service.*;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.sys.service.MessageService;
 import com.erp.server.sys.service.MessageUserReadService;
 import com.erp.server.sys.service.PdaVersionService;

@@ -10,7 +10,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.SystemConstants;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -225,7 +225,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
 
         //金蝶操作编码
-        String operateNumber = SyncKingdeeOperateEnum.getNameByCode(operate);
+        String operateNumber = SyncOperateEnum.getNameByCode(operate);
 
         try {
             apiUtils.excuteOperation(operateNumber, JSONUtil.toJsonStr(viewMap));
@@ -235,7 +235,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             return Boolean.FALSE;
         }
         //操作成功添加日志
-        insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(viewMap), SyncKingdeeOperateEnum.getDescByCode(operate), type, ApiSendStatusEnum.SUCCESS.getCode());
+        insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(viewMap), SyncOperateEnum.getDescByCode(operate), type, ApiSendStatusEnum.SUCCESS.getCode());
         return Boolean.TRUE;
     }
 

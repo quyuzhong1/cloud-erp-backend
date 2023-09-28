@@ -10,7 +10,7 @@ import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.server.wms.mapper.StocktakingTaskUserMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.StocktakingTaskUserService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

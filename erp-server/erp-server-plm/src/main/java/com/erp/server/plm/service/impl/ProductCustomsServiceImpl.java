@@ -4,7 +4,7 @@ import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.plm.mapper.ProductCustomsMapper;
 import com.erp.server.plm.service.ProductCustomsService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.plm.service.ProductDetailService;
 import org.springframework.stereotype.Service;
 

@@ -1,7 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.common.business.dto.FindUserDTO;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.plm.dto.MemberPagingShowDTO;
 import com.erp.model.plm.dto.ProductMemberDTO;
 import com.erp.model.plm.entity.TaskCommentRefEntity;

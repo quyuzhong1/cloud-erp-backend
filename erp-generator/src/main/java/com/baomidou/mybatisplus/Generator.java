@@ -210,7 +210,7 @@ public class Generator {
                 .setEntitySerialVersionUID(false)
                 .setSuperEntityClass("com.common.core.entity.BaseEntity")
                 .setSuperServiceClass("com.common.business.service.SuperService")
-                .setSuperServiceImplClass("com.common.business.service.SuperServiceImpl")
+                .setSuperServiceImplClass("com.common.business.service.impl.SuperServiceImpl")
                 .setSuperControllerClass("com.common.core.controller.BaseController")
                 // 公共字段
                 .setSuperEntityColumns("id","create_time","update_time","version","is_deleted","create_user_id","create_user_name","update_user_id","update_user_name")

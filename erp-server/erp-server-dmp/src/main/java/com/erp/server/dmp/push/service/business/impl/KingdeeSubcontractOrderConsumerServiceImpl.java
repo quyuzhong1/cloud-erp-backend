@@ -5,7 +5,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
@@ -98,12 +98,12 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
 
         //操作项
         String operate = (String) map.get("operate");
-        if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
             //作废
             kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
             return;
         }
-        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             //反审核
             disApprove(platformEntity, map, apiUtils, id, documentStatus);
             return;
@@ -144,7 +144,7 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
 
         if (KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //将业务状态反执行至计划确认
-            Boolean confirm = kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, SyncKingdeeOperateEnum.OPERATE_UNDO_TO_PLAN_CONFIRM.getCode());
+            Boolean confirm = kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, SyncOperateEnum.OPERATE_UNDO_TO_PLAN_CONFIRM.getCode());
             if (!confirm) {
                 return Boolean.FALSE;
             }

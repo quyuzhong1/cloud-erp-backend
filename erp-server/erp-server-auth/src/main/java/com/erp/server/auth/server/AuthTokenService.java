@@ -2,9 +2,8 @@ package com.erp.server.auth.server;
 
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
-import com.common.core.utils.IdUtils;
 import com.erp.model.sys.utils.JwtUtils;
-import com.common.business.service.RedisService;
+import com.common.business.service.impl.RedisService;
 import com.common.business.interceptor.CommonInterceptor;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.common.business.vo.LoginUser;

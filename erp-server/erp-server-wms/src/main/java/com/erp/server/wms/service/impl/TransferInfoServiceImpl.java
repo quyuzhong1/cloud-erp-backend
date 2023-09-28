@@ -15,7 +15,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -440,7 +440,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 .update();
 
         //发送金蝶
-        list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
+        list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
 
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -475,10 +475,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             updateInventoryTransCore(list);
             if (isSyncKingDee) {
                 //发送金蝶
-                list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+                list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             } else {
                 //更新金蝶状态
-                updateSyncKingdeeStatus(ids,SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(),"",SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                updateSyncKingdeeStatus(ids,SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(),"", SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
             //发送马帮（非马帮平台的才需要推送）
             // TODO 正式上线时需注释掉
@@ -489,7 +489,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                     log.warn("审核直接调拨单【{}】第三方平台类型：【{}】", obj.getCode(), obj.getThirdPartySystem());
                     if(!Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_MB.getCode())) {
                         log.warn("审核直接调拨单【{}】是非马帮平台的，需要同步到马帮平台出入库，直接调拨单参数：{}", obj.getCode(), JSONObject.toJSONString(obj));
-                        syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                        syncMabangTransferService.syncDataToMabang(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
                     }
                 });
             }
@@ -527,7 +527,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
         if(isPushKingDee){
             //发送金蝶
-            list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
 
         //发送马帮（非马帮平台的才需要推送）
@@ -539,7 +539,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 log.warn("反审核直接调拨单【{}】第三方平台类型：【{}】", obj.getCode(), obj.getThirdPartySystem());
                 if(!Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_MB.getCode())) {
                     log.warn("反审核直接调拨单【{}】是非马帮平台的，需要同步到马帮平台出入库，直接调拨单参数：{}", obj.getCode(), JSONObject.toJSONString(obj));
-                    syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode());
+                    syncMabangTransferService.syncDataToMabang(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
                 }
             });
         }

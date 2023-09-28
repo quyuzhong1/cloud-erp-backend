@@ -3,7 +3,7 @@ package com.erp.server.dmp.service.impl;
 import com.erp.server.dmp.entity.DmpWarehouseInboundItemEntity;
 import com.erp.server.dmp.mapper.DmpWarehouseInboundItemMapper;
 import com.erp.server.dmp.service.DmpWarehouseInboundItemService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
 /**

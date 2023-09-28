@@ -1,7 +1,7 @@
 package com.erp.server.sys.service.impl;
 
 
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.sys.entity.PdaUserSkipVersionEntity;
 import com.erp.server.sys.mapper.PdaUserSkipVersionMapper;
 import com.erp.server.sys.service.PdaUserSkipVersionService;

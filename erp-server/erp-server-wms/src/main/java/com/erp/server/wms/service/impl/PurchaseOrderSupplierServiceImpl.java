@@ -1,6 +1,6 @@
 package com.erp.server.wms.service.impl;
 
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.server.wms.mapper.PurchaseOrderSupplierMapper;
 import com.erp.server.wms.service.PurchaseOrderSupplierService;

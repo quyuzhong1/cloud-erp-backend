@@ -2,7 +2,7 @@ package com.erp.server.wms.schedule;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.service.RedisService;
+import com.common.business.service.impl.RedisService;
 import com.common.core.utils.StrUtils;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;

@@ -4,7 +4,7 @@ import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.server.dmp.mapper.CfgSettingMapper;
 import com.erp.server.dmp.service.CfgSettingService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
