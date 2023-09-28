@@ -13,6 +13,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -58,7 +59,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -875,17 +875,14 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     /**
      * 更改销售订单金蝶推送的状态
      *
-     * @param id
-     * @param syncKingdeeStatus
-     * @param syncKingdeeId
-     * @param syncOperate
      * @return
      * @author yl
      * @date 2023-05-31 14:20
      */
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
-
+    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
+        String id = kingdeeDTO.getBusinessId();
+        String syncKingdeeStatus = kingdeeDTO.getSyncKingdeeStatus();
         if (StringUtils.isEmpty(id)) {
             return Boolean.TRUE;
         }
@@ -904,14 +901,8 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             }
 
         }
-        return this.lambdaUpdate()
-                .eq(SoChangeEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SoChangeEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SoChangeEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId), SoChangeEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), SoChangeEntity::getSyncOperate, syncOperate)
-                .update();
-
+        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
+        return Boolean.TRUE;
     }
 
 

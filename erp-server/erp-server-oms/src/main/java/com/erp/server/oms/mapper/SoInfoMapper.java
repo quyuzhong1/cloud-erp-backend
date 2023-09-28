@@ -3,6 +3,7 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -56,6 +57,13 @@ public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>
      **/
     List<SoInfoDTO.GenerateSoReturnView> generateSoReturnView(@Param("ids") List<String> ids);
+    /**
+     * @description: 更新金蝶推送状态
+     * @author Will
+     * @date: 2023/9/26 18:34
+     * @param kingdeeDTO
+     */
+    void updateSyncKingdeeStatus(@Param("params") PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 
     /**
      * 获取折扣额大于0 的

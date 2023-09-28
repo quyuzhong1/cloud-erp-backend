@@ -13,10 +13,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -1160,6 +1157,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         //检查能否删除
         checkRemove(ids);
+
+        //推送金蝶
+        list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
+
         Boolean result = this.removeByIds(ids);
         if (result) {
             //添加日志
@@ -1168,7 +1169,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "删除");
             //删除明细
             soDetailService.removeByMainIdList(ids);
-
         }
 
         return result;
@@ -1870,16 +1870,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     /**
      * 更改销售订单金蝶推送的状态
      *
-     * @param id
-     * @param syncKingdeeStatus
-     * @param syncKingdeeId
-     * @param syncOperate
      * @return
      * @author yl
      * @date 2023-05-31 14:20
      */
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
+        String id = kingdeeDTO.getBusinessId();
+        String syncKingdeeStatus = kingdeeDTO.getSyncKingdeeStatus();
+        String syncKingdeeId = kingdeeDTO.getSyncKingdeeId();
         try {
             if (StringUtils.isEmpty(id)) {
                 return Boolean.TRUE;
@@ -1915,14 +1914,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     soDetailService.updateBatchById(updateList);
                 }
             }
-
-            return this.lambdaUpdate()
-                    .eq(SoInfoEntity::getId, id)
-                    .set(StringUtils.isNotBlank(syncKingdeeStatus), SoInfoEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                    .set(StringUtils.isNotBlank(syncKingdeeStatus), SoInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
-                    .set(StringUtils.isNotBlank(syncKingdeeId), SoInfoEntity::getSyncKingdeeId, syncKingdeeId)
-                    .set(StringUtils.isNotBlank(syncOperate), SoInfoEntity::getSyncOperate, syncOperate)
-                    .update();
+            this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
+            return Boolean.TRUE;
         } catch (Exception e) {
             log.error("同步状态出错>>>>{}", e);
         }

@@ -3,6 +3,7 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -45,4 +46,11 @@ public interface SoChangeMapper extends BaseMapper<SoChangeEntity> {
     List<SoChangeDTO.PagingViewDTO> listExport(@Param("params") SoChangeDTO.PagingParamDTO dto,@Param("approveList") List<String> approveList);
 
     List<SoChangeDTO.SoRefDTO> listSoRefSoChangeBySoId(@Param("soId") String soId);
+    /**
+     * @description: 更新金蝶推送状态
+     * @author Will
+     * @date: 2023/9/26 18:34
+     * @param kingdeeDTO
+     */
+    void updateSyncKingdeeStatus(@Param("params") PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 }

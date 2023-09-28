@@ -565,6 +565,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         if (count != entityList.size()) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
+
         //删除详情表
         soReturnDetailService.delete(ids);
         boolean flag = this.removeByIds(ids);
@@ -751,16 +752,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 count();
     }
 
-    @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId,String operate) {
-        return  this.lambdaUpdate()
-                .eq(SoReturnEntity::getId,id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),SoReturnEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),SoReturnEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId),SoReturnEntity::getSyncKingdeeId,syncKingdeeId)
-                .set(StringUtils.isNotBlank(operate),SoReturnEntity::getSyncOperate,operate)
-                .update();
-    }
 
     @Transactional(rollbackFor = Exception.class)
     @Override

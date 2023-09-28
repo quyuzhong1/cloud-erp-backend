@@ -1,9 +1,6 @@
 package com.erp.server.scm.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
@@ -223,12 +220,9 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 更新金蝶发送状态
      * @author Will
      * @date: 2023/4/21 10:04
-     * @param ids
-     * @param code
-     * @param syncKingdeeId
      * @return Boolean
      */
-    Boolean updateSyncKingdeeStatus(List<String> ids, String code, String syncKingdeeId,String syncOperate);
+    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 
     /**
      * 根据采购订单id 集合获取对应数量

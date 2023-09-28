@@ -2,6 +2,7 @@ package com.erp.server.sys.mapper;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentTreeDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
@@ -32,4 +33,12 @@ public interface SysDepartmentMapper extends BaseMapper<SysDepartmentEntity> {
      * @return List<SysUserDeptDTO>
      */
     List<SysUserDeptDTO> getByDeptNames(@Param("deptNames") List<String> deptNames);
+
+    /**
+     * @description: 更新金蝶推送状态
+     * @author Will
+     * @date: 2023/9/26 18:34
+     * @param kingdeeDTO
+     */
+    void updateSyncKingdeeStatus(@Param("params")PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 }

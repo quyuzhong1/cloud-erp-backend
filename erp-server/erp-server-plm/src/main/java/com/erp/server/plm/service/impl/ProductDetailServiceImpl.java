@@ -1574,6 +1574,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (detailEntity.getOccupyStatus()) {
             throw new ServiceException(ApiError.ERROR_95242);
         }
+
+        //更新金蝶
+        syncKingdeeProductDetailService.syncDataToKingdee(detailEntity,SyncKingdeeOperateEnum.OPERATE_DELETE.getCode());
+
         List<String> idList = Arrays.asList(skuId);
         //1.删除证书信息
         productCertificateService.removeCertificate(idList);
@@ -1649,6 +1653,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (list.size() != sign) {
             throw new ServiceException(ApiError.ERROR_95242);
         }
+        list.forEach(req -> {
+            //更新金蝶
+            syncKingdeeProductDetailService.syncDataToKingdee(req,SyncKingdeeOperateEnum.OPERATE_DELETE.getCode());
+        });
         List<String> skuIds = list.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         //1.删除证书信息
         productCertificateService.removeCertificate(skuIds);
@@ -1665,7 +1673,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //7.删除目的国海关编码
         productCustomsService.removeBySkuId(skuIds);
         List<ProductDetailEntity> entityList = lambdaQuery().in(ProductDetailEntity::getId, skuIds).list();
-        entityList.forEach(req -> req.setIsDeleted(Boolean.TRUE));
         //同步到SCM
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), entityList, IdUtil.simpleUUID());
         //同步到WMS
@@ -3636,6 +3643,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (entityListt.size() != sign) {
             throw new ServiceException(ApiError.ERROR_95242);
         }
+        entityListt.forEach(req -> {
+            //更新金蝶
+            syncKingdeeProductDetailService.syncDataToKingdee(req,SyncKingdeeOperateEnum.OPERATE_DELETE.getCode());
+        });
         //1.删除证书信息
         productCertificateService.removeCertificate(ids);
         //2.删除包装信息
@@ -3677,7 +3688,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
         List<ProductDetailEntity> detailEntityList = this.listByIds(ids);
-        detailEntityList.forEach(req -> req.setIsDeleted(Boolean.TRUE));
         //同步到SCM
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), detailEntityList, IdUtil.simpleUUID());
         //同步到WMS

@@ -10,10 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
@@ -407,6 +404,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
 
         log.info("直接调拨单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
+
+        //发送金蝶
+        list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
+
         //删除明细数据
         transferInfoDetailService.removeByMainIds(ids);
         //删除操作日志
@@ -477,8 +478,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 //发送金蝶
                 list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             } else {
-                //更新金蝶状态
-                updateSyncKingdeeStatus(ids, SyncStatusEnum.SUCCESS_SYNC.getCode(),"", SyncOperateEnum.OPERATE_APPROVE.getCode());
+                ids.stream().forEach(obj -> {
+                    //更新金蝶状态
+                    PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(obj,SyncOperateEnum.OPERATE_APPROVE.getCode(),"",SyncStatusEnum.SUCCESS_SYNC.getCode());
+                    updateSyncKingdeeStatus(syncKingdeeDTO);
+                });
             }
             //发送马帮（非马帮平台的才需要推送）
             // TODO 正式上线时需注释掉
@@ -603,15 +607,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String operate) {
-        return  this.lambdaUpdate()
-                .in(TransferInfoEntity::getId,ids)
-                .ne(TransferInfoEntity::getThirdPartySystem,ThirdPartySystemEnum.ENUM_MB.getCode())
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),TransferInfoEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),TransferInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId),TransferInfoEntity::getSyncKingdeeId,syncKingdeeId)
-                .set(StringUtils.isNotBlank(operate),TransferInfoEntity::getSyncOperate,operate)
-                .update();
+    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
+        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
+        return Boolean.TRUE;
     }
 
     @Override
