@@ -808,7 +808,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 addList.addAll(pickingDetailList);
                 //添加冻结库存
                 InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-                inventoryInOutStockDTO.setMembers(inOutStockList);
+                inventoryInOutStockDTO.setParamList(inOutStockList);
                 inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_DELIVERY_NOTICE.getCode());
                 //更新库存
                 inventoryTransCoreService.approveByType(inventoryInOutStockDTO);

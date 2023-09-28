@@ -17,10 +17,10 @@ import java.util.List;
 @Data
 public class InventoryInOutStockRuleDTO implements Serializable {
 
-    @NotNull(message = "sku信息不能为空")
-    @Size(min = 1, message = "请至少传输一个sku信息")
+    @NotNull(message = "【出入库】业务参数不能为空")
+    @Size(min = 1, message = "请至少传输一行【出入库】业务参数")
     @Valid
-    private List<InOutStockDTO> members;
+    private List<InOutStockDTO> paramList;
 
     @NotNull(message = "业务类型不能为空")
     @StateEnumValue(clazz = InventoryBusinessTypeEnum.class,message = "业务类型有误")

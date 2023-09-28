@@ -10,15 +10,19 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
 import com.common.message.constant.RedisKeyConstant;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.*;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.config.InventoryHelper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.InventoryUtils;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Lists;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -42,34 +46,36 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public abstract class AbstractInventoryServiceImpl {
-
-    @Autowired
-    private InventoryService inventoryService;
-
     @Autowired
     private RedissonClient redisson;
-
-    @Autowired
-    private InventoryDetailService inventoryDetailService;
-
-    @Autowired
-    private TransactionFlowService transactionFlowService;
-
-    @Autowired
-    private InventoryHisService inventoryHisService;
-
-    @Autowired
-    public InventoryHelper inventoryHelper;
-
+    @Resource
+    private RedisUtil  redisUtil;
     @Autowired
     private WarehouseService warehouseService;
     @Resource
-    private RedisUtil  redisUtil;
-    @Resource
     private WarehouseLocationService warehouseLocationService;
+    @Autowired
+    private CfgTransactionRulesService cfgTransactionRulesService;
+    @Autowired
+    private InventoryService inventoryService;
+    @Autowired
+    private InventoryDetailService inventoryDetailService;
+    @Autowired
+    private TransactionFlowService transactionFlowService;
+    @Autowired
+    private InventoryHisService inventoryHisService;
+    @Autowired
+    public InventoryHelper inventoryHelper;
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
 
     @Value("${inventory.closed.time:2023-09-01}")
     private String closedTime;
+
+    /**
+     * 允许录入负数的库存业务单据（临时打开）
+     */
+    protected static List<InventorySourceTypeEnum> allowNegativeQtyBusinessList = Lists.newArrayList(InventorySourceTypeEnum.INIT_STOCK);
 
     /**
      *
@@ -85,7 +91,7 @@ public abstract class AbstractInventoryServiceImpl {
         // 1.验证参数
         List<TransactionRuleDTO> transactionRuleParams;
         if(Objects.equals(byType,Boolean.TRUE)) {
-            transactionRuleParams = inventoryHelper.wrapTransactionRule(businessType);
+            transactionRuleParams = this.wrapTransactionRule(businessType);
         } else {
             transactionRuleParams = ruleList;
         }
@@ -109,25 +115,25 @@ public abstract class AbstractInventoryServiceImpl {
 
     /**
      * 循环处理业务（子类实现）
-     * @param paramLis
-     * @param businessType
-     * @param transactionRuleParams
+     * @param paramList                 业务参数列表
+     * @param businessType              业务类型
+     * @param transactionRuleParams     交易规则
      */
-    public abstract <T extends InventoryStockBaseDTO> void stockHandler(List<T> paramLis, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo);
+    public abstract <T extends InventoryStockBaseDTO> void stockHandler(List<T> paramList, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo);
 
     /**
      * 单个sku处理（子类实现）
-     * @param baseParam
-     * @param businessType
-     * @param transactionRuleParams
-     * @param transactionNo
+     * @param baseParam                 业务参数列表
+     * @param businessType              业务类型
+     * @param transactionRuleParams     交易规则
+     * @param transactionNo             交易编号
      */
     public abstract <T extends InventoryStockBaseDTO> void singleHandler(T baseParam,  InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams,
                                                                          String transactionNo);
 
     /**
      * 反审核
-     * @param dto
+     * @param dto       业务参数
      */
     @Transactional(rollbackFor = Exception.class)
     @SneakyThrows
@@ -285,7 +291,7 @@ public abstract class AbstractInventoryServiceImpl {
             throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
         }
         // 仓库是否允许负库存
-        if(!inventoryHelper.allowNegativeInventory(transactionFlow.getWarehouseId())) {
+        if(!this.allowNegativeInventory(transactionFlow.getWarehouseId())) {
             if(inventoryDetail.getQty()+transactionFlow.getQty()<0){
                 String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(inventoryDetail)?"无":inventoryDetail.getQty()),transactionFlow.getQty());
                 log.error(errMsg);
@@ -313,7 +319,7 @@ public abstract class AbstractInventoryServiceImpl {
             throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
         }
         // 仓库是否允许负库存
-        if(!inventoryHelper.allowNegativeInventory(transactionFlow.getWarehouseId())) {
+        if(!this.allowNegativeInventory(transactionFlow.getWarehouseId())) {
             if(inventory.getQty()+transactionFlow.getQty()<0){
                 String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, transactionFlow.getSkuNo(), transactionFlow.getWarehouseName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),transactionFlow.getQty());
                 log.error(errMsg);
@@ -416,7 +422,7 @@ public abstract class AbstractInventoryServiceImpl {
                 throw new ServiceException(ApiError.ERROR_99035.code, errMsg);
             }
             // 仓库负库存是否允许
-            if(!inventoryHelper.allowNegativeInventory(param.getWarehouseId())) {
+            if(!this.allowNegativeInventory(param.getWarehouseId())) {
                 if(inventory.getQty()<waitOutQty) {
                     String errMsg=StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),param.getQty());
                     log.error(errMsg);
@@ -427,7 +433,7 @@ public abstract class AbstractInventoryServiceImpl {
             // 查询库存明细，按入库批次日期降序排序
             List<InventoryDetailEntity> inventoryDetails = inventoryDetailService.findListQtyGreatZero(inventory.getId());
             // 允许负库存
-            if(inventoryHelper.allowNegativeInventory(param.getWarehouseId()) && CollUtil.isEmpty(inventoryDetails)) {
+            if(this.allowNegativeInventory(param.getWarehouseId()) && CollUtil.isEmpty(inventoryDetails)) {
                 // 判断是否含有小于等于0库存
                 inventoryDetails = inventoryDetailService.findListQtyLeZero(inventory.getId());
                 if(CollUtil.isEmpty(inventoryDetails)) {
@@ -454,7 +460,7 @@ public abstract class AbstractInventoryServiceImpl {
                 Integer tradeQty=Math.min(waitOutQty,detailEntity.getQty());
 
                 // 仓库负库存是否允许
-                if(inventoryHelper.allowNegativeInventory(param.getWarehouseId())) {
+                if(this.allowNegativeInventory(param.getWarehouseId())) {
                     if (i == inventoryDetails.size() -1 && tradeQty < waitOutQty ){
                         log.warn("仓库【{}】SKU【{}】允许负库存，即时库存id【{}】，剩余待出库数量【{}】，交易数量【{}】不足出库，从最后一条库存明细出库",warehouseInfo.getName(), param.getSkuNo(), inventory.getId(), waitOutQty, tradeQty);
                         tradeQty = waitOutQty;
@@ -472,7 +478,7 @@ public abstract class AbstractInventoryServiceImpl {
                 // 此处再次验证，防止变成负库存
                 InventoryDetailEntity curInventoryDetail = inventoryDetailService.getById(detailEntity.getId());
                 // 仓库允许负库存判断
-                if(!inventoryHelper.allowNegativeInventory(param.getWarehouseId())) {
+                if(!this.allowNegativeInventory(param.getWarehouseId())) {
                     if (curInventoryDetail.getQty() < 0) {
                         log.warn("库存明细id：{}出库后的库存数量变为:{}，不允许出库", detailEntity.getId(), curInventoryDetail.getQty());
                         throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName, (Objects.isNull(detailEntity) ? "无" : detailEntity.getQty()), tradeQty));
@@ -488,7 +494,7 @@ public abstract class AbstractInventoryServiceImpl {
             // 仓库允许负库存判断
             if(waitOutQty > 0) {
                 // 仓库允许负库存判断
-                if(!inventoryHelper.allowNegativeInventory(param.getWarehouseId())) {
+                if(!this.allowNegativeInventory(param.getWarehouseId())) {
                     throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(inventory)?"无":inventory.getQty()),param.getQty()));
                 }
             }
@@ -501,7 +507,7 @@ public abstract class AbstractInventoryServiceImpl {
             // 此处再次验证，防止变成负库存
             InventoryEntity curInventory = inventoryService.getById(inventory.getId());
             // 仓库允许负库存判断
-            if(!inventoryHelper.allowNegativeInventory(param.getWarehouseId())) {
+            if(!this.allowNegativeInventory(param.getWarehouseId())) {
                 if(curInventory.getQty() < 0) {
                     log.warn("库存id:{}出库后的库存数量变为:{}，不允许出库", inventory.getId(), curInventory.getQty());
                     throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, param.getSkuNo(), warehouseInfo.getName(), warehouseLocationEntity.getName(), inventoryStatusName,(Objects.isNull(curInventory)?"无":curInventory.getQty()),param.getQty()));
@@ -526,4 +532,134 @@ public abstract class AbstractInventoryServiceImpl {
             }
         }
     }
+
+    /**
+     * 获取忽略库存计算的sku
+     * @return
+     */
+    protected List<String> getIgnoreSkuIds() {
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        }
+        return ignoreInventorySkuIds;
+    }
+
+    /**
+     * 出库检查库存是否足够（走交易规则，不能手工传输库存状态）
+     */
+    protected void checkStockByRule(InventoryBaseInfoDTO param, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules) {
+        InventorySourceTypeEnum sourceTypeEnum = param.getSourceType();
+        String sourceId = param.getSourceId();
+        LocalDate billDate = param.getBillDate();
+        List<TransactionRuleDTO> outTransactionRules;
+        log.info("库存状态从配置中取，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】，SKU编号：【{}】", businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
+        if(CollUtil.isEmpty(transactionRules)) {
+            throw new ServiceException(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
+        }
+        if(Objects.nonNull(param.getWarehouseOption())) { // 调拨类业务，包含当前仓和目的仓
+            outTransactionRules = transactionRules.stream().filter(r->Objects.equals(r.getTransactionMode(), InventoryModeEnum.OUT_STOCK)
+                    && Objects.equals(r.getWarehouseOption(), param.getWarehouseOption().getCode())).collect(Collectors.toList());
+        } else {
+            // 直接过滤得到出库类型的数据
+            outTransactionRules = transactionRules.stream().filter(r->Objects.equals(r.getTransactionMode(), InventoryModeEnum.OUT_STOCK)).collect(Collectors.toList());
+        }
+        if(CollUtil.isNotEmpty(outTransactionRules)) {
+            for (TransactionRuleDTO rule : outTransactionRules) {
+                InventoryStatusEnum ruleInventoryStatusEnum = rule.getInventoryStatus();
+                ValidatorUtil.isTrue(Objects.nonNull(ruleInventoryStatusEnum),()->new ServiceException(ApiError.ERROR_99036));
+                this.checkStockQtyByWareLocalSkuStatus(businessType, param, ruleInventoryStatusEnum);
+            }
+        }
+    }
+
+    /**
+     * 检查库存是否足够
+     * @param businessType
+     * @param param
+     * @param status
+     */
+    protected void checkStockQtyByWareLocalSkuStatus(InventoryBusinessTypeEnum businessType, InventoryBaseInfoDTO param, InventoryStatusEnum status) {
+        // 仓库
+        String warehouseId = param.getWarehouseId();
+        // SKU
+        String skuId = param.getSkuId();
+        String skuNo = param.getSkuNo();
+        // 库位
+        String warehouseLocation = StrUtils.null2EmptyWithTrim(param.getWarehouseLocation());
+        // 操作数量
+        Integer qty = param.getQty();
+        // 来源
+        InventorySourceTypeEnum sourceTypeEnum = param.getSourceType();
+        // 仓库信息
+        WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
+        if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        // 仓库组织
+        String orgId = warehouseDetail.getOrgId();
+
+        InventoryEntity inventory = inventoryService.findInventoryLock(orgId, warehouseId,skuId,warehouseLocation,status.getCode());
+
+        String inventoryStatusName = Optional.ofNullable(status).map(InventoryStatusEnum::getName).orElse("");
+
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(warehouseId));
+
+        WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(warehouseLocation)).findFirst().orElse(new WarehouseLocationEntity());
+
+        if(Objects.isNull(inventory)) {
+            log.warn("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 出库时未找到库存数据", warehouseId, orgId, warehouseLocation,skuId, skuNo);
+            throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg,skuNo, warehouseDetail.getName(), warehouseLocationEntity.getName(), inventoryStatusName,"无",qty));
+        }
+        log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，操作数量：【{}】，库存状态对应的总数量：【{}】", warehouseId, orgId, warehouseLocation,skuId, skuNo, sourceTypeEnum.getName(),
+                businessType.getName(), status.getName(), qty, inventory.getQty());
+
+        if(!allowNegativeInventory(warehouseId)) {
+            if(inventory.getQty() < qty) {
+                throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, skuNo, warehouseDetail.getName(), warehouseLocationEntity.getName(), inventoryStatusName,inventory.getQty(),qty));
+            }
+        }
+    }
+
+    /**
+     * 查询配置的交易规则
+     * @param businessType
+     * @return
+     */
+    protected List<TransactionRuleDTO> wrapTransactionRule(InventoryBusinessTypeEnum businessType) {
+        // 查询配置的交易规则
+        List<CfgTransactionRulesEntity> transactionRulesEntities = cfgTransactionRulesService.findByDictBizType(businessType.getCode());
+        if(CollUtil.isNotEmpty(transactionRulesEntities)) {
+            List<TransactionRuleDTO> transactionRuleDTOS = Lists.newArrayListWithExpectedSize(transactionRulesEntities.size());
+            transactionRulesEntities.stream().forEach(r->{
+                TransactionRuleDTO transactionRuleDTO = new TransactionRuleDTO();
+                transactionRuleDTO.setId(r.getId());
+                transactionRuleDTO.setDictBizType(InventoryBusinessTypeEnum.getByCode(r.getDictBizType()));
+                transactionRuleDTO.setWarehouseOption(InventoryWarehouseOptionEnum.getByCode(r.getWarehouseOption()));
+                transactionRuleDTO.setInventoryStatus(InventoryStatusEnum.getByCode(r.getInventoryStatus()));
+                transactionRuleDTO.setTransactionMode(InventoryModeEnum.getByCode(r.getTransactionMode()));
+                transactionRuleDTOS.add(transactionRuleDTO);
+            });
+            return transactionRuleDTOS;
+        }
+        return null;
+    }
+
+    /**
+     * 仓库是否允许负库存
+     * @param warehouseId
+     * @return true表示允许,false表示不允许
+     */
+    protected boolean allowNegativeInventory(String warehouseId) {
+        // 仓库信息
+        WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
+        if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        Boolean warehouseAllowNegativeInventory = warehouseDetail.getAllowNegativeInventory();
+        log.warn("仓库【{}】【{}】负库存", warehouseDetail.getName(), Objects.equals(warehouseAllowNegativeInventory, Boolean.TRUE) ? "允许": "不允许");
+        return Objects.equals(warehouseAllowNegativeInventory, Boolean.TRUE);
+    }
+
 }

@@ -5,6 +5,7 @@ import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.mabang.item.OrderItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -586,5 +587,23 @@ public class OrderEntity extends CleanBaseDTO {
                 ", orderItem=" + orderItem +
                 ", extendAttr='" + extendAttr + '\'' +
                 '}';
+    }
+
+    /**
+     * 从收获地址设置国家信息
+     */
+    public void setCountryInfo(JSONObject jsonObject) {
+        JSONObject receiverAddressInfoObj = jsonObject.getJSONObject("receiver_address_info");
+        if (null == receiverAddressInfoObj){
+            return;
+        }
+        String receiverCountryNameCN = receiverAddressInfoObj.getString("countryNameCN");
+        String receiverCountryNameEN = receiverAddressInfoObj.getString("countryNameEN");
+        if (StringUtils.isNotBlank(receiverCountryNameCN)){
+            this.setCountryNameCN(receiverCountryNameCN);
+        }
+        if (StringUtils.isNotBlank(receiverCountryNameEN)){
+            this.setCountryNameEN(receiverCountryNameEN);
+        }
     }
 }

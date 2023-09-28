@@ -69,9 +69,6 @@ import java.util.stream.Collectors;
 public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<StocktakingProfitLossMapper, StocktakingProfitLossEntity> implements StocktakingProfitLossService {
 
     @Resource
-    private StocktakingTaskDetailService stocktakingTaskDetailService;
-
-    @Resource
     private StocktakingTaskUserService stocktakingTaskUserService;
 
     @Resource
@@ -482,7 +479,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                     member.setInventoryStatus(inventoryStatus);
                 }
                 if (CollectionUtils.isNotEmpty(members)) {
-                    inventoryInOutStockDTO.setMembers(members);
+                    inventoryInOutStockDTO.setParamList(members);
                     //扣减库存
                     inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
                 }

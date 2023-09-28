@@ -678,7 +678,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         }
         //组装父SKU增加库存，拆卸父SKU减少库存
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        inventoryInOutStockDTO.setMembers(inOutStockList);
+        inventoryInOutStockDTO.setParamList(inOutStockList);
         if (WorkTypeEnum.ASSEMBLE.getCode().equals(entity.getWorkType())) {
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_PARENT.getCode());
         } else {
@@ -722,7 +722,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         }
         //组装父SKU增加库存，拆卸父SKU减少库存
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        inventoryInOutStockDTO.setMembers(inOutStockList);
+        inventoryInOutStockDTO.setParamList(inOutStockList);
         if (WorkTypeEnum.ASSEMBLE.getCode().equals(entity.getWorkType())) {
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_CHILDD.getCode());
         } else {

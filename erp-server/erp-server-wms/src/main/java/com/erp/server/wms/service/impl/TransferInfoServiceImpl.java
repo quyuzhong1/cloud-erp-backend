@@ -738,7 +738,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //手动新增数据更新库存
         if (CollectionUtils.isNotEmpty(addTransferList)) {
             InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
-            inventoryTransferDTO.setMembers(addTransferList);
+            inventoryTransferDTO.setParamList(addTransferList);
             inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DIRECT_ALLOCATE.getCode());
             //更新库存
             inventoryTransCoreService.approveByType(inventoryTransferDTO);
@@ -746,7 +746,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //下推数据更新库存
         if (CollectionUtils.isNotEmpty(pushTransferList)) {
             InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
-            inventoryTransferDTO.setMembers(pushTransferList);
+            inventoryTransferDTO.setParamList(pushTransferList);
             inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DIRECT_ALLOCATE_APPLY.getCode());
             //更新库存
             inventoryTransCoreService.approveByType(inventoryTransferDTO);

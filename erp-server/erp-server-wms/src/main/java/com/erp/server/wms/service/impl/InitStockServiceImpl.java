@@ -490,7 +490,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 stockMembers.add(inOutStockDTO);
             });
         });
-        inventoryInOutStockDTO.setMembers(stockMembers);
+        inventoryInOutStockDTO.setParamList(stockMembers);
         inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
     }
 
