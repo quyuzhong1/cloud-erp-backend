@@ -18,7 +18,6 @@ import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.wms.config.InventoryHelper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.InventoryUtils;
 import com.google.common.base.Stopwatch;
@@ -45,7 +44,7 @@ import java.util.stream.Collectors;
  * @Author: zhangchunlin
  */
 @Slf4j
-public abstract class AbstractInventoryServiceImpl {
+public abstract class AbstractInventoryServiceImpl implements InventoryStockService {
     @Autowired
     private RedissonClient redisson;
     @Resource
@@ -65,8 +64,6 @@ public abstract class AbstractInventoryServiceImpl {
     @Autowired
     private InventoryHisService inventoryHisService;
     @Autowired
-    public InventoryHelper inventoryHelper;
-    @Autowired
     private PlmTaskFeign plmTaskFeign;
 
     @Value("${inventory.closed.time:2023-09-01}")
@@ -75,7 +72,7 @@ public abstract class AbstractInventoryServiceImpl {
     /**
      * 允许录入负数的库存业务单据（临时打开）
      */
-    protected static List<InventorySourceTypeEnum> allowNegativeQtyBusinessList = Lists.newArrayList(InventorySourceTypeEnum.INIT_STOCK);
+    protected final List<InventorySourceTypeEnum> allowNegativeQtyBusinessList = Lists.newArrayList(InventorySourceTypeEnum.INIT_STOCK);
 
     /**
      *
@@ -111,7 +108,7 @@ public abstract class AbstractInventoryServiceImpl {
      * @param transactionRules
      * @param <T>
      */
-    public abstract <T extends InventoryStockBaseDTO> void checkParam(List<T> paramList, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules);
+    abstract <T extends InventoryStockBaseDTO> void checkParam(List<T> paramList, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules);
 
     /**
      * 循环处理业务（子类实现）
@@ -119,7 +116,7 @@ public abstract class AbstractInventoryServiceImpl {
      * @param businessType              业务类型
      * @param transactionRuleParams     交易规则
      */
-    public abstract <T extends InventoryStockBaseDTO> void stockHandler(List<T> paramList, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo);
+    abstract <T extends InventoryStockBaseDTO> void stockHandler(List<T> paramList, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo);
 
     /**
      * 单个sku处理（子类实现）
@@ -128,7 +125,7 @@ public abstract class AbstractInventoryServiceImpl {
      * @param transactionRuleParams     交易规则
      * @param transactionNo             交易编号
      */
-    public abstract <T extends InventoryStockBaseDTO> void singleHandler(T baseParam,  InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams,
+    abstract <T extends InventoryStockBaseDTO> void singleHandler(T baseParam,  InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams,
                                                                          String transactionNo);
 
     /**
