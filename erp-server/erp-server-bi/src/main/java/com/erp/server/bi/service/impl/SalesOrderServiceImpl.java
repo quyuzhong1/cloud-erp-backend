@@ -2397,10 +2397,28 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             List<SalesFlagVO> salesFlagVOList = salesList.stream().filter(req -> req.getCategory() != null && req.getCategory().equals(category) ).collect(Collectors.toList());
             for (String date : dateList) {
                 SalesFlagVO salesFlagVO = salesFlagVOList.stream().filter(req -> req.getName().equals(date)).findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(salesFlagVO)) {
-                    list.add(salesFlagVO.getSales());
-                } else {
-                    list.add(BigDecimal.ZERO);
+                switch (DateSalesTrendSearchTypeEnum.getEnumByCode(dto.getSearchType())) {
+                    case SALES_AMOUNT:
+                        if (ObjectUtil.isNotEmpty(salesFlagVO)) {
+                            list.add(salesFlagVO.getSales());
+                        } else {
+                            list.add(BigDecimal.ZERO);
+                        }
+                        break;
+                    case SALES_QUANTITY:
+                        if (ObjectUtil.isNotEmpty(salesFlagVO)) {
+                            list.add(salesFlagVO.getSalesQuantity());
+                        } else {
+                            list.add(BigDecimal.ZERO);
+                        }
+                        break;
+                    case SALES_PRICE:
+                        if (ObjectUtil.isNotEmpty(salesFlagVO)) {
+                            list.add(salesFlagVO.getSalesPrice());
+                        } else {
+                            list.add(BigDecimal.ZERO);
+                        }
+                        break;
                 }
             }
             sales.setData(list);
