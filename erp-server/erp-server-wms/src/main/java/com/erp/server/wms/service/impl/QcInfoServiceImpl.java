@@ -204,7 +204,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         BeanMapper.copy(dto, bill);
         bill.setId(billId);
         //处理相关数据
-        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill);
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceCode(), dto.getSourceId());
 
         //采购订单明细
         String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
@@ -257,6 +257,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         String sourceDetailId = dto.getSourceDetailId();
         bill.setSourceDetailId(sourceDetailId);
+
         Boolean result = this.saveOrUpdate(bill);
         if (result) {
             //质检产品 暂存
@@ -554,7 +555,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         BeanMapper.copy(dto, bill);
 
         //处理相关数据
-        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill);
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceCode(), dto.getSourceId());
         if (StringUtils.isBlank(code)) {
             code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
             bill.setCode(code);
@@ -680,7 +681,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @param qcDeptId
      * @param entity
      */
-    private void HandleData(String qcUserId, String qcDeptId, QcInfoEntity entity) {
+    private void HandleData(String qcUserId, String qcDeptId, QcInfoEntity entity, String sourceCode, String sourceId) {
         //质检员
         if (StringUtils.isNotBlank(qcUserId)) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(qcUserId);
@@ -696,6 +697,17 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 throw new ServiceException(ApiError.ERROR_9029);
             }
             entity.setQcDeptName(depart.getName());
+        }
+
+        if (SourceTypeEnum.PO_RECEIVE.getCode().equals(sourceCode)) {
+            WarehouseReceiveEntity info = warehouseReceiveService.getById(sourceId);
+            entity.setSourceCode(info.getCode());
+        } else if (SourceTypeEnum.PURCHASE_ORDER.getCode().equals(sourceCode)) {
+            PurchaseOrderEntity info = scmTaskFeign.getPurchaseOrderById(sourceId);
+            entity.setSourceCode(info.getCode());
+        } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(sourceCode)) {
+            SoReturnReceiveEntity info = soReturnReceiveService.getById(sourceId);
+            entity.setSourceCode(info.getCode());
         }
     }
 
@@ -809,7 +821,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         BeanMapper.copy(dto, bill);
         bill.setId(billId);
         //处理相关数据
-        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill);
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceCode(), dto.getSourceId());
         String skuId = dto.getQcProduct().getSkuId();
         String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
         //当采购订单明细id 不为空的时候
@@ -901,7 +913,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         String code = bill.getCode();
         BeanMapper.copy(dto, bill);
         //处理相关数据
-        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill);
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceCode(), dto.getSourceId());
         bill.setId(id);
         bill.setQcFinishTime(LocalDateTime.now());
         QcBillStatusEnum exemption = QcBillStatusEnum.getByCode(QcBillStatusEnum.EXEMPTION.getCode());
