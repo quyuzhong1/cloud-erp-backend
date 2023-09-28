@@ -88,5 +88,30 @@ public class ServiceException extends RuntimeException {
         this.msg = msg;
     }
 
+    /**
+     * 抛出 ServiceException 异常
+     * @param msg   错误消息
+     */
+    public static void runError(String msg) {
+        throw new ServiceException(msg);
+    }
+
+    /**
+     * 抛出 ServiceException 异常
+     * @param code  错误代号
+     * @param msg   错误消息
+     */
+    public static void runError(Integer code,String msg) {
+        throw new ServiceException(code,msg);
+    }
+
+    /**
+     * 抛出 ServiceException 异常，按约定的ApiError指定类型
+     * @param apiError  错误类型
+     * @param params    错误信息 参数
+     */
+    public static void runError(ApiError apiError,Object... params) {
+        throw new ServiceException(apiError, params);
+    }
 
 }
