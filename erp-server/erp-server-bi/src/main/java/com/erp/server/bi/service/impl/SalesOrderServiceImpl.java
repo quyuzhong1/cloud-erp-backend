@@ -2385,7 +2385,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         for (String category : categoryList) {
             SeriesVO<Object> sales = new SeriesVO();
             List<Object> list = new ArrayList<>();
-            sales.setName(category);
+            if ("new_sign".equals(groupName) && "1".equals(category)) {
+                sales.setName("新品");
+            } else if ("new_sign".equals(groupName) && "0".equals(category)) {
+                sales.setName("老品");
+            } else {
+                sales.setName(category);
+            }
             sales.setType(ChartType.BAR);
 
             List<SalesFlagVO> salesFlagVOList = salesList.stream().filter(req -> req.getCategory().equals(category)).collect(Collectors.toList());
@@ -2570,7 +2576,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<Object> lastYearOrderSalesList = new ArrayList<>();
         for (String date : dateList) {
             String[] split = date.split("-");
-            String dateStr = (Integer.valueOf(split[0]) - 1)+ "-" + split[1];
+            String dateStr = "";
+            if (split.length > 1) {
+                dateStr = (Integer.valueOf(split[0]) - 1)+ "-" + split[1];
+            } else {
+                dateStr = date;
+            }
             if (lastYearMonthMap.get(dateStr) != null) {
                 lastYearOrderSalesList.add(lastYearMonthMap.get(dateStr));
             } else {
@@ -2586,7 +2597,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<Object> basisRatioList = new ArrayList<>();
         for (String date : dateList) {
             String[] split = date.split("-");
-            String dateStr = (Integer.valueOf(split[0]) - 1)+ "-" + split[1];
+            String dateStr = "";
+            if (split.length > 1) {
+                dateStr = (Integer.valueOf(split[0]) - 1)+ "-" + split[1];
+            } else {
+                dateStr = date;
+            }
             if (lastYearMonthMap.get(dateStr) != null && lastYearMonthMap.get(dateStr).compareTo(BigDecimal.ZERO) > 0) {
                 basisRatioList.add(monthMap.get(date)
                         .subtract(lastYearMonthMap.get(dateStr))
