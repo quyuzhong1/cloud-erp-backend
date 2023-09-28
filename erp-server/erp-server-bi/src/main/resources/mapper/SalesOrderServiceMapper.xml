@@ -3704,7 +3704,7 @@
         </if>
         to_char(o.${timeFlag},'yyyy-mm-dd') AS name,
         <choose>
-            <when test="groupName == 'charge_id'">
+            <when test="groupName == 'charge_name'">
                 o.${groupName} AS category,
             </when>
             <when test="groupName == 'sku_no'">
@@ -3803,7 +3803,7 @@
         </where>
         group by to_char(o.${timeFlag},'yyyy-mm-dd'),
         <choose>
-            <when test="groupName == 'charge_id'">
+            <when test="groupName == 'charge_name'">
                 o.${groupName}
             </when>
             <when test="groupName == 'sku_no'">
@@ -3828,7 +3828,7 @@
         </if>
         concat(date_trunc('week', o.platform_create_time::timestamp)::date, '~', (date_trunc('week', o.platform_create_time::timestamp)+ '6 days'::interval)::date) AS name,
         <choose>
-            <when test="groupName == 'charge_id'">
+            <when test="groupName == 'charge_name'">
                 o.${groupName} AS category,
             </when>
             <when test="groupName == 'sku_no'">
@@ -3932,7 +3932,7 @@
         group by
         concat(date_trunc('week', o.platform_create_time::timestamp)::date, '~', (date_trunc('week', o.platform_create_time::timestamp)+ '6 days'::interval)::date),
         <choose>
-            <when test="groupName == 'charge_id'">
+            <when test="groupName == 'charge_name'">
                 o.${groupName}
             </when>
             <when test="groupName == 'sku_no'">
@@ -3957,7 +3957,7 @@
         </if>
         to_char(o.${timeFlag},'yyyy-mm') AS name,
         <choose>
-            <when test="groupName == 'charge_id'">
+            <when test="groupName == 'charge_name'">
                 o.${groupName} AS category,
             </when>
             <when test="groupName == 'sku_no'">
@@ -4056,7 +4056,7 @@
         </where>
         group by to_char(o.${timeFlag},'yyyy-mm'),
         <choose>
-            <when test="groupName == 'charge_id'">
+            <when test="groupName == 'charge_name'">
                 o.${groupName}
             </when>
             <when test="groupName == 'sku_no'">
@@ -4081,7 +4081,7 @@
         </if>
         to_char(date_trunc('QUARTER',o.${timeFlag}),'yyyy-mm') AS name,
         <choose>
-            <when test="groupName == 'charge_id'">
+            <when test="groupName == 'charge_name'">
                 o.${groupName} AS category,
             </when>
             <when test="groupName == 'sku_no'">
@@ -4180,7 +4180,7 @@
         </where>
         group by to_char(date_trunc('QUARTER',o.${timeFlag}),'yyyy-mm'),
         <choose>
-            <when test="groupName == 'charge_id'">
+            <when test="groupName == 'charge_name'">
                 o.${groupName}
             </when>
             <when test="groupName == 'sku_no'">
@@ -4206,7 +4206,7 @@
         </if>
         to_char(o.${timeFlag},'yyyy') as name,
         <choose>
-            <when test="groupName == 'charge_id'">
+            <when test="groupName == 'charge_name'">
                 o.${groupName} AS category,
             </when>
             <when test="groupName == 'sku_no'">
@@ -4305,7 +4305,7 @@
         </where>
         group by to_char(o.${timeFlag},'yyyy'),
         <choose>
-            <when test="groupName == 'charge_id'">
+            <when test="groupName == 'charge_name'">
                 o.${groupName}
             </when>
             <when test="groupName == 'sku_no'">
