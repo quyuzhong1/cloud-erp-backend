@@ -465,7 +465,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             addDTO.setPurchaseUserId(value.get(0).getPurchaseUserId());
 
             //付款条件
-            String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(value.get(0).getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
+            String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(value.get(0).getSupplierId()) && StringUtils.isNotBlank(obj.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
 
 
             //采购订单供应商信息
@@ -754,7 +754,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             String supplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
             viewDTO.setSupplierId(supplierId);
             //付款条件
-            String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(supplierId)).map(SupplierEntity::getPaymentCondition).findFirst().orElse("");
+            String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(supplierId) && StringUtils.isNotBlank(obj.getPaymentCondition())).map(SupplierEntity::getPaymentCondition).findFirst().orElse("");
             viewDTO.setPaymentCondition(paymentCondition);
 
             //可下推数量
