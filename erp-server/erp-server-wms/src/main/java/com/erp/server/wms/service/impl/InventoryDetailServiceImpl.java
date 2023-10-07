@@ -4,17 +4,14 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.entity.InventoryDetailEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.mapper.InventoryDetailMapper;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.InventoryDetailService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,12 +31,9 @@ import java.util.stream.Collectors;
 @Service
 public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetailMapper, InventoryDetailEntity> implements InventoryDetailService {
 
-    @Autowired
-    private CommonService commonService;
-
     @Override
     public InventoryDetailEntity findOneDetail(String inventoryInfoId, LocalDate instockBatchDate, InventoryStatusEnum inventoryStatusEnum) {
-        LambdaQueryWrapper<InventoryDetailEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<InventoryDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(InventoryDetailEntity::getInfoId, inventoryInfoId);
         if (Objects.equals(inventoryStatusEnum, InventoryStatusEnum.IN_TRANSIT)) {
             queryWrapper.isNull(InventoryDetailEntity::getInstockBatchDate).last("limit 1");
@@ -63,7 +57,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean updateQtyById(String id, Integer qty) {
-        LoginUser loginUser = commonService.getUserInfo();
+//        LoginUser loginUser = commonService.getUserInfo();
         boolean flag = lambdaUpdate()
                 .setSql(StrUtil.format("{}={}+{}", "qty","qty", qty))
 //                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
@@ -71,6 +65,11 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
 //                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
                 .eq(InventoryDetailEntity::getId, id)
                 .update(new InventoryDetailEntity());
+
+        if(!flag) {
+            throw new ServiceException(ApiError.ERROR_1027);
+        }
+
         return flag;
         // return inventoryDetailMapper.updateQtyById(id, qty, version, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
     }

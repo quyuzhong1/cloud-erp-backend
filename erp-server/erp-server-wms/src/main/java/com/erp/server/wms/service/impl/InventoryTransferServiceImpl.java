@@ -12,11 +12,10 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.*;
-import com.erp.server.wms.service.InventoryStockService;
+import com.erp.server.wms.annotation.InventoryHandler;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.utils.InventoryUtils;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @Classname: InventoryTransferServiceImpl
@@ -34,7 +34,8 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl implements InventoryStockService {
+@InventoryHandler(InventoryBizTypeEnum.TRANSFER_STOCK)
+public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl {
 
     @Autowired
     private WarehouseService warehouseService;
@@ -57,10 +58,9 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                 if(0 == param.getQty()) {
                     throw new ServiceException("库存变更数量不能等于0");
                 }
-                if(!this.allowNegativeQtyBusinessList.contains(param.getSourceType())) {
-                    if(param.getQty() < 0) {
-                        throw new ServiceException("库存变更数量不能小于0");
-                    }
+
+                if(!this.allowNegativeQtyBusinessList.contains(param.getSourceType()) && param.getQty() < 0) {
+                    throw new ServiceException("库存变更数量不能小于0");
                 }
 
                 if(ignoreInventorySkuIds.contains(param.getSkuId())) {
@@ -132,9 +132,6 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
 
     @Override
     public <T extends InventoryStockBaseDTO> void stockHandler(List<T> paramList, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo) {
-        List<String> skuIds = Lists.newArrayList();
-        paramList.stream().forEach(param->skuIds.add(((TransferDTO)param).getSkuId()));
-
         // 获取忽略库存计算的sku
         List<String> ignoreInventorySkuIds = this.getIgnoreSkuIds();
         // 通过对sku id 仓库id 仓位 顺序执行, 避免多线程死锁
@@ -157,8 +154,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
             }
             // 目的仓出入库业务处理
             InOutStockTransformDTO targetWareInOrOutStock = InventoryUtils.wrapInOutStockByTransfer(param, InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryOperationModeEnum.APPROVE);
-            Arrays.asList(curWareInOrOutStock, targetWareInOrOutStock)
-                    .stream()
+            Stream.of(curWareInOrOutStock, targetWareInOrOutStock)
                     .sorted(Comparator.comparing(InOutStockTransformDTO::getWarehouseId)
                             .thenComparing(x -> ObjectUtil.isNotEmpty(x.getWarehouseLocation()) ? x.getWarehouseLocation() : "")
                             .thenComparing(x -> ObjectUtil.isNotEmpty(x.getInventoryStatus()) ? x.getInventoryStatus().getCode(): "")
@@ -213,12 +209,4 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
         }
     }
 
-    /**
-     * 调拨类
-     * @return
-     */
-    @Override
-    public InventoryBizTypeEnum handlerType() {
-        return InventoryBizTypeEnum.TRANSFER_STOCK;
-    }
 }

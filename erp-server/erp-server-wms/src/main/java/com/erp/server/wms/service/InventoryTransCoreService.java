@@ -37,14 +37,6 @@ public interface InventoryTransCoreService {
     void approveByRule(InventoryTransferRuleDTO dto);
 
     /**
-     * 自定义业务类型-来源于InventoryBizTypeEnum枚举，自定义规则，操作引起当前仓和目的仓两个仓库的库存变化
-     * @param dto 业务参数与规则参数
-     * @param bizTypeEnum 业务类型
-     */
-    void approveByRule(InventoryTransferRuleDTO dto, InventoryBizTypeEnum bizTypeEnum);
-
-
-    /**
      * 单据 反审核
      * @param dto 业务参数
      */
