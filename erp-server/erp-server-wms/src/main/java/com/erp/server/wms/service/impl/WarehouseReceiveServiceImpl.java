@@ -62,8 +62,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -1215,7 +1213,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             inOutStockDTO.setWarehouseLocation("");
             members.add(inOutStockDTO);
         }
-        inventoryInOutStockDTO.setMembers(members);
+        inventoryInOutStockDTO.setParamList(members);
         inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
     }
 
