@@ -315,7 +315,7 @@
         <!--分类-->
         <if test="params.category!=null and params.category.size>0">
             AND pi.category_id  IN
-            <foreach collection="category" item="categoryId" open="(" separator="," close=")">
+            <foreach collection="params.category" item="categoryId" open="(" separator="," close=")">
                 #{categoryId}
             </foreach>
         </if>
