@@ -1,7 +1,6 @@
 package com.erp.server.oms.service;
-import com.erp.model.oms.entity.CfConditionEntity;
+import com.erp.model.oms.entity.CfgConditionEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.CfConditionDTO;
 
 import java.util.List;
@@ -14,7 +13,7 @@ import java.util.List;
  * @author Lambda
  * @since 2023-08-30
  */
-public interface CfConditionService extends SuperService<CfConditionEntity> {
+public interface CfgConditionService extends SuperService<CfgConditionEntity> {
 
     /**
     * 新增

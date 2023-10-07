@@ -3,10 +3,10 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
-import com.erp.model.oms.entity.CfConditionEntity;
+import com.erp.model.oms.entity.CfgConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.server.oms.mapper.CfConditionMapper;
-import com.erp.server.oms.service.CfConditionService;
+import com.erp.server.oms.mapper.CfgConditionMapper;
+import com.erp.server.oms.service.CfgConditionService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.oms.service.DictRuleConditionService;
 import com.erp.server.oms.service.OperateLogService;
@@ -34,7 +34,7 @@ import com.common.core.enums.ApiError;
  */
 @Slf4j
 @Service
-public class CfConditionServiceImpl extends SuperServiceImpl<CfConditionMapper, CfConditionEntity> implements CfConditionService {
+public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper, CfgConditionEntity> implements CfgConditionService {
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
@@ -47,7 +47,7 @@ public class CfConditionServiceImpl extends SuperServiceImpl<CfConditionMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(CfConditionDTO.AddDTO addDTO) {
-        CfConditionEntity cfConditionEntity = new CfConditionEntity();
+        CfgConditionEntity cfConditionEntity = new CfgConditionEntity();
         BeanMapperUtils.copy(addDTO, cfConditionEntity);
 
         // 数据处理
@@ -73,9 +73,9 @@ public class CfConditionServiceImpl extends SuperServiceImpl<CfConditionMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(CfConditionDTO.UpdateDTO updateDTO) {
-        CfConditionEntity old = super.getById(updateDTO.getId());
+        CfgConditionEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "条件配置单"));
-        CfConditionEntity cfConditionEntity = BeanMapperUtils.map(CfConditionEntity.class, updateDTO);
+        CfgConditionEntity cfConditionEntity = BeanMapperUtils.map(CfgConditionEntity.class, updateDTO);
 
         // 数据处理
         handleData(cfConditionEntity);
@@ -118,7 +118,7 @@ public class CfConditionServiceImpl extends SuperServiceImpl<CfConditionMapper, 
     /**
      * 新增修改处理数据
      */
-    private void handleData(CfConditionEntity cfConditionEntity) {
+    private void handleData(CfgConditionEntity cfConditionEntity) {
         // TODO 验证数据 & 数据赋值
     }
 }

@@ -1,6 +1,6 @@
 package com.erp.server.oms.mapper;
 import com.erp.model.oms.dto.CfConditionDTO;
-import com.erp.model.oms.entity.CfConditionEntity;
+import com.erp.model.oms.entity.CfgConditionEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -18,7 +18,7 @@ import java.util.List;
  * @since 2023-08-30
  */
 @Mapper
-public interface CfConditionMapper extends BaseMapper<CfConditionEntity> {
+public interface CfgConditionMapper extends BaseMapper<CfgConditionEntity> {
 
     /**
      * 获取到对应逻辑关系

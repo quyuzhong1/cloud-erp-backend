@@ -7,7 +7,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -21,8 +20,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("cf_condition")
-public class CfConditionEntity extends BaseEntity<CfConditionEntity> {
+@TableName("cfg_condition")
+public class CfgConditionEntity extends BaseEntity<CfgConditionEntity> {
 
     /**
     * 条件字段 对应dict_rule_condition key
@@ -51,6 +50,32 @@ public class CfConditionEntity extends BaseEntity<CfConditionEntity> {
     */
     @TableField("api_url")
     private String apiUrl;
+
+    /**
+     * 请求方式 GET POST 等
+     */
+    @TableField("request_method")
+    private String requestMethod;
+
+    /**
+     *请求参数json 根式
+     */
+    @TableField("param")
+    private String param;
+
+    /**
+     *对应下拉的绑定的字段
+     */
+    @TableField("label")
+    private String label;
+
+    /**
+     *对应下拉的显示中文的名 的字段
+     */
+    @TableField("value")
+    private String value;
+
+
 
 
     public static final String CONDITION_FIELD = "condition_field";
