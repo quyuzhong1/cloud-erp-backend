@@ -3188,10 +3188,14 @@
         SELECT
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
-            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
             round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         to_char(o.${timeFlag},'yyyy-mm-dd') AS name,
@@ -3289,10 +3293,14 @@
         SELECT
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
-            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
             round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         concat(date_trunc('week', o.platform_create_time::timestamp)::date, '~', (date_trunc('week', o.platform_create_time::timestamp)+ '6 days'::interval)::date) AS name,
@@ -3390,10 +3398,14 @@
         SELECT
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
-            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
             round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         to_char(o.${timeFlag},'yyyy-mm') AS name,
@@ -3491,10 +3503,14 @@
         SELECT
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
-            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
             round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         to_char(date_trunc('QUARTER',o.${timeFlag}),'yyyy-mm') AS name,
@@ -3594,10 +3610,14 @@
         SELECT
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
-            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
             round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         to_char(o.${timeFlag},'yyyy') as name,
@@ -3696,10 +3716,14 @@
         SELECT
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
-            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
             round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         to_char(o.${timeFlag},'yyyy-mm-dd') AS name,
@@ -3827,10 +3851,14 @@
         SELECT
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
-            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
             round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         concat(date_trunc('week', o.platform_create_time::timestamp)::date, '~', (date_trunc('week', o.platform_create_time::timestamp)+ '6 days'::interval)::date) AS name,
@@ -3963,10 +3991,14 @@
         SELECT
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
-            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
             round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         to_char(o.${timeFlag},'yyyy-mm') AS name,
@@ -4094,10 +4126,14 @@
         SELECT
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
-            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
             round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         to_char(date_trunc('QUARTER',o.${timeFlag}),'yyyy-mm') AS name,
@@ -4226,10 +4262,14 @@
         SELECT
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
-            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
             round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         to_char(o.${timeFlag},'yyyy') as name,

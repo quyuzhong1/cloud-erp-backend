@@ -145,20 +145,20 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
     List<SalesFlagVO> byTobToc(@Param("params")BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesFlagVO> getByDay(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate);
-    List<SalesFlagVO> getByDayCategory(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate, @Param("groupName") String groupName);
+    List<SalesFlagVO> getByDay(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate, @Param("searchType") String searchType);
+    List<SalesFlagVO> getByDayCategory(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate, @Param("groupName") String groupName, @Param("searchType") String searchType);
 
-    List<SalesFlagVO> getByWeek(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate);
-    List<SalesFlagVO> getByWeekCategory(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate, @Param("groupName") String groupName);
+    List<SalesFlagVO> getByWeek(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate, @Param("searchType") String searchType);
+    List<SalesFlagVO> getByWeekCategory(@Param("params") DateSalesTrendDTO.SearchDTO biFilterDTO, @Param("timeFlag")String timeFlag, @Param("settleRate") String settleRate, @Param("groupName") String groupName, @Param("searchType") String salesPrice);
 
-    List<SalesFlagVO> getByMonth(@Param("params") DateSalesTrendDTO.SearchDTO dto,@Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate);
-    List<SalesFlagVO> getByMonthCategory(@Param("params") DateSalesTrendDTO.SearchDTO dto,@Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate, @Param("groupName") String groupName);
+    List<SalesFlagVO> getByMonth(@Param("params") DateSalesTrendDTO.SearchDTO dto,@Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate, @Param("searchType") String searchType);
+    List<SalesFlagVO> getByMonthCategory(@Param("params") DateSalesTrendDTO.SearchDTO dto,@Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate, @Param("groupName") String groupName, @Param("searchType") String searchType);
 
-    List<SalesFlagVO> getByQuarter(@Param("params")DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag")String timeFlag, @Param("settleRate")String settleRate);
-    List<SalesFlagVO> getByQuarterCategory(@Param("params")DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag")String timeFlag, @Param("settleRate")String settleRate, @Param("groupName") String groupName);
+    List<SalesFlagVO> getByQuarter(@Param("params")DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag")String timeFlag, @Param("settleRate")String settleRate, @Param("searchType") String searchType);
+    List<SalesFlagVO> getByQuarterCategory(@Param("params")DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag")String timeFlag, @Param("settleRate")String settleRate, @Param("groupName") String groupName, @Param("searchType") String searchType);
 
-    List<SalesFlagVO> getByYear(@Param("params") DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate);
-    List<SalesFlagVO> getByYearCategory(@Param("params") DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate, @Param("groupName") String groupName);
+    List<SalesFlagVO> getByYear(@Param("params") DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate, @Param("searchType") String searchType);
+    List<SalesFlagVO> getByYearCategory(@Param("params") DateSalesTrendDTO.SearchDTO dto, @Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate, @Param("groupName") String groupName, @Param("searchType") String searchType);
 
     List<SalesFlagVO> deptNewAndOldSalesAmount(@Param("params") NewAndOldSalesSearchDTO.SearchDTO dto, @Param("settleRate") String settleRate);
 
