@@ -53,6 +53,17 @@ public class DmpOrderInfoEntity implements Serializable {
     private String buyerName;
 
     /**
+     * 客户名称
+     */
+    @TableField(value = "customer_name")
+    private String customerName;
+
+    /**
+     * 客户编号
+     */
+    @TableField(value = "customer_code")
+    private String customerCode;
+    /**
      * 店铺编号
      */
     @TableField(value = "shop_no")

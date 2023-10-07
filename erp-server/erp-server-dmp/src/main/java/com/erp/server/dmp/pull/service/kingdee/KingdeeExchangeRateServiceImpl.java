@@ -77,7 +77,7 @@ public class KingdeeExchangeRateServiceImpl implements IReportSaveService<Kingde
             OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getId());
             List<KingdeeExchangeRateEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_EXCHANGE_RATE, KingdeeExchangeRateEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
-            entity.setDownloadTime(LocalDateTime.now());
+            entity.setDownloadTime(LocalDateTime.now().toString());
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
@@ -123,14 +123,14 @@ public class KingdeeExchangeRateServiceImpl implements IReportSaveService<Kingde
         // 查询mongo待推送数据
         String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
         Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
-        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
         List<KingdeeExchangeRateEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_KINGDEE_EXCHANGE_RATE, KingdeeExchangeRateEntity.class);
         if (CollectionUtil.isEmpty(mongoData)) {
             return;
         }
         for (KingdeeExchangeRateEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
-            mongoDatum.setLastPushTime(LocalDateTime.now());
+            mongoDatum.setLastPushTime(LocalDateTime.now().toString());
             updateAndSaveDb(mongoDatum);
         }
     }

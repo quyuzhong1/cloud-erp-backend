@@ -117,7 +117,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         }
         gyyOrder.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
         gyyOrder.setDownloadStatus(1);
-        gyyOrder.setDownloadTime(LocalDateTime.now());
+        gyyOrder.setDownloadTime(LocalDateTime.now().toString());
         // 修改数据
         updateAndSaveDb(gyyOrder);
     }
@@ -148,7 +148,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         // 查询mongo待推送数据
         String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
         Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
-        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
         orderMongoDTO.setDownloadStatus(1);
         List<GyyOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
         if (CollectionUtil.isEmpty(mongoData)) {
@@ -156,7 +156,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         }
         for (GyyOrderEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
-            mongoDatum.setLastPushTime(LocalDateTime.now());
+            mongoDatum.setLastPushTime(LocalDateTime.now().toString());
             updateAndSaveDb(mongoDatum);
         }
     }

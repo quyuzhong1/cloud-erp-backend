@@ -1,6 +1,5 @@
 package com.erp.model.dmp.dto;
 
-import cn.hutool.core.annotation.Alias;
 import cn.hutool.core.util.StrUtil;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
@@ -59,7 +58,8 @@ public class  OrderMongoDTO {
     private Integer cleanToDeliveryExists;
 
     @Panno(findType = PannoEnum.LTE,field = "downloadTime")
-    private LocalDateTime downloadEndTime;
+    private String downloadEndTimeStr;
+
     @Panno(findType = PannoEnum.EQ, field = "comboSku")
     private String comboSku;
 
@@ -139,11 +139,20 @@ public class  OrderMongoDTO {
         return orderMongoDTO;
     }
 
-    public static OrderMongoDTO getByIsClean(Integer isClean, Integer diffMinute) {
+//    public static OrderMongoDTO getByIsClean(Integer isClean, Integer diffMinute) {
+//        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+//        orderMongoDTO.setIsClean(isClean);
+//        if(null != diffMinute && diffMinute != 0){
+//            orderMongoDTO.setDownloadEndTime(LocalDateTime.now().minusMinutes(diffMinute).toString());
+//        }
+//        return orderMongoDTO;
+//    }
+
+    public static OrderMongoDTO getByIsCleanDateStr(Integer isClean, Integer diffMinute) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setIsClean(isClean);
         if(null != diffMinute && diffMinute != 0){
-            orderMongoDTO.setDownloadEndTime(LocalDateTime.now().minusMinutes(diffMinute));
+            orderMongoDTO.setDownloadEndTimeStr(LocalDateTime.now().minusMinutes(diffMinute).toString());
         }
         return orderMongoDTO;
     }

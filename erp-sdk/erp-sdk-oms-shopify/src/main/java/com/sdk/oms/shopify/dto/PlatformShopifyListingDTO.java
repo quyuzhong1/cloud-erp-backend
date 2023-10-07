@@ -1,6 +1,5 @@
 package com.sdk.oms.shopify.dto;
 
-import cn.hutool.core.util.ReflectUtil;
 import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
@@ -42,8 +41,8 @@ public class PlatformShopifyListingDTO extends CleanBaseDTO {
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
         this.setUniqueId(shopifyProduct.getId());
-        this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()));
-        this.setLastPushTime(dto.getNextTime());
+        this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
+        this.setLastPushTime(dto.getNextTime().toString());
     }
 
 
