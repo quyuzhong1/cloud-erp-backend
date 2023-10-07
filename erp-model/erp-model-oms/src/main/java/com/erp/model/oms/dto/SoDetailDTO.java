@@ -332,6 +332,16 @@ public class SoDetailDTO implements Serializable {
          */
         private BigDecimal taxAmountBefore;
 
+        /**
+         * 销售单价(本位币)
+         */
+        private BigDecimal priceLocalCurrency;
+
+        /**
+         * 含税单价(本位币)
+         */
+        private BigDecimal taxPriceLocalCurrency;
+
     }
 
     /**

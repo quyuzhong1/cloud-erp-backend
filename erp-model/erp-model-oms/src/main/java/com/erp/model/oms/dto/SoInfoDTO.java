@@ -534,7 +534,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 总价税合计（本位币）
          */
-        private BigDecimal totalAllAmountLocalCurrency;
+        private BigDecimal allAmountLc;
 
         /**
          * 销售单价(本位币)
@@ -1130,6 +1130,10 @@ public class SoInfoDTO implements Serializable {
          */
         private BigDecimal discountAmount;
 
+        /**
+         * 总价税合计（本位币）
+         */
+        private BigDecimal allAmountLc;
         /**
          * 订单产品详情
          */
