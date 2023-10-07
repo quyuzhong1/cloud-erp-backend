@@ -19,7 +19,6 @@ import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.utils.InventoryUtils;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,10 +60,8 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
                     throw new ServiceException("库存变更数量不能等于0");
                 }
 
-                if(!allowNegativeQtyBusinessList.contains(param.getSourceType())) {
-                    if(param.getQty() < 0) {
-                        throw new ServiceException("库存变更数量不能小于0");
-                    }
+                if(param.getQty() < 0 && !this.allowNegativeQtyBusinessList.contains(param.getSourceType())) {
+                    throw new ServiceException("库存变更数量不能小于0");
                 }
 
                 if(ignoreInventorySkuIds.contains(param.getSkuId())) {
@@ -107,9 +104,6 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
     @Transactional(rollbackFor = Exception.class)
     @Override
     public <T extends InventoryStockBaseDTO> void stockHandler(List<T> paramList, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo) {
-        List<String> skuIds = Lists.newArrayList();
-        paramList.stream().forEach(param->skuIds.add(((InOutStockDTO)param).getSkuId()));
-
         // 获取忽略库存计算的sku
         List<String> ignoreInventorySkuIds = this.getIgnoreSkuIds();
         // 通过对sku id顺序执行, 避免多线程死锁
