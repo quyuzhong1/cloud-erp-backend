@@ -207,21 +207,27 @@
         SELECT
         coalesce(SUM(refund_amount*dri.currency_rate),0)
         FROM dmp_refund_info dri
-        INNER JOIN dmp_order_info o
-        ON dri.platform_order_id=o.platform_order_id
+        INNER JOIN
+        (SELECT
+        o.platform_order_id
+        FROM dmp_order_info o
         INNER JOIN dmp_order_item i
-        ON i.order_id=o.id
+        ON i.order_id = o.ID
         <include refid="condition"></include>
+        GROUP BY o.id
+        ) TEMP ON TEMP.platform_order_id = dri.platform_order_id
+
 
     </select>
     <select id="getYearRefundOrderAmount" resultType="java.math.BigDecimal">
         SELECT
         coalesce(SUM(refund_amount*dri.currency_rate),0)
         FROM dmp_refund_info dri
-            INNER JOIN dmp_order_info o
-                ON dri.platform_order_id = o.platform_order_id
-            INNER JOIN dmp_order_item i
-                ON i.order_id = o.id
+        INNER JOIN
+        (
+        SELECT o.platform_order_id FROM
+        dmp_order_info o INNER JOIN dmp_order_item i
+        ON i.order_id = o.ID
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 EXTRACT( YEAR FROM o.platform_create_time )=${year}
@@ -297,6 +303,10 @@
                 ${params.permissionSql}
             </if>
         </where>
+        GROUP BY O.id
+        ) temp
+        ON temp.platform_order_id=dri.platform_order_id
+
     </select>
 
 </mapper>
