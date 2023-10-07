@@ -220,6 +220,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
      */
     private void checkAllowTransaction(String orgId, String warehouseId, String warehouseLocation, String skuId, String skuNo, String dictInventoryStatus, LocalDate billDate) {
         //TODO 今后需要做 库存关账 等检测
+        log.info("closedTime:{}",closedTime);
         if(StrUtil.isNotBlank(closedTime)){
             LocalDate closeDate = LocalDate.parse(closedTime);
             if (billDate.isBefore(closeDate)) {
