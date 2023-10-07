@@ -22,6 +22,7 @@ import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -285,6 +286,13 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
                 PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
                 BeanMapperUtils.copy(updateDTO, purchaseReturnOrderDetailEntity);
+                //退货补货
+                if (ReturnModeEnum.REPLENISHMENT.getCode().equals(dto.getReturnMode())) {
+                    purchaseReturnOrderDetailEntity.setDeductAmountQty(0);
+                } else {
+                    //退货扣款
+                    purchaseReturnOrderDetailEntity.setReplenishQty(0);
+                }
                 purchaseReturnOrderDetailEntity.setMainId(id);
                 PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
@@ -361,8 +369,16 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
         List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> detailEntityList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
+
             PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
             BeanMapperUtils.copy(updateDTO, purchaseReturnOrderDetailEntity);
+            //退货补货
+            if (ReturnModeEnum.REPLENISHMENT.getCode().equals(dto.getReturnMode())) {
+                purchaseReturnOrderDetailEntity.setDeductAmountQty(0);
+            } else {
+                //退货扣款
+                purchaseReturnOrderDetailEntity.setReplenishQty(0);
+            }
             purchaseReturnOrderDetailEntity.setMainId(id);
             purchaseReturnOrderDetailEntity.setReturnQty(updateDTO.getReturnQty());
             //获取sku信息
