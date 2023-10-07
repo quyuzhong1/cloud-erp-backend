@@ -3,8 +3,7 @@ package com.erp.server.wms.config;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.server.wms.annotation.InventoryHandler;
 import com.erp.server.wms.service.*;
-import com.erp.server.wms.service.impl.AbstractInventoryServiceImpl;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @CreateTime: 2023-04-26  16:31
  * @Author: zhangchunlin
  */
-@Slf4j
 @Component
 public class InventoryHelper {
     @Resource
@@ -31,7 +29,9 @@ public class InventoryHelper {
     public void init() {
         Map<String, InventoryStockService> beans = context.getBeansOfType(InventoryStockService.class);
         for (InventoryStockService bean : beans.values()) {
-            InventoryHandler annotation = bean.getClass().getAnnotation(InventoryHandler.class);
+            Class<?> actualClass = AopProxyUtils.ultimateTargetClass(bean);
+            InventoryHandler annotation = actualClass.getAnnotation(InventoryHandler.class);
+//            InventoryHandler annotation = bean.getClass().getAnnotation(InventoryHandler.class);
             handlers.put(annotation.value(),bean);
         }
 
