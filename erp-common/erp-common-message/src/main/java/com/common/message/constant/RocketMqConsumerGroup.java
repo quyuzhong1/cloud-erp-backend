@@ -32,6 +32,10 @@ public class RocketMqConsumerGroup {
      * 金蝶采购订单（采购订单）
      */
     public static final String SYNC_KINGDEE_PURCHASE_ORDER = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_purchase_order";
+    /**
+     * 金蝶采购订单新变更单（采购变更）
+     */
+    public static final String SYNC_KINGDEE_PURCHASE_CHANGE = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_purchase_change";
 
     /**
      * 金蝶采购价目表（采购价目表）

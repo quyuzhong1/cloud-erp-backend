@@ -48,6 +48,8 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private PurchaseOrderDetailService purchaseOrderDetailService;
 
+    @Resource
+    private PurchaseChangeService purchaseChangeService;
 
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
@@ -72,6 +74,10 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
                 return;
             }
             purchaseOrderService.updateSyncKingdeeStatus(syncKingdeeDTO);
+        }
+        //采购变更
+        if (ApiModuleTypeEnum.PURCHASE_CHANGE.getCode().toString().equals(code)) {
+            purchaseChangeService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
         //采购价目表
         if (ApiModuleTypeEnum.PURCHASE_PRICE.getCode().toString().equals(code)) {
