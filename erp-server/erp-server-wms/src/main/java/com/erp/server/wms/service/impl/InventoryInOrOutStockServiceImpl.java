@@ -13,7 +13,6 @@ import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.server.wms.annotation.InventoryHandler;
-import com.erp.server.wms.service.InventoryStockService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.utils.InventoryUtils;
@@ -38,7 +37,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @InventoryHandler(InventoryBizTypeEnum.IN_OUT_STOCK)
-public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceImpl implements InventoryStockService {
+public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceImpl {
 
     @Autowired
     private WarehouseService warehouseService;
