@@ -31,7 +31,13 @@ public class KingdeePushJob {
    private PurchaseOrderService purchaseOrderService;
 
     @Resource
+    private PurchaseChangeService purchaseChangeService;
+
+    @Resource
     private SyncKingdeePurchaseOrderService syncKingdeePurchaseOrderService;
+
+    @Resource
+    private SyncKingdeePurchaseChangeService syncKingdeePurchaseChangeService;
 
     @Resource
     private PurchasePriceService purchasePriceService;
@@ -83,6 +89,30 @@ public class KingdeePushJob {
             } catch (Exception e) {
                 XxlJobHelper.log("采购订单【{}】推送金蝶失败,error = {}",obj.getCode(),e);
                 log.error("采购订单【{}】推送金蝶失败",obj.getCode(),e);
+            }
+        });
+
+    }
+
+    /**
+     * 推送采购订单变更单
+     */
+    @XxlJob("kingdeePushPurchaseChange")
+    public void kingdeePushPurchaseChange() {
+        List<PurchaseChangeEntity> list = purchaseChangeService.lambdaQuery()
+                .in(PurchaseChangeEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(PurchaseChangeEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(PurchaseChangeEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
+                .list();
+        if (ObjectUtils.isEmpty(list)) {
+            log.info("无需要同步的采购订单变更");
+            return;
+        }
+        list.forEach(obj->{
+            try {
+                syncKingdeePurchaseChangeService.syncDataToKingdee(obj, obj.getSyncOperate());
+            } catch (Exception e) {
+                XxlJobHelper.log("采购订单变更【{}】推送金蝶失败,error = {}",obj.getCode(),e);
+                log.error("采购订单变更【{}】推送金蝶失败",obj.getCode(),e);
             }
         });
 
