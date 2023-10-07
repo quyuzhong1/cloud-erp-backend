@@ -271,8 +271,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                         String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(childDTO.getSupplierId()) && StringUtils.isNotBlank(obj.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
                         childDTO.setPaymentCondition(paymentCondition);
                     }
-                    //状态名称
-                    childDTO.setStatusName(ProductDetailStatusEnum.getName(childDTO.getStatus()));
+                    if (ObjectUtils.isNotEmpty(childDTO.getStatus())) {
+                        //状态名称
+                        childDTO.setStatusName(ProductDetailStatusEnum.getName(childDTO.getStatus()));
+                    }
                     childDTO.setIndex(index);
                     index++;
                 }
