@@ -59,7 +59,7 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
                     throw new ServiceException("库存变更数量不能等于0");
                 }
 
-                if(!this.allowNegativeQtyBusinessList.contains(param.getSourceType())) {
+                if(!allowNegativeQtyBusinessList.contains(param.getSourceType())) {
                     if(param.getQty() < 0) {
                         throw new ServiceException("库存变更数量不能小于0");
                     }
