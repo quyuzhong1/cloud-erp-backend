@@ -43,7 +43,7 @@
         SELECT
             condition_field AS code,
             condition_field_name AS value
-        FROM cf_condition
+        FROM cfg_condition
         WHERE is_deleted=FALSE
     </select>
 
