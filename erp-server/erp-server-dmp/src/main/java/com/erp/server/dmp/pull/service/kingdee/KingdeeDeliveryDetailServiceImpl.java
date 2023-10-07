@@ -79,7 +79,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             KingdeeOutStockDTO outStockDTO = new KingdeeOutStockDTO(entity.getFBillNo());
             List<KingdeeDeliveryDetailEntity> mongoData = mongoService.findMongoData(outStockDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL, KingdeeDeliveryDetailEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
-            entity.setDownloadTime(LocalDateTime.now());
+            entity.setDownloadTime(LocalDateTime.now().toString());
             //当没有查询到的时候 就添加
             if (CollectionUtil.isEmpty(mongoData)) {
                 insertList.add(entity);
@@ -169,14 +169,14 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         // 查询mongo待推送数据
         String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
         Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
-        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
         List<KingdeeDeliveryDetailEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL, KingdeeDeliveryDetailEntity.class);
         if (CollectionUtil.isEmpty(mongoData)) {
             return;
         }
         for (KingdeeDeliveryDetailEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
-            mongoDatum.setLastPushTime(LocalDateTime.now());
+            mongoDatum.setLastPushTime(LocalDateTime.now().toString());
             updateAndSaveDb(mongoDatum);
         }
     }

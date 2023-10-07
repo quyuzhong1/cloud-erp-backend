@@ -48,53 +48,65 @@ public interface CustomerFeign {
 
     /**
      * 根据ids查询客户信息
-     * @Author Luo_WG
-     * @Date 2023/6/1 15:42
+     *
      * @param ids ids
      * @return java.util.List<com.erp.model.oms.entity.CustomerInfoEntity>
+     * @Author Luo_WG
+     * @Date 2023/6/1 15:42
      **/
     @PostMapping("feign/customer/listCustomerByIds")
     List<CustomerInfoEntity> listCustomerByIds(@RequestBody List<String> ids);
 
     /**
+     * @param countryIdList
+     * @return List<CustomerInfoEntity>
      * @description: 根据国家ids查询客户信息
      * @author Will
      * @date: 2023/7/24 12:28
-     * @param countryIdList
-     * @return List<CustomerInfoEntity>
      */
     @PostMapping("feign/customer/listByCountryIdList")
     List<CustomerInfoEntity> listByCountryIdList(@RequestBody List<String> countryIdList);
 
     /**
      * 客户列表审核
-     * @Author Luo_WG
-     * @Date 2023/7/4 12:28
+     *
      * @param dto
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/7/4 12:28
      **/
     @PostMapping("feign/customer/approve")
     Boolean approve(@RequestBody BaseApproveParamDTO dto);
 
     /**
      * 售货员信息
-     * @author yl
-     * @date 2023-05-15 10:10
+     *
      * @param mainId
      * @return java.util.List<com.erp.model.oms.dto.SellerDTO.ViewDTO>
+     * @author yl
+     * @date 2023-05-15 10:10
      */
     @PostMapping("feign/customer/listSellerByMainId")
     List<SellerDTO.ViewDTO> listSellerByMainId(@RequestBody String mainId);
 
     /**
      * 根据key 获取字典数据
-     * @author yl
-     * @date 2023-03-17 14:16
+     *
      * @param Key
      * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
+     * @author yl
+     * @date 2023-03-17 14:16
      */
     @PostMapping("feign/customer/getDictBasicByKey")
     List<DictBasicDTO.ViewDTO> getDictBasicByKey(@RequestBody String Key);
 
 
+    /**
+     * 根据客户名称获取客户详情
+     *
+     * @param customerName
+     * @return
+     */
+    @PostMapping("feign/customer/getCustomerByName")
+    public CustomerInfoEntity getCustomerByName(@RequestBody String customerName);
 }

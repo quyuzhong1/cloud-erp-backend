@@ -1371,6 +1371,18 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         return list;
     }
 
+    @Override
+    public CustomerInfoEntity getCustomerByName(String name) {
+        if (StringUtils.isEmpty(name)) {
+            return null;
+        }
+        LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(CustomerInfoEntity::getName, name);
+        queryWrapper.eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+    }
+
     /**
      * 客户联系人信息
      *

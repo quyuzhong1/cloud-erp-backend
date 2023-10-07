@@ -68,7 +68,7 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByOrderIdAndSaleNum(entity.getPlatformOrderId(), entity.getSalesRecordNumber());
             List<OrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
-            entity.setDownloadTime(LocalDateTime.now());
+            entity.setDownloadTime(LocalDateTime.now().toString());
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);

@@ -423,7 +423,7 @@ public class MQConsumerService {
     private static MapUtil getMapParam() {
         CleanBaseDTO updateParam = new CleanBaseDTO();
         updateParam.setIsClean(CleanStatusEnum.CLEANED.getCode());
-        updateParam.setLastPushTime(LocalDateTime.now());
+        updateParam.setLastPushTime(LocalDateTime.now().toString());
         MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(updateParam), MapUtil.class);
         return mapUtil;
     }
