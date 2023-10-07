@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 
 /**
@@ -145,17 +146,28 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
                 String[] productSizes = productSize.split("X");
                 //长
                 if (productSizes.length > 0) {
-                    packVO.setProductLength(new BigDecimal(productSizes[0]));
+                    if (StringUtils.isNotBlank(productSizes[0])) {
+                        packVO.setProductLength(new BigDecimal(productSizes[0]));
+                    } else {
+                        packVO.setProductLength(new BigDecimal(BigInteger.ZERO));
+                    }
                 }
                 //宽
                 if (productSizes.length > 1) {
-                    packVO.setProductWidth(new BigDecimal(productSizes[1]));
+                    if (StringUtils.isNotBlank(productSizes[1])) {
+                        packVO.setProductWidth(new BigDecimal(productSizes[1]));
+                    } else {
+                        packVO.setProductWidth(new BigDecimal(BigInteger.ZERO));
+                    }
                 }
                 //高
                 if (productSizes.length > 2) {
-                    packVO.setProductHeight(new BigDecimal(productSizes[2]));
+                    if (StringUtils.isNotBlank(productSizes[2])) {
+                        packVO.setProductHeight(new BigDecimal(productSizes[2]));
+                    } else {
+                        packVO.setProductHeight(new BigDecimal(BigInteger.ZERO));
+                    }
                 }
-
             }
 
             //外箱大小
@@ -164,15 +176,27 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
                 String[] boxSizes = boxSize.split("X");
                 //长
                 if (boxSizes.length > 0) {
-                    packVO.setBoxLength(new BigDecimal(boxSizes[0]));
+                    if (StringUtils.isNotBlank(boxSizes[0])) {
+                        packVO.setBoxLength(new BigDecimal(boxSizes[0]));
+                    } else {
+                        packVO.setBoxLength(new BigDecimal(BigInteger.ZERO));
+                    }
                 }
                 //宽
                 if (boxSizes.length > 1) {
-                    packVO.setBoxWidth(new BigDecimal(boxSizes[1]));
+                    if (StringUtils.isNotBlank(boxSizes[1])) {
+                        packVO.setBoxWidth(new BigDecimal(boxSizes[1]));
+                    } else {
+                        packVO.setBoxWidth(new BigDecimal(BigInteger.ZERO));
+                    }
                 }
                 //高
                 if (boxSizes.length > 2) {
-                    packVO.setBoxHeight(new BigDecimal(boxSizes[2]));
+                    if (StringUtils.isNotBlank(boxSizes[2])) {
+                        packVO.setBoxHeight(new BigDecimal(boxSizes[2]));
+                    } else {
+                        packVO.setBoxHeight(new BigDecimal(BigInteger.ZERO));
+                    }
                 }
             }
             //外箱重量
