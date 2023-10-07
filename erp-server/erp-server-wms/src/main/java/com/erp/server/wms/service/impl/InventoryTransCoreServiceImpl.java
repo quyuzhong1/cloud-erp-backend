@@ -18,6 +18,7 @@ import javax.annotation.Resource;
  * @Description: 库存交易核心处理类
  * @CreateTime: 2023-05-06  09:30
  * @Author: zhangchunlin
+ * Update By Edison.Qu  2023-09-28
  */
 @Service
 public class InventoryTransCoreServiceImpl implements InventoryTransCoreService {
@@ -58,10 +59,6 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         inventoryService.approve(dto.getParamList(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
     }
 
-    /**
-     * 反审核
-     * @param dto
-     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void unApprove(InventoryUnApproveDTO dto) {
@@ -70,16 +67,12 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 .unApprove(dto);
     }
 
-    /**
-     * 批量反审核
-     * @param dto
-     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void batchUnApprove(InventoryBatchUnApproveDTO dto) {
         ValidatorUtil.validateEntity(dto);
         InventoryStockService inventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
-        dto.getBillIds().stream().forEach(billId->{
+        dto.getBillIds().forEach(billId->{
             InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO();
             inventoryUnApproveDTO.setSourceType(dto.getSourceType());
             inventoryUnApproveDTO.setBillId(billId);
