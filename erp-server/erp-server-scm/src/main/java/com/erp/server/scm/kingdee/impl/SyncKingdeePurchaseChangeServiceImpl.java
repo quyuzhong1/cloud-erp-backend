@@ -162,7 +162,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             //源单分录内码
             refJsonObject.set("refKingdeeDetailId",purchaseOrderDetailEntity.getKingdeeDetailId());
 
-            jsonObject.set("refJsonObject",refJsonObject);
+            jsonObject.set("refList",Arrays.asList(refJsonObject));
             list.add(jsonObject);
         }
         //明细信息
