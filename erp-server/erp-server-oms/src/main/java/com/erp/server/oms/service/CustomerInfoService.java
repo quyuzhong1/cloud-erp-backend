@@ -8,6 +8,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.vo.CustomerInfoVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -235,6 +236,13 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @date 2023-05-15 14:30
      */
     Boolean quoteCustomer(List<String> ids);
+
+    /**
+     * 获取客户等级信息
+     *
+     * @return
+     */
+    List<CustomerInfoVO> listCustomerByGroup();
 
     /**
      * 修改金蝶同步信息

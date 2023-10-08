@@ -5,6 +5,7 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.vo.CustomerInfoVO;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.CustomerSellerService;
@@ -47,6 +48,17 @@ public class CustomerFeignController {
         return customerInfoService.list();
     }
 
+    /**
+     * 获取所有客户等级信息
+     *
+     * @return java.util.List<com.erp.model.oms.vo.CustomerInfoVO>
+     * @Author zdy
+     * @Date 2023/10/08 18:41
+     **/
+    @PostMapping("/listCustomerByGroup")
+    public List<CustomerInfoVO> listCustomerByGroup() {
+        return customerInfoService.listCustomerByGroup();
+    }
     @PostMapping("/quoteCustomer")
     public Boolean quoteCustomer(@RequestBody List<String> ids) {
         return customerInfoService.quoteCustomer(ids);

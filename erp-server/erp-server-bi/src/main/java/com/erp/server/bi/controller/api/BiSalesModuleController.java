@@ -2,13 +2,12 @@ package com.erp.server.bi.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
-import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.server.bi.service.SalesOrderService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -691,6 +690,35 @@ public class BiSalesModuleController extends BaseController {
     public ApiResult<StatisticalDataVO> grossProfit(@RequestBody @Validated BiDataSourceCostDTO.GrossProfitDTO dto) {
         StatisticalDataVO statistical = salesOrderService.grossProfit(dto);
         return success(statistical);
+    }
+    /**
+     * B2B客户属性分析
+     *
+     * @param biFilterDTO biFilterDTO
+     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     * @Author zdy
+     * @Date 2022/12/27 10:41
+     **/
+    @PostMapping("/customerPropertyAnalysis")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
+    public ApiResult<StatisticalDataVO> customerPropertyAnalysis(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+        StatisticalDataVO statisticalDataVO = salesOrderService.customerPropertyAnalysis(biFilterDTO);
+        return success(statisticalDataVO);
+    }
+
+    /**
+     * B2B客户等级占比
+     *
+     * @param biFilterDTO biFilterDTO
+     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     * @Author zdy
+     * @Date 2022/12/27 10:41
+     **/
+    @PostMapping("/customerLevelProportion")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
+    public ApiResult<StatisticalDataVO> customerLevelProportion(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+        StatisticalDataVO statisticalDataVO = salesOrderService.customerLevelProportion(biFilterDTO);
+        return success(statisticalDataVO);
     }
 
 }

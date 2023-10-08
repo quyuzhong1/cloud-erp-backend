@@ -174,6 +174,13 @@
                     #{userId}
                 </foreach>
             </if>
+            <!-- 客户编码 -->
+            <if test="params.customerCodes!=null and params.customerCodes.size>0">
+                AND o.customer_code IN
+                <foreach collection="params.customerCodes" item="customerCode" open="(" separator="," close=")">
+                    #{customerCode}
+                </foreach>
+            </if>
             <!-- 权限 -->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
@@ -4751,6 +4758,24 @@
 
     </select>
 
+    <select id="customerLevelProportion" resultType="java.math.BigDecimal">
+        SELECT
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS sales
+        </if>
+        FROM
+        dmp_order_item i
+        LEFT JOIN dmp_order_info o
+        ON i.order_id = o.id
+        INNER JOIN product_detail pd
+        ON pd.sku_no=i.sku_no
+        INNER JOIN product_info pi
+        ON pi.id=pd.product_id AND pi.is_deleted=FALSE
+        <include refid="joinCondition"/>
+    </select>
     <!--部门销售额排行榜-->
     <select id="deptCompletionRateRanking" resultType="com.erp.model.bi.dto.CompletionRateRankingDTO$PagingDTO">
         SELECT

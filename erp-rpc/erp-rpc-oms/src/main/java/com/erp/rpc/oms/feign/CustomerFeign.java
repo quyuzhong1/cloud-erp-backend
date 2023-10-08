@@ -5,6 +5,7 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.vo.CustomerInfoVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +24,15 @@ public interface CustomerFeign {
     @PostMapping("feign/customer/listCustomer")
     List<CustomerInfoEntity> listCustomer();
 
+    /**
+     * 获取客户分组信息
+     *
+     * @return com.erp.model.oms.vo.CustomerInfoVO
+     * @Author zdy
+     * @Date 2023/10/08 18:18
+     **/
+    @PostMapping("feign/customer/listCustomerByGroup")
+    List<CustomerInfoVO> listCustomerByGroup();
 
     /**
      * 引用客户

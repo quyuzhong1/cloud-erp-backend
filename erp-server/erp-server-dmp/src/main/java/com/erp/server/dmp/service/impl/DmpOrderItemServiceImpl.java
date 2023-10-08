@@ -15,11 +15,13 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.SplitSkuDTO;
-import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.entity.DmpBomEntity;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.entity.DmpSkuCostEntity;
+import com.erp.model.dmp.entity.DmpSplitErrorLogEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.NewProductDTO;
-import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.pull.mapper.DmpOrderItemMapper;
 import com.erp.server.dmp.service.DmpBomService;
@@ -33,7 +35,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -123,6 +124,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     public DmpOrderItemEntity getByErpOrderItemId(String erpOrderItemId) {
         LambdaQueryWrapper<DmpOrderItemEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpOrderItemEntity::getErpOrderItemId, erpOrderItemId);
+        lambdaQueryWrapper.last("limit 1");
         return this.getOne(lambdaQueryWrapper);
     }
 
