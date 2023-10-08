@@ -206,7 +206,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         BeanMapper.copy(dto, bill);
         bill.setId(billId);
         //处理相关数据
-        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceCode(), dto.getSourceId());
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
 
         //采购订单明细
         String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
@@ -742,7 +742,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @param qcDeptId
      * @param entity
      */
-    private void HandleData(String qcUserId, String qcDeptId, QcInfoEntity entity, String sourceCode, String sourceId) {
+    private void HandleData(String qcUserId, String qcDeptId, QcInfoEntity entity, String sourceType, String sourceId) {
         //质检员
         if (StringUtils.isNotBlank(qcUserId)) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(qcUserId);
@@ -760,13 +760,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             entity.setQcDeptName(depart.getName());
         }
 
-        if (SourceTypeEnum.PO_RECEIVE.getCode().equals(sourceCode)) {
+        if (SourceTypeEnum.PO_RECEIVE.getCode().equals(sourceType)) {
             WarehouseReceiveEntity info = warehouseReceiveService.getById(sourceId);
             entity.setSourceCode(info.getCode());
-        } else if (SourceTypeEnum.PURCHASE_ORDER.getCode().equals(sourceCode)) {
+        } else if (SourceTypeEnum.PURCHASE_ORDER.getCode().equals(sourceType)) {
             PurchaseOrderEntity info = scmTaskFeign.getPurchaseOrderById(sourceId);
             entity.setSourceCode(info.getCode());
-        } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(sourceCode)) {
+        } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(sourceType)) {
             SoReturnReceiveEntity info = soReturnReceiveService.getById(sourceId);
             entity.setSourceCode(info.getCode());
         }
