@@ -420,6 +420,13 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             bomList = allBomList.stream().filter(req -> req.getParentSkuNo().equals(splitSkuDTO.getSkuNo())).collect(Collectors.toList());
         }
 
+        //如果sku能直接匹配成本，那么就不拆单直接返回
+        List<DmpSkuCostEntity> costEntities = allSkuCostList.stream().filter(req -> req.getSkuNo().equals(splitSkuDTO.getSkuNo())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(costEntities)) {
+            itemListAll.add(splitSkuDTO);
+            return itemListAll;
+        }
+
         //如果匹配ERP的bom不存在记录错误日志
         if (CollectionUtils.isEmpty(bomList)) {
             itemListAll.add(splitSkuDTO);
@@ -430,13 +437,6 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             errorLogEntity.setSkuNo(splitSkuDTO.getSkuNo());
             errorLogEntity.setMsg(String.format(ApiError.ERP_BOM_EXIST.msg, ObjectUtil.isEmpty(dmpBomEntity) ? "" : dmpBomEntity.getFinancialCode()));
             dmpSplitErrorLogService.save(errorLogEntity);
-            return itemListAll;
-        }
-
-        //如果sku能直接匹配成本，那么就不拆单直接返回
-        List<DmpSkuCostEntity> costEntities = allSkuCostList.stream().filter(req -> req.getSkuNo().equals(splitSkuDTO.getSkuNo())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(costEntities)) {
-            itemListAll.add(splitSkuDTO);
             return itemListAll;
         }
 
