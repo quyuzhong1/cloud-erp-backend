@@ -3655,7 +3655,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 params.setCustomerCodes(new ArrayList<>(customerCodes));
                 BigDecimal bigDecimal = baseMapper.customerLevelProportion(params, settleRate);
                 siteMap.put("name", customerInfoVOS1.get(0).getCustomerProperty());
-                siteMap.put("value", bigDecimal.stripTrailingZeros().toPlainString());
+                if(Objects.isNull(bigDecimal)){
+                    siteMap.put("value", "0.00");
+                }else {
+                    siteMap.put("value", bigDecimal.stripTrailingZeros().toPlainString());
+                }
                 dataList.add(siteMap);
             }
         }
@@ -3698,7 +3702,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 params.setCustomerCodes(new ArrayList<>(customerCodes));
                 BigDecimal bigDecimal = baseMapper.customerLevelProportion(params, settleRate);
                 siteMap.put("name", customerInfoVOS1.get(0).getGroupName());
-                siteMap.put("value", bigDecimal.stripTrailingZeros().toPlainString());
+                if(Objects.isNull(bigDecimal)){
+                    siteMap.put("value", "0.00");
+                }else {
+                    siteMap.put("value", bigDecimal.stripTrailingZeros().toPlainString());
+                }
                 dataList.add(siteMap);
             }
         }
