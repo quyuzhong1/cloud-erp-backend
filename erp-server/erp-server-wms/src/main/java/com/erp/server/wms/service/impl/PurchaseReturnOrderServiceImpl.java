@@ -1547,6 +1547,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 addDetailDTO.setPurchaseQty(detailEntity.getReplenishQty());
                 addDetailDTO.setPlanDeliveryDate(null);
                 addDetailDTO.setRemark(detailEntity.getRemark());
+                addDetailDTO.setCurrency(detailEntity.getCurrency());
+                addDetailDTO.setCurrencySymbol(detailEntity.getCurrencySymbol());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setDetails(addDetailList);
