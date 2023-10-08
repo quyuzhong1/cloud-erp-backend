@@ -13,6 +13,7 @@ import com.erp.server.bi.service.BiDataSourceCostDetailService;
 import com.erp.server.bi.service.BiTargetYearService;
 import com.erp.server.bi.service.DmpRefundInfoService;
 import com.erp.server.bi.service.DmpShopInfoService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -20,6 +21,11 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -111,6 +117,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
             case SALES_QTY:
                 //年度的
                 if (yearFlag.equals(flagStr)) {
+
                     return salesOrderServiceMapper.getYearQtyByYear(dto, yearStr);
                 } else {
                     return salesOrderServiceMapper.getMonthQty(dto);
@@ -199,11 +206,21 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
         return BigDecimal.ZERO;
     }
 
-
     /**
      * 新增修改处理数据
      */
     private void handleData(BiTargetYearEntity biTargetYearEntity) {
         // TODO 验证数据 & 数据赋值
+    }
+    public static void main(String[] args) {
+        DateTimeFormatter fmt = new DateTimeFormatterBuilder()
+                .appendPattern("yyyy")
+                .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+                .toFormatter();
+
+        LocalDateTime localDateTime = LocalDate.parse("2023", fmt).atStartOfDay();
+        System.out.println(localDateTime);
+
+
     }
 }
