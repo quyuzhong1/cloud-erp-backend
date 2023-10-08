@@ -3228,7 +3228,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         monthMetrics.setMetricsValue(monthMetricsValue);
         //完成值
-        BigDecimal monthFinishValue = biTargetYearService.getMetricsFinishValue(dto, "month", year, month, settleRate);
+        BigDecimal monthFinishValue = biTargetYearService.getMetricsFinishValue(dto, "month", yearMonth, settleRate);
         if (Objects.isNull(monthFinishValue)) {
             monthFinishValue = BigDecimal.ZERO;
         }
@@ -3250,7 +3250,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             yearMetricsValue = MathUtil.multiply(yearMetricsValue, multiplyValue, 2);
         }
         yearMetrics.setMetricsValue(yearMetricsValue);
-        BigDecimal yearFinishValue = biTargetYearService.getMetricsFinishValue(dto, "year", year, month, settleRate);
+        BigDecimal yearFinishValue = biTargetYearService.getMetricsFinishValue(dto, "year", yearMonth, settleRate);
         if (Objects.isNull(yearFinishValue)) {
             yearFinishValue = BigDecimal.ZERO;
         }
