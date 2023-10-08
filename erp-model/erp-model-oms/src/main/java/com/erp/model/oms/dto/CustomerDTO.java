@@ -674,6 +674,11 @@ public class CustomerDTO implements Serializable {
         private String conditionDict;
 
         /**
+         * 客户属性
+         */
+        private String customerProperty;
+
+        /**
          * 附件名集合
          */
         private List<String> attachNameList;

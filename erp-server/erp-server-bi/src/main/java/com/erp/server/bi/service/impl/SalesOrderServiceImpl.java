@@ -3646,24 +3646,21 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SeriesVO<Object>> seriesList = new ArrayList<>();
         SeriesVO<Object> series = new SeriesVO();
         series.setName("销售额");
-        SeriesVO<Object> series2 = new SeriesVO();
-        series2.setName("客户属性");
-        List<Object> list = new ArrayList<>();
-        List<Object> list2 = new ArrayList<>();
+        List<Object> dataList = new ArrayList<>();
         for(String s : map.keySet()){
             List<CustomerInfoVO> customerInfoVOS1 = map.get(s);
             if (CollectionUtils.isNotEmpty(customerInfoVOS1)){
+                Map<String, Object> siteMap = new HashMap<>();
                 Set<String> customerCodes = customerInfoVOS1.stream().map(CustomerInfoVO::getCode).filter(StringUtils::isNotEmpty).collect(Collectors.toSet());
                 params.setCustomerCodes(new ArrayList<>(customerCodes));
                 BigDecimal bigDecimal = baseMapper.customerLevelProportion(params, settleRate);
-                list.add(bigDecimal);
-                list2.add(customerInfoVOS1.get(0).getCustomerProperty());
+                siteMap.put("name", customerInfoVOS1.get(0).getCustomerProperty());
+                siteMap.put("value", bigDecimal.stripTrailingZeros().toPlainString());
+                dataList.add(siteMap);
             }
         }
-        series.setData(list);
-        series2.setData(list2);
+        series.setData(dataList);
         seriesList.add(series);
-        seriesList.add(series2);
         chartVO.setSeries(seriesList);
         statistical.setData(chartVO);
         return statistical;
@@ -3692,24 +3689,21 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SeriesVO<Object>> seriesList = new ArrayList<>();
         SeriesVO<Object> series = new SeriesVO();
         series.setName("销售额");
-        SeriesVO<Object> series2 = new SeriesVO();
-        series2.setName("客户等级");
-        List<Object> list = new ArrayList<>();
-        List<Object> list2 = new ArrayList<>();
+        List<Object> dataList = new ArrayList<>();
         for(String s : map.keySet()){
             List<CustomerInfoVO> customerInfoVOS1 = map.get(s);
             if (CollectionUtils.isNotEmpty(customerInfoVOS1)){
+                Map<String, Object> siteMap = new HashMap<>();
                 Set<String> customerCodes = customerInfoVOS1.stream().map(CustomerInfoVO::getCode).filter(StringUtils::isNotEmpty).collect(Collectors.toSet());
                 params.setCustomerCodes(new ArrayList<>(customerCodes));
                 BigDecimal bigDecimal = baseMapper.customerLevelProportion(params, settleRate);
-                list.add(bigDecimal);
-                list2.add(customerInfoVOS1.get(0).getGroupName());
+                siteMap.put("name", customerInfoVOS1.get(0).getGroupName());
+                siteMap.put("value", bigDecimal.stripTrailingZeros().toPlainString());
+                dataList.add(siteMap);
             }
         }
-        series.setData(list);
-        series2.setData(list2);
+        series.setData(dataList);
         seriesList.add(series);
-        seriesList.add(series2);
         chartVO.setSeries(seriesList);
         statistical.setData(chartVO);
         return statistical;
