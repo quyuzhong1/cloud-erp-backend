@@ -75,7 +75,7 @@ public class KingdeeCustomerConsumerServiceImpl implements KingdeeCustomerConsum
         /**
          * 审核
          */
-        if (SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
             operateApprove(apiUtils,platformEntity, map,type,json);
         }
 

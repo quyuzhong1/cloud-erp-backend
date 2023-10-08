@@ -406,7 +406,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         log.info("直接调拨单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
 
         //发送金蝶
-        list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
+        list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
 
         //删除明细数据
         transferInfoDetailService.removeByMainIds(ids);

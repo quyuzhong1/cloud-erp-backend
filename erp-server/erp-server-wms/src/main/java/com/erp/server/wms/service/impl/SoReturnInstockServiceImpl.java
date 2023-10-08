@@ -690,7 +690,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
 
         //删除发送金蝶
-        entityList.forEach(obj -> syncKingdeeSoReturnService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
+        entityList.forEach(obj -> syncKingdeeSoReturnService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         //删除详情表
         soReturnInstockDetailService.delete(ids);
         boolean flag = this.removeByIds(ids);

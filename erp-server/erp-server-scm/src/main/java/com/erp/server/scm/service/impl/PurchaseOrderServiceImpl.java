@@ -378,7 +378,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
 
         //采购订单删除
-        list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+        list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
 
         log.info("采购申请单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //删除供应商数据

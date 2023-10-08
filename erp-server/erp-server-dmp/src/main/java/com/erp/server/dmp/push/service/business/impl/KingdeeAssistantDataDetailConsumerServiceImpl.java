@@ -65,14 +65,14 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
         /**
          * 审核
          */
-        if (SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
             operateApprove(apiUtils,platformEntity, map,type);
         }
 
         /**
          * 删除
          */
-        if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
             operateDelete(apiUtils,platformEntity, map,operate);
         }
     }

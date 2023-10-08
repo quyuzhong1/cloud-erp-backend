@@ -3,7 +3,7 @@ package com.erp.server.oms.service.impl;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.dto.base.PushSyncStatusDTO;
-
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.validator.ValidList;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;

@@ -381,7 +381,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
 
         //删除同步金蝶
-        purchasePriceList.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
+        purchasePriceList.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
 
         //删除价目表
         Boolean result = this.removeByIds(ids);

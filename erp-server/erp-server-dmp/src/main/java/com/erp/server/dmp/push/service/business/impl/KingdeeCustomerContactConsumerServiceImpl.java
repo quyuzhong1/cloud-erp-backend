@@ -58,7 +58,7 @@ public class KingdeeCustomerContactConsumerServiceImpl implements KingdeeCustome
         /**
          * 审核
          */
-        if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
             operateDelete(apiUtils,platformEntity, map);
         } else {
             operateApprove(apiUtils,platformEntity, map,type);

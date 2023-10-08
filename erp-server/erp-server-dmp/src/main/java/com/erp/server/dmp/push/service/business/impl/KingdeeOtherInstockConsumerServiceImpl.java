@@ -81,7 +81,7 @@ public class KingdeeOtherInstockConsumerServiceImpl implements KingdeeOtherInsto
         /**
          * 删除
          */
-        if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
             operateDelete(apiUtils,platformEntity,map,operate);
         }
     }

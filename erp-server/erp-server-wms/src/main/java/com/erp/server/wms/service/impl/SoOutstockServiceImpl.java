@@ -679,7 +679,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         //删除发送金蝶
-        list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
+        list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
 
         Boolean result = this.removeByIds(ids);
         if (result) {

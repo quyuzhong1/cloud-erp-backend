@@ -3,7 +3,7 @@ package com.erp.server.dmp.push.service.business.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -57,7 +57,7 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
         /**
          * 审核
          */
-        if (SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
             operateApprove(apiUtils,platformEntity, map,type);
         }
     }

@@ -45,6 +45,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.scm.kingdee.SyncKingdeePurchaseChangeService;
 import com.erp.server.scm.mapper.PurchaseChangeMapper;
 import com.erp.server.scm.service.*;
 import com.google.common.collect.Lists;

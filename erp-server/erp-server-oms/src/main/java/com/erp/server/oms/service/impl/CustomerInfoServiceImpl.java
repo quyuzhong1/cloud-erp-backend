@@ -757,7 +757,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             throw new ServiceException(ApiError.ERROR_92018);
         }
         //推送金蝶
-        list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
+        list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
 
         //删除客户
         Boolean result = this.removeByIds(ids);

@@ -886,7 +886,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             throw new ServiceException(ApiError.ERROR_98009);
         }
         //删除发送金蝶
-        warehouseReceiveList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
+        warehouseReceiveList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         //删除详情表
         purchaseReturnOrderDetailService.delete(ids);
 

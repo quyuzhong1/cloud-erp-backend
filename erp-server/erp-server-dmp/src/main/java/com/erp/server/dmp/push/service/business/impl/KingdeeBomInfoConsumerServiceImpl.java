@@ -4,6 +4,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
@@ -65,20 +66,20 @@ public class KingdeeBomInfoConsumerServiceImpl implements KingdeeBomInfoConsumer
         /**
          * 删除
          */
-        if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
             operateDelete(apiUtils,platformEntity,map,operate);
         }
 
         /**
          * 反审核
          */
-        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             operateDisapprove(apiUtils,platformEntity, map,type);
         }
         /**
          * 审核
          */
-        if (SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
             operateApprove(apiUtils,platformEntity, map,type);
         }
     }

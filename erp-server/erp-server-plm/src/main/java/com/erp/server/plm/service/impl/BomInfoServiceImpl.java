@@ -649,7 +649,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             String operateContent = BomOperateContent.DELETE;
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.DELETE.getType(), operateContent);
             //更新金蝶
-            syncKingdeeBomInfoService.syncDataToKingdee(bomInfoEntity,SyncKingdeeOperateEnum.OPERATE_DELETE.getCode());
+            syncKingdeeBomInfoService.syncDataToKingdee(bomInfoEntity, SyncOperateEnum.OPERATE_DELETE.getCode());
         }
         return flag;
     }
@@ -878,7 +878,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_PASS.getName(), BomStateEnum.WAIT_SUBMIT_AUDIT.getName());
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
             //bom反审核
-            syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode());
+            syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return result;
     }

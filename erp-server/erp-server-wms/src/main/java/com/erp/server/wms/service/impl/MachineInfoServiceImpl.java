@@ -433,7 +433,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         }
         log.info("加工单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //金蝶推送
-        list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
+        list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
 
         //删除子件明细
         machineSubComponentsService.removeByMainIds(ids);

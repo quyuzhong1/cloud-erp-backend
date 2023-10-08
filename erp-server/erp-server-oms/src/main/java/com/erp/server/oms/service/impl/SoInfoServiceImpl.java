@@ -1159,7 +1159,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         checkRemove(ids);
 
         //推送金蝶
-        list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
+        list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
 
         Boolean result = this.removeByIds(ids);
         if (result) {

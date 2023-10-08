@@ -85,7 +85,7 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
         /**
          * 禁用/反禁用
          */
-        if (SyncOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
             operateEnable(apiUtils,platformEntity, map,type,json);
         }
 
@@ -146,7 +146,7 @@ public class KingdeeSysUserInfoConsumerServiceImpl implements KingdeeSysUserInfo
         String forbidStatus = model.getStr("ForbidStatus", "");
         // A启用 B禁用
         Boolean kingdeeForbidStatus = "B".equals(forbidStatus) ? Boolean.TRUE : Boolean.FALSE;
-        if (SyncOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
             //如果是一致就不处理
             if (erpForbidStatus.equals(kingdeeForbidStatus)) {
                 log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}], 无需{}，跳过{}操作", forbidStatus, map.get("disabled"), operate, operate);

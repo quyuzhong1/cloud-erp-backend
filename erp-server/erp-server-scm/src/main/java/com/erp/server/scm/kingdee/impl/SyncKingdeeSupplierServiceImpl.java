@@ -99,7 +99,7 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
         resultMap.put("disabled",entity.getDisabled());
 
         //审核未通过、非反审核不推送
-        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) && !SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) && !SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate) && !SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
             return;
         }
 

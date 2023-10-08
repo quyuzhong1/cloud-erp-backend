@@ -88,7 +88,7 @@ public class KingdeeSupplierConsumerServiceImpl implements KingdeeSupplierConsum
         /**
          * 禁用/反禁用
          */
-        if (SyncOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
             operateEnable(apiUtils,platformEntity, map,type,json);
         }
 
@@ -202,7 +202,7 @@ public class KingdeeSupplierConsumerServiceImpl implements KingdeeSupplierConsum
         Boolean kingdeeForbidStatus = "B".equals(forbidStatus) ? Boolean.TRUE : Boolean.FALSE;
         //操作项
         String operate = (String) map.get("operate");
-        if (SyncOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
             // 判断禁用状态是否与金蝶系统一致 A启用 B禁用
             if (erpForbidStatus.equals(kingdeeForbidStatus)) {
                 log.warn("金蝶禁用状态为[{}] ERP禁用状态为[{}], 无需{}，跳过{}操作", forbidStatus, map.get("disabled"), operate, operate);

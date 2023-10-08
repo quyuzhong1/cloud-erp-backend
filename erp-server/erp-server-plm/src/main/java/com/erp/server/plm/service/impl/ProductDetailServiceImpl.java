@@ -1576,7 +1576,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //更新金蝶
-        syncKingdeeProductDetailService.syncDataToKingdee(detailEntity,SyncKingdeeOperateEnum.OPERATE_DELETE.getCode());
+        syncKingdeeProductDetailService.syncDataToKingdee(detailEntity, SyncOperateEnum.OPERATE_DELETE.getCode());
 
         List<String> idList = Arrays.asList(skuId);
         //1.删除证书信息
@@ -1655,7 +1655,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         list.forEach(req -> {
             //更新金蝶
-            syncKingdeeProductDetailService.syncDataToKingdee(req,SyncKingdeeOperateEnum.OPERATE_DELETE.getCode());
+            syncKingdeeProductDetailService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DELETE.getCode());
         });
         List<String> skuIds = list.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         //1.删除证书信息
@@ -3645,7 +3645,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         entityListt.forEach(req -> {
             //更新金蝶
-            syncKingdeeProductDetailService.syncDataToKingdee(req,SyncKingdeeOperateEnum.OPERATE_DELETE.getCode());
+            syncKingdeeProductDetailService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DELETE.getCode());
         });
         //1.删除证书信息
         productCertificateService.removeCertificate(ids);

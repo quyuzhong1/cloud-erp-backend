@@ -84,7 +84,7 @@ public class KingdeeWarehouseConsumerServiceImpl implements KingdeeWarehouseCons
         /**
          * 删除
          */
-        if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
             operateDelete(apiUtils,platformEntity,map,operate);
         }
 

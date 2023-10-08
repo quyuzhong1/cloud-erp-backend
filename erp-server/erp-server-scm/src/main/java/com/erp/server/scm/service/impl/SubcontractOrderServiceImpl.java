@@ -472,7 +472,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
        }
 
         //删除发送金蝶
-        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
+        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
 
        // 删除日志数据
        log.info("删除 开始删除委外订单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
