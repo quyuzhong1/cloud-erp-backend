@@ -202,6 +202,12 @@ public class PdaVersionDTO implements Serializable {
         private String type;
 
         /**
+        * 通知类型：1 系统通知  0 升级通知
+        */
+        @NotNull(message = "通知类型")
+        private Integer releaseType;
+
+        /**
         * 升级时间
         */
         private LocalDateTime upgradeTime;

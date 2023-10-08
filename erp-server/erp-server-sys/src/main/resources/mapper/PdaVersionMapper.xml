@@ -69,7 +69,7 @@
         FROM pda_version pv
         WHERE pv.is_deleted = FALSE
         AND now() >= pv.upgrade_time
-        AND pv.upgrade_time IN (SELECT MAX(upgrade_time) FROM pda_version)
+        AND pv.upgrade_time IN (SELECT MAX(upgrade_time) FROM pda_version WHERE release_type = 0)
 		AND NOT EXISTS (
 		    SELECT
 			    pusv.id
