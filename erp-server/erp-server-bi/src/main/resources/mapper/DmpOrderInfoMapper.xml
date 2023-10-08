@@ -431,15 +431,53 @@
     <select id="listNetSalesAmountBiFilter" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
         select
         ${viewParams.viewData},
-        sum(doit.totalAmount - COALESCE(dri.refund_amount, 0) * COALESCE(dri.currency_rate,1)) as value
+        sum(COALESCE(doit.amount_after,0) * COALESCE(doit.currency_rate,1)) as value
         from dmp_order_info doi
-        inner join (
-            select order_id,sum(COALESCE(amount_after,0) * COALESCE(currency_rate,1)) as totalAmount from dmp_order_item  group by order_id) doit on doi.id = doit.order_id
-        left join dmp_refund_info dri on doi.platform_order_id = dri.platform_order_id
+        inner join dmp_order_item doit on doi.id = doit.order_id
         <where>
             <include refid="base_where_sql"/>
 
             <include refid="conditionSql"/>
+        </where>
+        group by ${viewParams.groupData}
+    </select>
+
+
+    <select id="listRefundBiFilter" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
+        select
+            ${viewParams.viewData},
+            to_char(dri.refund_time,'MM') as month,
+            sum(COALESCE(dri.refund_amount, 0) * COALESCE(dri.currency_rate,1)) as value
+        from dmp_refund_info dri
+        <where>
+            dri.refund_status = 4
+            <if test="params.startTime != null">
+                AND dri.refund_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND dri.refund_time &lt; #{params.endTime}
+            </if>
+            /*平台*/
+            <if test="params.platform!=null and params.platform.size>0">
+                AND dri.platform_name IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            /*店铺*/
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND dri.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            /*用户id*/
+            <if test="params.userId!=null and params.userId.size>0">
+                AND dri.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
         </where>
         group by ${viewParams.groupData}
     </select>
