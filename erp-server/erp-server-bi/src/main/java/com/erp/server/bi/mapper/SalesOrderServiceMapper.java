@@ -16,11 +16,12 @@ import java.util.Map;
 
 /**
  * @Classname SalesOrderServiceMapper
+
  * @Date 2022-12-16 11:09
  * @Created by yl
  */
 @Mapper
-public interface SalesOrderServiceMapper extends BaseMapper<DmpOrderInfoEntity> {
+public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity> {
 
     List<SalesFlagVO> getMonthSales(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate, @Param("timeFlag") String timeFlag);
 
