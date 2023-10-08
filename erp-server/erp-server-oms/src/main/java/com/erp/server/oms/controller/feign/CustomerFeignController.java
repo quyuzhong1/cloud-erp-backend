@@ -59,6 +59,19 @@ public class CustomerFeignController {
     public List<CustomerInfoVO> listCustomerByGroup() {
         return customerInfoService.listCustomerByGroup();
     }
+
+    /**
+     * 获取客户属性信息
+     *
+     * @return com.erp.model.oms.vo.CustomerInfoVO
+     * @Author zdy
+     * @Date 2023/10/08 18:18
+     **/
+    @PostMapping("/listCustomerByProperty")
+    public List<CustomerInfoVO> listCustomerByProperty() {
+        return customerInfoService.listCustomerByProperty();
+    }
+
     @PostMapping("/quoteCustomer")
     public Boolean quoteCustomer(@RequestBody List<String> ids) {
         return customerInfoService.quoteCustomer(ids);

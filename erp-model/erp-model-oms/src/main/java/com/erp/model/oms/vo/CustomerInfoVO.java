@@ -41,4 +41,9 @@ public class CustomerInfoVO implements Serializable {
      * 分组名
      */
     private String groupName;
+
+    /**
+     * 客户属性
+     */
+    private String customerProperty;
 }

@@ -35,6 +35,16 @@ public interface CustomerFeign {
     List<CustomerInfoVO> listCustomerByGroup();
 
     /**
+     * 获取客户属性信息
+     *
+     * @return com.erp.model.oms.vo.CustomerInfoVO
+     * @Author zdy
+     * @Date 2023/10/08 18:18
+     **/
+    @PostMapping("feign/customer/listCustomerByProperty")
+    List<CustomerInfoVO> listCustomerByProperty();
+
+    /**
      * 引用客户
      *
      * @param ids ids

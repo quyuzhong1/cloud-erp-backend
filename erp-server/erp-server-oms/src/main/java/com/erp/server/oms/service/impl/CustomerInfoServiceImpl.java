@@ -1050,6 +1050,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         return baseMapper.listCustomerByGroup();
     }
 
+    @Override
+    public List<CustomerInfoVO> listCustomerByProperty() {
+        return baseMapper.listCustomerByProperty();
+    }
+
     private Boolean updateApproveStatus(List<CustomerInfoEntity> list, ApproveStatusEnum statusEnum, String approveUserName) {
         if (CollectionUtils.isNotEmpty(list)) {
             for (CustomerInfoEntity item : list) {

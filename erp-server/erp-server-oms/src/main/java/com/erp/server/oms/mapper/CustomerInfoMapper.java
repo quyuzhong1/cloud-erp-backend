@@ -53,4 +53,10 @@ public interface CustomerInfoMapper extends BaseMapper<CustomerInfoEntity> {
      * @return
      */
     List<CustomerInfoVO> listCustomerByGroup();
+    /**
+     * 获取用户属性信息
+     *
+     * @return
+     */
+    List<CustomerInfoVO> listCustomerByProperty();
 }

@@ -203,6 +203,12 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
     private String syncKingdeeId;
 
     /**
+     * 客户属性
+     */
+    @TableField("customer_property")
+    private String customerProperty;
+
+    /**
      * 同步操作
      */
     @TableField("sync_operate")

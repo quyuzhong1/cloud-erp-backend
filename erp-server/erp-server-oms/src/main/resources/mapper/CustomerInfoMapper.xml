@@ -165,4 +165,11 @@
         from customer_info ci
         where ci.is_deleted = FALSE and group_id != ''
     </select>
+
+    <select id="listCustomerByProperty" resultType="com.erp.model.oms.vo.CustomerInfoVO">
+        select id,"name", code,customer_property
+        from customer_info ci
+        where ci.is_deleted = FALSE and customer_property != ''
+    </select>
+
 </mapper>

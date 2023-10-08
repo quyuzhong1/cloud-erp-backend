@@ -243,6 +243,12 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return
      */
     List<CustomerInfoVO> listCustomerByGroup();
+    /**
+     * 获取客户属性信息
+     *
+     * @return
+     */
+    List<CustomerInfoVO> listCustomerByProperty();
 
     /**
      * 修改金蝶同步信息

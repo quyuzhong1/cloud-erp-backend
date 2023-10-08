@@ -3624,8 +3624,48 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     }
 
     @Override
-    public StatisticalDataVO customerPropertyAnalysis(BiFilterDTO biFilterDTO) {
+    public StatisticalDataVO customerPropertyAnalysis(BiFilterDTO params) {
         StatisticalDataVO statistical = new StatisticalDataVO();
+        statistical.setName("B2B客户属性销售额占比");
+        statistical.setChartType(ChartType.PIE);
+        List<CustomerInfoVO> customerInfoVOS = customerFeign.listCustomerByProperty();
+        if (CollectionUtils.isEmpty(customerInfoVOS)){
+            return statistical;
+        }
+        //分组
+        Map<String, List<CustomerInfoVO>> map = customerInfoVOS.stream().collect(Collectors.groupingBy(CustomerInfoVO::getCustomerProperty));
+        if (map.isEmpty()){
+            return statistical;
+        }
+        //获取到结算汇率
+        String settleRate = getSettleRate(params.getSettleMethod());
+        LocalDateTime paramsEndTime = params.getEndTime();
+        params.setEndTime(paramsEndTime, 1);
+        ChartVO chartVO = new ChartVO();
+        chartVO.setXAxis(new ArrayList<>());
+        List<SeriesVO<Object>> seriesList = new ArrayList<>();
+        SeriesVO<Object> series = new SeriesVO();
+        series.setName("销售额");
+        SeriesVO<Object> series2 = new SeriesVO();
+        series2.setName("客户属性");
+        List<Object> list = new ArrayList<>();
+        List<Object> list2 = new ArrayList<>();
+        for(String s : map.keySet()){
+            List<CustomerInfoVO> customerInfoVOS1 = map.get(s);
+            if (CollectionUtils.isNotEmpty(customerInfoVOS1)){
+                Set<String> customerCodes = customerInfoVOS1.stream().map(CustomerInfoVO::getCode).filter(StringUtils::isNotEmpty).collect(Collectors.toSet());
+                params.setCustomerCodes(new ArrayList<>(customerCodes));
+                BigDecimal bigDecimal = baseMapper.customerLevelProportion(params, settleRate);
+                list.add(bigDecimal);
+                list2.add(customerInfoVOS1.get(0).getCustomerProperty());
+            }
+        }
+        series.setData(list);
+        series2.setData(list2);
+        seriesList.add(series);
+        seriesList.add(series2);
+        chartVO.setSeries(seriesList);
+        statistical.setData(chartVO);
         return statistical;
     }
 
@@ -3659,7 +3699,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         for(String s : map.keySet()){
             List<CustomerInfoVO> customerInfoVOS1 = map.get(s);
             if (CollectionUtils.isNotEmpty(customerInfoVOS1)){
-                Set<String> customerCodes = customerInfoVOS1.stream().map(CustomerInfoVO::getCode).filter(code -> StringUtils.isNotEmpty(code)).collect(Collectors.toSet());
+                Set<String> customerCodes = customerInfoVOS1.stream().map(CustomerInfoVO::getCode).filter(StringUtils::isNotEmpty).collect(Collectors.toSet());
                 params.setCustomerCodes(new ArrayList<>(customerCodes));
                 BigDecimal bigDecimal = baseMapper.customerLevelProportion(params, settleRate);
                 list.add(bigDecimal);
