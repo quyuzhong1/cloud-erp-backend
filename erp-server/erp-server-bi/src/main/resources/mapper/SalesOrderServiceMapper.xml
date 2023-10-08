@@ -4882,4 +4882,63 @@
         GROUP BY name
         ORDER BY monthSales
     </select>
+    <!--获取净销售额-->
+    <select id="netSalesAmount" resultType="java.math.BigDecimal">
+        SELECT
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS sales
+        </if>
+        FROM
+        dmp_order_item i
+        LEFT JOIN dmp_order_info o
+        ON i.order_id = o.id
+        <where>
+        <if test="params.timeType!=null and params.timeType==0">
+            <if test="params.startTime !=null">
+                o.platform_create_time &gt;= #{params.startTime}
+            </if>
+            <if test="params.endTime !=null">
+                AND o.platform_create_time &lt; #{params.endTime}
+            </if>
+        </if>
+        <!-- 发货时间 -->
+        <if test="params.timeType!=null and params.timeType==1">
+            <if test="params.startTime !=null">
+                AND o.delivery_time &gt;= #{params.startTime}
+            </if>
+            <if test="params.endTime !=null">
+                AND o.delivery_time &lt; #{params.endTime}
+            </if>
+        </if>
+        <!-- 平台 -->
+        <if test="params.platform!=null and params.platform.size>0">
+            AND o.source_platform IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+        <!-- 店铺 -->
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND o.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
+            </foreach>
+        </if>
+        <!-- 用户id -->
+        <if test="params.userId!=null and params.userId.size>0">
+            AND o.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <!-- 权限 -->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+       </where>
+
+    </select>
 </mapper>

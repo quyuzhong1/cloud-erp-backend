@@ -135,7 +135,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                 if (yearFlag.equals(flagStr)) {
                     setYearDate(dto, yearMonth);
                     //销售额
-                    BigDecimal yearOrderAmount = salesOrderServiceMapper.getAmount(dto, settleRate);
+                    BigDecimal yearOrderAmount = salesOrderServiceMapper.netSalesAmount(dto, settleRate);
                     //年退款金额
                     BigDecimal yearRefundOrderAmount = dmpRefundInfoService.getRefundOrderAmount(dto);
                     return MathUtil.subtract(yearOrderAmount, yearRefundOrderAmount);
@@ -143,7 +143,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                     setMonthDate(dto, yearMonth);
                     //退款金额
                     BigDecimal refundOrderAmount = dmpRefundInfoService.getRefundOrderAmount(dto);
-                    BigDecimal monthAmount = salesOrderServiceMapper.getAmount(dto, settleRate);
+                    BigDecimal monthAmount = salesOrderServiceMapper.netSalesAmount(dto, settleRate);
                     if (Objects.isNull(monthAmount)) {
                         monthAmount = BigDecimal.ZERO;
                     }

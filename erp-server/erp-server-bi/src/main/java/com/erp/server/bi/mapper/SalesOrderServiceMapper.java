@@ -231,4 +231,14 @@ public interface SalesOrderServiceMapper extends BaseMapper<DmpOrderInfoEntity> 
      * @return
      */
     BigDecimal customerLevelProportion(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
+
+    /**
+     * 净销售额
+     * @author yl
+     * @date 2023-10-08 15:49
+     * @param dto
+     * @param settleRate
+     * @return java.math.BigDecimal
+     */
+    BigDecimal netSalesAmount(@Param("params") BiTargetYearDTO.SearchDTO dto, @Param("settleRate") String settleRate);
 }
