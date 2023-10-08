@@ -53,4 +53,9 @@ public class SplitSkuDTO implements Serializable {
      * 商品售价
      */
     private BigDecimal amountAfter;
+
+    public SplitSkuDTO() {
+        this.cleanCostPrice = BigDecimal.ZERO;
+        this.amountAfter = BigDecimal.ZERO;
+    }
 }
