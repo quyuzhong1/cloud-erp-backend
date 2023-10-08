@@ -166,7 +166,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_OTHER_INSTOCK_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"",SyncStatusEnum.IN_SYNC.getCode());
+                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.IN_SYNC.getCode());
                 return otherInstockService.updateSyncKingdeeStatus(syncKingdeeDTO);
             }
             return Boolean.TRUE;

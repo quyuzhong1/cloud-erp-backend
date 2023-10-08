@@ -5,9 +5,9 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -66,7 +66,7 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
         Map<String, Object> resultMap = new HashMap<>();
 
         //更新同步状态为待同步
-        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"",SyncStatusEnum.TO_BE_SYNC.getCode());
+        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.TO_BE_SYNC.getCode());
         purchasePriceService.updateSyncKingdeeStatus(kingdeeDTO);
 
         //业务id
@@ -145,7 +145,7 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_PRICE_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"",SyncStatusEnum.IN_SYNC.getCode());
+                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.IN_SYNC.getCode());
                 return purchasePriceService.updateSyncKingdeeStatus(syncKingdeeDTO);
             }
             return Boolean.TRUE;

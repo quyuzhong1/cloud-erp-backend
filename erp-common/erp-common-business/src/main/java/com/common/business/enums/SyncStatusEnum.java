@@ -51,8 +51,8 @@ public enum SyncStatusEnum {
      * @return
      */
     public static String getNameByCode(String code) {
-        SyncStatusEnum syncKingdeeStatusEnum = Arrays.stream(SyncStatusEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
-        return Optional.ofNullable(syncKingdeeStatusEnum).map(SyncStatusEnum::getName).orElse("");
+        SyncStatusEnum syncStatusEnum = Arrays.stream(SyncStatusEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
+        return Optional.ofNullable(syncStatusEnum).map(SyncStatusEnum::getName).orElse("");
     }
 
 }

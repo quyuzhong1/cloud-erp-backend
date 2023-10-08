@@ -69,7 +69,7 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
             return;
         }
         //更新同步状态为待同步
-        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"",SyncStatusEnum.TO_BE_SYNC.getCode());
+        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.TO_BE_SYNC.getCode());
         stocktakingProfitLossService.updateSyncKingdeeStatus(kingdeeDTO);
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -122,7 +122,7 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_STOCKTAKING_PROFIT_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"",SyncStatusEnum.IN_SYNC.getCode());
+                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.IN_SYNC.getCode());
                 return stocktakingProfitLossService.updateSyncKingdeeStatus(syncKingdeeDTO);
             }
             return Boolean.TRUE;

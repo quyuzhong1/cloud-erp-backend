@@ -100,8 +100,8 @@ public class KingdeePushJob {
     @XxlJob("kingdeePushPurchaseChange")
     public void kingdeePushPurchaseChange() {
         List<PurchaseChangeEntity> list = purchaseChangeService.lambdaQuery()
-                .in(PurchaseChangeEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
-                .or(obj -> obj.eq(PurchaseChangeEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(PurchaseChangeEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
+                .in(PurchaseChangeEntity::getSyncKingdeeStatus, Arrays.asList(SyncStatusEnum.TO_BE_SYNC.getCode(), SyncStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(PurchaseChangeEntity::getSyncKingdeeStatus, SyncStatusEnum.IN_SYNC.getCode()).le(PurchaseChangeEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的采购订单变更");

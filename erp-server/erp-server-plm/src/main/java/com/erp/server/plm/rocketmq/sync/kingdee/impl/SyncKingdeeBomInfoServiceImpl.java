@@ -1,6 +1,7 @@
 package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
@@ -52,7 +53,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         Map<String, Object> resultMap = new HashMap<>();
 
         //更新同步状态为待同步
-        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"",SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.TO_BE_SYNC.getCode());
         bomInfoService.updateSyncKingdeeStatus(kingdeeDTO);
 
 
@@ -92,7 +93,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_BOM_INFO_TAG.getName(), resultMap, entity.getId());
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"",SyncKingdeeStatusEnum.IN_SYNC.getCode());
+                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.IN_SYNC.getCode());
                 //mq发送成更新业务表状态及时间
                 return bomInfoService.updateSyncKingdeeStatus(syncKingdeeDTO);
             }

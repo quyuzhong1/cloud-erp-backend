@@ -43,13 +43,13 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
         String code = entity.getCode();
         //表示没有金蝶的code 那就无需推送的
         if (StringUtils.isBlank(code)) {
-            PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getUid(),operate,"",SyncStatusEnum.NO_NEED_SYNC.getCode());
+            PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getUid(),operate,"", SyncStatusEnum.NO_NEED_SYNC.getCode());
             sysUserInfoService.updateSyncKingdeeStatus(kingdeeDTO);
             return;
         }
 
         //更新同步状态为待同步
-        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getUid(),operate,"",SyncStatusEnum.TO_BE_SYNC.getCode());
+        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getUid(),operate,"", SyncStatusEnum.TO_BE_SYNC.getCode());
         sysUserInfoService.updateSyncKingdeeStatus(kingdeeDTO);
 
         //业务id
@@ -74,7 +74,7 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SYS_USER_INFO_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getUid(),operate,"",SyncStatusEnum.IN_SYNC.getCode());
+                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getUid(),operate,"", SyncStatusEnum.IN_SYNC.getCode());
                 return sysUserInfoService.updateSyncKingdeeStatus(syncKingdeeDTO);
             }
             return Boolean.TRUE;

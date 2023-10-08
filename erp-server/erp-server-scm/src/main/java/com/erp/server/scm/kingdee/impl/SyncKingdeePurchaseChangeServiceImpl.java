@@ -8,7 +8,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.SubcontractTypeEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -67,7 +67,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
     public void syncDataToKingdee(PurchaseChangeEntity entity, String operate) {
 
         //更新同步状态为待同步
-        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.TO_BE_SYNC.getCode());
         purchaseChangeService.updateSyncKingdeeStatus(kingdeeDTO);
 
         //采购订单未同步成功则无需推送采购变更
@@ -75,7 +75,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
-        if (!SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode().equals(purchaseOrderEntity.getSyncKingdeeStatus())) {
+        if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(purchaseOrderEntity.getSyncKingdeeStatus())) {
             return;
         }
         Map<String, Object> resultMap = new HashMap<>();
@@ -197,7 +197,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_CHANGE_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"",SyncKingdeeStatusEnum.IN_SYNC.getCode());
+                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.IN_SYNC.getCode());
                 return purchaseChangeService.updateSyncKingdeeStatus(syncKingdeeDTO);
             }
             return Boolean.TRUE;
