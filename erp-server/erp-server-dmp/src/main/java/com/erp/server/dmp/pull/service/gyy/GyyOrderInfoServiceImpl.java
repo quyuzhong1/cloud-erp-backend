@@ -117,7 +117,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         }
         gyyOrder.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
         gyyOrder.setDownloadStatus(1);
-        gyyOrder.setDownloadTime(LocalDateTime.now());
+        gyyOrder.setDownloadTime(LocalDateTime.now().toString());
         // 修改数据
         updateAndSaveDb(gyyOrder);
     }
@@ -156,7 +156,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         }
         for (GyyOrderEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
-            mongoDatum.setLastPushTime(LocalDateTime.now());
+            mongoDatum.setLastPushTime(LocalDateTime.now().toString());
             updateAndSaveDb(mongoDatum);
         }
     }

@@ -7,14 +7,12 @@ import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.sdk.oms.shopify.api.rest.model.ShopifyLineItem;
 import com.sdk.oms.shopify.api.rest.model.ShopifyOrder;
-import com.sdk.oms.shopify.api.rest.model.ShopifyProduct;
 import com.sdk.oms.shopify.api.rest.model.ShopifyShippingLine;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -45,9 +43,10 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
         this.setUniqueId(shopifyOrder.getId());
-        this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()));
 //        this.setLastPushTime(dto.getNextTime());
         this.shopInfoDTO = shopInfoDTO;
+        this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
+        this.setLastPushTime(dto.getNextTime().toString());
     }
 
     /**

@@ -156,7 +156,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         }
         for (GyyRefundEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
-            mongoDatum.setLastPushTime(LocalDateTime.now());
+            mongoDatum.setLastPushTime(LocalDateTime.now().toString());
             updateAndSaveDb(mongoDatum);
         }
     }

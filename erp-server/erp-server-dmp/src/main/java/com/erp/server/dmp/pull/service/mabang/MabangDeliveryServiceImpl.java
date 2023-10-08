@@ -95,7 +95,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByDeliveryNo(entity.getDelivery_no());
             List<DeliveryEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_DELIVERY, DeliveryEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
-            entity.setDownloadTime(LocalDateTime.now());
+            entity.setDownloadTime(LocalDateTime.now().toString());
 
             // 拉取下来的数据在mongodb中不存在，新增到mongodb，并推送到mq
             if(CollectionUtil.isEmpty(mongoData)){
@@ -155,14 +155,14 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
         // 查询mongo待推送数据
         String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
         Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
-        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
         List<DeliveryEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_MABANG_DELIVERY, DeliveryEntity.class);
         if (CollectionUtil.isEmpty(mongoData)) {
             return;
         }
         for (DeliveryEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
-            mongoDatum.setLastPushTime(LocalDateTime.now());
+            mongoDatum.setLastPushTime(LocalDateTime.now().toString());
             updateAndSaveDb(mongoDatum);
         }
     }

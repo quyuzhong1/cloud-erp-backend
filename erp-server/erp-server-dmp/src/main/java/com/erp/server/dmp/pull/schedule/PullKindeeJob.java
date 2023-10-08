@@ -4,16 +4,15 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
-import com.common.business.enums.ErpServerModuleEnum;
-import com.common.message.service.mq.MQProducerService;
 import com.common.business.constant.TaskConstant;
-import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.RequestDTO;
+import com.common.business.enums.ErpServerModuleEnum;
+import com.common.business.enums.PlatformApiEnum;
+import com.common.business.service.IReportSaveService;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
-import com.common.business.enums.PlatformApiEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
-import com.common.business.service.IReportSaveService;
 import com.erp.server.dmp.pull.thread.PullErpDateThread;
 import com.erp.server.dmp.service.DmpErrorLogService;
 import com.erp.server.dmp.service.PlatformApiTaskService;
@@ -61,6 +60,7 @@ public class PullKindeeJob {
     }
 
     @XxlJob("kindeeCleanExecute")
+//    @Scheduled(cron = "*/5 * * * * ?")
     public void kindeeCleanExecute() {
         String jobParam = XxlJobHelper.getJobParam();
         log.info("金蝶云清洗任务参数：{}", jobParam);

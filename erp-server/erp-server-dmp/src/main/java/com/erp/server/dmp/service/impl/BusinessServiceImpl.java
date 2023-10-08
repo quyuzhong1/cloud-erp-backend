@@ -89,7 +89,7 @@ public class BusinessServiceImpl {
             OrderMongoDTO orderMongoDTO =  OrderMongoDTO.getUniqId(item.getUniqueId());
             List<T> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, tableName, tClass);
             item.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
-            item.setDownloadTime(LocalDateTime.now());
+            item.setDownloadTime(LocalDateTime.now().toString());
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add((T) item);
                 uniqueIds.add(item.getUniqueId());

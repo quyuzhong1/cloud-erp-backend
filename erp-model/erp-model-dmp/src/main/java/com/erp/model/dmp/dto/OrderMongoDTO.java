@@ -59,9 +59,6 @@ public class  OrderMongoDTO {
     private Integer cleanToDeliveryExists;
 
     @Panno(findType = PannoEnum.LTE,field = "downloadTime")
-    private LocalDateTime downloadEndTime;
-
-    @Panno(findType = PannoEnum.LTE,field = "downloadTime")
     private String downloadEndTimeStr;
 
     @Panno(findType = PannoEnum.EQ, field = "comboSku")
@@ -143,14 +140,15 @@ public class  OrderMongoDTO {
         return orderMongoDTO;
     }
 
-    public static OrderMongoDTO getByIsClean(Integer isClean, Integer diffMinute) {
-        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
-        orderMongoDTO.setIsClean(isClean);
-        if(null != diffMinute && diffMinute != 0){
-            orderMongoDTO.setDownloadEndTime(LocalDateTime.now().minusMinutes(diffMinute));
-        }
-        return orderMongoDTO;
-    }
+//    public static OrderMongoDTO getByIsClean(Integer isClean, Integer diffMinute) {
+//        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+//        orderMongoDTO.setIsClean(isClean);
+//        if(null != diffMinute && diffMinute != 0){
+//            orderMongoDTO.setDownloadEndTime(LocalDateTime.now().minusMinutes(diffMinute).toString());
+//        }
+//        return orderMongoDTO;
+//    }
+
     public static OrderMongoDTO getByIsCleanDateStr(Integer isClean, Integer diffMinute) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setIsClean(isClean);

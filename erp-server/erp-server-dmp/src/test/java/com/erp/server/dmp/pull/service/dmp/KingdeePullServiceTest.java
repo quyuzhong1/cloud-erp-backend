@@ -1,22 +1,22 @@
 package com.erp.server.dmp.pull.service.dmp;
 
 import cn.hutool.json.JSONObject;
-import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.RequestDTO;
+import com.common.business.enums.PlatformApiEnum;
+import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.common.business.enums.PlatformApiEnum;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeDeliveryDetailServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeEccShopServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeOrderInfoServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeReturnOrderInfoImpl;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,7 +26,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @Author Cloud
@@ -151,4 +153,30 @@ public class KingdeePullServiceTest {
         System.out.println(model);
     }
 
+
+    /**
+     * 近7天数据拉取
+     */
+    @Test
+    public void pullOrderTest() {
+        KingdeeOrderInfoServiceImpl kingdeeOrderInfoService = new KingdeeOrderInfoServiceImpl();
+        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+        jobTaskDTO.setApiCode(PlatformApiEnum.SAL_SALEORDER.getTaskName());
+        jobTaskDTO.setPlatformApiId("5");
+        jobTaskDTO.setApiName("获取订单列表");
+        jobTaskDTO.setId("30");
+        jobTaskDTO.setIntervalTime(1800);
+        jobTaskDTO.setLastTime(LocalDateTime.now().minusDays(5));
+        jobTaskDTO.setNextTime(LocalDateTime.now());
+        jobTaskDTO.setDictPlatform("1");
+        jobTaskDTO.setStatus(1);
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setPlatformApiEnum(PlatformApiEnum.SAL_SALEORDER);
+        requestDTO.setJobTaskDTO(jobTaskDTO);
+        try {
+            kingdeeOrderInfoService.pullDataSave(requestDTO);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
