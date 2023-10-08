@@ -94,6 +94,26 @@ public class DmpReturnOrderItemEntity implements Serializable {
     @TableField(value = "amount_after")
     private BigDecimal amountAfter;
 
+    /**
+     * 原始sku
+     */
+    private String originalSkuNo;
+
+    /**
+     * 清洗后成本价
+     */
+    private BigDecimal cleanCostPrice;
+
+    /**
+     * 是否拆分订单 1.拆分 2.非拆分
+     */
+    private Integer isSplitSku;
+
+    /**
+     * 是否是赠品 1. 是 2. 否
+     */
+    private Integer isGift;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 

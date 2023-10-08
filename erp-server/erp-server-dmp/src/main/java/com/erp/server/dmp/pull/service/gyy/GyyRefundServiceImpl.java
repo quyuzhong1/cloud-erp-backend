@@ -146,7 +146,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         // 查询mongo待推送数据
         String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
         Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
-        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
         List<GyyRefundEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
         if (CollectionUtil.isEmpty(mongoData)) {
             return;
@@ -245,7 +245,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
 
         //店铺编号
         dmpRefundInfoEntity.setShopNo(gyyRefundEntity.getShopCode());
-        DmpShopInfoEntity shopInfo = dmpShopInfoService.getShopByShopNo(gyyRefundEntity.getShopCode(), PlatformEnum.GYY.getDesc());
+        DmpShopInfoEntity shopInfo = dmpShopInfoService.getShopByShopNo(gyyRefundEntity.getShopCode());
         //店铺名称
         dmpRefundInfoEntity.setShopName(null != shopInfo ? shopInfo.getName() : "");
         //平台名称
@@ -318,7 +318,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
     }
 
     private boolean assertOrgIsVijim(String shopCode) {
-        DmpShopInfoEntity shopInfo = dmpShopInfoService.getShopByShopNo(shopCode, PlatformEnum.GYY.getDesc());
+        DmpShopInfoEntity shopInfo = dmpShopInfoService.getShopByShopNo(shopCode);
 //        return null != shopInfo && (ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(shopInfo.getUseOrgId().toString()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(shopInfo.getUseOrgId().toString()));
         return null != shopInfo && StrUtil.isNotBlank(shopInfo.getName()) && (shopInfo.getName().contains("小隼") || shopInfo.getName().contains("优至胜"));
     }

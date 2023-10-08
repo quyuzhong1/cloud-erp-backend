@@ -37,14 +37,24 @@ import java.util.Objects;
  * @Author: zhangchunlin
  */
 @Slf4j
-@RestControllerAdvice(basePackages = {"com.erp.server.scm.controller.api",
+@RestControllerAdvice(basePackages = {
+        "com.erp.server.scm.controller.api",
         "com.erp.server.wms.controller.api",
         "com.erp.server.workflow.controller.api",
         "com.erp.server.auth.controller.api",
         "com.erp.server.bi.controller.api",
         "com.erp.server.plm.controller.api",
         "com.erp.server.sys.controller.api",
-        "com.erp.server.oms.controller.api"
+        "com.erp.server.oms.controller.api",
+
+        "com.erp.server.scm.controller.pda",
+        "com.erp.server.wms.controller.pda",
+        "com.erp.server.workflow.controller.pda",
+        "com.erp.server.auth.controller.pda",
+        "com.erp.server.bi.controller.pda",
+        "com.erp.server.plm.controller.pda",
+        "com.erp.server.sys.controller.pda",
+        "com.erp.server.oms.controller.pda"
 
 })
 public class GlobalExceptionHandler {

@@ -39,7 +39,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.listener.InitStockDetailExcelListener;
 import com.erp.server.wms.mapper.InitStockMapper;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -490,7 +490,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 stockMembers.add(inOutStockDTO);
             });
         });
-        inventoryInOutStockDTO.setMembers(stockMembers);
+        inventoryInOutStockDTO.setParamList(stockMembers);
         inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
     }
 

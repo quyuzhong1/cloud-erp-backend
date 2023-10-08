@@ -1,7 +1,7 @@
 package com.erp.server.sys.schedule;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
@@ -48,7 +48,7 @@ public class KingdeePushJob {
     @XxlJob("kingdeePushSysDepartment")
     public void kingdeePushSysDepartment() {
         List<SysDepartmentEntity> list = sysDepartmentService.lambdaQuery()
-                .in(SysDepartmentEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .in(SysDepartmentEntity::getSyncKingdeeStatus, Arrays.asList(SyncStatusEnum.TO_BE_SYNC.getCode(), SyncStatusEnum.FAILED_SYNC.getCode()))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的部门");
@@ -66,8 +66,8 @@ public class KingdeePushJob {
     @XxlJob("kingdeePushSysUserInfo")
     public void kingdeePushSysUserInfo() {
         List<SysUserInfoEntity> list = sysUserInfoService.lambdaQuery()
-                .in(SysUserInfoEntity::getSyncKingdeeStatus, Arrays.asList(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
-                .or(obj -> obj.eq(SysUserInfoEntity::getSyncKingdeeStatus,SyncKingdeeStatusEnum.IN_SYNC.getCode()).le(SysUserInfoEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
+                .in(SysUserInfoEntity::getSyncKingdeeStatus, Arrays.asList(SyncStatusEnum.TO_BE_SYNC.getCode(), SyncStatusEnum.FAILED_SYNC.getCode()))
+                .or(obj -> obj.eq(SysUserInfoEntity::getSyncKingdeeStatus, SyncStatusEnum.IN_SYNC.getCode()).le(SysUserInfoEntity::getSyncKingdeeTime, LocalDateTime.now().minusMinutes(10)))
                 .list();
         if (ObjectUtils.isEmpty(list)) {
             log.info("无需要同步的用户");

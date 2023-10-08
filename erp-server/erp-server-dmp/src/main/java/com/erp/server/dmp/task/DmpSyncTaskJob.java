@@ -1,12 +1,11 @@
 package com.erp.server.dmp.task;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.entity.DmpSyncTaskEntity;
@@ -60,7 +59,7 @@ public class DmpSyncTaskJob {
 
         // 查询DMP同步数据
         List<DmpSyncTaskEntity> recordEntityList = dmpSyncTaskService.lambdaQuery()
-                .in(DmpSyncTaskEntity::getStatus, Arrays.asList(SyncKingdeeStatusEnum.FAILED_SYNC.getCode(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode()))
+                .in(DmpSyncTaskEntity::getStatus, Arrays.asList(SyncStatusEnum.FAILED_SYNC.getCode(), SyncStatusEnum.TO_BE_SYNC.getCode()))
                 .le(DmpSyncTaskEntity::getUpdateTime, LocalDateTime.now().minusMinutes(diffMinute))
                 .orderByAsc(DmpSyncTaskEntity::getUpdateTime)
                 .last(null != size && size > 0, StrUtil.format("limit {}", size))

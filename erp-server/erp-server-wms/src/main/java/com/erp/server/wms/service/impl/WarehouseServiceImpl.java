@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -11,9 +10,9 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
-import com.common.business.service.RedisService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.business.service.impl.RedisService;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -85,6 +84,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public List<WarehouseDTO.UpdateDTO> listWarehouseByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
         List<WarehouseEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
@@ -255,9 +257,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
         //发送金蝶
         if (dto.getState()) {
-            syncKingdeeWarehouseService.syncDataToKingdee(warehouse, SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode());
+            syncKingdeeWarehouseService.syncDataToKingdee(warehouse, SyncOperateEnum.OPERATE_DISABLE.getCode());
         } else {
-            syncKingdeeWarehouseService.syncDataToKingdee(warehouse, SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode());
+            syncKingdeeWarehouseService.syncDataToKingdee(warehouse, SyncOperateEnum.OPERATE_ENABLE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -292,7 +294,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
 
             //审核通过后发送金蝶
-            list.forEach(obj -> syncKingdeeWarehouseService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeWarehouseService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             return result;
         } else {
             //审核不通过
@@ -337,7 +339,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
 
         //反审核后发送金蝶
-        list.forEach(obj -> syncKingdeeWarehouseService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        list.forEach(obj -> syncKingdeeWarehouseService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         return result;
     }
 

@@ -39,5 +39,15 @@ public class WarehouseLocationFeignController extends BaseController {
       return StrUtils.isEmpty(id) ? new WarehouseLocationEntity() : warehouseLocationService.getById(id);
     }
 
-
+    /**
+     * 根据仓库ids查询
+     * @Author Luo_WG
+     * @Date 2023/9/4 17:38
+     * @param warehouseIds
+     * @return java.util.List<com.erp.model.wms.entity.WarehouseLocationEntity>
+     **/
+    @PostMapping("/listByWarehouseIds")
+    public List<WarehouseLocationEntity> listByWarehouseIds(@RequestBody List<String> warehouseIds) {
+        return warehouseLocationService.listByWarehouseIds(warehouseIds);
+    }
 }

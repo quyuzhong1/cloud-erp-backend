@@ -549,9 +549,19 @@ public class SoOutstockDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
          * 库位
          */
         private String warehouseLocation;
+
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
 
 
         /**
@@ -586,7 +596,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private LocalDate requireDate;
 
-
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
     }
 
     /**
@@ -637,6 +650,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private String sourceType;
 
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
 
         /**
          * 库存组织id
@@ -681,9 +698,19 @@ public class SoOutstockDTO implements Serializable {
         private String warehouseId;
 
         /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
          * 仓管员
          */
         private String warehouseKeeperId;
+
+        /**
+         * 仓管员名称
+         */
+        private String warehouseKeeperName;
 
         /**
          * 客户id
@@ -717,6 +744,11 @@ public class SoOutstockDTO implements Serializable {
          * 承运商id 来源供应商
          */
         private String carrierId;
+
+        /**
+         * 承运商名称 来源供应商
+         */
+        private String carrierName;
 
 
         /**
@@ -1094,6 +1126,11 @@ public class SoOutstockDTO implements Serializable {
          * 数量
          */
         private Integer count;
+
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
     }
 
     /**
@@ -1164,5 +1201,124 @@ public class SoOutstockDTO implements Serializable {
          * 数量
          */
         private Integer qty;
+    }
+
+    /**
+     * PDA:分页查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingViewDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 单据来源
+         */
+        private String sourceType;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名
+         */
+        private String approveStatusName;
+
+        /**
+         * 销售员
+         */
+        private String sellerName;
+
+        /**
+         * 仓库名
+         */
+        private String warehouseName;
+
+        /**
+         * 产品数量
+         */
+        private Integer detailCount;
+
+        /**
+         * 产品信息
+         */
+        private List<PdaItemDTO> itemList;
+    }
+
+    /**
+     * PDA:商品信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaItemDTO {
+        /**
+         * 明细id
+         */
+        private String id;
+
+        /**
+         * sku
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 实发数量
+         */
+        private Integer actualQty;
+    }
+
+    /**
+     * PDA:列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingParamDTO extends SortDTO {
+        /**
+         * 审核状态：根据tab页传审核状态
+         */
+        private List<String> approveStatusList;
+
+        /**
+         * 出库日期
+         */
+        private List<LocalDate> actualDeliveryDateList;
+    }
+
+    /**
+     * PDA:列表状态
+     * @Author Luo_WG
+     * @Date 2023/8/11 9:15
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class PdaCountDTO {
+        /**
+         * 类型(waitSubmitAndReject 待提交/审核不通过，approveIng 审核中，approve 已审核)
+         */
+        private String tabFlag;
+        /**
+         * 数量
+         */
+        private Integer count;
     }
 }

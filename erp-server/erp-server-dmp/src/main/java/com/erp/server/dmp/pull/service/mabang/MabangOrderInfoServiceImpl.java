@@ -31,6 +31,7 @@ import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,6 +132,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
             log.warn("马帮销售订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
             return;
         }
+
         // 构造订单结构
         List<DmpOrderInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(MabangOrderInfoServiceImpl::initOrderInfoEntity)
@@ -158,7 +160,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         // 查询mongo待推送数据
         String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
         Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
-        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
         List<OrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
         if (CollectionUtil.isEmpty(mongoData)) {
             return;
@@ -205,8 +207,16 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
     /**
      * 解析订单数据
      **/
-
     public static DmpOrderInfoEntity initOrderInfoEntity(OrderEntity orderEntity){
+        if (orderEntity.getOrderFee().compareTo(BigDecimal.ZERO) <= 0) {
+            return null;
+        }
+        if (orderEntity.getIsResend().equals(1)) {
+            orderEntity.setOrderFee(BigDecimal.ZERO);
+        }
+        if (orderEntity.getOrderStatus().equals(5) && (StringUtils.isBlank(orderEntity.getBeforeStatus()) || orderEntity.getBeforeStatus().equals(2))) {
+            return null;
+        }
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         BeanUtil.copyProperties(orderEntity, dmpOrderInfoEntity);
         //订单状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
@@ -227,7 +237,13 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         }
         //订单来源平台
         MabangSourcePlatformEnum sourcePlatformEnum = MabangSourcePlatformEnum.getByCode(orderEntity.getPlatformId());
+        if(StrUtil.isNotBlank(orderEntity.getPlatformId()) && orderEntity.getPlatformId().contains("亚马逊")){
+            sourcePlatformEnum = MabangSourcePlatformEnum.AMAZON_FBA;
+        }
         dmpOrderInfoEntity.setSourcePlatform(null != sourcePlatformEnum ? sourcePlatformEnum.getDesc() : orderEntity.getPlatformId());
+        if (orderEntity.getOrderStatus().equals(2) && orderEntity.getCanSend().equals(2) && "Amazon".equals(dmpOrderInfoEntity.getSourcePlatform())) {
+            return null;
+        }
         //买家地址1
         dmpOrderInfoEntity.setManStreet(orderEntity.getStreet1());
         //买家地址2
@@ -316,4 +332,6 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         }
         return items;
     }
+
+
 }

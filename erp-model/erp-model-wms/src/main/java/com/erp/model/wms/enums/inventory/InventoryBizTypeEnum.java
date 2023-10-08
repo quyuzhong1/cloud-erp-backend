@@ -13,6 +13,7 @@ public enum InventoryBizTypeEnum {
 
     IN_OUT_STOCK("inOut", "出入库"),
     TRANSFER_STOCK("transfer", "调拨"),
+    WAREHOUSE_LOCATION_MOVE("warehouseLocationMove", "仓位移动"),
     ;
 
     private String code;

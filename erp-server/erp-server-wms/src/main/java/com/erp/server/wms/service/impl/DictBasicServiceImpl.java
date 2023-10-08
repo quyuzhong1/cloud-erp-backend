@@ -1,7 +1,7 @@
 package com.erp.server.wms.service.impl;
 
-import com.common.business.service.RedisService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.RedisService;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.DictBasicEntity;

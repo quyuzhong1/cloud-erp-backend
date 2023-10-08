@@ -80,4 +80,14 @@ public interface PoInstockMapper extends BaseMapper<PoInstockEntity> {
      */
     List<PoInstockDTO.SupplierInstockInfoDTO> getInstockInfoBySupplierIds(@Param("supplierIds") List<String> supplierIds,
                                                                           @Param("dateList") List<LocalDate> dateList);
+
+    /**
+     * PDA:分页查询
+     * @Author Luo_WG
+     * @Date 2023/8/16 16:12
+     * @param query
+     * @param params
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.PoInstockDTO.PdaPagingView>
+     **/
+    IPage<PoInstockDTO.PdaPagingView> pdaPaging(Page query, @Param("params") PoInstockDTO.PdaSearchParamDTO params);
 }

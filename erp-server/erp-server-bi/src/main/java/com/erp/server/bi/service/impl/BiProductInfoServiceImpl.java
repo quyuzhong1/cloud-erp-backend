@@ -1,6 +1,6 @@
 package com.erp.server.bi.service.impl;
 
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.bi.entity.BiProductInfoEntity;
 import com.erp.server.bi.mapper.BiProductInfoMapper;
 import com.erp.server.bi.service.BiProductInfoService;

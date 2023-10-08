@@ -96,6 +96,11 @@ public class QcInfoDTO implements Serializable {
         private String sourceType;
 
         /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
          * 供应商id
          */
         private String supplierId;
@@ -143,6 +148,10 @@ public class QcInfoDTO implements Serializable {
          */
         private String sourceId;
 
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
 
         /**
          * 来源type
@@ -153,6 +162,11 @@ public class QcInfoDTO implements Serializable {
          * 采购订单明细id
          */
         private String purchaseOrderDetailId;
+
+        /**
+         * 来源详情id
+         */
+        private String sourceDetailId;
 
         /**
          * 是否新品
@@ -268,6 +282,11 @@ public class QcInfoDTO implements Serializable {
          * 来源id
          */
         private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
 
         /**
          * 来源明细id

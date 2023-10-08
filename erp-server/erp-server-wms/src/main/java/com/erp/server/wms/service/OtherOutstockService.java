@@ -145,4 +145,22 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * @return Boolean
      */
     Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String operate);
+
+    /**
+     * PDA:分页查询
+     * @Author Luo_WG
+     * @Date 2023/8/23 11:16
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.OtherOutstockDTO.PdaListDTO>
+     **/
+    PagingVO<OtherOutstockDTO.PdaListDTO> PdaPaging(PagingDTO<OtherOutstockDTO.PdaSearchParamDTO> dto);
+
+    /**
+     * PDA:列表数量
+     * @Author Luo_WG
+     * @Date 2023/8/23 17:44
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.OtherOutstockDTO.PdaListStatusCountDTO>
+     **/
+    List<OtherOutstockDTO.PdaListStatusCountDTO> PdaListCount(PermissionsDTO dto);
 }

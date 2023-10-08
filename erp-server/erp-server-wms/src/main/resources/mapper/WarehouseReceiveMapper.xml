@@ -100,7 +100,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        wr.create_time desc
+        wr.create_time desc, wrd.id ASC
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">
@@ -115,9 +115,19 @@
                 #{item}
             </foreach>
         </if>
+
+        <if test="params.invalidStatus != null">
+            and wr.invalid_status = #{params.invalidStatus}
+        </if>
+
+        <if test="params.billDate != null and params.billDate.size > 0">
+            and wr.bill_date >= #{params.billDate[0]} and  (#{params.billDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
+        </if>
+
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
+
     </select>
 
     <select id="getReceiveQty" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$GetReceiveDTO">
@@ -286,7 +296,9 @@
 
     <select id="getQcList" resultType="com.erp.model.wms.dto.QcInfoDTO$ReceiveToQcDTO">
        SELECT
+         wrd.id AS sourceDetailId,
          wrd.main_id AS sourceId,
+         wr.code AS sourceCode,
          wrd.sku_id,
          wrd.sku_no,
          wrd.receive_qty AS totalQty,
@@ -320,5 +332,283 @@
             pr.bill_date >= #{dateList[0]} AND (#{dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pr.bill_date
         </if>
         group by pr.supplier_id
+    </select>
+
+    <select id="pdaPaging" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PdaPagingViewDTO">
+        SELECT
+        DISTINCT
+        pr.id,
+        pr.code,
+        pr.approve_status,
+        pr.supplier_name,
+        pr.delivery_warehouse_name,
+        pr.subcontract_type as subcontractType,
+        pr.create_time
+        FROM po_receive pr
+        INNER JOIN po_receive_detail prd ON prd.main_id = pr.id AND prd.is_deleted = FALSE
+        WHERE pr.is_deleted = FALSE
+        AND pr.invalid_status = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and pr.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.billDate != null and params.billDate.size > 0">
+            and pr.bill_date >= #{params.billDate[0]} and  (#{params.billDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pr.bill_date
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ORDER BY pr.create_time desc
+    </select>
+
+    <select id="pdaListCount" resultType="java.lang.Integer">
+        select
+        count(distinct wr.id)
+        FROM po_receive_detail wrd
+        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        WHERE wr.is_deleted = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and wr.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+    <select id="pdaList" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PdaPoReceive">
+        SELECT
+            DISTINCT
+            pr.id,
+            pr.code,
+            pr.supplier_name,
+            pr.approve_status,
+            pr.delivery_warehouse_id AS warehouseId,
+            pr.delivery_warehouse_name AS warehouseName,
+            pr.create_time
+        FROM po_receive pr
+        LEFT JOIN po_receive_detail prd ON pr.id = prd.main_id AND prd.is_deleted = FALSE
+        WHERE pr.is_deleted = FALSE
+        AND pr.invalid_status = FALSE
+        AND pr.approve_status = 'approve'
+        <if test="skuNo != '' and skuNo != null ">
+            AND prd.sku_no = #{skuNo}
+        </if>
+        <if test="code != '' and code != null ">
+            AND pr.code ILIKE concat('%', #{code} ,'%')
+        </if>
+        ORDER BY pr.create_time
+    </select>
+
+    <select id="pdaWaitInStockPaging" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$WaitInStockPaging">
+        SELECT
+            DISTINCT
+            pr.id,
+            pr.code,
+            pr.approve_status,
+            pr.supplier_name,
+            pr.delivery_warehouse_name,
+            pr.subcontract_type as subcontractType
+        FROM po_receive pr
+        LEFT JOIN po_receive_detail prd ON pr.id = prd.main_id AND prd.is_deleted = FALSE
+        WHERE pr.is_deleted = FALSE
+        AND pr.invalid_status = FALSE
+        AND pr.approve_status = 'approve'
+        AND  EXISTS (
+            SELECT
+                t.id
+            FROM (
+                SELECT
+                    prdt."id",
+                    SUM(tabp.stock_in_qty) as stock_in_qty
+                FROM po_receive_detail prdt
+                LEFT JOIN (
+                    SELECT
+                        pid.source_detail_id,
+                        pid.stock_in_qty
+                    FROM po_instock_detail pid
+                    INNER JOIN po_instock pik ON pik.id = pid.main_id AND pik.is_deleted = FALSE
+                    WHERE pid.is_deleted = FALSE
+                    AND pik.invalid_status = FALSE
+                ) tabp ON tabp.source_detail_id = prdt.id
+                WHERE prdt.is_deleted = FALSE
+                GROUP BY prdt."id"
+            ) t
+            WHERE t.id = prd."id" AND (stock_in_qty &lt; prd.receive_qty OR stock_in_qty IS NULL)
+        )
+        <if test="param2.tabFlag == 'waitInStockQc'">
+            AND EXISTS (
+                SELECT
+                    t.id
+                FROM (
+                    SELECT
+                        tab.id,
+                        array_to_string(ARRAY(SELECT unnest(array_agg(tab.qc_status))),',') AS qc_status
+                    FROM (
+                        SELECT
+                            DISTINCT
+                            pr.id,
+                            prdt.id AS detailId,
+                            qc.code,
+                            CASE WHEN qc.code is null THEN 'notQc' ELSE  qc.qc_status END qc_status
+                        FROM po_receive_detail prdt
+                        LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
+                        LEFT JOIN qc_info qc ON qc.source_detail_id = prdt.id AND qc.is_deleted = FALSE
+                        WHERE prdt.is_deleted = FALSE
+                        AND pr.approve_status = 'approve'
+                    ) tab
+                    GROUP BY tab.id
+                ) t
+                WHERE t.id = prd."main_id"
+                AND t.qc_status NOT ILIKE concat('%', 'notQc' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'draft' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'waitQc' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'cancel' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'waitReQc' ,'%')
+            )
+        </if>
+        <if test="param2.tabFlag == 'waitInStockNotQc'">
+            AND EXISTS (
+                SELECT
+                    t.id
+                FROM (
+                    SELECT
+                        tab.id,
+                        array_to_string(ARRAY(SELECT unnest(array_agg(tab.qc_status))),',') AS qc_status
+                    FROM (
+                        SELECT
+                            DISTINCT
+                            pr.id,
+                            prdt.id AS detailId,
+                            qc.code,
+                            CASE WHEN qc.code is null THEN 'notQc' ELSE  qc.qc_status END qc_status
+                        FROM po_receive_detail prdt
+                        LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
+                        LEFT JOIN qc_info qc ON qc.source_detail_id = prdt.id AND qc.is_deleted = FALSE
+                        WHERE prdt.is_deleted = FALSE
+                        AND pr.approve_status = 'approve'
+                    ) tab
+                    GROUP BY tab.id
+                ) t
+                WHERE t.id = prd."main_id"
+                AND (t.qc_status ILIKE concat('%', 'notQc' ,'%')
+                OR t.qc_status ILIKE concat('%', 'draft' ,'%')
+                OR t.qc_status ILIKE concat('%', 'waitQc' ,'%')
+                OR t.qc_status ILIKE concat('%', 'cancel' ,'%')
+                OR t.qc_status ILIKE concat('%', 'waitReQc' ,'%'))
+            )
+        </if>
+
+        ORDER BY pr.code DESC
+    </select>
+
+    <select id="waitInStockListCount"  resultType="java.lang.Integer">
+        select
+            count(distinct pr.id)
+        FROM po_receive pr
+        LEFT JOIN po_receive_detail prd ON pr.id = prd.main_id AND prd.is_deleted = FALSE AND prd.is_deleted = FALSE
+        WHERE pr.is_deleted = FALSE
+        AND pr.approve_status = 'approve'
+        AND EXISTS (
+            SELECT
+                t.id
+            FROM (
+                SELECT
+                    prdt."id",
+                    SUM(tabp.stock_in_qty) as stock_in_qty
+                FROM po_receive_detail prdt
+                LEFT JOIN (
+                    SELECT
+                        pid.source_detail_id,
+                        pid.stock_in_qty
+                    FROM po_instock_detail pid
+                    INNER JOIN po_instock pik ON pik.id = pid.main_id AND pik.is_deleted = FALSE
+                    WHERE pid.is_deleted = FALSE
+                    AND pik.invalid_status = FALSE
+                ) tabp ON tabp.source_detail_id = prdt.id
+                WHERE prdt.is_deleted = FALSE
+                GROUP BY prdt."id"
+            ) t
+            WHERE t.id = prd."id" AND (stock_in_qty &lt; prd.receive_qty OR stock_in_qty IS NULL)
+        )
+        <if test="params.invalidStatus != null">
+            and pr.invalid_status = #{params.invalidStatus}
+        </if>
+
+        <if test="params.tabFlag == 'waitInStockQc'">
+            AND EXISTS (
+                SELECT
+                    t.id
+                FROM (
+                    SELECT
+                        tab.id,
+                        array_to_string(ARRAY(SELECT unnest(array_agg(tab.qc_status))),',') AS qc_status
+                    FROM (
+                        SELECT
+                            DISTINCT
+                            pr.id,
+                            prdt.id AS detailId,
+                            qc.code,
+                            CASE WHEN qc.code is null THEN 'notQc' ELSE  qc.qc_status END qc_status
+                        FROM po_receive_detail prdt
+                        LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
+                        LEFT JOIN qc_info qc ON qc.source_detail_id = prdt.id AND qc.is_deleted = FALSE
+                        WHERE prdt.is_deleted = FALSE
+                        AND pr.approve_status = 'approve'
+                    ) tab
+                    GROUP BY tab.id
+                ) t
+                WHERE t.id = prd."main_id"
+                AND t.qc_status NOT ILIKE concat('%', 'notQc' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'draft' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'waitQc' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'cancel' ,'%')
+                AND t.qc_status NOT ILIKE concat('%', 'waitReQc' ,'%')
+            )
+        </if>
+        <if test="params.tabFlag == 'waitInStockNotQc'">
+            AND EXISTS (
+                SELECT
+                    t.id
+                FROM (
+                    SELECT
+                        tab.id,
+                        array_to_string(ARRAY(SELECT unnest(array_agg(tab.qc_status))),',') AS qc_status
+                    FROM (
+                        SELECT
+                            DISTINCT
+                            pr.id,
+                            prdt.id AS detailId,
+                            qc.code,
+                            CASE WHEN qc.code is null THEN 'notQc' ELSE  qc.qc_status END qc_status
+                        FROM po_receive_detail prdt
+                        LEFT JOIN po_receive pr ON pr.id = prdt.main_id AND pr.is_deleted = FALSE
+                        LEFT JOIN qc_info qc ON qc.source_detail_id = prdt.id AND qc.is_deleted = FALSE
+                        WHERE prdt.is_deleted = FALSE
+                        AND pr.approve_status = 'approve'
+                    ) tab
+                    GROUP BY tab.id
+                ) t
+                WHERE t.id = prd."main_id"
+                AND (t.qc_status ILIKE concat('%', 'notQc' ,'%')
+                OR t.qc_status ILIKE concat('%', 'draft' ,'%')
+                OR t.qc_status ILIKE concat('%', 'waitQc' ,'%')
+                OR t.qc_status ILIKE concat('%', 'cancel' ,'%')
+                OR t.qc_status ILIKE concat('%', 'waitReQc' ,'%'))
+            )
+        </if>
+
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
     </select>
 </mapper>

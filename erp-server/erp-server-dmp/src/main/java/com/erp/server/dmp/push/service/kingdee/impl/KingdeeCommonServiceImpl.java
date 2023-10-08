@@ -10,8 +10,8 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.SystemConstants;
-import com.common.business.enums.SyncKingdeeOperateEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
@@ -212,17 +212,20 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
 
         String syncKingdeeId = (String) map.get("syncKingdeeId");
-        Integer createOrgId = Integer.valueOf((String) map.get("createOrgId"));
+        Object createOrgId = map.get("createOrgId");
 
         if (StringUtils.isNotBlank(syncKingdeeId)) {
             viewMap.put("ids", syncKingdeeId);
         } else {
             viewMap.put("numbers", Arrays.asList(number));
         }
-        //创建组织
-        viewMap.put("CreateOrgId", ObjectUtils.isEmpty(createOrgId) ? MathUtil.ZERO : createOrgId);
+        if (ObjectUtils.isNotEmpty(createOrgId)) {
+            //创建组织
+            viewMap.put("CreateOrgId", Integer.valueOf(createOrgId.toString()));
+        }
+
         //金蝶操作编码
-        String operateNumber = SyncKingdeeOperateEnum.getNameByCode(operate);
+        String operateNumber = SyncOperateEnum.getNameByCode(operate);
 
         try {
             apiUtils.excuteOperation(operateNumber, JSONUtil.toJsonStr(viewMap));
@@ -232,7 +235,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             return Boolean.FALSE;
         }
         //操作成功添加日志
-        insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(viewMap), SyncKingdeeOperateEnum.getDescByCode(operate), type, ApiSendStatusEnum.SUCCESS.getCode());
+        insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(viewMap), SyncOperateEnum.getDescByCode(operate), type, ApiSendStatusEnum.SUCCESS.getCode());
         return Boolean.TRUE;
     }
 
@@ -260,7 +263,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             //表示没有那么就让其 无需同步
             if (StringUtils.isBlank(syncKingdeeId)) {
                 String businessId = String.valueOf(map.get("id"));
-                this.updateBusinessSyncKingdeeStatus(type, businessId, SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode(), "");
+                this.updateBusinessSyncKingdeeStatus(type, businessId, SyncStatusEnum.NO_NEED_SYNC.getCode(), "");
             } else {
                 this.excuteOperation(apiUtils, platformEntity, map, type, number, operate);
             }
@@ -330,7 +333,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                 //金蝶id
                 map.put("syncKingdeeId", id);
                 //更新业务表中的金蝶id
-                updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(), id);
+                updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), SyncStatusEnum.SUCCESS_SYNC.getCode(), id);
                 //新增成功操作日志
                 insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(json), msg, type, ApiSendStatusEnum.SUCCESS.getCode());
             }
@@ -388,7 +391,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //金蝶id
         map.put("syncKingdeeId", id);
         //更新业务表中的金蝶id
-        updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(), id);
+        updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), SyncStatusEnum.SUCCESS_SYNC.getCode(), id);
         //新增成功操作日志
         insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(json), msg, type, ApiSendStatusEnum.SUCCESS.getCode());
         return Boolean.TRUE;
@@ -491,7 +494,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             audit(platformEntity, map, apiUtils, id, type);
         }
         //更新业务单据状态
-        kingdeeCommonService.updateBusinessSyncKingdeeStatus(type, map.get("id").toString(), SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(), id);
+        kingdeeCommonService.updateBusinessSyncKingdeeStatus(type, map.get("id").toString(), SyncStatusEnum.SUCCESS_SYNC.getCode(), id);
         return Boolean.TRUE;
     }
 
@@ -552,7 +555,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //新增日志
         insertSyncLog(platformEntity, businessId, jsonData, msg, type, status);
         //更新金蝶同步状态
-        this.updateBusinessSyncKingdeeStatus(type, businessId, SyncKingdeeStatusEnum.getCodeBySendStatus(status), "");
+        this.updateBusinessSyncKingdeeStatus(type, businessId, SyncStatusEnum.getCodeBySendStatus(status), "");
     }
 
     /**

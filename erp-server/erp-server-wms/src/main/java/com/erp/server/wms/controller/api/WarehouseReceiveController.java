@@ -255,6 +255,11 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,receive_user_id",
+            menuCode = "wms:warehouseReceive:delete",
+            serviceClass = WarehouseReceiveService.class,
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
         Boolean flag = warehouseReceiveService.delete(idsDTO.getIds());
         return flag == true ? success() : failure();

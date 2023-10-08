@@ -9,7 +9,7 @@ import java.util.Arrays;
  * @Date 2023/3/27 17:37
  **/
 public enum MabangSourcePlatformEnum {
-    AMAZON_FBA("2", "Amazon FBA"),
+    AMAZON_FBA("2", "Amazon"),
     ALIEXPRESS("3", "Aliexpress"),
     CDISCOUNT_FBC("8", "Cdiscount FBC"),
     SHOPIFY("16", "Shopify"),

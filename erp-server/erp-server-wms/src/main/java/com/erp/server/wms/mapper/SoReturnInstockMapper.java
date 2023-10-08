@@ -49,4 +49,14 @@ public interface SoReturnInstockMapper extends BaseMapper<SoReturnInstockEntity>
      * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.PagingView>
      **/
     List<SoReturnInstockDTO.PagingView> soReturnInstockExportExcel(@Param("params") SoReturnInstockDTO.PagingParam dto);
+
+    /**
+     * Pda:列表查询
+     * @Author Luo_WG
+     * @Date 2023/8/17 17:03
+     * @param query
+     * @param params
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.SoReturnInstockDTO.PdaPagingView>
+     **/
+    IPage<SoReturnInstockDTO.PdaPagingView> pdaPaging(Page query, @Param("params") SoReturnInstockDTO.PdaPagingParam params);
 }

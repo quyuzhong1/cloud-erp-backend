@@ -3,7 +3,7 @@ package com.erp.server.dmp.push.service.business.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -100,15 +100,15 @@ public class KingdeeTransferInfoConsumerServiceImpl implements KingdeeTransferIn
         //操作项
         String operate = (String) map.get("operate");
         //作废
-        if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
             operateInvalid(platformEntity,map,apiUtils,id,documentStatus);
         }
         //反审核
-        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             operateDisapprove(platformEntity,map,apiUtils,id,documentStatus);
         }
         //审核
-        if (SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate) && !isAdd) {
+        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate) && !isAdd) {
             operateApprove(platformEntity,map,apiUtils,id,documentStatus,json);
         }
     }

@@ -270,4 +270,67 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      */
     void handleKingdeeToErp(SoOutstockEntity soOutstock, List<SoOutstockDetailEntity> detailList, String flagId);
 
+    /**
+     * PDA:分页列表
+     * @Author Luo_WG
+     * @Date 2023/8/22 11:32
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoOutstockDTO.PdaPagingViewDTO>
+     **/
+    PagingVO<SoOutstockDTO.PdaPagingViewDTO> pdaPaging(PagingDTO<SoOutstockDTO.PdaPagingParamDTO> dto);
+
+    /**
+     * pda:列表状态数量统计
+     * @Author Luo_WG
+     * @Date 2023/8/22 14:53
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.PdaPoReceiveCountDTO>
+     **/
+    List<SoOutstockDTO.PdaCountDTO> pdaListCount(PermissionsDTO dto);
+
+    /**
+     * PDA:新增
+     * @Author Luo_WG
+     * @Date 2023/9/6 17:45
+     * @param dto
+     * @return java.lang.String
+     **/
+    String pdaAdd(SoOutstockDTO.AddDTO dto);
+
+    /**
+     * PDA:修改
+     * @Author Luo_WG
+     * @Date 2023/9/6 17:55
+     * @param dto
+     * @return java.lang.String
+     **/
+    String pdaUpdate(SoOutstockDTO.UpdateDTO dto);
+
+
+    /**
+     * PDA:新增并提交
+     * @Author Luo_WG
+     * @Date 2023/9/6 17:57
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaAddAndSubmit(SoOutstockDTO.AddDTO dto);
+
+    /**
+     * PDA:修改并提交
+     * @Author Luo_WG
+     * @Date 2023/9/6 17:58
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaUpdateAndSubmit(SoOutstockDTO.UpdateDTO dto);
+
+    /**
+     * 修改线上历史数据
+     * @author yl
+     * @date 2023-09-28 10:20
+     * @param
+     * @return void
+     */
+    void tempRepairHistoryDb();
 }

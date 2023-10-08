@@ -118,4 +118,11 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      * @return java.util.List<com.erp.model.dmp.entity.DmpShopInfoEntity>
      */
     List<DmpShopInfoEntity> getByShopNoList(List<String> shopNoList);
+
+    /**
+     * 根据店铺名查询数据
+     * @param shopNameList
+     * @return
+     */
+    List<DmpShopInfoEntity> listByNames(List<String> shopNameList);
 }

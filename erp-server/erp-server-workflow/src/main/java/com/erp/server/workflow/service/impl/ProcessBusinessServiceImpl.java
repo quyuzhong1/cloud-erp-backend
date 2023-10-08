@@ -7,7 +7,7 @@ import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.server.workflow.mapper.ProcessBusinessMapper;
 import com.erp.server.workflow.service.ProcessBusinessService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

@@ -5,7 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -19,8 +19,10 @@ import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -69,6 +71,9 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
     @Resource
     private WarehouseService warehouseService;
+
+    @Resource
+    private PurchaseReturnOrderService purchaseReturnOrderService;
 
     /**
      * @param sourceDetailIds
@@ -242,6 +247,8 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto, String id) {
+        PurchaseReturnOrderEntity entity = purchaseReturnOrderService.getById(id);
+
         List<String> addList = dto.getPurchasePriceDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(PurchaseReturnOrderDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         //原明细数据
         List<PurchaseReturnOrderDetailEntity> oldList = this.getDetailByMainId(dto.getId());
@@ -279,6 +286,13 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
                 PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
                 BeanMapperUtils.copy(updateDTO, purchaseReturnOrderDetailEntity);
+                //退货补货
+                if (ReturnModeEnum.REPLENISHMENT.getCode().equals(dto.getReturnMode())) {
+                    purchaseReturnOrderDetailEntity.setDeductAmountQty(0);
+                } else {
+                    //退货扣款
+                    purchaseReturnOrderDetailEntity.setReplenishQty(0);
+                }
                 purchaseReturnOrderDetailEntity.setMainId(id);
                 PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
@@ -288,12 +302,12 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                     SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(purchaseReturnOrderDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
                     purchaseReturnOrderDetailEntity.setMainSupplierId(skuVO.getSupplierId());
 
-                    if (dto.getSourceType().equals(SourceTypeEnum.PO_RECEIVE.getCode())) {
+                    if (entity.getSourceType().equals(SourceTypeEnum.PO_RECEIVE.getCode())) {
                         Integer receiveQty = detailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                         if (updateDTO.getReturnQty() > receiveQty) {
                             throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
-                    } else if (dto.getSourceType().equals(ReturnOrderSourceEnum.QC.getCode())) {
+                    } else if (entity.getSourceType().equals(ReturnOrderSourceEnum.QC.getCode())) {
                         WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getReturnWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
                         Integer inventoryTotal = inventoryService.getInventoryTotal(warehouseDTO.getOrgId(), warehouseDTO.getId(), updateDTO.getSkuId(), updateDTO.getWarehouseLocation(), InventoryStatusEnum.WAIT_QC.getCode());
                         returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && !req.getId().equals(updateDTO.getId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -355,8 +369,16 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
         List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> detailEntityList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
+
             PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
             BeanMapperUtils.copy(updateDTO, purchaseReturnOrderDetailEntity);
+            //退货补货
+            if (ReturnModeEnum.REPLENISHMENT.getCode().equals(dto.getReturnMode())) {
+                purchaseReturnOrderDetailEntity.setDeductAmountQty(0);
+            } else {
+                //退货扣款
+                purchaseReturnOrderDetailEntity.setReplenishQty(0);
+            }
             purchaseReturnOrderDetailEntity.setMainId(id);
             purchaseReturnOrderDetailEntity.setReturnQty(updateDTO.getReturnQty());
             //获取sku信息

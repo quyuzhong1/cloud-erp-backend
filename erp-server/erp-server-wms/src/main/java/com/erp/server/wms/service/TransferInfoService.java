@@ -166,4 +166,22 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return
      */
     String checkSkuInventory(TransferInfoDTO.CommonDTO dto, List<TransferInfoDetailDTO.AddDTO> detailList);
+
+    /**
+     * pda:列表查询
+     * @Author Luo_WG
+     * @Date 2023/8/24 15:36
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.TransferInfoDTO.PdaListDTO>
+     **/
+    PagingVO<TransferInfoDTO.PdaListDTO> pdaPaging(PagingDTO<TransferInfoDTO.PdaSearchParamDTO> dto);
+
+    /**
+     * PDA:列表数量
+     * @Author Luo_WG
+     * @Date 2023/8/24 15:51
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.TransferInfoDTO.PdaListStatusCountDTO>
+     **/
+    List<TransferInfoDTO.PdaListStatusCountDTO> pdaListCount(PermissionsDTO dto);
 }

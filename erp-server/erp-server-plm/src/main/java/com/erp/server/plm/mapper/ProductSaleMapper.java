@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.dto.ProductCostShowDTO;
 import com.erp.model.plm.dto.ProductSaleShowDTO;
+import com.erp.model.plm.dto.SkuDTO;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -41,6 +42,12 @@ public interface ProductSaleMapper extends BaseMapper<ProductSaleEntity> {
      **/
     List<NewProductDTO> getListingProductAll(@Param("sign") Boolean sign);
 
+    /**
+     * 获取sku 销售信息
+     * @param skuNoList
+     * @return
+     */
+    List<SkuDTO.SalesDTO> listSkuSalesBySkuNos(@Param("skuNoList") List<String> skuNoList);
 }
 
 

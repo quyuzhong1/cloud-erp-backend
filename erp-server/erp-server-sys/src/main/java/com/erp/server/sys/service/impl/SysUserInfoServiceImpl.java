@@ -14,10 +14,10 @@ import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.service.RedisService;
+import com.common.business.service.impl.RedisService;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -144,7 +144,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, true);
             }
             //同步金蝶员工数据
-            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_ADD.getCode());
+            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_ADD.getCode());
         }
     }
 
@@ -167,7 +167,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (updateResult) {
             sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, false);
             //同步金蝶员工数据
-            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_UPDATE.getCode());
+            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_UPDATE.getCode());
         }
 
     }
@@ -356,7 +356,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             return;
         }
         for (SysUserInfoEntity entity : list) {
-            String operate = MathUtil.ZERO.equals(stateDTO.getState()) ? SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode() : SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
+            String operate = MathUtil.ZERO.equals(stateDTO.getState()) ? SyncOperateEnum.OPERATE_DISABLE.getCode() : SyncOperateEnum.OPERATE_ENABLE.getCode();
             syncKingdeeSysUserInfoService.syncDataToKingdee(entity, operate);
         }
     }
@@ -1003,7 +1003,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         for (SysUserInfoEntity entity : list) {
             //同步金蝶员工数据
-            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode());
+            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
         }
         this.removeByIds(uids);
     }
@@ -1256,8 +1256,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 continue;
             }
             lambdaUpdate().set(SysUserInfoEntity::getSyncKingdeeId, kingdeeId).set(SysUserInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
-                    .set(SysUserInfoEntity::getSyncOperate, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode())
-                    .set(SysUserInfoEntity::getSyncKingdeeStatus, SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())
+                    .set(SysUserInfoEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
+                    .set(SysUserInfoEntity::getSyncKingdeeStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
                     .set(SysUserInfoEntity::getCode, code)
                     .eq(SysUserInfoEntity::getUid, sysUserInfoEntity.getUid())
                     .update();

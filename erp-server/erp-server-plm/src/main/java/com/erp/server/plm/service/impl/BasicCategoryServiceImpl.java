@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -69,7 +69,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
             return;
         }
         //组装数据发送到金蝶
-        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_ADD.getCode());
+        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_ADD.getCode());
     }
 
     /**
@@ -96,12 +96,12 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         entity.setName(categoryName);
         this.updateById(entity);
         //组装数据发送到金蝶
-        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_UPDATE.getCode());
+        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_UPDATE.getCode());
         //编辑的时候如果变动了一级编码则需要更新金蝶二级类目编码
         if ("0".equals(found.getPid()) && !StringUtils.equals(dto.getCode(),found.getCode())) {
             List<BasicCategoryEntity> list = this.lambdaQuery().eq(BasicCategoryEntity::getPid, found.getId()).list();
             if (CollectionUtils.isNotEmpty(list)) {
-                list.forEach(obj -> syncKingdeeCategoryService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_UPDATE.getCode()));
+                list.forEach(obj -> syncKingdeeCategoryService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_UPDATE.getCode()));
             }
         }
         return Boolean.TRUE;
@@ -195,7 +195,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         checkId(id);
         BasicCategoryEntity entity = this.getById(id);
         //组装数据发送到金蝶
-        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode());
+        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
         return this.removeById(id);
     }
 
@@ -390,6 +390,49 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
                 .set(StringUtils.isNotBlank(syncKingdeeStatus),BasicCategoryEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId),BasicCategoryEntity::getSyncKingdeeId,syncKingdeeId)
                 .update();
+    }
+
+    /**
+     * 获取到父级分类
+     * @author yl
+     * @date 2023-09-15 9:42
+     * @param
+     * @return java.util.List<com.erp.model.plm.entity.BasicCategoryEntity>
+     */
+    @Override
+    public List<BasicCategoryEntity> listParentCategory() {
+        return this.lambdaQuery().eq(BasicCategoryEntity::getPid,"0").orderByDesc(BasicCategoryEntity::getId).list();
+    }
+
+    /**
+     * 通过子类id或名称获取到父级的分类
+     */
+    @Override
+    public BasicCategoryDTO getParentCategoryByParam(Map<String, String> params) {
+        if (null == params || params.isEmpty()) {
+            return null;
+        }
+        String id = params.get("id");
+        String name = params.get("name");
+        BasicCategoryEntity entity = lambdaQuery()
+                .eq(StringUtils.isNotBlank(id), BasicCategoryEntity::getId, id)
+                .eq(StringUtils.isNotBlank(name), BasicCategoryEntity::getName, name)
+                .last("limit 1")
+                .one();
+        if (null == entity){
+            return null;
+        }
+        if (StringUtils.isBlank(entity.getPid()) || "0".equals(entity.getPid())){
+            return null;
+        }
+        BasicCategoryEntity parentEntity = getById(entity.getPid());
+        if (null == parentEntity){
+            return null;
+        }
+        BasicCategoryDTO dto = new BasicCategoryDTO();
+        BeanUtils.copyProperties(parentEntity, dto);
+        return dto;
+
     }
 
     /**

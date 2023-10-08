@@ -12,7 +12,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -368,7 +368,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         InventorySourceTypeEnum transferIn = InventorySourceTypeEnum.TRANSFER_IN;
         members.stream().forEach(m -> m.setSourceType(transferIn));
         if (CollectionUtils.isNotEmpty(members)) {
-            inventoryInOutStockDTO.setMembers(members);
+            inventoryInOutStockDTO.setParamList(members);
             inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
         }
 

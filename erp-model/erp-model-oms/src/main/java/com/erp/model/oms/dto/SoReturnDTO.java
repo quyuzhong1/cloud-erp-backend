@@ -312,6 +312,10 @@ public class SoReturnDTO {
          */
         private String type;
         /**
+         * 单据类型名称
+         */
+        private String typeName;
+        /**
          * 销售组织id
          */
         private String salesOrgId;
@@ -520,5 +524,63 @@ public class SoReturnDTO {
          * 库存组织id
          */
         private String inventoryOrgName;
+    }
+
+    /**
+     * PDA:销售退货单查询列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaSoReturn {
+        /**
+         * 退货单id
+         */
+        private String id;
+
+        /**
+         * 退货单号
+         */
+        private String soReturnCode;
+
+        /**
+         * 销售订单号
+         */
+        private String soCode;
+
+        /**
+         * 销售员
+         */
+        private String sellerName;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+    }
+
+    /**
+     * PDA:销售退货单查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaSoReturnParam {
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 销售退货单号
+         */
+        private String code;
     }
 }

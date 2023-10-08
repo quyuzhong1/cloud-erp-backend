@@ -12,9 +12,12 @@
            dc.short_name_en,
            dc.region_code,
            dga.region_name AS areaName,
+           dc.subregion_code,
+           dga.subregion_name,
            dc.disabled
         FROM dict_country dc LEFT JOIN dict_global_area dga
-        ON dc.region_code=dga.id
+--         ON dc.region_code=dga.id
+        ON dc.subregion_code=dga.id
         WHERE dc.is_deleted=FALSE
         ORDER BY dc.index DESC
     </select>

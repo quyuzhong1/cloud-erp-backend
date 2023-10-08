@@ -1,8 +1,10 @@
 package com.erp.server.bi.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.bi.dto.SkuSalesDTO;
 import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.vo.SkuCategoryVO;
+import com.erp.model.bi.vo.SkuDetailVO;
 
 import java.util.List;
 
@@ -23,7 +25,7 @@ public interface BiProductDetailService extends SuperService<BiProductDetailEnti
      * @param
      * @return java.util.List<com.erp.model.bi.vo.SkuCategoryVO>
      */
-    List<SkuCategoryVO> getSkuCategoryList();
+    List<SkuCategoryVO> getSkuCategoryList(List<String> categoryIdList);
 
 
     /**
@@ -43,4 +45,32 @@ public interface BiProductDetailService extends SuperService<BiProductDetailEnti
      * @return java.util.List<com.erp.model.bi.vo.SkuCategoryVO>
      */
     List<SkuCategoryVO> getSkuPropertyList();
+
+    /**
+     * 根据sku 获取详情信息
+     * @param skuNo
+     * @return
+     */
+    BiProductDetailEntity getBySkuNo(String skuNo);
+
+    /**
+     * 根据sku no list 获取信息
+     * @param skuNoList
+     * @return
+     */
+    List<BiProductDetailEntity> listBySkuNoList(List<String> skuNoList);
+
+    /**
+     * 通过编码获取skuId集合
+     * @param skuNos
+     * @return
+     */
+    List<SkuDetailVO> getSkuIdBySkuNo(List<String> skuNos);
+
+    /**
+     * 根据sku id 获取到对应数据
+     * @param skuIdList
+     * @return
+     */
+    List<SkuSalesDTO.ProductSkuDTO> listProductSkuBySkuIdList(List<String> skuIdList);
 }

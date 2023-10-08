@@ -1,12 +1,18 @@
 package com.erp.model.bi.dto;
 
 import com.common.business.validator.UpdateGroup;
+import com.erp.model.bi.entity.BiSubjectShareEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @Classname SubjectPagingDTO
@@ -53,12 +59,11 @@ public class SubjectPagingDTO implements Serializable {
      */
     private Boolean state;
 
-
-
     /**
      * 分享标示
      * personal 私人
      * share 共享
+     * role 角色共享
      */
     private String shareFlag;
 
@@ -94,6 +99,19 @@ public class SubjectPagingDTO implements Serializable {
      */
     private Date updateTime;
 
+    /**
+     * 分享的身份id列表(用户ID/角色ID)
+     */
+    private List<String> shareFlagIdList = Collections.emptyList();
 
-
+    /**
+     * 检查和设置分享的身份id列表
+     */
+    public void checkAndSetShareFlagIdList(List<BiSubjectShareEntity> shareList) {
+        if (CollectionUtils.isEmpty(shareList)){
+            return;
+        }
+        List<String> identityIds = shareList.stream().map(BiSubjectShareEntity::getIdentityId).collect(Collectors.toList());
+        this.setShareFlagIdList(identityIds);
+    }
 }

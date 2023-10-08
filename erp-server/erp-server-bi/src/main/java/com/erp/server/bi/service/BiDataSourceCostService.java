@@ -4,10 +4,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.business.vo.SeriesVO;
+import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.vo.*;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
+import com.erp.model.bi.vo.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -30,6 +31,11 @@ public interface BiDataSourceCostService
      * @return PagingVO<LinkedHashMap<String,Object>>
      */
     PagingVO<LinkedHashMap<String,Object>> paging(PagingDTO<BiDataSourceCostSearchDTO> dto);
+
+    /**
+     * 查询成本数据
+     */
+    List<BiDataSourceCostDTO.ListDTO> listBiDataSourceCost (BiDataSourceCostDTO.GroupDTO dto);
 
     /**
      * 统计销售毛利润
@@ -170,4 +176,11 @@ public interface BiDataSourceCostService
      * @return
      */
     List<CostProfitAnalyzeRankVO> getUserCostProfitRank(BiFilterDTO dto);
+
+    /**
+     * 日期分类获取成本信息
+     * @param dto
+     * @return
+     */
+    List<DateCostVO> sumByDateAndCostType(BiFilterDTO dto, List<String> dictValues);
 }

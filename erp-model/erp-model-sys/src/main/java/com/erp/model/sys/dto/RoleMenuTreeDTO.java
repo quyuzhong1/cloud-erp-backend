@@ -57,7 +57,10 @@ public class RoleMenuTreeDTO implements Serializable {
      * 是否需要数据权限
      */
     private Boolean isAuth;
-
+    /**
+     * 菜单排序
+     */
+    private Integer index;
 
     @JsonInclude(value= JsonInclude.Include.NON_NULL)
     private List<RoleMenuTreeDTO> childrenList;

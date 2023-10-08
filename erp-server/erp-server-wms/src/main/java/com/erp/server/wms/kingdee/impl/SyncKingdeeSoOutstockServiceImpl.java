@@ -3,8 +3,8 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SalesPlatformEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -24,6 +24,7 @@ import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -43,7 +44,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -90,6 +91,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
     @Resource
     private KingdeeFeign kingdeeFeign;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+
     /**
      * 发送消息同步金蝶
      *
@@ -104,14 +109,18 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         Map<String, Object> resultMap = new HashMap<>();
 
         //更新同步状态为待同步
-        soOutstockService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        soOutstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
 
         //获取销售出库单详情
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
         //销售单信息
         SoInfoEntity soInfoById = soInfoFeign.getSoInfoById(entity.getSoId());
         //销售单明细
-        List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soInfoById.getId()));
+        List<SoDetailEntity> soDetailEntitieList = new ArrayList<>();
+        if (StringUtils.isNotBlank(soInfoById.getId())) {
+            soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soInfoById.getId()));
+        }
+
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(soInfoById.getSalesOrgId(), entity.getWarehouseOrgId()));
         //客户信息
@@ -119,7 +128,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //部门信息
         SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoById.getSalesDeptId());
         //查询供应商信息
-        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getCarrierId());
+        SupplierEntity supplierEntity = null;
+        if (StringUtils.isNotBlank(entity.getCarrierId())) {
+            supplierEntity = scmTaskFeign.getSupplierById(entity.getCarrierId());
+        }
         //获取币别信息
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(soInfoById.getCurrency()));
         //仓库
@@ -147,7 +159,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             resultMap.put("customerCode", customerInfoEntity.getCode());
             resultMap.put("customerName", customerInfoEntity.getName());
-            SalesPlatformEnum salesPlatformEnum = SalesPlatformEnum.getByCode(customerInfoEntity.getPlatformType());
+            PlatformDictEnum salesPlatformEnum = PlatformDictEnum.getByCode(customerInfoEntity.getPlatformType());
             String salesPlatformCode = salesPlatformEnum != null ? salesPlatformEnum.getKingdeeCode() : "";
             //平台类型
             resultMap.put("platformType", salesPlatformCode);
@@ -182,8 +194,16 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("warehouseKeeperCode", userKingdeePostInfoList.get(0).getKingdeeUserCode());
         }
 
-        //仓管员
-        resultMap.put("trackNo", entity.getWarehouseKeeperId());
+
+        String billDate = soInfoById.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String currency = StringUtils.isNotBlank(soInfoById.getCurrency()) ? soInfoById.getCurrency() : "CNY";
+        //汇率
+        BigDecimal exchangeRate = dmpTaskFeign.getRate(billDate, currency);
+        if (Objects.isNull(exchangeRate)) {
+            exchangeRate = MathUtil.BigDecimal_1;
+        }
+        //汇率
+        resultMap.put("exchangeRate", exchangeRate);
         //运输单号
         resultMap.put("trackNo", entity.getTrackNo());
         //销售单号
@@ -209,6 +229,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
             resultMap.put("salesOrgCode", salesOrgCode);
         }
+        if (soInfoById.getDiscountAmount() != null) {
+            resultMap.put("FAllDisCount", entity.getTotalDiscountAmount());
+        }
+
         List<String> soDetailIds = soDetailEntitieList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(soDetailIds);
         //发货通知详情id
@@ -228,6 +252,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             map.put("salesQty", soDetailEntity.getQty());
             map.put("planQty", detailEntity.getPlanQty());
             map.put("price", soDetailEntity.getPrice());
+
             //含税单价
             BigDecimal flagTaxRate = MathUtil.divide(soDetailEntity.getTaxRate(), MathUtil.BigDecimal_100);
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
@@ -255,8 +280,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             map.put("FSrcBillNo", soInfoById.getCode());
             map.put("FSoorDerno", soInfoById.getCode());
 
-            List<Map<String,Object>> mapList = new ArrayList<>();
-            Map<String,Object> mapPush = new HashMap<>();
+            List<Map<String, Object>> mapList = new ArrayList<>();
+            Map<String, Object> mapPush = new HashMap<>();
             mapPush.put("soKingdeeDetailId", soDetailEntity.getKingdeeDetailId());
             mapPush.put("soSyncKingdeeId", soInfoById.getSyncKingdeeId());
             mapList.add(mapPush);
@@ -274,7 +299,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_OUTSTOCK_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return soOutstockService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "", operate);
+                return soOutstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(), "", operate);
             }
             return Boolean.TRUE;
         });

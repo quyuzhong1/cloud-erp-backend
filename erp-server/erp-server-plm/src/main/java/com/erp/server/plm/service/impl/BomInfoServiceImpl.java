@@ -13,8 +13,8 @@ import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -1019,7 +1019,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         Boolean isFirstAudit = BomStateEnum.WAIT_AUDIT.getState().equals(bom.getState());
 //        bom.setState(BomStateEnum.AUDIT_ING.getState());
         bom.setState(BomStateEnum.AUDIT_PASS.getState());
-        bom.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+        bom.setSyncKingdeeStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
         bom.setRemark(dto.getComment());
         Boolean result = this.updateById(bom);
 
@@ -1052,7 +1052,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             }
 //        }
         // 发送到金蝶
-        syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+        syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncOperateEnum.OPERATE_APPROVE.getCode());
     }
 
 
@@ -1072,14 +1072,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         BomInfoEntity bom = this.getById(bomId);
         if (bom != null) {
             bom.setState(BomStateEnum.AUDIT_PASS.getState());
-            bom.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+            bom.setSyncKingdeeStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
             this.updateById(bom);
 
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_ING.getName(), BomStateEnum.AUDIT_PASS.getName());
             //操作记录
             bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
             // 发送到金蝶
-            syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+            syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
     }
 
@@ -1101,7 +1101,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             Integer bomVersion = bomEntity.getBomVersion();
             bomEntity.setBomVersion(bomVersion + 1);
             bomEntity.setType(bom.getType());
-            bomEntity.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+            bomEntity.setSyncKingdeeStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
             List<BomSkuDTO> oldBomList = bomSkuService.getByBomId(bomId);
             List<BomSkuDTO> bomSkuList = bom.getSkuList();
             Boolean result = this.updateById(bomEntity);
@@ -1114,7 +1114,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 String operateContent = getUpdateContent(oldBomList, bomSkuList);
                 bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.UPDATE.getType(), operateContent);
                 //再次发送到金蝶
-                syncKingdeeBomInfoService.syncDataToKingdee(bomEntity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                syncKingdeeBomInfoService.syncDataToKingdee(bomEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
         }
     }

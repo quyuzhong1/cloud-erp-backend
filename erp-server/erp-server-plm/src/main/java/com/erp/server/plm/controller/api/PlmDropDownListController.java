@@ -3,7 +3,7 @@ package com.erp.server.plm.controller.api;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.enums.SalesPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.plm.dto.SelectShowDTO;
 import com.erp.model.plm.enums.RelatedSkuTypeEnum;
 import com.erp.model.plm.enums.TaskRelationshipEnum;
@@ -35,7 +35,7 @@ public class PlmDropDownListController extends BaseController {
      */
     @GetMapping("/platform/list")
     public ApiResult<List<SelectShowDTO>> listPlatformDropDown() {
-        List<SelectShowDTO> result = Arrays.stream(SalesPlatformEnum.values())
+        List<SelectShowDTO> result = Arrays.stream(PlatformDictEnum.values())
                 .map(x -> new SelectShowDTO(IsConstant.NO, x.getName(), x.getDesc()))
                 .collect(Collectors.toList());
         return success(result);

@@ -1,6 +1,6 @@
 package com.erp.server.sys.rocketmq.sync.kingdee.impl;
 
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -43,12 +43,12 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
         String code = entity.getCode();
         //表示没有金蝶的code 那就无需推送的
         if (StringUtils.isBlank(code)) {
-            sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getUid()), SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode(), "", operate);
+            sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getUid()), SyncStatusEnum.NO_NEED_SYNC.getCode(), "", operate);
             return;
         }
 
         //更新同步状态为待同步
-        sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getUid()), SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(), "", operate);
+        sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getUid()), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
 
         //业务id
         resultMap.put("id", entity.getUid());
@@ -72,7 +72,7 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SYS_USER_INFO_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getUid()), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "", operate);
+                return sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getUid()), SyncStatusEnum.IN_SYNC.getCode(), "", operate);
             }
             return Boolean.TRUE;
         });

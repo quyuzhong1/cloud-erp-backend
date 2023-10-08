@@ -13,7 +13,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum InstockTypeEnum implements EnumMessage {
 
 
-    SAMPLE_RETURN("sampleReturn", "样品归还");
+    SAMPLE_RETURN("sampleReturn", "样品归还"),
+    THREE_NO_PRODUCT("threeNoProduct", "三无产品"),
+    ;
 
     /**
      * 类型

@@ -33,6 +33,16 @@ public interface BomRefSkuMapper extends BaseMapper<BomSkuEntity> {
      * @return List<BomChildrenSkuDTO>
      */
     List<BomChildrenSkuDTO> listBomChildBySkuIds(@Param("parentSkuIds") List<String> parentSkuIds);
+
+    /**
+     * @description: 根据父SKU查询子集SKU
+     * @Author Luo_WG
+     * @Date 2023/9/14 12:03
+     * @param parentSkuNos
+     * @return java.util.List<com.erp.model.plm.dto.BomChildrenSkuDTO>
+     **/
+    List<BomChildrenSkuDTO> listBomChildBySkuNos(@Param("parentSkuNos") List<String> parentSkuNos);
+
     /**
      * @description: 根据父级SKU查询BOM
      * @author Will
@@ -59,5 +69,15 @@ public interface BomRefSkuMapper extends BaseMapper<BomSkuEntity> {
      * @return List<BomInfoEntity>
      */
     List<BomInfoEntity> listAllBomByParentSkuNos(@Param("parentSkuNos") List<String> parentSkuNos);
+
+
+    /**
+     * 根据KU查询Bom
+     * @Author Luo_WG
+     * @Date 2023/9/4 19:36
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.dto.BomChildrenSkuDTO>
+     **/
+    List<BomChildrenSkuDTO> listBomBySkuIds(@Param("skuIds") List<String> skuIds);
 }
 

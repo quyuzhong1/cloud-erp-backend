@@ -200,4 +200,94 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * 根据供应商id集合查询收货批次和收货数量
      */
     List<WarehouseReceiveDTO.SupplierReceiveInfoDTO> getReceiveInfoBySupplierIds(WarehouseReceiveDTO.SupplierReceiveParamDTO dto);
+
+    /**
+     * pda:分页查询
+     * @Author Luo_WG
+     * @Date 2023/4/13 15:41
+     * @param pagingParamDTO pagingParamDTO
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.WarehouseReceiveDTO.PagingViewDTO>
+     **/
+    PagingVO<WarehouseReceiveDTO.PdaPagingViewDTO> pdaPaging(PagingDTO<WarehouseReceiveDTO.PdaPagingParamDTO> pagingParamDTO);
+
+    /**
+     * pda:列表状态数量统计
+     * @Author Luo_WG
+     * @Date 2023/4/17 13:13
+     * @param dto dto
+     * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>
+     **/
+    List<WarehouseReceiveDTO.PdaPoReceiveCountDTO> pdaListCount(PermissionsDTO dto);
+
+    /**
+     * PDA:新增
+     * @Author Luo_WG
+     * @Date 2023/4/13 11:03
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    String pdaAdd(WarehouseReceiveDTO.AddDTO dto);
+
+    /**
+     * PDA:修改
+     * @Author Luo_WG
+     * @Date 2023/8/14 14:29
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaUpdate(WarehouseReceiveDTO.UpdateDTO dto);
+
+    /**
+     * PDA:查询详情
+     * @Author Luo_WG
+     * @Date 2023/4/13 17:10
+     * @param id id
+     * @return com.erp.model.wms.dto.WarehouseReceiveDTO.ViewDTO
+     **/
+    WarehouseReceiveDTO.ViewDTO pdaView(String id);
+
+    /**
+     * PDA:条件查询收货单
+     * @Author Luo_WG
+     * @Date 2023/8/18 11:10
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.PdaPoReceive>
+     **/
+    List<WarehouseReceiveDTO.PdaPoReceive> pdaList(WarehouseReceiveDTO.PdaPoReceiveParam dto);
+
+    /**
+     * 新增提交
+     * @Author Luo_WG
+     * @Date 2023/4/6 18:52
+     * @param dto dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaAddAndSubmit(WarehouseReceiveDTO.AddDTO dto);
+
+    /**
+     * 修改提交
+     * @Author Luo_WG
+     * @Date 2023/4/6 18:52
+     * @param dto dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaUpdateAndSubmit(WarehouseReceiveDTO.UpdateDTO dto);
+
+    /**
+     * pda:待入库查询
+     * @Author Luo_WG
+     * @Date 2023/9/6 10:33
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WaitInStockPaging>
+     **/
+    PagingVO<List<WarehouseReceiveDTO.WaitInStockPaging>> waitInStockPaging(PagingDTO<WarehouseReceiveDTO.WaitInStockPagingParam> dto);
+
+    /**
+     * PDA:待入库查询表头数量
+     * @Author Luo_WG
+     * @Date 2023/9/6 11:38
+     * @param dto
+     * @return com.common.business.vo.PagingVO<java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WaitInStockPaging>>
+     **/
+     List<WarehouseReceiveDTO.WaitInStockCountDTO> waitInStockListCount(PermissionsDTO dto);
 }

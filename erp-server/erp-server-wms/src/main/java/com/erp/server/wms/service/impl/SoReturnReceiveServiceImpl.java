@@ -6,6 +6,11 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.*;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
@@ -22,6 +27,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
@@ -44,6 +50,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.SoReturnReceiveMapper;
 import com.erp.server.wms.service.*;
+import com.common.business.service.impl.SuperServiceImpl;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -111,10 +118,16 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Resource
     private SoReturnInstockService soReturnInstockService;
 
+    @Resource
+    private SoReturnInstockDetailService soReturnInstockDetailService;
+
     @Override
     public PagingVO<SoReturnReceiveDTO.PagingView> paging(PagingDTO<SoReturnReceiveDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        if (CollectionUtils.isNotEmpty(pagingParamDTO.getParams().getApproveStatusList())) {
+            pagingParamDTO.getParams().setInvalidStatus(Boolean.FALSE);
+        }
         IPage<SoReturnReceiveDTO.PagingView> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(new Page());
@@ -170,6 +183,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         for (SOReturnChangeListTypeEnum item : values) {
             SoReturnReceiveDTO.PagingParam pagingParam = new SoReturnReceiveDTO.PagingParam();
             pagingParam.setPermissionSql(dto.getPermissionSql());
+            pagingParam.setInvalidStatus(Boolean.FALSE);
             SoReturnReceiveDTO.StatusCountDTO resultDTO = new SoReturnReceiveDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (SOReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
@@ -371,7 +385,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //获取sku的id集合
         List<String> skuIdList = detailEntityList.stream().map(SoReturnReceiveDetailEntity::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
-        List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);
+        List<SkuVO> skuInfoByIds = plmTaskFeign.getSkuInfoByIds(skuIdList);
         //退货单详情
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(Arrays.asList(entity.getSourceId()));
         //销售单详情id集合
@@ -380,12 +394,14 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
+        viewDTO.setTypeName(BillTypeEnum.getName(viewDTO.getType()));
         for (SoReturnReceiveDetailEntity detailEntity : detailEntityList) {
             SoReturnReceiveDetailDTO.View detailView = new SoReturnReceiveDetailDTO.View();
             BeanMapperUtils.copy(detailEntity, detailView);
             //产品sku信息
-            ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(detailEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-            detailView.setProductName(productDetailEntity.getName());
+            SkuVO productDetailEntity = skuInfoByIds.stream().filter(entityClass -> entityClass.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
+            detailView.setProductName(productDetailEntity.getSkuName());
+            detailView.setVariantProperty(productDetailEntity.getVariantProperty());
             SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
 
             //销售单信息
@@ -558,25 +574,30 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 newQc.setQcType(returnQc);
                 addList.add(newQc);
             } else if (StringUtils.isBlank(newProductGrade)) {
-                String[] split = newItem.getSaleMethod().split(",");
-                for (String s : split) {
-                    if (newSaleMethod.contains(s)) {
-                        QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
-                        BeanMapper.copy(newItem, newQc);
-                        newQc.setQcType(returnQc);
-                        addList.add(newQc);
-                        break;
+                if (StringUtils.isNotBlank(newItem.getSaleMethod())) {
+                    String[] split = newItem.getSaleMethod().split(",");
+                    for (String s : split) {
+                        if (newSaleMethod.contains(s)) {
+                            QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
+                            BeanMapper.copy(newItem, newQc);
+                            newQc.setQcType(returnQc);
+                            addList.add(newQc);
+                            break;
+                        }
                     }
                 }
+
             } else if (StringUtils.isBlank(newSaleMethod)) {
-                String[] split = newItem.getProductGrade().split(",");
-                for (String s : split) {
-                    if (newProductGrade.contains(s)) {
-                        QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
-                        BeanMapper.copy(newItem, newQc);
-                        newQc.setQcType(returnQc);
-                        addList.add(newQc);
-                        break;
+                if (StringUtils.isNotBlank(newItem.getProductGrade())) {
+                    String[] split = newItem.getProductGrade().split(",");
+                    for (String s : split) {
+                        if (newProductGrade.contains(s)) {
+                            QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
+                            BeanMapper.copy(newItem, newQc);
+                            newQc.setQcType(returnQc);
+                            addList.add(newQc);
+                            break;
+                        }
                     }
                 }
             } else {
@@ -890,5 +911,115 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Override
     public List<SoReturnReceiveEntity> listByIds(List<String> ids) {
         return lambdaQuery().in(SoReturnReceiveEntity::getId, ids).list();
+    }
+
+    @Override
+    public PagingVO<SoReturnReceiveDTO.PdaPagingView> pdaPaging(PagingDTO<SoReturnReceiveDTO.PdaPagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        SoReturnReceiveDTO.PdaPagingParamDTO params = pagingParamDTO.getParams();
+        List<String> approveStatusList = params.getApproveStatusList();
+        if (approveStatusList.contains(ApproveStatusEnum.APPROVE.getCode())) {
+            List<LocalDate> dateList = new ArrayList<>();
+            LocalDate now = LocalDate.now();
+            dateList.add(now.minusDays(30));
+            dateList.add(now);
+            params.setBillDateList(dateList);
+        }
+        IPage<SoReturnReceiveDTO.PdaPagingView> pageData = this.baseMapper.pdaPaging(query, pagingParamDTO.getParams());
+        if (CollectionUtils.isEmpty(pageData.getRecords())) {
+            return new PagingVO(new Page());
+        }
+        List<SoReturnReceiveDTO.PdaPagingView> records = pageData.getRecords();
+        //主键id
+        List<String> ids = records.stream().map(req -> req.getId()).collect(Collectors.toList());
+        //查询详情
+        List<SoReturnReceiveDetailEntity> detailEntityList = soReturnReceiveDetailService.listDetailByMainIds(ids);
+        for (SoReturnReceiveDTO.PdaPagingView record : records) {
+            record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
+            List<SoReturnReceiveDetailEntity> detailEntities = detailEntityList.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
+            List<SoReturnReceiveDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, SoReturnReceiveDTO.PdaItemDTO.class);
+            record.setDetailCount(itemDTOList.size());
+            record.setItemList(itemDTOList);
+        }
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<SoReturnReceiveDTO.PdaSoReturnReceiveCount> pdaListCount(PermissionsDTO dto) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(30);
+        PdaTabFlagEnum[] values = PdaTabFlagEnum.values();
+        List<SoReturnReceiveDTO.PdaSoReturnReceiveCount> list = new ArrayList<>();
+        for (PdaTabFlagEnum item : values) {
+            SoReturnReceiveDTO.PagingParam pagingParamDTO = new SoReturnReceiveDTO.PagingParam();
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            pagingParamDTO.setInvalidStatus(Boolean.FALSE);
+            SoReturnReceiveDTO.PdaSoReturnReceiveCount resultDTO = new SoReturnReceiveDTO.PdaSoReturnReceiveCount();
+            Integer count = MathUtil.ZERO;
+            if (PdaTabFlagEnum.WAIT_SUBMIT_AND_REJECT.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.REJECT.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
+                List<LocalDate> dateList = new ArrayList<>();
+                dateList.add(startDate);
+                dateList.add(endDate);
+                pagingParamDTO.setBillDateList(dateList);
+                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(pagingParamDTO);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            list.add(resultDTO);
+        }
+        return list;
+    }
+
+    @Override
+    public List<SoReturnReceiveDTO.PdaSoReceive> pdaList(SoReturnReceiveDTO.PdaSoReceiveParam dto) {
+        List<SoReturnReceiveDTO.PdaSoReceive> list = baseMapper.pdaList(dto);
+
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        List<String> srrId = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<SoReturnReceiveDetailEntity> detailEntityList = soReturnReceiveDetailService.listDetailByMainIds(srrId);
+        List<String> detailIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<SoReturnInstockDetailEntity> returnInstockDetailEntities = soReturnInstockDetailService.listDetailBySourceDetailIds(detailIds);
+        //获取未全部入库的销售退货签收单详情id
+        List<String> soReturnReceiveDetailIds = new ArrayList<>();
+
+        returnInstockDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getSourceDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+            int realQty = m.stream().mapToInt(SoReturnInstockDetailEntity::getRealQty).sum();
+            SoReturnReceiveDetailEntity detailEntity = detailEntityList.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(detailEntity)) {
+                if (realQty < detailEntity.getReceiveQty()) {
+                    soReturnReceiveDetailIds.add(m.get(MathUtil.ZERO).getSourceDetailId());
+                }
+            }
+            return m;
+        })));
+        List<String> collect = returnInstockDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
+        List<String> ids = detailIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
+        soReturnReceiveDetailIds.addAll(ids);
+
+        if (CollectionUtils.isEmpty(soReturnReceiveDetailIds)) {
+            return new ArrayList<>();
+        }
+        //根据未全部入库的销售退货签收单详情id获取签收单id
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listByIds(soReturnReceiveDetailIds);
+        List<String> notAllReceivePoOrderId = soReturnReceiveDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+
+        //获取到未全部入库的销售退货签收单返回数据
+        List<SoReturnReceiveDTO.PdaSoReceive> soReceiveList = list.stream().filter(req -> notAllReceivePoOrderId.contains(req.getId())).collect(Collectors.toList());
+
+        soReceiveList.sort(Comparator.comparing(SoReturnReceiveDTO.PdaSoReceive::getCode).reversed());
+        soReceiveList.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
+        return soReceiveList;
     }
 }

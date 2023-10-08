@@ -1,11 +1,12 @@
 package com.erp.server.bi.listener;
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.enums.SalesPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
@@ -14,6 +15,7 @@ import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.server.bi.enums.BiDataSourceCostEnum;
 import com.erp.server.bi.service.BiDataSourceCostDetailService;
 import com.erp.server.bi.service.BiDataSourceCostService;
@@ -41,6 +43,8 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
 
     private List<BiDictEntity> dictList;
 
+    private List<SysDepartmentDTO> deptList;
+
     private  List<Map<Integer,String>> list ;
 
     private Map<Integer,String> headMap;
@@ -48,12 +52,13 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
     private List<String> headList;
 
     public BiDataSourceCostExcelListener(BiDataSourceCostService biDataSourceCostService,BiDataSourceCostDetailService biDataSourceCostDetailService,
-                                         List<DmpShopInfoEntity> shopList,List<FindUserDTO> userList,List<BiDictEntity> dictList) {
+                                         List<DmpShopInfoEntity> shopList,List<FindUserDTO> userList,List<BiDictEntity> dictList,List<SysDepartmentDTO> deptList) {
         this.biDataSourceCostService = biDataSourceCostService;
         this.biDataSourceCostDetailService = biDataSourceCostDetailService;
         this.shopList = shopList;
         this.userList = userList;
         this.dictList = dictList;
+        this.deptList = deptList;
         this.list = new ArrayList<>();
     }
 
@@ -127,27 +132,35 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
                         //既不是数值也不是百分比
                         if (!StrUtils.isDigit(value) && !StrUtils.isPercentage(value)) {
                             errorMsgList.add("成本必须是数值或百分比数据");
-                        }
-                        if (StrUtils.isDigit(value)) {
-                            detailEntity.setCostValue(MathUtil.valueOf(value));
-                            detailEntity.setValueType(MathUtil.ZERO);
-                            detailList.add(detailEntity);
                         } else {
-                            detailEntity.setValueType(MathUtil.ONE);
-                            String costValue = value.replace("%", "");
-                            detailEntity.setCostValue(MathUtil.divide(MathUtil.valueOf(costValue),new BigDecimal(100),4));
-                            detailList.add(detailEntity);
+                            if (StrUtils.isDigit(value)) {
+                                detailEntity.setCostValue(MathUtil.valueOf(value));
+                                detailEntity.setValueType(MathUtil.ZERO);
+                                detailList.add(detailEntity);
+                            } else {
+                                detailEntity.setValueType(MathUtil.ONE);
+                                String costValue = value.replace("%", "");
+                                detailEntity.setCostValue(MathUtil.divide(MathUtil.valueOf(costValue),new BigDecimal(100),4));
+                                detailList.add(detailEntity);
+                            }
                         }
                     }
                 }
             }
             if (StringUtils.isBlank(entity.getDeptName())) {
                 errorMsgList.add("销售事业部不能为空");
+            } else {
+                String deptId = deptList.stream().filter(obj -> obj.getName().equals(entity.getDeptName())).map(SysDepartmentDTO::getId).findFirst().orElse("");
+                if (StringUtils.isBlank(deptId)) {
+                    errorMsgList.add(StrUtil.format("部门{}不存在",entity.getDeptName()));
+                } else {
+                    entity.setDeptId(deptId);
+                }
             }
             if (StringUtils.isBlank(entity.getPlatformName())) {
                 errorMsgList.add("平台名称不能为空");
             } else {
-                SalesPlatformEnum platformEnum = SalesPlatformEnum.getByName(entity.getPlatformName());
+                PlatformDictEnum platformEnum = PlatformDictEnum.getByName(entity.getPlatformName());
                 if (ObjectUtils.isEmpty(platformEnum)) {
                     errorMsgList.add("系统中不存在此平台名称");
                 }

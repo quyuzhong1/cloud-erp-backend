@@ -23,7 +23,7 @@ public class Generator {
     /**
        模块名（需要更改）
      */
-    private static final String MODEL = "plm";
+    private static final String MODEL = "sys";
     /**
      * 作者（需要更改）
      */
@@ -78,7 +78,7 @@ public class Generator {
     public static void main(String[] args) {
         // 需要生成的表名（特别注意：请确保生成多个表时在同一个数据库，如果一次性生成多个，中间有异常不会中断后续生成）
         // 现设置的是文件不覆盖，即生成时如果已经存在该文件则不会生成导致覆盖，设置成true覆盖，如果需要覆盖请将全局配置fileOverride设置成true
-        String[] tableNames = {"product_customs"};
+        String[] tableNames = {"pda_version"};
         generateByTables(tableNames);
     }
 
@@ -210,7 +210,7 @@ public class Generator {
                 .setEntitySerialVersionUID(false)
                 .setSuperEntityClass("com.common.core.entity.BaseEntity")
                 .setSuperServiceClass("com.common.business.service.SuperService")
-                .setSuperServiceImplClass("com.common.business.service.SuperServiceImpl")
+                .setSuperServiceImplClass("com.common.business.service.impl.SuperServiceImpl")
                 .setSuperControllerClass("com.common.core.controller.BaseController")
                 // 公共字段
                 .setSuperEntityColumns("id","create_time","update_time","version","is_deleted","create_user_id","create_user_name","update_user_id","update_user_name")

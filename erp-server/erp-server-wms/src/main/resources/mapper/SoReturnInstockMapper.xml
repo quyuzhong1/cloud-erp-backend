@@ -7,6 +7,7 @@
         sri.id,
         sri.source_id,
         srid.source_detail_id,
+        srid.so_return_detail_id,
         sri.code,
         sri.source_code,
         sri.so_code,
@@ -120,12 +121,18 @@
         count(distinct sri.id)
         FROM so_return_instock sri
         INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND sri.is_deleted = FALSE
-        WHERE srid.is_deleted = FALSE AND sri.source_id &lt;&gt; 'SAL_RETURNSTOCK'
+        WHERE srid.is_deleted = FALSE AND sri.source_type &lt;&gt; 'SAL_RETURNSTOCK'
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and sri.approve_status in
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
+        </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and sri.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sri.bill_date
+        </if>
+        <if test="params.invalidStatus != null ">
+            and sri.invalid_status = #{params.invalidStatus}
         </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -137,6 +144,7 @@
         sri.id,
         sri.source_id,
         srid.source_detail_id,
+        srid.so_return_detail_id,
         sri.code,
         sri.source_code,
         sri.so_code,
@@ -242,4 +250,38 @@
         sri.create_time desc
     </select>
 
+    <select id="pdaPaging" resultType="com.erp.model.wms.dto.SoReturnInstockDTO$PdaPagingView">
+        SELECT
+            DISTINCT
+            sri.id,
+            sri.code,
+            sri.source_type,
+            sri.approve_status,
+            sri.warehouse_name,
+            sri.seller_name,
+            sri.create_time
+        FROM so_return_instock sri
+        INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND srid.is_deleted = FALSE
+        WHERE sri.is_deleted = FALSE
+        AND sri.source_type NOT IN ('SAL_RETURNSTOCK')
+        AND sri.invalid_status = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and sri.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and sri.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sri.bill_date
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ORDER BY sri.create_time desc
+    </select>
 </mapper>

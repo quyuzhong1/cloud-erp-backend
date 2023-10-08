@@ -739,6 +739,11 @@ public class SupplierDTO implements Serializable {
          * 付款条件
          */
         private String paymentCondition;
+
+        /**
+         * 公司地址
+         */
+        private String companyAddress;
     }
 
     /**

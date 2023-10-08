@@ -1,20 +1,24 @@
 package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.bi.dto.DictDTO;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.server.bi.mapper.BiDictMapper;
 import com.erp.server.bi.service.BiDictService;
+import io.seata.common.util.StringUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -54,6 +58,47 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
     @Override
     public Boolean insert(BiDictEntity biDict) {
         return this.save(biDict);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean batchAdd(List<DictDTO> dictEntities) {
+        if (CollectionUtils.isEmpty(dictEntities)) {
+            throw new ServiceException(ApiError.ERROR_EMPTY_LIST);
+        }
+        Set<String> valueSet = dictEntities.stream().collect(Collectors.groupingBy(DictDTO::getValue, Collectors.counting()))
+                .entrySet().stream().filter(entry -> entry.getValue() > 1).map(Map.Entry::getKey).collect(Collectors.toSet());
+        if (CollectionUtils.isNotEmpty(valueSet)) {
+            throw new ServiceException(ApiError.ERROR_HAS_EXIST_DICT_VALUE, valueSet);
+        }
+        DictDTO entity = dictEntities.stream().filter(biDictEntity -> StringUtils.isNotBlank(biDictEntity.getType())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_EMPTY_DICT_TYPE));
+        //校验字典是否数据库已存在
+        Set<String> values = dictEntities.stream().filter(v -> StringUtils.isBlank(v.getId())).map(DictDTO::getValue).collect(Collectors.toSet());
+        if (CollectionUtils.isNotEmpty(values)){
+            List<Object> valueObjs = getByNames(values, entity.getType());
+            if (CollectionUtils.isNotEmpty(valueObjs)) {
+                throw new ServiceException(ApiError.ERROR_EXIST_DICT_VALUE, valueObjs.toArray());
+            }
+        }
+        List<BiDictEntity> entities = BeanMapperUtils.copyList(BiDictEntity.class, dictEntities);
+        return this.saveOrUpdateBatch(entities, entities.size());
+    }
+
+    /**
+     * 根据表name 获取到 BiDictEntity信息
+     *
+     * @param
+     * @return java.util.List<com.erp.model.plm.entity.BasicLabelEntity>
+     * @author zdy
+     * @date 2023-09-16 08:01
+     */
+    private List<Object> getByNames(Set<String> values, String type) {
+        LambdaQueryWrapper<BiDictEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(BiDictEntity::getValue, values);
+        queryWrapper.eq(BiDictEntity::getType, type);
+        queryWrapper.orderByDesc(BiDictEntity::getCreateTime);
+        queryWrapper.select(BiDictEntity::getValue);
+        return this.baseMapper.selectObjs(queryWrapper);
     }
 
     /**
@@ -143,6 +188,15 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
         return lambdaQuery().eq(BiDictEntity::getType, type)
                 .eq(BiDictEntity::getName, name)
                 .oneOpt().orElse(null);
+    }
+
+    @Override
+    public List<Map<String, Object>> listValueByType(String type) {
+        QueryWrapper<BiDictEntity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.select("value AS code","name AS value");
+        queryWrapper.eq("type", type);
+        queryWrapper.orderByAsc("order_index");
+        return this.listMaps(queryWrapper);
     }
 
     @Override

@@ -32,7 +32,15 @@ public interface WarehouseLocationFeign {
     @PostMapping("/getById")
     WarehouseLocationEntity quoteLocation(@RequestParam(value = "id")String id);
 
-
+    /**
+     * 根据仓库ids查询
+     * @Author Luo_WG
+     * @Date 2023/9/4 17:38
+     * @param warehouseIds
+     * @return java.util.List<com.erp.model.wms.entity.WarehouseLocationEntity>
+     **/
+    @PostMapping("/listByWarehouseIds")
+    List<WarehouseLocationEntity> listByWarehouseIds(@RequestBody List<String> warehouseIds);
 }
 
 

@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.FindUserDTO;
-import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
@@ -11,7 +10,7 @@ import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.server.wms.mapper.StocktakingTaskUserMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.StocktakingTaskUserService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

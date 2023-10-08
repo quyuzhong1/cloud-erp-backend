@@ -14,7 +14,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -43,10 +43,8 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoChangeService;
-import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.mapper.SoChangeMapper;
 import com.erp.server.oms.service.*;
-import com.erp.server.oms.utils.SoUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -157,8 +155,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         checkChangeCustomerInfo(soId, dto.getReceiveAddressId(), dto.getAddressType(), dto.getReceiverName(), dto.getTelNumber());
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSBG, BusinessNoTypeEnum.CODE_XSBG.getCode()));
         soChange.setCode(code);
-        //检查能否变更 根据折扣金额来
-        checkByDiscountAmount(dto.getDetailList());
         Boolean addResult = this.save(soChange);
         if (addResult) {
             //添加日志
@@ -264,7 +260,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             throw new ServiceException(ApiError.ERROR_92034);
         }
         List<SoChangeDetailDTO.UpdateDTO> detailList = dto.getDetailList();
-        checkByDiscountAmount(BeanMapper.copyList(dto.getDetailList(),SoChangeDetailDTO.AddDTO.class));
         //检查对应详情的变更类型
         soChangeDetailService.checkChange(BeanMapper.copyList(detailList, SoChangeDetailDTO.AddDTO.class));
         String code = soChange.getCode();
@@ -348,7 +343,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
     /**
      * 验证销售变更单
-     *
      * @param soId
      * @param receiveAddressId
      * @param addressType
@@ -898,7 +892,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         SoChangeEntity soChange = this.getById(id);
         if (Objects.nonNull(soChange)) {
             //同步成功的
-            String successSyncStatus = SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode();
+            String successSyncStatus = SyncStatusEnum.SUCCESS_SYNC.getCode();
             //表示同步成功
             if (successSyncStatus.equals(syncKingdeeStatus)) {
                 Boolean existAdd = soChangeDetailService.existAdd(id);
@@ -982,7 +976,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             //更新销售表数据
             soChangeDetailService.handleDb(list);
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeSoChangeService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeSoChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         }
         return Boolean.TRUE;
     }

@@ -74,4 +74,39 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      */
     List<InventoryEntity> listByStocktakingType(@Param("type") String type,@Param("startTime")LocalDateTime startTime,
                                                 @Param("endTime")LocalDateTime endTime, @Param("params") List<StocktakingPlanDetailEntity> detailEntityList);
+    /**
+     * 根据仓库id查询库存信息
+     * @Author Luo_WG
+     * @Date 2023/8/10 10:23
+     * @param warehouseId
+     * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaHomeInventoryBalanceDTO
+     **/
+    List<InventoryDTO.PdaHomeInventoryBalanceDTO> getInventoryByWarehouseId(@Param("warehouseId") String warehouseId, @Param("status") String status);
+
+    /**
+     * 根据条件查询库存信息
+     * @Author Luo_WG
+     * @Date 2023/8/25 18:13
+     * @param params
+     * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventoryDTO
+     **/
+    List<InventoryDTO.PdaInventoryDTO> getInventoryByParam(@Param("params") InventoryDTO.PdaSearchParamDTO params);
+
+    /**
+     * 根据条件查询仓库信息
+     * @Author Luo_WG
+     * @Date 2023/8/25 18:13
+     * @param params
+     * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventoryDTO
+     **/
+    List<InventoryDTO.PdaInventoryWarehouseDTO> listInventoryWarehouseByParam(@Param("params") InventoryDTO.InventoryBySkuNoDTO params);
+
+    /**
+     * 根据条件查询仓库下的仓位库存信息
+     * @Author Luo_WG
+     * @Date 2023/8/25 18:13
+     * @param params
+     * @return com.erp.model.wms.dto.inventory.InventoryDTO.PdaInventoryDTO
+     **/
+    List<InventoryDTO.PdaInventoryWarehouseLocationDTO> listInventoryWarehouseLocationByParam(@Param("params") InventoryDTO.InventoryBySkuNoDTO params);
 }

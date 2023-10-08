@@ -22,6 +22,10 @@ public class SoReturnReceiveDetailDTO implements Serializable {
          */
         private String skuId;
         /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
          * 退货数量
          */
         @NotNull(message = "退货数量不能为空")
@@ -66,6 +70,10 @@ public class SoReturnReceiveDetailDTO implements Serializable {
          * skuId
          */
         private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
         /**
          * id
          */
@@ -127,6 +135,10 @@ public class SoReturnReceiveDetailDTO implements Serializable {
          * sku编号
          */
         private String skuNo;
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
         /**
          * 产品名称
          */

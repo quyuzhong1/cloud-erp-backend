@@ -1,6 +1,8 @@
 package com.erp.model.wms.dto.inventory;
 
+import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.business.dto.base.SortDTO;
+import com.common.core.utils.MathUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -352,6 +354,11 @@ public class InventoryDTO implements Serializable {
          * 仓位id
          */
         private String warehouseLocation;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
 
         /**
          * 仓库id
@@ -951,4 +958,225 @@ public class InventoryDTO implements Serializable {
         }
     }
 
+    /**
+     * PDA首页库存结余查询
+     */
+    @Data
+    public static class PdaHomeInventoryBalanceDTO {
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 可用数量
+         */
+        private Long usableQty;
+
+        /**
+         * 今日出库数量
+         */
+        private Long todayDeliveryQty;
+
+        /**
+         * 今日入库数量
+         */
+        private Long todayStockInQty;
+
+        public  PdaHomeInventoryBalanceDTO() {
+            this.usableQty = 0L;
+            this.todayDeliveryQty = 0L;
+            this.todayStockInQty = 0L;
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaSearchParamDTO {
+        /**
+         * 组织id
+         */
+        private String orgId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private List<String> skuIds;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 库位
+         */
+        private List<String> warehouseLocations;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class InventoryBySkuNoDTO {
+        /**
+         * 组织id
+         */
+        private String orgId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaInventoryDTO {
+        /**
+         * 组织id
+         */
+        private String orgId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 实际库存
+         */
+        private Integer realQty;
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+        /**
+         * 冻结库存
+         */
+        private Integer frozenQty;
+    }
+
+    /**
+     * PDA:库存查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaInventorySearch {
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * sku名称
+         */
+        private String skuName;
+        /**
+         * spu编号
+         */
+        private String spuNo;
+        /**
+         * spu名称
+         */
+        private String spuName;
+        /**
+         * sku图片
+         */
+        private String imagesUrl;
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+        /**
+         * 仓库信息
+         */
+        private List<PdaInventoryWarehouseDTO> warehouseDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaInventoryWarehouseDTO {
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 实际库存
+         */
+        private Integer realQty;
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+        /**
+         * 冻结库存
+         */
+        private Integer frozenQty;
+        /**
+         * 仓位信息
+         */
+        private List<PdaInventoryWarehouseLocationDTO> warehouseLocationDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaInventoryWarehouseLocationDTO {
+        /**
+         * 组织id
+         */
+        private String orgId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
+        /**
+         * 实际库存
+         */
+        private Integer realQty;
+        /**
+         * 可用库存
+         */
+        private Integer usableQty;
+        /**
+         * 冻结库存
+         */
+        private Integer frozenQty;
+    }
 }

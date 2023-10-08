@@ -1,28 +1,21 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
-import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
-import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
@@ -32,7 +25,6 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.mapper.SoReturnDetailMapper;
 import com.erp.server.oms.service.*;
-import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -352,5 +344,15 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             availableQty = curInventoryQty;
         }
         return availableQty;
+    }
+
+    @Override
+    public List<String> listBySkuNo(SoReturnDTO.PdaSoReturnParam dto) {
+        LambdaQueryWrapper<SoReturnDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(SoReturnDetailEntity::getMainId);
+        queryWrapper.eq(StringUtils.isNotBlank(dto.getSkuNo()), SoReturnDetailEntity::getSkuNo, dto.getSkuNo());
+        queryWrapper.eq(SoReturnDetailEntity::getIsDeleted, Boolean.FALSE);
+        queryWrapper.groupBy(SoReturnDetailEntity::getMainId);
+        return listObjs(queryWrapper, Object::toString);
     }
 }

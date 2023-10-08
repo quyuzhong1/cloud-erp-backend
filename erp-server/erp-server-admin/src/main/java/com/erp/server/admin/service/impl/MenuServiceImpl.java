@@ -3,9 +3,9 @@ package com.erp.server.admin.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.admin.dto.SysFindMenuDTO;
 import com.erp.model.admin.dto.SysMenuDTO;
 import com.erp.model.admin.entity.MenuEntity;
@@ -17,6 +17,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -79,15 +80,13 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuEntity> impleme
         //  List<SysMenuEntity> allList = menuList(dto);
         List<MenuEntity> allList=list();
         List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
-        List<SysMenuVO> treeList = menuList.stream().
-                filter(item -> "0".equals(item.getParentId())).
-                map(item -> {
+        return menuList.stream().
+                filter(item -> "0".equals(item.getParentId()))
+                .sorted(Comparator.comparing(SysMenuVO::getIndex))
+                .peek(item -> {
                     item.setParentName("");
                     item.setChildrenList(getChildrenList(item, menuList));
-
-                    return item;
                 }).collect(Collectors.toList());
-        return treeList;
     }
 
     @Override
@@ -117,10 +116,10 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuEntity> impleme
      */
     public List<SysMenuVO> getChildrenList(SysMenuVO item, List<SysMenuVO> treeList) {
         List<SysMenuVO> collectList = treeList.stream().filter(menu -> item.getMenuId().equals(menu.getParentId()))
-                .map(m -> {
+                .sorted(Comparator.comparing(SysMenuVO::getIndex))
+                .peek(m -> {
                     m.setParentName(item.getMenuName());
                     m.setChildrenList(getChildrenList(m, treeList));
-                    return m;
                 }).collect(Collectors.toList());
         return CollectionUtils.isEmpty(collectList) ? null : collectList;
     }

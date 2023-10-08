@@ -16,7 +16,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.*;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -124,6 +124,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Autowired
     private WorkflowFeign workflowFeign;
 
+    @Autowired
+    private SupplierService supplierService;
+
     /**
      * 保存供应商信息
      *
@@ -145,10 +148,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //检查资质日期
         supplierCredentialService.checkDate(credentialList);
         //验证付款条件是否正确
-        if(StrUtils.isNotEmpty(dto.getPaymentCondition())) {
-            List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+        if (StrUtils.isNotEmpty(dto.getPaymentCondition())) {
+            List<DictBasicDTO.ViewDTO> paymentConditionList = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
             List<String> paymentConditionCodes = paymentConditionList.stream().map(DictBasicDTO.ViewDTO::getValue).distinct().collect(Collectors.toList());
-            if(!paymentConditionCodes.contains(dto.getPaymentCondition())) {
+            if (!paymentConditionCodes.contains(dto.getPaymentCondition())) {
                 throw new ServiceException("付款条件错误");
             }
         }
@@ -240,10 +243,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         result.setApproveStatus(supplier.getApproveStatus().getStatus());
         result.setPhase(supplier.getPhase().getPhase());
         //付款条件
-        List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
-        if(StrUtils.isNotEmpty(result.getPaymentCondition())) {
-            DictBasicDTO.ViewDTO dict =  paymentConditionList.stream().filter(r->Objects.equals(r.getValue(), result.getPaymentCondition())).findFirst().orElse(null);
-            if(Objects.nonNull(dict)) {
+        List<DictBasicDTO.ViewDTO> paymentConditionList = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+        if (StrUtils.isNotEmpty(result.getPaymentCondition())) {
+            DictBasicDTO.ViewDTO dict = paymentConditionList.stream().filter(r -> Objects.equals(r.getValue(), result.getPaymentCondition())).findFirst().orElse(null);
+            if (Objects.nonNull(dict)) {
                 result.setPaymentConditionName(dict.getName());
             }
         }
@@ -280,10 +283,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
 
         //验证付款条件是否正确
-        if(StrUtils.isNotEmpty(dto.getPaymentCondition())) {
-            List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+        if (StrUtils.isNotEmpty(dto.getPaymentCondition())) {
+            List<DictBasicDTO.ViewDTO> paymentConditionList = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
             List<String> paymentConditionCodes = paymentConditionList.stream().map(DictBasicDTO.ViewDTO::getValue).distinct().collect(Collectors.toList());
-            if(!paymentConditionCodes.contains(dto.getPaymentCondition())) {
+            if (!paymentConditionCodes.contains(dto.getPaymentCondition())) {
                 throw new ServiceException("付款条件错误");
             }
         }
@@ -396,7 +399,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //获取到采购订单数据
         List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
         //付款条件
-        List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+        List<DictBasicDTO.ViewDTO> paymentConditionList = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
 
 
         //最新审核人
@@ -615,7 +618,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         }
         return Boolean.TRUE;
     }
@@ -644,9 +647,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
         //发送金蝶
         if (dto.getState()) {
-            syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode());
+            syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncOperateEnum.OPERATE_DISABLE.getCode());
         } else {
-            syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode());
+            syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncOperateEnum.OPERATE_ENABLE.getCode());
         }
         return this.updateById(supplier);
     }
@@ -706,7 +709,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
             //发送金蝶
-            list.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }
@@ -789,7 +792,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //获取供应商默认联系人信息
             List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
             //付款条件
-            List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+            List<DictBasicDTO.ViewDTO> paymentConditionList = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
             //获取到采购订单数据
             List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
             for (SupplierDTO.PagingViewDTO item : list) {
@@ -913,6 +916,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         view.setPayMethodId(entity.getPayMethodId());
         view.setPayCurrency(entity.getPayCurrency());
         view.setPaymentCondition(entity.getPaymentCondition());
+        view.setCompanyAddress(entity.getCompanyAddress());
         return view;
     }
 
@@ -1023,13 +1027,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate) {
+    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
         return this.lambdaUpdate()
                 .in(SupplierEntity::getId, ids)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), SupplierEntity::getSyncKingdeeStatus, syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), SupplierEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId), SupplierEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), SupplierEntity::getSyncOperate,syncOperate)
+                .set(StringUtils.isNotBlank(syncOperate), SupplierEntity::getSyncOperate, syncOperate)
                 .update();
     }
 
@@ -1045,9 +1049,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<BaseIdDTO> listSupplierByCategoryType(String categoryType) {
         String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
-        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory,categoryType, null);
-        if(CollUtil.isNotEmpty(dataList)) {
-            return dataList.stream().map(data->{
+        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory, categoryType, null);
+        if (CollUtil.isNotEmpty(dataList)) {
+            return dataList.stream().map(data -> {
                 BaseIdDTO baseIdDTO = new BaseIdDTO();
                 baseIdDTO.setId(data.getId());
                 baseIdDTO.setName(data.getName());
@@ -1059,18 +1063,18 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Override
     public Map<String, SupplierDTO.SupplierSimpleDTO> getSupplierSimpleInfo(List<String> ids) {
-        if(CollUtil.isEmpty(ids)) {
+        if (CollUtil.isEmpty(ids)) {
             return Maps.newHashMap();
         }
         ids = ids.stream().distinct().collect(Collectors.toList());
         List<SupplierEntity> supplierList = lambdaQuery().in(SupplierEntity::getId, ids).list();
-        if(CollUtil.isEmpty(supplierList)) {
+        if (CollUtil.isEmpty(supplierList)) {
             return Maps.newHashMap();
         }
-        Map<String,SupplierEntity> supplierEntityMap = supplierList.stream().collect(Collectors.toMap(SupplierEntity::getId, Function.identity()));
+        Map<String, SupplierEntity> supplierEntityMap = supplierList.stream().collect(Collectors.toMap(SupplierEntity::getId, Function.identity()));
 
-        Map<String,SupplierDTO.SupplierSimpleDTO> supplierMap = Maps.newHashMapWithExpectedSize(supplierEntityMap.size());
-        supplierEntityMap.forEach((id, sup)->{
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = Maps.newHashMapWithExpectedSize(supplierEntityMap.size());
+        supplierEntityMap.forEach((id, sup) -> {
             SupplierDTO.SupplierSimpleDTO supplierSimpleDTO = new SupplierDTO.SupplierSimpleDTO();
             supplierSimpleDTO.setId(id);
             supplierSimpleDTO.setCode(sup.getCode());
@@ -1084,11 +1088,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<SupplierDTO.SupplierSimpleDTO> listApproveSupplierByCategoryType(String categoryType) {
         String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
-        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory,categoryType, null);
-        if(CollUtil.isNotEmpty(dataList)) {
+        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory, categoryType, null);
+        if (CollUtil.isNotEmpty(dataList)) {
             // 未审核通过的设置为禁用
-            dataList.stream().forEach(data->{
-                if(!Objects.equals(data.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+            dataList.stream().forEach(data -> {
+                if (!Objects.equals(data.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
                     data.setDisabled(Boolean.TRUE);
                 }
             });
@@ -1102,8 +1106,25 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             return Collections.EMPTY_LIST;
         }
         return lambdaQuery()
-                .in(SupplierEntity::getCode,supplierCodes)
+                .in(SupplierEntity::getCode, supplierCodes)
                 .list();
+    }
+
+
+    /**
+     * 根据名称获取供应商
+     *
+     * @param supplierNames
+     * @return java.util.List<com.erp.model.scm.entity.SupplierEntity>
+     * @author yl
+     * @date 2023-09-22 19:51
+     */
+    @Override
+    public List<SupplierEntity> listBySupplierByNames(List<String> supplierNames) {
+        if (CollectionUtils.isEmpty(supplierNames)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SupplierEntity::getName,supplierNames).list();
     }
 
     /**
@@ -1178,7 +1199,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 obj.setApproveStatus(statusEnum);
                 //审核通过更新金蝶推送状态为待同步
                 if (ApproveStatusEnum.APPROVE.equals(statusEnum)) {
-                    obj.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+                    obj.setSyncKingdeeStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
                 }
             });
             return this.updateBatchById(list);

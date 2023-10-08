@@ -4,13 +4,11 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.io.resource.ClassPathResource;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.HttpRequest;
-import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -42,6 +40,25 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     public List<DictCountryDTO.ListDTO> listCountry() {
         List<DictCountryDTO.ListDTO> list = baseMapper.listCountry();
         return list;
+    }
+
+    public static void main(String[] args) {
+        // 1. 读取resources文件夹下locList.xml文件
+        ClassPathResource resource = new ClassPathResource("locList.xml");
+        String xmlContent = resource.readUtf8Str();
+
+        // 将XML转换为JSON
+        JSON json = JSONUtil.parseFromXml(xmlContent);
+        // 2. 解析文件
+        JSONObject jsonObject = JSONUtil.parseObj(json.toString());
+//        System.out.println(jsonObject);
+        JSONArray jsonArray = jsonObject.getJSONObject("Location").getJSONArray("CountryRegion");
+        List<Object> name = jsonArray.stream().map(o -> new JSONObject(o).get("Name")).collect(Collectors.toList());
+        List<Object> code = jsonArray.stream().map(o -> new JSONObject(o).get("Code")).collect(Collectors.toList());
+        System.out.println(name);
+        System.out.println(name.size());
+        System.out.println(code);
+        System.out.println(code.size());
     }
 
     @Override

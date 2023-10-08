@@ -7,7 +7,7 @@ import com.erp.model.workflow.dto.DictBasicDTO;
 import com.erp.model.workflow.entity.WorkMenuEntity;
 import com.erp.server.workflow.mapper.WorkMenuMapper;
 import com.erp.server.workflow.service.WorkMenuService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

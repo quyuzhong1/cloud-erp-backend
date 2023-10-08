@@ -118,6 +118,11 @@ public class PoInstockDTO implements Serializable {
         private Integer exceedQty;
 
         /**
+         * 交货仓库Id
+         */
+        private String deliveryWarehouseId;
+
+        /**
          * 交货仓库名称
          */
         private String deliveryWarehouseName;
@@ -161,6 +166,11 @@ public class PoInstockDTO implements Serializable {
          * 仓位
          */
         private String warehouseLocation;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
 
     }
 
@@ -321,7 +331,15 @@ public class PoInstockDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+        /**
+         * 来源主键id
+         */
+        private String sourceId;
 
+        /**
+         * 来源 purchaseOrder采购订单
+         */
+        private String sourceType;
         /**
          * 明细
          */
@@ -349,6 +367,11 @@ public class PoInstockDTO implements Serializable {
         private String supplierContactId;
 
         /**
+         * 供应商联系人名称
+         */
+        private String supplierContactName;
+
+        /**
          * 供应商地址
          */
         private String supplierAddress;
@@ -366,12 +389,27 @@ public class PoInstockDTO implements Serializable {
         /**
          * 入库单号
          */
-        private String  code;
+        private String code;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
 
         /**
          * 审核状态
          */
-        private String  approveStatus;
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
 
         /**
          * 入库日期
@@ -749,5 +787,151 @@ public class PoInstockDTO implements Serializable {
          */
         private Integer instockQty;
 
+    }
+
+    /**
+     * PDA:列表查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingView {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 入库单号
+         */
+        private String code;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 入库单号
+         */
+        private String sourceType;
+
+        /**
+         * 采购单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 质检状态
+         */
+        private String qcStatus;
+
+        /**
+         * 质检状态名
+         */
+        private String qcStatusName;
+
+        /**
+         * 产品数量
+         */
+        private Integer detailCount;
+
+        /**
+         * 委外标识
+         */
+        private String subcontractType;
+
+        /**
+         * 产品信息
+         */
+        private List<PdaItemDTO> itemList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PdaItemDTO {
+        /**
+         * 明细id
+         */
+        private String id;
+        /**
+         * sku
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 实收数量
+         */
+        private Integer stockInQty;
+    }
+
+    /**
+     * PDA:列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaSearchParamDTO extends SortDTO {
+        /**
+         * 单据编号
+         */
+        private String code;
+        /**
+         * 审核状态集合
+         */
+        private List<String> approveStatusList;
+
+        /**
+         * 入库日期集合
+         */
+        private List<LocalDate> stockInDateList;
+    }
+
+    /**
+     * PDA:列表状态
+     * @Author Luo_WG
+     * @Date 2023/8/11 9:15
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class PdaPoInStockCountDTO {
+        /**
+         * 类型(waitSubmitAndReject 待提交/审核不通过，approveIng 审核中，approve 已审核)
+         */
+        private String tabFlag;
+        /**
+         * 数量
+         */
+        private Integer count;
     }
 }

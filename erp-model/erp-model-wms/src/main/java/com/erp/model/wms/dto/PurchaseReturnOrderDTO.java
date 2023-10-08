@@ -47,7 +47,6 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货人组织id
          */
-        @NotBlank(message = "退货人组织不能为空")
         private String returnOrgId;
 
         /**
@@ -154,13 +153,11 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货人id
          */
-        @NotBlank(message = "退货人不能为空")
         private String returnUserId;
 
         /**
          * 退货人组织id
          */
-        @NotBlank(message = "退货人组织不能为空")
         private String returnOrgId;
 
         /**
@@ -345,6 +342,16 @@ public class PurchaseReturnOrderDTO {
         private LocalDateTime approveTime;
 
         /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
          * 退货来源
          */
         private String sourceType;
@@ -485,6 +492,11 @@ public class PurchaseReturnOrderDTO {
         private LocalDate billDate;
 
         /**
+         * 退货仓库Id
+         */
+        private String returnWarehouseId;
+
+        /**
          * 退货仓库
          */
         private String returnWarehouseName;
@@ -569,6 +581,11 @@ public class PurchaseReturnOrderDTO {
          * 仓位
          */
         private String warehouseLocation;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
 
         /**
          * 单据来源
@@ -1000,4 +1017,120 @@ public class PurchaseReturnOrderDTO {
 
     }
 
+    /**
+     * PDA:列表查询
+     * @Author Luo_WG
+     * @Date 2023/8/18 16:21
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingViewDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 供应商
+         */
+        private String supplierName;
+
+        /**
+         * 退货仓库名称
+         */
+        private String returnWarehouseName;
+
+        /**
+         * 产品数量
+         */
+        private Integer detailCount;
+
+        /**
+         * 产品信息
+         */
+        private List<PdaItemDTO> itemList;
+    }
+
+
+    /**
+     * PDA:商品信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaItemDTO {
+        /**
+         * 明细id
+         */
+        private String id;
+        /**
+         * sku
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 实退数量
+         */
+        private Integer returnQty;
+    }
+
+    /**
+     * PDA:列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaPagingParamDTO extends SortDTO {
+        /**
+         * 审核状态：根据tab页传审核状态
+         */
+        private List<String> approveStatusList;
+
+        /**
+         * 退货日期
+         */
+        private List<LocalDate> billDateList;
+    }
+
+    /**
+     * PDA:列表状态
+     * @Author Luo_WG
+     * @Date 2023/8/11 9:15
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class PdaReturnOrderCountDTO {
+        /**
+         * 类型(waitSubmitAndReject 待提交/审核不通过，approveIng 审核中，approve 已审核)
+         */
+        private String tabFlag;
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
 }

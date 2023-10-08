@@ -102,9 +102,19 @@ public class TransferInfoDTO implements Serializable {
         private String unit;
 
         /**
+         * 调入仓库id
+         */
+        private String inWarehouseId;
+
+        /**
          * 调入仓库名称
          */
         private String inWarehouseName;
+
+        /**
+         * 调出仓库id
+         */
+        private String outWarehouseId;
 
         /**
          * 调出仓库名称
@@ -117,9 +127,19 @@ public class TransferInfoDTO implements Serializable {
         private String inWarehouseLocation;
 
         /**
+         * 调入仓位名称
+         */
+        private String inWarehouseLocationName;
+
+        /**
          * 调出仓位
          */
         private String outWarehouseLocation;
+
+        /**
+         * 调出仓位名称
+         */
+        private String outWarehouseLocationName;
 
         /**
          * 备注
@@ -224,6 +244,8 @@ public class TransferInfoDTO implements Serializable {
         @NotBlank(message = "调拨类型不能为空")
         @StateEnumValue(clazz = TransferTypeEnum.class, message = "调拨类型输入值有误")
         private String type;
+
+        private String typeName;
 
         /**
          * 调拨日期
@@ -414,5 +436,120 @@ public class TransferInfoDTO implements Serializable {
          * 明细
          */
         private List<TransferInfoDetailDTO.ViewDTO> detailList;
+    }
+
+    /**
+     * PDA:分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaListDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 调入仓库名称
+         */
+        private String inWarehouseName;
+
+        /**
+         * 调出仓库名称
+         */
+        private String outWarehouseName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名
+         */
+        private String approveStatusName;
+
+        /**
+         * 产品数量
+         */
+        private Integer detailCount;
+
+        /**
+         * 产品信息
+         */
+        private List<TransferInfoDTO.PdaItemDTO> itemList;
+    }
+
+    /**
+     * PDA:商品信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaItemDTO {
+        /**
+         * 明细id
+         */
+        private String id;
+        /**
+         * sku
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+    }
+
+    /**
+     * PDA:列表查询参数
+     * @Author Luo_WG
+     * @Date 2023/8/15 11:19
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class PdaSearchParamDTO extends SortDTO {
+        /**
+         * 审核状态：根据tab页传审核状态
+         */
+        private List<String> approveStatusList;
+
+        /**
+         * 签收日期
+         */
+        private List<LocalDate> billDateList;
+    }
+
+    /**
+     * PDA:列表状态
+     * @Author Luo_WG
+     * @Date 2023/8/11 9:15
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class PdaListStatusCountDTO {
+        /**
+         * 类型(waitSubmitAndReject 待提交/审核不通过，approveIng 审核中，approve 已审核)
+         */
+        private String tabFlag;
+        /**
+         * 数量
+         */
+        private Integer count;
     }
 }

@@ -29,6 +29,7 @@
             pbi.id as bomId,
            pbi.bom_version as bomVersion,
            pbs.parent_sku_id as parentSkuId,
+           pbs.parent_sku_no as parentSkuNo,
            pbs.sku_id as skuId,
            pbs.sku_no as skuNo,
            pbs.quantity as quantity,
@@ -44,6 +45,30 @@
                 #{item}
             </foreach>
         </where>
+    </select>
+
+    <select id="listBomChildBySkuNos" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
+        select
+        pbi.id as bomId,
+        pbi.bom_version as bomVersion,
+        pbs.parent_sku_id as parentSkuId,
+        pbs.parent_sku_no as parentSkuNo,
+        pbs.sku_id as skuId,
+        pbs.sku_no as skuNo,
+        pbs.quantity as quantity,
+        pd.name as skuName,
+        pd.unit_name as unitName
+        from product_bom_info pbi
+        left join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
+        left join product_detail pd on pbs.sku_id = pd.id and pd.is_deleted = false
+        WHERE pbi.is_deleted = false
+        and pbi.state = 4
+        <if test="parentSkuNos != null and parentSkuNos.size > 0">
+            and pbs.parent_sku_no in
+            <foreach collection="parentSkuNos" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
     </select>
 
     <select id="listBomByParentSkuIds" resultType="com.erp.model.plm.entity.BomInfoEntity">
@@ -117,4 +142,26 @@
         </where>
     </select>
 
+
+    <select id="listBomBySkuIds" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
+        select
+        pbi.id as bomId,
+        pbi.bom_version as bomVersion,
+        pbs.parent_sku_id as parentSkuId,
+        pbs.sku_id as skuId,
+        pbs.sku_no as skuNo,
+        pbs.quantity as quantity,
+        pd.name as skuName,
+        pd.unit_name as unitName
+        from product_bom_info pbi
+        left join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
+        left join product_detail pd on pbs.sku_id = pd.id and pd.is_deleted = false
+        <where>
+            pbi.is_deleted = false and pbi.state = 4
+            and pbs.sku_id in
+            <foreach collection="skuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+    </select>
 </mapper>

@@ -1,10 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.LoginUser;
@@ -13,16 +11,14 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.inventory.*;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.InstockForcastMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -31,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -52,9 +47,6 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
 
     @Autowired
     private InstockForcastDetailService instockForcastDetailService;
-
-    @Autowired
-    private SysUserFeign sysUserFeign;
 
     @Autowired
     private InventoryTransCoreService inventoryTransCoreService;
@@ -144,7 +136,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             inOutStockDTO.setQty(instockForcastDetailEntity.getQty());
             inventorySkus.add(inOutStockDTO);
         });
-        inventoryDto.setMembers(inventorySkus);
+        inventoryDto.setParamList(inventorySkus);
         inventoryTransCoreService.approveByType(inventoryDto);
     }
 
@@ -212,7 +204,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             inOutStockDTO.setQty(member.getQty());
             inventorySkus.add(inOutStockDTO);
         });
-        inventoryDto.setMembers(inventorySkus);
+        inventoryDto.setParamList(inventorySkus);
         inventoryTransCoreService.approveByType(inventoryDto);
 
     }
@@ -328,7 +320,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             }
             inOutStockDTO.setQty(changeQty);
             inventorySkus.add(inOutStockDTO);
-            inventoryDto.setMembers(inventorySkus);
+            inventoryDto.setParamList(inventorySkus);
 
             List<TransactionRuleDTO> rules = Lists.newArrayList();
             TransactionRuleDTO transactionRuleDTO = new TransactionRuleDTO();

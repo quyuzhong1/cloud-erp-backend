@@ -473,6 +473,21 @@
             </foreach>
         </if>
     </select>
+    <select id="listRepairHistoryDb" resultType="com.erp.model.oms.dto.SoInfoDTO$ListDTO">
+        SELECT
+            si.id AS  soId,
+            si.discount_amount,
+            sd.sku_id,
+            sd.sku_no,
+            sd.qty,
+            sd.price
+        FROM so_info si
+        LEFT JOIN so_detail sd
+        ON si.id = sd.main_id AND si.is_deleted = FALSE
+        WHERE sd.is_deleted = FALSE
+        AND si.approve_status='approve'
+        AND si.discount_amount>0
+    </select>
 
 
 </mapper>

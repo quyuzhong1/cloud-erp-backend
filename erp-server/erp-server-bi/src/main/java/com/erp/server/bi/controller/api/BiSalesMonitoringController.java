@@ -1,9 +1,9 @@
 package com.erp.server.bi.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiSalesMonitoringDTO;
 import com.erp.model.bi.dto.BiSalesMonitoringSearchDTO;
 import com.erp.server.bi.service.BiSalesMonitoringService;
@@ -42,7 +42,7 @@ public class BiSalesMonitoringController extends BaseController {
     }
 
     /**
-     * 销售监控-批量新增销售监控
+     * 销售监控-批量修改销售监控
      * @author Will
      * @date: 2022/12/29 16:54
      * @param list
@@ -78,7 +78,7 @@ public class BiSalesMonitoringController extends BaseController {
                     tableField = "charge_id",
                     menuCode = "bi:module:content",
                     tableAlias = "doio")
-    public ApiResult<LinkedHashMap<String,Object>> listBiSalesMonitoringView(@RequestBody @Validated BiSalesMonitoringSearchDTO dto) {
+    public ApiResult<LinkedHashMap<String,Object>> listBiSalesMonitoringView(@RequestBody @Validated BiSalesMonitoringSearchDTO.ParamDTO dto) {
         LinkedHashMap<String,Object> map =  biSalesMonitoringService.listBiSalesMonitoringView(dto);
         return success(map);
     }

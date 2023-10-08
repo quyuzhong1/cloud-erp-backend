@@ -18,7 +18,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -1004,7 +1004,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //审核通过
             approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -1057,7 +1057,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), rejectPairList, "状态变更");
             // TODO 收款字段需补
-            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }
@@ -1209,7 +1209,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         String content = "作废了一个销售订单【%s】,作废原因: ".concat(remark);
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "作废");
-        list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
+        list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_INVALID.getCode()));
 
         return Boolean.TRUE;
     }
@@ -1886,7 +1886,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 return Boolean.TRUE;
             }
             //同步成功
-            if (syncKingdeeStatus.equals(SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())) {
+            if (syncKingdeeStatus.equals(SyncStatusEnum.SUCCESS_SYNC.getCode())) {
                 KingdeeDTO dto = new KingdeeDTO();
                 dto.setId(syncKingdeeId);
                 dto.setNumber("");
@@ -2513,6 +2513,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 .update();
     }
 
+
+    /**
+     * 获取到折扣额大于0的历史数据
+     * @author yl
+     * @date 2023-09-28 10:31
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.ListDTO>
+     */
+    @Override
+    public List<SoInfoDTO.ListDTO> listRepairHistoryDb() {
+        return baseMapper.listRepairHistoryDb();
+    }
 
 
     public SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfitt(SkuCostProfitDTO.SkuCostProfitParam costParam) {

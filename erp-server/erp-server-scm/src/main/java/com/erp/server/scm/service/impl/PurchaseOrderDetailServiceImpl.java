@@ -7,7 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -611,5 +611,15 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         lambdaUpdate().in(PurchaseOrderDetailEntity::getId,ids)
                 .set(PurchaseOrderDetailEntity::getRemark,remark)
                 .update(new PurchaseOrderDetailEntity());
+    }
+
+    @Override
+    public List<String> listPoIdBySkuNo(String skuNo) {
+        LambdaQueryWrapper<PurchaseOrderDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(PurchaseOrderDetailEntity::getPurchaseOrderId);
+        queryWrapper.eq(PurchaseOrderDetailEntity::getSkuNo, skuNo);
+        queryWrapper.eq(PurchaseOrderDetailEntity::getIsDeleted, Boolean.FALSE);
+        queryWrapper.groupBy(PurchaseOrderDetailEntity::getPurchaseOrderId);
+        return listObjs(queryWrapper, Object::toString);
     }
 }

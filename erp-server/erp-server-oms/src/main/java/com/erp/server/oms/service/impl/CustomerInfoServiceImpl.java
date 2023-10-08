@@ -15,7 +15,7 @@ import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -41,7 +41,6 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.constant.OmsConstant;
-import com.erp.server.oms.kingdee.SyncKingdeeCustomerContactService;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
 import com.erp.server.oms.service.*;
@@ -675,7 +674,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
 
             /*for (CustomerInfoEntity customerInfoEntity : list) {
                 List<CustomerContactEntity> contactEntities = customerContactService.listEntityByMainId(customerInfoEntity.getId());
@@ -729,7 +728,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }
@@ -879,9 +878,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         customerList.forEach(req -> {
             //发送金蝶
             if (dto.getDisabled()) {
-                syncKingdeeCustomerService.syncDataToKingdee(req, SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode());
+                syncKingdeeCustomerService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DISABLE.getCode());
             } else {
-                syncKingdeeCustomerService.syncDataToKingdee(req, SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode());
+                syncKingdeeCustomerService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_ENABLE.getCode());
             }
         });
 
@@ -989,6 +988,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             base.setCountryName(dictCountryEntity.getNameCn());
         }
         base.setSellerId(customer.getSellerId());
+        base.setSellerName(customer.getSellerName());
+        base.setUseOrgId(customer.getUseOrgId());
+        base.setUseOrgName(customer.getUseOrgName());
         String currencySymbol = "";
         if (CollectionUtils.isNotEmpty(currencyList)) {
             currencySymbol = currencyList.get(0).getSymbol();
@@ -1101,7 +1103,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
         for (CustomerInfoEntity item : list) {
             String platformType = item.getPlatformType();
-            String platformTypeName = SalesPlatformEnum.getByCode(platformType).getName();
+            String platformTypeName = PlatformDictEnum.getByCode(platformType).getName();
             String newPlatformType = dictList.stream().filter(d -> d.getName().equals(platformTypeName)).
                     findFirst().map(DictBasicDTO.ViewDTO::getValue).orElse("");
             item.setPlatformType(newPlatformType);
@@ -1350,8 +1352,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 continue;
             }
             lambdaUpdate().set(CustomerInfoEntity::getSyncKingdeeId, kingdeeId).set(CustomerInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
-                    .set(CustomerInfoEntity::getSyncOperate, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode())
-                    .set(CustomerInfoEntity::getSyncKingdeeStatus, SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())
+                    .set(CustomerInfoEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
+                    .set(CustomerInfoEntity::getSyncKingdeeStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
                     .eq(CustomerInfoEntity::getId, customerInfoEntity.getId())
                     .update();
         }

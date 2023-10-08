@@ -35,6 +35,12 @@
         is_deleted,
         sku_no, name, qty, parent_sku, relation_type, platform_sign, remark, status
     </sql>
+    <delete id="deletePhysicalBatchIds">
+        delete from dmp_bom where id in
+        <foreach collection="ids" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
 
 
 </mapper>

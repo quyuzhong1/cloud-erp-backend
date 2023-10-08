@@ -20,6 +20,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -96,6 +97,9 @@ ProductDetailController extends BaseController {
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
 
     @Resource
     private ProductDetailApproverService productDetailApproverService;
@@ -646,7 +650,7 @@ ProductDetailController extends BaseController {
     public ApiResult importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<BasicDictEntity> basicDictList = basicDictService.list();
-        ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productUnitService, basicCategoryService, basicDictService, userList, basicDictList);
+        ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productUnitService, basicCategoryService, basicDictService, userList, basicDictList,scmTaskFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -975,7 +979,7 @@ ProductDetailController extends BaseController {
      **/
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = productDetailService.submit(dto.getIds());
+        Boolean flag = productDetailService.submit(dto.getIds(), Boolean.TRUE);
         return flag == true ? success() : failure();
     }
 
@@ -1071,5 +1075,18 @@ ProductDetailController extends BaseController {
     @GetMapping("/listSkuByProductId")
     public ApiResult<List<ProductDetailEntity>> listSkuByProductId(@RequestParam("productId") String productId) {
         return success(productDetailService.queryByProductId(productId));
+    }
+
+    /**
+     * PDA:条件查询sku
+     * @Author Luo_WG
+     * @Date 2023/8/21 12:11
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.plm.vo.SkuVO>>
+     **/
+    @PostMapping("/search/pdaSearchSku")
+    public ApiResult<List<SkuVO>> pdaSearchSku(@RequestBody ProductDetailDTO.PdaSearchDTO dto) {
+        List<SkuVO> skuList = productDetailService.pdaSearchSku(dto);
+        return success(skuList);
     }
 }

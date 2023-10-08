@@ -11,7 +11,7 @@ import com.baomidou.mybatisplus.generator.config.rules.DateType;
 import com.baomidou.mybatisplus.generator.engine.FreemarkerTemplateEngine;
 import com.baomidou.mybatisplus.generator.keywords.PostgreSqlKeyWordsHandler;
 import com.common.business.service.SuperService;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.controller.BaseController;
 import com.common.core.entity.BaseEntity;
 import lombok.SneakyThrows;

@@ -12,12 +12,10 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.*;
-import com.erp.server.wms.config.InventoryHelper;
-import com.erp.server.wms.service.InventoryStockService;
+import com.erp.server.wms.annotation.InventoryHandler;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.utils.InventoryUtils;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @Classname: InventoryTransferServiceImpl
@@ -35,7 +34,8 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl implements InventoryStockService {
+@InventoryHandler(InventoryBizTypeEnum.TRANSFER_STOCK)
+public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl {
 
     @Autowired
     private WarehouseService warehouseService;
@@ -48,19 +48,19 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
         Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         Map<String, WarehouseLocationEntity> warehouseLocationMap = Maps.newHashMap();
         // 判断是否需要忽略计算库存的sku
-        List<String>  ignoreInventorySkuIds = inventoryHelper.getIgnoreSkuIds();
+        List<String>  ignoreInventorySkuIds = this.getIgnoreSkuIds();
+
         for(InventoryStockBaseDTO baseParam : paramList) {
             if(baseParam instanceof TransferDTO) { // 调拨走交易规则
                 TransferDTO param = (TransferDTO)baseParam;
                 ValidatorUtil.validateEntity(param);
 
-                if(0 == param.getQty().intValue()) {
+                if(0 == param.getQty()) {
                     throw new ServiceException("库存变更数量不能等于0");
                 }
-                if(!InventoryHelper.ALLOW_NEGATIVE_INVENTORY.contains(param.getSourceType())) {
-                    if(param.getQty().intValue() < 0) {
-                        throw new ServiceException("库存变更数量不能小于0");
-                    }
+
+                if(!this.allowNegativeQtyBusinessList.contains(param.getSourceType()) && param.getQty() < 0) {
+                    throw new ServiceException("库存变更数量不能小于0");
                 }
 
                 if(ignoreInventorySkuIds.contains(param.getSkuId())) {
@@ -68,35 +68,38 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                     continue;
                 }
 
-                //当前仓和目的仓不能一样
-                ValidatorUtil.isTrue(!Objects.equals(param.getCurWarehouseId(), param.getTargetWarehouseId()),()->new ServiceException(ApiError.ERROR_99039));
+                // 调拨/移仓位 的仓库校验
+                if(businessType.equals(InventoryBusinessTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO)) {
+                    //移仓位：当前仓和目的仓必须 一样
+                    ValidatorUtil.isTrue(!Objects.equals(param.getCurWarehouseId(), param.getTargetWarehouseId()), () -> new ServiceException(ApiError.CURRENT_TARGET_WAREHOUSE_SAME));
+                }else {
+                    //调拨：当前仓和目的仓必须 不一样
+                    ValidatorUtil.isTrue(Objects.equals(param.getCurWarehouseId(), param.getTargetWarehouseId()), () -> new ServiceException(ApiError.ERROR_99039));
+                }
 
                 // 当前仓仓库和仓位信息
-                WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getCurWarehouseId(),(v)->warehouseService.detailWithCache(v));
+                WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getCurWarehouseId(), v -> warehouseService.detailWithCache(v));
                 if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
                     throw new ServiceException(ApiError.ERROR_99002);
                 }
+
                 if(StrUtils.isNotEmpty(param.getCurWarehouseLocation())) {
-                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getCurWarehouseLocation(),(v)->warehouseLocationService.findByWarehouseIdAndCode(param.getCurWarehouseId(), v));
+                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getCurWarehouseLocation(), v->warehouseLocationService.findByWarehouseIdAndCode(param.getCurWarehouseId(), v));
                     if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
                         throw new ServiceException("仓位信息不存在");
                     }
                 }
                 // 目的仓仓库和仓位信息
-                warehouseDetail = warehouseMap.computeIfAbsent(param.getTargetWarehouseId(),(v)->warehouseService.detailWithCache(v));
+                warehouseDetail = warehouseMap.computeIfAbsent(param.getTargetWarehouseId(), v ->warehouseService.detailWithCache(v));
                 if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
                     throw new ServiceException(ApiError.ERROR_99002);
                 }
                 if(StrUtils.isNotEmpty(param.getTargetWarehouseLocation())) {
-                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getTargetWarehouseLocation(),(v)->warehouseLocationService.findByWarehouseIdAndCode(param.getTargetWarehouseId(), v));
+                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getTargetWarehouseLocation(),v->warehouseLocationService.findByWarehouseIdAndCode(param.getTargetWarehouseId(), v));
                     if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
                         throw new ServiceException("仓位信息不存在");
                     }
                 }
-
-                inventoryHelper.checkCommonBiz(param.getSourceType(), param.getSourceId(), param.getBillDate());// 通用检查
-                inventoryHelper.checkAllowTrade(param.getSourceType(), param.getCurWarehouseId(), param.getSkuNo());// 当前仓关账检查
-                inventoryHelper.checkAllowTrade(param.getSourceType(), param.getTargetWarehouseId(), param.getSkuNo());// 目的仓关账检查
 
                 InventoryBaseInfoDTO currInventoryBaseInfoDTO = new InventoryBaseInfoDTO();
                 currInventoryBaseInfoDTO.setSourceType(param.getSourceType());
@@ -109,7 +112,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                 currInventoryBaseInfoDTO.setQty(param.getQty());
                 currInventoryBaseInfoDTO.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT);//当前仓
 
-                inventoryHelper.checkStockByRule(currInventoryBaseInfoDTO, businessType, transactionRules);// 当前仓出库库存数量检查（因为有可能是当前仓入库）
+                this.checkStockByRule(currInventoryBaseInfoDTO, businessType, transactionRules);// 当前仓出库库存数量检查（因为有可能是当前仓入库）
 
                 InventoryBaseInfoDTO targetInventoryBaseInfoDTO = new InventoryBaseInfoDTO();
                 targetInventoryBaseInfoDTO.setSourceType(param.getSourceType());
@@ -122,30 +125,20 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                 targetInventoryBaseInfoDTO.setQty(param.getQty());
                 targetInventoryBaseInfoDTO.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET);//目的仓
 
-                inventoryHelper.checkStockByRule(targetInventoryBaseInfoDTO, businessType, transactionRules);// 目的仓出库库存数量检查（因为有可能是目的仓出库）
+                this.checkStockByRule(targetInventoryBaseInfoDTO, businessType, transactionRules);// 目的仓出库库存数量检查（因为有可能是目的仓出库）
             }
         }
     }
 
-    /**
-     * 循环处理调拨业务
-     * @param paramLis
-     * @param businessType
-     * @param transactionRuleParams
-     * @param transactionNo
-     */
     @Override
-    public <T extends InventoryStockBaseDTO> void stockHandler(List<T> paramLis, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo) {
-        List<String> skuIds = Lists.newArrayList();
-        paramLis.stream().forEach(param->skuIds.add(((TransferDTO)param).getSkuId()));
-
+    public <T extends InventoryStockBaseDTO> void stockHandler(List<T> paramList, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo) {
         // 获取忽略库存计算的sku
-        List<String> ignoreInventorySkuIds = inventoryHelper.getIgnoreSkuIds();
+        List<String> ignoreInventorySkuIds = this.getIgnoreSkuIds();
         // 通过对sku id 仓库id 仓位 顺序执行, 避免多线程死锁
         Comparator<InventoryStockBaseDTO> comparing = Comparator.comparing(InventoryStockBaseDTO::getSkuId)
                 .thenComparing(x -> ObjectUtil.isNotEmpty(x.getInventoryStatus()) ? x.getInventoryStatus().getCode() : "");
-        paramLis = paramLis.stream().sorted(comparing).collect(Collectors.toList());
-        for(InventoryStockBaseDTO baseParam : paramLis) {
+        paramList = paramList.stream().sorted(comparing).collect(Collectors.toList());
+        for(InventoryStockBaseDTO baseParam : paramList) {
             // 当前仓出入库业务处理
             TransferDTO param = (TransferDTO)baseParam;
             if(Objects.nonNull(param.getCurWarehouseLocation())) {
@@ -161,8 +154,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
             }
             // 目的仓出入库业务处理
             InOutStockTransformDTO targetWareInOrOutStock = InventoryUtils.wrapInOutStockByTransfer(param, InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryOperationModeEnum.APPROVE);
-            Arrays.asList(curWareInOrOutStock, targetWareInOrOutStock)
-                    .stream()
+            Stream.of(curWareInOrOutStock, targetWareInOrOutStock)
                     .sorted(Comparator.comparing(InOutStockTransformDTO::getWarehouseId)
                             .thenComparing(x -> ObjectUtil.isNotEmpty(x.getWarehouseLocation()) ? x.getWarehouseLocation() : "")
                             .thenComparing(x -> ObjectUtil.isNotEmpty(x.getInventoryStatus()) ? x.getInventoryStatus().getCode(): "")
@@ -217,12 +209,4 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
         }
     }
 
-    /**
-     * 调拨类
-     * @return
-     */
-    @Override
-    public InventoryBizTypeEnum handlerType() {
-        return InventoryBizTypeEnum.TRANSFER_STOCK;
-    }
 }

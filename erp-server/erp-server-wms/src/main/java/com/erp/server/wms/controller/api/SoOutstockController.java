@@ -12,6 +12,7 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.server.wms.service.SoOutstockService;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -160,10 +161,11 @@ public class SoOutstockController extends BaseController {
 
     /**
      * 列表修改
-     * @author Will
-     * @date: 2023/7/12 16:54
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2023/7/12 16:54
      */
     @PostMapping("/pagingUpdate")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -313,14 +315,26 @@ public class SoOutstockController extends BaseController {
 
     /**
      * 打印
-     * @Author Luo_WG
-     * @Date 2023/7/13 10:44
+     *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
+     * @Author Luo_WG
+     * @Date 2023/7/13 10:44
      **/
     @PostMapping("/print")
     public ApiResult<List<SoOutstockDTO.PrintDTO>> print(@RequestBody BaseIdsDTO.IdsDTO dto) {
         List<SoOutstockDTO.PrintDTO> printDTOList = soOutstockService.print(dto.getIds());
         return success(printDTOList);
+    }
+
+    /**
+     * 修复销售出库单历史数据
+     *
+     * @return
+     */
+    @PostMapping("/tempRepairHistoryDb")
+    public ApiResult tempRepairHistoryDb() {
+        soOutstockService.tempRepairHistoryDb();
+        return success();
     }
 }

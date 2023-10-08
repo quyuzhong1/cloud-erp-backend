@@ -1,6 +1,6 @@
 package com.erp.server.sys.service.impl;
 
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
@@ -57,6 +57,32 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
         }
         List<DictGlobalAreaDTO.InfoDTO> resultList = this.baseMapper.listByCountryIds(countryIds);
         return resultList;
+    }
+
+    /**
+     * 根据区域ids获取地区列表
+     * @author yl
+     * @date 2023-08-22 15:48
+     * @param ids
+     * @return java.util.List<com.erp.model.sys.entity.DictGlobalAreaEntity>
+     */
+    @Override
+    public List<DictGlobalAreaEntity> listGlobalAreaByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(DictGlobalAreaEntity::getId,ids).list();
+    }
+
+    /**
+     * 获取地区列表
+     * @author Jim
+     * @date 2023-09-19 09:48
+     * @return java.util.List<com.erp.model.sys.entity.DictGlobalAreaEntity>
+     */
+    @Override
+    public List<DictGlobalAreaEntity> listGlobalArea() {
+        return this.lambdaQuery().list();
     }
 
 

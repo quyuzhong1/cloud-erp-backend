@@ -303,17 +303,85 @@
     <select id="listApproveCount" resultType="com.erp.model.wms.dto.SoOutstockDTO$ApproveCountDTO">
           SELECT
             approve_status,
+            invalid_status,
 	        count(*)
-	     FROM   so_outstock
+	     FROM so_outstock
 	     WHERE is_deleted=FALSE
+         AND source_type!='SAL_OUTSTOCK'
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
-         GROUP BY approve_status
+         GROUP BY approve_status,invalid_status
     </select>
     <select id="getIdsByTemp" resultType="java.lang.String">
         SELECT so.id FROM "temp_recovry_record" trr
           left join so_return_instock so on trr.code = so.code and so.is_deleted = false
         where so.approve_status = 'approve' limit 1000
+    </select>
+
+    <select id="pdaPaging" resultType="com.erp.model.wms.dto.SoOutstockDTO$PdaPagingViewDTO">
+        SELECT
+        DISTINCT
+        so.id,
+        so.code,
+        so.source_type,
+        so.seller_name,
+        so.warehouse_name,
+        so.approve_status,
+        so.create_time
+        FROM so_outstock so
+        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND sod.is_deleted=FALSE
+        WHERE so.is_deleted = false
+        AND so.invalid_status = false
+        AND so.source_type NOT IN ('SAL_OUTSTOCK')
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+
+            and so.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.actualDeliveryDateList !=null and params.actualDeliveryDateList.size>0">
+            AND so.actual_delivery_date >= #{params.actualDeliveryDateList[0]} and
+            (#{params.actualDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > so.actual_delivery_date
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ORDER BY so.create_time desc
+    </select>
+
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+        count(distinct so.id)
+        FROM so_outstock_detail sod
+        INNER JOIN so_outstock so ON sod.main_id = so.id AND sod.is_deleted = FALSE
+        WHERE so.is_deleted = FALSE
+        AND so.source_type NOT IN ('SAL_OUTSTOCK')
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and so.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.actualDeliveryDateList !=null and params.actualDeliveryDateList.size>0">
+            AND so.actual_delivery_date >= #{params.actualDeliveryDateList[0]} and
+            (#{params.actualDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > so.actual_delivery_date
+        </if>
+        <if test="params.invalidStatus != null">
+            and so.invalid_status = #{params.invalidStatus}
+        </if>
+
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+
     </select>
 </mapper>

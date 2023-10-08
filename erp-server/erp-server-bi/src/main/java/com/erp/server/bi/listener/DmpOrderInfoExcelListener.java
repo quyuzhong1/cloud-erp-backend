@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseSearchDTO;
-import com.common.business.enums.SalesPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
@@ -80,7 +80,7 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         }
 
         if (StringUtils.isNotBlank(dto.getSourcePlatform())) {
-            SalesPlatformEnum platformEnum = SalesPlatformEnum.getByName(dto.getSourcePlatform());
+            PlatformDictEnum platformEnum = PlatformDictEnum.getByName(dto.getSourcePlatform());
             if (ObjectUtils.isEmpty(platformEnum)) {
                 errorMsgList.add("系统中不存在此平台名称");
             }

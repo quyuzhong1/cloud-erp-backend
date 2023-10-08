@@ -17,7 +17,9 @@ import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.model.plm.enums.*;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.ProductDetailService;
@@ -30,6 +32,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ProductDetailExcelListener extends AnalysisEventListener<ProductDetailExcelDTO> {
@@ -58,10 +61,12 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
     private List<ProductDetailExcelDTO> dataList = new ArrayList<>();
 
+    private ScmTaskFeign scmTaskFeign;
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
     public ProductDetailExcelListener(Integer importType, ProductDetailService productDetailService, ProductUnitService productUnitService,
-                                      BasicCategoryService basicCategoryService, BasicDictService basicDictService, List<FindUserDTO> userList, List<BasicDictEntity> basicDictList) {
+                                      BasicCategoryService basicCategoryService, BasicDictService basicDictService, List<FindUserDTO> userList,
+                                      List<BasicDictEntity> basicDictList,ScmTaskFeign scmTaskFeign) {
         this.importType = importType;
         this.productDetailService = productDetailService;
         this.productUnitService = productUnitService;
@@ -70,6 +75,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         this.userList = userList;
         this.basicDictList = basicDictList;
         this.list = new ArrayList<>();
+        this.scmTaskFeign=scmTaskFeign;
     }
 
     /**
@@ -284,6 +290,40 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             errorMsgList.add("销售平台有误，请输入【全平台】或【亚马逊定制】");
         }
 
+        // 一级供应商
+        String mainSupplier = dto.getMainSupplier();
+
+        //二级供应商
+        String secondSupplier = dto.getSecondSupplier();
+
+        List<String> supplierNameList = new ArrayList<>(2);
+        if (StringUtils.isNotBlank(mainSupplier)) {
+            supplierNameList.add(mainSupplier);
+        }
+
+        if (StringUtils.isNotBlank(secondSupplier)) {
+            supplierNameList.add(secondSupplier);
+        }
+        List<SupplierEntity>  supplierList= scmTaskFeign.listBySupplierByNames(supplierNameList);
+        if(StringUtils.isNotBlank(mainSupplier)){
+            SupplierEntity  mainSupplierDb= supplierList.stream().filter(s->s.getName().equals(mainSupplier)).
+                    findFirst().orElse(null);
+            if(Objects.isNull(mainSupplierDb)){
+                errorMsgList.add("一级供应商不存在");
+            }else{
+                dto.setMainSupplier(mainSupplierDb.getId());
+            }
+        }
+
+        if(StringUtils.isNotBlank(secondSupplier)){
+            SupplierEntity  secondSupplierDb= supplierList.stream().filter(s->s.getName().equals(secondSupplier)).
+                    findFirst().orElse(null);
+            if(Objects.isNull(secondSupplierDb)){
+                errorMsgList.add("二级供应商不存在");
+            }else{
+                dto.setSecondSupplier(secondSupplierDb.getId());
+            }
+        }
 
         if (errorMsgList.size() > 0) {
             for (int i = 0; i < errorMsgList.size(); i++) {

@@ -7,6 +7,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.*;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.LayoutBlockEnum;
 import com.erp.server.bi.mapper.BiLayoutMapper;
@@ -59,6 +60,9 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
     @Resource
     private BiModulePermissionService modulePermissionService;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
+
 
     /**
      * 添加布局与专题
@@ -95,12 +99,8 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         Boolean result = subjectService.updateById(subject);
         String shareFlag = subject.getShareFlag();
         if (result) {
-            //如果是分享
-            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
-                List<String> userList = dto.getShareUserIdList();
-                //添加专题的分享用户
-                subjectShareService.addSubjectShare(userList, subjectId);
-            }
+            // 检查和添加分享记录
+            subjectShareService.checkAndAddSubjectShare(dto.getShareUserIdList(), subjectId, shareFlag);
         }
         List<LayoutDTO> layoutList = dto.getLayoutList();
         List<String> LayoutIds = new ArrayList<>();
@@ -142,8 +142,19 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
             log.info("subject result ={}", JSONUtil.toJsonStr(subject));
             throw new ServiceException(ApiError.ERROR_97000);
         }
-        subjectShareService.checkPermission(userId, subject);
-        List<String> shareUserIdList = subjectShareService.getUserIdsBySubjectId(subjectId);
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
+        subjectShareService.checkPermission(userId, subject, roleIdList);
+//        List<String> shareUserIdList = subjectShareService.getUserIdsBySubjectId(subjectId);
+        List<BiSubjectShareEntity> shareEntityList =  subjectShareService.findBySubjectId(subjectId);
+        List<String> shareFlagIdList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(shareEntityList)){
+            shareFlagIdList = shareEntityList
+                    .stream()
+                    .map(BiSubjectShareEntity::getIdentityId)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+
         SubjectLayoutDetailsDTO details = new SubjectLayoutDetailsDTO();
         details.setSubjectId(subjectId);
         details.setName(subject.getName());
@@ -151,7 +162,8 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         details.setIsFrequently(subject.getIsFrequently());
         details.setCategoryId(subject.getCategoryId());
         details.setCategoryName(subject.getCategoryName());
-        details.setShareUserIdList(shareUserIdList);
+        details.setShareUserIdList(shareFlagIdList);
+        details.setShareFlagIdList(shareFlagIdList);
         List<LayoutDetailsDTO> layoutDetailsList = getBySubjectId(subjectId, userId);
         details.setLayoutDetailsList(layoutDetailsList);
         return details;
@@ -206,13 +218,14 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         }
         subject.setCategoryId(categoryId);
         subject.setCategoryName(categoryName);
+        subject.setShareFlag(dto.getShareFlag());
         boolean updateResult = subjectService.updateById(subject);
         if (!updateResult) {
             return "";
         }
-        List<String> userList = dto.getShareUserIdList();
+        List<String> shareFlagIdList = dto.checkAndGetShareFlagIdList();
         //添加专题的分享用户
-        subjectShareService.addSubjectShare(userList, subjectId);
+        subjectShareService.checkAndAddSubjectShare(shareFlagIdList, subjectId, subject.getShareFlag());
 
         //删除布局主题关系
         subjectRefLayoutService.deleteBySubjectId(subjectId);
@@ -344,7 +357,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         }
         subject.setShareFlag(shareFlag);
         subject.setIsFrequently(dto.getIsFrequently());
-        subject.setShareUserIdList(dto.getShareUserIdList());
+        subject.setShareFlagIdList(dto.getShareUserIdList());
         //专题id
         String subjectId = subjectService.addSubject(subject);
         if (StringUtils.isBlank(subjectId)) {
@@ -410,8 +423,9 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         List<LayoutRefModuleDTO.LayoutRefModuleInfoDTO> layoutRefModuleList = layoutRefModuleService.listByLayoutIds(layoutIdList);
         List<String> moduleIdList = layoutRefModuleList.stream().map(LayoutRefModuleDTO.LayoutRefModuleInfoDTO::getModuleId).collect(Collectors.toList());
         List<BiModuleEntity> moduleList = moduleService.getByIds(moduleIdList);
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
         //用户可见的模块id
-        List<String> visibleModuleIdList = modulePermissionService.getModuleIdsByUserId(userId);
+        List<String> visibleModuleIdList = modulePermissionService.findModuleId(userId, roleIdList);
         for (LayoutDetailsDTO item : list) {
             //布局id
             String layoutId = item.getId();

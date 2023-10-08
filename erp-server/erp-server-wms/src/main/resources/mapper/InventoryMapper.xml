@@ -312,6 +312,46 @@
         group by inv.warehouse_id,inv.org_id,inv.sku_id,inv.warehouse_location,ind.instock_batch_date
         ) m group by warehouse_id,org_id,sku_id,warehouse_location order by real_inventory desc
     </select>
+
+    <select id="getInventoryByWarehouseId" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaHomeInventoryBalanceDTO">
+        SELECT
+            t.warehouse_id,
+            t.usableQty,
+            tt.todayStockInQty,
+            tt.todayDeliveryQty
+        FROM (
+            SELECT
+                i.warehouse_id,
+                SUM(qty) AS usableQty
+            FROM inventory i
+            WHERE is_deleted = FALSE
+            <if test="status != null and status != ''">
+                AND dict_inventory_status = #{status}
+            </if>
+            <if test="warehouseId != null and warehouseId != ''">
+                AND warehouse_id = #{warehouseId}
+            </if>
+            GROUP BY i.warehouse_id
+        )t
+        LEFT JOIN (
+            SELECT
+                warehouse_id,
+                SUM(CASE WHEN qty > 0 THEN qty END) AS todayStockInQty,
+                SUM(CASE WHEN qty &lt; 0 THEN qty END) AS todayDeliveryQty
+            FROM "transaction_flow"
+            WHERE to_char(create_time,'YYYY-MM-dd') = to_char(NOW()::timestamp,'YYYY-MM-dd')
+            AND is_unapproved = FALSE
+            <if test="status != null and status != ''">
+                AND dict_inventory_status = #{status}
+            </if>
+            <if test="warehouseId != null and warehouseId != ''">
+                AND warehouse_id = #{warehouseId}
+            </if>
+            AND dict_inventory_status = 'usable'
+            GROUP BY warehouse_id
+        )tt ON t.warehouse_id = tt.warehouse_id
+    </select>
+
     <select id="listByStocktakingType" resultType="com.erp.model.wms.entity.InventoryEntity">
         SELECT
             inv.id,
@@ -323,15 +363,11 @@
             inv.dict_inventory_status,
             inv.qty
         FROM "inventory" inv
+        LEFT JOIN transaction_flow tf ON inv."id" = tf.inventory_id
+        AND tf.is_deleted = FALSE
+        AND tf.trade_time BETWEEN #{startTime} AND #{endTime}
         WHERE inv.is_deleted = false and inv.dict_inventory_status in ('usable','frozen')
-        AND ( inv.qty != 0 OR (inv.qty = 0
-            AND EXISTS (
-                SELECT 1 FROM transaction_flow tf
-                WHERE tf.inventory_id = inv.id AND tf.is_deleted = FALSE
-                <if test="null != startTime and null != endTime">
-                    AND tf.trade_time &gt;= #{startTime} AND tf.trade_time &lt; #{endTime}
-                </if>
-            )))
+        AND ( inv.qty > 0 OR (inv.qty = 0 AND tf.inventory_id IS NOT NULL) )
         <if test="type != null and type == 'byWarehouse' and null != params and params.size > 0">
               and inv.warehouse_id in
             <foreach collection="params" item="item" open="(" close=")" separator=",">
@@ -352,5 +388,128 @@
         </if>
         GROUP BY inv.id
         order by inv.warehouse_id, inv.warehouse_location, inv.sku_id, inv.dict_inventory_status
+    </select>
+
+    <select id="getInventoryByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryDTO">
+        SELECT
+            it.warehouse_id,
+            it.org_id,
+            it.sku_id,
+            sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end)
+            +
+            sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as realQty,
+            sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usableQty,
+            sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozenQty,
+            sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransitQty,
+            sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqcQty
+        FROM "inventory" it
+        WHERE it.is_deleted = FALSE
+        <if test="params.skuIds != null and params.skuIds.size > 0">
+            and it.sku_id in
+            <foreach collection="params.skuIds" item="item" open="(" close=")" separator=",">
+                (#{item})
+            </foreach>
+        </if>
+        <if test="params.warehouseLocations != null and params.warehouseLocations.size > 0">
+            and it.warehouse_location in
+            <foreach collection="params.warehouseLocations" item="item" open="(" close=")" separator=",">
+                (#{item})
+            </foreach>
+        </if>
+        <if test="params.warehouseId != null and params.warehouseId != ''">
+            and it.warehouse_id = #{params.warehouseId}
+        </if>
+        <if test="params.orgId != null and params.orgId != ''">
+            and it.org_id = #{params.orgId}
+        </if>
+        GROUP BY it.warehouse_id, it.org_id, it.sku_id
+    </select>
+
+    <select id="listInventoryWarehouseByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseDTO">
+        SELECT
+            t.warehouse_id,
+            t.sku_id,
+            t.realQty,
+            t.usableQty,
+            t.frozenQty,
+            t.intransitQty,
+            t.waitqcQty
+        FROM (
+            SELECT
+            it.warehouse_id,
+            it.sku_id,
+            sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end)
+            +
+            sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as realQty,
+            sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usableQty,
+            sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozenQty,
+            sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransitQty,
+            sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqcQty
+            FROM "inventory" it
+            WHERE it.is_deleted = FALSE
+            <if test="params.skuId != null and params.skuId != ''">
+                and it.sku_id = #{params.skuId}
+            </if>
+            <if test="params.skuNo != null and params.skuNo != ''">
+                and it.sku_no = #{params.skuNo}
+            </if>
+            <if test="params.warehouseId != null and params.warehouseId != ''">
+                and it.warehouse_id = #{params.warehouseId}
+            </if>
+            <if test="params.orgId != null and params.orgId != ''">
+                and it.org_id in #{params.orgId}
+            </if>
+            <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
+                and it.warehouse_location = #{params.warehouseLocation}
+            </if>
+            GROUP BY it.warehouse_id, it.sku_id
+        ) t
+        WHERE t.realQty > 0
+    </select>
+
+    <select id="listInventoryWarehouseLocationByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseLocationDTO">
+        SELECT
+            t.warehouse_id,
+            t.org_id,
+            t.sku_id,
+            t.warehouse_location,
+            t.realQty,
+            t.usableQty,
+            t.frozenQty,
+            t.intransitQty,
+            t.waitqcQty
+        FROM (
+            SELECT
+            it.warehouse_id,
+            it.org_id,
+            it.sku_id,
+            it.warehouse_location,
+            sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end)
+            +
+            sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as realQty,
+            sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usableQty,
+            sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozenQty,
+            sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransitQty,
+            sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqcQty
+            FROM "inventory" it
+            WHERE it.is_deleted = FALSE
+            <if test="params.skuId != null and params.skuId != ''">
+                and it.sku_id = #{params.skuId}
+            </if>
+            <if test="params.skuNo != null and params.skuNo != ''">
+                and it.sku_no = #{params.skuNo}
+            </if>
+            <if test="params.warehouseId != null and params.warehouseId != ''">
+                and it.warehouse_id = #{params.warehouseId}
+            </if>
+            <if test="params.orgId != null and params.orgId != ''">
+                and it.org_id in #{params.orgId}
+            </if>
+            <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
+                and it.warehouse_location = #{params.warehouseLocation}
+            </if>
+            GROUP BY it.warehouse_id, it.org_id, it.sku_id, it.warehouse_location
+        ) t
+        WHERE t.realQty > 0
     </select>
 </mapper>

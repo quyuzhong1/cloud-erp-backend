@@ -42,4 +42,51 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
      * 根据供应商id集合查询收货批次和收货数量
      */
     List<WarehouseReceiveDTO.SupplierReceiveInfoDTO> getReceiveInfoBySupplierIds(@Param("supplierIds") List<String> supplierIds, @Param("dateList") List<LocalDate> dateList);
+
+    /**
+     * PDA:首页分页查询
+     * @Author Luo_WG
+     * @Date 2023/8/11 9:28
+     * @param query
+     * @param params
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.WarehouseReceiveDTO.PdaPagingViewDTO>
+     **/
+    IPage<WarehouseReceiveDTO.PdaPagingViewDTO> pdaPaging(Page query, @Param("params") WarehouseReceiveDTO.PdaPagingParamDTO params);
+
+    /**
+     * PDA:列表tab页单据数量
+     * @Author Luo_WG
+     * @Date 2023/8/11 9:37
+     * @param params
+     * @return java.lang.Integer
+     **/
+    Integer pdaListCount(@Param("params") WarehouseReceiveDTO.PagingParamDTO params);
+
+    /**
+     * PDA:条件查询收货单
+     * @Author Luo_WG
+     * @Date 2023/8/18 11:10
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.PdaPoReceive>
+     **/
+    List<WarehouseReceiveDTO.PdaPoReceive> pdaList(WarehouseReceiveDTO.PdaPoReceiveParam dto);
+
+    /**
+     * PDA:待入库查询
+     * @Author Luo_WG
+     * @Date 2023/9/6 11:09
+     * @param query
+     * @param params
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.WarehouseReceiveDTO.WaitInStockPaging>
+     **/
+    IPage<WarehouseReceiveDTO.WaitInStockPaging> pdaWaitInStockPaging(Page query, WarehouseReceiveDTO.WaitInStockPagingParam params);
+
+    /**
+     * PDA:待入库查询表头数量
+     * @Author Luo_WG
+     * @Date 2023/9/6 14:56
+     * @param params
+     * @return java.lang.Integer
+     **/
+    Integer waitInStockListCount(@Param("params") WarehouseReceiveDTO.PagingParamDTO params);
 }

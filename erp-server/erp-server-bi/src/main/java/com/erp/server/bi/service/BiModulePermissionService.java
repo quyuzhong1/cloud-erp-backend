@@ -2,8 +2,10 @@ package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.entity.BiModulePermissionEntity;
+import com.erp.model.bi.enums.BiShareIdentityTypeEnum;
 
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -15,11 +17,33 @@ import java.util.List;
 public interface BiModulePermissionService  extends IService<BiModulePermissionEntity> {
 
 
-    void addModulePermission(String id, List<String> permissionUserIdList);
+    void addModulePermission(String id, List<String> permissionUserIdList, BiShareIdentityTypeEnum typeEnum);
 
     void deleteByModuleId(String id);
 
     List<String> getByModuleId(String moduleId);
 
+    @Deprecated
     List<String> getModuleIdsByUserId(String userId);
+
+    /**
+     * 检查和添加
+     */
+    void checkAndAddModulePermission(List<String> shareFlagIdList, String mainId, String shareFlag);
+
+    /**
+     * 通过ModuleId查询
+     */
+    List<BiModulePermissionEntity> findByModuleId(String moduleId);
+
+    /**
+     * 通过ModuleIds查询
+     */
+    Map<String, List<BiModulePermissionEntity>> mapByModuleIds(List<String> moduleIds);
+
+
+    /**
+     * 查询当前用户共享的ModuleId
+     */
+    List<String> findModuleId(String userId, List<String> roleIdList);
 }

@@ -4,6 +4,182 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.erp.server.bi.mapper.SalesOrderServiceMapper">
+    <sql id="condition">
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+                )
+            </if>
+            <!-- 是否新品 -->
+            <if test="params.newSign!=null" >
+                AND i.new_sign =#{params.newSign}
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </sql>
+    <sql id="joinCondition">
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 是否新品 -->
+            <if test="params.newSign!=null" >
+                AND i.new_sign =#{params.newSign}
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND  pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </sql>
 
     <select id="getMonthSales" resultType="com.erp.model.bi.vo.SalesFlagVO">
         SELECT
@@ -104,9 +280,9 @@
         GROUP BY flag
     </select>
 
-    <select id="getBySku" resultType="com.erp.model.bi.vo.SalesVO">
+    <select id="getBySku" resultType="com.erp.model.bi.dto.SkuSalesDTO$PagingSalesInfoDTO">
         SELECT
-        SUM ( i.quantity ) AS salesQuantity,
+        SUM ( i.quantity ) AS salesQty,
         COUNT(DISTINCT ( o.platform_order_id )) AS orderCount,
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
@@ -114,7 +290,7 @@
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
         </if>
-        i.sku_no AS name,
+        i.sku_no AS skuNo,
         min(i.item_name) AS productName
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.ID
@@ -181,6 +357,17 @@
                 </foreach>
                 )
             </if>
+            <!-- 是否组合品 -->
+            <if test="params.isCombo!=null and params.isCombo==true" >
+                AND i.is_combo=1
+            </if>
+            <if test="params.isCombo!=null and params.isCombo==false" >
+                AND i.is_combo !=1
+            </if>
+            <!-- 是否新品 -->
+            <if test="params.newSign!=null" >
+                AND i.new_sign =#{params.newSign}
+            </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
                 AND i.sku_no IN
@@ -204,11 +391,136 @@
             </if>
         </where>
         GROUP BY i.sku_no
-        ORDER BY sales DESC
-        nulls last
-        LIMIT 100
-
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sales DESC
     </select>
+
+    <!--导出sku 销售额-->
+    <select id="listSkuSalesExcel" resultType="com.erp.model.bi.dto.SkuSalesDTO$PagingSalesInfoDTO">
+        SELECT
+        SUM ( i.quantity ) AS salesQty,
+        COUNT(DISTINCT ( o.platform_order_id )) AS orderCount,
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        i.sku_no AS skuNo,
+        min(i.item_name) AS productName
+        FROM dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.ID
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+                )
+            </if>
+            <!-- 是否组合品 -->
+            <if test="params.isCombo!=null and params.isCombo==true" >
+                AND i.is_combo=1
+            </if>
+            <if test="params.isCombo!=null and params.isCombo==false" >
+                AND i.is_combo !=1
+            </if>
+            <!-- 是否新品 -->
+            <if test="params.newSign!=null" >
+                AND i.new_sign =#{params.newSign}
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        GROUP BY i.sku_no
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sales DESC
+    </select>
+
 
     <!--获取近三十天 销售数据-->
     <select id="getLastDays" resultType="com.erp.model.bi.vo.SalesBaseVO">
@@ -268,6 +580,14 @@
                 <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
                     #{shopName}
                 </foreach>
+            </if>
+            <!-- 是否组合品 -->
+            <!-- 是否组合品 -->
+            <if test="params.isCombo!=null and params.isCombo==true" >
+                AND i.is_combo=1
+            </if>
+            <if test="params.isCombo!=null and params.isCombo==false" >
+                AND i.is_combo !=1
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
@@ -545,6 +865,72 @@
                 <if test="params.endTime !=null">
                     AND o.delivery_time &lt; #{params.endTime}
                 </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+                )
+            </if>
+            <!-- 是否新品 -->
+            <if test="params.newSign!=null" >
+                AND i.new_sign =#{params.newSign}
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
             </if>
             <!-- 权限 -->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
@@ -1171,95 +1557,19 @@
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
-        </if>,
-        i.sku_no AS flagNo FROM dmp_order_item i
-        LEFT JOIN dmp_order_info o ON i.order_id = o.id
-        <where>
-            <if test="params.timeType!=null and params.timeType==0">
-                <if test="params.startTime !=null">
-                    o.platform_create_time &gt;= #{params.startTime}
-                </if>
-                <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt; #{params.endTime}
-                </if>
-            </if>
-            <!-- 发货时间 -->
-            <if test="params.timeType!=null and params.timeType==1">
-                <if test="params.startTime !=null">
-                    AND o.delivery_time &gt;= #{params.startTime}
-                </if>
-                <if test="params.endTime !=null">
-                    AND o.delivery_time &lt; #{params.endTime}
-                </if>
-            </if>
-            <!-- 部门 -->
-            <if test="params.department!=null and params.department.size>0">
-                AND o.dept_id IN
-                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
-                    #{deptId}
-                </foreach>
-            </if>
-            <!-- 平台 -->
-            <if test="params.platform!=null and params.platform.size>0">
-                AND o.source_platform IN
-                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
-                    #{platform}
-                </foreach>
-            </if>
-            <!-- 站点 -->
-            <if test="params.site!=null and params.site.size>0">
-                AND o.site IN
-                <foreach collection="params.site" item="site" open="(" separator="," close=")">
-                    #{site}
-                </foreach>
-            </if>
-            <!-- 店铺 -->
-            <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_name IN
-                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
-                    #{shopName}
-                </foreach>
-            </if>
-            <!-- sku -->
-            <if test="params.sku!=null and params.sku.size>0">
-                AND i.sku_no IN
-                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
-                    #{sku}
-                </foreach>
-            </if>
-            <!-- 品类 -->
-            <if test="params.category!=null and params.category.size>0">
-                AND i.sku_no IN
-                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category_id IN
-                <foreach collection="params.category" item="category" open="(" separator="," close=")">
-                    #{category}
-                </foreach>
-                )
-            </if>
-            <!-- 品牌 -->
-            <if test="params.brand!=null and params.brand.size>0">
-                AND i.sku_no IN
-                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.brand_name IN
-                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
-                    #{brand}
-                </foreach>
-                )
-            </if>
-            <!-- 用户id -->
-            <if test="params.userId!=null and params.userId.size>0">
-                AND o.charge_id IN
-                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
-                    #{userId}
-                </foreach>
-            </if>
-            <!-- 权限 -->
-            <if test="params.permissionSql!=null and params.permissionSql!=''">
-                ${params.permissionSql}
-            </if>
-        </where>
-        GROUP BY i.sku_no
+        </if>
+        pi.category_id AS flagNo
+        FROM dmp_order_item i
+        LEFT JOIN dmp_order_info o
+        ON i.order_id = o.id
+        INNER JOIN product_detail pd
+        ON pd.sku_no=i.sku_no
+        INNER JOIN product_info pi
+        ON pi.id=pd.product_id
+        AND pi.is_deleted=FALSE
+        <include refid="joinCondition"></include>
+
+        GROUP BY pi.category_id
     </select>
 
     <select id="byPlatform" resultType="com.erp.model.bi.vo.SalesCountVO">
@@ -2882,7 +3192,118 @@
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
         </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
         to_char(o.${timeFlag},'yyyy-mm-dd') AS name,
+        SUM ( i.quantity ) AS salesQuantity
+        FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+                )
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by name order by name asc
+    </select>
+
+    <select id="getByWeek" resultType="com.erp.model.bi.vo.SalesFlagVO">
+        SELECT
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        concat(date_trunc('week', o.platform_create_time::timestamp)::date, '~', (date_trunc('week', o.platform_create_time::timestamp)+ '6 days'::interval)::date) AS name,
         SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
@@ -2980,6 +3401,12 @@
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         to_char(o.${timeFlag},'yyyy-mm') AS name,
         SUM ( i.quantity ) AS salesQuantity
@@ -3080,7 +3507,15 @@
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
         </if>
-        date_trunc('QUARTER',o.${timeFlag}) AS name,SUM ( i.quantity ) AS salesQuantity
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        to_char(date_trunc('QUARTER',o.${timeFlag}),'yyyy-mm') AS name,
+
+        SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
             <if test="params.timeType!=null and params.timeType==0">
@@ -3171,7 +3606,6 @@
 
     </select>
 
-
     <select id="getByYear" resultType="com.erp.model.bi.vo.SalesFlagVO">
         SELECT
         <if test="settleRate !=null and settleRate!=''">
@@ -3179,6 +3613,12 @@
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
         </if>
         to_char(o.${timeFlag},'yyyy') as name,
         SUM ( i.quantity ) AS salesQuantity FROM
@@ -3272,4 +3712,1320 @@
 
     </select>
 
+    <select id="getByDayCategory" resultType="com.erp.model.bi.vo.SalesFlagVO">
+        SELECT
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        to_char(o.${timeFlag},'yyyy-mm-dd') AS name,
+        <choose>
+            <when test="groupName == 'charge_name'">
+                o.${groupName} AS category,
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName} AS category,
+            </when>
+            <otherwise>
+                ${groupName} AS category,
+            </otherwise>
+        </choose>
+        SUM ( i.quantity ) AS salesQuantity
+        FROM dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        LEFT JOIN product_detail pd ON pd.sku_no = i.sku_no
+        LEFT JOIN product_info pi ON pi.id = pd.product_id
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 产品属性 -->
+            <if test="params.propertyIdList!=null and params.propertyIdList.size>0">
+                AND pi.property_id IN
+                <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                    #{propertyId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by to_char(o.${timeFlag},'yyyy-mm-dd'),
+        <choose>
+            <when test="groupName == 'charge_name'">
+                o.${groupName}
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName}
+            </when>
+            <otherwise>
+                ${groupName}
+            </otherwise>
+        </choose>
+        order by name asc
+    </select>
+
+    <select id="getByWeekCategory" resultType="com.erp.model.bi.vo.SalesFlagVO">
+        SELECT
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        concat(date_trunc('week', o.platform_create_time::timestamp)::date, '~', (date_trunc('week', o.platform_create_time::timestamp)+ '6 days'::interval)::date) AS name,
+        <choose>
+            <when test="groupName == 'charge_name'">
+                o.${groupName} AS category,
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName} AS category,
+            </when>
+            <otherwise>
+                ${groupName} AS category,
+            </otherwise>
+        </choose>
+
+        SUM ( i.quantity ) AS salesQuantity
+        FROM dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        LEFT JOIN product_detail pd ON pd.sku_no = i.sku_no
+        LEFT JOIN product_info pi ON pi.id = pd.product_id
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+                )
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 产品属性 -->
+            <if test="params.propertyIdList!=null and params.propertyIdList.size>0">
+                AND pi.property_id IN
+                <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                    #{propertyId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by
+        concat(date_trunc('week', o.platform_create_time::timestamp)::date, '~', (date_trunc('week', o.platform_create_time::timestamp)+ '6 days'::interval)::date),
+        <choose>
+            <when test="groupName == 'charge_name'">
+                o.${groupName}
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName}
+            </when>
+            <otherwise>
+                ${groupName}
+            </otherwise>
+        </choose>
+        order by name asc
+    </select>
+
+    <select id="getByMonthCategory" resultType="com.erp.model.bi.vo.SalesFlagVO">
+        SELECT
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        to_char(o.${timeFlag},'yyyy-mm') AS name,
+        <choose>
+            <when test="groupName == 'charge_name'">
+                o.${groupName} AS category,
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName} AS category,
+            </when>
+            <otherwise>
+                ${groupName} AS category,
+            </otherwise>
+        </choose>
+        SUM ( i.quantity ) AS salesQuantity
+        FROM dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        LEFT JOIN product_detail pd ON pd.sku_no = i.sku_no
+        LEFT JOIN product_info pi ON pi.id = pd.product_id
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 产品属性 -->
+            <if test="params.propertyIdList!=null and params.propertyIdList.size>0">
+                AND pi.property_id IN
+                <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                    #{propertyId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by to_char(o.${timeFlag},'yyyy-mm'),
+        <choose>
+            <when test="groupName == 'charge_name'">
+                o.${groupName}
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName}
+            </when>
+            <otherwise>
+                ${groupName}
+            </otherwise>
+        </choose>
+        order by name asc
+    </select>
+
+    <select id="getByQuarterCategory" resultType="com.erp.model.bi.vo.SalesFlagVO">
+        SELECT
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        to_char(date_trunc('QUARTER',o.${timeFlag}),'yyyy-mm') AS name,
+        <choose>
+            <when test="groupName == 'charge_name'">
+                o.${groupName} AS category,
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName} AS category,
+            </when>
+            <otherwise>
+                ${groupName} AS category,
+            </otherwise>
+        </choose>
+        SUM ( i.quantity ) AS salesQuantity
+        FROM dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        LEFT JOIN product_detail pd ON pd.sku_no = i.sku_no
+        LEFT JOIN product_info pi ON pi.id = pd.product_id
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 产品属性 -->
+            <if test="params.propertyIdList!=null and params.propertyIdList.size>0">
+                AND pi.property_id IN
+                <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                    #{propertyId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by to_char(date_trunc('QUARTER',o.${timeFlag}),'yyyy-mm'),
+        <choose>
+            <when test="groupName == 'charge_name'">
+                o.${groupName}
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName}
+            </when>
+            <otherwise>
+                ${groupName}
+            </otherwise>
+        </choose>
+        order by name asc
+
+    </select>
+
+    <select id="getByYearCategory" resultType="com.erp.model.bi.vo.SalesFlagVO">
+        SELECT
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        <if test="settleRate !=null and settleRate!='' and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * i.${settleRate}) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        <if test="(settleRate ==null or settleRate=='') and searchType == 'salesPrice'">
+            round(SUM (i.amount_after * 1) / count(DISTINCT order_id),2) AS salesPrice,
+        </if>
+        to_char(o.${timeFlag},'yyyy') as name,
+        <choose>
+            <when test="groupName == 'charge_name'">
+                o.${groupName} AS category,
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName} AS category,
+            </when>
+            <otherwise>
+                ${groupName} AS category,
+            </otherwise>
+        </choose>
+        SUM ( i.quantity ) AS salesQuantity
+        FROM dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        LEFT JOIN product_detail pd ON pd.sku_no = i.sku_no
+        LEFT JOIN product_info pi ON pi.id = pd.product_id
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 产品属性 -->
+            <if test="params.propertyIdList!=null and params.propertyIdList.size>0">
+                AND pi.property_id IN
+                <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                    #{propertyId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by to_char(o.${timeFlag},'yyyy'),
+        <choose>
+            <when test="groupName == 'charge_name'">
+                o.${groupName}
+            </when>
+            <when test="groupName == 'sku_no'">
+                i.${groupName}
+            </when>
+            <otherwise>
+                ${groupName}
+            </otherwise>
+        </choose>
+        order by name asc
+
+    </select>
+
+    <select id="deptNewAndOldSalesAmount" resultType="com.erp.model.bi.vo.SalesFlagVO">
+        SELECT
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        i.new_sign AS flag,
+        CASE WHEN o.dept_id IS NULL OR o.dept_id = '' THEN '无' ELSE o.dept_id END AS name,
+        SUM ( i.quantity ) AS salesQuantity,
+        COUNT ( DISTINCT ( o.platform_order_id ) ) AS orderCount FROM
+        dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+                )
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        GROUP BY i.new_sign,o.dept_id
+    </select>
+
+    <select id="userNewAndOldSalesAmount" resultType="com.erp.model.bi.vo.SalesFlagVO">
+        SELECT
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+        i.new_sign AS flag,
+        CASE WHEN o.charge_id IS NULL OR o.charge_id = '' THEN '无' ELSE o.charge_id END AS name,
+        SUM ( i.quantity ) AS salesQuantity,
+        COUNT ( DISTINCT ( o.platform_order_id ) ) AS orderCount
+        FROM dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.ID
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+                )
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        GROUP BY i.new_sign,o.charge_id
+        ORDER BY sales DESC
+
+    </select>
+    <!--获取年的销量-->
+    <select id="getYearQtyByYear" resultType="java.math.BigDecimal">
+        SELECT
+            SUM ( i.quantity ) AS qty
+        FROM
+        dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                EXTRACT( YEAR FROM o.platform_create_time )=${year}
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                EXTRACT( YEAR FROM o.delivery_time )=${year}
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+                )
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+
+    </select>
+    <!--获取月度销售量-->
+    <select id="getMonthQty" resultType="java.math.BigDecimal">
+        SELECT
+            SUM ( i.quantity ) AS qty
+        FROM
+            dmp_order_item i
+            LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        <include refid="condition">
+
+        </include>
+    </select>
+
+    <!--获取年的销售额-->
+    <select id="getYearSalesAmountByYear" resultType="java.math.BigDecimal">
+        SELECT
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS sales
+        </if>
+        FROM
+        dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                EXTRACT( YEAR FROM o.platform_create_time )=${year}
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                EXTRACT( YEAR FROM o.delivery_time )=${year}
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+                )
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
+    <!--获取月的销售额-->
+    <select id="getMonthAmount" resultType="java.math.BigDecimal">
+        SELECT
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS sales
+        </if>
+        FROM
+        dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        <include refid="condition">
+
+        </include>
+    </select>
+
+    <!--产品等级销售额-->
+    <select id="listProductGradeSales" resultType="java.util.Map">
+        SELECT
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS sales,
+        </if>
+         pi.grade AS flag
+        FROM
+        dmp_order_item i
+        LEFT JOIN dmp_order_info o
+        ON i.order_id = o.id
+        INNER JOIN product_detail pd
+        ON pd.sku_no=i.sku_no
+        INNER JOIN product_info pi
+        ON pi.id=pd.product_id AND pi.is_deleted=FALSE
+       <include refid="joinCondition">
+
+       </include>
+        GROUP BY pi.grade
+
+    </select>
+
+    <!--部门销售额排行榜-->
+    <select id="deptCompletionRateRanking" resultType="com.erp.model.bi.dto.CompletionRateRankingDTO$PagingDTO">
+        SELECT
+        ROW_NUMBER() over(ORDER bY round(SUM (i.amount_after * 1),2) DESC ) AS ranking,
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS monthSales,
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS monthSales,
+        </if>
+        CASE WHEN o.dept_id IS NULL OR o.dept_id = '' THEN '无' ELSE o.dept_id END AS name
+        FROM dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.ID
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+                )
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        GROUP BY name
+        ORDER BY monthSales
+    </select>
+
+    <!--用户销售额排行榜-->
+    <select id="userCompletionRateRanking" resultType="com.erp.model.bi.dto.CompletionRateRankingDTO$PagingDTO">
+        SELECT
+        ROW_NUMBER() over(ORDER bY round(SUM (i.amount_after * 1),2) DESC ) AS ranking,
+        <if test="settleRate !=null and settleRate!=''">
+            round(SUM (i.amount_after * i.${settleRate}),2) AS monthSales,
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(SUM (i.amount_after * 1),2) AS monthSales,
+        </if>
+        CASE WHEN o.charge_id IS NULL OR o.charge_id = '' THEN '无' ELSE o.charge_id END AS name
+        FROM dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.ID
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+                )
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        GROUP BY name
+        ORDER BY monthSales
+    </select>
 </mapper>

@@ -4,7 +4,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SalesPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.bi.dto.BiTargetManagementImportExcelDTO;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
@@ -67,7 +67,7 @@ public class BiTargetManagementExcelListener extends AnalysisEventListener<BiTar
             errorMsgList.add("年份不能为空");
         }
         if (StringUtils.isNotBlank(dto.getPlatformName())) {
-            SalesPlatformEnum platformEnum = SalesPlatformEnum.getByName(dto.getPlatformName());
+            PlatformDictEnum platformEnum = PlatformDictEnum.getByName(dto.getPlatformName());
             if (ObjectUtils.isEmpty(platformEnum)) {
                 errorMsgList.add("系统中不存在此平台名称");
             }

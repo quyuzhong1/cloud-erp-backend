@@ -2,8 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.service.SuperServiceImpl;
-import com.common.core.controller.vo.ApiResult;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -100,7 +99,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             //采购数量
             Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
-            if (receiveQty > purchaseQty + returnQty) {
+            if (receiveQty + addDTO.getReceiveQty() > purchaseQty + returnQty) {
                 throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
             }
 
@@ -160,7 +159,6 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         List<WarehouseReceiveDetailDTO.UpdateDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
         List<WarehouseReceiveDetailEntity> detailEntityList = listWarehouseReceiveByPodIds(orderDetailIds);
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(orderDetailIds);
-        List<WarehouseReceiveDetailEntity> receiveDetailEntities = this.listWarehouseReceiveByPodIds(orderDetailIds);
 
         //原明细数据
         List<WarehouseReceiveDetailEntity> oldList = this.listDetailByMainIds(Arrays.asList(dto.getId()));
@@ -182,12 +180,12 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             //退货补货数量
             Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             //签收数量
-            Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer receiveQty = detailEntityList.stream().filter(obj -> !deleteIds.contains(obj.getId()) && obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             //采购数量
             Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
 
             if (StringUtils.isNotBlank(updateDTO.getId())) {
-                Integer receive = receiveDetailEntities.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderDetailId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId()) && !obj.getId().equals(updateDTO.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer receive = detailEntityList.stream().filter(obj -> !deleteIds.contains(obj.getId()) && obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && !obj.getId().equals(updateDTO.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (receive + updateDTO.getReceiveQty() > purchaseQty + returnQty) {
                     throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
                 }
@@ -203,10 +201,10 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             warehouseReceiveDetailEntity.setPurchaseOrderDetailId(updateDTO.getPurchaseOrderDetailId());
             listDetail.add(warehouseReceiveDetailEntity);
             //修改操作日志
-            if (StringUtils.isNotBlank(warehouseReceiveDetailEntity.getId())) {
+/*            if (StringUtils.isNotBlank(warehouseReceiveDetailEntity.getId())) {
                 WarehouseReceiveDetailEntity old = this.getById(warehouseReceiveDetailEntity.getId());
                 operateLogService.addModuleOperateLogByObj(old,warehouseReceiveDetailEntity, ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(),dto.getId(),"",String.format("【%s】",old.getSkuNo()));
-            }
+            }*/
         }
         boolean flag = this.saveOrUpdateBatch(listDetail);
         //添加操作日志
@@ -253,6 +251,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     public List<WarehouseReceiveDetailEntity> getDetailByMainId(String mainId) {
         LambdaQueryWrapper<WarehouseReceiveDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(WarehouseReceiveDetailEntity::getMainId, mainId);
+        queryWrapper.orderByAsc(WarehouseReceiveDetailEntity::getId);
         return this.list(queryWrapper);
     }
 
@@ -306,4 +305,20 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         return arrivalStatus;
     }
 
+    /**
+     * 根据主表id和skuId删除
+     *
+     * @param mainId mainId
+     * @param skuId skuId
+     * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
+     **/
+    @Override
+    public Boolean deleteBySkuId(String mainId, String skuId) {
+        return lambdaUpdate().set(WarehouseReceiveDetailEntity::getIsDeleted, Boolean.TRUE)
+                .eq(WarehouseReceiveDetailEntity::getMainId, mainId)
+                .eq(WarehouseReceiveDetailEntity::getSkuId, skuId)
+                .update();
+    }
 }

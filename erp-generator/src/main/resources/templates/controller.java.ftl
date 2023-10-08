@@ -14,6 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
 <#if restControllerStyle>
 import org.springframework.web.bind.annotation.RestController;
 <#else>
@@ -53,6 +57,7 @@ import ${package.Entity}.${entity};
 <#else>
 @Controller
 </#if>
+@LogSystemModule("${table.comment!}")
 @RequestMapping("<#if package.ModuleName??>/${package.ModuleName}</#if>/<#if controllerMappingHyphenStyle??>${controllerMappingHyphen}<#else>${table.entityPath}</#if>")
 <#if kotlin>
 class ${table.controllerName}<#if superControllerClass??> : ${superControllerClass}()</#if>
@@ -74,6 +79,7 @@ public class ${table.controllerName} {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "${table.comment!}新增")
     public ApiResult<String> add(@RequestBody @Validated ${table.dtoName}.AddDTO dto) {
         return success(${serviceBean}.add(dto));
     }
@@ -182,6 +188,7 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "${table.comment!}提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -192,11 +199,11 @@ public class ${table.controllerName} {
                 log.error("${docName} 提交审核失败",e);
                 ${entity} entity = ${serviceBean}.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, "${docName}不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "${docName}不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
         }
@@ -218,6 +225,7 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
+    @LogAction(value = LogActionEnum.APPROVE, desc = "${table.comment!}审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -229,11 +237,11 @@ public class ${table.controllerName} {
                 log.error("${docName}审核失败",e);
                 ${entity} entity = ${serviceBean}.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(entity.getCode(), "${docName}不存在, 审核失败");
+                    approveResult = BatchResultDTO.fail(id, id, "${docName}不存在, 审核失败");
                     resultDTOS.add(approveResult);
                     continue;
                 }
-                approveResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(approveResult);
         }
@@ -255,6 +263,7 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "${table.comment!}反审核")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -265,11 +274,11 @@ public class ${table.controllerName} {
                 log.error("${docName}反审核失败",e);
                 ${entity} entity = ${serviceBean}.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(entity.getCode(), "${docName}不存在, 反审核失败");
+                    disApproveResult = BatchResultDTO.fail(id, id, "${docName}不存在, 反审核失败");
                     resultDTOS.add(disApproveResult);
                     continue;
                 }
-                disApproveResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(disApproveResult);
         }
@@ -292,6 +301,7 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
+    @LogAction(value = LogActionEnum.DELETE, desc = "${table.comment!}删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -302,11 +312,11 @@ public class ${table.controllerName} {
                 log.error("${docName}删除失败",e);
                 ${entity} entity = ${serviceBean}.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(entity.getCode(), "${docName}不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "${docName}不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(deleteResult);
         }
@@ -328,6 +338,7 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
+    @LogAction(value = LogActionEnum.INVALID, desc = "${table.comment!}作废")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -338,11 +349,11 @@ public class ${table.controllerName} {
                 log.error("${docName}作废失败",e);
                 ${entity} entity = ${serviceBean}.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    invalidResult = BatchResultDTO.fail(entity.getCode(), "${docName}不存在, 作废失败");
+                    invalidResult = BatchResultDTO.fail(id, id, "${docName}不存在, 作废失败");
                     resultDTOS.add(invalidResult);
                     continue;
                 }
-                invalidResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                invalidResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(invalidResult);
         }
@@ -365,6 +376,7 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "ids")
     </#if>
+    @LogAction(value = LogActionEnum.CANCEL, desc = "${table.comment!}撤销")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -375,11 +387,11 @@ public class ${table.controllerName} {
                 log.error("${docName}撤回流程失败",e);
                 ${entity} entity = ${serviceBean}.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    cancelResult = BatchResultDTO.fail(entity.getCode(), "${docName}不存在, 撤回流程失败");
+                    cancelResult = BatchResultDTO.fail(id, id, "${docName}不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
                     continue;
                 }
-                cancelResult = BatchResultDTO.fail(entity.getCode(), e.getMessage());
+                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(cancelResult);
         }
@@ -401,6 +413,7 @@ public class ${table.controllerName} {
             serviceClass = ${table.serviceName}.class,
             keyIdName = "id")
     </#if>
+    @LogViewService
     public ApiResult<${table.dtoName}.ViewDTO> view(@RequestParam("id") String id) {
         return success(${serviceBean}.view(id));
     }
@@ -421,6 +434,7 @@ public class ${table.controllerName} {
             tableAlias = ""
     )
     </#if>
+    @LogAction(value = LogActionEnum.EXPORT, desc = "${table.comment!}导出Excel数据")
     public void exportList(@RequestBody @Validated ${table.dtoName}.ExportDTO dto, HttpServletResponse response) {
         ${serviceBean}.exportList(dto, response);
     }

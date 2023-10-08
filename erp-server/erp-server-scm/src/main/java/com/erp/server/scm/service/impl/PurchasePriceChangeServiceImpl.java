@@ -13,7 +13,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
-import com.common.business.service.SuperServiceImpl;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -556,7 +556,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             //更新价目表数据
             purchasePriceChangeDetailService.updatePurchasePriceDetail(list);
             //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeePurchasePriceChangeService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeePurchasePriceChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         }
         return Boolean.TRUE;
     }
@@ -758,7 +758,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 obj.setApproveStatus(statusEnum);
                 //审核通过更新金蝶推送状态为待同步
                 if (ApproveStatusEnum.APPROVE.equals(statusEnum)) {
-                    obj.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+                    obj.setSyncKingdeeStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
                 }
             });
             return this.updateBatchById(list);

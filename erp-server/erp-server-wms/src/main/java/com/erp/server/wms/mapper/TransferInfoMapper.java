@@ -43,4 +43,14 @@ public interface TransferInfoMapper extends BaseMapper<TransferInfoEntity> {
      * @return List<ListDTO>
      */
     List<TransferInfoDTO.ListDTO> listExportExcel(@Param("params") TransferInfoDTO.SearchParamDTO params);
+
+    /**
+     * pda:列表查询
+     * @Author Luo_WG
+     * @Date 2023/8/24 15:45
+     * @param query
+     * @param params
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.TransferInfoDTO.PdaListDTO>
+     **/
+    IPage<TransferInfoDTO.PdaListDTO> pdaPaging(Page query, @Param("params") TransferInfoDTO.PdaSearchParamDTO params);
 }

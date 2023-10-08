@@ -205,10 +205,10 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * 修改到货状态
      * @Author Luo_WG
      * @Date 2023/4/28 11:41
-     * @param PurchaseOrderId PurchaseOrderId
+     * @param purchaseOrderIds
      * @return void
      **/
-    void updateArrivalState(String PurchaseOrderId, List<PurchaseOrderDetailEntity> detailEntityList);
+    void updateArrivalState(List<String> purchaseOrderIds, List<PurchaseOrderDetailEntity> detailEntityList);
 
     
     /**
@@ -241,4 +241,58 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @return Boolean
      */
     Boolean autoGeneratePurchaseOrder(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * PDA:列表查询
+     * @Author Luo_WG
+     * @Date 2023/8/21 12:25
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PdaPagingViewDTO>
+     **/
+    PagingVO<PurchaseReturnOrderDTO.PdaPagingViewDTO> pdaPaging(PagingDTO<PurchaseReturnOrderDTO.PdaPagingParamDTO> dto);
+
+    /**
+     * pda:列表状态数量统计
+     * @Author Luo_WG
+     * @Date 2023/8/21 16:14
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PdaReturnOrderCountDTO>
+     **/
+    List<PurchaseReturnOrderDTO.PdaReturnOrderCountDTO> pdaListCount(PermissionsDTO dto);
+
+    /**
+     * PDA:新增
+     * @Author Luo_WG
+     * @Date 2023/8/30 16:16
+     * @param dto
+     * @return java.lang.String
+     **/
+    String pdaAdd(PurchaseReturnOrderDTO.AddDTO dto);
+
+    /**
+     * PDA:修改
+     * @Author Luo_WG
+     * @Date 2023/8/30 16:17
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaUpdate(PurchaseReturnOrderDTO.UpdateDTO dto);
+
+    /**
+     * PDA:新增并提交
+     * @Author Luo_WG
+     * @Date 2023/8/30 18:28
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaAddAndSubmit(PurchaseReturnOrderDTO.AddDTO dto);
+
+    /**
+     * 修改并提交
+     * @Author Luo_WG
+     * @Date 2023/8/30 18:28
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaUpdateAndSubmit(PurchaseReturnOrderDTO.UpdateDTO dto);
 }

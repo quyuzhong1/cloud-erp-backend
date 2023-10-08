@@ -2,7 +2,7 @@ package com.erp.server.dmp.push.consumer.mabang;
 
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.DmpSyncMqDTO;
@@ -52,11 +52,11 @@ public class DmpMabangInOutStockConsume implements RocketMQListener<DmpSyncMqDTO
             }
             String sourceType = dmpSyncTaskEntity.getSourceType();
             String sourceTypeName = SourceTypeEnum.getName(sourceType);
-            String syncStatusName = SyncKingdeeStatusEnum.getNameByCode(dmpSyncTaskEntity.getStatus());
+            String syncStatusName = SyncStatusEnum.getNameByCode(dmpSyncTaskEntity.getStatus());
             log.warn("ERP【{}】原单据id：【{}】，同步马帮状态【{}】", sourceTypeName, dmpSyncTaskEntity.getSourceId(), syncStatusName);
 
             // 同步成功的不处理
-            if(Objects.equals(dmpSyncTaskEntity.getStatus(), SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())) {
+            if(Objects.equals(dmpSyncTaskEntity.getStatus(), SyncStatusEnum.SUCCESS_SYNC.getCode())) {
                 log.warn("ERP【{}】同步到马帮已经同步，不处理", sourceTypeName);
                 return;
             }

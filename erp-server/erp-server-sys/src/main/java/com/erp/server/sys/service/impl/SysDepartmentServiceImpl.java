@@ -6,8 +6,8 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -186,7 +186,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         if (CollectionUtils.isNotEmpty(treeList)) {
             for (SysDepartmentTreeDTO vo : treeList) {
                 //如果路径包含了 就说有
-                if (vo.getPath().contains(departmentId)) {
+                if (StringUtils.isNotBlank(departmentId) && vo.getPath().contains(departmentId)) {
                     resultList.add(vo.getId());
                 }
             }
@@ -362,8 +362,8 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
                 continue;
             }
             lambdaUpdate().set(SysDepartmentEntity::getSyncKingdeeId, kingdeeId).set(SysDepartmentEntity::getSyncKingdeeTime, LocalDateTime.now())
-                    .set(SysDepartmentEntity::getSyncOperate, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode())
-                    .set(SysDepartmentEntity::getSyncKingdeeStatus, SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())
+                    .set(SysDepartmentEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
+                    .set(SysDepartmentEntity::getSyncKingdeeStatus, SyncStatusEnum.SUCCESS_SYNC.getCode())
                     .set(SysDepartmentEntity::getCode, code)
                     .eq(SysDepartmentEntity::getId, sysDepartmentEntity.getId())
                     .update();
@@ -403,11 +403,56 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
 
         List<SysDepartmentUserNumberDTO> deptUserList = sysDepartmentUserService.listDeptUserByUserIdList(userIdList);
         //父部门id s
-        List<String>  deptPidList=deptUserList.stream().map(SysDepartmentUserNumberDTO::getDeptPid).collect(Collectors.toList());
-        List<SysDepartmentUserEntity>  departmentUserList=  sysDepartmentUserService.listByDepartmentIds(deptPidList);
-        List<String> resultList=departmentUserList.stream().filter(d-> SysConstant.YES_STATE.equals(d.getLeadState())).
+        List<String> deptPidList = deptUserList.stream().map(SysDepartmentUserNumberDTO::getDeptPid).collect(Collectors.toList());
+        List<SysDepartmentUserEntity> departmentUserList = sysDepartmentUserService.listByDepartmentIds(deptPidList);
+        List<String> resultList = departmentUserList.stream().filter(d -> SysConstant.YES_STATE.equals(d.getLeadState())).
                 map(SysDepartmentUserEntity::getUserId).collect(Collectors.toList());
         return resultList;
+    }
+
+    @Override
+    public List<SysDepartmentDTO> listSameLevelDeptIdList(List<String> deptIdList) {
+        if (CollectionUtils.isEmpty(deptIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SysDepartmentTreeDTO> treeList = baseMapper.findTree();
+        if (CollectionUtils.isEmpty(treeList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SysDepartmentDTO> resultList = new LinkedList<>();
+        for (String deptId : deptIdList) {
+            List<SysDepartmentTreeDTO> deptList = treeList.stream().filter(obj -> obj.getPath().contains(deptId)).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(deptList)) {
+                continue;
+            }
+            SysDepartmentDTO departmentDTO = new SysDepartmentDTO();
+            SysDepartmentTreeDTO deptDTO = getBest(treeList, deptId);
+            if (ObjectUtils.isEmpty(deptDTO)) {
+                continue;
+            }
+            departmentDTO.setId(deptDTO.getId());
+            departmentDTO.setName(deptDTO.getName());
+            List<SysDepartmentDTO> childList = BeanMapperUtils.copyList(SysDepartmentDTO.class, deptList);
+            departmentDTO.setChildrenList(childList);
+            resultList.add(departmentDTO);
+        }
+        return resultList;
+    }
+
+    /**
+     * 查找部门最上级
+     */
+    private SysDepartmentTreeDTO getBest(List<SysDepartmentTreeDTO> treeList, String deptId) {
+        SysDepartmentTreeDTO sysDepartmentTreeDTO = treeList.stream().filter(obj -> obj.getId().equals(deptId)).findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(sysDepartmentTreeDTO)) {
+            return null;
+        }
+        if ("0".equals(sysDepartmentTreeDTO.getParentId())) {
+            return sysDepartmentTreeDTO;
+        } else {
+            SysDepartmentTreeDTO best = getBest(treeList, sysDepartmentTreeDTO.getParentId());
+            return best;
+        }
     }
 
     @Override
