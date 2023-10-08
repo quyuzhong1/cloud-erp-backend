@@ -172,6 +172,15 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             jsonObject.set("sourceCode",purchaseOrderEntity.getCode());
             //采购明细
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchaseOrderDetailEntity)) {
+                log.error("未找到采购订单明细，purchaseDetailIdList = {}",detailEntity.getPurchaseOrderDetailId());
+                throw new ServiceException(ApiError.ERROR_98026);
+            }
+            //税率
+            jsonObject.set("taxRate",purchaseOrderDetailEntity.getTaxRate());
+            //源单分录内码
+            jsonObject.set("refKingdeeDetailId",purchaseOrderDetailEntity.getKingdeeDetailId());
+
             JSONObject refJsonObject = new JSONObject();
             //源单内码
             refJsonObject.set("refKingdeeId",purchaseOrderEntity.getSyncKingdeeId());

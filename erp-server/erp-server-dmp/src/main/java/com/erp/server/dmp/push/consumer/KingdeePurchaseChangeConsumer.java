@@ -40,7 +40,7 @@ public class KingdeePurchaseChangeConsumer implements RocketMQListener<Map<Strin
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", "POC23100700001"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FBillTypeIdX,FPOOrderEntry_Link_FSTableName,FPOOrderEntry_Link_FSId,FPOOrderEntry_Link_FSBillId,FDEMANDBILLNO,FDEMANDBILLENTRYSEQ,FDEMANDBILLENTRYID";
+        String fieldKeys = "FId,FPKIDX,FSrcBillNo,FPOOrderEntry_Link_FSId,FPOOrderEntry_Link_FSBillId,FDEMANDBILLNO,FDEMANDBILLENTRYSEQ,FDEMANDBILLENTRYID";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 20);
         queryList.forEach(req -> {
             System.out.println(req);
