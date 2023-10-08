@@ -38,9 +38,9 @@ public class KingdeePurchaseChangeConsumer implements RocketMQListener<Map<Strin
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_POXCHANGE.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "CGDD-230428-10031_V001"));
+        queryFilters.add(String.format("FBillNo = '%s'", "POC23100700001"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FModifyDate,FPurchaserId.FNumber,FPOOrderEntry_FEntryID,FMaterialId.FNumber,FBillTypeID";
+        String fieldKeys = "FId,FBillTypeIdX,FPOOrderEntry_Link_FSTableName,FPOOrderEntry_Link_FSId,FPOOrderEntry_Link_FSBillId,FDEMANDBILLNO,FDEMANDBILLENTRYSEQ,FDEMANDBILLENTRYID";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 20);
         queryList.forEach(req -> {
             System.out.println(req);

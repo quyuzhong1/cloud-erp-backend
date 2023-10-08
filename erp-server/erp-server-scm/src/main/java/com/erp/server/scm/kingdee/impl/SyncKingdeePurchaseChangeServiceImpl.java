@@ -7,12 +7,14 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PushSyncStatusDTO;
+import com.common.business.enums.SubcontractTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.scm.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchaseChangeService;
@@ -85,6 +87,14 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         resultMap.put("operate", operate);
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+
+        //判断是标准采购还是委外采购
+        if (SubcontractTypeEnum.ENUM_PARENT.getCode().equals(purchaseOrderEntity.getSubcontractType())) {
+            resultMap.put("sourceType", KingdeePushModuleEnum.SUB_SUBREQORDER.getCode());
+        } else {
+            resultMap.put("sourceType", KingdeePushModuleEnum.PUR_PURCHASEORDER.getCode());
+        }
+
         //变更人
         if (StringUtils.isNotBlank(entity.getChangeUserId())) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getChangeUserId());
@@ -92,6 +102,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
                 resultMap.put("changeUserCode", findUserDTO.getCode());
             }
         }
+
         //变更日期
         resultMap.put("changeDate",entity.getChangeDate());
         //采购日期
@@ -103,7 +114,10 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
         resultMap.put("supplierCode",supplierEntity.getCode());
-
+        //来源单号
+        resultMap.put("sourceCode",purchaseOrderEntity.getCode());
+        //来源单据金蝶id
+        resultMap.put("sourceSyncKingdeeId",purchaseOrderEntity.getSyncKingdeeId());
         //采购组织
         String purchaseOrgCode = "";
         //收料组织
@@ -154,6 +168,8 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             jsonObject.set("purchaseOrgCode",purchaseOrgCode);
             //明细备注
             jsonObject.set("detailRemark",detailEntity.getRemark());
+            //来源单号
+            jsonObject.set("sourceCode",purchaseOrderEntity.getCode());
             //采购明细
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
             JSONObject refJsonObject = new JSONObject();
