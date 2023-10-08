@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -19,7 +18,6 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname CustomerDTO
-
  * @Date 2023-05-10 15:43
  * @Created by yl
  */
@@ -322,6 +320,21 @@ public class CustomerDTO implements Serializable {
         private String sellerId;
 
         /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 客户属性
+         */
+        private String customerProperty;
+
+        /**
          * 附件名集合
          */
         private List<String> attachNameList;
@@ -350,7 +363,6 @@ public class CustomerDTO implements Serializable {
          */
         @Valid
         private List<InvoiceDTO.AddDTO> invoiceList;
-
 
 
     }
@@ -506,6 +518,11 @@ public class CustomerDTO implements Serializable {
          * 条件
          */
         private String conditionDict;
+
+        /**
+         * 客户属性
+         */
+        private String customerProperty;
 
         /**
          * 附件名集合
