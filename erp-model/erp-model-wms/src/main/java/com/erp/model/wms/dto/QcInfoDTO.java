@@ -937,6 +937,11 @@ public class QcInfoDTO implements Serializable {
          * 来源id
          */
         private String sourceId;
+
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
     }
 
 
