@@ -1,5 +1,5 @@
 package com.erp.server.oms.mapper;
-import com.erp.model.oms.dto.CfConditionDTO;
+import com.erp.model.oms.dto.CfgConditionDTO;
 import com.erp.model.oms.entity.CfgConditionEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -27,5 +27,14 @@ public interface CfgConditionMapper extends BaseMapper<CfgConditionEntity> {
      * @param conditionCode
      * @return java.util.List<com.erp.model.oms.dto.CfConditionDTO.CommonDTO>
      */
-    List<CfConditionDTO.CommonDTO> listByConditionCode(@Param("conditionCode") String conditionCode);
+    List<CfgConditionDTO.CommonDTO> listByConditionCode(@Param("conditionCode") String conditionCode);
+    
+    /**
+     * 获取所有的条件
+     * @author yl
+     * @date 2023-10-08 14:46
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.CfConditionDTO.ListDTO>
+     */
+    List<CfgConditionDTO.ListDTO> listAllCondition();
 }

@@ -12,7 +12,7 @@ import com.erp.server.oms.service.CfgConditionService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.oms.dto.CfConditionDTO;
+import com.erp.model.oms.dto.CfgConditionDTO;
 
 import java.util.List;
 
@@ -39,7 +39,7 @@ public class CfgConditionController extends BaseController {
      * @date: 2023-08-30
      */
     @PostMapping("/add")
-    public ApiResult<String> add(@RequestBody @Validated CfConditionDTO.AddDTO dto) {
+    public ApiResult<String> add(@RequestBody @Validated CfgConditionDTO.AddDTO dto) {
         return success(cfConditionService.add(dto));
     }
 
@@ -57,7 +57,7 @@ public class CfgConditionController extends BaseController {
             menuCode = "oms:cfCondition:update",
             serviceClass = CfgConditionService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated CfConditionDTO.UpdateDTO dto) {
+    public ApiResult update(@RequestBody @Validated CfgConditionDTO.UpdateDTO dto) {
         cfConditionService.update(dto);
         return success();
     }
@@ -69,11 +69,41 @@ public class CfgConditionController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    public ApiResult<List<CfConditionDTO.CommonDTO>> listByConditionCode(@RequestParam("conditionCode") String conditionCode) {
-        List<CfConditionDTO.CommonDTO> resultList = cfConditionService.listByConditionCode(conditionCode);
+    public ApiResult<List<CfgConditionDTO.CommonDTO>> listByConditionCode(@RequestParam("conditionCode") String conditionCode) {
+        List<CfgConditionDTO.CommonDTO> resultList = cfConditionService.listByConditionCode(conditionCode);
         return success(resultList);
 
     }
+
+
+    /**
+     * 所有的条件下拉
+     *
+     * @param
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.CfConditionDTO.CommonDTO>>
+     * @author yl
+     * @date 2023-10-08 14:38
+     */
+    @GetMapping("/listAll")
+    public ApiResult<List<CfgConditionDTO.ListDTO>> listAllCondition() {
+        List<CfgConditionDTO.ListDTO> result = cfConditionService.listAllCondition();
+        return success(result);
+    }
+
+    /**
+     * 条件 树结构
+     * @author yl
+     * @date 2023-10-08 15:08
+     * @param
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.CfConditionDTO.TreeDTO>>
+     */
+    @GetMapping("/tree")
+    public ApiResult<List<CfgConditionDTO.TreeDTO>> tree() {
+        List<CfgConditionDTO.TreeDTO> result = cfConditionService.tree();
+        return success(result);
+    }
+
+
 
 
 }

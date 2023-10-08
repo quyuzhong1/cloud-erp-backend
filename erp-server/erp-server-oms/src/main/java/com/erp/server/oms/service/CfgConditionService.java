@@ -1,7 +1,7 @@
 package com.erp.server.oms.service;
 import com.erp.model.oms.entity.CfgConditionEntity;
 import com.common.business.service.SuperService;
-import com.erp.model.oms.dto.CfConditionDTO;
+import com.erp.model.oms.dto.CfgConditionDTO;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public interface CfgConditionService extends SuperService<CfgConditionEntity> {
     * @param dto
     * @return
     */
-    String add(CfConditionDTO.AddDTO dto);
+    String add(CfgConditionDTO.AddDTO dto);
 
     /**
     * 修改
@@ -31,12 +31,30 @@ public interface CfgConditionService extends SuperService<CfgConditionEntity> {
     * @param dto
     * @return
     */
-    Boolean update(CfConditionDTO.UpdateDTO dto);
+    Boolean update(CfgConditionDTO.UpdateDTO dto);
 
     /**
      * 根据添加code 获取到逻辑关系
      * @param conditionCode
      * @return
      */
-    List<CfConditionDTO.CommonDTO> listByConditionCode(String conditionCode);
+    List<CfgConditionDTO.CommonDTO> listByConditionCode(String conditionCode);
+
+    /**
+     * 获取到所有的条件值
+     * @author yl
+     * @date 2023-10-08 14:45
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.CfConditionDTO.ListDTO>
+     */
+    List<CfgConditionDTO.ListDTO> listAllCondition();
+
+    /**
+     * 条件树结构
+     * @author yl
+     * @date 2023-10-08 15:09
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.CfConditionDTO.TreeDTO>
+     */
+    List<CfgConditionDTO.TreeDTO> tree();
 }

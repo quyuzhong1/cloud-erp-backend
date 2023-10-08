@@ -1,11 +1,13 @@
 package com.erp.model.oms.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -17,7 +19,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class CfConditionDTO implements Serializable {
+public class CfgConditionDTO implements Serializable {
 
 
     /**
@@ -128,14 +130,99 @@ public class CfConditionDTO implements Serializable {
 
 
         /**
-         * 在下拉 选择接口 中需要的值
+         * 对应下拉的绑定的字段
          */
         private String label;
+
+        /**
+         * 对应下拉的显示中文的名 的字段
+         */
+        private String value;
 
         /**
          * json 格式
          */
         private String param;
+
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * 条件字段 对应dict_rule_condition key
+         */
+        private String conditionField;
+
+        /**
+         * 字段名
+         */
+        private String conditionFieldName;
+
+
+
+        /**
+         * 空间 如时间戳 输入框之类
+         */
+        private String controls;
+
+        /**
+         * 对应api url
+         */
+        private String apiUrl;
+
+        /**
+         * 请求方式
+         */
+        private String requestMethod;
+
+
+        /**
+         * 对应下拉的绑定的字段
+         */
+        private String label;
+
+        /**
+         * 对应下拉的显示中文的名 的字段
+         */
+        private String value;
+
+        /**
+         * json 格式
+         */
+        private String param;
+
+
+    }
+
+
+    /**
+     * 树状结构
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TreeDTO {
+
+        /**
+         * 条件字段
+         */
+        private String conditionField;
+
+
+        /**
+         * 逻辑关系
+         */
+        private String logic;
+
+        /**
+         * 逻辑关系名
+         */
+        private String logicName;
+
+        @JsonInclude(value= JsonInclude.Include.NON_NULL)
+        private List<TreeDTO> children;
 
 
     }

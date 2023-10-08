@@ -31,7 +31,7 @@
         is_deleted,
         condition_field, logic, controls, api_url
     </sql>
-    <select id="listByConditionCode" resultType="com.erp.model.oms.dto.CfConditionDTO$CommonDTO">
+    <select id="listByConditionCode" resultType="com.erp.model.oms.dto.CfgConditionDTO$CommonDTO">
         SELECT
             condition_field,
             unnest(string_to_array(cc.logic,',')) as logic,
@@ -46,6 +46,21 @@
             cfg_condition cc
         WHERE
             condition_field = #{conditionCode}
+    </select>
+
+
+    <select id="listAllCondition" resultType="com.erp.model.oms.dto.CfgConditionDTO$ListDTO">
+        SELECT
+            condition_field ,
+            condition_field_name,
+            request_method,
+            controls,
+            api_url,
+            param,
+            label,
+            value
+        FROM cfg_condition
+        WHERE is_deleted=FALSE
     </select>
 
 
