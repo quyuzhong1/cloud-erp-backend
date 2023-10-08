@@ -22,7 +22,6 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
@@ -60,8 +59,8 @@ public class PullKindeeJob {
         });
     }
 
-//    @XxlJob("kindeeCleanExecute")
-    @Scheduled(cron = "*/5 * * * * ?")
+    @XxlJob("kindeeCleanExecute")
+//    @Scheduled(cron = "*/5 * * * * ?")
     public void kindeeCleanExecute() {
         String jobParam = XxlJobHelper.getJobParam();
         log.info("金蝶云清洗任务参数：{}", jobParam);
