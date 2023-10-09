@@ -171,6 +171,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_92029);
         }
+        //销售订单详情集合
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(dto.getSoId()));
+        if (CollectionUtils.isEmpty(soDetailList)) {
+            throw new ServiceException("销售订单详情不存在");
+        }
+
         //检查出库数量
         List<SoOutstockDetailDTO.UpdateDTO> checkList = BeanMapper.copyList(detailList, SoOutstockDetailDTO.UpdateDTO.class);
         soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), sourceId, sourceType, checkList);
@@ -180,11 +186,35 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.ERROR_92003);
         }
+        //销售订单的总金额
+        BigDecimal soAmount = BigDecimal.ZERO;
+        for (SoDetailEntity soDetail : soDetailList) {
+            soAmount = soAmount.add(MathUtil.multiply(soDetail.getPrice(), soDetail.getQty()));
+        }
+        //出库金额
+        BigDecimal outStockAmount = BigDecimal.ZERO;
+        for (SoOutstockDetailDTO.AddDTO item : detailList) {
+            //sku id
+            String skuId = item.getSkuId();
+            //实发数量
+            Integer actualQty = item.getActualQty();
+            BigDecimal price = soDetailList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                    findFirst().map(SoDetailEntity::getPrice).orElse(BigDecimal.ZERO);
+            outStockAmount = outStockAmount.add(MathUtil.multiply(price, actualQty));
+        }
+        //销售订单折扣额
+        BigDecimal discountAmount = soInfo.getDiscountAmount();
+        //折扣总额占比
+        BigDecimal discountAmountRate = MathUtil.divide(outStockAmount, soAmount, 4);
+        //整单折扣额
+        BigDecimal totalDiscountAmount = MathUtil.multiply(discountAmount, discountAmountRate, 2);
+
         SoOutstockEntity soOutstock = new SoOutstockEntity();
         BeanMapper.copy(dto, soOutstock);
         soOutstock.setSoCode(soInfo.getCode());
         soOutstock.setCustomerId(soInfo.getCustomerId());
         soOutstock.setId(id);
+        soOutstock.setTotalDiscountAmount(totalDiscountAmount);
         soOutstock.setOrderType(soInfo.getOrderType());
         List<SoOutstockDetailDTO.AddDTO> addDetailList = dto.getDetailList();
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSCK, BusinessNoTypeEnum.CODE_XSCK.getCode()));
@@ -229,6 +259,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         return "";
     }
+
 
     /**
      * 批量提交
@@ -432,8 +463,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //销售订单的id
         List<String> soIds = list.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
-        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(soIds);
-        List<String> detailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+
+        //这个是销售出库单id
         List<String> allList = list.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
         //发货通知单
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
@@ -841,6 +872,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 item.setBillDate(null);
                 item.setCreateUserName("");
                 item.setCreateTime(null);
+
             }
             flagList.add(item.getId());
         }
@@ -952,6 +984,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (StringUtils.isBlank(sourceType)) {
             sourceType = SourceTypeEnum.SELF_ADD.getCode();
         }
+
+        //销售订单详情集合
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(dto.getSoId()));
+        if (CollectionUtils.isEmpty(soDetailList)) {
+            throw new ServiceException("销售订单详情不存在");
+        }
+
         //检查出库数量
         soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), dto.getSourceId(), sourceType, detailList);
         String code = soOutstock.getCode();
@@ -965,8 +1004,33 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.ERROR_92003);
         }
+
+        //销售订单的总金额
+        BigDecimal soAmount = BigDecimal.ZERO;
+        for (SoDetailEntity soDetail : soDetailList) {
+            soAmount = soAmount.add(MathUtil.multiply(soDetail.getPrice(), soDetail.getQty()));
+        }
+        //出库金额
+        BigDecimal outStockAmount = BigDecimal.ZERO;
+        for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
+            //sku id
+            String skuId = item.getSkuId();
+            //实发数量
+            Integer actualQty = item.getActualQty();
+            BigDecimal price = soDetailList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                    findFirst().map(SoDetailEntity::getPrice).orElse(BigDecimal.ZERO);
+            outStockAmount = outStockAmount.add(MathUtil.multiply(price, actualQty));
+        }
+        //销售订单折扣额
+        BigDecimal discountAmount = soInfo.getDiscountAmount();
+        //折扣总额占比
+        BigDecimal discountAmountRate = MathUtil.divide(outStockAmount, soAmount, 4);
+        //整单折扣额
+        BigDecimal totalDiscountAmount = MathUtil.multiply(discountAmount, discountAmountRate, 2);
+
         BeanMapper.copy(dto, soOutstock);
         soOutstock.setCode(code);
+        soOutstock.setTotalDiscountAmount(totalDiscountAmount);
         // 出库日期
         soOutstock.setBillDate(billDate);
         soOutstock.setSoCode(soInfo.getCode());
