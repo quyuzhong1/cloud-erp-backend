@@ -102,6 +102,15 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
     List<SoDetailEntity> listBaseByMainId(String mainId);
 
     /**
+     * 根据主表idlist 获取对明细数据
+     * @author yl
+     * @date 2023-10-09 14:42
+     * @param mainIdList
+     * @return java.util.List<com.erp.model.oms.entity.SoDetailEntity>
+     */
+    List<SoDetailEntity> listBaseByMainIdList(List<String> mainIdList);
+
+    /**
      * 根据搜索类型 获取到对应的明细id
      *
      * @param searchType

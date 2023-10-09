@@ -539,12 +539,12 @@ public class SoInfoDTO implements Serializable {
         /**
          * 销售单价(本位币)
          */
-        private BigDecimal priceLocalCurrency;
+        private BigDecimal priceLc;
 
         /**
          * 含税单价(本位币)
          */
-        private BigDecimal taxPriceLocalCurrency;
+        private BigDecimal taxPriceLc;
 
     }
 

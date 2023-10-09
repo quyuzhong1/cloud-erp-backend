@@ -297,6 +297,29 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
+        //收款日期为空的
+        List<String> isNullReceiveDateList = list.stream().filter(s -> Objects.isNull(s.getReceiveDate())).map(SoInfoEntity::getCode).
+                collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(isNullReceiveDateList)) {
+            String isNullReceiveDateCode = isNullReceiveDateList.stream().collect(Collectors.joining(","));
+            throw new ServiceException(isNullReceiveDateCode + " 销售订单 收款日期不能为空");
+        }
+        //收款金额为空的
+        List<String> isNullReceiveAmountList = list.stream().filter(s -> Objects.isNull(s.getReceiveAmount())).map(SoInfoEntity::getCode).
+                collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(isNullReceiveAmountList)) {
+            String isNullReceiveAmountCode = isNullReceiveAmountList.stream().collect(Collectors.joining(","));
+            throw new ServiceException(isNullReceiveAmountCode + " 销售订单 收款金额不能为空");
+        }
+        List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainIdList(ids);
+        //这个是 单价为空的集合
+        List<SoDetailEntity> isNullPriceList = soDetailList.stream().filter(s -> Objects.isNull(s.getPrice())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(isNullPriceList)) {
+            List<String> soIdList = isNullPriceList.stream().map(SoDetailEntity::getMainId).collect(Collectors.toList());
+            String isNullPriceCode = list.stream().filter(s->soIdList.contains(s.getId())).
+                    map(SoInfoEntity::getCode).distinct().collect(Collectors.joining(","));
+            throw new ServiceException(isNullPriceCode + " 销售订单 销售单价不能为空");
+        }
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -672,13 +695,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             //汇率
             BigDecimal exchangeRate = item.getExchangeRate();
+            if (Objects.isNull(exchangeRate)) {
+                exchangeRate = MathUtil.BigDecimal_1;
+            }
 
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //销售单价
             BigDecimal price = item.getPrice();
 
             //销售单价(本位币)
-            item.setPriceLocalCurrency(MathUtil.multiply(price,exchangeRate));
+            item.setPriceLc(MathUtil.multiply(price, exchangeRate));
 
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
@@ -686,7 +712,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setTaxPriceLocalCurrency(MathUtil.multiply(taxPrice,exchangeRate));
+            item.setTaxPriceLc(MathUtil.multiply(taxPrice, exchangeRate));
 
 
             if (ignoreInventorySkuIds.contains(skuId)) {
