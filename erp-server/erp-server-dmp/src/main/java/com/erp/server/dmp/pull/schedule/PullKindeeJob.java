@@ -119,7 +119,7 @@ public class PullKindeeJob {
             XxlJobHelper.log("{}任务task记录为空异常", PlatformApiEnum.BD_RATE.getTaskName());
             return ReturnT.SUCCESS;
         }
-        RequestDTO requestDTO = new RequestDTO(PullGyyHistoryJob.getJobTaskDTO(entity, TaskConstant.KINGDEE_PULL_DATA_TASK), PlatformApiEnum.BD_RATE);
+        RequestDTO requestDTO = new RequestDTO(new JobTaskDTO(entity, TaskConstant.KINGDEE_PULL_DATA_TASK), PlatformApiEnum.BD_RATE);
         try {
             // 处理汇率
             kingdeeTransferDirectService.pullDataSave(requestDTO);

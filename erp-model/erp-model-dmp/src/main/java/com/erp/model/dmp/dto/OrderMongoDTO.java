@@ -149,7 +149,7 @@ public class  OrderMongoDTO {
 //        return orderMongoDTO;
 //    }
 
-TO getByIsCleanDateStr(Integer isClean, Integer diffMinute) {
+    public static OrderMongoDTO getByIsCleanDateStr(Integer isClean, Integer diffMinute) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setIsClean(isClean);
         if(null != diffMinute && diffMinute != 0){
