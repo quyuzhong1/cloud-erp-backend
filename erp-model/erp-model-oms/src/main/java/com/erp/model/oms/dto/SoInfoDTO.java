@@ -1182,6 +1182,11 @@ public class SoInfoDTO implements Serializable {
          */
         private String telNumber;
 
+        /**
+         * 收货地址
+         */
+        private String receiveAddress;
+
 
         /**
          * 收款条件
@@ -1234,6 +1239,12 @@ public class SoInfoDTO implements Serializable {
          * 总费用
          */
         private String totalFeeStr;
+
+
+        /**
+         * 贸易条款
+         */
+        private String tradeTerm;
 
 
     }
