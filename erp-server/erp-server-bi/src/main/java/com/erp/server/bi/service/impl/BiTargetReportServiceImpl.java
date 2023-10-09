@@ -302,11 +302,26 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         }
         //净销售额
         if (MetricsEnum.NET_SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
-            //品类和SKU无需显示（现马帮数据退款明细无金额暂不计算财务销售额·6）
-            if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SKU.getCode().equals(dto.getSearchType())) {
+            //部门、品类和SKU无需显示（现马帮数据退款明细无金额暂不计算财务销售额·6）
+            if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SKU.getCode().equals(dto.getSearchType())
+                || TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
                 return resultList;
             }
+            dto.setCategory(null);
+            dto.setSku(null);
+            dto.setBrand(null);
+            dto.setDepartment(null);
             resultList = dmpOrderInfoMapper.listNetSalesAmountBiFilter(dto, groupViewDTO);
+            if (CollectionUtils.isNotEmpty(resultList)) {
+                TargetFinishDTO.GroupViewDTO refundGroupViewDTO = handleRefundGroupData(dto);
+                //退款信息
+                List<TargetFinishDTO.ViewDTO> refundList = dmpOrderInfoMapper.listRefundBiFilter(dto, refundGroupViewDTO);
+                for (TargetFinishDTO.ViewDTO viewDTO : resultList) {
+                    //退款金额
+                    BigDecimal refundAmount = refundList.stream().filter(obj -> obj.getMonth().equals(viewDTO.getMonth()) && obj.getTypeName().equals(viewDTO.getTypeName())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getValue())).orElse(BigDecimal.ZERO);
+                    viewDTO.setValue(MathUtil.subtract(viewDTO.getValue(),refundAmount));
+                }
+            }
         }
         // 财务销售额(主营收入)
         if (MetricsEnum.FINANCE_SALES_AMOUNT.getCode().equals(dto.getMetrics())) {
@@ -386,6 +401,33 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         }
         return new TargetFinishDTO.GroupViewDTO(groupStr,viewStr);
     }
+
+    /**
+     * @description: 退款分组获得实际数据
+     * @author Will
+     * @date: 2023/10/8 14:38
+     * @param dto
+     * @return GroupViewDTO
+     */
+    private TargetFinishDTO.GroupViewDTO handleRefundGroupData (TargetFinishDTO.ParamDTO dto) {
+
+        String timeGroupStr = "to_char(dri.refund_time,'MM')";
+        String timeViewStr = "to_char(dri.refund_time,'MM') as month";
+
+        String viewStr = "";
+        String groupStr = "";
+
+        if (TargetSearchTypeEnum.USER.getCode().equals(dto.getSearchType())) {
+            viewStr = "dri.charge_name as typeName,".concat(timeViewStr);
+            groupStr = "dri.charge_name,".concat(timeGroupStr);
+        }
+        if (TargetSearchTypeEnum.SHOP.getCode().equals(dto.getSearchType())) {
+            viewStr = "dri.shop_name as typeName,".concat(timeViewStr);
+            groupStr = "dri.shop_name,".concat(timeGroupStr);
+        }
+        return new TargetFinishDTO.GroupViewDTO(groupStr,viewStr);
+    }
+
 
     /**
      * @description: 财务销售额

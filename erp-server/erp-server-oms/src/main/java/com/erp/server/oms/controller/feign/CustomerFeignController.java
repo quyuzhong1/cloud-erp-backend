@@ -5,6 +5,7 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.vo.CustomerInfoVO;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.CustomerSellerService;
@@ -37,13 +38,38 @@ public class CustomerFeignController {
 
     /**
      * 获取所有客户信息
+     *
+     * @return java.util.List<com.erp.model.oms.entity.CustomerInfoEntity>
      * @Author Luo_WG
      * @Date 2023/5/17 18:41
-     * @return java.util.List<com.erp.model.oms.entity.CustomerInfoEntity>
      **/
     @PostMapping("/listCustomer")
     public List<CustomerInfoEntity> listCustomer() {
         return customerInfoService.list();
+    }
+
+    /**
+     * 获取所有客户等级信息
+     *
+     * @return java.util.List<com.erp.model.oms.vo.CustomerInfoVO>
+     * @Author zdy
+     * @Date 2023/10/08 18:41
+     **/
+    @PostMapping("/listCustomerByGroup")
+    public List<CustomerInfoVO> listCustomerByGroup() {
+        return customerInfoService.listCustomerByGroup();
+    }
+
+    /**
+     * 获取客户属性信息
+     *
+     * @return com.erp.model.oms.vo.CustomerInfoVO
+     * @Author zdy
+     * @Date 2023/10/08 18:18
+     **/
+    @PostMapping("/listCustomerByProperty")
+    public List<CustomerInfoVO> listCustomerByProperty() {
+        return customerInfoService.listCustomerByProperty();
     }
 
     @PostMapping("/quoteCustomer")
@@ -69,10 +95,11 @@ public class CustomerFeignController {
 
     /**
      * 根据国家ids查询客户信息
-     * @author Will
-     * @date: 2023/7/24 12:28
+     *
      * @param ids
      * @return List<CustomerInfoEntity>
+     * @author Will
+     * @date: 2023/7/24 12:28
      */
     @PostMapping("/listByCountryIdList")
     List<CustomerInfoEntity> listByCountryIdList(@RequestBody List<String> ids) {
@@ -81,10 +108,11 @@ public class CustomerFeignController {
 
     /**
      * 客户列表审核
-     * @Author Luo_WG
-     * @Date 2023/7/4 12:28
+     *
      * @param dto
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/7/4 12:28
      **/
     @PostMapping("/approve")
     public Boolean approve(@RequestBody @Validated BaseApproveParamDTO dto) {
@@ -93,10 +121,11 @@ public class CustomerFeignController {
 
     /**
      * 售货员信息
-     * @author yl
-     * @date 2023-05-15 10:10
+     *
      * @param mainId
      * @return java.util.List<com.erp.model.oms.dto.SellerDTO.ViewDTO>
+     * @author yl
+     * @date 2023-05-15 10:10
      */
     @PostMapping("/listSellerByMainId")
     public List<SellerDTO.ViewDTO> listSellerByMainId(@RequestBody String mainId) {
@@ -105,14 +134,25 @@ public class CustomerFeignController {
 
     /**
      * 根据key 获取字典数据
-     * @author yl
-     * @date 2023-03-17 14:16
+     *
      * @param Key
      * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
+     * @author yl
+     * @date 2023-03-17 14:16
      */
     @PostMapping("/getDictBasicByKey")
     public List<DictBasicDTO.ViewDTO> getDictBasicByKey(@RequestBody String Key) {
         return dictBasicService.getByKey(Key);
     }
 
+    /**
+     * 根据名称获取用户详情
+     *
+     * @param customerName
+     * @return
+     */
+    @PostMapping("/getCustomerByName")
+    public CustomerInfoEntity getCustomerByName(@RequestBody String customerName) {
+        return customerInfoService.getCustomerByName(customerName);
+    }
 }

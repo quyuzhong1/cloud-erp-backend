@@ -10,7 +10,9 @@ import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.vo.CleanAmountAfterVO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.sys.dto.SysUserDeptDTO;
+import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.pull.mapper.DmpOrderInfoMapper;
 import com.erp.server.dmp.service.*;
@@ -31,7 +33,7 @@ import java.util.stream.Collectors;
  */
 @Service
 public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, DmpOrderInfoEntity>
-    implements DmpOrderInfoService {
+        implements DmpOrderInfoService {
 
     @Resource
     private DmpDeliveryDetailInfoService dmpDeliveryDetailInfoService;
@@ -47,25 +49,30 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private CustomerFeign customerFeign;
+
     /**
      * 添加订单信息
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:10
+     *
      * @param dmpOrderInfoEntity 订单信息
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:10
      **/
     @Override
     public String add(DmpOrderInfoEntity dmpOrderInfoEntity) {
-        save(dmpOrderInfoEntity);
+        this.save(dmpOrderInfoEntity);
         return dmpOrderInfoEntity.getId();
     }
 
     /**
      * 根据平台订单id查询订单信息
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:28
+     *
      * @param platformOrderId 平台订单id
      * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:28
      **/
     @Override
     public DmpOrderInfoEntity getOrderByPlatformOrderId(String platformOrderId) {
@@ -77,10 +84,11 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     /**
      * 根据平台订单id修改订单信息
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:39
+     *
      * @param dmpOrderInfoEntity 订单信息
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:39
      **/
     @Override
     public Boolean updateOrderByPlatformOrderId(DmpOrderInfoEntity dmpOrderInfoEntity) {
@@ -92,28 +100,29 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     /**
      * 校验订单在中台是否存在，存在就修改不存在则新增
+     *
+     * @return void
      * @Author Luo_WG
      * @Date 2022/11/14 21:25
-     * @return void
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String checkOrder(DmpOrderInfoEntity orderInfoEntity) {
         String orderInfoId = "";
-        DmpOrderInfoEntity dmpOrderInfoEntity = this.getOrderBySalesRecordNumber(orderInfoEntity.getSalesRecordNumber(), orderInfoEntity.getPlatformOrderId(),orderInfoEntity.getPlatformSign());
+        DmpOrderInfoEntity dmpOrderInfoEntity = this.getOrderBySalesRecordNumber(orderInfoEntity.getSalesRecordNumber(), orderInfoEntity.getPlatformOrderId(), orderInfoEntity.getPlatformSign());
         // 是否为销售订单 避免订单类型修改
         Boolean skipOrderType = StringUtils.isEmpty(orderInfoEntity.getOrderTypeName()) || !"销售订单".equals(orderInfoEntity.getOrderTypeName());
         // 跳过取消订单 避免状态变更为取消
-        Boolean skipCancel =  StrUtil.isNotBlank(orderInfoEntity.getPlatformOrderStatus()) && orderInfoEntity.getPlatformOrderStatus().contains("取消");
+        Boolean skipCancel = StrUtil.isNotBlank(orderInfoEntity.getPlatformOrderStatus()) && orderInfoEntity.getPlatformOrderStatus().contains("取消");
         boolean isGyyPlatform = PlatformEnum.GYY.getDesc().equals(orderInfoEntity.getPlatformSign());
         if (null != dmpOrderInfoEntity) {
             // 删除已存在取消订单  和非销售订单
-            if(isGyyPlatform && (skipOrderType || skipCancel)){
+            if (isGyyPlatform && (skipOrderType || skipCancel)) {
                 removeById(dmpOrderInfoEntity.getId());
                 List<DmpOrderItemEntity> list = dmpOrderItemService.lambdaQuery()
                         .eq(DmpOrderItemEntity::getOrderId, dmpOrderInfoEntity.getId())
                         .list();
-                if(CollectionUtil.isNotEmpty(list)){
+                if (CollectionUtil.isNotEmpty(list)) {
                     dmpOrderItemService.removeByIds(list.stream().map(DmpOrderItemEntity::getId).collect(Collectors.toList()));
                 }
                 return orderInfoId;
@@ -121,23 +130,25 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             //如果数据有变动需要更新数据库订单信息
             if (!dmpOrderInfoEntity.toString().equals(orderInfoEntity.toString())) {
                 orderInfoEntity.setId(dmpOrderInfoEntity.getId());
+                fillCustomerCode(orderInfoEntity);
                 updateById(orderInfoEntity);
             }
             orderInfoId = dmpOrderInfoEntity.getId();
         } else {
             // 跳过不存在取消订单 和非销售订单
-            if(isGyyPlatform && (skipOrderType || skipCancel)){
+            if (isGyyPlatform && (skipOrderType || skipCancel)) {
                 return orderInfoId;
             }
             // 修正状态同步
             orderInfoEntity.setCorrectionStatus(orderInfoEntity.getOrderStatus());
+            fillCustomerCode(orderInfoEntity);
             orderInfoId = add(orderInfoEntity);
         }
-        if(StrUtil.isBlank(orderInfoId)){
+        if (StrUtil.isBlank(orderInfoId)) {
             throw new RuntimeException("DmpOrderInfoServiceImpl>>>checkOrder>>>销售订单保存失败");
         }
         List<DmpOrderItemEntity> itemList = orderInfoEntity.getItemList();
-        if (CollectionUtil.isEmpty(itemList)){
+        if (CollectionUtil.isEmpty(itemList)) {
             return orderInfoId;
         }
         String orderId = orderInfoId;
@@ -146,11 +157,26 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         return orderInfoId;
     }
 
+    private void fillCustomerCode(DmpOrderInfoEntity orderInfoEntity) {
+        //如果客户编码不存在则进行获取
+        if (StringUtils.isNotEmpty(orderInfoEntity.getCustomerName()) && StringUtils.isEmpty(orderInfoEntity.getCustomerCode())) {
+            try {
+                CustomerInfoEntity customerInfo = customerFeign.getCustomerByName(orderInfoEntity.getCustomerName());
+                if (Objects.nonNull(customerInfo)) {
+                    orderInfoEntity.setCustomerCode(customerInfo.getCode());
+                }
+            }catch (Exception e){
+                log.error("获取客户编码接口异常记录：{}", e);
+            }
+        }
+    }
+
     /**
      * 清洗订单数据
+     *
+     * @return void
      * @Author Luo_WG
      * @Date 2022/11/14 21:25
-     * @return void
      **/
     @Override
     public void cleanOrder(Integer pageSize) {
@@ -166,8 +192,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 .orderByAsc(DmpOrderInfoEntity::getId)
                 .last("limit " + pageSize)
                 .list();
-        if (CollectionUtil.isEmpty(list)){
-            XxlJobHelper.log("清洗订单数据 cleanOrder 需要清洗数据为空 pageSize={}",  pageSize);
+        if (CollectionUtil.isEmpty(list)) {
+            XxlJobHelper.log("清洗订单数据 cleanOrder 需要清洗数据为空 pageSize={}", pageSize);
             return;
         }
         List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
@@ -176,7 +202,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             try {
                 this.cleanDmpOrderInfo(userDeptList, dmpOrderInfoEntity);
                 XxlJobHelper.log("update( dmpOrderInfoEntity={})完成", JSONUtil.toJsonStr(dmpOrderInfoEntity));
-            }catch (Exception e) {
+            } catch (Exception e) {
                 XxlJobHelper.log("update( dmpOrderInfoEntity={})失败====》", JSONUtil.toJsonStr(dmpOrderInfoEntity));
             }
         });
@@ -188,22 +214,22 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(DmpOrderInfoEntity::getRetryCount, dmpOrderInfoEntity.getRetryCount() + 1);
         boolean deliveryTimeTag = false;
-        if (0 == dmpOrderInfoEntity.getCleanState()){
+        if (0 == dmpOrderInfoEntity.getCleanState()) {
             //查询店铺信息获取'负责人','站点信息'同步到订单
             DmpShopInfoEntity shopByShopNo = dmpShopInfoService.getShopByShopNo(dmpOrderInfoEntity.getShopNo());
             if (null != shopByShopNo) {
-                if(!Objects.equals(dmpOrderInfoEntity.getSite(), shopByShopNo.getSite())){
+                if (!Objects.equals(dmpOrderInfoEntity.getSite(), shopByShopNo.getSite())) {
                     updateWrapper.set(DmpOrderInfoEntity::getSite, shopByShopNo.getSite());
                 }
                 DmpShopChangeLogEntity shopChargeName = dmpShopChangeLogService.getShopChargeName(shopByShopNo.getId(), dmpOrderInfoEntity.getPlatformCreateTime());
                 if (null != shopChargeName && StringUtils.isNotBlank(shopChargeName.getChargeId())) {
-                    if(!(Objects.equals(shopChargeName.getChargeId(), dmpOrderInfoEntity.getChargeId()) && Objects.equals(shopChargeName.getChargeName(), dmpOrderInfoEntity.getChargeName()))){
+                    if (!(Objects.equals(shopChargeName.getChargeId(), dmpOrderInfoEntity.getChargeId()) && Objects.equals(shopChargeName.getChargeName(), dmpOrderInfoEntity.getChargeName()))) {
                         updateWrapper.set(DmpOrderInfoEntity::getChargeId, shopChargeName.getChargeId());
                         updateWrapper.set(DmpOrderInfoEntity::getChargeName, shopChargeName.getChargeName());
                     }
-                }else if (StringUtils.isNotBlank(shopByShopNo.getChargeId())){
+                } else if (StringUtils.isNotBlank(shopByShopNo.getChargeId())) {
                     // 无变更日志时使用当前负责人
-                    if(!(Objects.equals(shopByShopNo.getChargeId(), dmpOrderInfoEntity.getChargeId()) && Objects.equals(shopByShopNo.getChargeName(), dmpOrderInfoEntity.getChargeName()))){
+                    if (!(Objects.equals(shopByShopNo.getChargeId(), dmpOrderInfoEntity.getChargeId()) && Objects.equals(shopByShopNo.getChargeName(), dmpOrderInfoEntity.getChargeName()))) {
                         updateWrapper.set(DmpOrderInfoEntity::getChargeId, shopByShopNo.getChargeId());
                         updateWrapper.set(DmpOrderInfoEntity::getChargeName, shopByShopNo.getChargeName());
                     }
@@ -213,8 +239,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             //根据负责人获取部门信息，同步到订单
             if (StringUtils.isNotBlank(dmpOrderInfoEntity.getShopNo())) {
                 DmpShopInfoDTO dmpShopInfoDTO = dmpShopInfoService.queryShopByPlatformList(dmpOrderInfoEntity.getShopNo(), dmpOrderInfoEntity.getPlatformSign(), userDeptList);
-                if (dmpShopInfoDTO != null &&StringUtils.isNotBlank(dmpShopInfoDTO.getDeptId()) &&StringUtils.isNotBlank(dmpShopInfoDTO.getDeptName())) {
-                    if (!(Objects.equals(dmpShopInfoDTO.getDeptId(),dmpOrderInfoEntity.getDeptId()) && Objects.equals(dmpShopInfoDTO.getDeptName(), dmpOrderInfoEntity.getDeptName()))) {
+                if (dmpShopInfoDTO != null && StringUtils.isNotBlank(dmpShopInfoDTO.getDeptId()) && StringUtils.isNotBlank(dmpShopInfoDTO.getDeptName())) {
+                    if (!(Objects.equals(dmpShopInfoDTO.getDeptId(), dmpOrderInfoEntity.getDeptId()) && Objects.equals(dmpShopInfoDTO.getDeptName(), dmpOrderInfoEntity.getDeptName()))) {
                         updateWrapper.set(DmpOrderInfoEntity::getDeptId, dmpShopInfoDTO.getDeptId());
                         updateWrapper.set(DmpOrderInfoEntity::getDeptName, dmpShopInfoDTO.getDeptName());
                     }

@@ -33,10 +33,11 @@ public class BiComprehensiveAnalyseController extends BaseController {
 
     /**
      * SKU矩阵
-     * @Author Luo_WG
-     * @Date 2022/12/26 10:42
+     *
      * @param biFilterDTO biFilterDTO
      * @return com.erp.common.vo.PagingVO<com.erp.model.bi.vo.SkuMatrixVO>
+     * @Author Luo_WG
+     * @Date 2022/12/26 10:42
      **/
     @PostMapping("/skuMatrix")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
@@ -47,10 +48,11 @@ public class BiComprehensiveAnalyseController extends BaseController {
 
     /**
      * 店铺矩阵
-     * @Author Luo_WG
-     * @Date 2022/12/26 10:42
+     *
      * @param biFilterDTO biFilterDTO
      * @return com.erp.common.vo.PagingVO<com.erp.model.bi.vo.SkuMatrixVO>
+     * @Author Luo_WG
+     * @Date 2022/12/26 10:42
      **/
     @PostMapping("/shopMatrix")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
@@ -61,10 +63,11 @@ public class BiComprehensiveAnalyseController extends BaseController {
 
     /**
      * 平台店铺对比趋势
-     * @Author Luo_WG
-     * @Date 2022/12/26 10:35
+     *
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ShopContrastTrendVO>
+     * @Author Luo_WG
+     * @Date 2022/12/26 10:35
      **/
     @PostMapping("/shopContrastTrend")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
@@ -75,10 +78,11 @@ public class BiComprehensiveAnalyseController extends BaseController {
 
     /**
      * 品类矩阵
-     * @Author Luo_WG
-     * @Date 2022/12/26 10:35
+     *
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ShopContrastTrendVO>
+     * @Author Luo_WG
+     * @Date 2022/12/26 10:35
      **/
     @PostMapping("/categoryMatrix")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
@@ -89,10 +93,11 @@ public class BiComprehensiveAnalyseController extends BaseController {
 
     /**
      * 销售明细表-SKU
-     * @Author Luo_WG
-     * @Date 2022/12/27 10:41
+     *
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     * @Author Luo_WG
+     * @Date 2022/12/27 10:41
      **/
     @PostMapping("/saleDetailSku")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
@@ -100,12 +105,14 @@ public class BiComprehensiveAnalyseController extends BaseController {
         List<SaleDetailVO> saleDetailVOList = biComprehensiveAnalyseService.saleDetailSku(biFilterDTO);
         return success(saleDetailVOList);
     }
+
     /**
      * 销售单价分布
-     * @Author zdy
-     * @Date 2022/12/27 10:41
+     *
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     * @Author zdy
+     * @Date 2022/12/27 10:41
      **/
     @PostMapping("/salePriceDistribution")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
@@ -113,13 +120,13 @@ public class BiComprehensiveAnalyseController extends BaseController {
         StatisticalDataVO statisticalDataVO = biComprehensiveAnalyseService.salePriceDistribution(biFilterDTO);
         return success(statisticalDataVO);
     }
-
     /**
      * 销售明细表-店铺
-     * @Author Luo_WG
-     * @Date 2022/12/27 10:41
+     *
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     * @Author Luo_WG
+     * @Date 2022/12/27 10:41
      **/
     @PostMapping("/saleDetailShop")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
@@ -130,10 +137,11 @@ public class BiComprehensiveAnalyseController extends BaseController {
 
     /**
      * 销售明细表-用户
-     * @Author Luo_WG
-     * @Date 2022/12/27 10:41
+     *
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     * @Author Luo_WG
+     * @Date 2022/12/27 10:41
      **/
     @PostMapping("/saleDetailUser")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
@@ -144,10 +152,11 @@ public class BiComprehensiveAnalyseController extends BaseController {
 
     /**
      * 单商品-SKU日期销售额趋势表-日期
-     * @Author Luo_WG
-     * @Date 2022/12/27 10:41
+     *
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     * @Author Luo_WG
+     * @Date 2022/12/27 10:41
      **/
     @PostMapping("/saleDetailDate")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
@@ -161,10 +170,11 @@ public class BiComprehensiveAnalyseController extends BaseController {
 
     /**
      * 单商品-SKU日期销售额趋势图
-     * @Author Luo_WG
-     * @Date 2022/12/27 10:41
+     *
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     * @Author Luo_WG
+     * @Date 2022/12/27 10:41
      **/
     @PostMapping("/skuDateSaleTrend")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
@@ -178,10 +188,11 @@ public class BiComprehensiveAnalyseController extends BaseController {
 
     /**
      * 单商品-SKU详情顶部信息
-     * @Author Jim
-     * @Date 2023/09/15
+     *
      * @param dto SkuDetailDTO
      * @return java.util.List<com.erp.model.bi.dto.BiSkuDetailTopVO>
+     * @Author Jim
+     * @Date 2023/09/15
      **/
     @PostMapping("/skuDetail")
     public ApiResult<BiSkuDetailTopDTO> skuDateSaleTrend(@RequestBody @Validated SkuDetailDTO dto) {

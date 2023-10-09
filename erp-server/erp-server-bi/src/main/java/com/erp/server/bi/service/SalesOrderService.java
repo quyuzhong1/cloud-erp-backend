@@ -227,4 +227,20 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      * @return com.erp.model.bi.vo.StatisticalDataVO
      */
     StatisticalDataVO grossProfit(BiDataSourceCostDTO.GrossProfitDTO dto);
+
+
+    /**
+     * B2B客户属性分析
+     * @param biFilterDTO
+     * @return
+     */
+    StatisticalDataVO customerPropertyAnalysis(BiFilterDTO biFilterDTO);
+
+
+    /**
+     * B2B客户等级占比
+     * @param biFilterDTO
+     * @return
+     */
+    StatisticalDataVO customerLevelProportion(BiFilterDTO biFilterDTO);
 }

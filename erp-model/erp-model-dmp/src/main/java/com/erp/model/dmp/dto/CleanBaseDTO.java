@@ -3,8 +3,6 @@ package com.erp.model.dmp.dto;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 /**
  * 清洗基础数据
  *
@@ -22,10 +20,10 @@ public class CleanBaseDTO {
     /**
      * 上次推送时间
      */
-    private LocalDateTime lastPushTime;
+    private String lastPushTime;
 
     /**
      * 数据下载时间
      */
-    private LocalDateTime downloadTime;
+    private String downloadTime;
 }

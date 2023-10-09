@@ -110,6 +110,8 @@ public enum PlatformApiEnum {
 
     IML_OMS_ASN_LIST(23,"getAsnList", MongoTableNameContant.ORIGINAL_IML_INBOUND_ORDER, TaskConstant.IML_PULL_DATA_TASK),
 
+
+    BD_RATE(25,"BD_Rate", MongoTableNameContant.ORIGINAL_KINGDEE_EXCHANGE_RATE, TaskConstant.KINGDEE_PULL_DATA_TASK),
     ;
 
     /** 状态码 */

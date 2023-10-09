@@ -84,7 +84,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getShopByMaterialId(entity.getFMaterialId());
             List<KingdeeSkuEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_SKU, KingdeeSkuEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
-            entity.setDownloadTime(LocalDateTime.now());
+            entity.setDownloadTime(LocalDateTime.now().toString());
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
@@ -130,14 +130,14 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
         // 查询mongo待推送数据
         String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
         Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
-        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsCleanDateStr(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
         List<KingdeeSkuEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_KINGDEE_SKU, KingdeeSkuEntity.class);
         if (CollectionUtil.isEmpty(mongoData)) {
             return;
         }
         for (KingdeeSkuEntity mongoDatum : mongoData) {
             mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
-            mongoDatum.setLastPushTime(LocalDateTime.now());
+            mongoDatum.setLastPushTime(LocalDateTime.now().toString());
             updateAndSaveDb(mongoDatum);
         }
     }

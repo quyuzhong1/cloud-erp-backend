@@ -26,11 +26,12 @@ import com.erp.model.bi.enums.TargetMetricsSearchTypeEnum;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.oms.vo.CustomerInfoVO;
 import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.SkuDTO;
-import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.BiConstant;
@@ -50,6 +51,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -60,7 +62,6 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * 销售维度 模块服务
@@ -81,6 +82,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private CustomerFeign customerFeign;
 
     @Resource
     private BiTargetNewProductSettingService biTargetNewProductSettingService;
@@ -1310,7 +1314,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<Object> dataList = new ArrayList<>(10);
         for (BasicCategoryDTO item : categoryList) {
             List<BasicCategoryDTO> childrenList = item.getChildrenList();
-            List<String> categoryIdList=childrenList.stream().map(BasicCategoryDTO::getId).collect(Collectors.toList());
+            List<String> categoryIdList = childrenList.stream().map(BasicCategoryDTO::getId).collect(Collectors.toList());
             BigDecimal totalSales = list.stream().filter(
                             s -> categoryIdList.contains(s.getFlagNo()) && s.getSales() != null
                     ).map(SalesBaseVO::getSales).
@@ -2352,19 +2356,19 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesFlagVO> salesList = new ArrayList();
         switch (dateType) {
             case "DAY":
-                salesList = baseMapper.getByDayCategory(dto, timeFlag, settleRate, groupName);
+                salesList = baseMapper.getByDayCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
                 break;
             case "MONTH":
-                salesList = baseMapper.getByMonthCategory(dto, timeFlag, settleRate, groupName);
+                salesList = baseMapper.getByMonthCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
                 break;
             case "WEEK":
-                salesList = baseMapper.getByWeekCategory(dto, timeFlag, settleRate, groupName);
+                salesList = baseMapper.getByWeekCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
                 break;
             case "QUARTER":
-                salesList = baseMapper.getByQuarterCategory(dto, timeFlag, settleRate, groupName);
+                salesList = baseMapper.getByQuarterCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
                 break;
             case "YEAR":
-                salesList = baseMapper.getByYearCategory(dto, timeFlag, settleRate, groupName);
+                salesList = baseMapper.getByYearCategory(dto, timeFlag, settleRate, groupName, dto.getSearchType());
                 break;
             default:
                 salesList = new ArrayList<>();
@@ -2597,9 +2601,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             String[] split = date.split("-");
             String dateStr = "";
             if (split.length > 1) {
-                dateStr = (Integer.valueOf(split[0]) - 1)+ "-" + split[1];
+                dateStr = (Integer.valueOf(split[0]) - 1) + "-" + split[1];
             } else {
-                dateStr = Integer.valueOf(date) -1 +"";
+                dateStr = Integer.valueOf(date) - 1 + "";
             }
             if (lastYearMonthMap.get(dateStr) != null) {
                 lastYearOrderSalesList.add(lastYearMonthMap.get(dateStr));
@@ -2618,9 +2622,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             String[] split = date.split("-");
             String dateStr = "";
             if (split.length > 1) {
-                dateStr = (Integer.valueOf(split[0]) - 1)+ "-" + split[1];
+                dateStr = (Integer.valueOf(split[0]) - 1) + "-" + split[1];
             } else {
-                dateStr = Integer.valueOf(date) -1 +"";
+                dateStr = Integer.valueOf(date) - 1 + "";
             }
             if (lastYearMonthMap.get(dateStr) != null && lastYearMonthMap.get(dateStr).compareTo(BigDecimal.ZERO) > 0) {
                 basisRatioList.add(monthMap.get(date)
@@ -2750,50 +2754,50 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         switch (dateType) {
             case "DAY":
-                int days = dto.getEndTime().toLocalDate().until(dto.getStartTime().toLocalDate()).getDays();
+                long days = Duration.between(dto.getStartTime(), dto.getEndTime()).toDays();
                 if (days > 31) {
                     throw new ServiceException(ApiError.ERROR_DATE_RANGE_THIRTY_ONE);
                 }
-                salesList = baseMapper.getByDay(dto, timeFlag, settleRate);
+                salesList = baseMapper.getByDay(dto, timeFlag, settleRate, dto.getSearchType());
                 dto.setStartTime(dto.getStartTime().minusYears(1));
                 dto.setEndTime(dto.getEndTime().minusYears(1));
-                lastYearSalesList = baseMapper.getByDay(dto, timeFlag, settleRate);
+                lastYearSalesList = baseMapper.getByDay(dto, timeFlag, settleRate, dto.getSearchType());
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "DAY");
                 break;
             case "WEEK":
-                int weekDay = dto.getEndTime().toLocalDate().until(dto.getStartTime().toLocalDate()).getDays();
+                long weekDay = Duration.between(dto.getStartTime(), dto.getEndTime()).toDays();
                 if (weekDay > 62) {
                     throw new ServiceException(ApiError.ERROR_DATE_RANGE_WEEK_DAY);
                 }
-                salesList = baseMapper.getByWeek(dto, timeFlag, settleRate);
+                salesList = baseMapper.getByWeek(dto, timeFlag, settleRate, dto.getSearchType());
                 dto.setStartTime(dto.getStartTime().minusYears(1));
                 dto.setEndTime(dto.getEndTime().minusYears(1));
-                lastYearSalesList = baseMapper.getByWeek(dto, timeFlag, settleRate);
+                lastYearSalesList = baseMapper.getByWeek(dto, timeFlag, settleRate, dto.getSearchType());
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "WEEK");
                 break;
             case "MONTH":
-                salesList = baseMapper.getByMonth(dto, timeFlag, settleRate);
+                salesList = baseMapper.getByMonth(dto, timeFlag, settleRate, dto.getSearchType());
                 dto.setStartTime(dto.getStartTime().minusYears(1));
                 dto.setEndTime(dto.getEndTime().minusYears(1));
-                lastYearSalesList = baseMapper.getByMonth(dto, timeFlag, settleRate);
+                lastYearSalesList = baseMapper.getByMonth(dto, timeFlag, settleRate, dto.getSearchType());
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
                 dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "MONTH");
                 break;
             case "QUARTER":
-                salesList = baseMapper.getByQuarter(dto, timeFlag, settleRate);
+                salesList = baseMapper.getByQuarter(dto, timeFlag, settleRate, dto.getSearchType());
                 dto.setStartTime(dto.getStartTime().minusYears(1));
                 dto.setEndTime(dto.getEndTime().minusYears(1));
-                lastYearSalesList = baseMapper.getByQuarter(dto, timeFlag, settleRate);
+                lastYearSalesList = baseMapper.getByQuarter(dto, timeFlag, settleRate, dto.getSearchType());
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
                 dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "QUARTER");
                 break;
             case "YEAR":
-                salesList = baseMapper.getByYear(dto, timeFlag, settleRate);
+                salesList = baseMapper.getByYear(dto, timeFlag, settleRate, dto.getSearchType());
                 dto.setStartTime(dto.getStartTime().minusYears(1));
                 dto.setEndTime(dto.getEndTime().minusYears(1));
-                lastYearSalesList = baseMapper.getByYear(dto, timeFlag, settleRate);
+                lastYearSalesList = baseMapper.getByYear(dto, timeFlag, settleRate, dto.getSearchType());
                 dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy");
                 dateSalesTrendRatio(salesList, lastYearSalesList, dateTimeFormatter, "YEAR");
                 break;
@@ -3224,7 +3228,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         monthMetrics.setMetricsValue(monthMetricsValue);
         //完成值
-        BigDecimal monthFinishValue = biTargetYearService.getMetricsFinishValue(dto, "month", year, month, settleRate);
+        BigDecimal monthFinishValue = biTargetYearService.getMetricsFinishValue(dto, "month", yearMonth, settleRate);
         if (Objects.isNull(monthFinishValue)) {
             monthFinishValue = BigDecimal.ZERO;
         }
@@ -3246,7 +3250,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             yearMetricsValue = MathUtil.multiply(yearMetricsValue, multiplyValue, 2);
         }
         yearMetrics.setMetricsValue(yearMetricsValue);
-        BigDecimal yearFinishValue = biTargetYearService.getMetricsFinishValue(dto, "year", year, month, settleRate);
+        BigDecimal yearFinishValue = biTargetYearService.getMetricsFinishValue(dto, "year", yearMonth, settleRate);
         if (Objects.isNull(yearFinishValue)) {
             yearFinishValue = BigDecimal.ZERO;
         }
@@ -3614,6 +3618,100 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 sorted().collect(Collectors.toList());
         grossProfitRateSeries.setData(grossProfitRateValueList);
         seriesList.add(grossProfitRateSeries);
+        chartVO.setSeries(seriesList);
+        statistical.setData(chartVO);
+        return statistical;
+    }
+
+    @Override
+    public StatisticalDataVO customerPropertyAnalysis(BiFilterDTO params) {
+        StatisticalDataVO statistical = new StatisticalDataVO();
+        statistical.setName("B2B客户属性销售额占比");
+        statistical.setChartType(ChartType.PIE);
+        List<CustomerInfoVO> customerInfoVOS = customerFeign.listCustomerByProperty();
+        if (CollectionUtils.isEmpty(customerInfoVOS)){
+            return statistical;
+        }
+        //分组
+        Map<String, List<CustomerInfoVO>> map = customerInfoVOS.stream().collect(Collectors.groupingBy(CustomerInfoVO::getCustomerProperty));
+        if (map.isEmpty()){
+            return statistical;
+        }
+        //获取到结算汇率
+        String settleRate = getSettleRate(params.getSettleMethod());
+        LocalDateTime paramsEndTime = params.getEndTime();
+        params.setEndTime(paramsEndTime, 1);
+        ChartVO chartVO = new ChartVO();
+        chartVO.setXAxis(new ArrayList<>());
+        List<SeriesVO<Object>> seriesList = new ArrayList<>();
+        SeriesVO<Object> series = new SeriesVO();
+        series.setName("销售额");
+        List<Object> dataList = new ArrayList<>();
+        for(String s : map.keySet()){
+            List<CustomerInfoVO> customerInfoVOS1 = map.get(s);
+            if (CollectionUtils.isNotEmpty(customerInfoVOS1)){
+                Map<String, Object> siteMap = new HashMap<>();
+                Set<String> customerCodes = customerInfoVOS1.stream().map(CustomerInfoVO::getCode).filter(StringUtils::isNotEmpty).collect(Collectors.toSet());
+                params.setCustomerCodes(new ArrayList<>(customerCodes));
+                BigDecimal bigDecimal = baseMapper.customerLevelProportion(params, settleRate);
+                siteMap.put("name", customerInfoVOS1.get(0).getCustomerProperty());
+                if(Objects.isNull(bigDecimal)){
+                    siteMap.put("value", "0.00");
+                }else {
+                    siteMap.put("value", bigDecimal.stripTrailingZeros().toPlainString());
+                }
+                dataList.add(siteMap);
+            }
+        }
+        series.setData(dataList);
+        seriesList.add(series);
+        chartVO.setSeries(seriesList);
+        statistical.setData(chartVO);
+        return statistical;
+    }
+
+    @Override
+    public StatisticalDataVO customerLevelProportion(BiFilterDTO params) {
+        StatisticalDataVO statistical = new StatisticalDataVO();
+        statistical.setName("B2B客户等级销售额占比");
+        statistical.setChartType(ChartType.PIE);
+        List<CustomerInfoVO> customerInfoVOS = customerFeign.listCustomerByGroup();
+        if (CollectionUtils.isEmpty(customerInfoVOS)){
+            return statistical;
+        }
+        //分组
+        Map<String, List<CustomerInfoVO>> map = customerInfoVOS.stream().collect(Collectors.groupingBy(CustomerInfoVO::getGroupId));
+        if (map.isEmpty()){
+            return statistical;
+        }
+        //获取到结算汇率
+        String settleRate = getSettleRate(params.getSettleMethod());
+        LocalDateTime paramsEndTime = params.getEndTime();
+        params.setEndTime(paramsEndTime, 1);
+        ChartVO chartVO = new ChartVO();
+        chartVO.setXAxis(new ArrayList<>());
+        List<SeriesVO<Object>> seriesList = new ArrayList<>();
+        SeriesVO<Object> series = new SeriesVO();
+        series.setName("销售额");
+        List<Object> dataList = new ArrayList<>();
+        for(String s : map.keySet()){
+            List<CustomerInfoVO> customerInfoVOS1 = map.get(s);
+            if (CollectionUtils.isNotEmpty(customerInfoVOS1)){
+                Map<String, Object> siteMap = new HashMap<>();
+                Set<String> customerCodes = customerInfoVOS1.stream().map(CustomerInfoVO::getCode).filter(StringUtils::isNotEmpty).collect(Collectors.toSet());
+                params.setCustomerCodes(new ArrayList<>(customerCodes));
+                BigDecimal bigDecimal = baseMapper.customerLevelProportion(params, settleRate);
+                siteMap.put("name", customerInfoVOS1.get(0).getGroupName());
+                if(Objects.isNull(bigDecimal)){
+                    siteMap.put("value", "0.00");
+                }else {
+                    siteMap.put("value", bigDecimal.stripTrailingZeros().toPlainString());
+                }
+                dataList.add(siteMap);
+            }
+        }
+        series.setData(dataList);
+        seriesList.add(series);
         chartVO.setSeries(seriesList);
         statistical.setData(chartVO);
         return statistical;

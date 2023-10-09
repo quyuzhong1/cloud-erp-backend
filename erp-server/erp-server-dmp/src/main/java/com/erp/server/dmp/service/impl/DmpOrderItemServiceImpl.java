@@ -15,11 +15,13 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.SplitSkuDTO;
-import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.entity.DmpBomEntity;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.entity.DmpSkuCostEntity;
+import com.erp.model.dmp.entity.DmpSplitErrorLogEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.NewProductDTO;
-import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.pull.mapper.DmpOrderItemMapper;
 import com.erp.server.dmp.service.DmpBomService;
@@ -33,7 +35,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -123,6 +124,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     public DmpOrderItemEntity getByErpOrderItemId(String erpOrderItemId) {
         LambdaQueryWrapper<DmpOrderItemEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpOrderItemEntity::getErpOrderItemId, erpOrderItemId);
+        lambdaQueryWrapper.last("limit 1");
         return this.getOne(lambdaQueryWrapper);
     }
 
@@ -418,6 +420,13 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             bomList = allBomList.stream().filter(req -> req.getParentSkuNo().equals(splitSkuDTO.getSkuNo())).collect(Collectors.toList());
         }
 
+        //如果sku能直接匹配成本，那么就不拆单直接返回
+        List<DmpSkuCostEntity> costEntities = allSkuCostList.stream().filter(req -> req.getSkuNo().equals(splitSkuDTO.getSkuNo())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(costEntities)) {
+            itemListAll.add(splitSkuDTO);
+            return itemListAll;
+        }
+
         //如果匹配ERP的bom不存在记录错误日志
         if (CollectionUtils.isEmpty(bomList)) {
             itemListAll.add(splitSkuDTO);
@@ -428,13 +437,6 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             errorLogEntity.setSkuNo(splitSkuDTO.getSkuNo());
             errorLogEntity.setMsg(String.format(ApiError.ERP_BOM_EXIST.msg, ObjectUtil.isEmpty(dmpBomEntity) ? "" : dmpBomEntity.getFinancialCode()));
             dmpSplitErrorLogService.save(errorLogEntity);
-            return itemListAll;
-        }
-
-        //如果sku能直接匹配成本，那么就不拆单直接返回
-        List<DmpSkuCostEntity> costEntities = allSkuCostList.stream().filter(req -> req.getSkuNo().equals(splitSkuDTO.getSkuNo())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(costEntities)) {
-            itemListAll.add(splitSkuDTO);
             return itemListAll;
         }
 

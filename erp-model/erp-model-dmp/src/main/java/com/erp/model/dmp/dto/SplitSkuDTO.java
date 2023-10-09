@@ -1,14 +1,11 @@
 package com.erp.model.dmp.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Data
-@NoArgsConstructor
 public class SplitSkuDTO implements Serializable {
     /**
      * 来源平台
@@ -54,4 +51,9 @@ public class SplitSkuDTO implements Serializable {
      * 商品售价
      */
     private BigDecimal amountAfter;
+
+    public SplitSkuDTO() {
+        this.cleanCostPrice = BigDecimal.ZERO;
+        this.amountAfter = BigDecimal.ZERO;
+    }
 }

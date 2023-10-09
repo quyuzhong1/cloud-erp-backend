@@ -224,23 +224,6 @@ public class BiTargetStaffSettingDTO implements Serializable {
 
         private String staffName;
 
-        /**
-         * 月
-         */
-        @NotNull(message = "月不能为空")
-        private Integer month;
-
-
-        private BigDecimal value;
-
-        /**
-         * 指标维度
-         */
-        @NotBlank(message = "指标维度不能为空")
-        @StateEnumValue(clazz = MetricsEnum.class, message = "指标维度有误")
-        private MetricsEnum metrics;
-
-
     }
 
 

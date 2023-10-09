@@ -59,9 +59,6 @@ public class  OrderMongoDTO {
     private Integer cleanToDeliveryExists;
 
     @Panno(findType = PannoEnum.LTE,field = "downloadTime")
-    private LocalDateTime downloadEndTime;
-
-    @Panno(findType = PannoEnum.LTE,field = "downloadTime")
     private String downloadEndTimeStr;
 
     @Panno(findType = PannoEnum.EQ, field = "comboSku")
@@ -78,6 +75,10 @@ public class  OrderMongoDTO {
 
     @Panno(findType=PannoEnum.EQ,  field = "delivery_no")
     private String delivery_no;
+
+
+    @Panno(findType=PannoEnum.EQ,  field = "unique_id")
+    private String uniqueId;
 
     public static OrderMongoDTO getByFBillNo(String fBillNo) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
@@ -139,14 +140,15 @@ public class  OrderMongoDTO {
         return orderMongoDTO;
     }
 
-    public static OrderMongoDTO getByIsClean(Integer isClean, Integer diffMinute) {
-        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
-        orderMongoDTO.setIsClean(isClean);
-        if(null != diffMinute && diffMinute != 0){
-            orderMongoDTO.setDownloadEndTime(LocalDateTime.now().minusMinutes(diffMinute));
-        }
-        return orderMongoDTO;
-    }
+//    public static OrderMongoDTO getByIsClean(Integer isClean, Integer diffMinute) {
+//        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+//        orderMongoDTO.setIsClean(isClean);
+//        if(null != diffMinute && diffMinute != 0){
+//            orderMongoDTO.setDownloadEndTime(LocalDateTime.now().minusMinutes(diffMinute).toString());
+//        }
+//        return orderMongoDTO;
+//    }
+
     public static OrderMongoDTO getByIsCleanDateStr(Integer isClean, Integer diffMinute) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setIsClean(isClean);
@@ -198,6 +200,12 @@ public class  OrderMongoDTO {
     public static OrderMongoDTO getByStockSku(String stockSku) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setStockSku(stockSku);
+        return orderMongoDTO;
+    }
+
+    public static OrderMongoDTO getUniqId(String uniqueId) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setUniqueId(uniqueId);
         return orderMongoDTO;
     }
 
