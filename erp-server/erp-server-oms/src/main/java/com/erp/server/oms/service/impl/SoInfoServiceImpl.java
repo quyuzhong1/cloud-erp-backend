@@ -49,6 +49,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -486,7 +487,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         List<String> paramDetailIds = soDetailService.listParamDetailIdsBySearchType(params.getSearchType());
-
         if (Objects.isNull(paramDetailIds)) {
             paramDetailIds = Collections.emptyList();
         } else {
@@ -494,12 +494,24 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 return new PagingVO<>(new Page<>());
             }
         }
-
         IPage pageData = baseMapper.paging(query, params, paramDetailIds);
         List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
+        fillPagingDb(list);
+        return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 填充分页数据
+     *
+     * @param list
+     * @return void
+     * @author yl
+     * @date 2023-10-08 18:00
+     */
+    private void fillPagingDb(List<SoInfoDTO.PagingViewDTO> list) {
         //销售部门id
         List<String> salesDeptIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSalesDeptId).distinct().collect(Collectors.toList());
         List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(salesDeptIdList);
@@ -516,13 +528,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         // 国家
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
-
         //有效发货通知单
         List<String> sodIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getDetailId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(sodIdList);
-
         //出库
         List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockFeign.listDetailBySoDetailIds(detailIds);
+
+        //销售出库单列表
+        List<SoOutstockEntity> soOutstockList = soOutstockFeign.listBySoIds(soIdList);
 
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         soOutstockDetailList = soOutstockDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
@@ -540,9 +553,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIdList) ? customerInfoService.listByIds(customerIdList) : Collections.emptyList();
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         List<String> flagList = new ArrayList<>();
-
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(soIdList);
-
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = Lists.newArrayList();
@@ -564,7 +575,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setApproveStatusName(billApproveStatus.getName());
             String type = item.getOrderType();
             item.setOrderTypeName(BillTypeEnum.getName(type));
-
+            String soId = item.getId();
+            //运单号集合
+            List<String> trackNoList = soOutstockList.stream().filter(s -> s.getSoId().equals(soId)).
+                    map(SoOutstockEntity::getTrackNo).collect(Collectors.toList());
+            item.setTrackNoList(trackNoList);
+            item.setTrackNoStr(trackNoList.stream().collect(Collectors.joining(",")));
             //国家
             if (CollectionUtils.isNotEmpty(countryList)) {
                 String countryName = countryList.stream().filter(obj -> obj.getId().equals(item.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
@@ -601,7 +617,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //是否大于销售数量
             Boolean isGre = curInventoryQty >= qty;
 
-
             /**
              * 可出数量
              * 根据可用即时库存计算可出数量，
@@ -617,7 +632,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 //当为正数的时候不缺货
                 scarceQty = scarceQty > 0 ? 0 : Math.abs(scarceQty);
                 availableQty = curInventoryQty;
-
             } else {
                 availableQty = qty;
             }
@@ -655,14 +669,25 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             //税率
             BigDecimal taxRate = item.getTaxRate();
+
+            //汇率
+            BigDecimal exchangeRate = item.getExchangeRate();
+
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //销售单价
             BigDecimal price = item.getPrice();
+
+            //销售单价(本位币)
+            item.setPriceLocalCurrency(MathUtil.multiply(price,exchangeRate));
+
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             item.setTaxPrice(taxPrice);
+            //含税单价(本位币)
+            item.setTaxPriceLocalCurrency(MathUtil.multiply(taxPrice,exchangeRate));
+
 
             if (ignoreInventorySkuIds.contains(skuId)) {
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", skuId, item.getSkuNo());
@@ -685,7 +710,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             flagList.add(item.getId());
         }
-        return new PagingVO<>(pageData);
+
+
     }
 
     @Override
@@ -1238,230 +1264,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-        //销售订单id集合
-        List<String> soIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getId).collect(Collectors.toList());
-
-        //发货通知单的
-        List<SoDeliveryNoticeDetailDTO.ListDTO> soDeliveryNoticeList = soDeliveryNoticeFeign.listBySourceIdList(soIdList);
-
-        //发货通知单的详情id
-        List<String> deliveryNoticeDetailIdList = soDeliveryNoticeList.stream().map(SoDeliveryNoticeDetailDTO.ListDTO::getDetailId).collect(Collectors.toList());
-        //详情id
-        List<String> detailIds = list.stream().map(SoInfoDTO.PagingViewDTO::getDetailId).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(deliveryNoticeDetailIdList)) {
-            detailIds.addAll(deliveryNoticeDetailIdList);
-        }
-        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockFeign.listDetailBySoDetailIds(detailIds);
-        List<String> skuIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-        List<String> warehouseIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getWarehouseId).collect(Collectors.toList());
-        InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
-        skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
-        skuInventoryDTO.setWarehouseIdList(warehouseIdList);
-        skuInventoryDTO.setSkuIdList(skuIdList);
-
-        //销售部门id
-        List<String> salesDeptIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSalesDeptId).distinct().collect(Collectors.toList());
-        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(salesDeptIdList);
-
-        // 国家
-        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
-
-        //从wms 获取到sku 的即时库存信息
-        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventoryByParam(skuInventoryDTO);
-        //客户id
-        List<String> customerIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getCustomerId).collect(Collectors.toList());
-        List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIdList) ? customerInfoService.listByIds(customerIdList) : Collections.emptyList();
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-
-        List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
-        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
-        Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
-
-        // 收款方式
-        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicEnum.RECEIVE_METHOD.getType());
-        // 收款条件
-        List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicEnum.COLLECTION_TERMS.getType());
-        // 仓库
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
-        // 仓库组织
-        List<BaseIdDTO> accountingCompanyList = sysUserFeign.listAccountingCompany();
-        // 收款账号
-        List<BankAccountEntity> bankAccountList = bankAccountService.list();
-        // 收货地址
-        List<String> receiveAddressIds = list.stream().filter(r -> StrUtils.isNotEmpty(r.getReceiveAddressId())).map(SoInfoDTO.PagingViewDTO::getReceiveAddressId).collect(Collectors.toList());
-        List<CustomerAddressEntity> customerAddressEntities = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(receiveAddressIds)) {
-            customerAddressEntities = customerAddressService.listByIds(receiveAddressIds);
-        }
-        for (SoInfoDTO.PagingViewDTO item : list) {
-            BillApproveStatusEnum approveStatus = item.getApproveStatus();
-            item.setApproveStatusName(approveStatus.getName());
-            String warehouseId = item.getWarehouseId();
-            String type = item.getOrderType();
-            item.setOrderTypeName(BillTypeEnum.getName(type));
-            String deliveryStatus = item.getDeliveryStatus();
-            String deliveryStatusName = DeliveryStatusEnum.getName(deliveryStatus);
-            item.setDeliveryStatusName(deliveryStatusName);
-
-            //部门名称
-            String deptName = departmentList.stream().filter(d -> d.getId().equals(item.getSalesDeptId())).
-                    map(SysDepartmentEntity::getName).findFirst().orElse("");
-            item.setSalesDeptName(deptName);
-
-            //国家
-            if (CollectionUtils.isNotEmpty(countryList)) {
-                String countryName = countryList.stream().filter(obj -> obj.getId().equals(item.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-                item.setCountryName(countryName);
-            }
-
-            // 仓库
-            if (StrUtil.isNotEmpty(item.getWarehouseId())) {
-                String warehouseName = warehouseList.stream().filter(w -> w.getId().equals(item.getWarehouseId())).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                item.setWarehouseName(warehouseName);
-            }
-
-            // 仓库组织
-            if (StrUtil.isNotEmpty(item.getWarehouseOrgId())) {
-                String warehouseOrgName = accountingCompanyList.stream().filter(w -> w.getId().equals(item.getWarehouseOrgId())).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                item.setWarehouseOrgName(warehouseOrgName);
-            }
-
-            //作废状态
-            Boolean invalidStatus = item.getInvalidStatus();
-            String invalidStatusName = invalidStatus != null && invalidStatus ? "已作废" : "未作废";
-            item.setInvalidStatusName(invalidStatusName);
-            String customerName = customerList.stream().filter(c -> c.getId().equals(item.getCustomerId())).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            item.setCustomerName(customerName);
-            String skuId = item.getSkuId();
-            //销售数量
-            Integer qty = item.getQty();
-
-            //即时库存
-            Integer curInventoryQty = skuInventoryTotalList.stream().filter(
-                    s -> s.getSkuId().equals(skuId) &&
-                            s.getWarehouseId().equals(warehouseId)
-            ).mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
-            /**
-             * 缺货数量
-             * 当可用即时库存数量小于销售数量时， 缺货数量=可用即时库存数量-(销售数量-发货通知单数量)；
-             *
-             * 当可用即时库存数量大于销售数量时，缺货数量为0
-             */
-            Integer scarceQty = 0;
-            Boolean isGre = curInventoryQty > qty;
-
-            Boolean isScarce = !isGre;
-
-            item.setIsScarce(isScarce);
-            /**
-             * 可出数量
-             * 根据可用即时库存计算可出数量，
-             * 当可用即时库存数量大于销售数量时 可出数量=销售数量；
-             * 若可用即时库存数量小于销售数量，可出数量=即时可用库存数量
-             */
-            Integer availableQty = 0;
-            if (!isGre) {
-                Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceDetailId().equals(item.getDetailId())).
-                        mapToInt(SoDeliveryNoticeDetailDTO.ListDTO::getDeliveryQty).sum();
-                scarceQty = curInventoryQty - (qty - deliveryNoticeQty);
-                //当为正数的时候不缺货
-                scarceQty = scarceQty > 0 ? 0 : Math.abs(scarceQty);
-                availableQty = curInventoryQty;
-            } else {
-                availableQty = qty;
-            }
-            item.setScarceQty(scarceQty);
-            item.setAvailableQty(availableQty);
-            /**
-             * 已出库数量
-             * 新增时默认为0
-             * 编辑时根据关联出库单
-             * 总共已发货数量同步
-             *
-             */
-            Integer deliveryQty = soOutstockDetailList.stream().filter(req -> req.getSourceDetailId().equals(item.getDetailId())).map(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
-            item.setDeliveryQty(deliveryQty);
-            /**
-             * 剩余数量
-             * 销售数量-已出库数量
-             */
-            Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
-            item.setWaitQty(waitQty);
-            SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
-            if (sku != null) {
-                item.setProductName(sku.getSkuName());
-                String unit = sku.getUnitName();
-                item.setUnit(StringUtils.isNotBlank(unit) ? unit : "");
-            }
-            if (StrUtil.isNotEmpty(item.getTradeTerm())) {
-                item.setTradeTermName(TradeTermEnum.getName(item.getTradeTerm()));
-            }
-
-            if (CollectionUtils.isNotEmpty(receiveMethodList) && StrUtils.isNotEmpty(item.getReceiveMethod())) {
-                DictBasicEntity dictBasicEntity = receiveMethodList.stream().filter(obj -> Objects.equals(obj.getValue(), item.getReceiveMethod())).findFirst().orElse(null);
-                if (Objects.nonNull(dictBasicEntity)) {
-                    item.setReceiveMethodName(dictBasicEntity.getName());
-                }
-            }
-            // 银行账号
-            if (StrUtils.isNotEmpty(item.getReceiveAccount())) {
-                String bankAccountName = bankAccountList.stream().filter(r -> Objects.equals(r.getOrgId(), item.getSalesOrgId())
-                        && (Objects.equals(r.getBankAccountNo(), item.getReceiveAccount()))).findFirst().flatMap(r -> Optional.ofNullable(r.getAccountName())).orElse("");
-                item.setReceiveAccountName(bankAccountName);
-            }
-            // 交货方式
-            if (StrUtils.isNotEmpty(item.getDeliveryMode())) {
-                String deliveryModeName = DeliveryModeEnum.getName(item.getDeliveryMode());
-                item.setDeliveryModeName(deliveryModeName);
-            }
-            // 地址类型
-            if (StrUtils.isNotEmpty(item.getAddressType())) {
-                String addressTypeName = AddressTypeEnum.getName(item.getAddressType());
-                item.setAddressTypeName(addressTypeName);
-            }
-            // 收款条件
-            if (StrUtils.isNotEmpty(item.getReceiveCondition())) {
-                if (CollectionUtils.isNotEmpty(receiveConditionList) && StrUtils.isNotEmpty(item.getReceiveCondition())) {
-                    DictBasicEntity dictBasicEntity = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getValue(), item.getReceiveCondition())).findFirst().orElse(null);
-                    if (Objects.nonNull(dictBasicEntity)) {
-                        item.setReceiveConditionName(dictBasicEntity.getName());
-                    }
-                }
-            }
-            // 收货地址
-            if (StrUtils.isNotEmpty(item.getReceiveAddressId())) {
-                CustomerAddressEntity customerAddressEntity = customerAddressEntities.stream().filter(req -> req.getId().equals(item.getReceiveAddressId())).findFirst().orElse(new CustomerAddressEntity());
-                item.setReceiveAddress(customerAddressEntity.getAddress());
-            }
-            // 含税单价
-            BigDecimal taxRate = item.getTaxRate();
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-            //单价
-            BigDecimal price = item.getPrice();
-            //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
-            item.setTaxPrice(taxPrice);
-        }
-
-        /**
-         StringBuffer sb = new StringBuffer();
-         String excelPath = "excel/SoInfo.xlsx";
-         String name = "销售订单列表";
-         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-         sb.append(date);
-         sb.append(name);
-         try {
-         new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-         } catch (IOException e) {
-         log.error("销售订单列表导出出错 {}", e);
-         return Boolean.FALSE;
-         }
-         */
+        //填充分页列表
+        fillPagingDb(list);
         List<String> nopermitFields = dto.getNopermitFields();
         Map<String, String> headMap = SoUtils.getExportHeadList();
         List<LinkedHashMap<String, Object>> dataList = new ArrayList<>();
@@ -2515,10 +2319,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     /**
      * 获取到折扣额大于0的历史数据
-     * @author yl
-     * @date 2023-09-28 10:31
+     *
      * @param
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.ListDTO>
+     * @author yl
+     * @date 2023-09-28 10:31
      */
     @Override
     public List<SoInfoDTO.ListDTO> listRepairHistoryDb() {

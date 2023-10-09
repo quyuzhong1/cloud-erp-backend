@@ -520,6 +520,32 @@ public class SoInfoDTO implements Serializable {
          */
         private String platformSkuNo;
 
+
+        /**
+         * 运单号
+         */
+        private List<String> trackNoList;
+
+        /**
+         * 运单号 导出用到
+         */
+        private String trackNoStr;
+
+        /**
+         * 总价税合计（本位币）
+         */
+        private BigDecimal totalAllAmountLocalCurrency;
+
+        /**
+         * 销售单价(本位币)
+         */
+        private BigDecimal priceLocalCurrency;
+
+        /**
+         * 含税单价(本位币)
+         */
+        private BigDecimal taxPriceLocalCurrency;
+
     }
 
     /**
