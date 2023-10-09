@@ -1183,7 +1183,10 @@ public class SoInfoDTO implements Serializable {
         private String telNumber;
 
 
-
+        /**
+         * 收货人
+         */
+        private String receiverName;
 
         /**
          * 收款条件
