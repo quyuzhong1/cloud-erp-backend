@@ -1,7 +1,7 @@
 package com.erp.model.dmp.mabang;
 
 import com.alibaba.fastjson.JSONObject;
-import com.erp.model.dmp.dto.CleanBaseDTO;
+import com.common.business.dto.CleanBaseDTO;
 import com.erp.model.dmp.mabang.item.OrderItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;

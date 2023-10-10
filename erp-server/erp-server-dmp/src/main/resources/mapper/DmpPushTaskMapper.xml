@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.dmp.mapper.DmpSyncTaskMapper">
+<mapper namespace="com.erp.server.dmp.mapper.DmpPushTaskMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpSyncTaskEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpPushTaskEntity">
        <result column="id" property="id" />
        <result column="create_time" property="createTime" />
        <result column="create_user_id" property="createUserId" />
@@ -16,12 +16,15 @@
        <result column="mq_topic" property="mqTopic" />
        <result column="mq_tag" property="mqTag" />
        <result column="mq_data" property="mqData" />
-       <result column="sync_status" property="syncStatus" />
-       <result column="err_msg" property="errMsg" />
+       <result column="status" property="status" />
+       <result column="return_msg" property="returnMsg" />
        <result column="last_sync_time" property="lastSyncTime" />
        <result column="source_platform_name" property="sourcePlatformName" />
-       <result column="souce_type" property="souceType" />
+       <result column="source_type" property="sourceType" />
        <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="retry_times" property="retryTimes" />
+       <result column="sync_operate" property="syncOperate" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -35,7 +38,7 @@
         update_user_name,
         version,
         is_deleted,
-        target_platform_name, mq_topic, mq_tag, mq_data, sync_status, err_msg, last_sync_time, source_platform_name, souce_type, source_id
+        target_platform_name, mq_topic, mq_tag, mq_data, status, return_msg, last_sync_time, source_platform_name, source_type, source_id, source_code, retry_times, sync_operate
     </sql>
 
 

@@ -13,12 +13,12 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
+import com.common.business.dto.DmpSyncMqDTO;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
-import com.erp.server.dmp.mapper.DmpSyncTaskMapper;
-import com.erp.server.dmp.service.DmpSyncTaskService;
+import com.erp.server.dmp.mapper.DmpPullTaskMapper;
+import com.erp.server.dmp.service.DmpPullTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -42,10 +42,10 @@ import java.util.Map;
  */
 @Slf4j
 @Service
-public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, DmpSyncTaskEntity> implements DmpSyncTaskService {
+public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, DmpPullTaskEntity> implements DmpPullTaskService {
 
     @Autowired
-    private DmpSyncTaskMapper dmpSyncTaskMapper;
+    private DmpPullTaskMapper dmpPullTaskMapper;
 
     @Resource
     private MQProducerService mqProducerService;
@@ -53,24 +53,24 @@ public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateSyncInfo(String id, String syncStatus, String responseMsg) {
-        LambdaUpdateWrapper<DmpSyncTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(DmpSyncTaskEntity::getId, id);
-        updateWrapper.set(DmpSyncTaskEntity::getLastSyncTime, LocalDateTime.now());
-        updateWrapper.set(DmpSyncTaskEntity::getStatus, syncStatus);
-        updateWrapper.set(StrUtil.isNotBlank(responseMsg), DmpSyncTaskEntity::getReturnMsg, responseMsg);
-        updateWrapper.set(DmpSyncTaskEntity::getUpdateTime, LocalDateTime.now());
+        LambdaUpdateWrapper<DmpPullTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(DmpPullTaskEntity::getId, id);
+        updateWrapper.set(DmpPullTaskEntity::getLastSyncTime, LocalDateTime.now());
+        updateWrapper.set(DmpPullTaskEntity::getStatus, syncStatus);
+        updateWrapper.set(StrUtil.isNotBlank(responseMsg), DmpPullTaskEntity::getReturnMsg, responseMsg);
+        updateWrapper.set(DmpPullTaskEntity::getUpdateTime, LocalDateTime.now());
         this.update(updateWrapper);
     }
 
     @Override
-    public void saveOrUpdateDmpSyncTask(DmpSyncTaskEntity dmpSyncTaskEntity) {
-        DmpSyncTaskEntity found = lambdaQuery()
-                .eq(DmpSyncTaskEntity::getSourceType, dmpSyncTaskEntity.getSourceType())
-                .eq(DmpSyncTaskEntity::getSourceId, dmpSyncTaskEntity.getSourceId())
-                .eq(DmpSyncTaskEntity::getSourcePlatformName, dmpSyncTaskEntity.getSourcePlatformName())
-                .eq(DmpSyncTaskEntity::getTargetPlatformName, dmpSyncTaskEntity.getTargetPlatformName())
-                .eq(DmpSyncTaskEntity::getMqTopic, dmpSyncTaskEntity.getMqTopic())
-                .eq(DmpSyncTaskEntity::getMqTag, dmpSyncTaskEntity.getMqTag())
+    public void saveOrUpdateDmpSyncTask(DmpPullTaskEntity dmpSyncTaskEntity) {
+        DmpPullTaskEntity found = lambdaQuery()
+                .eq(DmpPullTaskEntity::getSourceType, dmpSyncTaskEntity.getSourceType())
+                .eq(DmpPullTaskEntity::getSourceId, dmpSyncTaskEntity.getSourceId())
+                .eq(DmpPullTaskEntity::getSourcePlatformName, dmpSyncTaskEntity.getSourcePlatformName())
+                .eq(DmpPullTaskEntity::getTargetPlatformName, dmpSyncTaskEntity.getTargetPlatformName())
+                .eq(DmpPullTaskEntity::getMqTopic, dmpSyncTaskEntity.getMqTopic())
+                .eq(DmpPullTaskEntity::getMqTag, dmpSyncTaskEntity.getMqTag())
                 .last("LIMIT 1")
                 .one();
         //存在则修改
@@ -91,7 +91,7 @@ public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, 
     @Transactional(rollbackFor = Exception.class)
     public void syncKingdeeReturnOrderToWms(KingdeeReturnOrderEntity entity) {
         //新增发送任务
-        DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
+        DmpPullTaskEntity dmpSyncTaskEntity = new DmpPullTaskEntity();
         dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskEntity.setSourceType(SourceTypeEnum.SAL_RETURNSTOCK.getCode());
         dmpSyncTaskEntity.setSourceId(entity.getFId());
@@ -115,21 +115,21 @@ public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, 
     public List<String> listKingdeeCode(Map<String, Object> conditon) {
         List<String> result= new ArrayList<>();
 
-        LambdaQueryWrapper<DmpSyncTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(DmpSyncTaskEntity::getSourceCode);
-        queryWrapper.eq(DmpSyncTaskEntity::getSourcePlatformName,"金蝶云星空")
-                .eq(DmpSyncTaskEntity::getTargetPlatformName,"自研ERP")
-                .eq(null!=conditon.get("id"), DmpSyncTaskEntity::getId, conditon.get("id"))
-                .eq(null!=conditon.get("is_deleted"), DmpSyncTaskEntity::getIsDeleted, conditon.get("is_deleted"))
-                .eq(null!=conditon.get("source_type"), DmpSyncTaskEntity::getSourceType, conditon.get("source_type"))
-                .eq(null!=conditon.get("source_code"), DmpSyncTaskEntity::getSourceCode, conditon.get("source_code"))
-                .eq(null!=conditon.get("source_id"), DmpSyncTaskEntity::getSourceCode, conditon.get("source_id"))
-                .eq(null!=conditon.get("status"), DmpSyncTaskEntity::getStatus, conditon.get("status"))
-                .eq(null!=conditon.get("mq_tag"), DmpSyncTaskEntity::getMqTag, conditon.get("mq_tag"))
-                .like(null!=conditon.get("return_msg"), DmpSyncTaskEntity::getReturnMsg, conditon.get("return_msg"))
+        LambdaQueryWrapper<DmpPullTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(DmpPullTaskEntity::getSourceCode);
+        queryWrapper.eq(DmpPullTaskEntity::getSourcePlatformName,"金蝶云星空")
+                .eq(DmpPullTaskEntity::getTargetPlatformName,"自研ERP")
+                .eq(null!=conditon.get("id"), DmpPullTaskEntity::getId, conditon.get("id"))
+                .eq(null!=conditon.get("is_deleted"), DmpPullTaskEntity::getIsDeleted, conditon.get("is_deleted"))
+                .eq(null!=conditon.get("source_type"), DmpPullTaskEntity::getSourceType, conditon.get("source_type"))
+                .eq(null!=conditon.get("source_code"), DmpPullTaskEntity::getSourceCode, conditon.get("source_code"))
+                .eq(null!=conditon.get("source_id"), DmpPullTaskEntity::getSourceCode, conditon.get("source_id"))
+                .eq(null!=conditon.get("status"), DmpPullTaskEntity::getStatus, conditon.get("status"))
+                .eq(null!=conditon.get("mq_tag"), DmpPullTaskEntity::getMqTag, conditon.get("mq_tag"))
+                .like(null!=conditon.get("return_msg"), DmpPullTaskEntity::getReturnMsg, conditon.get("return_msg"))
         ;
         queryWrapper.last(null!=conditon.get("lastSql")," and " + conditon.get("lastSql").toString());
-        List<DmpSyncTaskEntity> queryResult=this.list(queryWrapper);
+        List<DmpPullTaskEntity> queryResult=this.list(queryWrapper);
 
         if(CollectionUtil.isNotEmpty(queryResult)) {
             queryResult.stream().forEach(item-> result.add(item.getSourceCode()));
