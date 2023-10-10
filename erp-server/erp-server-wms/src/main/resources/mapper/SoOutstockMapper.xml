@@ -55,6 +55,10 @@
         <if test="params.orderType !=null and params.orderType!=''">
             AND so.order_type =#{params.orderType}
         </if>
+
+        <if test="params.salesDeptId !=null and params.salesDeptId!=''">
+            AND so.sales_dept_id =#{params.salesDeptId}
+        </if>
         <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
             AND so.approve_status IN
             <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
@@ -176,6 +180,9 @@
                 </if>
                 <if test="params.orderType !=null and params.orderType!=''">
                     AND so.order_type =#{params.orderType}
+                </if>
+                <if test="params.salesDeptId !=null and params.salesDeptId!=''">
+                    AND so.sales_dept_id =#{params.salesDeptId}
                 </if>
                 <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
                     AND so.approve_status IN

@@ -155,6 +155,15 @@ public class SoOutstockDTO implements Serializable {
         private String sellerName;
 
         /**
+         * 销售员部门id
+         */
+        private String salesDeptId;
+
+        /**
+         * 销售员部门名
+         */
+        private String salesDeptName;
+        /**
          * 仓库id
          */
         private String warehouseId;
@@ -327,6 +336,11 @@ public class SoOutstockDTO implements Serializable {
          * 销售员 id 集合
          */
         private List<String> sellerIdList;
+
+        /**
+         * 销售部门
+         */
+        private String salesDeptId;
 
         /**
          * 出库日期
