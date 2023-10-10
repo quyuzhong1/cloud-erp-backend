@@ -546,6 +546,11 @@ public class SoInfoDTO implements Serializable {
          */
         private BigDecimal taxPriceLc;
 
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
+
     }
 
     /**
@@ -661,6 +666,11 @@ public class SoInfoDTO implements Serializable {
          * 平台类型
          */
         private String platformType;
+
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
     }
 
 
@@ -867,6 +877,10 @@ public class SoInfoDTO implements Serializable {
         @DecimalMin(value = "0.00", message = "折扣总额不能小于0")
         private BigDecimal discountAmount;
 
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
     }
 
 
@@ -1134,6 +1148,12 @@ public class SoInfoDTO implements Serializable {
          * 总价税合计（本位币）
          */
         private BigDecimal allAmountLc;
+
+
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
         /**
          * 订单产品详情
          */
@@ -1448,6 +1468,11 @@ public class SoInfoDTO implements Serializable {
          */
         @DecimalMin(value = "0.00", message = "折扣总额不能小于0")
         private BigDecimal discountAmount;
+
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
     }
 
     @Data
