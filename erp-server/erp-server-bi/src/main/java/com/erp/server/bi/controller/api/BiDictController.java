@@ -88,7 +88,17 @@ public class BiDictController extends BaseController {
         List<Map<String, Object>> list = this.biDictService.listByType(type);
         return success(list);
     }
-
+    /**
+     * 根据类型获取全量字典字段
+     *
+     * @param
+     * @return 删除是否成功
+     */
+    @GetMapping("/listByType")
+    public ApiResult<List<BiDictEntity>> listByType(String type) {
+        List<BiDictEntity> list = this.biDictService.listEntityByType(type);
+        return success(list);
+    }
     /**
      * 根据类型获取全量字典字段
      *

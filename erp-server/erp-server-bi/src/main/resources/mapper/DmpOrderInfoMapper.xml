@@ -364,23 +364,23 @@
     </select>
     <select id="salePriceDistribution" resultType="com.erp.model.bi.vo.SalePriceDistributionVO">
         SELECT
-            doit.id,
-            <if test="params.rangeType == 1">
-                doit.sell_price AS sellPrice,
-            </if>
-            <if test="params.rangeType == 2">
-                doit.sell_price_origin AS sellPrice,
-            </if>
-            <if test="settleRate !=null and settleRate!=''">
-                round((doit.amount_after * doit.${settleRate}),2) AS saleAmount,
-            </if>
-            <if test="settleRate ==null or settleRate==''">
-                round((doit.amount_after * 1),2) AS saleAmount,
-            </if>
-            doit.quantity AS salesQuantity
+        doit.id,
+        <if test="params.rangeType == 1">
+            doit.sell_price AS sellPrice,
+        </if>
+        <if test="params.rangeType == 2">
+            doit.sell_price_origin AS sellPrice,
+        </if>
+        <if test="settleRate !=null and settleRate!=''">
+            round((doit.amount_after * doit.${settleRate}),2) AS saleAmount,
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round((doit.amount_after * 1),2) AS saleAmount,
+        </if>
+        doit.quantity AS salesQuantity
         FROM
-            dmp_order_item AS doit
-                LEFT JOIN dmp_order_info AS doi ON doit.order_id = doi."id"
+        dmp_order_item AS doit
+        LEFT JOIN dmp_order_info AS doi ON doit.order_id = doi."id"
         <where>
             <!--国内国外-->
             <if test="params.rangeType == 1">
