@@ -23,6 +23,7 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.CompletionRateRankingDTO;
 import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.entity.BiDictEntity;
@@ -927,6 +928,15 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         return vo;
     }
 
+    @Override
+    public List<CompletionRateRankingDTO.PagingDTO> deptCompletionRateRanking(CompletionRateRankingDTO.SearchDTO dto, String settleRate) {
+        return baseMapper.deptCompletionRateRanking(dto, settleRate);
+    }
+
+    @Override
+    public List<CompletionRateRankingDTO.PagingDTO> userCompletionRateRanking(CompletionRateRankingDTO.SearchDTO dto, String settleRate) {
+        return baseMapper.userCompletionRateRanking(dto, settleRate);
+    }
 
     /**
      * 通过日期汇总成本数据

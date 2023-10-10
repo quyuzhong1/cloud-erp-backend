@@ -163,6 +163,11 @@ public class PurchaseChangeDTO implements Serializable {
         private String productName;
 
         /**
+         * 采购订单号
+         */
+        private String purchaseOrderCode;
+
+        /**
          * sku编码
          */
         private List<String> skuNoList;
