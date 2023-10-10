@@ -1124,6 +1124,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
+        List<String> soIdList = list.stream().map(SoOutstockDTO.GenerateSoOutstockViewDTO::getSoId).collect(Collectors.toList());
+        List<SoInfoEntity> soInfoList = soInfoFeign.listSoInfoByIds(soIdList);
+        if (CollectionUtils.isEmpty(soInfoList)) {
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+
         Map<String, List<SoOutstockDTO.GenerateSoOutstockViewDTO>> map = list.stream().collect(Collectors.groupingBy(SoOutstockDTO.GenerateSoOutstockViewDTO::getSourceId));
         List<SoOutstockDTO.AddDTO> addList = new ArrayList<>(map.size());
         for (Map.Entry<String, List<SoOutstockDTO.GenerateSoOutstockViewDTO>> entry : map.entrySet()) {
@@ -1133,6 +1139,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             SoOutstockDTO.GenerateSoOutstockViewDTO generateInfo = generateInfoList.stream().filter(g -> StringUtils.isNotBlank(g.getSourceCode())).findFirst().orElse(null);
             if (generateInfo != null) {
                 SoOutstockDTO.AddDTO add = new SoOutstockDTO.AddDTO();
+                //客户订单号
+                String customerOrderNo = soInfoList.stream().filter(obj -> obj.getId().equals(generateInfo.getSoId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCustomerOrderNo())).orElse("");
+
                 add.setSoId(generateInfo.getSoId());
                 add.setSourceId(generateInfo.getSourceId());
                 add.setSourceCode(generateInfo.getSourceCode());
@@ -1142,6 +1151,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 add.setWarehouseId(generateInfo.getWarehouseId());
                 add.setTrackNo(generateInfo.getTrackNo());
                 add.setSellerId(generateInfo.getSellerId());
+                add.setCustomerOrderNo(customerOrderNo);
                 List<SoOutstockDetailDTO.AddDTO> detailList = new ArrayList<>(generateInfoList.size());
                 for (SoOutstockDTO.GenerateSoOutstockViewDTO item : generateInfoList) {
                     SoOutstockDetailDTO.AddDTO detail = new SoOutstockDetailDTO.AddDTO();
