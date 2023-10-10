@@ -28,7 +28,7 @@ public interface NoticeMsgConstant {
     /**
      * 首次质检完成回填尺寸信息
      */
-    String QC_BACK_FILL_PACK_CONTENT = "**所属SKU：{}\n**更新数据：产品尺寸{}；箱规{}；净重{}；单箱数量{}\n**发生时间：{}";
+    String QC_BACK_FILL_PACK_CONTENT = "**所属SKU：{}\n**更新数据：产品尺寸{}；箱规{}；净重{}；单箱数量{}\n发生时间：{}";
 
 
 }
