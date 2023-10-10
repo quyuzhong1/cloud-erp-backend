@@ -180,6 +180,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     private String getSettleRate(Integer code) {
+        Optional.ofNullable(code).orElseThrow(() -> new ServiceException(ApiError.ERROR_SETTLE_METHOD_EXIST));
         SettleMethodEnum settleMethod = SettleMethodEnum.getByCode(code);
         if (settleMethod != null) {
             return settleMethod.getField();
