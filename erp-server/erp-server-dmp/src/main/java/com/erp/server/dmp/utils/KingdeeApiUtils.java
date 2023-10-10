@@ -5,7 +5,6 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.core.utils.date.EnumTimePattern;
 import com.google.gson.Gson;
 import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
@@ -13,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -613,8 +611,6 @@ public class KingdeeApiUtils {
     }
 
     public boolean needPushMQ(LocalDateTime lastTime) {
-
-        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         if (Objects.nonNull(SWITCH_TIME)) {
             LocalDateTime dateTime = LocalDateTime.parse(SWITCH_TIME);
             if (lastTime.isAfter(dateTime)) {
