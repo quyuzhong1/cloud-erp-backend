@@ -34,6 +34,10 @@ public class BiDictEntity implements Serializable {
      */
     private String type;
     /**
+     * 类型名称
+     */
+    private String typeName;
+    /**
      * 名
      */
     private String name;
@@ -44,7 +48,7 @@ public class BiDictEntity implements Serializable {
     /**
      * 序号
      */
-    private Integer order_index;
+    private Integer orderIndex;
     /**
      * 状态0 未开启 1 已开启
      */
