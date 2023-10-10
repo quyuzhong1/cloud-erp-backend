@@ -4780,7 +4780,7 @@
             </if>
         </where>
         GROUP BY name
-        ORDER BY monthSales
+        ORDER BY monthSales DESC
     </select>
 
     <!--用户销售额排行榜-->
@@ -4882,7 +4882,7 @@
             </if>
         </where>
         GROUP BY name
-        ORDER BY monthSales
+        ORDER BY monthSales DESC
     </select>
     <!--获取净销售额-->
     <select id="netSalesAmount" resultType="java.math.BigDecimal">

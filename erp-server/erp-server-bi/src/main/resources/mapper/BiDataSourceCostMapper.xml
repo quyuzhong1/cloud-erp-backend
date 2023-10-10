@@ -177,11 +177,11 @@
         SELECT
         ROW_NUMBER() over(ORDER bY round(SUM (bdscd.cost_value * 1),2) DESC ) AS ranking,
         round(SUM (bdscd.cost_value * 1),2) AS monthSales,
-        CASE WHEN bdsc.dept_id IS NULL OR bdsc.dept_id = '' THEN '无' ELSE o.dept_id END AS name
+        CASE WHEN bdsc.dept_id IS NULL OR bdsc.dept_id = '' THEN '无' ELSE bdsc.dept_id END AS name
         FROM bi_data_source_cost AS bdsc
         LEFT JOIN bi_data_source_cost_detail AS bdscd ON bdsc.id = bdscd.cost_id
         WHERE bdscd.cost_type IS NOT NULL
-
+        AND bdscd.cost_type = 'cost_mainBusinessIncome'
         <if test="null != params.startTime">
             AND bdsc.month >= #{params.startTime}
         </if>
@@ -214,12 +214,6 @@
             </foreach>
         </if>
 
-        <if test="null != dictValues and dictValues.size > 0">
-            AND  bdscd.cost_type IN
-            <foreach collection="dictValues" separator="," open="(" close=")" item="item">
-                #{item}
-            </foreach>
-        </if>
         <if test="params.userId!=null and params.userId.size>0">
             AND bdsc.charge_id IN
             <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
@@ -242,6 +236,7 @@
         FROM bi_data_source_cost AS bdsc
         LEFT JOIN bi_data_source_cost_detail AS bdscd ON bdsc.id = bdscd.cost_id
         WHERE bdscd.cost_type IS NOT NULL
+        AND bdscd.cost_type = 'cost_mainBusinessIncome'
         <if test="null != params.startTime">
             AND bdsc.month >= #{params.startTime}
         </if>
@@ -274,12 +269,6 @@
             </foreach>
         </if>
 
-        <if test="null != dictValues and dictValues.size > 0">
-            AND  bdscd.cost_type IN
-            <foreach collection="dictValues" separator="," open="(" close=")" item="item">
-                #{item}
-            </foreach>
-        </if>
         <if test="params.userId!=null and params.userId.size>0">
             AND bdsc.charge_id IN
             <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
