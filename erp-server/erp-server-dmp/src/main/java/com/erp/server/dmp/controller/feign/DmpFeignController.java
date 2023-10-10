@@ -5,18 +5,15 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.controller.BaseController;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.dto.DmpShopInfoDTO;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
-import com.erp.model.dmp.dto.KingdeeDTO;
+import com.common.business.dto.DmpSyncMqDTO;
+import com.erp.model.dmp.dto.*;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.service.BiSettlementExchangeRateService;
-import com.erp.server.dmp.service.DmpShopInfoService;
-import com.erp.server.dmp.service.DmpSyncTaskService;
-import com.erp.server.dmp.service.PlatformService;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.erp.server.dmp.service.*;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -45,13 +42,20 @@ public class DmpFeignController extends BaseController {
     private KingdeeCommonService kingdeeCommonService;
 
     @Resource
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     @Resource
     private PlatformService platformService;
 
     @Autowired
     private BiSettlementExchangeRateService biSettlementExchangeRateService;
+
+    @Resource
+    private PlatformApiTaskService platformApiTaskService;
+
+
+    @Resource
+    private CfgAppClientService cfgAppClientService;
 
 
     @PostMapping("/getShopById")
@@ -96,7 +100,7 @@ public class DmpFeignController extends BaseController {
      */
     @PostMapping("/updateSyncInfo")
     public void updateSyncInfo(@RequestBody DmpSyncMqDTO.ParamDTO paramDTO) {
-         dmpSyncTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
+         dmpPullTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
     }
     
     
@@ -134,8 +138,20 @@ public class DmpFeignController extends BaseController {
     public List<String> getKingdeeSourceCode(@RequestBody Map<String,Object> conditon){
         List<String> result=new ArrayList<>();
 
-        result = dmpSyncTaskService.listKingdeeCode(conditon);
+        result = dmpPullTaskService.listKingdeeCode(conditon);
 
         return result;
+    }
+
+    /**
+     * 根据id获取到第三方应用信息
+     * @author yl
+     * @date 2023-08-28 16:22
+     * @param dto
+     * @return com.erp.model.dmp.entity.CfgAppClientEntity
+     */
+    @PostMapping("/getCfgAppClient")
+    public CfgAppClientEntity getCfgAppClient(@RequestBody CfgAppClientDTO.FindDTO dto){
+          return cfgAppClientService.getCfgAppClient(dto);
     }
 }

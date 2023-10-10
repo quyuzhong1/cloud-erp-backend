@@ -3,7 +3,7 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PushSyncStatusDTO;
+import com.erp.model.plm.dto.BomCombinationDTO;
 import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.plm.dto.ChangeInfoDTO;
 import com.erp.model.plm.dto.SearchPagingDTO;
@@ -38,5 +38,14 @@ public interface BomInfoMapper  extends BaseMapper<BomInfoEntity> {
     List<BomSkuPageDTO.ChildDTO> listBomSkuByBomIds(@Param("bomIds") List<String> bomIds);
 
     void updateSyncKingdeeStatus(@Param("params")PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    /**
+     * @description: 组合产品分页查询
+     * @author Will
+     * @date: 2023/8/16 10:23
+     * @param query
+     * @param params
+     * @return IPage<ListDTO>
+     */
+    IPage<BomCombinationDTO.ListDTO> combinationPaging(Page query, @Param("params") BomCombinationDTO.SearchParamDTO params);
 }
 

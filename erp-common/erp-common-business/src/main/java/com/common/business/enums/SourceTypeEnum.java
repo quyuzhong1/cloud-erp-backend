@@ -50,16 +50,21 @@ public enum SourceTypeEnum {
     SO_INFO("soInfo", "销售订单","so_info"),
     SO_CHANGE("soChange", "销售变更单","so_change"),
     CUSTOMER_INFO( "customerInfo", "客户表","customer_info"),
-    SO_B2C("soB2c", "B2C销售订单","so_b2c"),
+    SO_B2C( "soB2c", "B2C销售订单","so_b2c"),
+    CUSTOMER_B2C( "customerB2c", "B2C客户表","customer_b2c"),
+    SHOP( "shop", "店铺","shop_info"),
 
     //Kingdee
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单",""),
     SAL_OUTSTOCK("SAL_OUTSTOCK", "金蝶销售出库单",""),
     STK_TRANSFERDIRECT("STK_TransferDirect", "金蝶直接调拨单",""),
+    BD_RATE("BD_Rate", "汇率列表",""),
 
 
     // PLM
     PRODUCT_BOM_INFO("productBomInfo", "BOM管理","product_bom_info"),
+    PRODUCT_COMBINATION("productCombination", "组合产品",""),
+
     PRODUCT_DETAIL("productDetail", "产品管理","product_detail"),
     PROJECT_TASK("projectTask", "任务列表","project_task"),
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),

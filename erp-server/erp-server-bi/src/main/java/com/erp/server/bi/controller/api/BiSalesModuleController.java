@@ -2,12 +2,16 @@ package com.erp.server.bi.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
+import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.server.bi.service.SalesOrderService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -391,7 +395,6 @@ public class BiSalesModuleController extends BaseController {
 
     /**
      * 销售相关-一级模块-事业部销售额
-     *
      * @param
      * @return
      */
@@ -472,7 +475,7 @@ public class BiSalesModuleController extends BaseController {
             tableAlias = "o"
     )
     public ApiResult<List<ProductNewAndOldVO>> byPeopleNewAndOld(@RequestBody @Validated BiFilterDTO dto) {
-        List<ProductNewAndOldVO> result = salesOrderService.byPeopleNewAndOld(dto);
+        List<ProductNewAndOldVO> result=salesOrderService.byPeopleNewAndOld(dto);
         return success(result);
     }
 

@@ -26,7 +26,9 @@ import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.BiStateEnum;
 import com.erp.server.bi.mapper.DmpShopInfoMapper;
-import com.erp.server.bi.service.*;
+import com.erp.server.bi.service.DmpOrderInfoService;
+import com.erp.server.bi.service.DmpShopChangeLogService;
+import com.erp.server.bi.service.DmpShopInfoService;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -61,12 +63,6 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
-
-    @Resource
-    private DmpRefundInfoService dmpRefundInfoService;
-
-    @Resource
-    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
 
     @Resource
     private MQProducerService mQProducerService;

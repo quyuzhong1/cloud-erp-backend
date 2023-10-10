@@ -1,7 +1,7 @@
 package com.erp.server.plm.api.kingdee;
 
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.kingdee.bos.webapi.entity.OperatorResult;
 
 import java.util.ArrayList;

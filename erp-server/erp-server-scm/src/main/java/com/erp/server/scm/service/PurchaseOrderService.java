@@ -3,15 +3,13 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.ListStatusCountDTO;
-import com.erp.model.scm.dto.PurchaseChangeDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -365,4 +363,13 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return java.util.List<com.erp.model.scm.dto.PurchaseOrderDTO.PdaPurchaseOrder>
      **/
     List<PurchaseOrderDTO.PdaPurchaseOrder> pdaListAll(PurchaseOrderDTO.PdaPurchaseOrderParam dto);
+
+    /**
+     * 根据采购日期查询采购采购单
+     * @Author Luo_WG
+     * @Date 2023/9/13 18:21
+     * @param purchaseDateList
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
+     **/
+    List<SkuCostDTO> listPurchaseOrderByPurchaseDate(List<LocalDate> purchaseDateList);
 }

@@ -44,4 +44,16 @@ public class DictCountryFeignController {
         return list;
     }
 
+
+    /**
+     * 根据ids 获取到国家列表
+     * @param
+     * @return
+     */
+    @PostMapping("/listCountryByIds")
+    public List<DictCountryEntity> listCountryByIds(@RequestBody List<String> ids) {
+        List<DictCountryEntity>list = dictCountryService.listCountryByIds(ids);
+        return list;
+    }
+
 }

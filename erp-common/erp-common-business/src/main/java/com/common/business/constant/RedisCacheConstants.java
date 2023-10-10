@@ -39,4 +39,10 @@ public interface RedisCacheConstants {
      * pda用户叉掉消息通知的 key
      */
     String CLOSE_MESSAGE_NOTICE_KEY = "close_message_notice:";
+
+    /**
+     * 平台token
+     * platform-token:平台名称:店铺ID
+     */
+    String REDIS_PLATFORM_TOKEN = "platform-token:{}:{}";
 }

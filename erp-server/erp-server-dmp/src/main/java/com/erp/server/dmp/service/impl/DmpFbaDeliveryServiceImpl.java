@@ -10,14 +10,15 @@ import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.mapper.DmpFbaDeliveryMapper;
 import com.erp.server.dmp.service.DmpFbaDeliveryDetailService;
 import com.erp.server.dmp.service.DmpFbaDeliveryService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.dmp.service.DmpPullTaskService;
 import com.erp.server.dmp.service.DmpSyncTaskService;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -45,7 +46,7 @@ public class DmpFbaDeliveryServiceImpl extends SuperServiceImpl<DmpFbaDeliveryMa
     private DmpFbaDeliveryDetailService dmpFbaDeliveryDetailService;
 
     @Autowired
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     @Autowired
     private MQProducerService mqProducerService;
@@ -75,22 +76,22 @@ public class DmpFbaDeliveryServiceImpl extends SuperServiceImpl<DmpFbaDeliveryMa
         }
 
         //新增发送任务
-        DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
-        dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.MABANG.getDesc());
-        dmpSyncTaskEntity.setSourceType(SourceTypeEnum.MABANG_FBA_DELIVERY.getCode());
-        dmpSyncTaskEntity.setSourceId(fbaDeliveryEntity.getDeliveryId());
-        dmpSyncTaskEntity.setSourceCode(fbaDeliveryEntity.getDeliveryNo());
-        dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
-        dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
-        dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName());
+        DmpPullTaskEntity dmpPullTaskEntity = new DmpPullTaskEntity();
+        dmpPullTaskEntity.setSourcePlatformName(PlatformEnum.MABANG.getDesc());
+        dmpPullTaskEntity.setSourceType(SourceTypeEnum.MABANG_FBA_DELIVERY.getCode());
+        dmpPullTaskEntity.setSourceId(fbaDeliveryEntity.getDeliveryId());
+        dmpPullTaskEntity.setSourceCode(fbaDeliveryEntity.getDeliveryNo());
+        dmpPullTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
+        dmpPullTaskEntity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
+        dmpPullTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
+        dmpPullTaskEntity.setMqTag(RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName());
         String mqData = JSONObject.toJSONString(fbaDeliveryEntity);
-        dmpSyncTaskEntity.setMqData(mqData);
-        dmpSyncTaskService.save(dmpSyncTaskEntity);
+        dmpPullTaskEntity.setMqData(mqData);
+        dmpPullTaskService.save(dmpPullTaskEntity);
 
         if(PlatformEnum.MABANG.getDesc().equals(fbaDeliveryEntity.getPlatformSign())) {
             // 发送到ERP WMS系统，生成加工单
-            DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
+            DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpPullTaskEntity.getId(), mqData);
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName(),
                     dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {

@@ -1,7 +1,7 @@
 package com.erp.server.plm.api.kingdee;
 
 import com.alibaba.fastjson.JSONObject;
-import com.erp.server.dmp.utils.KingdeeUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.OperateParam;
 import com.kingdee.bos.webapi.entity.OperatorResult;
 import com.kingdee.bos.webapi.entity.QueryParam;

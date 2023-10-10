@@ -289,6 +289,45 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
+    public List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> listSkuInventory(InventoryQtyDTO.SkuInventoryStatusParamDTO dto) {
+        List<String> inventoryStatusList = dto.getInventoryStatusList();
+        inventoryStatusList.forEach(obj -> {
+            InventoryStatusEnum inventoryStatusEnum = InventoryStatusEnum.getByCode(obj);
+            ValidatorUtil.isTrue(Objects.nonNull(inventoryStatusEnum), () -> new ServiceException("库存状态错误"));
+        });
+        List<String> skuIds = dto.getSkuIdList();
+        // sku id去重
+        skuIds = skuIds.stream().distinct().collect(Collectors.toList());
+        List<String> warehouseIdList = dto.getWarehouseIdList();
+        List<String> warehouseLocationIdList = dto.getWarehouseLocationIdList();
+        if (CollectionUtils.isEmpty(skuIds) || CollectionUtils.isEmpty(warehouseIdList)) {
+            return Collections.emptyList();
+        }
+
+        Boolean isExist = CollectionUtils.isNotEmpty(warehouseLocationIdList);
+        LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(InventoryEntity::getWarehouseId, warehouseIdList);
+        queryWrapper.in(InventoryEntity::getDictInventoryStatus, inventoryStatusList);
+        if (isExist) {
+            queryWrapper.in(InventoryEntity::getWarehouseLocation, warehouseLocationIdList);
+        }
+        queryWrapper.in(InventoryEntity::getSkuId, skuIds);
+
+        List<InventoryEntity> inventoryEntities = this.list(queryWrapper);
+        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryList = Lists.newArrayList();
+        for (InventoryEntity item : inventoryEntities) {
+            InventoryQtyDTO.SkuInventoryStatusTotalDTO result = new InventoryQtyDTO.SkuInventoryStatusTotalDTO();
+            result.setInventoryTotal(item.getQty());
+            result.setInventoryStatus(item.getDictInventoryStatus());
+            result.setSkuId(item.getSkuId());
+            result.setWarehouseId(item.getWarehouseId());
+            result.setWarehouseLocationId(item.getWarehouseLocation());
+            skuInventoryList.add(result);
+        }
+        return skuInventoryList;
+    }
+
+    @Override
     public Integer getInventoryTotal(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
         InventoryEntity inventory = this.findInventoryIncLocation(orgId, warehouseId, skuId, warehouseLocationId, status);
         return Objects.isNull(inventory) ? 0 : inventory.getQty();

@@ -4,7 +4,7 @@ import cn.hutool.json.JSONObject;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;

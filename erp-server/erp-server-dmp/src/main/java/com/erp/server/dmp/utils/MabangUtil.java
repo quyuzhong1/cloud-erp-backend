@@ -68,7 +68,6 @@ public class MabangUtil {
      * @param transferInfo
      * @param transferDetailList
      * @param inOutType
-     * @param hashOperations
      * @return
      */
     public static MabangInOutStockDTO fillMabangInOutStock(String warehouseCode, String warehouseName, String employeeName,

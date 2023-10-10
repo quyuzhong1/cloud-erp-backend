@@ -2,11 +2,8 @@ package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.dto.inventory.*;
 import com.erp.server.wms.service.InventoryService;
-import com.erp.server.wms.service.InventoryTransCoreService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -63,4 +60,10 @@ public class InventoryFeignController extends BaseController {
     }
 
 
+
+    @PostMapping("/listSkuInventoryStatusByParam")
+    public List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> listSkuInventoryStatusByParam(@RequestBody @Valid InventoryQtyDTO.SkuInventoryStatusParamDTO dto) {
+        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> resultList = inventoryService.listSkuInventory(dto);
+        return resultList;
+    }
 }

@@ -279,6 +279,23 @@ public class WarehouseController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 仓库列表(树状)
+     */
+    @GetMapping("/listTree")
+    public ApiResult<List<WarehouseDTO.ListTreeDTO>> listTree() {
+        List<WarehouseDTO.ListTreeDTO> list = warehouseService.listTree();
+        return success(list);
+    }
+
+    /**
+     * 仓库列表(树状有参)
+     */
+    @PostMapping("/listTreeByParams")
+    public ApiResult<List<WarehouseDTO.ListTreeDTO>> listTreeByParams(@RequestBody @Valid WarehouseDTO.ListParamDTO dto) {
+        List<WarehouseDTO.ListTreeDTO> list = warehouseService.listTreeByParams(dto);
+        return success(list);
+    }
 
     /**
      * 仓库分页列表-无权限

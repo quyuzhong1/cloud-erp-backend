@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -85,5 +86,46 @@ public class ProductAccessoriesDTO implements Serializable {
      */
     private List<String> disableFieldList=new ArrayList<>();
 
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
 
+        /**
+         * 辅料skuId
+         */
+        private String skuId;
+
+        /**
+         * 辅料sku单号
+         */
+        private String skuNo;
+
+        /**
+         * 数量
+         */
+        private Integer quantity;
+
+        /**
+         * 辅料sku名称
+         */
+        private String skuName;
+
+        /**
+         * 包装辅料SKU编号 + 辅料名称
+         */
+        private String skuContent;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO {
+
+        /**
+         * skuid集合
+         */
+        @NotEmpty(message = "skuid集合")
+        private List<String> skuIdList;
+
+    }
 }

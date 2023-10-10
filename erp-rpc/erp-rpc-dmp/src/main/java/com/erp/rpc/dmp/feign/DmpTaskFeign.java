@@ -2,17 +2,20 @@ package com.erp.rpc.dmp.feign;
 
 
 import cn.hutool.json.JSONObject;
+import com.common.business.dto.DmpSyncMqDTO;
+import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
+import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.validation.Valid;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -79,4 +82,38 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/getKingdeeSourceCode")
     List<String> getKingdeeSourceCode(@RequestBody Map<String,Object> conditon);
+
+
+    /**
+     * 根据id获取到第三方应用信息
+     * @author yl
+     * @date 2023-08-28 16:22
+     * @param dto
+     * @return com.erp.model.dmp.entity.CfgAppClientEntity
+     */
+    @PostMapping("feign/getCfgAppClient")
+    CfgAppClientEntity getCfgAppClient(@RequestBody CfgAppClientDTO.FindDTO dto);
+
+    /**
+     * 创建平台任务
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/dmp/createPlatformTask")
+    Boolean createPlatformTask(@RequestBody @Valid PlatformTaskDTO.AddDTO dto);
+    /**
+     * 删除平台任务
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/dmp/removePlatformTask")
+    Boolean removePlatformTask(@RequestBody @Valid PlatformTaskDTO.AddDTO dto);
+
+    /**
+     * 禁用启用
+     * @param disabledDTO
+     * @return
+     */
+    @PostMapping("feign/dmp/disabledPlatformTask")
+    Boolean disabledPlatformTask(@RequestBody @Valid PlatformTaskDTO.DisabledDTO disabledDTO);
 }

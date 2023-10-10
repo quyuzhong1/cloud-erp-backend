@@ -1,11 +1,15 @@
 package com.erp.model.dmp.dto;
 
 import lombok.Data;
+import com.baomidou.mybatisplus.annotation.TableField;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Data
+@NoArgsConstructor
 public class SplitSkuDTO implements Serializable {
     /**
      * 来源平台

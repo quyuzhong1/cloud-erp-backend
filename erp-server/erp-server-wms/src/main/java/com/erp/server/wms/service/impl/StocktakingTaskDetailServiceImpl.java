@@ -177,11 +177,11 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateBatchDetail(List<StocktakingTaskDetailDTO.UpdateDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_99090);
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"");
         }
         List<String> idList = list.stream().map(StocktakingTaskDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(idList)) {
-            throw new ServiceException(ApiError.ERROR_99090);
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"");
         }
         List<StocktakingTaskDetailEntity> taskDetailList = this.listByIds(idList);
         List<StocktakingTaskDetailEntity> updateTaskDetailList = new ArrayList<>(taskDetailList.size());

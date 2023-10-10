@@ -5,7 +5,7 @@ import com.common.business.enums.SyncKingdeeOmsStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.server.dmp.entity.DmpWarehouseInboundRecordEntity;
 import com.erp.server.dmp.service.DmpWarehouseInboundRecordService;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;

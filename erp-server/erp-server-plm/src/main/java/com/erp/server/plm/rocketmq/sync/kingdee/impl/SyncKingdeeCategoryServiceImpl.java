@@ -3,6 +3,7 @@ package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;

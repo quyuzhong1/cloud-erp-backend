@@ -1,8 +1,11 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.BasicLabelDTO;
 import com.erp.model.plm.vo.LabelBasicVO;
 import com.erp.model.plm.vo.LabelLevelTreeVO;
@@ -25,6 +28,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
+@LogSystemModule("基础标签")
 @RequestMapping("/basicLabel")
 public class BasicLabelController extends BaseController {
 
@@ -66,6 +70,7 @@ public class BasicLabelController extends BaseController {
      * @date: 2023-09-13
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "新增基础标签")
     public ApiResult<String> add(@RequestBody @Validated BasicLabelDTO.AddDTO dto) {
         return success(basicLabelService.add(dto));
     }
@@ -79,6 +84,7 @@ public class BasicLabelController extends BaseController {
      * @date: 2023-09-13
      */
     @PostMapping("/batchAdd")
+    @LogAction(value = LogActionEnum.INSERT, desc = "批量新增基础标签")
     public ApiResult<Boolean> batchAdd(@RequestBody @Validated List<BasicLabelDTO.AddDTO> dtos) {
         return success(basicLabelService.batchAdd(dtos));
     }
@@ -92,6 +98,7 @@ public class BasicLabelController extends BaseController {
      * @date: 2023-09-13
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新基础标签")
     public ApiResult update(@RequestBody @Validated BasicLabelDTO.UpdateDTO dto) {
         basicLabelService.update(dto);
         return success();
@@ -101,6 +108,7 @@ public class BasicLabelController extends BaseController {
      * 删除基础标签
      */
     @PostMapping("/remove")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除基础标签")
     public ApiResult delete(@RequestBody @Validated BasicLabelDTO.DeleteDTO dto) {
         basicLabelService.removeBasicLabelById(dto.getId());
         return success();

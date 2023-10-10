@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Lambda
@@ -71,6 +72,26 @@ public class DictCountryDTO implements Serializable {
          * 子区域名称
          */
         private String subregionName;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CascadeDTO{
+
+        private String dictAreaCode;
+
+        private List<ChildrenDTO> children;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ChildrenDTO{
+
+        private String dictCountryCode;
+
+        private String dictCountryName;
 
     }
 }

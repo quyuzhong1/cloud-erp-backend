@@ -6,13 +6,13 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.constant.UrlContant;
+import com.common.business.dto.ParamHeaderVO;
 import com.common.core.security.HmacSHA256Utils;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.date.EnumTimePattern;
-import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.mabang.*;
-import com.erp.model.dmp.vo.ParamHeaderVO;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -79,7 +79,7 @@ public class MabangApiUtils {
             ParamHeaderVO paramVo = getParamMap(method, 0, params);
             JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
             if (!Objects.equals(responseMap.getInteger("code"), 200)) {
-                log.error("调用url={} param={} {}马帮销售订单数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
+                log.error("调用url={} param={} {}马帮销售订单数据失败 responseMap={}", UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
                 throw new RuntimeException(StrUtil.format("调用url={} param={} {}马帮销售订单数据失败 responseMap={}",
                         UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap)));
             }

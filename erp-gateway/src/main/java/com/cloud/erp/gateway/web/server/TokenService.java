@@ -2,10 +2,10 @@ package com.cloud.erp.gateway.web.server;
 
 import com.alibaba.fastjson.JSONObject;
 import com.cloud.erp.gateway.config.JwtProperties;
-import com.common.core.utils.IdUtils;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.service.impl.RedisService;
 import com.common.business.vo.LoginUser;
+import com.common.core.utils.IdUtils;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.utils.JwtUtils;
 import lombok.extern.slf4j.Slf4j;

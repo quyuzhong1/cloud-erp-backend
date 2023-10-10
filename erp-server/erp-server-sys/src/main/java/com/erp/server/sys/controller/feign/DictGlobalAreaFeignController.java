@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 区域
@@ -27,5 +28,14 @@ public class DictGlobalAreaFeignController {
     @PostMapping("/getById")
     public DictGlobalAreaEntity getById(@RequestBody String id) {
         return dictGlobalAreaService.getById(id);
+    }
+
+
+    /**
+     * 根据ids查询区域
+     */
+    @PostMapping("/listGlobalAreaByIds")
+    public List<DictGlobalAreaEntity> listGlobalAreaByIds(@RequestBody List<String> ids) {
+        return dictGlobalAreaService.listGlobalAreaByIds(ids);
     }
 }

@@ -308,7 +308,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         return purchaseReturnOrderEntity.getId();
     }
 
-
     /**
      * 修改
      *
@@ -515,9 +514,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             detailView.setHasStockInQty(stockInQty);
             BigDecimal deductAmountAmount;
             if (ReturnModeEnum.DEDUCTION.getCode().equals(purchaseReturnOrderEntity.getReturnMode())) {
-                deductAmountAmount = MathUtil.multiply(purchaseReturnOrderDetailEntity.getReturnPrice(),purchaseReturnOrderDetailEntity.getDeductAmountQty());
+                deductAmountAmount = MathUtil.multiply(detailView.getReturnPrice(),purchaseReturnOrderDetailEntity.getDeductAmountQty());
             } else {
-                deductAmountAmount = MathUtil.multiply(purchaseReturnOrderDetailEntity.getReturnPrice(),purchaseReturnOrderDetailEntity.getReturnQty());
+                deductAmountAmount = MathUtil.multiply(detailView.getReturnPrice(),purchaseReturnOrderDetailEntity.getReturnQty());
             }
             detailView.setTotalPrice(deductAmountAmount);
             //获取sku信息
@@ -1504,15 +1503,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<String> unApproveIds = Lists.newArrayList();
         for (PurchaseReturnOrderEntity purchaseReturnOrder : purchaseReturnOrderEntityList) {
             String sourceType = purchaseReturnOrder.getSourceType();
-            if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) {
-                // 库存退货
+            if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) { // 库存退货
                 unApproveIds.add(purchaseReturnOrder.getId());
             } else { // 质检退货
-                String returnMode = purchaseReturnOrder.getReturnMode();
-                // 退货方式
+                String returnMode = purchaseReturnOrder.getReturnMode(); // 退货方式
                 /*
-                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())) {
-                // 退货补货
+                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())) { // 退货补货
                     unApproveIds.add(purchaseReturnOrder.getId());
                 }
                  */

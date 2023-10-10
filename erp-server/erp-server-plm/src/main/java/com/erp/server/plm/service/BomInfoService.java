@@ -26,7 +26,7 @@ import java.util.List;
 public interface BomInfoService  extends IService<BomInfoEntity> {
 
 
-    Boolean insert(AddBomDTO dto);
+    String insert(AddBomDTO dto);
 
     PagingVO<List<BomPagingVO>> paging(PagingDTO<SearchPagingDTO> dto);
 

@@ -5,6 +5,10 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -30,7 +34,12 @@ import com.erp.model.oms.vo.CustomerInfoVO;
 import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.SkuDTO;
 import com.erp.model.plm.vo.ProductRefLabelVO;
+import com.erp.model.plm.dto.BasicCategoryDTO;
+import com.erp.model.plm.dto.SkuDTO;
+import com.erp.model.plm.entity.BasicCategoryEntity;
+import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -42,6 +51,7 @@ import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -62,6 +72,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * 销售维度 模块服务
@@ -380,6 +391,70 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 BigDecimal perCustomerTransaction = sales.divide(new BigDecimal(orderCount), 2, BigDecimal.ROUND_HALF_UP);
                 item.setPerCustomerTransaction(perCustomerTransaction);
             }
+            //增加标签
+            if (Objects.nonNull(labelMap)) {
+                item.setLabels(labelMap.get(item.getSkuNo()));
+            }
+
+        }
+        return new PagingVO<>(pageData);
+    }
+
+
+    /**
+     * 导出sku 销售额
+     *
+     * @param params
+     * @param response
+     * @return
+     */
+    @Override
+    public Boolean exportSkuSalesExcel(SkuSalesDTO.SearchSkuDTO params, HttpServletResponse response) {
+        //获取到结算汇率
+        String settleRate = getSettleRate(params.getSettleMethod());
+        LocalDateTime paramsEndTime = params.getEndTime();
+        params.setEndTime(paramsEndTime, 1);
+
+        List<SkuSalesDTO.PagingSalesInfoDTO> resultList = baseMapper.listSkuSalesExcel(params, settleRate);
+        List<String> skuNoList = resultList.stream().map(SkuSalesDTO.PagingSalesInfoDTO::getSkuNo).collect(Collectors.toList());
+
+        LocalDateTime nowTime = LocalDateTime.now();
+        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 29);
+        params.setStartTime(beforeThirtyDays);
+        params.setEndTime(nowTime);
+        String findTime = "delivery_time";
+        if (params.getTimeType() != null && params.getTimeType() == 0) {
+            findTime = "platform_create_time";
+        }
+        //查询进三十天信息
+        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(params, settleRate, findTime);
+
+
+        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
+        params.setStartTime(beforeSevenDays);
+        params.setEndTime(nowTime);
+        //查询进七天信息
+        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(params, settleRate, findTime);
+
+
+        Integer nowYear = LocalDate.now().getYear();
+        //销售信息
+        List<SkuDTO.SalesDTO> skuList = plmTaskFeign.listSkuSalesBySkuNos(skuNoList);
+        for (SkuSalesDTO.PagingSalesInfoDTO item : resultList) {
+            SkuDTO.SalesDTO skuInfo = skuList.stream().filter(s -> s.getSkuNo().equals(item.getSkuNo())).
+                    findFirst().orElse(null);
+            if (Objects.nonNull(skuInfo)) {
+                //公司首单日期
+                LocalDate firstOrderDate = skuInfo.getFirstOrderDate();
+                if (firstOrderDate != null) {
+                    Integer year = firstOrderDate.getYear();
+                    if (nowYear.equals(year)) {
+                        item.setIsNewProductName("是");
+                    }
+                }
+                item.setFirstOrderDate(skuInfo.getFirstOrderDate());
+                item.setSaleStateName(skuInfo.getSaleStateName());
+            }
 
         }
 
@@ -653,7 +728,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         dto.setEndTime(nowTime);
         //查询进三十天信息
         List<SalesBaseVO> lastThirtyList = baseMapper.getShopLastDays(dto, settleRate, findTime);
-        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
+        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 7);
 
         dto.setStartTime(beforeSevenDays);
         dto.setEndTime(nowTime);

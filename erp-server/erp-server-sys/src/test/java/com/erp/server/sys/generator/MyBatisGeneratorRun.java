@@ -32,7 +32,7 @@ public class MyBatisGeneratorRun {
     // 当前环境是否Windows
     private static final boolean IS_WINDOWS = System.getProperty("os.name").trim().toLowerCase().contains("windows");
     // 数据库链接配置
-    static String MODEL = "wms";
+    static String MODEL = "oms";
     private static String DB_URL = StrUtil.format("jdbc:postgresql://172.16.100.12:5432/erp-{}?useSSL=false&serverTimezone=GMT%2B8", MODEL);
     private static final String USER_NAME = "postgres";
     private static final String PASSWORD = "admin@viji";
@@ -56,7 +56,7 @@ public class MyBatisGeneratorRun {
         String prefix = "";
 
         // 注意：会直接生成到项目路径，请注意防止覆盖
-        String[] tables = new String[]{"stocktaking_task","stocktaking_task_detail","stocktaking_task_user","stocktaking_profit_loss","stocktaking_profit_loss_detail"};
+        String[] tables = new String[]{"refund_order"};
         autoGenerator(prefix, tables);
     }
 

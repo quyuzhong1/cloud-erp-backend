@@ -14,13 +14,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
-import com.erp.model.wms.dto.TransferInDTO;
-import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,10 +27,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * 盘点管理-盘点任务
@@ -117,7 +112,7 @@ public class StocktakingTaskController extends BaseController {
             }
             resultDTOS.add(submit);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -207,7 +202,7 @@ public class StocktakingTaskController extends BaseController {
             }
             resultDTOS.add(submit);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -242,7 +237,7 @@ public class StocktakingTaskController extends BaseController {
             }
             resultDTOS.add(submit);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -272,7 +267,7 @@ public class StocktakingTaskController extends BaseController {
             }
             resultDTOS.add(submit);
         }
-        return success(resultDTOS);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

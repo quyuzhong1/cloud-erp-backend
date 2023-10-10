@@ -1,8 +1,13 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.common.business.service.SuperService;
+
+import java.util.List;
 
 /**
  * <p>
@@ -22,7 +27,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param dto
      * @return java.lang.String
      */
-    String add(ShopDTO.AddDTO dto);
+    Boolean add(ShopDTO.AddDTO dto);
 
     /**
      * 修改店铺
@@ -34,12 +39,108 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
     String updateShop(ShopDTO.UpdateDTO dto);
 
     
+
+
     /**
-     * 初始同步店铺信息
+     * 店铺分页
+     * @param dto
+     * @return
+     */
+    PagingVO<ShopDTO.PagingViewDTO> paging(PagingDTO<ShopDTO.PagingParamDTO> dto);
+
+    /**
+     * 批量启用或者禁用店铺
+     * @param shop 店铺信息
+     * @param disabled 禁用状态
+     * @return
+     */
+    BatchResultDTO updateStatus(ShopInfoEntity shop, Boolean disabled);
+
+    /**
+     * 获取详情
      * @author yl
-     * @date 2023-07-06 12:23
-     * @param
+     * @date 2023-08-22 16:13
+     * @param id
+     * @return com.erp.model.oms.dto.ShopDTO.ViewDTO
+     */
+    ShopDTO.ViewDTO view(String id);
+
+    /**
+     * 更新店铺信息
+     * @param shopInfoEntity
+     * @return
+     */
+    Boolean updateShopInfoById(ShopInfoEntity shopInfoEntity);
+
+
+
+
+    /**
+     * 店铺授权
+     *
+     * @param code
+     * @param hmac
+     * @param host
+     * @param shop
+     * @param timestamp
+     * @return
+     */
+    Boolean shopAuthorize(String code, String hmac, String host, String shop, String timestamp);
+
+    /**
+     * 取消授权
+     * @author yl
+     * @date 2023-08-29 16:41
+     * @param id
      * @return java.lang.Boolean
      */
-    Boolean initialSync();
+    Boolean cancelAuthorize(String id);
+
+
+
+    /**
+     * 店铺账号下拉
+     * @author yl
+     * @date 2023-08-30 16:43
+     * @param
+     * @return java.util.List<java.lang.String>
+     */
+    List<String> accountList();
+
+    
+    /**
+     * 获取到安装的url
+     * @author yl
+     * @date 2023-09-06 16:34
+     * @param
+     * @return java.lang.String
+     */
+    String getShopifyInstallUrl(String id);
+
+    
+    /**
+     * 获取到ShopifyAuthorizeUrl 授权的url
+     * @author yl
+     * @date 2023-09-06 16:54
+     * @param hmac
+     * @param host
+     * @param shop
+     * @param timestamp
+     * @return java.lang.String
+     */
+    String getShopifyAuthorizeUrl(String hmac, String host, String shop, String timestamp);
+    /**
+     * @description: 获取店铺列表
+     * @author Will
+     * @date: 2023/9/7 16:31
+     * @return List<ListTreeDTO>
+     */
+    List<ShopDTO.ListTreeDTO> listTree();
+
+    /**
+     * 检查店铺是否授权
+     * @param id
+     * @return
+     */
+    Boolean checkShopIsAuthorize(String id);
 }

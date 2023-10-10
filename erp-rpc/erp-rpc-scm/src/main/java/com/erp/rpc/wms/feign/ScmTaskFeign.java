@@ -4,6 +4,7 @@ import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -11,6 +12,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -355,5 +357,15 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/purchaseOrder/addPurchaseOrder")
     String addPurchaseOrder(@RequestBody PurchaseOrderDTO.AddDTO addDTO);
+
+    /**
+     * 根据采购日期查询采购采购单
+     * @Author Luo_WG
+     * @Date 2023/9/13 18:21
+     * @param purchaseDateList
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
+     **/
+    @PostMapping("feign/purchaseOrder/listPurchaseOrderByPurchaseDate")
+    List<SkuCostDTO> listPurchaseOrderByPurchaseDate(@RequestBody List<LocalDate> purchaseDateList);
 
 }

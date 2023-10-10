@@ -3,5 +3,37 @@
 <mapper namespace="com.erp.server.bi.mapper.BiSettlementExchangeRateMapper">
 
 
+    <select id="paging" resultType="com.erp.model.bi.dto.BiSettlementExchangeRateDTO$ListDTO">
+        select
+            bser.id,
+            bser.source_currency_code as sourceCurrencyCode,
+            bser.target_currency_code as targetCurrencyCode,
+            bser.exchange_rate as exchangeRate,
+            bser.indirect_exchange_rate as indirectExchangeRate,
+            bser.settlement_date_begin as settlementDateBegin,
+            bser.settlement_date_end as settlementDateEnd,
+            bser.disabled as disabled,
+            bser.approve_status as approveStatus
+        from bi_settlement_exchange_rate bser
+        <where>
+            <if test="params.currencyList != null and params.currencyList.size > 0">
+                bser.source_currency_code in
+                <foreach collection="params.currencyList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by bser.settlement_date_begin desc
+    </select>
 
+    <select id="findByCurrencyAndDate" resultType="com.erp.model.bi.entity.BiSettlementExchangeRateEntity">
+        select id, settlement_date_begin, settlement_date_end, exchange_rate, source_currency_code, target_currency_code, update_time
+        from bi_settlement_exchange_rate
+        <where>
+            source_currency_code = #{sourceCurrencyCode}
+            and target_currency_code = 'CNY'
+            and settlement_date_begin <![CDATA[<=]]> #{date}
+            and settlement_date_end >= #{date}
+        </where>
+    </select>
 </mapper>

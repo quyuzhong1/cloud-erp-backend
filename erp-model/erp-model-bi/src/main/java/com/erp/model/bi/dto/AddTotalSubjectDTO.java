@@ -46,10 +46,11 @@ public class AddTotalSubjectDTO implements Serializable {
      * 分享标示
      * personal 私人
      * share 共享
+     * role 角色
      */
     @NotBlank(message = "分享标示不能为空")
-    @StateEnumValue(strValues = {"personal","share"},message = "分享标识有误")
-    private String shareFlag="personal";
+    @StateEnumValue(strValues = {"personal","share","role"},message = "分享标识有误")
+    private String shareFlag;
 
 
     /**
@@ -61,6 +62,7 @@ public class AddTotalSubjectDTO implements Serializable {
     /**
      * 分享的用户集合
      */
+    @Deprecated
     private List<String> shareUserIdList;
 
 
@@ -74,4 +76,9 @@ public class AddTotalSubjectDTO implements Serializable {
      */
     @Valid
     private List<LayoutDTO> layoutList;
+
+    /**
+     * 分享的标识ID集合
+     */
+    private List<String> shareFlagIdList;
 }

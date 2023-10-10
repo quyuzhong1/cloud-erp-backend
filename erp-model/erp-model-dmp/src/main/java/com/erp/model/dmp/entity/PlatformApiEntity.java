@@ -1,30 +1,26 @@
 package com.erp.model.dmp.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
-import java.io.Serializable;
+import java.util.Map;
 
 /**
- * 
+ * 平台api
  * @TableName platform_api
  */
 @TableName(value ="platform_api")
 @Data
-public class PlatformApiEntity implements Serializable {
-    /**
-     * 主键id
-     */
-    @TableId(value = "id")
-    private Integer id;
+public class PlatformApiEntity extends BaseEntity<PlatformApiEntity> {
 
     /**
      * 平台表id
      */
-    @TableField(value = "platform_id")
-    private Integer platformId;
+    @TableField(value = "dict_platform")
+    private String dictPlatform;
 
     /**
      * 平台api
@@ -39,10 +35,40 @@ public class PlatformApiEntity implements Serializable {
     private String apiName;
 
     /**
-     * 是否生成了任务 1：已生成 0 ：未生成
+     * api共用参数
      */
-    @TableField(value = "is_finished_task")
-    private Integer isFinishedTask;
+    @TableField(value = "api_common_param", typeHandler = JacksonTypeHandler.class)
+    private Map<String, Object> apiCommonParam;
+
+    /**
+     * 单据类型
+     */
+    @TableField(value = "bill_type")
+    private String billType;
+
+    /**
+     * 操作类型
+     */
+    @TableField(value = "operate_type")
+    private String operateType;
+
+    /**
+     * 禁用状态：false：启用 true：禁用
+     */
+    @TableField(value = "disabled")
+    private Boolean disabled;
+
+    /**
+     * 间隔时间
+     */
+    @TableField(value = "interval_time")
+    private Integer intervalTime;
+
+    /**
+     * 同步操作
+     */
+    @TableField(value = "sync_operate")
+    private String syncOperate;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

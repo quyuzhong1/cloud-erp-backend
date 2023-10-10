@@ -1,18 +1,24 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.ProductAccessoriesDTO;
 import com.erp.model.plm.entity.ProductAccessoriesEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.mapper.ProductAccessoriesMapper;
 import com.erp.server.plm.service.ProductAccessoriesService;
+import com.erp.server.plm.service.ProductDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 产品包装/辅料信息(ProductAccessories)表服务实现类
@@ -23,7 +29,8 @@ import java.util.List;
 @Service
 public class ProductAccessoriesServiceImpl extends ServiceImpl<ProductAccessoriesMapper, ProductAccessoriesEntity> implements ProductAccessoriesService {
 
-
+    @Resource
+    private ProductDetailService productDetailService;
     /**
      * 批量保存或者修改包装辅料的信息
      *
@@ -70,6 +77,39 @@ public class ProductAccessoriesServiceImpl extends ServiceImpl<ProductAccessorie
         LambdaQueryWrapper<ProductAccessoriesEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductAccessoriesEntity::getId, ids);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<ProductAccessoriesDTO.ListDTO> listAccessories(ProductAccessoriesDTO.ParamDTO dto) {
+        List<ProductAccessoriesEntity> list = lambdaQuery().in(ProductAccessoriesEntity::getParentSkuId, dto.getSkuIdList()).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<ProductAccessoriesEntity> accessoriesList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getAccessoriesSkuId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(accessoriesList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<String> skuIdList = accessoriesList.stream().map(ProductAccessoriesEntity::getAccessoriesSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = productDetailService.getSkuBySkuIds(skuIdList);
+
+        List<ProductAccessoriesDTO.ListDTO> resultList = new ArrayList<>();
+        for (ProductAccessoriesEntity productAccessoriesEntity : accessoriesList) {
+            ProductAccessoriesDTO.ListDTO listDTO = new ProductAccessoriesDTO.ListDTO();
+            listDTO.setSkuId(productAccessoriesEntity.getAccessoriesSkuId());
+            listDTO.setQuantity(productAccessoriesEntity.getQuantity());
+            if (CollectionUtils.isNotEmpty(skuList)) {
+                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(listDTO.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(skuVO)) {
+                    listDTO.setSkuNo(skuVO.getSkuNo());
+                    listDTO.setSkuName(skuVO.getSkuName());
+                    listDTO.setSkuContent(skuVO.getSkuNo().concat("【").concat(skuVO.getSkuName()).concat("】"));
+                }
+            }
+            if (StringUtils.isNotBlank(listDTO.getSkuId())) {
+                resultList.add(listDTO);
+            }
+        }
+        return resultList;
     }
 
 

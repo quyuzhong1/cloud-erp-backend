@@ -24,21 +24,21 @@ public enum SyncOperateEnum {
     ;
     private String code;
 
-    private String name;
+    private String kingdeeParam;
 
     private String desc;
 
-    SyncOperateEnum(String code, String name, String desc) {
+    SyncOperateEnum(String code, String kingdeeParam, String desc) {
         this.code = code;
-        this.name = name;
+        this.kingdeeParam = kingdeeParam;
         this.desc = desc;
     }
 
     public String getCode() {
         return code;
     }
-    public String getName() {
-        return name;
+    public String getKingdeeParam() {
+        return kingdeeParam;
     }
     public String getDesc() {
         return desc;
@@ -48,7 +48,7 @@ public enum SyncOperateEnum {
         SyncOperateEnum[] enums = values();
         for (SyncOperateEnum operateEnum : enums) {
             if (operateEnum.getCode().equals(code)) {
-                return operateEnum.getName();
+                return operateEnum.getKingdeeParam();
             }
         }
         return null;

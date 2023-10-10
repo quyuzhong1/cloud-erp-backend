@@ -46,6 +46,7 @@ import com.erp.model.wms.dto.inventory.InstockForcastDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryFinishDeliveryDetailDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
@@ -157,11 +158,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     private DocNoGenHelper docNoGenHelper;
 
     @Autowired
-    private SubcontractOrderService subcontractOrderService;
-
+    private WarehouseLocationFeign warehouseLocationFeign;
 
     @Autowired
-    private WarehouseLocationFeign warehouseLocationFeign;
+    private SubcontractOrderService subcontractOrderService;
+
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
@@ -2163,6 +2164,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         list.sort(Comparator.comparing(PurchaseOrderDTO.PdaPurchaseOrder::getCode).reversed());
         list.forEach(req -> req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus())));
+        return list;
+    }
+
+    @Override
+    public List<SkuCostDTO> listPurchaseOrderByPurchaseDate(List<LocalDate> purchaseDateList) {
+        List<SkuCostDTO> list = baseMapper.listPurchaseOrderByPurchaseDate(purchaseDateList);
         return list;
     }
 }

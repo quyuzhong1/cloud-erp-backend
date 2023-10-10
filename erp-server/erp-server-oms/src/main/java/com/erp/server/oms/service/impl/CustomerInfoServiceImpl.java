@@ -33,6 +33,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.vo.CustomerInfoVO;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCountryEntity;

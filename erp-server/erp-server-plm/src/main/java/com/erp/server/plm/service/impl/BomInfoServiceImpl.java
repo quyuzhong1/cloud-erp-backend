@@ -114,7 +114,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     @Transactional
-    public Boolean insert(AddBomDTO dto) {
+    public String insert(AddBomDTO dto) {
         //sku信息
         List<BomSkuDTO> bomSkuList = dto.getSkuList();
         if (CollectionUtils.isEmpty(bomSkuList)) {
@@ -130,6 +130,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         bom.setBomVersion(dto.getVersion());
         bom.setId(bomId);
         bom.setSerialNumber(serialNumber);
+        bom.setSourceType(dto.getSourceType());
         String submitAudit = BomConstant.SUBMIT_AUDIT;
         boolean isSubmitAudit = submitAudit.equals(dto.getSubmitType());
         if (isSubmitAudit) {
@@ -153,7 +154,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             String operateContent = String.format(BomOperateContent.ADD, serialNumber);
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.ADD.getType(), operateContent);
         }
-        return saveResult;
+        return bomId;
     }
 
 

@@ -120,6 +120,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Autowired
     private WorkflowFeign workflowFeign;
 
+    @Autowired
+    private SupplierService supplierService;
+
     /**
      * 保存供应商信息
      *

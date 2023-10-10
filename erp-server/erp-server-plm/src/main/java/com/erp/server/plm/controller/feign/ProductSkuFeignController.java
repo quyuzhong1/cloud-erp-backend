@@ -95,6 +95,7 @@ public class ProductSkuFeignController {
 
     /**
      * 通过子类id或名称获取到父级的分类
+     *
      * @author Jim
      */
     @PostMapping("/parentCategory")

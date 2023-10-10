@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 字典管理
+ * 国家管理
  *
  * @author Lambda
  * @since 2023-03-21
@@ -51,8 +51,20 @@ public class DictCountryController extends BaseController {
                 .collect(Collectors.toList());
         return success(resultList);
     }
+
     @GetMapping("/country")
     public void addCountry(@RequestParam("country") String country) {
         dictCountryService.initRegionList(country);
+    }
+
+    /**
+     * 根据类型获取到区域国家列表列表
+     *
+     * @param type
+     */
+    @GetMapping("/areaCountryList")
+    public ApiResult<List<DictCountryDTO.CascadeDTO>> areaCountryListByType(@RequestParam("type") String type) {
+        List<DictCountryDTO.CascadeDTO> list = dictCountryService.areaCountryListByType(type);
+        return success(list);
     }
 }

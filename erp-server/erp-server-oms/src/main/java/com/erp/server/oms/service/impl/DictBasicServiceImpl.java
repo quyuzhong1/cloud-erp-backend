@@ -100,6 +100,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     private List<DictBasicEntity> listByKey(String key) {
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DictBasicEntity::getType, key);
+        queryWrapper.eq(DictBasicEntity::getStatus,Boolean.TRUE);
         return this.list(queryWrapper);
     }
 }

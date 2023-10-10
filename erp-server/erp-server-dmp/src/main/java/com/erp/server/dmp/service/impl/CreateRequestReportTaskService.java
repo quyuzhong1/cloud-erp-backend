@@ -1,7 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.erp.model.dmp.dto.JobTaskDTO;
+import com.common.business.dto.JobTaskDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -24,20 +24,8 @@ public class CreateRequestReportTaskService {
      **/
     public void addTaskToQueue(List<JobTaskDTO> list) {
         for (JobTaskDTO tbTask : list) {
-            JobTaskDTO jobTask = new JobTaskDTO();
-            jobTask.setId(tbTask.getId());
-            jobTask.setPlatformId(tbTask.getPlatformId());
-            jobTask.setApiId(tbTask.getApiId());
-            jobTask.setIntervalTime(tbTask.getIntervalTime());
-            jobTask.setLastTime(tbTask.getLastTime());
-            jobTask.setNextTime(tbTask.getNextTime());
-            jobTask.setState(tbTask.getState());
-            jobTask.setApiCode(tbTask.getApiCode());
-            jobTask.setApiName(tbTask.getApiName());
-            jobTask.setTaskName(tbTask.getTaskName());
-            jobTask.setPlatformName(tbTask.getPlatformName());
-            jobTask.setRetryCount(tbTask.getRetryCount());
-            redisTemplate.boundListOps(tbTask.getTaskName()).leftPush(JSONObject.toJSONString(jobTask));
+            JobTaskDTO jobTask = new JobTaskDTO(tbTask);
+            redisTemplate.boundListOps(tbTask.getDictPlatform()).leftPush(JSONObject.toJSONString(jobTask));
         }
     }
 }

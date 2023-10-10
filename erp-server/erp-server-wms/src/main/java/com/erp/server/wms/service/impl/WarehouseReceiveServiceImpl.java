@@ -622,7 +622,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<QcInfoDTO.ReceiveToQcDTO> newProductList = qcList.stream().filter(q -> q.getIsFirstMassProduct()).collect(Collectors.toList());
         for (QcInfoDTO.ReceiveToQcDTO newItem : newProductList) {
             //为空所有的加，等级为空用销售方式，销售方式为空用等级
-            if ((StringUtils.isBlank(newProductGrade) && StringUtils.isBlank(newSaleMethod))) {
+            if ((StringUtils.isNotBlank(newProductGrade) && StringUtils.isNotBlank(newSaleMethod))) {
                 QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
                 BeanMapper.copy(newItem, newQc);
                 newQc.setQcType(newProduct);
@@ -666,7 +666,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //旧品 并且符合等级的
         List<QcInfoDTO.ReceiveToQcDTO> stockInProductList = qcList.stream().filter(q -> !q.getIsFirstMassProduct()).collect(Collectors.toList());
         for (QcInfoDTO.ReceiveToQcDTO stockInItem : stockInProductList) {
-            if ((StringUtils.isBlank(stockInProductGrade) && StringUtils.isBlank(stockInSaleMethod))) {
+            if ((StringUtils.isNotBlank(stockInProductGrade) && StringUtils.isNotBlank(stockInSaleMethod))) {
                 QcInfoDTO.ReceiveToQcDTO stockInQc = new QcInfoDTO.ReceiveToQcDTO();
                 BeanMapper.copy(stockInItem, stockInQc);
                 stockInQc.setQcType(stockIn);

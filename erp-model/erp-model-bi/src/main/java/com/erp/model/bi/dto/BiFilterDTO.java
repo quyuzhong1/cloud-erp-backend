@@ -65,7 +65,7 @@ public class BiFilterDTO extends SortDTO {
      * 0 CNY实时  1 CNY结算  2原币种
      * 对应枚举 SettleMethodEnum
      */
-    //  @NotNull(message = "结算方式不能为空")
+  //  @NotNull(message = "结算方式不能为空")
     private Integer settleMethod;
 
     /**
@@ -133,7 +133,7 @@ public class BiFilterDTO extends SortDTO {
      * 默认当月开始时间
      */
     public LocalDateTime getStartTime() {
-        if (null == this.startTime) {
+        if (null == this.startTime){
             return LocalDateTime.now(ZoneId.systemDefault()).with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN);
         }
         return startTime;
@@ -143,14 +143,13 @@ public class BiFilterDTO extends SortDTO {
      * 默认当月结束时间
      */
     public LocalDateTime getEndTime() {
-        if (null == this.endTime) {
+        if (null == this.endTime){
             return LocalDateTime.now(ZoneId.systemDefault())
                     .with(TemporalAdjusters.lastDayOfMonth())
                     .with(LocalTime.MIN);
         }
         return LocalDateTime.of(endTime.toLocalDate(), LocalTime.MIN);
     }
-
     public void setEndTime(LocalDateTime endTime, Integer day) {
         this.endTime = endTime.plusDays(day);
     }

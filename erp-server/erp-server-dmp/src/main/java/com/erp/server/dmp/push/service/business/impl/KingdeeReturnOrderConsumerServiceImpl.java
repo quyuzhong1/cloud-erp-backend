@@ -14,9 +14,10 @@ import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.business.KingdeeReturnOrderConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
-import com.erp.server.dmp.utils.KingdeeUtils;
+
 import com.kingdee.bos.webapi.entity.SaveParam;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -133,6 +134,60 @@ public class KingdeeReturnOrderConsumerServiceImpl implements KingdeeReturnOrder
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             return;
         }
+        //执行操作
+        operate (platformEntity,map,apiUtils,model,json,type);
+
+    }
+
+    /**
+     * 采购订单操作
+     */
+    public void operate (PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject model, JSONObject json, Integer type) {
+        //查找到数据后的审核状态
+        String documentStatus = (String)model.get("DocumentStatus");
+        //操作项
+        String operate = (String) map.get("operate");
+        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+            operateInvalid(apiUtils, platformEntity, map, type);
+        }
+        //反审核
+        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+            //审核中或已审核则要先反审
+            if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+                //反审核
+                operateDisapprove(apiUtils, platformEntity, map, type);
+            }
+        }
+        //审核
+        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+            operateApprove(apiUtils, platformEntity, map, model, json, type);
+        }
+    }
+
+
+
+    public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //业务编码
+        String code = (String) map.get("code");
+        //操作项
+        String operate = (String) map.get("operate");
+        //作废
+        kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
+        return;
+    }
+
+    public void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        String syncKingdeeId = (String) map.get("syncKingdeeId");
+        if (StringUtils.isBlank(syncKingdeeId)) {
+            return;
+        }
+        //反审核
+        kingdeeCommonService.unAudit(platformEntity, map, apiUtils, syncKingdeeId, type);
+        return;
+    }
+
+    public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map, JSONObject model, JSONObject json, Integer type) {
+        SaveParam param = new SaveParam(json);
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
         String id = String.valueOf(model.get("Id")) ;
