@@ -1571,9 +1571,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             return;
         }
 
-        List<String> receiveIds = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<String> receiveDetailIds = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getId).collect(Collectors.toList());
         //质检信息
-        List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceIds(receiveIds);
+        List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceDetailIds(receiveDetailIds);
         if (CollectionUtils.isEmpty(qcInfoList)) {
             return;
         }
