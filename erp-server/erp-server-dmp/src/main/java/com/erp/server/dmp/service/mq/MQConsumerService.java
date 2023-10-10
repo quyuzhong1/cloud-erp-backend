@@ -262,11 +262,10 @@ public class MQConsumerService {
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
             selectorExpression = "sync_dmp_product_info_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-plm_product_info_consumer")
-    public class ConsumerPlmProductInfo implements RocketMQListener<Object> {
+    public class ConsumerPlmProductInfo implements RocketMQListener<List<ProductInfoEntity>> {
         @Override
-        public void onMessage(Object ext) {
-            return;
-//            productInfoService.saveOrUpdateProductInfo(ext);
+        public void onMessage(List<ProductInfoEntity> ext) {
+            productInfoService.saveOrUpdateProductInfo(ext);
         }
     }
 
@@ -274,11 +273,10 @@ public class MQConsumerService {
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
             selectorExpression = "sync_dmp_product_sku_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-plm_product_detail_consumer")
-    public class ConsumerPlmProductDetail implements RocketMQListener<Object> {
+    public class ConsumerPlmProductDetail implements RocketMQListener<List<ProductDetailEntity>> {
         @Override
-        public void onMessage(Object ext) {
-            return;
-//            productDetailService.saveOrUpdateProductDetail(ext);
+        public void onMessage(List<ProductDetailEntity> ext) {
+            productDetailService.saveOrUpdateProductDetail(ext);
         }
     }
 
