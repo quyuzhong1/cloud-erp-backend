@@ -93,7 +93,7 @@ public class GyyPullServiceTest {
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
 //        jobTaskDTO.setPlatformApiId("7");
         jobTaskDTO.setApiName("管易云查询订单列表");
-        jobTaskDTO.setId("32");
+//        jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.of(2023, 9, 25, 0, 0));
         jobTaskDTO.setNextTime(LocalDateTime.of(2023, 9, 26, 0, 0));
