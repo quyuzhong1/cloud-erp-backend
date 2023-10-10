@@ -736,6 +736,11 @@ public class SupplierDTO implements Serializable {
         private String payCurrency;
 
         /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
          * 付款条件
          */
         private String paymentCondition;
