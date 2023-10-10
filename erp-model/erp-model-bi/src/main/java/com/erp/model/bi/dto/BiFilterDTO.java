@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
 
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -65,7 +66,7 @@ public class BiFilterDTO extends SortDTO {
      * 0 CNY实时  1 CNY结算  2原币种
      * 对应枚举 SettleMethodEnum
      */
-    //  @NotNull(message = "结算方式不能为空")
+    @NotNull(message = "结算方式不能为空")
     private Integer settleMethod;
 
     /**
