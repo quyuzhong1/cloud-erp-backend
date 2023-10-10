@@ -4924,7 +4924,7 @@
             </if>
         </where>
         GROUP BY name
-        ORDER BY monthSales
+        ORDER BY monthSales DESC
     </select>
 
     <!--用户销售额排行榜-->
@@ -5026,6 +5026,6 @@
             </if>
         </where>
         GROUP BY name
-        ORDER BY monthSales
+        ORDER BY monthSales DESC
     </select>
 </mapper>
