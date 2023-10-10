@@ -300,6 +300,12 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     private BigDecimal discountAmount;
 
     /**
+     * 总价税合计本位币
+     */
+    @TableField(value = "all_amount_lc")
+    private BigDecimal allAmountLc;
+
+    /**
      * 客户订单号
      */
     @TableField("customer_order_no")

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Objects;
 
 public enum SysTypeEnum {
+    ALL("ALL","全部"),
     PC("PC","PC端"),
     PDA("PDA","PDA"),
     ;
