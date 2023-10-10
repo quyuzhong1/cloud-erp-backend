@@ -9,6 +9,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.bi.dto.DictDTO;
 import com.erp.model.bi.entity.BiDictEntity;
+import com.erp.model.bi.enums.SaleContryTypeEnum;
 import com.erp.server.bi.mapper.BiDictMapper;
 import com.erp.server.bi.service.BiDictService;
 import io.seata.common.util.StringUtils;
@@ -74,13 +75,20 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
         DictDTO entity = dictEntities.stream().filter(biDictEntity -> StringUtils.isNotBlank(biDictEntity.getType())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_EMPTY_DICT_TYPE));
         //校验字典是否数据库已存在
         Set<String> values = dictEntities.stream().filter(v -> StringUtils.isBlank(v.getId())).map(DictDTO::getValue).collect(Collectors.toSet());
-        if (CollectionUtils.isNotEmpty(values)){
+        if (CollectionUtils.isNotEmpty(values)) {
             List<Object> valueObjs = getByNames(values, entity.getType());
             if (CollectionUtils.isNotEmpty(valueObjs)) {
                 throw new ServiceException(ApiError.ERROR_EXIST_DICT_VALUE, valueObjs.toArray());
             }
         }
         List<BiDictEntity> entities = BeanMapperUtils.copyList(BiDictEntity.class, dictEntities);
+        //补充或更新字典排序
+        int sort = 1;
+        for (BiDictEntity dict : entities) {
+            dict.setOrderIndex(sort);
+            dict.setTypeName(SaleContryTypeEnum.getNameByCode(dict.getType()));
+            sort += 1;
+        }
         return this.saveOrUpdateBatch(entities, entities.size());
     }
 
@@ -120,7 +128,7 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
      */
     @Override
     public boolean deleteById(String id) {
-        return true;
+        return this.removeById(id);
     }
 
     @Override
@@ -154,7 +162,7 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
     public List<BiDictEntity> listEntityByType(String type) {
         LambdaQueryWrapper<BiDictEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiDictEntity::getType, type);
-        queryWrapper.orderByAsc(BiDictEntity::getId);
+        queryWrapper.orderByAsc(BiDictEntity::getOrderIndex);
         return this.list(queryWrapper);
     }
 
@@ -193,7 +201,7 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
     @Override
     public List<Map<String, Object>> listValueByType(String type) {
         QueryWrapper<BiDictEntity> queryWrapper = new QueryWrapper<>();
-        queryWrapper.select("value AS code","name AS value");
+        queryWrapper.select("value AS code", "name AS value");
         queryWrapper.eq("type", type);
         queryWrapper.orderByAsc("order_index");
         return this.listMaps(queryWrapper);
