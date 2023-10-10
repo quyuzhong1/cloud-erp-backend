@@ -455,6 +455,8 @@ public class SoOutstockDTO implements Serializable {
          */
         private String sellerId;
 
+
+
         /**
          * 客户订单号
          */
@@ -953,6 +955,8 @@ public class SoOutstockDTO implements Serializable {
          */
         @NotNull(message = "出库日期不能为空")
         private LocalDate billDate;
+
+
 
         /**
          * 客户订单号
