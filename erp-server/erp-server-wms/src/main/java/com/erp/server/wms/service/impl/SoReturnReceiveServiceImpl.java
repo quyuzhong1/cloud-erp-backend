@@ -904,6 +904,48 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         return lambdaQuery().in(SoReturnReceiveEntity::getId, ids).list();
     }
 
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pdaDisApprove(List<String> ids) {
+        List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //已审核支持反审核
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_99003);
+        }
+        //TODO 待加审核流程
+
+        //下推质检单不能反审核
+        List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(qcBySourceId)) {
+            throw new ServiceException(ApiError.ERROR_99042);
+        }
+
+        //下推退货入库单不能反审核
+        List<SoReturnInstockEntity> soReturnInstockEntityList = soReturnInstockService.listBySourceIds(ids).stream().filter(req -> req.getInvalidStatus().equals(InvalidStatusEnum.NOT_VOIDED.getStatus())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(soReturnInstockEntityList)) {
+            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_PUSHED);
+        }
+
+        //修改状态为待提交
+        lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .in(SoReturnReceiveEntity::getId, ids)
+                .update();
+
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("反审核了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "反审核操作");
+
+        return Boolean.TRUE;
+    }
+
     @Override
     public PagingVO<SoReturnReceiveDTO.PdaPagingView> pdaPaging(PagingDTO<SoReturnReceiveDTO.PdaPagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
