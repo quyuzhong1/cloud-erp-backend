@@ -159,11 +159,11 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     private void fillCustomerCode(DmpOrderInfoEntity orderInfoEntity) {
         //如果客户编码不存在则进行获取
-        if (StringUtils.isNotEmpty(orderInfoEntity.getCustomerName()) && StringUtils.isEmpty(orderInfoEntity.getCustomerCode())) {
+        if (StringUtils.isNotEmpty(orderInfoEntity.getShopName()) && Objects.equals(orderInfoEntity.getShopNo(), "B2B")) {
             try {
-                CustomerInfoEntity customerInfo = customerFeign.getCustomerByName(orderInfoEntity.getCustomerName());
+                CustomerInfoEntity customerInfo = customerFeign.getCustomerByName(orderInfoEntity.getShopName());
                 if (Objects.nonNull(customerInfo)) {
-                    orderInfoEntity.setCustomerCode(customerInfo.getCode());
+                    orderInfoEntity.setShopNo(customerInfo.getCode());
                 }
             }catch (Exception e){
                 log.error("获取客户编码接口异常记录：{}", e);
