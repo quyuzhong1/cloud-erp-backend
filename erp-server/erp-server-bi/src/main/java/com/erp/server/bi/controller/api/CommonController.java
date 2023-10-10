@@ -1,17 +1,16 @@
 package com.erp.server.bi.controller.api;
 
+import com.common.core.utils.EnumCacheUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 公共接口
@@ -48,4 +47,14 @@ public class CommonController extends BaseController {
     }
 
 
+    /**
+     * 获取枚举下拉框，供前端调用，不用每个枚举类都提供一个单独的接口（每个服务都有专属自己的）
+     * @param type
+     * @return
+     */
+    @GetMapping("enumDropDown")
+    public ApiResult<List<Map<String,Object>>> enumSelect(@RequestParam(value = "type")String type) {
+        Map<String,List<Map<String,Object>>> enumMaps = EnumCacheUtils.getInstance().getData();
+        return success(enumMaps.get(type));
+    }
 }
