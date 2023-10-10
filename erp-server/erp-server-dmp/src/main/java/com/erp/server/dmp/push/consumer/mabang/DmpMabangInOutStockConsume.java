@@ -5,12 +5,12 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 import com.erp.server.dmp.push.service.mabang.MabangInOutStockService;
-import com.erp.server.dmp.service.DmpSyncTaskService;
+import com.erp.server.dmp.service.DmpPullTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -30,7 +30,7 @@ import java.util.Objects;
 public class DmpMabangInOutStockConsume implements RocketMQListener<DmpSyncMqDTO>  {
 
     @Autowired
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     @Autowired
     private MabangInOutStockService mabangInOutStockService;
@@ -44,7 +44,7 @@ public class DmpMabangInOutStockConsume implements RocketMQListener<DmpSyncMqDTO
             log.warn("监听到DMP出入库，erp单号【{}】，同步内容：{}", erpSourceCode, JSONObject.toJSONString(dtoDmpSyncMqDTO));
 
             String syncTaskId = dtoDmpSyncMqDTO.getDmpSyncTaskId();
-            DmpSyncTaskEntity dmpSyncTaskEntity = dmpSyncTaskService.getById(syncTaskId);
+            DmpPullTaskEntity dmpSyncTaskEntity = dmpPullTaskService.getById(syncTaskId);
             if(Objects.isNull(dmpSyncTaskEntity)) {
                 log.warn("未查询到同步到马帮数据，同步任务数据id:{}，待同步内容：{}", syncTaskId, dtoDmpSyncMqDTO.getMqData());
                 mabangInOutStockService.sendNoTaskNotice(syncTaskId, erpSourceCode);

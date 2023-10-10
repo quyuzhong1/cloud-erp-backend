@@ -1,4 +1,4 @@
-package com.erp.model.dmp.dto;
+package com.common.business.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,12 +13,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DmpSyncMqDTO implements Serializable {
-
-    /**
-     * dmp同步任务id
-     */
-    private String dmpSyncTaskId;
+public class DmpSyncMqDTO extends DmpSyncTaskIdDTO  implements Serializable {
 
     /**
      * dmp同步任务mq消息内容实体
@@ -26,8 +21,13 @@ public class DmpSyncMqDTO implements Serializable {
     private String mqData;
 
 
+    public DmpSyncMqDTO(String id, String mqData) {
+        super(id);
+        this.mqData = mqData;
+    }
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class ParamDTO {
 
         /**
