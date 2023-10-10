@@ -652,7 +652,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
 
         }
         if (CollectionUtils.isNotEmpty(existCategory)) {
-            String existCategoryName = existCategory.stream().collect(Collectors.joining(","));
+            String existCategoryName = existCategory.stream().distinct().collect(Collectors.joining(","));
             throw new ServiceException(ApiError.YEAR_METRICS_EXIST, existCategoryName);
         }
 
