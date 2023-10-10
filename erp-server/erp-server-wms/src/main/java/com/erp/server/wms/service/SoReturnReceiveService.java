@@ -218,4 +218,14 @@ public interface SoReturnReceiveService extends SuperService<SoReturnReceiveEnti
      * @return java.util.List<com.erp.model.wms.dto.SoReturnReceiveDTO.PdaSoReceive>
      **/
     List<SoReturnReceiveDTO.PdaSoReceive> pdaList(SoReturnReceiveDTO.PdaSoReceiveParam dto);
+
+    /**
+     * 批量反审核
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
+     * @param ids ids
+     * @return java.lang.Boolean
+     **/
+    Boolean pdaDisApprove(List<String> ids);
+
 }
