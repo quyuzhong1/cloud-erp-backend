@@ -244,7 +244,8 @@
         pd.qty,
         pd.warehouse_location,
         sdn.seller_id,
-        sdn.seller_name
+        sdn.seller_name,
+        sdnd.remark
       FROM so_delivery_notice  sdn
       INNER JOIN so_delivery_notice_detail sdnd
       ON  sdn.id=sdnd.main_id AND  sdnd.is_deleted=FALSE

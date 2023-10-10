@@ -1133,6 +1133,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
+        List<String> soIdList = list.stream().map(SoInfoDTO.GenerateDeliveryView::getSoId).collect(Collectors.toList());
+        List<SoInfoEntity> soInfoList = soInfoFeign.listSoInfoByIds(soIdList);
+        if (CollectionUtils.isEmpty(soInfoList)) {
+            log.info("销售订单不存在，soIdList = {}",soInfoList);
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+
         Map<String, List<SoInfoDTO.GenerateDeliveryView>> map = list.stream().collect(Collectors.groupingBy(SoInfoDTO.GenerateDeliveryView::getSoId));
         List<SoOutstockDTO.AddDTO> addList = new ArrayList<>(map.size());
         String sourceType = SourceTypeEnum.SO_INFO.getCode();
@@ -1140,6 +1147,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //来源id
             String soId = entry.getKey();
             List<SoInfoDTO.GenerateDeliveryView> generateInfoList = entry.getValue();
+
+            SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> obj.getId().equals(soId)).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soInfoEntity)) {
+                log.info("销售订单不存在，soId = {}",soId);
+                throw new ServiceException(ApiError.ERROR_92016);
+            }
             SoInfoDTO.GenerateDeliveryView generateInfo = generateInfoList.stream().filter(g -> StringUtils.isNotBlank(g.getSoId())).findFirst().orElse(null);
             if (generateInfo != null) {
                 SoOutstockDTO.AddDTO add = new SoOutstockDTO.AddDTO();
@@ -1149,6 +1162,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 add.setSourceType(sourceType);
                 add.setPlanDeliveryDate(generateInfo.getPlanDeliveryDate());
                 add.setWarehouseId(generateInfo.getWarehouseId());
+                add.setCustomerOrderNo(soInfoEntity.getCustomerOrderNo());
                 List<SoOutstockDetailDTO.AddDTO> detailList = new ArrayList<>(generateInfoList.size());
                 for (SoInfoDTO.GenerateDeliveryView item : generateInfoList) {
                     SoOutstockDetailDTO.AddDTO detail = new SoOutstockDetailDTO.AddDTO();
