@@ -938,6 +938,11 @@ public class PurchaseReturnOrderDTO {
         private String warehouseLocation;
 
         /**
+         * 币种
+         */
+        private String currency;
+
+        /**
          * 币种符号
          */
         private String currencySymbol;

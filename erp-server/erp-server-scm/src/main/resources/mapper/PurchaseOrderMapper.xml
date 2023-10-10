@@ -484,6 +484,7 @@
         po.delivery_warehouse_name AS deliveryWarehouseName,
         po.delivery_warehouse_id AS deliveryWarehouseId,
         pod.sku_id, pod.sku_no,pod.product_name,
+        pod.currency,
         pod.currency_symbol,pos.supplier_name,
         pos.supplier_id,
         pod.tax_price
