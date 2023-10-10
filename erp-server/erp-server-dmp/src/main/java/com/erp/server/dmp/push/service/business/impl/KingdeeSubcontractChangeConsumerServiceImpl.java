@@ -44,10 +44,8 @@ public class KingdeeSubcontractChangeConsumerServiceImpl implements KingdeeSubco
     public void executeConsumer(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.SUBCONTRACT_CHAGE.getCode();
-        //业务id
-        String businessId = String.valueOf(map.get("id"));
-        //业务编码
-        String code = (String) map.get("code");
+        //操作项
+        String operate = (String) map.get("operate");
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
@@ -55,6 +53,21 @@ public class KingdeeSubcontractChangeConsumerServiceImpl implements KingdeeSubco
         }
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUB_REQCHANGE.getCode());
+
+        /**
+         * 审核
+         */
+        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+            operateApprove(apiUtils,platformEntity, map,type);
+        }
+    }
+
+    /**
+     * 审核
+     */
+    public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //业务id
+        String businessId = String.valueOf(map.get("id"));
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
@@ -83,19 +96,6 @@ public class KingdeeSubcontractChangeConsumerServiceImpl implements KingdeeSubco
         String documentStatus = (String) model.get("DocumentStatus");
         String id = String.valueOf(model.get("Id"));
         Boolean flag = Boolean.FALSE;
-
-        //操作项
-        String operate = (String) map.get("operate");
-        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-            //作废
-            kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
-            return;
-        }
-        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            //反审核
-            kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
-            return;
-        }
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
@@ -110,6 +110,5 @@ public class KingdeeSubcontractChangeConsumerServiceImpl implements KingdeeSubco
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
         }
-
     }
 }

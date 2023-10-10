@@ -1,5 +1,6 @@
 package com.erp.server.oms.kingdee.impl;
 
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.oms.kingdee.SyncKingdeeService;
 import com.erp.server.oms.service.*;
@@ -45,29 +46,28 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //金蝶id
         String syncKingdeeId = (String)params.get("kingdeeId");
 
+        PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(businessId,"",syncKingdeeId, status);
+
+
         //客户列表
         if (ApiModuleTypeEnum.CUSTOMER_INFO.getCode().toString().equals(code)) {
-            customerInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            customerInfoService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
         //客户分组
         if (ApiModuleTypeEnum.CUSTOMER_GROUP.getCode().toString().equals(code)) {
-            customerGroupService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
-        }
-        //销售退货
-        if (ApiModuleTypeEnum.SO_RETURN.getCode().toString().equals(code)) {
-            soReturnService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            customerGroupService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
         //销售订单
         if (ApiModuleTypeEnum.SO_INFO.getCode().toString().equals(code)) {
-            soInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            soInfoService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
         //销售变更
         if (ApiModuleTypeEnum.SO_CHANGE.getCode().toString().equals(code)) {
-            soChangeService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            soChangeService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
         //客户联系人
         if (ApiModuleTypeEnum.CUSTOMER_CONTACT.getCode().toString().equals(code)) {
-            customerContactService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            customerContactService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
     }
 }

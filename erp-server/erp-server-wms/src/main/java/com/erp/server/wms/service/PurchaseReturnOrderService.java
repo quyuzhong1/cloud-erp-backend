@@ -1,9 +1,6 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
@@ -184,12 +181,9 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * 修改金蝶同步状态
      * @Author Luo_WG
      * @Date 2023/4/24 15:29
-     * @param id
-     * @param syncKingdeeStatus
-     * @param syncKingdeeId
      * @return java.lang.Boolean
      **/
-    Boolean updateSyncKingdeeStatus(String id ,String syncKingdeeStatus,String syncKingdeeId, String syncOperate);
+    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 
     
     /**

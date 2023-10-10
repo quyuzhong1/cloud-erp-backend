@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -21,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -189,13 +189,8 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
-        return this.lambdaUpdate()
-                .eq(CustomerContactEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerContactEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerContactEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId), CustomerContactEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), CustomerContactEntity::getSyncOperate, syncOperate)
-                .update();
+    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
+        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
+        return Boolean.TRUE;
     }
 }

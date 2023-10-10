@@ -1,9 +1,6 @@
 package com.erp.server.oms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CustomerDTO;
@@ -253,15 +250,13 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
     /**
      * 修改金蝶同步信息
      *
-     * @param id
-     * @param syncKingdeeStatus
-     * @param syncKingdeeId
-     * @param syncOperate
+     * @Author Luo_WG
+     * @Date 2023/5/25 10:43
      * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/5/25 10:43
      **/
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate);
+    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 
 
     /**

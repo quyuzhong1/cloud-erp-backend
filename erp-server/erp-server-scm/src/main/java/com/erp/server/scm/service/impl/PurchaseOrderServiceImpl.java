@@ -377,6 +377,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98009);
         }
 
+        //采购订单删除
+        list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+
         log.info("采购申请单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //删除供应商数据
         purchaseOrderSupplierService.deleteByPurchaseOrderIds(ids);
@@ -1113,14 +1116,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate) {
-        return this.lambdaUpdate()
-                .in(PurchaseOrderEntity::getId, ids)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchaseOrderEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchaseOrderEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId), PurchaseOrderEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), PurchaseOrderEntity::getSyncOperate,syncOperate)
-                .update();
+    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
+        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
+        return Boolean.TRUE;
     }
 
     /**

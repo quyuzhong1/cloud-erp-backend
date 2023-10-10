@@ -3,6 +3,7 @@ package com.erp.server.oms.kingdee.impl;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -103,7 +104,8 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             return;
         }
         //更新同步状态为待同步
-        soChangeService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
+        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.TO_BE_SYNC.getCode());
+        soChangeService.updateSyncKingdeeStatus(kingdeeDTO);
 
         //填充数据
         fillDb(entity, soInfo.getSyncKingdeeId(), soInfo.getCode());
@@ -248,7 +250,8 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_CHANGE_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return soChangeService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(), "", entity.getSyncOperate());
+                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.IN_SYNC.getCode());
+                return soChangeService.updateSyncKingdeeStatus(syncKingdeeDTO);
             }
             return Boolean.TRUE;
         });

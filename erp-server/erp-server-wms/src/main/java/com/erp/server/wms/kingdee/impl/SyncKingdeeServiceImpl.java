@@ -3,13 +3,13 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.wms.kingdee.SyncKingdeeService;
 import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -68,25 +68,27 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //明细数据
         Object details = params.get("details");
 
+        PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(businessId,"",syncKingdeeId, status);
+
         //仓库
         if (ApiModuleTypeEnum.WAREHOUSE_INFO.getCode().toString().equals(code)) {
-            warehouseService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+            warehouseService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
         //调拨申请单
         if (ApiModuleTypeEnum.TRANSFER_INFO.getCode().toString().equals(code)) {
-            transferInfoService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId,null);
+            transferInfoService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
         //其他入库单
         if (ApiModuleTypeEnum.OTHER_INSTOCK.getCode().toString().equals(code)) {
-            otherInstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+            otherInstockService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
         //其他出库单
         if (ApiModuleTypeEnum.OTHER_OUTSTOCK.getCode().toString().equals(code)) {
-            otherOutstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+            otherOutstockService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
         //采购退货单
         if (ApiModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode().toString().equals(code)) {
-            purchaseReturnOrderService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+            purchaseReturnOrderService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
         //采购入库单
         if (ApiModuleTypeEnum.PURCHASE_STOCK_IN.getCode().toString().equals(code)) {
@@ -95,28 +97,28 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
                 poInstockDetailService.updateKingdeeDetailId(list);
                 return;
             }
-            poInstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+            poInstockService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
         //销售出库单
         if (ApiModuleTypeEnum.SO_OUTSTOCK.getCode().toString().equals(code)) {
-            soOutstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+            soOutstockService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
         //销售退货入库单
         if (ApiModuleTypeEnum.SO_RETURN.getCode().toString().equals(code)) {
-            soReturnInstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            soReturnInstockService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
         //加工单
         if (ApiModuleTypeEnum.MACHINE_INFO.getCode().toString().equals(code)) {
-            machineInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            machineInfoService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
 
         //盘盈单
         if (ApiModuleTypeEnum.STOCKTAKING_PROFIT.getCode().toString().equals(code)) {
-            stocktakingProfitLossService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            stocktakingProfitLossService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
         //盘亏单
         if (ApiModuleTypeEnum.STOCKTAKING_LOSS.getCode().toString().equals(code)) {
-            stocktakingProfitLossService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            stocktakingProfitLossService.updateSyncKingdeeStatus(syncKingdeeDTO);
         }
     }
 }

@@ -88,6 +88,7 @@ public class PdaVersionServiceImpl extends SuperServiceImpl<PdaVersionMapper, Pd
             map.put("version", dto.getPdaVersion());
             map.put("remark", dto.getRemark());
             messageEntity.setDataJson(map);
+            messageEntity.setApplication(dto.getType());
             messageService.save(messageEntity);
             List<MessageUserReadEntity> readEntityList = new ArrayList<>();
             for (FindUserDTO findUserDTO : allUserList) {

@@ -3,6 +3,7 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
@@ -93,7 +94,7 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
      * @date: 2023/3/9 10:04
      * @return Boolean
      */
-    Boolean updateSyncKingdeeStatus(String id ,String syncKingdeeStatus,String syncKingdeeId);
+    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
     /**
      * @description: 分页查询显示组合SKU列表
      * @author Will

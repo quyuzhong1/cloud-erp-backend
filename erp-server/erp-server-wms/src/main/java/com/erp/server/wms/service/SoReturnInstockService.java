@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -195,7 +196,7 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @param operate
      * @return Boolean
      **/
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String operate);
+    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 
     /**
      * 根据主键删除

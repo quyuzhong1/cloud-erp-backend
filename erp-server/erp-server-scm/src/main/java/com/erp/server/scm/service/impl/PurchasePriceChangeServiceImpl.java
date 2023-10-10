@@ -12,6 +12,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -49,7 +50,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -724,14 +724,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
-        return this.lambdaUpdate()
-                .in(PurchasePriceChangeEntity::getId, ids)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchasePriceChangeEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchasePriceChangeEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId), PurchasePriceChangeEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), PurchasePriceChangeEntity::getSyncOperate, syncOperate)
-                .update();
+    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
+        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
+        return Boolean.TRUE;
     }
 
     @Override
@@ -742,7 +737,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         purchasePriceChangeDetailService.updateDetailRemark(ids,remark);
         return Boolean.TRUE;
     }
-
     /**
      * 修改状态
      *

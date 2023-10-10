@@ -7,10 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
@@ -27,7 +24,9 @@ import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.StocktakingProfitLossDetailEntity;
+import com.erp.model.wms.entity.StocktakingProfitLossEntity;
+import com.erp.model.wms.entity.StocktakingTaskUserEntity;
 import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -391,24 +390,15 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     /**
      * 更改金蝶同步状态
      *
-     * @param id
-     * @param syncKingdeeStatus
-     * @param syncKingdeeId
-     * @param syncOperate
      * @return void
      * @author yl
      * @date 2023-08-14 17:47
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
-        return this.lambdaUpdate()
-                .eq(StocktakingProfitLossEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), StocktakingProfitLossEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), StocktakingProfitLossEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId), StocktakingProfitLossEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), StocktakingProfitLossEntity::getSyncOperate, syncOperate)
-                .update();
+    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
+        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
+        return Boolean.TRUE;
     }
 
     /**

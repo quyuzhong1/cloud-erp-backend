@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.utils.MathUtil;
@@ -85,7 +86,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         Map<String, Object> resultMap = new HashMap<>();
 
         //更新同步状态为待同步
-        customerInfoService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.TO_BE_SYNC.getCode());
+        customerInfoService.updateSyncKingdeeStatus(kingdeeDTO);
 
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -247,7 +249,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
                 //审核通过发送金蝶
                 contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
                 //mq发送成更新业务表状态及时间
-                return customerInfoService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(), "", operate);
+                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.IN_SYNC.getCode());
+                return customerInfoService.updateSyncKingdeeStatus(syncKingdeeDTO);
             }
             return Boolean.TRUE;
         });

@@ -756,7 +756,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (occupyCount > 0) {
             throw new ServiceException(ApiError.ERROR_92018);
         }
-
+        //推送金蝶
+        list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
 
         //删除客户
         Boolean result = this.removeByIds(ids);
@@ -1017,14 +1018,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
-        return this.lambdaUpdate()
-                .eq(CustomerInfoEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerInfoEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId), CustomerInfoEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), CustomerInfoEntity::getSyncOperate, syncOperate)
-                .update();
+    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
+        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
+        return Boolean.TRUE;
     }
 
 

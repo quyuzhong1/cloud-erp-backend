@@ -11,10 +11,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -66,7 +63,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -483,6 +479,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         purchasePriceService.checkIsRefSupplier(ids);
         //检查采购订单是否有关联到供应商id  如果有就不能删除
         purchaseOrderSupplierService.checkIsRefSupplier(ids);
+        //删除同步金蝶
+        supplierList.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+
         //删除供应商
         Boolean result = this.removeByIds(ids);
         if (result) {
@@ -1029,14 +1028,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
-        return this.lambdaUpdate()
-                .in(SupplierEntity::getId, ids)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SupplierEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SupplierEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId), SupplierEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), SupplierEntity::getSyncOperate, syncOperate)
-                .update();
+    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
+        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
+        return Boolean.TRUE;
     }
 
 

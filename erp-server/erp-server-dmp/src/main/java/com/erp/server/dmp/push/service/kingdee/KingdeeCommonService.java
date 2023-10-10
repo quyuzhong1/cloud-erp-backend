@@ -124,6 +124,17 @@ public interface KingdeeCommonService {
      * @date: 2023/3/30 9:46
      */
     Boolean audit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type);
+    /**
+     * @description: 审核（判断状态）
+     * @author Will
+     * @date: 2023/9/25 15:25
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @return Boolean
+     */
+    Boolean handleUnAudit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, Integer type);
 
     /**
      * 反审核
@@ -131,7 +142,6 @@ public interface KingdeeCommonService {
      * @param platformEntity
      * @param map
      * @param apiUtils
-     * @param id
      * @return String
      * @author Will
      * @date: 2023/3/3 14:07
@@ -200,6 +210,18 @@ public interface KingdeeCommonService {
      */
 
     Boolean checkAndExcuteOperation(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number, String operate);
+
+    /**
+     * @description: 删除（状态判断）
+     * @author Will
+     * @date: 2023/9/25 15:07
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @param number
+     */
+    void handleDelete (KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number);
 
     /**
      * @param apiUtils

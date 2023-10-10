@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.OptChangeTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
@@ -75,7 +76,8 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
 
 
         //更新同步状态为待同步
-        subcontractChangeService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        PushSyncStatusDTO.KingdeeDTO kingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.TO_BE_SYNC.getCode());
+        subcontractChangeService.updateSyncKingdeeStatus(kingdeeDTO);
 
         //如果上游单据未发送成功则无需发送
         SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
@@ -219,7 +221,8 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SUBCONTRACT_CHANGE_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return subcontractChangeService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncStatusEnum.IN_SYNC.getCode(),"",operate);
+                PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(entity.getId(),operate,"", SyncStatusEnum.IN_SYNC.getCode());
+                return subcontractChangeService.updateSyncKingdeeStatus(syncKingdeeDTO);
             }
             return Boolean.TRUE;
         });

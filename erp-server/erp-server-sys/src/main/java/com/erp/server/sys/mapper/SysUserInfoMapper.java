@@ -4,9 +4,9 @@ package com.erp.server.sys.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -69,4 +69,12 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
      * @return java.util.List<com.erp.model.sys.entity.SysUserInfoEntity>
      **/
     List<SysDepartmentTreeDTO> listSonDeptAll(@Param("deptName") String deptName);
+
+    /**
+     * @description: 更新金蝶推送状态
+     * @author Will
+     * @date: 2023/9/26 18:34
+     * @param kingdeeDTO
+     */
+    void updateSyncKingdeeStatus(@Param("params")PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 }

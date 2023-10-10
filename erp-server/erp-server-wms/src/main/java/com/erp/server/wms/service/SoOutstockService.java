@@ -1,9 +1,6 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -216,15 +213,11 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
 
     /**
      * 修改金蝶同步状态
-     * @param id
-     * @param syncKingdeeStatus
-     * @param syncKingdeeId
-     * @param syncOperate
      * @Author Luo_WG
      * @Date 2023/6/1 18:55
      * @return java.lang.Boolean
      **/
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate);
+    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 
     /**
      * 根据code 获取到销售出库单信息

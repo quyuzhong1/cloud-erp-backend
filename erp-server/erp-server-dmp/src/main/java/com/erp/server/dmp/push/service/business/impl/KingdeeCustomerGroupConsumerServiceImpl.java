@@ -84,4 +84,7 @@ public class KingdeeCustomerGroupConsumerServiceImpl implements KingdeeCustomerG
         kingdeeCommonService.customerGroupSaveOrUpdate(platformEntity, map, apiUtils, json, param, type);
 
     }
+
+
+
 }

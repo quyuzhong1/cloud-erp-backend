@@ -272,27 +272,45 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         return null;
     }
 
+    /**
+     * @description: 删除（状态判断）
+     * @author Will
+     * @date: 2023/9/25 15:06
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @param number
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handleDelete (KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number) {
+        //删除之前判断状态
+        this.updateApproved(apiUtils,platformEntity,map,type,KingdeeDocStatusEnum.REAPPROVE,Boolean.TRUE);
+        //删除
+        this.delete(apiUtils,platformEntity,map,type,number);
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number) {
-        LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
+
+       JSONObject jsonObject = new JSONObject();
         //金蝶id
         String syncKingdeeId = (String) map.get("syncKingdeeId");
+        //业务id
+        String businessId = (String) map.get("id");
 
-        if (ObjectUtils.isEmpty(syncKingdeeId)) {
-            viewMap.put("ids", Arrays.asList(syncKingdeeId));
-        } else {
-            viewMap.put("numbers", Arrays.asList(number));
-        }
+        jsonObject.set("Ids", syncKingdeeId);
         try {
-            apiUtils.delete(JSONUtil.toJsonStr(viewMap));
+            apiUtils.delete(JSONUtil.toJsonStr(jsonObject));
         } catch (Exception e) {
             //新增失败时添加日志及定时任务
-            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(viewMap), e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, syncKingdeeId, e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
         //操作成功添加日志
-        insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(viewMap), "删除", type, ApiSendStatusEnum.SUCCESS.getCode());
+        insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, syncKingdeeId, "删除", type, ApiSendStatusEnum.SUCCESS.getCode());
     }
 
     @Override
@@ -457,6 +475,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         return audit;
     }
 
+
     /**
      * @param platformEntity
      * @param map
@@ -498,10 +517,15 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         return Boolean.TRUE;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean handleUnAudit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, Integer type) {
+        //根据状态反审核
+        return this.updateApproved(apiUtils,platformEntity,map,type,KingdeeDocStatusEnum.REAPPROVE,Boolean.TRUE);
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-
     public Boolean unAudit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id, Integer type) {
         //审核中或已审核则要先反审
         ArrayList<String> ids = new ArrayList<>();
@@ -547,7 +571,6 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-
     public void insertLogWriteBackSyncKingdeeStatus(PlatformEntity platformEntity, String businessId,
                                                     String jsonData, String msg, Integer type, Integer status) {
         //新增任务
@@ -781,7 +804,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     /**
      * @param apiUtils
-     * @param id
+     * @param kingdeeId
      * @param number
      * @param createOrgId
      * @return JSONObject
@@ -789,18 +812,64 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      * @author Will
      * @date: 2023/7/3 10:23
      */
-    private JSONObject handleViewJson(KingdeeApiUtils apiUtils, String id, String number, Integer createOrgId) {
-        LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
-        if (StringUtils.isNotBlank(id)) {
-            viewMap.put("id", id);
+    private JSONObject handleViewJson(KingdeeApiUtils apiUtils, String kingdeeId, String number, Integer createOrgId) {
+        JSONObject jsonObject = new JSONObject();
+        if (StringUtils.isNotBlank(kingdeeId)) {
+            jsonObject.set("id", kingdeeId);
         } else {
-            viewMap.put("number", number);
+            jsonObject.set("number", number);
         }
         //创建组织
-        viewMap.put("CreateOrgId", createOrgId);
+        jsonObject.set("CreateOrgId", createOrgId);
 
-        log.info("view方法数据查询,viewJson = {}", JSONUtil.toJsonStr(viewMap));
-        JSONObject model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
+        log.info("view方法数据查询,viewJson = {}", JSONUtil.toJsonStr(jsonObject));
+        JSONObject model = apiUtils.getViewJson(JSONUtil.toJsonStr(jsonObject));
         return model;
     }
+
+
+    /**
+     * @description: 更新状态
+     * @author Will
+     * @date: 2023/9/25 15:00
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @param docStatusEnum
+     * @param isNeedError
+     * @return Boolean
+     */
+    private Boolean updateApproved (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,KingdeeDocStatusEnum docStatusEnum,Boolean isNeedError) {
+
+        //金蝶id
+        String syncKingdeeId = (String) map.get("syncKingdeeId");
+        //业务id
+        String businessId = (String) map.get("id");
+        JSONObject model;
+        try {
+            model = view(apiUtils, platformEntity.getId(), map);
+        } catch (Exception e) {
+            if (isNeedError) {
+                insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, syncKingdeeId, e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
+            } else {
+                //操作成功添加日志
+                insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, syncKingdeeId, "查询无数据，无需处理", type, ApiSendStatusEnum.SUCCESS.getCode());
+            }
+            return Boolean.TRUE;
+        }
+        if (docStatusEnum.getCode().equals(model)) {
+            return Boolean.TRUE;
+        }
+        //重新审核
+        if (KingdeeDocStatusEnum.REAPPROVE.equals(docStatusEnum)) {
+            return this.unAudit(platformEntity,map,apiUtils,syncKingdeeId,type);
+        }
+        //审核通过
+        if (KingdeeDocStatusEnum.APPROVED.equals(docStatusEnum)) {
+            return  this.audit(platformEntity,map,apiUtils,syncKingdeeId,type);
+        }
+        return Boolean.TRUE;
+    }
+
 }

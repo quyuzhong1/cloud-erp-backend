@@ -12,10 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -473,14 +470,16 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
        if (count > 0) {
          throw new ServiceException(ApiError.ERROR_98009);
        }
+
+        //删除发送金蝶
+        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+
        // 删除日志数据
        log.info("删除 开始删除委外订单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
        operateLogService.removeByBusinessIds(ids);
 
        // 删除明细数据（如果有明细数据的话）
        subcontractOrderDetailService.removeByMainIds(ids);
-
-
        // 删除主单数据
        log.info("删除 开始删除委外订单主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
        super.removeByIds(ids);
@@ -1103,14 +1102,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
-        return this.lambdaUpdate()
-                .in(SubcontractOrderEntity::getId, ids)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SubcontractOrderEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SubcontractOrderEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId), SubcontractOrderEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), SubcontractOrderEntity::getSyncOperate, syncOperate)
-                .update();
+    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
+        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
+        return Boolean.TRUE;
     }
 
     /**

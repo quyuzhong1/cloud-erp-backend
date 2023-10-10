@@ -13,6 +13,7 @@ import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
@@ -984,14 +985,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    public boolean updateSyncKingdeeStatus(List<String> businessIds, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
-        return this.lambdaUpdate()
-                .in(SysUserInfoEntity::getUid, businessIds)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SysUserInfoEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SysUserInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId), SysUserInfoEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), SysUserInfoEntity::getSyncOperate, syncOperate)
-                .update();
+    public boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
+        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
+        return Boolean.TRUE;
     }
 
     @Override

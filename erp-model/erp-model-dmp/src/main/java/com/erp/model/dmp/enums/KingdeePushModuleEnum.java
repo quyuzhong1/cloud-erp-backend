@@ -37,7 +37,7 @@ public enum KingdeePushModuleEnum {
     SUB_REQCHANGE("SUB_ReqChange","委外变更单"),
     STK_STOCKCOUNTGAIN("STK_StockCountGain","盘盈单"),
     STK_STOCKCOUNTLOSS("STK_StockCountLoss","盘亏单"),
-
+    PUR_POXCHANGE("PUR_POXChange","采购变更"),
     ;
     private String code;
 

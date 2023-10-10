@@ -21,6 +21,7 @@
         si.approve_user_name,
         si.approve_time,
         si.sales_dept_id,
+        si.all_amount_lc,
         si.remark,
         si.customer_order_no,
         sod.sku_id,
@@ -489,5 +490,18 @@
         AND si.discount_amount>0
     </select>
 
-
+    <update id="updateSyncKingdeeStatus">
+        update so_info set
+        <if test="params.operate != null and params.operate != ''">
+            sync_operate = #{params.operate},
+        </if>
+        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
+            sync_kingdee_id = #{params.syncKingdeeId},
+        </if>
+        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
+            sync_kingdee_status = #{params.syncKingdeeStatus},
+        </if>
+        sync_kingdee_time = current_timestamp
+        where id = #{params.businessId}
+    </update>
 </mapper>

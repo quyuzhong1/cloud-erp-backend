@@ -46,9 +46,8 @@ public class KingdeeReturnOrderConsumerServiceImpl implements KingdeeReturnOrder
     public void executeConsumer(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode();
-
-        //业务id
-        String  businessId = String.valueOf(map.get("id"));
+        //操作项
+        String operate = (String) map.get("operate");
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
@@ -56,6 +55,62 @@ public class KingdeeReturnOrderConsumerServiceImpl implements KingdeeReturnOrder
         }
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_MRB.getCode());
+
+        /**
+         * 反审核
+         */
+        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+            operateDisapprove(apiUtils,platformEntity, map,type);
+        }
+        /**
+         * 审核
+         */
+        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+            operateApprove(apiUtils,platformEntity, map,type);
+        }
+        /**
+         * 反审核
+         */
+        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+            operateInvalid(apiUtils,platformEntity, map,type);
+        }
+        /**
+         * 删除
+         */
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            operateDelete(apiUtils,platformEntity,map,operate);
+        }
+
+    }
+
+    /**
+     * 作废
+     */
+    public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //业务编码
+        String code = (String) map.get("code");
+        //操作项
+        String operate = (String) map.get("operate");
+        //作废
+        kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
+        return;
+    }
+
+    /**
+     * 反审核
+     */
+    public void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //反审核
+        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, type);
+        return;
+    }
+
+    /**
+     * 审核
+     */
+    public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map, Integer type) {
+        //业务id
+        String  businessId = String.valueOf(map.get("id"));
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
@@ -78,60 +133,6 @@ public class KingdeeReturnOrderConsumerServiceImpl implements KingdeeReturnOrder
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             return;
         }
-        //执行操作
-        operate (platformEntity,map,apiUtils,model,json,type);
-
-    }
-
-    /**
-     * 采购订单操作
-     */
-    public void operate (PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject model, JSONObject json, Integer type) {
-        //查找到数据后的审核状态
-        String documentStatus = (String)model.get("DocumentStatus");
-        //操作项
-        String operate = (String) map.get("operate");
-        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-            operateInvalid(apiUtils, platformEntity, map, type);
-        }
-        //反审核
-        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            //审核中或已审核则要先反审
-            if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-                //反审核
-                operateDisapprove(apiUtils, platformEntity, map, type);
-            }
-        }
-        //审核
-        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
-            operateApprove(apiUtils, platformEntity, map, model, json, type);
-        }
-    }
-
-
-
-    public void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-        //业务编码
-        String code = (String) map.get("code");
-        //操作项
-        String operate = (String) map.get("operate");
-        //作废
-        kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
-        return;
-    }
-
-    public void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
-        String syncKingdeeId = (String) map.get("syncKingdeeId");
-        if (StringUtils.isBlank(syncKingdeeId)) {
-            return;
-        }
-        //反审核
-        kingdeeCommonService.unAudit(platformEntity, map, apiUtils, syncKingdeeId, type);
-        return;
-    }
-
-    public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map, JSONObject model, JSONObject json, Integer type) {
-        SaveParam param = new SaveParam(json);
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
         String id = String.valueOf(model.get("Id")) ;
@@ -155,4 +156,12 @@ public class KingdeeReturnOrderConsumerServiceImpl implements KingdeeReturnOrder
         }
     }
 
+    /**
+     * 删除
+     */
+    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
+        //删除
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),operate);
+        return;
+    }
 }

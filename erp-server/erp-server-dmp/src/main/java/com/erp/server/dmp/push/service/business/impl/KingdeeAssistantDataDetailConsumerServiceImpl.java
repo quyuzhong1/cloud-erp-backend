@@ -49,6 +49,8 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
         Integer type = (Integer) map.get("moduleType");
         //业务id
         String businessId = String.valueOf(map.get("id"));
+        //操作项
+        String operate = (String) map.get("operate");
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
@@ -59,6 +61,58 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
 
         //map中设置父级id
         setPid(platformEntity, apiUtils, map, businessId, type);
+
+        /**
+         * 审核
+         */
+        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+            operateApprove(apiUtils,platformEntity, map,type);
+        }
+
+        /**
+         * 删除
+         */
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            operateDelete(apiUtils,platformEntity, map,operate);
+        }
+    }
+
+    /**
+     * 设置父级id
+     */
+    public void setPid(PlatformEntity platformEntity, KingdeeApiUtils apiUtils, Map<String, Object> map, String businessId, Integer type) {
+        //判断是否存在上级
+        Boolean isExistParent = (Boolean) map.get("isExistParent");
+        if (isExistParent) {
+            //根据上级编码查询上级id
+            String parentCode = (String) map.get("parentCode");
+            LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
+            viewMap.put("number", parentCode);
+            JSONObject model;
+            try {
+                model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
+            } catch (Exception e) {
+                //更新数据
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(viewMap), "未找到上级辅助资料", type, ApiSendStatusEnum.FAILURE.getCode());
+                return;
+            }
+            String id = (String) model.get("Id");
+            map.put("pid", id);
+        }
+
+    }
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/9/26 10:38
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     */
+    public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //业务id
+        String businessId = String.valueOf(map.get("id"));
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), ApiModuleTypeEnum.ASSISTANT_DATA.getCode());
@@ -105,34 +159,21 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
         }
-
     }
 
     /**
-     * 设置父级id
+     * @description: 删除
+     * @author Will
+     * @date: 2023/9/26 10:44
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param operate
      */
-    public void setPid(PlatformEntity platformEntity, KingdeeApiUtils apiUtils, Map<String, Object> map, String businessId, Integer type) {
-        //判断是否存在上级
-        Boolean isExistParent = (Boolean) map.get("isExistParent");
-        if (isExistParent) {
-            //根据上级编码查询上级id
-            String parentCode = (String) map.get("parentCode");
-            LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
-            viewMap.put("number", parentCode);
-            JSONObject model;
-            try {
-                model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
-            } catch (Exception e) {
-                //更新数据
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(viewMap), "未找到上级辅助资料", type, ApiSendStatusEnum.FAILURE.getCode());
-                return;
-            }
-            String id = (String) model.get("Id");
-            map.put("pid", id);
-        }
-
+    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
+        //删除
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.ASSISTANT_DATA.getCode(),operate);
+        return;
     }
-
 }

@@ -3,8 +3,8 @@ package com.erp.server.oms.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
@@ -12,7 +12,6 @@ import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -206,18 +205,6 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @return java.lang.Integer
      */
     Integer getPushDownBySourceIds(List<String> soIds);
-
-    /**
-     * 更新金蝶状态等信息
-     * @Author Luo_WG
-     * @date: 2023/5/23 17:41
-     * @param id
-     * @param syncKingdeeStatus
-     * @param syncKingdeeId
-     * @param operate
-     * @return Boolean
-     **/
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String operate);
 
     /**
      * 更新销售订单地址信息

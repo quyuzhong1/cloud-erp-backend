@@ -3,6 +3,7 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -220,11 +221,7 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * 修改金蝶同步信息
      * @Author Luo_WG
      * @Date 2023/5/25 10:43
-     * @param ids
-     * @param syncKingdeeStatus
-     * @param syncKingdeeId
-     * @param syncOperate
      * @return java.lang.Boolean
      **/
-    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
+    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 }

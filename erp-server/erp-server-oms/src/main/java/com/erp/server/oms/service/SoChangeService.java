@@ -3,6 +3,7 @@ package com.erp.server.oms.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoChangeDTO;
@@ -206,13 +207,9 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
     /**
      * 更改销售订单金蝶推送的状态
      *
-     * @param id
-     * @param syncKingdeeStatus
-     * @param syncKingdeeId
-     * @param syncOperate
      * @return
      * @author yl
      * @date 2023-05-31 14:20
      */
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate);
+    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 }

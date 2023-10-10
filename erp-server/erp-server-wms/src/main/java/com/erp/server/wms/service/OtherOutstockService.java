@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
@@ -138,13 +139,9 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * @description: 更新金蝶状态等信息
      * @author Will
      * @date: 2023/5/23 17:41
-     * @param id
-     * @param syncKingdeeStatus
-     * @param syncKingdeeId
-     * @param operate
      * @return Boolean
      */
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String operate);
+    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 
     /**
      * PDA:分页查询

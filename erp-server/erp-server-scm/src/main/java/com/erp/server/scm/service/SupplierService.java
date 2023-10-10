@@ -1,9 +1,6 @@
 package com.erp.server.scm.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SupplierDTO;
@@ -240,15 +237,12 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     void updatePhase(List<SupplierPhaseEntity> list);
 
     /**
-     * @param ids
-     * @param syncKingdeeStatus
-     * @param syncKingdeeId
      * @return Boolean
      * @description: 同步金蝶状态
      * @author Will
      * @date: 2023/4/25 18:48
      */
-    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate);
+    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
 
     /**
      * 根据供应商类型 获取对应供应商

@@ -16,6 +16,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SkuApproveConfigureEnum;
 import com.common.business.enums.SyncOperateEnum;
@@ -1574,6 +1575,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (detailEntity.getOccupyStatus()) {
             throw new ServiceException(ApiError.ERROR_95242);
         }
+
+        //更新金蝶
+        syncKingdeeProductDetailService.syncDataToKingdee(detailEntity, SyncOperateEnum.OPERATE_DELETE.getCode());
+
         List<String> idList = Arrays.asList(skuId);
         //1.删除证书信息
         productCertificateService.removeCertificate(idList);
@@ -1649,6 +1654,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (list.size() != sign) {
             throw new ServiceException(ApiError.ERROR_95242);
         }
+        list.forEach(req -> {
+            //更新金蝶
+            syncKingdeeProductDetailService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DELETE.getCode());
+        });
         List<String> skuIds = list.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         //1.删除证书信息
         productCertificateService.removeCertificate(skuIds);
@@ -1665,7 +1674,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //7.删除目的国海关编码
         productCustomsService.removeBySkuId(skuIds);
         List<ProductDetailEntity> entityList = lambdaQuery().in(ProductDetailEntity::getId, skuIds).list();
-        entityList.forEach(req -> req.setIsDeleted(Boolean.TRUE));
         //同步到SCM
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), entityList, IdUtil.simpleUUID());
         //同步到WMS
@@ -2630,20 +2638,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId) {
-        Boolean flag = this.lambdaUpdate()
-                .eq(ProductDetailEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductDetailEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId), ProductDetailEntity::getSyncKingdeeId, syncKingdeeId)
-                .update();
-        ProductDetailEntity byId = this.getById(id);
+    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
+
+        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
+        ProductDetailEntity byId = this.getById(kingdeeDTO.getBusinessId());
         //同步到SCM
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(byId), IdUtil.simpleUUID());
         //同步到WMS
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(byId), IdUtil.simpleUUID());
 
-        return flag;
+        return Boolean.TRUE;
     }
 
 
@@ -3640,6 +3644,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (entityListt.size() != sign) {
             throw new ServiceException(ApiError.ERROR_95242);
         }
+        entityListt.forEach(req -> {
+            //更新金蝶
+            syncKingdeeProductDetailService.syncDataToKingdee(req, SyncOperateEnum.OPERATE_DELETE.getCode());
+        });
         //1.删除证书信息
         productCertificateService.removeCertificate(ids);
         //2.删除包装信息
@@ -3681,7 +3689,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
         List<ProductDetailEntity> detailEntityList = this.listByIds(ids);
-        detailEntityList.forEach(req -> req.setIsDeleted(Boolean.TRUE));
         //同步到SCM
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), detailEntityList, IdUtil.simpleUUID());
         //同步到WMS

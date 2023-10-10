@@ -4,6 +4,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
@@ -49,8 +50,6 @@ public class KingdeeBomInfoConsumerServiceImpl implements KingdeeBomInfoConsumer
     public void executeBomInfoConsumer(Map<String, Object> map) {
         //同步模块类型
         Integer type = ApiModuleTypeEnum.BOM_INFO.getCode();
-        //业务id
-        String businessId = String.valueOf(map.get("id"));
         //编码转换
         map.put("code", map.get("version"));
 
@@ -61,6 +60,44 @@ public class KingdeeBomInfoConsumerServiceImpl implements KingdeeBomInfoConsumer
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.ENG_BOM.getCode());
 
+        //操作项
+        String operate = (String) map.get("operate");
+
+        /**
+         * 删除
+         */
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            operateDelete(apiUtils,platformEntity,map,operate);
+        }
+
+        /**
+         * 反审核
+         */
+        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+            operateDisapprove(apiUtils,platformEntity, map,type);
+        }
+        /**
+         * 审核
+         */
+        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+            operateApprove(apiUtils,platformEntity, map,type);
+        }
+    }
+
+    /**
+     * @description: 审核
+     * @author Will
+     * @date: 2023/9/25 15:23
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     */
+    public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+
+        //业务id
+        String  businessId = String.valueOf(map.get("id"));
+
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
         //未配置发送字段
@@ -69,6 +106,7 @@ public class KingdeeBomInfoConsumerServiceImpl implements KingdeeBomInfoConsumer
             kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "未配置同步字段", type, ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
+
         //判断金蝶系统是否已存在该数据
         JSONObject model;
         SaveParam param = new SaveParam(json);
@@ -114,6 +152,38 @@ public class KingdeeBomInfoConsumerServiceImpl implements KingdeeBomInfoConsumer
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
         }
-
     }
+
+    /**
+     * @description: 反审核
+     * @author Will
+     * @date: 2023/9/25 15:16
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     */
+    public void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //反审核
+        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, type);
+        return;
+    }
+
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2023/9/25 15:16
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param operate
+     */
+    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
+        //删除
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.BOM_INFO.getCode(),operate);
+        return;
+    }
+
+
+
 }

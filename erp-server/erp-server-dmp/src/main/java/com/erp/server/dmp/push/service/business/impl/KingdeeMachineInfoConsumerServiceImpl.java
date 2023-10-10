@@ -82,6 +82,12 @@ public class KingdeeMachineInfoConsumerServiceImpl implements KingdeeMachineInfo
             operateApprove(apiUtils,platformEntity, map,type);
         }
 
+        /**
+         * 删除
+         */
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            operateDelete(apiUtils,platformEntity,map,operate);
+        }
     }
 
     /**
@@ -175,5 +181,20 @@ public class KingdeeMachineInfoConsumerServiceImpl implements KingdeeMachineInfo
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
         }
+    }
+
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2023/9/26 11:49
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param operate
+     */
+    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
+        //删除
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.MACHINE_INFO.getCode(),operate);
+        return;
     }
 }

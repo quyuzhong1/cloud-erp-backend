@@ -4653,8 +4653,10 @@
         INNER JOIN product_detail pd
         ON pd.sku_no=i.sku_no
         INNER JOIN product_info pi
-        ON pi.id=pd.product_id AND pi.is_deleted=FALSE
-       <include refid="joinCondition">
+        ON pi.id=pd.product_id
+        AND pi.is_deleted=FALSE
+        AND pi.grade !=''
+        <include refid="joinCondition">
 
        </include>
         GROUP BY pi.grade
