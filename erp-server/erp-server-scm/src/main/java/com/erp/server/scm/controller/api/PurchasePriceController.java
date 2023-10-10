@@ -263,4 +263,19 @@ public class PurchasePriceController extends BaseController {
         return result ? success() : failure();
     }
 
+    /**
+     * 更新明细备注
+     */
+    @PostMapping("/updateDetailRemark")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:updateDetailRemark",
+            serviceClass = PurchasePriceService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult updateDetailRemark(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto) {
+        Boolean result = purchasePriceService.updateDetailRemark(dto.getIds(),dto.getRemark());
+        return result ? success() : failure();
+    }
+
 }

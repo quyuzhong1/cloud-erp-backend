@@ -690,6 +690,11 @@ public class PurchaseApplicationDTO implements Serializable {
         private LocalDate planDeliveryDate;
 
         /**
+         * 付款条件
+         */
+        private String paymentCondition;
+
+        /**
          * 子集
          */
         private List<ViewChildGenerateSubcontractOrderDTO> childList;
@@ -806,6 +811,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * 预计交货日期
          */
         private LocalDate planDeliveryDate;
+
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
     }
 
 
@@ -914,6 +924,12 @@ public class PurchaseApplicationDTO implements Serializable {
          * 是否自动生成采购订单
          */
         private Boolean isGeneratePo;
+
+        /**
+         * 付款条件
+         */
+        @NotBlank(message = "付款条件不能为空")
+        private String paymentCondition;
 
         /**
          * 子集

@@ -70,6 +70,11 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
     Boolean finish(QcInfoDTO.SaveOrUpdateDTO dto);
 
     /**
+     * 更新产品信息
+     */
+    void updateProductPack (List<String> billIdList);
+
+    /**
      * 暂存
      * @author yl
      * @date 2023-04-20 14:00

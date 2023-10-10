@@ -594,6 +594,10 @@ public class QcInfoDTO implements Serializable {
          */
         private String purchaseOrderCode;
 
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
 
         /**
          * SKU no
@@ -952,6 +956,11 @@ public class QcInfoDTO implements Serializable {
          * 来源id
          */
         private String sourceId;
+
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
     }
 
 

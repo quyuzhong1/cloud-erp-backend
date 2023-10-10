@@ -286,7 +286,9 @@ public class SubcontractOrderDetailDTO implements Serializable {
         /**
          * 付款条件
          */
+        @NotBlank(message = "付款条件不能为空")
         private String paymentCondition;
+
 
         private String kingdeeDetailId;
     }

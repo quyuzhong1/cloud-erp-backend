@@ -277,6 +277,7 @@ public class SoUtils {
         headMap.put("customsFee", "报关费");
         headMap.put("currency", "结算币种");
         headMap.put("requireDate", "要货日期");
+        headMap.put("customerOrderNo", "客户订单号");
         headMap.put("remark", "备注");
         headMap.put("detailRemark", "明细备注");
         headMap.put("approveUserName", "最新审核人");

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.entity.QcResultEntity;
 
@@ -123,4 +124,12 @@ public interface QcResultService extends SuperService<QcResultEntity> {
      * @return
      */
     void updateQcSampleResult(List<String> qcInfoIds, String qcSampleResult);
+    /**
+     * @description: 异步发送通知
+     * @author Will
+     * @date: 2023/9/21 11:44
+     * @param list
+     */
+    void sendQcBackFillPackaging(List<ProductPackDTO> list);
+
 }
