@@ -138,7 +138,7 @@ public class MQConsumerService {
                 updateParam.setCleanToDelivery(CleanStatusEnum.CLEANED.getCode());
                 updateParam.setLastPushDeliveryTime(LocalDateTime.now());
                 mapUtil = JSONObject.parseObject(JSONObject.toJSONString(updateParam), MapUtil.class);
-                OrderMongoDTO updateDto = OrderMongoDTO.getByOrderIdAndSaleNum(ext.getPlatformOrderId(), ext.getBillNo());
+                OrderMongoDTO updateDto = OrderMongoDTO.getByPlatformOrderId(ext.getPlatformOrderId());
                 finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
             }
             if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
@@ -413,7 +413,8 @@ public class MQConsumerService {
     private <T extends CleanBaseDTO> void finishClean(MapUtil mapUtil, OrderMongoDTO updateDto,String tableName, Class<T> clazz) {
         List<T> mongoData = mongoService.findMongoData(updateDto, 0, 0, tableName, clazz);
         if(CollectionUtil.isEmpty(mongoData)){
-            throw new RuntimeException("mongo暂未写入数据, 请稍后重试");
+            return;
+//            throw new RuntimeException("mongo暂未写入数据, 请稍后重试");
         }
         if(CleanStatusEnum.CLEANED.getCode().equals(mongoData.get(0).getIsClean())){
             return;
