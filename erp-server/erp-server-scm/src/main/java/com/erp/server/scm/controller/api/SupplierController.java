@@ -289,6 +289,7 @@ public class SupplierController extends BaseController {
      * 根据供应商类型 获取到 对应供应商
      * logistics 物流供应商
      * other 货代供应商
+     *
      * @return
      */
     @GetMapping("/listSupplierByCategoryType")
@@ -300,11 +301,13 @@ public class SupplierController extends BaseController {
     /**
      * 根据供应商类型 获取到已审核的对应供应商
      * 未审核通过的会置为禁用
+     *
      * @return
      */
     @GetMapping("/listApproveSupplierByCategoryType")
     public ApiResult<List<SupplierDTO.SupplierSimpleDTO>> listApproveSupplierByCategoryType(@RequestParam("categoryType") String categoryType) {
         return success(supplierService.listApproveSupplierByCategoryType(categoryType));
     }
+
 
 }

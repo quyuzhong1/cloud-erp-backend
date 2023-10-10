@@ -208,16 +208,42 @@
         SELECT
         coalesce(SUM(refund_amount*dri.currency_rate),0)
         FROM dmp_refund_info dri
-        INNER JOIN
-        (SELECT
-        o.platform_order_id
-        FROM dmp_order_info o
-        INNER JOIN dmp_order_item i
-        ON i.order_id = o.ID
-        <include refid="condition"></include>
-        GROUP BY o.id
-        ) TEMP ON TEMP.platform_order_id = dri.platform_order_id
+        INNER dmp_order_info o
+        ON dri.platform_order_id=o.platform_order_id
+        WHERE   dri.refund_status=4
+        <if test="params.startTime !=null">
+            AND dri.refund_time &gt;= #{params.startTime}
+        </if>
+        <if test="params.endTime !=null">
+            AND dri.refund_time &lt; #{params.endTime}
+        </if>
+        <!-- 平台 -->
+        <if test="params.platform!=null and params.platform.size>0">
+            AND dri.platform_name IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
 
+        <!-- 店铺 -->
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND dri.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
+            </foreach>
+        </if>
+
+        <!-- 用户id -->
+        <if test="params.userId!=null and params.userId.size>0">
+            AND dri.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <!-- 权限 -->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
 
     </select>
     <select id="getYearRefundOrderAmount" resultType="java.math.BigDecimal">

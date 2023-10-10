@@ -47,7 +47,6 @@ public class SoDetailDTO implements Serializable {
         /**
          * 单价
          */
-        @NotNull(message = "销售单价不能为空", groups = {AddGroup.class})
         private BigDecimal price;
 
         /**
@@ -332,6 +331,16 @@ public class SoDetailDTO implements Serializable {
          */
         private BigDecimal taxAmountBefore;
 
+        /**
+         * 销售单价(本位币)
+         */
+        private BigDecimal priceLc;
+
+        /**
+         * 含税单价(本位币)
+         */
+        private BigDecimal taxPriceLc;
+
     }
 
     /**
@@ -434,7 +443,6 @@ public class SoDetailDTO implements Serializable {
         /**
          * 单价
          */
-        @NotNull(message = "销售单价不能为空")
         private BigDecimal price;
 
         /**

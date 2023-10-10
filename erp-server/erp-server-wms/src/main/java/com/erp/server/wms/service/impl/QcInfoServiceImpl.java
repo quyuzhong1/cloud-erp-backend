@@ -253,10 +253,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 bill.setPurchaseOrderCode(purchaseOrder.getCode());
             }
         }
-        bill.setSourceCode(bill.getSourceCode());
-        if (StringUtils.isBlank(dto.getSourceCode()) && StringUtils.isNotBlank(bill.getPurchaseOrderCode())) {
-            bill.setSourceCode(bill.getPurchaseOrderCode());
-        }
         String sourceDetailId = dto.getSourceDetailId();
         bill.setSourceDetailId(sourceDetailId);
 

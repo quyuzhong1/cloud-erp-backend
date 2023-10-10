@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.CompletionRateRankingDTO;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.vo.DateCostVO;
 import com.erp.model.bi.vo.DeptCostVO;
@@ -59,4 +60,20 @@ public interface BiDataSourceCostMapper extends BaseMapper<BiDataSourceCostEntit
      * @return
      */
     List<DateCostVO> sumByDateAndCostType(@Param("params") BiFilterDTO dto, @Param("dictValues") List<String> dictValues);
+
+    /**
+     * 部门销售额排行榜
+     * @param dto
+     * @param settleRate
+     * @return
+     */
+    List<CompletionRateRankingDTO.PagingDTO> deptCompletionRateRanking(@Param("params") CompletionRateRankingDTO.SearchDTO dto, @Param("settleRate") String settleRate);
+
+    /**
+     * 用户销售额排行榜
+     * @param dto
+     * @param settleRate
+     * @return
+     */
+    List<CompletionRateRankingDTO.PagingDTO> userCompletionRateRanking(@Param("params") CompletionRateRankingDTO.SearchDTO dto, @Param("settleRate") String settleRate);
 }

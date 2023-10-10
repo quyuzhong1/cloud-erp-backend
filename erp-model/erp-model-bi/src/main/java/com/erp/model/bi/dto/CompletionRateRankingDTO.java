@@ -24,6 +24,14 @@ public class CompletionRateRankingDTO implements Serializable {
          *  user 人员，
          */
         private String searchType;
+
+        /**
+         * 统计维度：/bi/common/enumDropDown?type=CompletionRateRanking
+         * 描述：salesAmount 销售额完成率，
+         *  financeSalesAmount 财务销售额完成率，
+         */
+        private String completionRateRankingType;
+
     }
 
     /**
