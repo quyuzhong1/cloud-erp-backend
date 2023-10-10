@@ -215,14 +215,14 @@ public class SoReturnReceiveController extends BaseController {
                 try {
                     SoReturnReceiveEntity soReturnReceive = soReturnReceiveService.getById(id);
                     if (Objects.isNull(soReturnReceive)) {
-                        submit = BatchResultDTO.fail(flagCode, "退货签收单不存在");
+                        submit = BatchResultDTO.fail(id,flagCode, "退货签收单不存在");
                     } else {
                         flagCode = soReturnReceive.getCode();
                         submit = soReturnReceiveService.disApprove(Arrays.asList(id));
                     }
                 } catch (Exception e) {
                     log.error("退货签收单反审核失败>>>>{}", e);
-                    submit = BatchResultDTO.fail(flagCode, e.getMessage());
+                    submit = BatchResultDTO.fail(id,flagCode, e.getMessage());
                 }
                 resultDTOS.add(submit);
             }
