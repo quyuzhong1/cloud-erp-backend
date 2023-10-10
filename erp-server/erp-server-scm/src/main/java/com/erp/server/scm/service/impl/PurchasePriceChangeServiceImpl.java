@@ -737,7 +737,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         purchasePriceChangeDetailService.updateDetailRemark(ids,remark);
         return Boolean.TRUE;
     }
-
     /**
      * 修改状态
      *

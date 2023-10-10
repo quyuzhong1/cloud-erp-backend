@@ -115,7 +115,7 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @date: 2023/9/26 18:34
      * @param kingdeeDTO
      */
-    void updateSyncKingdeeStatus(@Param("params")PushSyncStatusDTO.KingdeeDTO kingdeeDTO);}
+    void updateSyncKingdeeStatus(@Param("params")PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
     /**
      * PDA:根据查询条件获取采购单
      * @Author Luo_WG

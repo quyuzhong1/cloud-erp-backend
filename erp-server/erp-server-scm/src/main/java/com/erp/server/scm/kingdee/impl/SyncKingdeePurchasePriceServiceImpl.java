@@ -20,6 +20,7 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
+import com.erp.server.scm.service.PurchasePriceService;
 import com.erp.server.scm.service.SupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
