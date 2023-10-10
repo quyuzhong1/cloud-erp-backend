@@ -392,7 +392,7 @@ public class SupplierDTO implements Serializable {
         /**
          * 结算付款币种
          */
-        //@NotBlank(message = "结算币种不能为空")
+        @NotBlank(message = "结算币种不能为空")
         private String payCurrency;
 
         /**
@@ -734,6 +734,11 @@ public class SupplierDTO implements Serializable {
          * 结算币种
          */
         private String payCurrency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
 
         /**
          * 付款条件

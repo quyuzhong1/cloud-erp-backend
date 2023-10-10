@@ -679,6 +679,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setApproveUserName("");
                 item.setRequireDate(null);
                 item.setRemark("");
+                item.setCustomerOrderNo("");
             }
             flagList.add(item.getId());
         }

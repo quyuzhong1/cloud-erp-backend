@@ -729,6 +729,15 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean updateDetailRemark(List<String> ids, String remark) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Boolean.TRUE;
+        }
+        purchasePriceChangeDetailService.updateDetailRemark(ids,remark);
+        return Boolean.TRUE;
+    }
+
     /**
      * 修改状态
      *

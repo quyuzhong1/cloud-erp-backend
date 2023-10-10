@@ -120,9 +120,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Autowired
     private WorkflowFeign workflowFeign;
 
-    @Autowired
-    private SupplierService supplierService;
-
     /**
      * 保存供应商信息
      *
@@ -911,6 +908,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             SupplierContactEntity contact = contactList.get(0);
             BeanMapper.copy(contact, view);
             view.setContactId(contact.getId());
+        }
+        List<CurrencyDTO.ViewDTO> currency = sysUserFeign.listByCurrency(Arrays.asList(entity.getPayCurrency()));
+        if (CollectionUtils.isNotEmpty(currency)) {
+            CurrencyDTO.ViewDTO viewDTO = currency.get(0);
+            view.setCurrencySymbol(viewDTO.getSymbol());
         }
         view.setPayMethodId(entity.getPayMethodId());
         view.setPayCurrency(entity.getPayCurrency());

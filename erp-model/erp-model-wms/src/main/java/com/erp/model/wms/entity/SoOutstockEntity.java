@@ -224,6 +224,12 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("bill_date")
     private LocalDate billDate;
 
+    /**
+     * 客户订单号
+     */
+    @TableField("customer_order_no")
+    private String customerOrderNo;
+
 
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;

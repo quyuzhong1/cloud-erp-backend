@@ -223,7 +223,8 @@
             qi.is_inside_qc AS isInsideQc,
             qi.qc_sample_result AS qcSampleResult,
             qb.source_type,
-            qb.source_id
+            qb.source_id,
+            qb.source_code
         FROM qc_info qb
         LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
@@ -242,6 +243,9 @@
         </if>
         <if test="params.code !=null and params.code!=''">
             AND qb.code ilike concat('%', #{params.code} ,'%')
+        </if>
+        <if test="params.sourceCode !=null and params.sourceCode!=''">
+            AND qb.source_code ilike concat('%', #{params.sourceCode} ,'%')
         </if>
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
             AND qp.sku_no IN

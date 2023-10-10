@@ -199,4 +199,12 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return List<PurchaseTaxPriceBatchViewDTO>
      */
     List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(ValidList<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list);
+    /**
+     * @description: 更新明细备注
+     * @author Will
+     * @date: 2023/9/21 15:26
+     * @param ids
+     * @param remark
+     */
+    void updateDetailRemark(List<String> ids, String remark);
 }

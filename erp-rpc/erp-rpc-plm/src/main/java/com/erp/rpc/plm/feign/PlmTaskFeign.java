@@ -369,4 +369,10 @@ public interface PlmTaskFeign {
      */
     @GetMapping("feign/product/parentCategory")
     BasicCategoryDTO getParent(Map<String, String> categoryParams);
+
+    /**
+     * 回填产品包装信息
+     */
+    @PostMapping("/feign/productPack/backFillPackaging")
+    void backFillPackaging(@RequestBody ProductPackDTO productPackDTO);
 }

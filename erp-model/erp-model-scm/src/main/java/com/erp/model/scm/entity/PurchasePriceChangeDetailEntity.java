@@ -113,6 +113,11 @@ public class PurchasePriceChangeDetailEntity extends BaseEntity<PurchasePriceCha
     private Boolean disabled;
 
     /**
+     * 备注
+     */
+    private String remark;
+
+    /**
      * 采购价目编号
      */
     @TableField(exist = false)

@@ -23,7 +23,8 @@
           ppd.effective_date,
           pp.purchase_org_id,
           pp.purchase_org_name,
-          ppd.disabled
+          ppd.disabled,
+          ppd.remark as detailRemark
         FROM purchase_price_change_detail ppd
         INNER JOIN purchase_price_change pp
         ON ppd.purchase_price_change_id=PP.id

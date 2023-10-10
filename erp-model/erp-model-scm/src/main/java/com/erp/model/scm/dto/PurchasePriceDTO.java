@@ -361,6 +361,11 @@ public class PurchasePriceDTO implements Serializable {
          *  fase 启用
          */
         private Boolean disabled;
+
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
     }
 
 

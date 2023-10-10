@@ -1,35 +1,34 @@
 package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.dto.SoReturnDTO;
-import com.erp.model.wms.dto.QcInfoDTO;
-import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
+import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.server.wms.service.SoReturnReceiveService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.common.core.controller.BaseController;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 销售退货签收单
  * @author LUO_WG
  * @since 2023-05-10
  */
+@Slf4j
 @RestController
 @RequestMapping("/soReturnReceive")
 public class SoReturnReceiveController extends BaseController {
@@ -208,9 +207,27 @@ public class SoReturnReceiveController extends BaseController {
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soReturnReceiveService.disApprove(dto.getIds());
-        return flag == true ? success() : failure();
-    }
+            List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+            List<String> ids = dto.getIds();
+            for (String id : ids) {
+                BatchResultDTO submit;
+                String flagCode = id;
+                try {
+                    SoReturnReceiveEntity soReturnReceive = soReturnReceiveService.getById(id);
+                    if (Objects.isNull(soReturnReceive)) {
+                        submit = BatchResultDTO.fail(id,flagCode, "退货签收单不存在");
+                    } else {
+                        flagCode = soReturnReceive.getCode();
+                        submit = soReturnReceiveService.disApprove(Arrays.asList(id));
+                    }
+                } catch (Exception e) {
+                    log.error("退货签收单反审核失败>>>>{}", e);
+                    submit = BatchResultDTO.fail(id,flagCode, e.getMessage());
+                }
+                resultDTOS.add(submit);
+            }
+            return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+     }
 
     /**
      * 取消流程

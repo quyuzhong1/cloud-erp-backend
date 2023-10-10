@@ -332,7 +332,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @Override
     public List<MachineSubComponentsDTO.ViewDTO> viewBomSubComponents(MachineSubComponentsDTO.ViewBomParamDTO dto) {
         List<MachineSubComponentsDTO.ViewDTO> resultList = new ArrayList<>();
-        dto.setBomVersion(MathUtil.compareTo(dto.getBomVersion(),MathUtil.ZERO) == MathUtil.ZERO ? MathUtil.ONE : dto.getBomVersion());
+
         //查询BOM中SKU子集
         List<BomChildrenSkuDTO> childrenList = plmTaskFeign.listHistoryBomChildBySkuIds(Arrays.asList(dto.getSkuId()));
         if (CollectionUtils.isEmpty(childrenList)) {
@@ -341,7 +341,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //查询sku
         List<String> skuIdList = childrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-
+        //bom版本取最新
+        Integer bomVersion = childrenList.stream().max(Comparator.comparingInt(BomChildrenSkuDTO::getBomVersion)).map(BomChildrenSkuDTO::getBomVersion).get();
+        dto.setBomVersion(MathUtil.compareTo(dto.getBomVersion(),MathUtil.ZERO) == MathUtil.ZERO ? bomVersion : dto.getBomVersion());
 
         List<BomChildrenSkuDTO> versionChildList = childrenList.stream().filter(obj -> obj.getBomVersion().equals(dto.getBomVersion())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(versionChildList)) {

@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import lombok.Data;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 
@@ -21,6 +22,11 @@ public class ProductPackDTO implements Serializable {
      * sku表id
      */
     private String skuId;
+
+    /**
+     * sku编号
+     */
+    private String skuNo;
 
     /**
      * 产品尺寸
