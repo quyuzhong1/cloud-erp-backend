@@ -376,6 +376,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             dto.setSupplierName(skuPurchase.getSupplierName());
             //预计交货日期
             dto.setPlanDeliveryDate(entity.getPlanDeliveryDate());
+            dto.setDetailRemark(entity.getRemark());
             PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO  = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
             searchDTO.setSkuId(entity.getSkuId());
             searchDTO.setSkuNo(entity.getSkuNo());
@@ -517,6 +518,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 addDetailDTO.setIsGift(generatePurchaseOrderDTO.getIsGift());
                 addDetailDTO.setPurchaseApplicationId(generatePurchaseOrderDTO.getId());
                 addDetailDTO.setPurchaseApplicationDetailId(generatePurchaseOrderDTO.getPurchaseApplicationDetailId());
+                addDetailDTO.setRemark(generatePurchaseOrderDTO.getDetailRemark());
                 details.add(addDetailDTO);
             }
             addDTO.setDetails(details);
