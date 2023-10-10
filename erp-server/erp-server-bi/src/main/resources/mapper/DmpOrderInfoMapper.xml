@@ -365,8 +365,18 @@
     <select id="salePriceDistribution" resultType="com.erp.model.bi.vo.SalePriceDistributionVO">
         SELECT
             doit.id,
-            doit.sell_price AS sellPrice,
-            doit.amount_after * COALESCE ( doit.currency_rate, 0 ) AS saleAmount,
+            <if test="params.rangeType == 1">
+                doit.sell_price AS sellPrice,
+            </if>
+            <if test="params.rangeType == 2">
+                doit.sell_price_origin * doit.currency_rate
+            </if>
+            <if test="settleRate !=null and settleRate!=''">
+                round((doit.amount_after * doit.${settleRate}),2) AS saleAmount,
+            </if>
+            <if test="settleRate ==null or settleRate==''">
+                round((doit.amount_after * 1),2) AS saleAmount,
+            </if>
             doit.quantity AS salesQuantity
         FROM
             dmp_order_item AS doit

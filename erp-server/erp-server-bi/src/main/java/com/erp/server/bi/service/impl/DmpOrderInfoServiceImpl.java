@@ -43,6 +43,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.ChartType;
 import com.erp.server.bi.enums.OrderStateEnum;
+import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.listener.DmpOrderInfoExcelListener;
 import com.erp.server.bi.mapper.DmpOrderInfoMapper;
@@ -163,15 +164,27 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         } else {
             dataType = dto.getDataType();
         }
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
+        LocalDateTime paramsEndTime = dto.getEndTime();
+        dto.setEndTime(paramsEndTime, 1);
         ChartVO chart = new ChartVO();
-        List<SalePriceDistributionVO> salePriceDistributionVOS = baseMapper.salePriceDistribution(dto);
+        List<SalePriceDistributionVO> salePriceDistributionVOS = baseMapper.salePriceDistribution(dto, settleRate);
         //获取区间列表
         List<SalesPriceRangeVO> rangeVOS = getRangeList(dto.getRangeType());
-        List<String> xAxisList = rangeVOS.stream().map(e -> e.getStartValue() + "," + e.getEndValue()).collect(Collectors.toList());
-//        BigDecimal totalSaleAmount = salePriceDistributionVOS.stream().filter(v -> Objects.nonNull(v.getSaleAmount()))
-//                .map(SalePriceDistributionVO::getSaleAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-//        int totalSalesQuantity = salePriceDistributionVOS.stream().filter(v -> 0 != v.getSalesQuantity()).mapToInt(SalePriceDistributionVO::getSalesQuantity).sum();
-        BigDecimal maxSellPrice = salePriceDistributionVOS.stream().map(SalePriceDistributionVO::getSellPrice).max(BigDecimal::compareTo).get();
+        List<String> xAxisList = rangeVOS.stream().map(e -> {
+            if (e.getEndValue() == -1 ){
+                return e.getStartValue() + "及以上";
+            }else {
+                return e.getStartValue() + "-" + e.getEndValue();
+            }
+        }).collect(Collectors.toList());
+        BigDecimal maxSellPrice;
+        if (CollectionUtils.isEmpty(salePriceDistributionVOS)){
+            maxSellPrice = BigDecimal.ZERO;
+        }else {
+            maxSellPrice = salePriceDistributionVOS.stream().map(SalePriceDistributionVO::getSellPrice).max(BigDecimal::compareTo).get();
+        }
         List<SeriesVO<Object>> seriesList = new ArrayList<>(10);
         SeriesVO series = new SeriesVO();
         if (2 == dataType){
@@ -186,28 +199,20 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             if (salesPriceRangeVO.getEndValue() == -1) {
                 salesPriceRangeVO.setEndValue(maxSellPrice.intValue() + 10);
             }
-            List<SalePriceDistributionVO> vos = salePriceDistributionVOS.stream().filter(v -> Objects.nonNull(v.getSellPrice()))
-                    .filter(v -> (v.getSellPrice().intValue() >= salesPriceRangeVO.getStartValue()
-                            && v.getSellPrice().intValue() < salesPriceRangeVO.getEndValue())).collect(Collectors.toList());
-            if (2 == dataType){
-                int count = vos.stream().mapToInt(SalePriceDistributionVO::getSalesQuantity).sum();
-                dataList.add(String.valueOf(count));
+            if (CollectionUtils.isEmpty(salePriceDistributionVOS)){
+                dataList.add(BigDecimal.ZERO.stripTrailingZeros().toPlainString());
             }else {
-                BigDecimal count = vos.stream().map(SalePriceDistributionVO::getSaleAmount).filter(saleAmount -> saleAmount.compareTo(BigDecimal.ZERO) != 0).reduce(BigDecimal.ZERO, BigDecimal::add);
-                dataList.add(count.stripTrailingZeros().toPlainString());
+                List<SalePriceDistributionVO> vos = salePriceDistributionVOS.stream().filter(v -> Objects.nonNull(v.getSellPrice()))
+                        .filter(v -> (v.getSellPrice().intValue() >= salesPriceRangeVO.getStartValue()
+                                && v.getSellPrice().intValue() < salesPriceRangeVO.getEndValue())).collect(Collectors.toList());
+                if (2 == dataType){
+                    int count = vos.stream().mapToInt(SalePriceDistributionVO::getSalesQuantity).sum();
+                    dataList.add(String.valueOf(count));
+                }else {
+                    BigDecimal count = vos.stream().map(SalePriceDistributionVO::getSaleAmount).filter(saleAmount -> saleAmount.compareTo(BigDecimal.ZERO) != 0).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    dataList.add(count.stripTrailingZeros().toPlainString());
+                }
             }
-//            salesPriceRangeVO.setSaleAmount(vos.stream().filter(v -> v.getSaleAmount().compareTo(BigDecimal.ZERO) != 0).map(SalePriceDistributionVO::getSaleAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
-//            if (totalSaleAmount.compareTo(BigDecimal.ZERO) != 0) {
-//                salesPriceRangeVO.setSaleAmountRate(salesPriceRangeVO.getSaleAmount().divide(totalSaleAmount, 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString() + "%");
-//            } else {
-//                salesPriceRangeVO.setSaleAmountRate("0%");
-//            }
-//            salesPriceRangeVO.setSalesQuantity(vos.stream().mapToInt(SalePriceDistributionVO::getSalesQuantity).sum());
-//            if (0 != totalSalesQuantity) {
-//                salesPriceRangeVO.setSalesQuantityRate(BigDecimal.valueOf(salesPriceRangeVO.getSalesQuantity()).divide(BigDecimal.valueOf(totalSalesQuantity), 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString() + "%");
-//            } else {
-//                salesPriceRangeVO.setSalesQuantityRate("0%");
-//            }
         });
         series.setData(dataList);
         seriesList.add(series);
@@ -215,6 +220,20 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         chart.setSeries(seriesList);
         statistical.setData(chart);
         return statistical;
+    }
+
+    /**
+     * 获取到结算汇率
+     *
+     * @param code
+     * @return
+     */
+    private String getSettleRate(Integer code) {
+        SettleMethodEnum settleMethod = SettleMethodEnum.getByCode(code);
+        if (settleMethod != null) {
+            return settleMethod.getField();
+        }
+        return "";
     }
 
     private List<SalesPriceRangeVO> getRangeList(Integer rangeType) {
