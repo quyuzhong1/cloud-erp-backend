@@ -369,7 +369,7 @@
                 doit.sell_price AS sellPrice,
             </if>
             <if test="params.rangeType == 2">
-                doit.sell_price_origin * doit.currency_rate
+                doit.sell_price_origin * doit.currency_rate,
             </if>
             <if test="settleRate !=null and settleRate!=''">
                 round((doit.amount_after * doit.${settleRate}),2) AS saleAmount,
