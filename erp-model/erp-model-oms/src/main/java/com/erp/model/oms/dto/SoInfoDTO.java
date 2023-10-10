@@ -520,11 +520,6 @@ public class SoInfoDTO implements Serializable {
          */
         private String platformSkuNo;
 
-        /**
-         * 客户订单号
-         */
-        private String customerOrderNo;
-
 
         /**
          * 运单号
@@ -550,6 +545,11 @@ public class SoInfoDTO implements Serializable {
          * 含税单价(本位币)
          */
         private BigDecimal taxPriceLc;
+
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
 
     }
 
@@ -666,6 +666,11 @@ public class SoInfoDTO implements Serializable {
          * 平台类型
          */
         private String platformType;
+
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
     }
 
 
@@ -872,6 +877,10 @@ public class SoInfoDTO implements Serializable {
         @DecimalMin(value = "0.00", message = "折扣总额不能小于0")
         private BigDecimal discountAmount;
 
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
     }
 
 
@@ -1136,6 +1145,16 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal discountAmount;
 
         /**
+         * 总价税合计（本位币）
+         */
+        private BigDecimal allAmountLc;
+
+
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
+        /**
          * 订单产品详情
          */
         private List<SoDetailDTO.ViewDTO> detailList;
@@ -1183,6 +1202,11 @@ public class SoInfoDTO implements Serializable {
          */
         private String telNumber;
 
+
+        /**
+         * 收货人
+         */
+        private String receiverName;
 
         /**
          * 收款条件
@@ -1235,6 +1259,12 @@ public class SoInfoDTO implements Serializable {
          * 总费用
          */
         private String totalFeeStr;
+
+
+        /**
+         * 贸易条款
+         */
+        private String tradeTerm;
 
 
     }
@@ -1438,6 +1468,11 @@ public class SoInfoDTO implements Serializable {
          */
         @DecimalMin(value = "0.00", message = "折扣总额不能小于0")
         private BigDecimal discountAmount;
+
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
     }
 
     @Data
