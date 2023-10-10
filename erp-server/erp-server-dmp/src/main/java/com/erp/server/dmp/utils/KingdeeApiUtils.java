@@ -5,16 +5,16 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.core.utils.date.EnumTimePattern;
 import com.google.gson.Gson;
 import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 /**
  * 金蝶API 处理类
@@ -34,6 +34,13 @@ public class KingdeeApiUtils {
     private static String APPSECRET;
 
     private static String DCID;
+
+    private static String SWITCH_TIME;
+
+    @Value("${openApi.kingdee.switchTime}")
+    private void setSwitchTime(String switchTime) {
+        KingdeeApiUtils.SWITCH_TIME = switchTime;
+    }
 
     @Value("${openApi.kingdee.appId}")
     public void setAppId(String appId) {
@@ -603,5 +610,18 @@ public class KingdeeApiUtils {
             result.append(joinStr);
         }
         return result.replace(1, 1, joinStr).toString();
+    }
+
+    public boolean needPushMQ(LocalDateTime lastTime) {
+
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+        if (Objects.nonNull(SWITCH_TIME)) {
+            LocalDateTime dateTime = LocalDateTime.parse(SWITCH_TIME);
+            if (lastTime.isAfter(dateTime)) {
+                //使用下次调用时间进行判断是否在切换时间之后，在之后就停止调用
+                return true;
+            }
+        }
+        return false;
     }
 }
