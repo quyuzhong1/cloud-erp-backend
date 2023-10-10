@@ -281,9 +281,9 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         //店铺编号
         dmpOrderInfoEntity.setShopNo("B2B");
         //店铺名称
-        dmpOrderInfoEntity.setShopName("B2B");
-        //客户名称
-        dmpOrderInfoEntity.setCustomerName(kingdeeOrderEntity.getFCustId());
+        dmpOrderInfoEntity.setShopName(kingdeeOrderEntity.getFCustId());
+//        客户名称
+//        dmpOrderInfoEntity.setCustomerName(kingdeeOrderEntity.getFCustId());
         BigDecimal totalPrice = BigDecimal.ZERO;
         BigDecimal totalCost = BigDecimal.ZERO;
         BigDecimal orderFee = BigDecimal.ZERO;
