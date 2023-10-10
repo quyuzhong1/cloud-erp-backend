@@ -82,4 +82,11 @@ public interface ProductPackService extends IService<ProductPackEntity> {
      * @return
      */
     List<ProductPackEntity> findBySkuIds(List<String> skuIds);
+    /**
+     * @description: 回填产品包装信息
+     * @author Will
+     * @date: 2023/9/20 11:39
+     * @param productPackDTO
+     */
+    void backFillPackaging(ProductPackDTO productPackDTO);
 }

@@ -872,7 +872,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 item.setBillDate(null);
                 item.setCreateUserName("");
                 item.setCreateTime(null);
-
+                item.setCustomerOrderNo("");
             }
             flagList.add(item.getId());
         }

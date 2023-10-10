@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
@@ -22,6 +24,7 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
+import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
@@ -44,12 +47,14 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcInfoMapper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.QcUtils;
 import com.google.common.collect.Lists;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -201,7 +206,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         BeanMapper.copy(dto, bill);
         bill.setId(billId);
         //处理相关数据
-        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceCode(), dto.getSourceId());
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
 
         //采购订单明细
         String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
@@ -508,6 +513,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean finish(QcInfoDTO.SaveOrUpdateDTO dto) {
         String id = dto.getId();
         QcInfoEntity bill = this.getById(id);
@@ -590,6 +596,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 //生成入库单
                 autoStockInBill(billId, qcInfo, purchaseOrderId, warehouseId);
             }
+            //新品首批回填SKU的尺寸信息
+            updateProductPack(Arrays.asList(billId));
+
             //异步发送通知
             qcResultService.sendQcResultMsg(Arrays.asList(billId));
             operateLogService.addModuleOperateLog(String.format("新增了一个质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "新增操作");
@@ -597,6 +606,134 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         return result;
     }
 
+    /**
+     * @description:回填产品信息
+     * @author Will
+     * @date: 2023/9/20 11:21
+     * @param billIdList
+     */
+    @Override
+    public void updateProductPack (List<String> billIdList) {
+        /**
+         * 采购订单为新品首批、并且质检完成后减产品尺寸、外箱尺寸、产品净重、外形重量
+         */
+        if (CollectionUtils.isEmpty(billIdList)) {
+            return;
+        }
+        List<QcInfoEntity> qcInfoEntityList = this.listByIds(billIdList);
+        if (CollectionUtils.isEmpty(qcInfoEntityList)) {
+            return;
+        }
+        //是否存在权限
+        Boolean isExist = isExistAuth(billIdList, "wms:qcBill:updateProductPack", "qc_user_id");
+        if (!isExist) {
+            return;
+        }
+        //采购信息
+        List<String> poIdList = qcInfoEntityList.stream().filter(obj -> StringUtils.isNotBlank(obj.getPurchaseOrderId())).map(QcInfoEntity::getPurchaseOrderId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(poIdList)) {
+            return;
+        }
+        List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(poIdList);
+
+        //质检产品信息
+        List<String> qcIdList = qcInfoEntityList.stream().map(QcInfoEntity::getId).collect(Collectors.toList());
+        List<QcProductEntity> qcProductList = qcProductService.getByMainIdList(qcIdList);
+
+        List<ProductPackDTO> productPactList = new ArrayList<>();
+
+        for (QcInfoEntity qcInfoEntity :  qcInfoEntityList) {
+            PurchaseOrderEntity purchaseOrderEntity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(qcInfoEntity.getPurchaseOrderId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+                continue;
+            }
+            if (!purchaseOrderEntity.getIsFirstMassProduct()) {
+                continue;
+            }
+            QcProductEntity qcProductEntity = qcProductList.stream().filter(obj -> obj.getMainId().equals(qcInfoEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(qcProductEntity)) {
+                throw new ServiceException(ApiError.ERROR_99015);
+            }
+
+            ProductPackDTO productPackDTO = new ProductPackDTO();
+            productPackDTO.setSkuId(qcProductEntity.getSkuId());
+            productPackDTO.setSkuNo(qcProductEntity.getSkuNo());
+            productPackDTO.setProductSize(StrUtil.format("{}X{}X{}",qcProductEntity.getProductLength().stripTrailingZeros().toPlainString(),qcProductEntity.getProductWidth().stripTrailingZeros().toPlainString(),qcProductEntity.getProductHeight().stripTrailingZeros().toPlainString()));
+            productPackDTO.setBoxSize(StrUtil.format("{}X{}X{}",qcProductEntity.getBoxLength().stripTrailingZeros().toPlainString(),qcProductEntity.getBoxWidth().stripTrailingZeros().toPlainString(),qcProductEntity.getBoxHeight().stripTrailingZeros().toPlainString()));
+            productPackDTO.setBoxQty(new BigDecimal(qcProductEntity.getBoxQty()));
+            productPackDTO.setBoxWeight(qcProductEntity.getBoxWeight());
+            productPackDTO.setNetWeight(qcProductEntity.getProductNetWeight());
+            plmTaskFeign.backFillPackaging(productPackDTO);
+
+            productPactList.add(productPackDTO);
+        }
+        if (CollectionUtils.isEmpty(productPactList)){
+            return;
+        }
+        //异步发送通知
+        qcResultService.sendQcBackFillPackaging(productPactList);
+    }
+
+    /**
+     * @description: 是否存在权限
+     * @author Will
+     * @date: 2023/10/7 16:21
+     * @param billIdList
+     * @param menuCode
+     * @param menuTableField
+     * @return Boolean
+     */
+    private Boolean isExistAuth (List<String> billIdList,String menuCode,String menuTableField) {
+        //判断是否有权限回填产品信息
+        LoginUser userInfo = commonService.getUserInfo();
+        List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userInfo.getUid());
+        UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userInfo.getUid());
+        if (roleIdList.contains("1")) {
+            userRequestPermissions.setPermissionsCode(menuCode);
+            userRequestPermissions.setDataScope(DataPermissionAspect.DATA_SCOPE_ALL);
+        } else {
+            userRequestPermissions = requestPermissionsList
+                    .stream()
+                    .filter(p -> p.getPermissionsCode().equals(menuCode))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (ObjectUtils.isEmpty(userRequestPermissions)) {
+            return Boolean.FALSE;
+        }
+        List<String> userList = sysUserFeign.getDepUserList(userInfo.getUid());
+        List<String> users = new ArrayList<>();
+        List<?> objects = this.listByIds(billIdList);
+        for (Object object : objects) {
+            JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(object));
+
+            if (StringUtils.isBlank(menuTableField)) {
+                return Boolean.FALSE;
+            }
+            String[] tableFields = menuTableField.split(",");
+            for (String tableField : tableFields) {
+                Object o = jsonObject.get(StrUtils.underlineToCamel(tableField, true));
+                if (o == null) {
+                    continue;
+                }
+                users.addAll(Arrays.asList(o.toString().split(",")));
+            }
+        }
+        if (DataPermissionAspect.DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
+            return Boolean.TRUE;
+        } else if (DataPermissionAspect.DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
+            long containsUserCount = users.stream().filter(u -> userList.contains(u)).count();
+            if (containsUserCount == 0) {
+                return Boolean.FALSE;
+            }
+        } else if (DataPermissionAspect.DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
+            if (!users.contains(userInfo.getUid())) {
+                return Boolean.FALSE;
+            }
+        }
+        return Boolean.TRUE;
+    }
 
     /**
      * 处理相关数据
@@ -605,7 +742,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @param qcDeptId
      * @param entity
      */
-    private void HandleData(String qcUserId, String qcDeptId, QcInfoEntity entity, String sourceCode, String sourceId) {
+    private void HandleData(String qcUserId, String qcDeptId, QcInfoEntity entity, String sourceType, String sourceId) {
         //质检员
         if (StringUtils.isNotBlank(qcUserId)) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(qcUserId);
@@ -623,13 +760,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             entity.setQcDeptName(depart.getName());
         }
 
-        if (SourceTypeEnum.PO_RECEIVE.getCode().equals(sourceCode)) {
+        if (SourceTypeEnum.PO_RECEIVE.getCode().equals(sourceType)) {
             WarehouseReceiveEntity info = warehouseReceiveService.getById(sourceId);
             entity.setSourceCode(info.getCode());
-        } else if (SourceTypeEnum.PURCHASE_ORDER.getCode().equals(sourceCode)) {
+        } else if (SourceTypeEnum.PURCHASE_ORDER.getCode().equals(sourceType)) {
             PurchaseOrderEntity info = scmTaskFeign.getPurchaseOrderById(sourceId);
             entity.setSourceCode(info.getCode());
-        } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(sourceCode)) {
+        } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(sourceType)) {
             SoReturnReceiveEntity info = soReturnReceiveService.getById(sourceId);
             entity.setSourceCode(info.getCode());
         }
@@ -901,6 +1038,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean batchFinish(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
@@ -937,6 +1075,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //异步发送通知
             qcResultService.sendQcResultMsg(ids);
+
+            //新品首批回填SKU的尺寸信息
+            updateProductPack(ids);
         }
         return result;
 

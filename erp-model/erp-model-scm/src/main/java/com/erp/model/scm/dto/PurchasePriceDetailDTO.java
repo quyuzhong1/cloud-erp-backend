@@ -91,7 +91,10 @@ public class PurchasePriceDetailDTO implements Serializable {
         @NotNull(message = "禁用状态不能为空")
         private Boolean disabled;
 
-
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     @Data
@@ -329,6 +332,11 @@ public class PurchasePriceDetailDTO implements Serializable {
          * false 启用
          */
         private Boolean disabled;
+
+        /**
+         * 备注
+         */
+        private String remark;
 
         private String kingdeeDetailId;
     }

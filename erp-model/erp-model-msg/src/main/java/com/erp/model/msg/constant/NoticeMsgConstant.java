@@ -19,4 +19,16 @@ public interface NoticeMsgConstant {
      * 质检结果消息内容
      */
     String QC_RESULT_CONTENT = "**采购订单：**%s\n**产品名称：**%s\n**质检人员：**%s\n**完成时间：**%s\n**处理措施：**%s";
+
+    /**
+     * 首次质检完成回填尺寸信息
+     */
+    String QC_BACK_FILL_PACK_HEAD = "通知：质检尺寸信息更新通知";
+
+    /**
+     * 首次质检完成回填尺寸信息
+     */
+    String QC_BACK_FILL_PACK_CONTENT = "**所属SKU：{}\n**更新数据：产品尺寸{}；箱规{}；净重{}；单箱数量{}\n**发生时间：{}";
+
+
 }

@@ -626,6 +626,10 @@ public class PoInstockDTO implements Serializable {
          */
         private String currency;
 
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
     }
 
     /**
