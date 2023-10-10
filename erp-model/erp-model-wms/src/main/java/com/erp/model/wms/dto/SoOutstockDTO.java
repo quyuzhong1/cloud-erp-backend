@@ -266,7 +266,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private LocalDate billDate;
 
-
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
     }
 
     /**
@@ -367,6 +370,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private List<String> trackNoList;
 
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
 
     }
 
@@ -447,6 +454,8 @@ public class SoOutstockDTO implements Serializable {
          * 销售员
          */
         private String sellerId;
+
+
 
         /**
          * 详情
@@ -826,6 +835,11 @@ public class SoOutstockDTO implements Serializable {
          */
         private LocalDate billDate;
 
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
+
         private List<SoOutstockDetailDTO.ViewDTO> detailList;
 
     }
@@ -936,6 +950,8 @@ public class SoOutstockDTO implements Serializable {
          */
         @NotNull(message = "出库日期不能为空")
         private LocalDate billDate;
+
+
 
         /**
          * 详情
