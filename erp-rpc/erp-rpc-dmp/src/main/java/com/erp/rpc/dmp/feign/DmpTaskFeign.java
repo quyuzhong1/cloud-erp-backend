@@ -3,7 +3,7 @@ package com.erp.rpc.dmp.feign;
 
 import cn.hutool.json.JSONObject;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 

@@ -7,8 +7,8 @@ import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.dto.CleanBaseDTO;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
+import com.common.business.dto.CleanBaseDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.DmpTransferInfoDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.*;
@@ -65,7 +65,7 @@ public class MQConsumerService {
     private MongoService mongoService;
 
     @Resource
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     @Resource
     private MQProducerService mqProducerService;
@@ -388,7 +388,7 @@ public class MQConsumerService {
         public void onMessage(KingdeeReturnOrderEntity ext) {
             log.info("监听金蝶B2C销售退货信息消息：entity={}", JSONUtil.toJsonStr(ext));
             //新增发送任务
-            dmpSyncTaskService.syncKingdeeReturnOrderToWms(ext);
+            dmpPullTaskService.syncKingdeeReturnOrderToWms(ext);
         }
     }
 
@@ -403,7 +403,7 @@ public class MQConsumerService {
         @Override
         public void onMessage(DmpSyncMqDTO.ParamDTO paramDTO) {
             log.info("监听到DMP同步任务回调：entity={}", JSONUtil.toJsonStr(paramDTO));
-            dmpSyncTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
+            dmpPullTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
         }
     }
 

@@ -1,7 +1,7 @@
 package com.erp.model.dmp.kingdee;
 
 import cn.hutool.core.annotation.Alias;
-import com.erp.model.dmp.dto.CleanBaseDTO;
+import com.common.business.dto.CleanBaseDTO;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;

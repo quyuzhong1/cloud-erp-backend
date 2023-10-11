@@ -1,6 +1,5 @@
 package com.erp.model.dmp.mabang;
 
-import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.mabang.item.MachiningDto;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
