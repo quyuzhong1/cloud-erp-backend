@@ -382,13 +382,6 @@
         dmp_order_item AS doit
         LEFT JOIN dmp_order_info AS doi ON doit.order_id = doi."id"
         <where>
-            <!--国内国外-->
-            <if test="params.rangeType == 1">
-                doi.country_name_en = 'China'
-            </if>
-            <if test="params.rangeType == 2">
-                doi.country_name_en != 'China'
-            </if>
             <include refid="conditionSql"/>
             <!--新品-->
             <if test="params.newSign != null">
