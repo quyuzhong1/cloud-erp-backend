@@ -227,39 +227,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getReturnOrgId());
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
-
-        // 产品属性为费用或服务的sku忽略库存计算
-        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
-        List<String> ignoreInventorySkuIds = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
-            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
-        }
-
-        // 增加库存数量验证（库存退货）
-        String sourceType = dto.getSourceType();
-        if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) {
-            String returnMode = dto.getReturnMode();
-            List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-            List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-            List<PurchaseReturnOrderDetailDTO.AddDTO> purchasePriceDetailList = dto.getPurchasePriceDetailList();
-            for(PurchaseReturnOrderDetailDTO.AddDTO detail : purchasePriceDetailList) {
-                if(ignoreInventorySkuIds.contains(detail.getSkuId())) {
-                    log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detail.getSkuId(), detail.getSkuNo());
-                    continue;
-                }
-                //获取sku信息
-                ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detail.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-                Integer usableQty = inventoryService.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), detail.getSkuId(), detail.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
-                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())
-                        && usableQty < detail.getReplenishQty()) {
-                    throw new ServiceException(ApiError.ERROR_99070, productDetailEntity.getSkuNo());
-                } else if (Objects.equals(returnMode, ReturnModeEnum.DEDUCTION.getCode())
-                        && usableQty < detail.getDeductAmountQty()) {
-                    throw new ServiceException(ApiError.ERROR_99070, productDetailEntity.getSkuNo());
-                }
-            }
-        }
-
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGTH, BusinessNoTypeEnum.CODE_CGTH.getCode()));
         //设置收货单主表
@@ -308,6 +275,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         return purchaseReturnOrderEntity.getId();
     }
 
+
     /**
      * 修改
      *
@@ -332,38 +300,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             long count = dto.getPurchasePriceDetailList().stream().filter(obj -> MathUtil.compareTo(obj.getReturnPrice(), MathUtil.ZERO) == MathUtil.ZERO).count();
             if (count > MathUtil.ZERO) {
                 throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL);
-            }
-        }
-
-        // 产品属性为费用或服务的sku忽略库存计算
-        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
-        List<String> ignoreInventorySkuIds = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
-            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
-        }
-
-        // 增加库存数量验证（库存退货）
-        String sourceType = dto.getSourceType();
-        if(!Objects.equals(sourceType, ReturnOrderSourceEnum.QC.getCode())) {
-            String returnMode = dto.getReturnMode();
-            List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
-            List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-            List<PurchaseReturnOrderDetailDTO.UpdateDTO> purchasePriceDetailList = dto.getPurchasePriceDetailList();
-            for (PurchaseReturnOrderDetailDTO.UpdateDTO detail : purchasePriceDetailList) {
-                if(ignoreInventorySkuIds.contains(detail.getSkuId())) {
-                    log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detail.getSkuId(), detail.getSkuNo());
-                    continue;
-                }
-                //获取sku信息
-                ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detail.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-                Integer usableQty = inventoryService.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), detail.getSkuId(), detail.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
-                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())
-                        && usableQty < detail.getReplenishQty()) {
-                    throw new ServiceException(ApiError.ERROR_99070, productDetailEntity.getSkuNo());
-                } else if (Objects.equals(returnMode, ReturnModeEnum.DEDUCTION.getCode())
-                        && usableQty < detail.getDeductAmountQty()) {
-                    throw new ServiceException(ApiError.ERROR_99070, productDetailEntity.getSkuNo());
-                }
             }
         }
 
@@ -651,6 +587,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         if (count != purchaseReturnOrderEntityList.size()) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+        //库存校验
+        checkInventoryQty(purchaseReturnOrderEntityList);
 
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -1508,12 +1446,15 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<String> unApproveIds = Lists.newArrayList();
         for (PurchaseReturnOrderEntity purchaseReturnOrder : purchaseReturnOrderEntityList) {
             String sourceType = purchaseReturnOrder.getSourceType();
-            if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) { // 库存退货
+            if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) {
+                // 库存退货
                 unApproveIds.add(purchaseReturnOrder.getId());
             } else { // 质检退货
-                String returnMode = purchaseReturnOrder.getReturnMode(); // 退货方式
+                String returnMode = purchaseReturnOrder.getReturnMode();
+                // 退货方式
                 /*
-                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())) { // 退货补货
+                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())) {
+                // 退货补货
                     unApproveIds.add(purchaseReturnOrder.getId());
                 }
                  */
@@ -1640,6 +1581,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 addDetailDTO.setPurchaseQty(detailEntity.getReplenishQty());
                 addDetailDTO.setPlanDeliveryDate(null);
                 addDetailDTO.setRemark(detailEntity.getRemark());
+                addDetailDTO.setCurrency(detailEntity.getCurrency());
+                addDetailDTO.setCurrencySymbol(detailEntity.getCurrencySymbol());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setDetails(addDetailList);
@@ -1909,5 +1852,58 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             throw new ServiceException(ApiError.ERROR_1020);
         }
         return this.submit(Arrays.asList(dto.getId()));
+    }
+    /**
+     * @description: 库存校验
+     * @author Will
+     * @date: 2023/9/22 10:12
+     * @param list
+     */
+    private void checkInventoryQty (List<PurchaseReturnOrderEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //采购退货明细信息
+        List<String> mainIdList = list.stream().map(PurchaseReturnOrderEntity::getId).collect(Collectors.toList());
+        List<PurchaseReturnOrderDetailEntity> detailList = purchaseReturnOrderDetailService.listByMainIds(mainIdList);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99008);
+        }
+        //仓库Id
+        List<String> returnWarehouseIdList = list.stream().map(PurchaseReturnOrderEntity::getReturnWarehouseId).collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(returnWarehouseIdList);
+
+
+        // 产品属性为费用或服务的sku忽略库存计算
+        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = Lists.newArrayList();
+        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
+            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        }
+
+        for (PurchaseReturnOrderDetailEntity detailEntity :  detailList) {
+            //采购退货信息
+            PurchaseReturnOrderEntity entity = list.stream().filter(obj -> obj.getId().equals(detailEntity.getId()) && !Objects.equals(obj.getSourceType(), SourceTypeEnum.QC_INFO.getCode())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
+                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detailEntity.getSkuId(), detailEntity.getSkuNo());
+                continue;
+            }
+            WarehouseEntity warehouseEntity = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getReturnWarehouseId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(warehouseEntity)) {
+                throw new ServiceException(ApiError.ERROR_99002);
+            }
+            String returnMode = entity.getReturnMode();
+            Integer usableQty = inventoryService.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), detailEntity.getSkuId(), detailEntity.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
+            if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())
+                    && usableQty < detailEntity.getReplenishQty()) {
+                throw new ServiceException(ApiError.ERROR_99070);
+            } else if (Objects.equals(returnMode, ReturnModeEnum.DEDUCTION.getCode())
+                    && usableQty < detailEntity.getDeductAmountQty()) {
+                throw new ServiceException(ApiError.ERROR_99070);
+            }
+        }
     }
 }

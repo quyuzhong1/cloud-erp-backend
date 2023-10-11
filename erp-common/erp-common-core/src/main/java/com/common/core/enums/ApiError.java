@@ -691,7 +691,7 @@ public enum ApiError implements Serializable {
     ERROR_99039(99039,"库存交易当前仓和目的仓不能一样"),
     ERROR_99040(99040,"库存交易流水不存在或已经反审核，无法反审核"),
     ERROR_99041(99041,"【%s】下推的数量合计不能大于收货数量"),
-    ERROR_99042(99042,"已下推质检单，不能反审核"),
+    ERROR_99042(99042,"已下推质检单【{}】，不能反审核"),
     ERROR_99043(99043,"未找到调拨申请单"),
     ERROR_99044(99044,"未找到调拨申请明细"),
     ERROR_99045(99045,"调拨申请单已下推直接调拨单，不支持反审核"),
@@ -748,7 +748,7 @@ public enum ApiError implements Serializable {
     STOCK_FREEZE_NOT_ALLOW(99094, "仓库【{}】库位【{}】 SKU【{}】 【{}】库存【{}】中, 无法操作"),
     ERROR_SUB_CHILD_LOCATION_BLANK(99088,"委外订单子SKU【{}】仓位不能为空"),
     // 已下推退货入库单不能反审核
-    ERROR_RETURN_ORDER_PUSHED(99089, "已下推退货入库单，不能反审核"),
+    ERROR_RETURN_ORDER_PUSHED(99089, "已下推退货入库单【{}】，不能反审核"),
     ERROR_WAREHOUSE_NOT_EXIST_ORG(99090, "仓库【{}】下未发现库存组织"),
     ERROR_SO_RETURN_INSTOCK_NOT_GENERATE(99090,"退货入库单【{}】未审核通过，不支持下推"),
     ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL(99091,"采购退货单退货扣款类型退款单价必填"),

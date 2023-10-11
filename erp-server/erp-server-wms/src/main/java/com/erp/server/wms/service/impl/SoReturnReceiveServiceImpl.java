@@ -6,11 +6,9 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -32,7 +30,6 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnReasonEnum;
@@ -45,7 +42,6 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.SoReturnReceiveMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -610,7 +606,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
+    public BatchResultDTO disApprove(List<String> ids) {
         List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -625,15 +621,17 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //TODO 待加审核流程
 
         //下推质检单不能反审核
-        List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceIds(ids);
-        if (CollectionUtils.isNotEmpty(qcBySourceId)) {
-            throw new ServiceException(ApiError.ERROR_99042);
+        List<QcInfoEntity> qcList = qcInfoService.listQCBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(qcList)) {
+            String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_99042,codes);
         }
 
         //下推退货入库单不能反审核
         List<SoReturnInstockEntity> soReturnInstockEntityList = soReturnInstockService.listBySourceIds(ids).stream().filter(req -> req.getInvalidStatus().equals(InvalidStatusEnum.NOT_VOIDED.getStatus())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(soReturnInstockEntityList)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_PUSHED);
+            String codes = soReturnInstockEntityList.stream().map(SoReturnInstockEntity::getCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_PUSHED,codes);
         }
 
         //修改状态为待提交
@@ -644,7 +642,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "反审核操作");
-        return Boolean.TRUE;
+
+        return BatchResultDTO.success(entityList.get(0).getId(),entityList.get(0).getCode(),"退货签收单反审核");
     }
 
     @Override
@@ -905,6 +904,50 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Override
     public List<SoReturnReceiveEntity> listByIds(List<String> ids) {
         return lambdaQuery().in(SoReturnReceiveEntity::getId, ids).list();
+    }
+
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pdaDisApprove(List<String> ids) {
+        List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //已审核支持反审核
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_99003);
+        }
+        //TODO 待加审核流程
+
+        //下推质检单不能反审核
+        List<QcInfoEntity> qcList = qcInfoService.listQCBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(qcList)) {
+            String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_99042,codes);
+        }
+
+        //下推退货入库单不能反审核
+        List<SoReturnInstockEntity> soReturnInstockEntityList = soReturnInstockService.listBySourceIds(ids).stream().filter(req -> req.getInvalidStatus().equals(InvalidStatusEnum.NOT_VOIDED.getStatus())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(soReturnInstockEntityList)) {
+            String codes = soReturnInstockEntityList.stream().map(SoReturnInstockEntity::getCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_PUSHED,codes);
+        }
+
+        //修改状态为待提交
+        lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .in(SoReturnReceiveEntity::getId, ids)
+                .update();
+
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("反审核了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "反审核操作");
+
+        return Boolean.TRUE;
     }
 
     @Override

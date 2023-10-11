@@ -465,7 +465,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             addDTO.setPurchaseUserId(value.get(0).getPurchaseUserId());
 
             //付款条件
-            String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(value.get(0).getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
+            String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(value.get(0).getSupplierId()) && StringUtils.isNotBlank(obj.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
 
 
             //采购订单供应商信息
@@ -724,13 +724,20 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         
         //查询bom信息填充子件信息
         List<String> skuIds = list.stream().map(PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO::getSkuId).collect(Collectors.toList());
-
-        //产品信息
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-
         List<BomChildrenSkuDTO> bomChildList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         if (CollectionUtils.isEmpty(bomChildList)) {
             throw new ServiceException(ApiError.ERROR_98093);
+        }
+        List<String> childSkuList = bomChildList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
+        skuIds.addAll(childSkuList);
+        //产品信息
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        //供应商信息
+        List<String> supplierIdList = skuList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSupplierId())).map(SkuVO::getSupplierId).collect(Collectors.toList());
+        List<SupplierEntity> supplierList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(supplierIdList)) {
+            supplierList = supplierService.listByIds(supplierIdList);
         }
         Integer index = MathUtil.ONE;
         List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO> resultList = new ArrayList<>();
@@ -746,6 +753,9 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //产品信息
             String supplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
             viewDTO.setSupplierId(supplierId);
+            //付款条件
+            String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(supplierId) && StringUtils.isNotBlank(obj.getPaymentCondition())).map(SupplierEntity::getPaymentCondition).findFirst().orElse("");
+            viewDTO.setPaymentCondition(paymentCondition);
 
             //可下推数量
             viewDTO.setToPushdownQty(viewDTO.getQty() - pushdownQty);

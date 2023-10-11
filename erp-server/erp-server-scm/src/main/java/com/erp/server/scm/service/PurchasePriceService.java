@@ -188,4 +188,13 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @return
      */
     Boolean disApprove(List<String> ids);
+    /**
+     * @description: 更新明细备注
+     * @author Will
+     * @date: 2023/9/21 15:21
+     * @param ids
+     * @param remark
+     * @return Boolean
+     */
+    Boolean updateDetailRemark(List<String> ids,String remark);
 }

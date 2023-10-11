@@ -1,17 +1,15 @@
 package com.erp.model.dmp.gyy;
 
 
-import com.erp.model.dmp.dto.CleanBaseDTO;
+import com.common.business.dto.CleanBaseDTO;
 import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
 import com.erp.model.dmp.gyy.bean.DeliveryStatusInfoBean;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data

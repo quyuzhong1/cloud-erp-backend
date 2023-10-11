@@ -779,6 +779,17 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         return resultList;
     }
 
+    @Override
+    public void updateDetailRemark(List<String> ids, String remark) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return ;
+        }
+        this.lambdaUpdate()
+                .in(PurchasePriceDetailEntity::getId,ids)
+                .set(PurchasePriceDetailEntity::getRemark,remark)
+                .update(new PurchasePriceDetailEntity());
+    }
+
 
     @Override
     public Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> listPurchaseTaxPriceView(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {

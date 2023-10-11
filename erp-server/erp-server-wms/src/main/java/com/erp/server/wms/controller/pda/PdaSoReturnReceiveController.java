@@ -10,7 +10,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
-import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.server.wms.service.SoReturnReceiveService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -202,7 +201,7 @@ public class PdaSoReturnReceiveController extends BaseController {
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soReturnReceiveService.disApprove(dto.getIds());
+        Boolean flag = soReturnReceiveService.pdaDisApprove(dto.getIds());
         return flag == true ? success() : failure();
     }
 

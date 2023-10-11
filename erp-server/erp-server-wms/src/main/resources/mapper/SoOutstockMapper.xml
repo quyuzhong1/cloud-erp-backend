@@ -30,6 +30,7 @@
         so.seller_name,
         so.customer_id,
         so.bill_date,
+        so.customer_order_no,
         sod.sku_id,
         sod.sku_no,
         sod.plan_qty,
@@ -48,6 +49,9 @@
         </if>
         <if test="params.code !=null and params.code!=''">
             AND so.code ILIKE concat('%', #{params.code} ,'%')
+        </if>
+        <if test="params.customerOrderNo != null and params.customerOrderNo != ''">
+            AND so.customer_order_no ILIKE concat('%', #{params.customerOrderNo} ,'%')
         </if>
         <if test="params.soCode !=null and params.soCode!=''">
             AND so.so_code ILIKE concat('%', #{params.soCode} ,'%')
@@ -144,6 +148,7 @@
            so.seller_name,
            so.customer_id,
            so.bill_date,
+           so.customer_order_no,
            sod.sku_id,
            sod.sku_no,
            sod.plan_qty,
@@ -170,6 +175,9 @@
                 </if>
                 <if test="params.code !=null and params.code!=''">
                     AND so.code ILIKE concat('%', #{params.code} ,'%')
+                </if>
+                <if test="params.customerOrderNo != null and params.customerOrderNo != ''">
+                    AND so.customer_order_no ILIKE concat('%', #{params.customerOrderNo} ,'%')
                 </if>
                 <if test="params.soCode !=null and params.soCode!=''">
                     AND so.so_code ILIKE concat('%', #{params.soCode} ,'%')
