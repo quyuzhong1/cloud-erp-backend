@@ -131,7 +131,31 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getSupplierId());
         //供应商编码
         resultMap.put("supplierCode", supplierEntity.getCode());
+        //收料员
+        String receiveUserId = entity.getReceiveUserId();
+        if (StringUtils.isNotBlank(receiveUserId)) {
+            //获取用户部门id
+            SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(receiveUserId);
+            //收料部门
+            if (ObjectUtil.isEmpty(departmentDTO)) {
+                resultMap.put("receiveDept", departmentDTO.getCode());
+            } else {
+                resultMap.put("receiveDept", "");
+            }
+        }
 
+        //采购员
+        String purchaseUserId = entity.getPurchaseUserId();
+        if (StringUtils.isNotBlank(purchaseUserId)) {
+            //获取用户部门id
+            SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(purchaseUserId);
+            //采购部门
+            if (ObjectUtil.isEmpty(departmentDTO)) {
+                resultMap.put("purchaseDept", departmentDTO.getCode());
+            } else {
+                resultMap.put("purchaseDept", "");
+            }
+        }
 
 /*        //收料员
         String receiveUserId = entity.getReceiveUserId();
