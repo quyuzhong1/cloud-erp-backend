@@ -2,6 +2,7 @@ package com.erp.server.sys.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.SysDepartmentTreeDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
@@ -14,7 +15,6 @@ import java.util.List;
 
 /**
  * @Classname SysDeptFeignController
-
  * @Date 2022-12-28 15:18
  * @Created by yl
  */
@@ -57,13 +57,14 @@ public class SysDeptFeignController extends BaseController {
         return dto;
     }
 
-     /**
-      * 根据用户id 集合获取用户信息 部门信息
-      * @author yl
-      * @date 2023-06-15 16:55
-      * @param userIdList
-      * @return java.util.List<com.erp.model.sys.dto.SysDepartmentUserNumberDTO>
-      */
+    /**
+     * 根据用户id 集合获取用户信息 部门信息
+     *
+     * @param userIdList
+     * @return java.util.List<com.erp.model.sys.dto.SysDepartmentUserNumberDTO>
+     * @author yl
+     * @date 2023-06-15 16:55
+     */
     @PostMapping("/listDeptUserByUserIdList")
     public List<SysDepartmentUserNumberDTO> listDeptUserByUserIdList(@RequestBody List<String> userIdList) {
         List<SysDepartmentUserNumberDTO> list = sysDepartmentUserService.listDeptUserByUserIdList(userIdList);
@@ -71,11 +72,11 @@ public class SysDeptFeignController extends BaseController {
     }
 
     /**
+     * @param codeList
+     * @return List<SysDepartmentDTO>
      * @description: 根据编码集合查询
      * @author Will
      * @date: 2023/7/5 18:16
-     * @param codeList
-     * @return List<SysDepartmentDTO>
      */
     @PostMapping("/listDeptByCodeList")
     public List<SysDepartmentDTO> listDeptByCodeList(@RequestBody List<String> codeList) {
@@ -85,6 +86,7 @@ public class SysDeptFeignController extends BaseController {
 
     /**
      * 根据用户id 获取到部门负责人
+     *
      * @param userIdList
      * @return
      */
@@ -97,14 +99,26 @@ public class SysDeptFeignController extends BaseController {
 
     /**
      * 根据部门名称查询最高级别部门及下级
-     * @author Will
-     * @date: 2023/9/20 18:54
+     *
      * @param deptNameList
      * @return List<String>
+     * @author Will
+     * @date: 2023/9/20 18:54
      */
     @PostMapping("/listSameLevelDeptIdList")
     public List<SysDepartmentDTO> listSameLevelDeptIdList(@RequestBody List<String> deptNameList) {
         List<SysDepartmentDTO> list = departmentService.listSameLevelDeptIdList(deptNameList);
         return list;
+    }
+
+    /**
+     * 根据父级获取全量子集
+     *
+     * @param deptId
+     * @return
+     */
+    @GetMapping("/getDeptByParentId")
+    public List<SysDepartmentTreeDTO> getDeptByParentId(@RequestParam("deptId") String deptId) {
+        return departmentService.getDeptByParentId(deptId);
     }
 }

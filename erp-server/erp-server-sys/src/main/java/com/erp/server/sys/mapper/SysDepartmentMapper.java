@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * 部门表
- * 
+ *
  * @author yl
  * @email ylstrive@gmail.com
  * @date 2022-07-11 14:05:47
@@ -24,12 +24,21 @@ public interface SysDepartmentMapper extends BaseMapper<SysDepartmentEntity> {
     List<SysDepartmentTreeDTO> findTree();
 
     List<SysDepartmentDTO> getDeptList();
+
     /**
+     * @param deptNames
+     * @return List<SysUserDeptDTO>
      * @description: 根据部门名称查询上级领导
      * @author Will
      * @date: 2023/1/17 10:09
-     * @param deptNames
-     * @return List<SysUserDeptDTO>
      */
     List<SysUserDeptDTO> getByDeptNames(@Param("deptNames") List<String> deptNames);
+
+    /**
+     * 根据部门获取下级全量子集
+     *
+     * @param deptId
+     * @return
+     */
+    List<SysDepartmentTreeDTO> getDeptByParentId(@Param("deptId") String deptId);
 }

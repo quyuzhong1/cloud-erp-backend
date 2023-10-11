@@ -23,6 +23,12 @@ public class SalesPriceRangeVO {
     private String id;
 
     /**
+     * 部门id
+     */
+    private String deptId;
+
+
+    /**
      * 1国内 2国外标识
      */
     private Integer rangeType;
@@ -63,8 +69,9 @@ public class SalesPriceRangeVO {
      */
     private String salesQuantityRate;
 
-    public SalesPriceRangeVO(String id, int rangeType, int startValue, int endValue) {
+    public SalesPriceRangeVO(String id, String deptId,int rangeType, int startValue, int endValue) {
         this.id = id;
+        this.deptId = deptId;
         this.rangeType = rangeType;
         this.startValue = startValue;
         this.endValue = endValue;
