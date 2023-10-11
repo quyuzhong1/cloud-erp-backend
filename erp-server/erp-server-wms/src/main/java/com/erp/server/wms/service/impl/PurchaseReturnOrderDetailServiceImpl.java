@@ -164,6 +164,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                     purchaseReturnOrderDetailEntity.setRemark(addDTO.getRemark());
                     purchaseReturnOrderDetailEntity.setPurchaseOrderDetailId(addDTO.getPurchaseOrderDetailId());
                     purchaseReturnOrderDetailEntity.setCurrency(addDTO.getCurrency());
+                    purchaseReturnOrderDetailEntity.setCurrencySymbol(addDTO.getCurrencySymbol());
                     purchaseReturnOrderDetailEntity.setSourceDetailId(addDTO.getSourceDetailId());
                     purchaseReturnOrderDetailEntity.setWarehouseLocation(addDTO.getWarehouseLocation());
                     purchaseReturnOrderDetailEntity.setWarehouseLocation(addDTO.getWarehouseLocation());
