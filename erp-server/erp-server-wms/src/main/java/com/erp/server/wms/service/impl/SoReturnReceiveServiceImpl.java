@@ -630,7 +630,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //下推退货入库单不能反审核
         List<SoReturnInstockEntity> soReturnInstockEntityList = soReturnInstockService.listBySourceIds(ids).stream().filter(req -> req.getInvalidStatus().equals(InvalidStatusEnum.NOT_VOIDED.getStatus())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(soReturnInstockEntityList)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_PUSHED);
+            String codes = soReturnInstockEntityList.stream().map(SoReturnInstockEntity::getCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_PUSHED,codes);
         }
 
         //修改状态为待提交
@@ -933,7 +934,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //下推退货入库单不能反审核
         List<SoReturnInstockEntity> soReturnInstockEntityList = soReturnInstockService.listBySourceIds(ids).stream().filter(req -> req.getInvalidStatus().equals(InvalidStatusEnum.NOT_VOIDED.getStatus())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(soReturnInstockEntityList)) {
-            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_PUSHED);
+            String codes = soReturnInstockEntityList.stream().map(SoReturnInstockEntity::getCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_RETURN_ORDER_PUSHED,codes);
         }
 
         //修改状态为待提交
