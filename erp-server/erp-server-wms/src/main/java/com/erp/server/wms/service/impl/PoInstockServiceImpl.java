@@ -770,7 +770,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     throw new ServiceException(1, String.format("SKU【%s】未找到对应数量", detail.getSkuNo()));
                 }
                 if (MathUtil.compareTo(detail.getRealityReturnQty(), stockInQty) > 0) {
-                    throw new ServiceException(1, String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), stockInQty));2
+                    throw new ServiceException(1, String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), stockInQty));
                 }
                 BeanMapperUtils.copy(detail, addDetailDTO);
                 addDetailDTO.setPurchaseOrderDetailId(detail.getPurchaseOrderDetailId());
