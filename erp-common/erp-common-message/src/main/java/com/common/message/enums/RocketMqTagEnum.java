@@ -284,6 +284,11 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_STOCKTAKING_LOSS_TAG(1027, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_stocktaking_loss_tag"),
 
+    /**
+     *采购收货单同步到金蝶
+     */
+    KINGDEE_PO_RECEIVE_TAG(1028, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_po_receive_tag"),
+
 
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
