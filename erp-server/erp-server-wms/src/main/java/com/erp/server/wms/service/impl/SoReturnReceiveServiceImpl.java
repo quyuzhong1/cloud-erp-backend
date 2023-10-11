@@ -621,9 +621,10 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //TODO 待加审核流程
 
         //下推质检单不能反审核
-        List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceIds(ids);
-        if (CollectionUtils.isNotEmpty(qcBySourceId)) {
-            throw new ServiceException(ApiError.ERROR_99042);
+        List<QcInfoEntity> qcList = qcInfoService.listQCBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(qcList)) {
+            String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_99042,codes);
         }
 
         //下推退货入库单不能反审核
@@ -923,9 +924,10 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //TODO 待加审核流程
 
         //下推质检单不能反审核
-        List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceIds(ids);
-        if (CollectionUtils.isNotEmpty(qcBySourceId)) {
-            throw new ServiceException(ApiError.ERROR_99042);
+        List<QcInfoEntity> qcList = qcInfoService.listQCBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(qcList)) {
+            String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_99042,codes);
         }
 
         //下推退货入库单不能反审核

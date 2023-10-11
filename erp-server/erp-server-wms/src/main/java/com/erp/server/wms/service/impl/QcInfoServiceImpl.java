@@ -650,7 +650,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             if (ObjectUtils.isEmpty(qcProductEntity)) {
                 throw new ServiceException(ApiError.ERROR_99015);
             }
-
+            long count = productPactList.stream().filter(obj -> obj.getSkuId().equals(qcProductEntity.getSkuId())).count();
+            if (count > 0) {
+                continue;
+            }
             ProductPackDTO productPackDTO = new ProductPackDTO();
             productPackDTO.setSkuId(qcProductEntity.getSkuId());
             productPackDTO.setSkuNo(qcProductEntity.getSkuNo());
@@ -659,13 +662,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             productPackDTO.setBoxQty(new BigDecimal(qcProductEntity.getBoxQty()));
             productPackDTO.setBoxWeight(qcProductEntity.getBoxWeight());
             productPackDTO.setNetWeight(qcProductEntity.getProductNetWeight());
-            plmTaskFeign.backFillPackaging(productPackDTO);
-
             productPactList.add(productPackDTO);
         }
         if (CollectionUtils.isEmpty(productPactList)){
             return;
         }
+        //plm回填信息
+        plmTaskFeign.backFillPackaging(productPactList);
         //异步发送通知
         qcResultService.sendQcBackFillPackaging(productPactList);
     }
