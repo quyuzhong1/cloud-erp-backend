@@ -1650,4 +1650,15 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         }
         return list;
     }
+
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+        return this.lambdaUpdate()
+                .eq(WarehouseReceiveEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), WarehouseReceiveEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), WarehouseReceiveEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), WarehouseReceiveEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), WarehouseReceiveEntity::getSyncOperate, syncOperate)
+                .update();
+    }
 }
