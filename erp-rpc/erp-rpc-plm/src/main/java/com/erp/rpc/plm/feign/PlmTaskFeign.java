@@ -374,5 +374,5 @@ public interface PlmTaskFeign {
      * 回填产品包装信息
      */
     @PostMapping("/feign/productPack/backFillPackaging")
-    void backFillPackaging(@RequestBody ProductPackDTO productPackDTO);
+    void backFillPackaging(@RequestBody List<ProductPackDTO>  productPackList);
 }
