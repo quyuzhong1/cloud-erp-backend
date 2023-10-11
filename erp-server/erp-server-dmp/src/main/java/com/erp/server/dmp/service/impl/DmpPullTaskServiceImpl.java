@@ -7,26 +7,31 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.common.business.dto.DmpSyncMqDTO;
+import com.erp.model.dmp.entity.DmpFieldMapEntity;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.server.dmp.mapper.DmpPullTaskMapper;
 import com.erp.server.dmp.service.DmpPullTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,10 +87,11 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
 
     /**
      * 新增同步金蝶退货单到wms退货入库单的任务
-     * @Author Luo_WG
-     * @Date 2023/7/4 19:48
+     *
      * @param entity
      * @return void
+     * @Author Luo_WG
+     * @Date 2023/7/4 19:48
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -113,28 +119,78 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
 
     @Override
     public List<String> listKingdeeCode(Map<String, Object> conditon) {
-        List<String> result= new ArrayList<>();
+        List<String> result = new ArrayList<>();
 
         LambdaQueryWrapper<DmpPullTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(DmpPullTaskEntity::getSourceCode);
-        queryWrapper.eq(DmpPullTaskEntity::getSourcePlatformName,"金蝶云星空")
-                .eq(DmpPullTaskEntity::getTargetPlatformName,"自研ERP")
-                .eq(null!=conditon.get("id"), DmpPullTaskEntity::getId, conditon.get("id"))
-                .eq(null!=conditon.get("is_deleted"), DmpPullTaskEntity::getIsDeleted, conditon.get("is_deleted"))
-                .eq(null!=conditon.get("source_type"), DmpPullTaskEntity::getSourceType, conditon.get("source_type"))
-                .eq(null!=conditon.get("source_code"), DmpPullTaskEntity::getSourceCode, conditon.get("source_code"))
-                .eq(null!=conditon.get("source_id"), DmpPullTaskEntity::getSourceCode, conditon.get("source_id"))
-                .eq(null!=conditon.get("status"), DmpPullTaskEntity::getStatus, conditon.get("status"))
-                .eq(null!=conditon.get("mq_tag"), DmpPullTaskEntity::getMqTag, conditon.get("mq_tag"))
-                .like(null!=conditon.get("return_msg"), DmpPullTaskEntity::getReturnMsg, conditon.get("return_msg"))
+        queryWrapper.eq(DmpPullTaskEntity::getSourcePlatformName, "金蝶云星空")
+                .eq(DmpPullTaskEntity::getTargetPlatformName, "自研ERP")
+                .eq(null != conditon.get("id"), DmpPullTaskEntity::getId, conditon.get("id"))
+                .eq(null != conditon.get("is_deleted"), DmpPullTaskEntity::getIsDeleted, conditon.get("is_deleted"))
+                .eq(null != conditon.get("source_type"), DmpPullTaskEntity::getSourceType, conditon.get("source_type"))
+                .eq(null != conditon.get("source_code"), DmpPullTaskEntity::getSourceCode, conditon.get("source_code"))
+                .eq(null != conditon.get("source_id"), DmpPullTaskEntity::getSourceCode, conditon.get("source_id"))
+                .eq(null != conditon.get("status"), DmpPullTaskEntity::getStatus, conditon.get("status"))
+                .eq(null != conditon.get("mq_tag"), DmpPullTaskEntity::getMqTag, conditon.get("mq_tag"))
+                .like(null != conditon.get("return_msg"), DmpPullTaskEntity::getReturnMsg, conditon.get("return_msg"))
         ;
-        queryWrapper.last(null!=conditon.get("lastSql")," and " + conditon.get("lastSql").toString());
-        List<DmpPullTaskEntity> queryResult=this.list(queryWrapper);
+        queryWrapper.last(null != conditon.get("lastSql"), " and " + conditon.get("lastSql").toString());
+        List<DmpPullTaskEntity> queryResult = this.list(queryWrapper);
 
-        if(CollectionUtil.isNotEmpty(queryResult)) {
-            queryResult.stream().forEach(item-> result.add(item.getSourceCode()));
+        if (CollectionUtil.isNotEmpty(queryResult)) {
+            queryResult.stream().forEach(item -> result.add(item.getSourceCode()));
         }
 
         return result;
+    }
+
+    @Override
+    public void syncOmsOrderToDmp(DmpSyncMqDTO dmpSyncMqDTO) {
+        //统一处理数据映射问题，并合并到 dmp_order_info
+        SoInfoEntity soInfoEntity = JSONObject.parseObject(dmpSyncMqDTO.getMqData(), SoInfoEntity.class);
+        //字段映射
+        DmpOrderInfoEntity entity = new DmpOrderInfoEntity();
+        //订单入库
+
+        //更新推送状态
+        this.updateSyncInfo(dmpSyncMqDTO.getDmpSyncTaskId(), SyncStatusEnum.SUCCESS_SYNC.getCode(), null);
+    }
+
+    /**
+     * 字段映射
+     *
+     * @param entity
+     * @param soInfoEntity
+     */
+    private static void orderEntityMapping(DmpOrderInfoEntity entity, SoInfoEntity soInfoEntity) {
+        List<DmpFieldMapEntity> mapEntities = new ArrayList<>();
+        mapEntities.add(new DmpFieldMapEntity().setFieldName("id").setFieldType("String").setOwsFieldName("id").setOwsFieldType("String"));
+        mapEntities.add(new DmpFieldMapEntity().setFieldName("shopNo").setFieldType("String").setOwsFieldName("code").setOwsFieldType("String"));
+        mapEntities.add(new DmpFieldMapEntity().setFieldName("shopName").setFieldType("String").setOwsFieldName("sellerName").setOwsFieldType("String"));
+        mapEntities.forEach(dmpFieldMapEntity -> {
+            Class<?> soInfoEntityClass = SoInfoEntity.class;
+            Class<?> dmpOrderInfoEntityClass = DmpOrderInfoEntity.class;
+            try {
+                Field sourceField = dmpOrderInfoEntityClass.getDeclaredField(dmpFieldMapEntity.getFieldName());
+                sourceField.setAccessible(true);
+                Field targetField = soInfoEntityClass.getDeclaredField(dmpFieldMapEntity.getOwsFieldName());
+                targetField.setAccessible(true);
+                targetField.set(dmpFieldMapEntity.getOwsFieldName(), sourceField.get(dmpFieldMapEntity.getFieldName()));
+                BeanUtils.copyProperties(soInfoEntity, entity);
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public static void main(String[] args) {
+        DmpOrderInfoEntity entity = new DmpOrderInfoEntity();
+        entity.setId("id1");
+        entity.setShopNo("shopNo");
+        entity.setShopName("shopName");
+        SoInfoEntity soInfoEntity = new SoInfoEntity();
+        orderEntityMapping(entity,soInfoEntity);
     }
 }

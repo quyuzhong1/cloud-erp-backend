@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
@@ -15,9 +16,11 @@ import java.time.LocalDateTime;
  * @author Will
  * @date: 2023/2/21 9:18
  */
+
 @Data
 @NoArgsConstructor
 @Accessors(chain = true)
+@EqualsAndHashCode(callSuper = true)
 public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     /**
      * 主键

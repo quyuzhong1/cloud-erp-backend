@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -12,6 +13,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -28,8 +30,11 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
@@ -53,6 +58,7 @@ import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -81,6 +87,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -142,6 +149,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
+    @Resource
+    private DmpMqFeign dmpMqFeign;
 
     @Value("${so.contract.company}")
     private String company;
@@ -169,8 +178,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Autowired
     private CustomerInvoiceService customerInvoiceService;
-    @Resource
-    private OrderSyncInfoService orderSyncInfoService;
 
     /**
      * 添加销售订单
@@ -1006,7 +1013,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             //审核通过同步mq
-            list.forEach(obj -> orderSyncInfoService.asyncOrderToDmp(obj));
+            list.forEach(obj -> this.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -2518,10 +2525,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     /**
      * 获取到折扣额大于0的历史数据
-     * @author yl
-     * @date 2023-09-28 10:31
+     *
      * @param
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.ListDTO>
+     * @author yl
+     * @date 2023-09-28 10:31
      */
     @Override
     public List<SoInfoDTO.ListDTO> listRepairHistoryDb() {
@@ -2605,5 +2613,28 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         skuCostProfitResult = SoUtils.calCostProfit(purchasePrice, costParam, skuCostProfitResult);
         skuCostProfitResult.setExchangeRate(rate);
         return skuCostProfitResult;
+    }
+
+    /**
+     * 推送订单到mq
+     *
+     * @param soInfoEntity
+     * @param syncOperate
+     */
+    @Override
+    public void syncOrderToDmp(SoInfoEntity soInfoEntity, String syncOperate) {
+        DmpPushTaskFeignDTO dto = new DmpPushTaskFeignDTO()
+                .setMqData(JSON.toJSONString(soInfoEntity))
+                .setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC)
+                .setMqTag(RocketMqTagEnum.KINGDEE_SO_INFO_TAG.getName())
+                .setSourceCode(soInfoEntity.getCode())
+                .setSourceId(soInfoEntity.getId())
+                .setSourceType(SourceTypeEnum.SO_INFO.getCode())
+                .setSourcePlatformName(PlatformEnum.ERP_OMS.getDesc())
+                .setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc())
+                .setSyncOperate(syncOperate);
+        log.info("推送消息：{}", dto.toString());
+        //异步推送mq
+        CompletableFuture.supplyAsync(() -> dmpMqFeign.sendMqAndSaveTask(dto));
     }
 }

@@ -1,7 +1,7 @@
 package com.erp.rpc.dmp.feign;
 
 
-import com.common.business.dto.DmpSyncTaskDTO;
+import com.common.business.dto.DmpPushTaskFeignDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,6 +22,6 @@ public interface DmpMqFeign {
      * @return
      */
     @PostMapping("send/mq/save/task")
-    Boolean sendMqAndSaveTask(@RequestBody @Valid DmpSyncTaskDTO dto);
+    Boolean sendMqAndSaveTask(@RequestBody @Valid DmpPushTaskFeignDTO dto);
 
 }

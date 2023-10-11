@@ -3,12 +3,12 @@ package com.erp.server.dmp.service.mq;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.dto.CleanBaseDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.common.business.dto.CleanBaseDTO;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.DmpTransferInfoDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.*;
@@ -414,12 +414,12 @@ public class MQConsumerService {
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_ORDER_TO_DMP_TOPIC,
             selectorExpression = "approved_order_to_dmp_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-approved_order_to_dmp_consumer")
-    public class ConsumerApprovedOrderToDmp implements RocketMQListener<DmpSyncMqDTO.ParamDTO> {
+    public class ConsumerApprovedOrderToDmp implements RocketMQListener<DmpSyncMqDTO> {
         @Override
-        public void onMessage(DmpSyncMqDTO.ParamDTO paramDTO) {
-            log.info("监听到订单审核通过同步任务回调：entity={}", JSONUtil.toJsonStr(paramDTO));
-            //TODO  处理订单同步
-//            dmpSyncTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
+        public void onMessage(DmpSyncMqDTO dmpSyncMqDTO) {
+            log.info("监听到订单审核通过同步任务回调：entity={}", JSONUtil.toJsonStr(dmpSyncMqDTO));
+            //处理订单同步
+            dmpPullTaskService.syncOmsOrderToDmp(dmpSyncMqDTO);
         }
     }
 
