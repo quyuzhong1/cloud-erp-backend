@@ -399,6 +399,10 @@ public enum RocketMqTagEnum {
      */
     SYNC_KINGDEE_RETURN_ORDER_TO_WMS_TAG(6004,RocketMqTagEnum.SYNC_WMS,"sync_kingdee_return_order_to_wms_tag"),
 
+    /**
+     * 金蝶汇率列表同步到DMP
+     */
+    SYNC_KINGDEE_EXCHANGE_RATE_TO_WMS_TAG(6005,RocketMqTagEnum.SYNC_DMP,"sync_kingdee_exchange_rate_to_wms_tag"),
     //---------------------------------马帮数据同步code从7001开始------------------------------------------------------------------------------------------
 
     /**
