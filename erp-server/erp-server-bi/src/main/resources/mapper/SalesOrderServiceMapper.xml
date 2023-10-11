@@ -4933,6 +4933,13 @@
                 #{shopName}
             </foreach>
         </if>
+        <!-- 部门 -->
+        <if test="params.department!=null and params.department.size>0">
+            AND o.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
         <!-- 用户id -->
         <if test="params.userId!=null and params.userId.size>0">
             AND o.charge_id IN
