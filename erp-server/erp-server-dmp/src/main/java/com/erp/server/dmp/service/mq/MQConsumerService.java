@@ -18,8 +18,6 @@ import com.erp.model.dmp.gyy.*;
 import com.erp.model.dmp.kingdee.*;
 import com.erp.model.dmp.mabang.*;
 import com.erp.model.plm.dto.NewProductDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -409,6 +407,21 @@ public class MQConsumerService {
         }
     }
 
+    /**
+     * 订单审核通过后同步dmp
+     */
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_ORDER_TO_DMP_TOPIC,
+            selectorExpression = "approved_order_to_dmp_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-approved_order_to_dmp_consumer")
+    public class ConsumerApprovedOrderToDmp implements RocketMQListener<DmpSyncMqDTO.ParamDTO> {
+        @Override
+        public void onMessage(DmpSyncMqDTO.ParamDTO paramDTO) {
+            log.info("监听到订单审核通过同步任务回调：entity={}", JSONUtil.toJsonStr(paramDTO));
+            //TODO  处理订单同步
+//            dmpSyncTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
+        }
+    }
 
     private <T extends CleanBaseDTO> void finishClean(MapUtil mapUtil, OrderMongoDTO updateDto,String tableName, Class<T> clazz) {
         List<T> mongoData = mongoService.findMongoData(updateDto, 0, 0, tableName, clazz);

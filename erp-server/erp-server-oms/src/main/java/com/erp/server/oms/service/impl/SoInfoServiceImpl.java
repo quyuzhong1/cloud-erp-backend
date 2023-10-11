@@ -169,6 +169,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Autowired
     private CustomerInvoiceService customerInvoiceService;
+    @Resource
+    private OrderSyncInfoService orderSyncInfoService;
 
     /**
      * 添加销售订单
@@ -934,7 +936,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         //审核流程
         approveProcess(list, dto);
-
         //添加日志
         List<Pair<String, String>> pairList = list.stream().
                 map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -1004,6 +1005,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            //审核通过同步mq
+            list.forEach(obj -> orderSyncInfoService.asyncOrderToDmp(obj));
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT.getStatus();
