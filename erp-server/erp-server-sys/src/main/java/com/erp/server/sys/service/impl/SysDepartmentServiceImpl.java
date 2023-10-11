@@ -435,6 +435,14 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         return resultList;
     }
 
+    @Override
+    public List<SysDepartmentTreeDTO> getDeptByParentId(String deptId) {
+        if (StringUtils.isEmpty(deptId)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getDeptByParentId(deptId);
+    }
+
     /**
      * 查找部门最上级
      */
