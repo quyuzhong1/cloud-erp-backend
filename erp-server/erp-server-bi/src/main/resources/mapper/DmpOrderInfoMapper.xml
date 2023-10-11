@@ -366,10 +366,10 @@
         SELECT
         doit.id,
         <if test="params.rangeType == 1">
-            doit.sell_price AS sellPrice,
+            round(doit.sell_price,2) AS sellPrice,
         </if>
         <if test="params.rangeType == 2">
-            doit.sell_price_origin AS sellPrice,
+            round(doit.sell_price_origin,2) AS sellPrice,
         </if>
         <if test="settleRate !=null and settleRate!=''">
             round((doit.amount_after * doit.${settleRate}),2) AS saleAmount,
