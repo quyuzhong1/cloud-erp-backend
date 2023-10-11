@@ -133,12 +133,6 @@ public class PurchaseReturnOrderDTO {
         private LocalDate billDate;
 
         /**
-         * 退货来源
-         */
-        @NotBlank(message = "退货来源不能为空")
-        private String sourceType;
-
-        /**
          * 供应商id
          */
         @NotBlank(message = "供应商不能为空")
