@@ -241,7 +241,23 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     }
 
     @Override
-    public void backFillPackaging(ProductPackDTO productPackDTO) {
+    public void backFillPackaging(List<ProductPackDTO> productPackList) {
+        if (CollectionUtils.isEmpty(productPackList)) {
+            return;
+        }
+        for (ProductPackDTO productPackDTO : productPackList) {
+            //更新尺寸信息
+            this.updateProductPackPackaging(productPackDTO);
+        }
+    }
+
+    /**
+     * @description: 更新尺寸信息
+     * @author Will
+     * @date: 2023/10/11 10:02
+     * @param productPackDTO
+     */
+    private void updateProductPackPackaging (ProductPackDTO productPackDTO) {
         lambdaUpdate()
                 .eq(ProductPackEntity::getSkuId,productPackDTO.getSkuId())
                 .set(ProductPackEntity::getProductSize,productPackDTO.getProductSize())

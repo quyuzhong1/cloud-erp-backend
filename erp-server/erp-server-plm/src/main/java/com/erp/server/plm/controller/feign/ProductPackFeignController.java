@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * @author Will
@@ -26,10 +27,10 @@ public class ProductPackFeignController {
      * 回填产品包装信息
      * @author Will
      * @date: 2023/9/20 11:39
-     * @param productPackDTO
+     * @param productPackList
      */
     @PostMapping("/backFillPackaging")
-    public void backFillPackaging(@RequestBody ProductPackDTO productPackDTO) {
-        productPackService.backFillPackaging(productPackDTO);
+    public void backFillPackaging(@RequestBody List<ProductPackDTO> productPackList) {
+        productPackService.backFillPackaging(productPackList);
     }
 }
