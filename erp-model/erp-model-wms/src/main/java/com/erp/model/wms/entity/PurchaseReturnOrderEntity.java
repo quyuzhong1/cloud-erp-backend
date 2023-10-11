@@ -215,6 +215,12 @@ public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEnt
     @TableField("sync_operate")
     private String syncOperate;
 
+    /**
+     * 退货来源类型
+     */
+    @TableField("return_source_type")
+    private String returnSourceType;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 
