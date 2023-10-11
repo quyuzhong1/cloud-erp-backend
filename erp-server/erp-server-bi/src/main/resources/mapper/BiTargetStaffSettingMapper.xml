@@ -101,6 +101,7 @@
 
     <select id="listUserTargetFinish" resultType="com.erp.model.bi.dto.TargetFinishDTO$ViewDTO">
         select
+            btss.staff_id as typeId,
             btss.staff_name as typeName,
             btss.month,
             btss.value

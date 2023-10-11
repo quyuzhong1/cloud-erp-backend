@@ -121,7 +121,7 @@
         SELECT
         coalesce(SUM(refund_amount*dri.currency_rate),0)
         FROM dmp_refund_info dri
-        INNER dmp_order_info o
+        INNER JOIN dmp_order_info o
         ON dri.platform_order_id=o.platform_order_id
         WHERE   dri.refund_status=4
         <if test="params.startTime !=null">
