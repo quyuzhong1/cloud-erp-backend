@@ -743,9 +743,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if (CollectionUtils.isNotEmpty(collect)) {
                 throw new ServiceException(ApiError.ERROR_99011);
             }
-            List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceId(req.getId());
-            if (CollectionUtils.isNotEmpty(qcBySourceId)) {
-                throw new ServiceException(ApiError.ERROR_99042);
+            List<QcInfoEntity> qcList = qcInfoService.listQCBySourceId(req.getId());
+            if (CollectionUtils.isNotEmpty(qcList)) {
+                String codes = qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(","));
+                throw new ServiceException(ApiError.ERROR_99042,codes);
             }
         });
 
