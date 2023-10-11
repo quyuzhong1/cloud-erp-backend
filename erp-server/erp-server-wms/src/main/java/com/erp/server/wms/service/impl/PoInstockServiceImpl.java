@@ -121,7 +121,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     private QcInfoService qcInfoService;
 
     @Autowired
-    private InventoryTransCoreService inventoryTransCoreService;viewGeneratePurchaseReturnOrder
+    private InventoryTransCoreService inventoryTransCoreService;
 
     @Autowired
     private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
