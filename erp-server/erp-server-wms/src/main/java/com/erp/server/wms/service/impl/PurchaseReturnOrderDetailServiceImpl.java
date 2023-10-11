@@ -14,6 +14,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -26,6 +27,7 @@ import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.PurchaseReturnOrderDetailMapper;
 import com.erp.server.wms.service.*;
@@ -75,6 +77,9 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
     @Resource
     private PurchaseReturnOrderService purchaseReturnOrderService;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
+
     /**
      * @param sourceDetailIds
      * @return List<PurchaseReturnOrderDetailEntity>
@@ -123,6 +128,9 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
             List<PoInstockDetailEntity> stockInDetailEntityList = poInstockDetailService.listDetailByPodIds(orderDetailIds);
             List<WarehouseReceiveDetailEntity> detailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(orderDetailIds);
+            List<String> collect = dto.getPurchasePriceDetailList().stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+            List<CurrencyDTO.ViewDTO> currency = sysUserFeign.listByCurrency(collect);
+
             List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = listReturnOrderDetailByPodIds(orderDetailIds);
             for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
                 PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
@@ -162,7 +170,11 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                     purchaseReturnOrderDetailEntity.setRemark(addDTO.getRemark());
                     purchaseReturnOrderDetailEntity.setPurchaseOrderDetailId(addDTO.getPurchaseOrderDetailId());
                     purchaseReturnOrderDetailEntity.setCurrency(addDTO.getCurrency());
-                    purchaseReturnOrderDetailEntity.setCurrencySymbol(addDTO.getCurrencySymbol());
+
+                    if (CollectionUtils.isNotEmpty(currency)) {
+                        CurrencyDTO.ViewDTO viewDTO = currency.stream().filter(req -> req.getId().equals(addDTO.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
+                        purchaseReturnOrderDetailEntity.setCurrencySymbol(viewDTO.getSymbol());
+                    }
                     purchaseReturnOrderDetailEntity.setSourceDetailId(addDTO.getSourceDetailId());
                     purchaseReturnOrderDetailEntity.setWarehouseLocation(addDTO.getWarehouseLocation());
                     purchaseReturnOrderDetailEntity.setWarehouseLocation(addDTO.getWarehouseLocation());
@@ -195,10 +207,15 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
         List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> detailEntityList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-
+        List<String> collect = dto.getPurchasePriceDetailList().stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currency = sysUserFeign.listByCurrency(collect);
         for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
             PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
             BeanMapperUtils.copy(addDTO, purchaseReturnOrderDetailEntity);
+            if (CollectionUtils.isNotEmpty(currency)) {
+                CurrencyDTO.ViewDTO viewDTO = currency.stream().filter(req -> req.getId().equals(addDTO.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
+                purchaseReturnOrderDetailEntity.setCurrencySymbol(viewDTO.getSymbol());
+            }
             purchaseReturnOrderDetailEntity.setMainId(id);
             purchaseReturnOrderDetailEntity.setReturnQty(addDTO.getReturnQty());
             //获取sku信息
@@ -284,6 +301,10 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             List<PoInstockDetailEntity> stockInDetailEntityList = poInstockDetailService.listDetailByPodIds(orderDetailIds);
             List<WarehouseReceiveDetailEntity> detailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(orderDetailIds);
             List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = listReturnOrderDetailByPodIds(orderDetailIds);
+
+            List<String> collect = dto.getPurchasePriceDetailList().stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+            List<CurrencyDTO.ViewDTO> currency = sysUserFeign.listByCurrency(collect);
+
             for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
                 PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
                 BeanMapperUtils.copy(updateDTO, purchaseReturnOrderDetailEntity);
@@ -324,6 +345,10 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                         if (updateDTO.getReturnQty() + returnQty > stockInQty) {
                             throw new ServiceException(ApiError.ERROR_99031.code, String.format(ApiError.ERROR_99031.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
+                    }
+                    if (CollectionUtils.isNotEmpty(currency)) {
+                        CurrencyDTO.ViewDTO viewDTO = currency.stream().filter(req -> req.getId().equals(updateDTO.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
+                        purchaseReturnOrderDetailEntity.setCurrencySymbol(viewDTO.getSymbol());
                     }
                 } else {
                     throw new ServiceException(ApiError.ERROR_99006);
@@ -369,6 +394,10 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
         List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
         List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> detailEntityList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        //获取币别符号
+        List<String> collect = dto.getPurchasePriceDetailList().stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currency = sysUserFeign.listByCurrency(collect);
+
         for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
 
             PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
@@ -382,6 +411,12 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             }
             purchaseReturnOrderDetailEntity.setMainId(id);
             purchaseReturnOrderDetailEntity.setReturnQty(updateDTO.getReturnQty());
+
+            if (CollectionUtils.isNotEmpty(currency)) {
+                CurrencyDTO.ViewDTO viewDTO = currency.stream().filter(req -> req.getId().equals(updateDTO.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
+                purchaseReturnOrderDetailEntity.setCurrencySymbol(viewDTO.getSymbol());
+            }
+
             //获取sku信息
             SkuVO skuVO = detailEntityList.stream().filter(entityClass -> entityClass.getSkuId().equals(updateDTO.getSkuId())).findFirst().orElse(new SkuVO());
             purchaseReturnOrderDetailEntity.setSkuNo(skuVO.getSkuNo());
