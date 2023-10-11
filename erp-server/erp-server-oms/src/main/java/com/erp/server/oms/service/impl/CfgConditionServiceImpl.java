@@ -3,6 +3,8 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.core.enums.RuleCompareEnum;
+import com.common.core.enums.RuleLogicEnum;
 import com.erp.model.oms.entity.CfgConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.oms.mapper.CfgConditionMapper;
@@ -17,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.CfConditionDTO;
+import com.erp.model.oms.dto.CfgConditionDTO;
 
 import java.util.*;
 
@@ -46,7 +48,7 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public String add(CfConditionDTO.AddDTO addDTO) {
+    public String add(CfgConditionDTO.AddDTO addDTO) {
         CfgConditionEntity cfConditionEntity = new CfgConditionEntity();
         BeanMapperUtils.copy(addDTO, cfConditionEntity);
 
@@ -72,7 +74,7 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(CfConditionDTO.UpdateDTO updateDTO) {
+    public Boolean update(CfgConditionDTO.UpdateDTO updateDTO) {
         CfgConditionEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "条件配置单"));
         CfgConditionEntity cfConditionEntity = BeanMapperUtils.map(CfgConditionEntity.class, updateDTO);
@@ -101,17 +103,70 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
      * @return
      */
     @Override
-    public List<CfConditionDTO.CommonDTO> listByConditionCode(String conditionCode) {
-        List<CfConditionDTO.CommonDTO> list = baseMapper.listByConditionCode(conditionCode);
+    public List<CfgConditionDTO.CommonDTO> listByConditionCode(String conditionCode) {
+        List<CfgConditionDTO.CommonDTO> list = baseMapper.listByConditionCode(conditionCode);
         String type = DictBasicTypeEnum.COMPARE.getType();
         List<BaseDropDownDTO.CommonDTO> dictRuleConditionList = dictRuleConditionService.listByType(type);
-        for (CfConditionDTO.CommonDTO item : list) {
+        for (CfgConditionDTO.CommonDTO item : list) {
             String logic = item.getLogic();
             String logicName = dictRuleConditionList.stream().filter(d -> d.getCode().equals(logic)).
                     findFirst().map(BaseDropDownDTO.CommonDTO::getValue).orElse("");
             item.setLogicName(logicName);
         }
         return list;
+    }
+
+    /**
+     * 获取到所有的条件值
+     *
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.CfConditionDTO.ListDTO>
+     * @author yl
+     * @date 2023-10-08 14:45
+     */
+    @Override
+    public List<CfgConditionDTO.ListDTO> listAllCondition() {
+        return baseMapper.listAllCondition();
+    }
+
+
+    /**
+     * 条件树结构
+     *
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.CfConditionDTO.TreeDTO>
+     * @author yl
+     * @date 2023-10-08 15:09
+     */
+    @Override
+    public List<CfgConditionDTO.TreeDTO> tree() {
+        List<CfgConditionEntity> conditionEntityList = this.list();
+        List<CfgConditionDTO.TreeDTO> resultList = new ArrayList<>(conditionEntityList.size());
+        Map<String, String> map = new HashMap<>();
+        for (RuleCompareEnum item : RuleCompareEnum.values()) {
+            map.put(item.getCode(), item.getName());
+        }
+
+        for (CfgConditionEntity item : conditionEntityList) {
+            String conditionField = item.getConditionField();
+            CfgConditionDTO.TreeDTO tree = new CfgConditionDTO.TreeDTO();
+            tree.setConditionField(conditionField);
+            String logicStr = item.getLogic();
+            List<String> logicList = Arrays.asList(logicStr.split(","));
+            List<CfgConditionDTO.TreeDTO> childrenList = new ArrayList<>(logicList.size());
+            for (String logic : logicList) {
+                CfgConditionDTO.TreeDTO children = new CfgConditionDTO.TreeDTO();
+                children.setConditionField(conditionField);
+                children.setLogic(logic);
+                children.setLogicName(map.getOrDefault(logic, ""));
+                childrenList.add(children);
+            }
+            tree.setChildren(childrenList);
+            resultList.add(tree);
+
+
+        }
+        return resultList;
     }
 
 
