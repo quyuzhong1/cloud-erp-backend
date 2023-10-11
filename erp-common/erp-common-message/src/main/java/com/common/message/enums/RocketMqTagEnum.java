@@ -284,7 +284,10 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_PO_RECEIVE_TAG(1028, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_po_receive_tag"),
 
-
+    /**
+     * 采购订单变更单同步金蝶
+     */
+    KINGDEE_PURCHASE_CHANGE_TAG(1029, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_change_tag"),
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
     /**
