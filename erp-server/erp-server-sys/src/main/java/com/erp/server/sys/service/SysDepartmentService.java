@@ -92,15 +92,14 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
     SysDepartmentEntity getParentDepartmentById(String departmentId);
 
     /**
-     * @param ids
-     * @param syncKingdeeStatus
-     * @param syncKingdeeId
+     * @param kingdeeDTO
      * @return Boolean
      * @description: 更新金蝶id、状态
      * @author Will
      * @date: 2023/5/4 9:57
      */
     Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+
     /**
      * @param codeList
      * @return List<SysDepartmentDTO>
