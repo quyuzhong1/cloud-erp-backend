@@ -121,7 +121,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     private QcInfoService qcInfoService;
 
     @Autowired
-    private InventoryTransCoreService inventoryTransCoreService;
+    private InventoryTransCoreService inventoryTransCoreService;viewGeneratePurchaseReturnOrder
 
     @Autowired
     private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
@@ -704,6 +704,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 throw new ServiceException(ApiError.ERROR_98026);
             }
             dto.setPurchaseOrderDetailId(detailEntity.getId());
+            //币别
+            dto.setCurrency(detailEntity.getCurrency());
             //币种符号
             dto.setCurrencySymbol(detailEntity.getCurrencySymbol());
             //单价
@@ -768,7 +770,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     throw new ServiceException(1, String.format("SKU【%s】未找到对应数量", detail.getSkuNo()));
                 }
                 if (MathUtil.compareTo(detail.getRealityReturnQty(), stockInQty) > 0) {
-                    throw new ServiceException(1, String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), stockInQty));
+                    throw new ServiceException(1, String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), stockInQty));2
                 }
                 BeanMapperUtils.copy(detail, addDetailDTO);
                 addDetailDTO.setPurchaseOrderDetailId(detail.getPurchaseOrderDetailId());
