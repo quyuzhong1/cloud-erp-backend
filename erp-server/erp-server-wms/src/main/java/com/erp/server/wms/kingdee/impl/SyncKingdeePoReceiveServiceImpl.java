@@ -65,9 +65,6 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
-    private PurchaseReturnOrderService purchaseReturnOrderService;
-
-    @Resource
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
 
     @Resource
@@ -101,7 +98,7 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
         PurchaseOrderEntity purchaseOrderEntity = new PurchaseOrderEntity();
 
         //更新同步状态为待同步
-        purchaseReturnOrderService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
+        warehouseReceiveService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
         //如果上游单据未发送成功则无需发送
         if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
             //采购订单
