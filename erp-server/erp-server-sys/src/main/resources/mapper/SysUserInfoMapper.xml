@@ -279,6 +279,6 @@
             sync_kingdee_status = #{params.syncKingdeeStatus},
         </if>
         sync_kingdee_time = current_timestamp
-        where id = #{params.businessId}
+        where uid = #{params.businessId}
     </update>
 </mapper>
