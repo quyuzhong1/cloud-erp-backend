@@ -437,7 +437,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2023-05-17 16:00
      */
     @Override
-    public void updateSoDetail(String mainId, List<SoDetailDTO.UpdateDTO> detailList) {
+    public void updateSoDetail(String mainId,Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
@@ -477,7 +477,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setCurrencySymbol(symbol);
         }
         // 金额信息加上折扣额计算
-        SoUtils.handleDetailAmount(soInfoEntity.getDiscountAmount(), saveOrUpdateList);
+        SoUtils.handleDetailAmount(isTax,soInfoEntity.getDiscountAmount(), saveOrUpdateList);
         for (SoDetailEntity item : saveOrUpdateList) {
             // 计算毛利成本
             calCost(purchasePriceList, skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);
@@ -1053,31 +1053,19 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * 添加销售订单明细
      *
      * @param mainId detailList
+     * @param isTax 是否含税  true 是
      * @return
      * @author yl
      * @date 2023-05-16 9:32
      */
     @Override
-    public void addSoDetail(String mainId, List<SoDetailDTO.AddDTO> detailList) {
+    public void addSoDetail(String mainId,Boolean isTax, List<SoDetailDTO.AddDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
-        // List<SoDetailEntity> saveOrUpdateList = new ArrayList<>(detailList.size());
         //这是修改的
         List<SoDetailDTO.AddDTO> updateList = detailList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
-        //这是要添加的
-        List<SoDetailDTO.AddDTO> addList = detailList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
-        /**
-         //这个是要修改的实体
-         List<SoDetailEntity> updateEntityList = BeanMapper.copyList(updateList, SoDetailEntity.class);
-
-         //这个是要添加的
-         List<SoDetailEntity> addEntityList = BeanMapper.copyList(addList, SoDetailEntity.class);
-
-         saveOrUpdateList.addAll(updateEntityList);
-         saveOrUpdateList.addAll(addEntityList);
-         */
         List<SoDetailEntity> saveOrUpdateList = BeanMapper.copyList(detailList, SoDetailEntity.class);
 
         List<SoDetailEntity> dbList = this.listBaseByMainId(mainId);
@@ -1115,7 +1103,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setCurrencySymbol(symbol);
         }
         // 金额折扣处理
-        SoUtils.handleDetailAmount(soInfoEntity.getDiscountAmount(), saveOrUpdateList);
+        SoUtils.handleDetailAmount(isTax,soInfoEntity.getDiscountAmount(), saveOrUpdateList);
         for (int i = 0; i < saveOrUpdateList.size(); i++) {
             SoDetailEntity item = saveOrUpdateList.get(i);
             // 计算毛利成本

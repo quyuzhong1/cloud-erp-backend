@@ -262,7 +262,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 dto.getDetailList().stream().forEach(detail -> detail.setCurrency(dto.getCurrency()));
             }
             //添加明细
-            soDetailService.addSoDetail(id, dto.getDetailList());
+            soDetailService.addSoDetail(id, dto.getIsTax(), dto.getDetailList());
 
             // 保存附件
             TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
@@ -780,7 +780,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 dto.getDetailList().stream().forEach(detail -> detail.setCurrency(dto.getCurrency()));
             }
             //添加明细
-            soDetailService.addSoDetail(id, dto.getDetailList());
+            soDetailService.addSoDetail(id, dto.getIsTax(), dto.getDetailList());
 
             // 保存附件
             TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
@@ -889,7 +889,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 dto.getDetailList().stream().forEach(detail -> detail.setCurrency(dto.getCurrency()));
             }
             //修改 订单详情
-            soDetailService.updateSoDetail(id, dto.getDetailList());
+            soDetailService.updateSoDetail(id, dto.getIsTax(), dto.getDetailList());
             return id;
         }
         return "";
@@ -2491,8 +2491,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
         }
         List<SoDetailEntity> soDetailList = BeanMapper.copyList(detailList, SoDetailEntity.class);
+        //是否含税
+        long count= soDetailList.stream().filter(s -> Objects.isNull(s.getTaxRate()) || (Objects.nonNull(s.getTaxRate()) &&
+                s.getTaxRate().compareTo(BigDecimal.ZERO) == 0)).count();
+
         // 金额折扣处理
-        SoUtils.handleDetailAmount(calCostProfitDTO.getDiscountAmount(), soDetailList);
+        SoUtils.handleDetailAmount(count>0,calCostProfitDTO.getDiscountAmount(), soDetailList);
         for (int i = 0; i < soDetailList.size(); i++) {
             SoDetailEntity item = soDetailList.get(i);
             // 计算毛利成本
@@ -2516,10 +2520,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     /**
      * 获取到折扣额大于0的历史数据
-     * @author yl
-     * @date 2023-09-28 10:31
+     *
      * @param
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.ListDTO>
+     * @author yl
+     * @date 2023-09-28 10:31
      */
     @Override
     public List<SoInfoDTO.ListDTO> listRepairHistoryDb() {
