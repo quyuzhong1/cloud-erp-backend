@@ -32,10 +32,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeePoReceiveService;
 import com.erp.server.wms.kingdee.SyncKingdeeReturnOrderService;
-import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
-import com.erp.server.wms.service.PurchaseReturnOrderService;
-import com.erp.server.wms.service.WarehouseReceiveDetailService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -84,6 +81,9 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
+    private WarehouseReceiveService warehouseReceiveService;
 
     /**
      * 发送消息同步金蝶
@@ -267,10 +267,10 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
 
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_RETURN_ORDER_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
+            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PO_RECEIVE_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return purchaseReturnOrderService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(), "", operate);
+                return warehouseReceiveService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(), "", operate);
             }
             return Boolean.TRUE;
         });
