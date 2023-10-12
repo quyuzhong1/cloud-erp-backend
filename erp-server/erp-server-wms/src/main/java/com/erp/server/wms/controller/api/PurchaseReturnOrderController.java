@@ -330,4 +330,16 @@ public class PurchaseReturnOrderController extends BaseController {
         return flag?success():failure();
     }
 
+    /**
+     * 修复退货来源错误数据
+     * @Author Luo_WG
+     * @Date 2023/10/12 10:21
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/dataRepairTemp")
+    public ApiResult dataRepairTemp() {
+        Boolean flag = purchaseReturnOrderService.dataRepairTemp();
+        return flag?success():failure();
+    }
+
 }
