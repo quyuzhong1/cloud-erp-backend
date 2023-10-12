@@ -2407,7 +2407,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         soPi.setSalesOrgName(soInfo.getSalesOrgName());
 
         //收款条件
-        String receiveMethodType = DictBasicEnum.RECEIVE_METHOD.getType();
+        String receiveMethodType = DictBasicTypeEnum.RECEIVE_METHOD.getType();
         DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(receiveMethodType, receiveCondition);
         if (Objects.isNull(dictBasic)) {
             soPi.setReceiveConditionStr("");
