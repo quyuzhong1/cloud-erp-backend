@@ -97,6 +97,11 @@ public class StocktakingProfitLossDTO implements Serializable {
          */
         private List<String> skuNoList;
 
+        /**
+         * 单据审核状态集合
+         */
+        private List<ApproveStatusEnum> approveStatusList;
+
 
         /**
          * 单据类型
