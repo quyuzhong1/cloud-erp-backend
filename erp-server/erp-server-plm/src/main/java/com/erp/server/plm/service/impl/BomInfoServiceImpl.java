@@ -22,6 +22,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
@@ -614,14 +615,17 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                     contentList.add(childrenQuantityContent);
                 }
             }
-            if (oldSize <= i) {
-                String addContent = "子物料添加" + newBom.getSkuNo() + ", 子物料添加用量" + newBom.getQuantity();
-                contentList.add(addContent);
-            }
+
+            String addContent = "子物料添加" + newBom.getSkuNo() + ", 子物料添加用量" + newBom.getQuantity();
+            contentList.add(addContent);
+
         }
         //删除
         if (oldSize > newSize) {
-            String removeContent = "删除了" + (oldSize - newSize) + "个子物料";
+            List<String> skuNoList = newChildrenList.stream().map(BomChildrenSkuDTO::getSkuNo).collect(Collectors.toList());
+            List<String> dbSkuNoList = OldChildrenList.stream().map(BomChildrenSkuDTO::getSkuNo).collect(Collectors.toList());
+            String removeSkuNo = dbSkuNoList.stream().filter(d -> !skuNoList.contains(d)).collect(Collectors.joining(","));
+            String removeContent = "删除了" + removeSkuNo + " 子物料";
             contentList.add(removeContent);
         }
 
@@ -913,16 +917,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         //加工单的
         List<MachineInfoDTO.ListDTO> machineList = wmsTaskFeign.listBySku(dto);
         if (CollectionUtils.isNotEmpty(machineList)) {
-            String code = machineList.stream().map(MachineInfoDTO.ListDTO::getCode).distinct()
-                    .collect(Collectors.joining(","));
-            throw new ServiceException("加工单号为: " + code + " 引用该bom 无法解除归档");
+            throw new ServiceException("该bom已被加工单引用,无法解除归档");
         }
         //委外加工单
         List<SubcontractOrderDTO.ListDTO> subcontractList = scmTaskFeign.listByBomSku(parentSkuId);
         if (CollectionUtils.isNotEmpty(subcontractList)) {
             String code = subcontractList.stream().map(SubcontractOrderDTO.ListDTO::getCode).distinct()
                     .collect(Collectors.joining(","));
-            throw new ServiceException("委外加工单号为: " + code + " 引用该bom 无法解除归档");
+            throw new ServiceException("该bom已被委外加工单引用,无法解除归档");
         }
     }
 
