@@ -1113,6 +1113,19 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 .update();
     }
 
+
+    /**
+     * 根据bom skuId 获取数据
+     * @author yl
+     * @date 2023-10-12 9:53
+     * @param bomSkuId
+     * @return java.util.List<com.erp.model.scm.dto.SubcontractOrderDTO.ListDTO>
+     */
+    @Override
+    public List<SubcontractOrderDTO.ListDTO> listByBomSku(String bomSkuId) {
+        return baseMapper.listByBomSku(bomSkuId);
+    }
+
     /**
      * @description: 启动流程
      * @author Will

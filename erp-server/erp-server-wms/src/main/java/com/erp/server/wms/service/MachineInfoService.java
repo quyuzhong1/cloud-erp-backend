@@ -175,4 +175,13 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @return java.util.List<com.erp.model.wms.entity.MachineInfoEntity>
      **/
     List<MachineInfoEntity> listBySourceIds(List<String> ids);
+
+    /**
+     * 根据sku 信息查询加工单信息
+     * @author yl
+     * @date 2023-10-11 19:54
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.MachineInfoDTO.ListDTO>
+     */
+    List<MachineInfoDTO.ListDTO> listBySku(MachineInfoDTO.FindInfoBySkuDTO dto);
 }
