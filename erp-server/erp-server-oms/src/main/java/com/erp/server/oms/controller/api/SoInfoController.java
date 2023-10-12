@@ -428,7 +428,7 @@ public class SoInfoController extends BaseController {
     }
 
     /**
-     * 导出销售订单国内合同
+     * 导出销售订单国内PI
      * @author yl
      * @date 2023-10-12 14:39
      * @param dto
