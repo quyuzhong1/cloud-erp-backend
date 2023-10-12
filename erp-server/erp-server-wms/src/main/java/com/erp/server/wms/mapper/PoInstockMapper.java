@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PushSyncStatusDTO;
+import com.erp.model.wms.dto.FirstMassInstockDTO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PoInstockEntity;
@@ -99,4 +101,11 @@ public interface PoInstockMapper extends BaseMapper<PoInstockEntity> {
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.PoInstockDTO.PdaPagingView>
      **/
     IPage<PoInstockDTO.PdaPagingView> pdaPaging(Page query, @Param("params") PoInstockDTO.PdaSearchParamDTO params);
+
+    /**
+     * 查询首批入库日期
+     * @param ids
+     * @return list
+     */
+    List<FirstMassInstockDTO> listFirstMassInstock(@Param("ids") List<String> ids);
 }
