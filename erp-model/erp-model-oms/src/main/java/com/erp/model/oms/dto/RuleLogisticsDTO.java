@@ -8,9 +8,7 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -131,7 +129,7 @@ public class RuleLogisticsDTO implements Serializable {
         /**
          * 优先级
          */
-        private String priority;
+        private Integer priority;
 
         /**
          * 禁用状态 false 未禁用
@@ -215,9 +213,10 @@ public class RuleLogisticsDTO implements Serializable {
         /**
          * 优先级
          */
-        @NotBlank(message = "优先级不能为空")
-        @Size(max = 5, message = "优先级最大长度不能超过5位")
-        private String priority;
+        @NotNull(message = "优先级不能为空")
+        @DecimalMin(value = "0", message = "最小值为1")
+        @DecimalMax(value = "10", message = "最小值为10")
+        private Integer priority;
 
         /**
          * 禁用状态 false 未禁用

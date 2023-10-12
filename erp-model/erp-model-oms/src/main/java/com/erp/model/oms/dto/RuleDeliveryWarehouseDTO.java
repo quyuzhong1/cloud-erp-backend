@@ -113,7 +113,7 @@ public class RuleDeliveryWarehouseDTO implements Serializable {
         /**
          * 优先级
          */
-        private String priority;
+        private Integer priority;
 
         /**
          * 禁用状态false 未禁用
