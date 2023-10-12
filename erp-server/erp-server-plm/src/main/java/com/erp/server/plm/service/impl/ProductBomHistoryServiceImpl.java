@@ -173,9 +173,11 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
             return;
         }
         String bomId = bom.getId();
-        List<BomSkuDTO> bomSkuList = bomSkuService.getByBomId(bomId);
+        //历史版本
+        List<ProductBomHistoryEntity> historyList = this.listByBomId(bomId);
         //表示第一次升级
-        if(CollectionUtils.isEmpty(bomSkuList)||bomSkuList.size()==1){
+        if(CollectionUtils.isEmpty(historyList)||historyList.size()==1){
+            List<BomSkuDTO> bomSkuList = bomSkuService.getByBomId(bomId);
             //先删除历史 bom
             deleteByBomId(bom.getId());
             //历史版本
