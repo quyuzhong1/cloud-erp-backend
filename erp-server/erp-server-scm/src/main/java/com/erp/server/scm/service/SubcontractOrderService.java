@@ -224,7 +224,6 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @return java.lang.Boolean
      **/
     Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
-    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
 
     /**
      * 根据bom skuId 获取数据
