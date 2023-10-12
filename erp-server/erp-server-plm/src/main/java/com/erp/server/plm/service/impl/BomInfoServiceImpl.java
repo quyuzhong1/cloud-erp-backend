@@ -529,8 +529,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         Boolean result = this.updateById(bom);
         List<BomSkuDTO> bomSkuList = dto.getSkuList();
         if (result) {
-            //保存历史bom信息
-            productBomHistoryService.insert(bom, bomSkuList);
             //添加 bom 与sku 关系
             bomSkuService.updateBomSku(id, bomSkuList);
             String operateContent = getUpdateContent(oldBomList, bomSkuList);
