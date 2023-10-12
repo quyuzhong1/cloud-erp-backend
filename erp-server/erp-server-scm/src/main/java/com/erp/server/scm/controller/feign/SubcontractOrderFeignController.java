@@ -1,14 +1,12 @@
 package com.erp.server.scm.controller.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.server.scm.service.SubcontractOrderDetailService;
 import com.erp.server.scm.service.SubcontractOrderService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -30,11 +28,11 @@ public class SubcontractOrderFeignController {
     private SubcontractOrderDetailService subcontractOrderDetailService;
 
     /**
+     * @param sourceDetailIds
+     * @return List<SubcontractOrderDetailEntity>
      * @description: 根据ids查询委外订单明细
      * @author Will
      * @date: 2023/6/26 10:21
-     * @param sourceDetailIds
-     * @return List<SubcontractOrderDetailEntity>
      */
     @PostMapping("/listSubcontractDetailByIds")
     public List<SubcontractOrderDetailEntity> listSubcontractDetailByIds(@RequestBody List<String> sourceDetailIds) {
@@ -46,14 +44,27 @@ public class SubcontractOrderFeignController {
 
     /**
      * 审核
-     * @Author Luo_WG
-     * @Date 2023/7/12 12:55
+     *
      * @param dto
      * @return void
+     * @Author Luo_WG
+     * @Date 2023/7/12 12:55
      **/
     @PostMapping("/subcontractOrderApprove")
     public Boolean subcontractOrderApprove(@RequestBody BaseApproveParamDTO dto) {
         subcontractOrderService.approve(dto);
         return Boolean.TRUE;
+    }
+
+    /**
+     * 根据bom sku
+     * @author yl
+     * @date 2023-10-12 9:39
+     * @param bomSkuId bom skuId
+     * @return java.util.List<com.erp.model.scm.dto.SubcontractOrderDTO.ListDTO>
+     */
+    @PostMapping("/listByBomSku")
+    public List<SubcontractOrderDTO.ListDTO> listByBomSku(@RequestBody String bomSkuId) {
+        return subcontractOrderService.listByBomSku(bomSkuId);
     }
 }
