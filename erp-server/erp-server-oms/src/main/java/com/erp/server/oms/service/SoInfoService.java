@@ -387,4 +387,15 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.ListDTO>
      */
     List<SoInfoDTO.ListDTO> listRepairHistoryDb();
+
+    
+    /**
+     * 导出国内的spi 数据
+     * @author yl
+     * @date 2023-10-12 14:42
+     * @param id
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean exportSoDomesticPI(String id, HttpServletResponse response);
 }
