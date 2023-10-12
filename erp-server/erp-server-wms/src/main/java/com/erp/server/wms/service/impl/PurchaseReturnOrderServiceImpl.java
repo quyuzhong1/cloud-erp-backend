@@ -117,6 +117,15 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Autowired
     private WarehouseLocationService warehouseLocationService;
 
+    @Autowired
+    private QcInfoService qcInfoService;
+
+    @Autowired
+    private PoInstockService poInstockService;
+
+    @Autowired
+    private MachineInfoService machineInfoService;
+
     @Value("${companyCode}")
     private String companyCode;
 
@@ -1894,5 +1903,46 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 throw new ServiceException(ApiError.ERROR_99070);
             }
         }
+    }
+
+    @Override
+    public Boolean dataRepairTemp() {
+        List<PurchaseReturnOrderEntity> list = lambdaQuery().eq(PurchaseReturnOrderEntity::getSourceType, ReturnOrderSourceEnum.OTHER.getCode()).list();
+        for (PurchaseReturnOrderEntity entity : list) {
+            if (StringUtils.isBlank(entity.getSourceId())) {
+                entity.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
+                this.updateById(entity);
+                continue;
+            }
+
+            QcInfoEntity qcInfoEntity = qcInfoService.getById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(qcInfoEntity)) {
+                entity.setSourceType(SourceTypeEnum.QC_INFO.getCode());
+                this.updateById(entity);
+                continue;
+            }
+
+            PoInstockEntity poInstockEntity = poInstockService.getById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(poInstockEntity)) {
+                entity.setSourceType(SourceTypeEnum.PO_INSTOCK.getCode());
+                this.updateById(entity);
+                continue;
+            }
+
+            PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(purchaseOrderEntity)) {
+                entity.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
+                this.updateById(entity);
+                continue;
+            }
+
+            MachineInfoEntity machineInfoEntity = machineInfoService.getById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(machineInfoEntity)) {
+                entity.setSourceType(SourceTypeEnum.MACHINE_INFO.getCode());
+                this.updateById(entity);
+                continue;
+            }
+        }
+        return Boolean.TRUE;
     }
 }
