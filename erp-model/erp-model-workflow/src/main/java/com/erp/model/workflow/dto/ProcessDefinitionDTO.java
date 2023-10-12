@@ -63,6 +63,12 @@ public class ProcessDefinitionDTO {
         private DictBasicEnum reviewSetting;
 
         /**
+         * 业务类型关联id
+         */
+        @NotNull(message = "业务类型关联id不能为空")
+        private String businessId;
+
+        /**
          * 业务类型
          */
         @NotBlank(message = "业务类型不能为空")
@@ -92,6 +98,9 @@ public class ProcessDefinitionDTO {
          */
         private List<LocalDate> createTimeList;
 
+        /**
+         * 是否已发布
+         */
         private Boolean isDeploy;
 
     }
@@ -122,7 +131,9 @@ public class ProcessDefinitionDTO {
          * 创建时间
          */
         private List<LocalDateTime> createTimeList;
-
+        /**
+         * 是否已发布
+         */
         private Boolean isDeploy;
 
     }
@@ -163,6 +174,11 @@ public class ProcessDefinitionDTO {
          * 审核人设置
          */
         private DictBasicEnum reviewSetting;
+
+        /**
+         * 业务关联id
+         */
+        private String businessId;
 
         /**
          * 业务类型
