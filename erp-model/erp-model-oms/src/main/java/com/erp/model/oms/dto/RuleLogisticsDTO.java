@@ -227,7 +227,6 @@ public class RuleLogisticsDTO implements Serializable {
         /**
          * 备注描述
          */
-        @NotBlank(message = "备注描述不能为空")
         @Size(max = 255, message = "备注描述最大长度不能超过255位")
         private String remark;
 

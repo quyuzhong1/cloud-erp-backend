@@ -157,7 +157,6 @@ public class RuleOrderApprovalDTO implements Serializable {
         /**
          * 备注
          */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 255, message = "备注最大长度不能超过255位")
         private String remark;
 
