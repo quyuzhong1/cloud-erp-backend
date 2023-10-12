@@ -284,6 +284,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         return purchaseReturnOrderEntity.getId();
     }
 
+
     /**
      * 修改
      *
@@ -1447,12 +1448,15 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<String> unApproveIds = Lists.newArrayList();
         for (PurchaseReturnOrderEntity purchaseReturnOrder : purchaseReturnOrderEntityList) {
             String sourceType = purchaseReturnOrder.getSourceType();
-            if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) { // 库存退货
+            if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) {
+                // 库存退货
                 unApproveIds.add(purchaseReturnOrder.getId());
             } else { // 质检退货
-                String returnMode = purchaseReturnOrder.getReturnMode(); // 退货方式
+                String returnMode = purchaseReturnOrder.getReturnMode();
+                // 退货方式
                 /*
-                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())) { // 退货补货
+                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())) {
+                // 退货补货
                     unApproveIds.add(purchaseReturnOrder.getId());
                 }
                  */

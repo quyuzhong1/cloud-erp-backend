@@ -427,6 +427,21 @@ public class SoInfoController extends BaseController {
 
     }
 
+    /**
+     * 导出销售订单国内合同
+     * @author yl
+     * @date 2023-10-12 14:39
+     * @param dto
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult
+     */
+    @PostMapping("/exportSoDomesticPI")
+    public ApiResult exportSoDomesticPI(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
+        Boolean result = soInfoService.exportSoDomesticPI(dto.getId(),response);
+        return result ? success() : failure();
+
+    }
+
 
     /**
      * 下推备货申请单数据显示
