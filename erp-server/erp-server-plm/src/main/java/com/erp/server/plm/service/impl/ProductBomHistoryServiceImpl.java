@@ -108,22 +108,26 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
             FindUserDTO findUserDTO = userList.stream().filter(user -> user.getUserId().equals(item.getCreateUserId())).findFirst().orElse(null);
             if (findUserDTO != null) {
                 item.setCreateUserName(findUserDTO.getUserName());
+            }else{
+                item.setCreateUserName("system");
             }
             String bomHistoryId = item.getBomHistoryId();
             List<ProductBomSkuHistoryEntity> refSkuList = skuList.stream().filter(h -> bomHistoryId.equals(h.getBomHistoryId())).collect(Collectors.toList());
             StringBuilder sb = new StringBuilder();
             if (CollectionUtils.isNotEmpty(refSkuList)) {
-                List<String> childrenSkuList = refSkuList.stream().map(ProductBomSkuHistoryEntity::getSkuNo).collect(Collectors.toList());
+                List<ProductBomSkuHistoryEntity> childrenSkuList = refSkuList.stream().collect(Collectors.toList());
                 //父sku
                 String parentSkuNo = refSkuList.get(0).getParentSkuNo();
                 sb.append("父物料:").append(parentSkuNo).append(";");
                 boolean addFlag = false;
-                for (String childrenSku : childrenSkuList) {
+                for (ProductBomSkuHistoryEntity childrenSku : childrenSkuList) {
                     if (addFlag) {
                         sb.append(",");
                     }
                     sb.append("子物料:");
-                    sb.append(childrenSku);
+                    sb.append(childrenSku.getSkuNo());
+                    sb.append(" 数量:");
+                    sb.append(childrenSku.getQuantity());
                     addFlag = true;
                 }
             }
