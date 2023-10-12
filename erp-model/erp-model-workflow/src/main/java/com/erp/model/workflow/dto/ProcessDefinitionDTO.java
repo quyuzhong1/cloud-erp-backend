@@ -317,52 +317,49 @@ public class ProcessDefinitionDTO {
         private String bpmnXml;
 
         /**
-         * 流程版本
-         */
-        @ColumnWidth(20)
-        @ExcelProperty(value = "流程版本", index = 3)
-        private Integer processVersion;
-
-        /**
          * 是否已发布
          */
         @ColumnWidth(20)
-        @ExcelProperty(value = "是否已发布", index = 4)
+        @ExcelProperty(value = "是否已发布", index = 2)
         private String isDeploy;
-
-        /**
-         * 描述信息
-         */
-        @ColumnWidth(20)
-        @ExcelProperty(value = "描述信息", index = 5)
-        private String remark;
-
-        /**
-         * 审核人设置
-         */
-        @ColumnWidth(20)
-        @ExcelProperty(value = "审核人设置", index = 6)
-        private String reviewSetting;
 
         /**
          * 流程单据名称
          */
         @ColumnWidth(20)
-        @ExcelProperty(value = "流程单据名称", index = 7)
+        @ExcelProperty(value = "流程单据名称", index = 3)
         private String businessName;
 
+        /**
+         * 流程版本
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "流程版本", index = 4)
+        private Integer processVersion;
+        /**
+         * 审核人设置
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "审核人设置", index = 5)
+        private String reviewSetting;
+        /**
+         * 描述信息
+         */
+        @ColumnWidth(20)
+        @ExcelProperty(value = "描述信息", index = 6)
+        private String remark;
         /**
          * 创建人
          */
         @ColumnWidth(20)
-        @ExcelProperty(value = "创建人", index = 8)
+        @ExcelProperty(value = "创建人", index = 7)
         private String createUserName;
 
         /**
          * 创建时间
          */
         @ColumnWidth(20)
-        @ExcelProperty(value = "创建时间", index = 9)
+        @ExcelProperty(value = "创建时间", index = 8)
         private LocalDateTime createTime;
 
     }
