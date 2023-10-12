@@ -583,6 +583,16 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             // 更新库存（需区分有无收货单）
             updateInventoryTransCore(list);
 
+            //填入产品首批量产入库时间
+/*
+            List<PoInstockDetailEntity> instockDetailEntities = poInstockDetailService.listByMainIds(ids);
+            List<String> skuIds = instockDetailEntities.stream().sorted(Comparator.comparing(PoInstockDetailEntity::getCreateTime)).map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+            List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIds);
+            List<String> skuIdList = productDetailEntityList.stream().filter(req -> req.getFirstMassProductDate() != null).map(req -> req.getId()).collect(Collectors.toList());
+
+*/
+
+
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
