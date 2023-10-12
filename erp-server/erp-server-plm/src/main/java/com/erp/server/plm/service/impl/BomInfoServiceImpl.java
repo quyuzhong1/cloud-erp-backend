@@ -615,10 +615,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                     contentList.add(childrenQuantityContent);
                 }
             }
-
-            String addContent = "子物料添加" + newBom.getSkuNo() + ", 子物料添加用量" + newBom.getQuantity();
-            contentList.add(addContent);
-
+            if (oldSize <= i) {
+                String addContent = "子物料添加" + newBom.getSkuNo() + ", 子物料添加用量" + newBom.getQuantity();
+                contentList.add(addContent);
+            }
         }
         //删除
         if (oldSize >= newSize) {
