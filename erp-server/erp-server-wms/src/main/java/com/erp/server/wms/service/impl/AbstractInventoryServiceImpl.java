@@ -65,9 +65,8 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
     private InventoryHisService inventoryHisService;
     @Autowired
     private PlmTaskFeign plmTaskFeign;
-
-    @Value("${inventory.closed.time:2023-09-01}")
-    private String closedTime;
+    @Resource
+    private InventoryClosedRecordService inventoryClosedRecordService;
 
     /**
      * 允许录入负数的库存业务单据（临时打开）
@@ -134,6 +133,8 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
             log.warn("库存交易反审核，单据类型：{}, 单据id：{}，未找到未审核过的交易流水，不处理", dto.getSourceType().getName(), dto.getBillId());
             return;
         }
+        // 查询最新库存关账记录
+        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
 
         // 关联交易号
         String transactionNo = IdUtil.getSnowflake().nextIdStr();
@@ -145,7 +146,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         txnFlows = txnFlows.stream().sorted(comparing).collect(Collectors.toList());
         txnFlows.forEach(txnFlow->{
             // 检测是否允许库存交易=
-            checkAllowTransaction(txnFlow.getOrgId(),txnFlow.getWarehouseId(),txnFlow.getWarehouseLocation(),txnFlow.getSkuId(),txnFlow.getSkuNo(),txnFlow.getDictInventoryStatus(),txnFlow.getBillDate());
+            checkAllowTransaction(closedDateMap.get(txnFlow.getOrgId()), txnFlow.getOrgId(),txnFlow.getWarehouseId(),txnFlow.getWarehouseLocation(),txnFlow.getSkuId(),txnFlow.getSkuNo(),txnFlow.getDictInventoryStatus(),txnFlow.getBillDate());
 
             // 获取单据业务类型
             InventoryBusinessTypeEnum businessTypeEnum = InventoryBusinessTypeEnum.getByCode(txnFlow.getDictBizType());// 取原交易流水的业务类型
@@ -211,6 +212,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
     /**
      * 检查库存交易的否允许
      *
+     * @param closeDate           关账时间
      * @param orgId               组织
      * @param warehouseId         仓库
      * @param warehouseLocation   仓位
@@ -218,12 +220,11 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
      * @param dictInventoryStatus 库存状态
      * @param billDate            单据日期
      */
-    private void checkAllowTransaction(String orgId, String warehouseId, String warehouseLocation, String skuId, String skuNo, String dictInventoryStatus, LocalDate billDate) {
-        //TODO 今后需要做 库存关账 等检测
-        log.info("closedTime:{}",closedTime);
-        if(StrUtil.isNotBlank(closedTime)){
-            LocalDate closeDate = LocalDate.parse(closedTime,DateTimeFormatter.ISO_LOCAL_DATE);
-            if (billDate.isBefore(closeDate)) {
+    private void checkAllowTransaction(LocalDate closeDate, String orgId, String warehouseId, String warehouseLocation, String skuId, String skuNo, String dictInventoryStatus, LocalDate billDate) {
+        // 库存关账时间检测
+        log.info("closeDate:{}",closeDate);
+        if(null != closeDate){
+            if (billDate.isBefore(closeDate) || billDate.equals(closeDate)) {
                 throw new ServiceException(ApiError.ERROR_INVENTORY_CLOSED, closeDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
             }
         }
@@ -292,7 +293,10 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         if(Objects.isNull(warehouseInfo) || StrUtil.isEmpty(warehouseInfo.getId())) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
-        checkAllowTransaction(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(),param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate());
+        // 查询最新库存关账记录
+        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
+
+        checkAllowTransaction(closedDateMap.get(warehouseInfo.getOrgId()), warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(),param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate());
         log.warn("交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走入库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName());
 
         // 按照仓库+仓位+库存状态+SKU 进行锁定
@@ -340,7 +344,10 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         if(Objects.isNull(warehouseInfo) || StrUtil.isEmpty(warehouseInfo.getId())) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
-        checkAllowTransaction(warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate());
+        // 查询最新库存关账记录
+        Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId();
+
+        checkAllowTransaction(closedDateMap.get(warehouseInfo.getOrgId()), warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate());
         // 待出库数量
         Integer waitOutQty = param.getQty();
         log.info("交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走出库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), inventoryStatusEnum.getName(), param.getSkuNo());
