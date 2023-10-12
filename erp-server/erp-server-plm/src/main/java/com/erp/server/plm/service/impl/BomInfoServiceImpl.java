@@ -626,8 +626,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             List<String> skuNoList = newChildrenList.stream().map(BomChildrenSkuDTO::getSkuNo).collect(Collectors.toList());
             List<String> dbSkuNoList = OldChildrenList.stream().map(BomChildrenSkuDTO::getSkuNo).collect(Collectors.toList());
             String removeSkuNo = dbSkuNoList.stream().filter(d -> !skuNoList.contains(d)).collect(Collectors.joining(","));
-            String removeContent = "删除了" + removeSkuNo + " 子物料";
-            contentList.add(removeContent);
+            if(StringUtils.isNotBlank(removeSkuNo)){
+                String removeContent = "删除了" + removeSkuNo + " 子物料";
+                contentList.add(removeContent);
+            }
         }
 
 
