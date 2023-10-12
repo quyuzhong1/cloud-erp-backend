@@ -83,7 +83,7 @@ public class RuleLogisticsController extends BaseController {
      * @author Lambda
      * @date: 2023-08-28
      */
-    @PostMapping("/view")
+    @GetMapping("/view")
     public ApiResult<RuleLogisticsDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         RuleLogisticsDTO.ViewDTO viewDTO = ruleLogisticsService.view(dto.getId());
         return success(viewDTO);
