@@ -317,4 +317,16 @@ public class ProductSkuFeignController {
         }
         return productRefLabelService.getLabelListByIds(null, null, skuIds);
     }
+
+
+    /**
+     * 批量修改产品信息
+     * @param list
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @PostMapping("/updateProductDetailBatch")
+    public Boolean updateProductDetailBatch(@RequestBody List<ProductDetailEntity> list) {
+        return productDetailService.updateProductDetailBatch(list);
+    }
+
 }

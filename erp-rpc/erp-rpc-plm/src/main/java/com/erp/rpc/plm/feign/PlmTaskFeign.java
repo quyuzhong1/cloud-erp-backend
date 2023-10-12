@@ -369,4 +369,12 @@ public interface PlmTaskFeign {
      */
     @GetMapping("feign/product/parentCategory")
     BasicCategoryDTO getParent(Map<String, String> categoryParams);
+
+    /**
+     * 批量修改产品信息
+     * @param list
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @PostMapping("feign/product/updateProductDetailBatch")
+    Boolean updateProductDetailBatch(List<ProductDetailEntity> list);
 }
