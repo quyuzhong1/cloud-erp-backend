@@ -523,9 +523,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         //数据验证
         checkRepeatBomSku(dto);
         checkBomCanUpdate(bom.getState(), BomConstant.EDIT);
-        Integer bomVersion = bom.getBomVersion();
         List<BomSkuDTO> oldBomList = bomSkuService.getByBomId(id);
-        bom.setBomVersion(bomVersion + 1);
         Boolean result = this.updateById(bom);
         List<BomSkuDTO> bomSkuList = dto.getSkuList();
         if (result) {
