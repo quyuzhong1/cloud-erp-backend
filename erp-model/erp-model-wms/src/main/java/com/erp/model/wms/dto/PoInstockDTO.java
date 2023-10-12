@@ -335,11 +335,6 @@ public class PoInstockDTO implements Serializable {
          * 来源主键id
          */
         private String sourceId;
-
-        /**
-         * 来源 purchaseOrder采购订单
-         */
-        private String sourceType;
         /**
          * 明细
          */

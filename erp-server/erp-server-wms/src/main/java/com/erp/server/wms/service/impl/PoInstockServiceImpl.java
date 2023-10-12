@@ -697,7 +697,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<String> resultIds = new ArrayList<>();
         for (PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO dto : list) {
             //来源类型
-            dto.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
+            dto.setSourceType(SourceTypeEnum.PO_INSTOCK.getCode());
             String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
             dto.setProductName(productName);
 
@@ -707,6 +707,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 throw new ServiceException(ApiError.ERROR_98026);
             }
             dto.setPurchaseOrderDetailId(detailEntity.getId());
+            //币别
+            dto.setCurrency(detailEntity.getCurrency());
             //币种符号
             dto.setCurrencySymbol(detailEntity.getCurrencySymbol());
             //单价
