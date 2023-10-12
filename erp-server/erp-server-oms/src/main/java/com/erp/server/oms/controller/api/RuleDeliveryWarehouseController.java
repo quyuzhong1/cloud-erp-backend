@@ -74,14 +74,14 @@ public class RuleDeliveryWarehouseController extends BaseController {
     /**
      * 发货仓库规则表详情
      *
-     * @param dto
+     * @param id
      * @return ApiResult
      * @author Lambda
      * @date: 2023-08-28
      */
     @GetMapping("/view")
-    public ApiResult<RuleDeliveryWarehouseDTO.ViewDTO> update(@RequestBody @Validated BaseIdDTO dto) {
-        RuleDeliveryWarehouseDTO.ViewDTO viewDTO = ruleDeliveryWarehouseService.view(dto.getId());
+    public ApiResult<RuleDeliveryWarehouseDTO.ViewDTO> update(@RequestParam("id") String id) {
+        RuleDeliveryWarehouseDTO.ViewDTO viewDTO = ruleDeliveryWarehouseService.view(id);
         return success(viewDTO);
     }
     /**
