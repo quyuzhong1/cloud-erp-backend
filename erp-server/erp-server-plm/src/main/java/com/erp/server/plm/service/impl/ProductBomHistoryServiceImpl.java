@@ -8,6 +8,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.dto.ProductBomHistoryDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
+import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
 import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
 import com.erp.model.plm.vo.BomVersionVO;
@@ -18,11 +19,13 @@ import com.erp.server.plm.service.ProductBomHistoryService;
 import com.erp.server.plm.service.ProductBomSkuHistoryService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -55,6 +58,7 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
      * @date 2023-01-12 18:47
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void insert(BomInfoEntity bom, List<BomSkuDTO> bomSkuList) {
         if (bom != null) {
             ProductBomHistoryEntity bomHistory = new ProductBomHistoryEntity();
@@ -107,20 +111,20 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
             }
             String bomHistoryId = item.getBomHistoryId();
             List<ProductBomSkuHistoryEntity> refSkuList = skuList.stream().filter(h -> bomHistoryId.equals(h.getBomHistoryId())).collect(Collectors.toList());
-            StringBuilder sb=new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             if (CollectionUtils.isNotEmpty(refSkuList)) {
-                List<String> childrenSkuList=refSkuList.stream().map(ProductBomSkuHistoryEntity::getSkuNo).collect(Collectors.toList());
+                List<String> childrenSkuList = refSkuList.stream().map(ProductBomSkuHistoryEntity::getSkuNo).collect(Collectors.toList());
                 //父sku
                 String parentSkuNo = refSkuList.get(0).getParentSkuNo();
                 sb.append("父物料:").append(parentSkuNo).append(";");
-                boolean addFlag=false;
-                for(String childrenSku:childrenSkuList){
-                    if(addFlag){
+                boolean addFlag = false;
+                for (String childrenSku : childrenSkuList) {
+                    if (addFlag) {
                         sb.append(",");
                     }
                     sb.append("子物料:");
                     sb.append(childrenSku);
-                    addFlag=true;
+                    addFlag = true;
                 }
             }
             item.setRefSku(sb.toString());
@@ -146,7 +150,38 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
-        List<ProductBomHistoryDTO.VersionDTO>  resultList= list.stream().map(obj -> new ProductBomHistoryDTO.VersionDTO(obj.getVersion())).collect(Collectors.toList());
+        List<ProductBomHistoryDTO.VersionDTO> resultList = list.stream().map(obj -> new ProductBomHistoryDTO.VersionDTO(obj.getVersion())).collect(Collectors.toList());
         return resultList;
+    }
+
+    /**
+     * 保存bom 审核通过过的历史数据
+     *
+     * @param bom
+     * @return void
+     * @author yl
+     * @date 2023-10-11 18:52
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveBomApprovalHistory(BomInfoEntity bom) {
+        if (Objects.isNull(bom)) {
+            return;
+        }
+        String bomId = bom.getId();
+        //先删除历史 bom
+        deleteByBomId(bom.getId());
+        List<BomSkuDTO> bomSkuList = bomSkuService.getByBomId(bomId);
+        //历史版本
+        ProductBomHistoryEntity bomHistory = new ProductBomHistoryEntity();
+        bomHistory.setBomId(bom.getId());
+        bomHistory.setSerialNumber(bom.getSerialNumber());
+        bomHistory.setType(bom.getType());
+        bomHistory.setVersion(bom.getBomVersion());
+        boolean saveFlag = this.save(bomHistory);
+        //当保存成功的时候
+        if (saveFlag) {
+            productBomSkuHistoryService.saveBomSku(bomHistory.getId(), bomSkuList);
+        }
     }
 }

@@ -224,5 +224,18 @@
         </if>
         mi.id desc,md.id desc
     </select>
+    <!--根据sku 信息获取到 加工单信息-->
+    <select id="listBySku" resultType="com.erp.model.wms.dto.MachineInfoDTO$ListDTO">
+        SELECT
+            m.code,
+            md.sku_no
+        FROM machine_detail md
+        LEFT JOIN machine_info m
+        ON md.main_id=m.id AND m.is_deleted=FALSE
+        WHERE md.is_deleted=FALSE
+        AND md.sku_no=#{params.skuNo}
+        AND md.sku_id=#{params.skuId}
+
+    </select>
 
 </mapper>

@@ -43,8 +43,11 @@ public class SaveHandler extends AbstractSparrowAnnotationBeanMap<SaveData, IRep
         }
         //通过枚举获取对应service
         IReportSaveService service = PAY_MAP.get(apiEnum);
-        //清除数据
-        service.cleanDataSave(tableName, size);
+        if(null != service){
+            //清洗数据
+            service.cleanDataSave(tableName, size);
+        }
+
     }
 
 }

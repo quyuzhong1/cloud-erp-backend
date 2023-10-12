@@ -107,7 +107,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         List<OrderEntity> insertList = new ArrayList<>();
         List<OrderEntity> pushToMqList = new ArrayList<>();
         for (OrderEntity entity : entityList) {
-            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByOrderIdAndSaleNum(entity.getPlatformOrderId(), entity.getSalesRecordNumber());
+            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByPlatformOrderId(entity.getPlatformOrderId());
             List<OrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             entity.setCleanToDelivery(CleanStatusEnum.UNCLEAN.getCode());
@@ -144,7 +144,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         // 异步推送到MQ
         entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SALE_ORDER_TAG.getName(),
-                    msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber()));
+                    msg,  msg.getPlatformOrderId());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }

@@ -4,7 +4,6 @@ import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
-import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -12,7 +11,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -52,6 +50,8 @@ public interface ScmTaskFeign {
      * @Date 2023/4/13 11:20
      * @param id id：采购订单id
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
+     * @Author Luo_WG
+     * @Date 2023/4/13 11:20
      **/
     @PostMapping("feign/purchaseOrder/getOrderSupplierByOrderId")
     PurchaseOrderSupplierEntity getOrderSupplierByOrderId(@RequestBody String id);
@@ -367,5 +367,16 @@ public interface ScmTaskFeign {
      **/
     @PostMapping("feign/purchaseOrder/listPurchaseOrderByPurchaseDate")
     List<SkuCostDTO> listPurchaseOrderByPurchaseDate(@RequestBody List<LocalDate> purchaseDateList);
+
+
+    /**
+     * 根据bom sku id 查询委外的数据
+     * @author yl
+     * @date 2023-10-12 10:05
+     * @param bomSkuId
+     * @return java.util.List<com.erp.model.scm.dto.SubcontractOrderDTO.ListDTO>
+     */
+    @PostMapping("feign/subcontractOrder/listByBomSku")
+    List<SubcontractOrderDTO.ListDTO> listByBomSku(@RequestBody String bomSkuId);
 
 }

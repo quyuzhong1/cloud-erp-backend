@@ -3,7 +3,6 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.entity.MachineInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -46,6 +45,8 @@ public interface MachineInfoMapper extends BaseMapper<MachineInfoEntity> {
      * @return List<ListDTO>
      */
     List<MachineInfoDTO.ListDTO> listExportExcel(@Param("params") MachineInfoDTO.SearchParamDTO params);
+
+    List<MachineInfoDTO.ListDTO> listBySku(@Param("params") MachineInfoDTO.FindInfoBySkuDTO dto);
 
     /**
      * @description: 更新金蝶推送状态
