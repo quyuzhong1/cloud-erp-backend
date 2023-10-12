@@ -172,13 +172,16 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 log.error("流程实例[{}]没有多实例执行任务",processInstance.getId());
                 throw new ServiceException(ApiError.ERROR_94004);
             }
-            List<ExecutionEntity> executionChild = executions.get(0).getExecutions();
-            if (CollectionUtil.isEmpty(executionChild)) {
-                log.error("流程实例[{}]没有多实例执行子任务",processInstance.getId());
-                throw new ServiceException(ApiError.ERROR_94004);
+            List<TaskEntity> tasks  = executions.get(0).getTasks();
+            if(CollectionUtil.isEmpty(tasks)){
+                List<ExecutionEntity> executionChild = executions.get(0).getExecutions();
+                if (CollectionUtil.isEmpty(executionChild)) {
+                    log.error("流程实例[{}]没有多实例执行子任务",processInstance.getId());
+                    throw new ServiceException(ApiError.ERROR_94004);
+                }
+                tasks = executionChild.get(0).getTasks();
             }
-            List<TaskEntity> tasks = executionChild.get(0).getTasks();
-            if (CollectionUtil.isEmpty(executionChild)) {
+            if (CollectionUtil.isEmpty(tasks)) {
                 log.error("流程实例[{}]没有多实例执行任务列表为空",processInstance.getId());
                 throw new ServiceException(ApiError.ERROR_94004);
             }
