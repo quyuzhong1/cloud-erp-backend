@@ -40,4 +40,12 @@ public interface PurchaseChangeDetailService extends SuperService<PurchaseChange
      * @return List<PurchaseChangeDetailEntity>
      */
     List<PurchaseChangeDetailEntity> listByPurchaseChangeIds(List<String> asList);
+    /**
+     * @description: 验证报价和关联数量
+     * @author Will
+     * @date: 2023/10/12 15:25
+     * @param list
+     * @param purchaseChangeIdList
+     */
+    void checkPurchasePrice (List<PurchaseChangeDetailEntity> list,List<String> purchaseChangeIdList);
 }

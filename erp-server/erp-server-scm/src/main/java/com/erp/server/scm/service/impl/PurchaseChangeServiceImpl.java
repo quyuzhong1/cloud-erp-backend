@@ -264,8 +264,8 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             //更新单据状态(后面有流程了可删)
             updateApproveStatusForApprove(ids,ApproveStatusEnum.APPROVE.getStatus());
 
-            //更新采购订单原有数据
-            updatePurchaseOrderData(ids);
+            //验证并更新采购订单原有数据
+            updatePurchaseOrderData(list,ids);
 
             //更新采购申请单生成PO类型
             updatePurchaseOrderCreatePoType(list);
@@ -547,12 +547,18 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
      * @date: 2023/3/31 16:33
      * @param ids
      */
-    private void updatePurchaseOrderData (List<String> ids) {
+    private void updatePurchaseOrderData (List<PurchaseChangeEntity> list,List<String> ids) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
 
         List<PurchaseChangeDetailEntity> purchaseChangeDetailList = purchaseChangeDetailService.listByPurchaseChangeIds(ids);
         if (CollectionUtils.isEmpty(purchaseChangeDetailList)) {
             throw new ServiceException(ApiError.ERROR_98043);
         }
+        //审核时明细数量验证
+        purchaseChangeDetailService.checkPurchasePrice(purchaseChangeDetailList,ids);
+
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = new ArrayList<>();
         for (PurchaseChangeDetailEntity detailEntity : purchaseChangeDetailList) {
             PurchaseOrderDetailEntity entity = new PurchaseOrderDetailEntity();
@@ -560,6 +566,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             entity.setPurchaseQty(detailEntity.getQty());
             entity.setTaxPrice(detailEntity.getPrice());
             entity.setPurchaseAmount(detailEntity.getAmount());
+            entity.setTaxRate(detailEntity.getTaxRate());
             purchaseOrderDetailList.add(entity);
         }
         purchaseOrderDetailService.updateBatchById(purchaseOrderDetailList);

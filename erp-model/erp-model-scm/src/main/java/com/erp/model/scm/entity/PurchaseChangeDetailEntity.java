@@ -108,8 +108,11 @@ public class PurchaseChangeDetailEntity extends BaseEntity<PurchaseChangeDetailE
     @TableField("remark")
     private String remark;
 
-
-
+    /**
+     * 汇率
+     */
+    @TableField(exist = false)
+    private BigDecimal taxRate;
 
     public static final String PURCHASE_CHANGE_ID = "purchase_change_id";
 
