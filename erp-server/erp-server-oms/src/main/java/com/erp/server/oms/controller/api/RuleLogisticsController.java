@@ -78,14 +78,14 @@ public class RuleLogisticsController extends BaseController {
     /**
      * 物流规则详情
      *
-     * @param dto
+     * @param id
      * @return ApiResult
      * @author Lambda
      * @date: 2023-08-28
      */
     @GetMapping("/view")
-    public ApiResult<RuleLogisticsDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        RuleLogisticsDTO.ViewDTO viewDTO = ruleLogisticsService.view(dto.getId());
+    public ApiResult<RuleLogisticsDTO.ViewDTO> view(@RequestParam("id") String id) {
+        RuleLogisticsDTO.ViewDTO viewDTO = ruleLogisticsService.view(id);
         return success(viewDTO);
     }
 
