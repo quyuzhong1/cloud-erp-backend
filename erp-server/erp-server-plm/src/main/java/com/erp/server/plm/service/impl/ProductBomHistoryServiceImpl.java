@@ -173,19 +173,25 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
             return;
         }
         String bomId = bom.getId();
-        //先删除历史 bom
-        deleteByBomId(bom.getId());
-        List<BomSkuDTO> bomSkuList = bomSkuService.getByBomId(bomId);
         //历史版本
-        ProductBomHistoryEntity bomHistory = new ProductBomHistoryEntity();
-        bomHistory.setBomId(bom.getId());
-        bomHistory.setSerialNumber(bom.getSerialNumber());
-        bomHistory.setType(bom.getType());
-        bomHistory.setVersion(bom.getBomVersion());
-        boolean saveFlag = this.save(bomHistory);
-        //当保存成功的时候
-        if (saveFlag) {
-            productBomSkuHistoryService.saveBomSku(bomHistory.getId(), bomSkuList);
+        List<ProductBomHistoryEntity> historyList = this.listByBomId(bomId);
+        //表示第一次升级
+        if(CollectionUtils.isEmpty(historyList)||historyList.size()==1){
+            List<BomSkuDTO> bomSkuList = bomSkuService.getByBomId(bomId);
+            //先删除历史 bom
+            deleteByBomId(bom.getId());
+            //历史版本
+            ProductBomHistoryEntity bomHistory = new ProductBomHistoryEntity();
+            bomHistory.setBomId(bom.getId());
+            bomHistory.setSerialNumber(bom.getSerialNumber());
+            bomHistory.setType(bom.getType());
+            bomHistory.setVersion(bom.getBomVersion());
+            boolean saveFlag = this.save(bomHistory);
+            //当保存成功的时候
+            if (saveFlag) {
+                productBomSkuHistoryService.saveBomSku(bomHistory.getId(), bomSkuList);
+            }
         }
+
     }
 }
