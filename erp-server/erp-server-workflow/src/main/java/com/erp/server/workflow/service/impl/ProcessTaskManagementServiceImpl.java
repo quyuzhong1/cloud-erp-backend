@@ -190,4 +190,9 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
         return baseMapper.listByProcessInstanceId(businessIds);
     }
 
+    @Override
+    public List<ProcessTaskManagementEntity> listPreActivityTask(String taskManagementId, String processInstanceId) {
+        return baseMapper.listPreActivityTask(taskManagementId, processInstanceId);
+    }
+
 }

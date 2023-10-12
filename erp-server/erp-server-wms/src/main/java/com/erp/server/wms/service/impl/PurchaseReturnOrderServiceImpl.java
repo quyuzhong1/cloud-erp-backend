@@ -117,6 +117,15 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Autowired
     private WarehouseLocationService warehouseLocationService;
 
+    @Autowired
+    private QcInfoService qcInfoService;
+
+    @Autowired
+    private PoInstockService poInstockService;
+
+    @Autowired
+    private MachineInfoService machineInfoService;
+
     @Value("${companyCode}")
     private String companyCode;
 
@@ -274,6 +283,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         purchaseReturnOrderDetailService.add(dto, purchaseReturnOrderEntity.getId());
         return purchaseReturnOrderEntity.getId();
     }
+
 
     /**
      * 修改
@@ -1438,12 +1448,15 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<String> unApproveIds = Lists.newArrayList();
         for (PurchaseReturnOrderEntity purchaseReturnOrder : purchaseReturnOrderEntityList) {
             String sourceType = purchaseReturnOrder.getSourceType();
-            if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) { // 库存退货
+            if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) {
+                // 库存退货
                 unApproveIds.add(purchaseReturnOrder.getId());
             } else { // 质检退货
-                String returnMode = purchaseReturnOrder.getReturnMode(); // 退货方式
+                String returnMode = purchaseReturnOrder.getReturnMode();
+                // 退货方式
                 /*
-                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())) { // 退货补货
+                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())) {
+                // 退货补货
                     unApproveIds.add(purchaseReturnOrder.getId());
                 }
                  */
@@ -1894,5 +1907,46 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 throw new ServiceException(ApiError.ERROR_99070);
             }
         }
+    }
+
+    @Override
+    public Boolean dataRepairTemp() {
+        List<PurchaseReturnOrderEntity> list = lambdaQuery().eq(PurchaseReturnOrderEntity::getSourceType, ReturnOrderSourceEnum.OTHER.getCode()).list();
+        for (PurchaseReturnOrderEntity entity : list) {
+            if (StringUtils.isBlank(entity.getSourceId())) {
+                entity.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
+                this.updateById(entity);
+                continue;
+            }
+
+            QcInfoEntity qcInfoEntity = qcInfoService.getById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(qcInfoEntity)) {
+                entity.setSourceType(SourceTypeEnum.QC_INFO.getCode());
+                this.updateById(entity);
+                continue;
+            }
+
+            PoInstockEntity poInstockEntity = poInstockService.getById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(poInstockEntity)) {
+                entity.setSourceType(SourceTypeEnum.PO_INSTOCK.getCode());
+                this.updateById(entity);
+                continue;
+            }
+
+            PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(purchaseOrderEntity)) {
+                entity.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
+                this.updateById(entity);
+                continue;
+            }
+
+            MachineInfoEntity machineInfoEntity = machineInfoService.getById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(machineInfoEntity)) {
+                entity.setSourceType(SourceTypeEnum.MACHINE_INFO.getCode());
+                this.updateById(entity);
+                continue;
+            }
+        }
+        return Boolean.TRUE;
     }
 }

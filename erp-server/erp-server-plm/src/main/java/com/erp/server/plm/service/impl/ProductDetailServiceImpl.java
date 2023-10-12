@@ -3898,4 +3898,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         return parentSkuDTOList;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateProductDetailBatch(List<ProductDetailEntity> list) {
+        return this.updateBatchById(list);
+    }
 }

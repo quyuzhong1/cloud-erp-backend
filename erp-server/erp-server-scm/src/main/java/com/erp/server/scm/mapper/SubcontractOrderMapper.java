@@ -62,6 +62,15 @@ public interface SubcontractOrderMapper extends BaseMapper<SubcontractOrderEntit
     List<String> listPodIdsByDetailIds(@Param("detailIds") List<String> detailIds);
 
     /**
+     * 根据bom sku 查询数据
+     * @author yl
+     * @date 2023-10-12 9:54
+     * @param bomSkuId
+     * @return java.util.List<com.erp.model.scm.dto.SubcontractOrderDTO.ListDTO>
+     */
+    List<SubcontractOrderDTO.ListDTO> listByBomSku(@Param("bomSkuId") String bomSkuId);
+
+    /**
      * @description: 更新金蝶推送状态
      * @author Will
      * @date: 2023/9/26 18:34

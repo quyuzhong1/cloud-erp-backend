@@ -43,6 +43,7 @@ public enum ApiModuleTypeEnum {
 
     PO_RECEIVE(32, "poReceive", "采购收货单","wms"),
 
+
     ;
     private Integer code;
 

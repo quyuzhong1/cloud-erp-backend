@@ -131,5 +131,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         if (ApiModuleTypeEnum.PO_RECEIVE.getCode().toString().equals(code)) {
             warehouseReceiveService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
         }
+        //采购收货单
+        if (ApiModuleTypeEnum.PO_RECEIVE.getCode().toString().equals(code)) {
+            warehouseReceiveService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+        }
     }
 }

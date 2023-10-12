@@ -24,6 +24,8 @@ import java.util.Map;
 @FeignClient(name = "erp-wms",configuration = {FeignErrorDecoder.class})
 public interface WmsTaskFeign {
 
+
+
     /**
      * 根据仓库id
      */
@@ -235,4 +237,7 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/purchaseReturnOrder/listPoReturnByIdList")
     List<PurchaseReturnOrderEntity> listPoReturnByIdList(@RequestBody List<String> poReturnIdList);
+
+    @PostMapping("feign/machineInfo/listBySku")
+    List<MachineInfoDTO.ListDTO> listBySku(@RequestBody MachineInfoDTO.FindInfoBySkuDTO dto);
 }

@@ -59,5 +59,34 @@
             #{id}
         </foreach>
     </select>
+    <select id="listPreActivityTask" resultType="com.erp.model.workflow.entity.ProcessTaskManagementEntity">
+        SELECT
+            t2.id,
+            t2.process_instance_id,
+            t2.task_id,
+            t2.cur_approve_id,
+            t2.start_time,
+            t2.task_status,
+            t2.timeout_handle_type,
+            t2.approve_time,
+            t2.remark,
+            t2.cur_activity_id,
+            t2.pre_activity_id,
+            t2.execution_id,
+            t2.approve_id,
+            t2.cur_activity_name,
+            t2.cur_approve_name,
+            t2.approve_name,
+            t2.timeout_status,
+            t2.timeout_warn_time,
+            t2.timeout_handle_time
+        FROM "process_task_management" t1
+        left join "process_task_management" t2 on t1.process_instance_id = t2.process_instance_id
+        where t1.is_deleted = false and t2.is_deleted = false
+        and t1.process_instance_id = #{processInstanceId}
+        and t1.id = #{taskManagementId}
+        and t2.cur_activity_id = t1.pre_activity_id
+        order by process_instance_id
+    </select>
 
 </mapper>

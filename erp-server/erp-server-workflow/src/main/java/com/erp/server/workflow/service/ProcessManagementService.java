@@ -34,7 +34,7 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * 流程审核
      * @param dto
      */
-    ProcessManagementDTO.ApproveResultDTO approveProcess(ProcessManagementDTO.ApproveDTO dto);
+    ProcessManagementDTO.ApproveResultDTO approveProcess(ProcessManagementDTO.ApproveDTO dto, Boolean isFirst);
 
     /**
      * 流程创建监听服务处理
@@ -213,4 +213,9 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      **/
     ProcessManagementEntity getByProcessInstanceId(String processInstanceId);
 
+    /**
+     *
+     * @param dto
+     */
+    void sameApproverAutoPass(ProcessManagementDTO.ApproveDTO dto, String processDefinitionId,String ProcessInstanceId);
 }

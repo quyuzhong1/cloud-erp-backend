@@ -1182,6 +1182,26 @@ public class SoInfoDTO implements Serializable {
 
 
         /**
+         * 销售员
+         */
+        private String sellerName;
+
+        /**
+         * 销售员电话
+         */
+        private String sellerMobile;
+
+        /**
+         * 销售员邮箱
+         */
+        private String sellerEmail;
+
+        /**
+         * 客户订单好
+         */
+        private String customerOrderNo;
+
+        /**
          * 客户名称
          */
         private String customerName;
@@ -1196,6 +1216,8 @@ public class SoInfoDTO implements Serializable {
          * 客户邮箱
          */
         private String email;
+
+
 
         /**
          * 客户电话
@@ -1218,6 +1240,15 @@ public class SoInfoDTO implements Serializable {
          */
         private String receiveConditionStr;
 
+        /**
+         * 销售组织
+         */
+        private String salesOrgName;
+
+        /**
+         * 订单备注
+         */
+        private String remark;
 
         /**
          * 运费

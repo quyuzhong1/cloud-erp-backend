@@ -20,7 +20,6 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
-
  * @date 2023/5/10 14:03
  */
 @Data
@@ -35,7 +34,7 @@ public class MachineInfoDTO implements Serializable {
         /**
          * 主键id
          */
-        private String  id;
+        private String id;
 
         /**
          * 加工单号
@@ -140,43 +139,43 @@ public class MachineInfoDTO implements Serializable {
         /**
          * 搜索类型
          */
-        private String  searchType;
+        private String searchType;
         /**
          * 加工编号
          */
-        private String  code;
+        private String code;
         /**
          * sku编码集合
          */
-        private List<String>  skuNoList;
+        private List<String> skuNoList;
         /**
          * 审核状态集合
          */
-        private List<String>  approveStatusList;
+        private List<String> approveStatusList;
         /**
          * 作废状态
          */
-        private Boolean  invalidStatus;
+        private Boolean invalidStatus;
         /**
          * 事务类型
          */
-        private String  workType;
+        private String workType;
         /**
          * 加工日期集合
          */
-        private List<LocalDate>  billDateList;
+        private List<LocalDate> billDateList;
         /**
          * 收货仓库id集合
          */
-        private List<String>  warehouseIdList;
+        private List<String> warehouseIdList;
         /**
          * 创建人id集合
          */
-        private List<String>  createUserIdList;
+        private List<String> createUserIdList;
         /**
          * 创建时间集合
          */
-        private List<LocalDate>   createTimeList;
+        private List<LocalDate> createTimeList;
 
 
     }
@@ -205,17 +204,17 @@ public class MachineInfoDTO implements Serializable {
          * 加工日期
          */
         @NotNull(message = "加工日期不能为空")
-        private LocalDate  billDate;
+        private LocalDate billDate;
         /**
          * 事务类型
          */
         @NotBlank(message = "事务类型不能为空")
         @StateEnumValue(clazz = WorkTypeEnum.class, message = "事务类型有误", groups = {AddGroup.class})
-        private String  workType;
+        private String workType;
         /**
          * 仓管员id
          */
-        private String  warehouseKeeperId;
+        private String warehouseKeeperId;
         /**
          * 仓库id
          */
@@ -254,7 +253,6 @@ public class MachineInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
 
 
         /**
@@ -297,17 +295,17 @@ public class MachineInfoDTO implements Serializable {
         /**
          * 加工单号
          */
-        private String  code;
+        private String code;
 
         /**
          * 审核状态
          */
-        private String  approveStatus;
+        private String approveStatus;
 
         /**
          * 审核状态名称
          */
-        private String  approveStatusName;
+        private String approveStatusName;
 
         /**
          * 收货仓库名称
@@ -317,22 +315,30 @@ public class MachineInfoDTO implements Serializable {
         /**
          * 领料组织名称
          */
-        private String  receiveOrgName;
+        private String receiveOrgName;
 
         /**
          * 库存组织id
          */
-        private String  inventoryOrgId;
+        private String inventoryOrgId;
 
         /**
          * 库存组织名称
          */
-        private String  inventoryOrgName;
+        private String inventoryOrgName;
 
         /**
          * 明细
          */
         private List<MachineDetailDTO.ViewDTO> detailList;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class FindInfoBySkuDTO {
+        private String skuNo;
+        private String skuId;
     }
 
 }

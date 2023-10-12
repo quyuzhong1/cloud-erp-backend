@@ -289,7 +289,7 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/approve")
     public ApiResult<ProcessManagementDTO.ApproveResultDTO> approve(@RequestBody ProcessManagementDTO.ApproveDTO dto) {
-        return success(processManagementService.approveProcess(dto));
+        return success(processManagementService.approveProcess(dto,Boolean.TRUE));
     }
 
     /**

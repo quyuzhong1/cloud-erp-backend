@@ -33,7 +33,7 @@ public class RuleLogisticsEntity extends BaseEntity<RuleLogisticsEntity> {
     * 优先级
     */
     @TableField("priority")
-    private String priority;
+    private Integer priority;
     /**
     * 禁用状态 false 未禁用
     */

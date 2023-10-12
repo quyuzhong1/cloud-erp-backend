@@ -47,6 +47,8 @@ public interface MachineInfoMapper extends BaseMapper<MachineInfoEntity> {
      */
     List<MachineInfoDTO.ListDTO> listExportExcel(@Param("params") MachineInfoDTO.SearchParamDTO params);
 
+    List<MachineInfoDTO.ListDTO> listBySku(@Param("params") MachineInfoDTO.FindInfoBySkuDTO dto);
+
     /**
      * @description: 更新金蝶推送状态
      * @author Will

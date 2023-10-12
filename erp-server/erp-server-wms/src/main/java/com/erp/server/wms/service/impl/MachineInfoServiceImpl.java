@@ -882,4 +882,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                 .eq(MachineInfoEntity::getInvalidStatus,Boolean.FALSE)
                 .list();
     }
+
+    @Override
+    public List<MachineInfoDTO.ListDTO> listBySku(MachineInfoDTO.FindInfoBySkuDTO dto) {
+        return baseMapper.listBySku(dto);
+    }
 }

@@ -224,4 +224,13 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @return java.lang.Boolean
      **/
     Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+
+    /**
+     * 根据bom skuId 获取数据
+     * @author yl
+     * @date 2023-10-12 9:53
+     * @param bomSkuId
+     * @return java.util.List<com.erp.model.scm.dto.SubcontractOrderDTO.ListDTO>
+     */
+    List<SubcontractOrderDTO.ListDTO> listByBomSku(String bomSkuId);
 }
