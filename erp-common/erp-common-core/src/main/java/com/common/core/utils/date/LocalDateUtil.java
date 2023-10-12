@@ -3,6 +3,7 @@ package com.common.core.utils.date;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 
+import java.math.BigDecimal;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -406,5 +407,21 @@ public class LocalDateUtil {
         return time.format(DateTimeFormatter.ofPattern(pattern));
     }
 
+    public static LocalDateTime plusHours(LocalDateTime startTime, String hourStr) {
+        if (StrUtil.isBlank(hourStr)){
+            return startTime;
+        }
+        BigDecimal hour = new BigDecimal(hourStr);
+        int intValue = hour.intValue();
+        LocalDateTime result = null;
+        if(intValue > 0){
+            result = startTime.plusHours(intValue);
+        }
+        BigDecimal remainder = hour.remainder(BigDecimal.ONE);
+        if(remainder.compareTo(BigDecimal.ZERO) > 0){
+            result = result.plusMinutes(new BigDecimal(60).multiply(remainder).intValue());
+        }
+        return result;
+    }
 }
 

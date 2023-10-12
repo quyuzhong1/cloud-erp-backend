@@ -10,9 +10,11 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.workflow.dto.CamundaDTO;
 import com.erp.model.workflow.enums.TimeoutStatusEnum;
 import lombok.Getter;
@@ -162,9 +164,9 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
         this.taskId = taskId;
         this.startTime = startTime;
         this.taskStatus = approveStatus;
-        this.timeoutHandleTime = StrUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? startTime.plusHours(Integer.parseInt(propertiesDTO.getTimeoutInterval())) : startTime;
+        this.timeoutHandleTime = StrUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? LocalDateUtil.plusHours(startTime, propertiesDTO.getTimeoutInterval()) : startTime;
         this.timeoutHandleType = propertiesDTO.getTimeoutHandling();
-        this.timeoutWarnTime = StrUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? startTime.plusHours(Integer.parseInt(propertiesDTO.getTimeoutWarnInterval())) : startTime;
+        this.timeoutWarnTime = StrUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? LocalDateUtil.plusHours(startTime, propertiesDTO.getTimeoutWarnInterval()) : startTime;
         this.curApproveId = findUserDTO.getUserId();
         this.curApproveName = findUserDTO.getUserName();
         this.executionId = executionId;
