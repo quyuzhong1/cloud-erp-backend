@@ -3605,7 +3605,19 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<String> dataStrList = dataValueList.stream().filter(d -> d.getType().
                         equals(grossProfit)).map(BiDataSourceCostDTO.DataValueDTO::getDateStr).
                 sorted().collect(Collectors.toList());
-        chartVO.setXAxis(dataStrList);
+
+        //如果是季度
+        if (dateType.equals("QUARTER")) {
+            List<String> quarterList = new ArrayList<>(12);
+            for (String dateStr : dataStrList) {
+                String quarterStr = conversionQuarterName(dateStr);
+                quarterList.add(quarterStr);
+            }
+            chartVO.setXAxis(quarterList);
+        } else {
+            chartVO.setXAxis(dataStrList);
+        }
+
         //对应值
         List<SeriesVO> seriesList = new ArrayList<>(2);
         //毛利额
@@ -3615,8 +3627,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<BigDecimal> grossProfitValueList = new ArrayList<>(2);
         for (String str : dataStrList) {
             BigDecimal dataValue = dataValueList.stream().filter(d ->
-                    d.getType().equals(grossProfit) && d.getDateStr().equals(str)
-            ).map(BiDataSourceCostDTO.DataValueDTO::getValue).findFirst().
+                            d.getType().equals(grossProfit) && d.getDateStr().equals(str)
+                    ).map(BiDataSourceCostDTO.DataValueDTO::getValue).findFirst().
                     orElse(BigDecimal.ZERO);
             grossProfitValueList.add(dataValue);
         }
