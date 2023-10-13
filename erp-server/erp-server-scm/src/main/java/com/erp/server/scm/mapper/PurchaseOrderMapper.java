@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PushSyncStatusDTO;
+import com.erp.model.scm.dto.FirstPlaceOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -135,4 +136,11 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return java.util.List<com.erp.model.scm.dto.SkuCostDTO>
      **/
     List<SkuCostDTO> listPurchaseOrderByPurchaseDate(@Param("purchaseDateList") List<LocalDate> purchaseDateList);
+
+    /**
+     * 获取首批采购日期
+     * @param ids
+     * @return
+     */
+    List<FirstPlaceOrderDTO> listFirstPlaceOrderDate(@Param("ids") List<String> ids);
 }

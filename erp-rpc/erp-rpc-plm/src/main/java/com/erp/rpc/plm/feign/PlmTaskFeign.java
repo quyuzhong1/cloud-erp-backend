@@ -2,10 +2,7 @@ package com.erp.rpc.plm.feign;
 
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.BasicCategoryEntity;
-import com.erp.model.plm.entity.BomInfoEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -383,4 +380,20 @@ public interface PlmTaskFeign {
      */
     @PostMapping("/feign/productPack/backFillPackaging")
     void backFillPackaging(@RequestBody List<ProductPackDTO>  productPackList);
+
+    /**
+     * 批量修改产品采购信息
+     * @param list
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @PostMapping("feign/product/updateProductPurchaseBatch")
+    Boolean updateProductPurchaseBatch(List<ProductPurchaseEntity> list);
+
+    /**
+     * 根据skuId查询产品采购信息
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.entity.ProductPurchaseEntity>
+     **/
+    @PostMapping("feign/product/listProductPurchaseBySkuId")
+    List<ProductPurchaseEntity> listProductPurchaseBySkuId(List<String> skuIds);
 }

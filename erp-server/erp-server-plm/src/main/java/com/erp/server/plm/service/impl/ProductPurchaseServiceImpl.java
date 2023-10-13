@@ -210,6 +210,12 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
         }
         return resultList;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateProductDetailBatch(List<ProductPurchaseEntity> list) {
+        return this.updateBatchById(list);
+    }
 }
 
 
