@@ -1242,7 +1242,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 item.setAllAmountLocalCurrency(item.getExchangeRate().multiply(taxAmount).setScale(4, BigDecimal.ROUND_HALF_UP));
             }
         }
-        SoUtils.updateSoDetailCost(item, purchasePrice, saleAmount);
+        SoUtils.updateSoDetailCost(item, purchasePrice);
     }
 
     @Transactional(rollbackFor = Exception.class)

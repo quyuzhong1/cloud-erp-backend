@@ -2417,29 +2417,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public Boolean temporaryUpdate() {
         List<SoDetailEntity> list = soDetailService.list();
         for (SoDetailEntity soDetailEntity : list) {
-            SkuCostProfitDTO.SkuCostProfitParam skuCostProfitParam = new SkuCostProfitDTO.SkuCostProfitParam();
-            skuCostProfitParam.setSaleAmount(soDetailEntity.getAmount());
-            skuCostProfitParam.setQty(soDetailEntity.getQty());
-            skuCostProfitParam.setTaxRate(soDetailEntity.getTaxRate());
-            skuCostProfitParam.setSkuId(soDetailEntity.getSkuId());
-            skuCostProfitParam.setCurrency(soDetailEntity.getCurrency());
 
-            SoInfoEntity soInfoEntity = getById(soDetailEntity.getMainId());
-            skuCostProfitParam.setBillDate(soInfoEntity.getBillDate());
-            SkuCostProfitDTO.SkuCostProfitResult skuCostProfit = this.getSkuCostProfitt(skuCostProfitParam);
-            //税率
-            BigDecimal taxRate = soDetailEntity.getTaxRate();
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-            //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(soDetailEntity.getPrice(), multiplyTax);
-            BigDecimal taxAmount = MathUtil.multiply(taxPrice, soDetailEntity.getQty());
-            soDetailService.lambdaUpdate()
-                    .set(SoDetailEntity::getPurchasePrice, skuCostProfit.getPurchasePrice())
-                    .set(SoDetailEntity::getAmountLocalCurrency, skuCostProfit.getSaleProfitRate() == BigDecimal.ZERO ? soDetailEntity.getAmount() : soDetailEntity.getAmount().multiply(skuCostProfit.getExchangeRate()))
-                    .set(SoDetailEntity::getAllAmountLocalCurrency, skuCostProfit.getSaleProfitRate() == BigDecimal.ZERO ? taxAmount : taxAmount.multiply(skuCostProfit.getExchangeRate()))
-                    .eq(SoDetailEntity::getId, soDetailEntity.getId()).update();
+
         }
         return Boolean.TRUE;
     }

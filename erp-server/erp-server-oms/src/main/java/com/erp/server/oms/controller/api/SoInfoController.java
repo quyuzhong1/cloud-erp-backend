@@ -519,11 +519,12 @@ public class SoInfoController extends BaseController {
     }
 
     /**
-     * 临时接口：修改未税单价
-     * @Author Luo_WG
-     * @Date 2023/7/13 10:44
-     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
-     **/
+     * 临时接口：添加折扣额 修复历史的数据销售额数据
+     * @author yl
+     * @date 2023-10-13 9:06
+     * @param
+     * @return com.common.core.controller.vo.ApiResult
+     */
     @PostMapping("/temporaryUpdate")
     public ApiResult temporaryUpdate() {
         Boolean aBoolean = soInfoService.temporaryUpdate();
