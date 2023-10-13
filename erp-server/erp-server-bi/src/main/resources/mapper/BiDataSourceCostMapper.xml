@@ -186,7 +186,7 @@
             AND bdsc.month >= #{params.startTime}
         </if>
         <if test="null != params.endTime">
-            AND bdsc.month <![CDATA[ <= ]]> #{params.endTime}
+            AND bdsc.month <![CDATA[ < ]]> #{params.endTime}
         </if>
         <if test="params.department!=null and params.department.size>0">
             AND bdsc.dept_id IN
@@ -241,7 +241,7 @@
             AND bdsc.month >= #{params.startTime}
         </if>
         <if test="null != params.endTime">
-            AND bdsc.month <![CDATA[ <= ]]> #{params.endTime}
+            AND bdsc.month <![CDATA[ < ]]> #{params.endTime}
         </if>
         <if test="params.department!=null and params.department.size>0">
             AND bdsc.dept_id IN

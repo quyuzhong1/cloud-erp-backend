@@ -3476,11 +3476,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<CompletionRateRankingDTO.PagingDTO> lastMonthList = baseMapper.deptCompletionRateRanking(dto, settleRate);
         for (CompletionRateRankingDTO.PagingDTO pagingDTO : list) {
             SysDepartmentDTO dept = deptList.stream().filter(u -> u.getId().equals(pagingDTO.getName())).findFirst().orElse(null);
-            if (dept != null) {
-                pagingDTO.setName(dept.getName());
-            } else {
-                pagingDTO.setName("无");
-            }
             //计算本月完成率
             List<TargetFinishDTO.ViewDTO> targetFinishList = viewDTOS.stream().filter(req -> req.getTypeId().equals(pagingDTO.getName())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(targetFinishList)) {
@@ -3493,6 +3488,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             CompletionRateRankingDTO.PagingDTO lastPagingDTO = lastMonthList.stream().filter(req -> req.getName().equals(pagingDTO.getName())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(lastPagingDTO)) {
                 pagingDTO.setLastMonthRanking(lastPagingDTO.getRanking());
+            }
+            if (dept != null) {
+                pagingDTO.setName(dept.getName());
+            } else {
+                pagingDTO.setName("无");
             }
         }
         return list;
