@@ -128,5 +128,14 @@ public interface CustomerFeign {
      * @return
      */
     @PostMapping("feign/customer/getCustomerByName")
-    public CustomerInfoEntity getCustomerByName(@RequestBody String customerName);
+    CustomerInfoEntity getCustomerByName(@RequestBody String customerName);
+
+    /**
+     * 根据客户名称获取客户详情
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("feign/customer/getCustomerById")
+    CustomerInfoEntity getCustomerById(@RequestBody String id);
 }

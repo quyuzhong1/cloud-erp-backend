@@ -1394,6 +1394,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         return this.getOne(queryWrapper);
     }
 
+    @Override
+    public CustomerInfoEntity getCustomerById(String id) {
+        if (StringUtils.isEmpty(id)) {
+            return null;
+        }
+        return this.getById(id);
+    }
+
     /**
      * 客户联系人信息
      *

@@ -13,7 +13,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
-import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -87,7 +87,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -1012,8 +1011,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
-            //审核通过同步mq
-            list.forEach(obj -> this.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -2623,7 +2620,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     public void syncOrderToDmp(SoInfoEntity soInfoEntity, String syncOperate) {
-        DmpPushTaskFeignDTO dto = new DmpPushTaskFeignDTO()
+
+        DmpPullTaskFeignDTO dto = new DmpPullTaskFeignDTO()
                 .setMqData(JSON.toJSONString(soInfoEntity))
                 .setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC)
                 .setMqTag(RocketMqTagEnum.KINGDEE_SO_INFO_TAG.getName())
@@ -2633,8 +2631,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 .setSourcePlatformName(PlatformEnum.ERP_OMS.getDesc())
                 .setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc())
                 .setSyncOperate(syncOperate);
-        log.info("推送消息：{}", dto.toString());
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> dmpMqFeign.sendMqAndSaveTask(dto));
+        log.info("推送消息开始：{}", dto.toString());
+        //推送mq
+        try {
+            Boolean b = dmpTaskFeign.sendMqAndSaveTask(dto);
+            if (Objects.isNull(b) || !b) {
+                throw new ServiceException("同步数据中台异常");
+            }
+        }catch (Exception e){
+            throw new ServiceException(String.format("同步数据中台异常:%s",e.getMessage()));
+        }
+        log.info("推送消息结束：");
     }
 }

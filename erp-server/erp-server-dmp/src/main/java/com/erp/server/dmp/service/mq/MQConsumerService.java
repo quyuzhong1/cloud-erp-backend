@@ -407,22 +407,6 @@ public class MQConsumerService {
         }
     }
 
-    /**
-     * 订单审核通过后同步dmp
-     */
-    @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_ORDER_TO_DMP_TOPIC,
-            selectorExpression = "approved_order_to_dmp_tag",
-            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-approved_order_to_dmp_consumer")
-    public class ConsumerApprovedOrderToDmp implements RocketMQListener<DmpSyncMqDTO> {
-        @Override
-        public void onMessage(DmpSyncMqDTO dmpSyncMqDTO) {
-            log.info("监听到订单审核通过同步任务回调：entity={}", JSONUtil.toJsonStr(dmpSyncMqDTO));
-            //处理订单同步
-            dmpPullTaskService.syncOmsOrderToDmp(dmpSyncMqDTO);
-        }
-    }
-
     private <T extends CleanBaseDTO> void finishClean(MapUtil mapUtil, OrderMongoDTO updateDto,String tableName, Class<T> clazz) {
         List<T> mongoData = mongoService.findMongoData(updateDto, 0, 0, tableName, clazz);
         if(CollectionUtil.isEmpty(mongoData)){

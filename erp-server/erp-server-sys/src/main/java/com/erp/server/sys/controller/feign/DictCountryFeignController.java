@@ -14,7 +14,7 @@ import java.util.List;
  * @Date 2023/5/26 10:49
  **/
 @RestController
-@RequestMapping("feign/dictCountry")
+@RequestMapping("/feign/dictCountry")
 public class DictCountryFeignController {
 
     @Resource

@@ -1,8 +1,10 @@
 package com.erp.server.dmp.mapper;
+
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -16,4 +18,11 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface DmpPushTaskMapper extends BaseMapper<DmpPushTaskEntity> {
 
+    /**
+     * 根据条件查询数据
+     *
+     * @param params
+     * @return
+     */
+    DmpPushTaskEntity getEntityByCondition(@Param("params") DmpPushTaskEntity params);
 }

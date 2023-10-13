@@ -315,4 +315,11 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return
      */
     CustomerInfoEntity getCustomerByName(String name);
+    /**
+     * 根据客户id获取详情
+     *
+     * @param id
+     * @return
+     */
+    CustomerInfoEntity getCustomerById(String id);
 }

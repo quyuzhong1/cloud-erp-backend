@@ -6,16 +6,13 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 /**
  * <p>
@@ -90,6 +87,15 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      **/
     List<SoDetailEntity> listSoDetailByMainIds(List<String> ids);
 
+    /**
+     * 根据销售单主表id查询详情表信息
+     *
+     * @param id id
+     * @return java.util.List<com.erp.model.oms.entity.SoDetailEntity>
+     * @Author Luo_WG
+     * @Date 2023/5/17 15:29
+     **/
+    List<SoDetailEntity> listSoDetailByMainId(String id);
 
     /**
      * 根据 主表id 获取到明细

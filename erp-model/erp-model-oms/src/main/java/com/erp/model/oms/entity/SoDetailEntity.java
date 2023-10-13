@@ -63,6 +63,12 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     private String deliveryStatus;
 
     /**
+     * 库位
+     */
+    @TableField("warehouse_location")
+    private String warehouseLocation;
+
+    /**
      * 单价
      */
     @TableField("price")

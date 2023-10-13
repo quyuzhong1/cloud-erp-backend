@@ -1,6 +1,6 @@
 package com.erp.server.dmp.service;
 
-import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
@@ -59,7 +59,19 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
     /**
      * 处理oms推送订单审核消息
      *
-     * @param dmpSyncMqDTO
+     * @param resultMap
      */
-    void syncOmsOrderToDmp(DmpSyncMqDTO dmpSyncMqDTO);
+    void syncOmsOrderToDmp(Map<String, Object> resultMap);
+
+    /**
+     * 发送mq并保存任务
+     * @param dto
+     */
+    Boolean sendMqAndSaveTask(DmpPullTaskFeignDTO dto);
+
+    /**
+     * 发送mq并保存任务
+     * @param dto
+     */
+    String savePullTask(DmpPullTaskFeignDTO dto);
 }

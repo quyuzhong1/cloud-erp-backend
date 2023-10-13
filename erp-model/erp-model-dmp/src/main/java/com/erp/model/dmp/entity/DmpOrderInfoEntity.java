@@ -29,7 +29,7 @@ public class DmpOrderInfoEntity implements Serializable {
     private String platformOrderId;
 
     /**
-     * 订单状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
+     * 订单状态 1.待配货 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
      */
     @TableField(value = "order_state")
     private Integer orderStatus;
@@ -356,6 +356,12 @@ public class DmpOrderInfoEntity implements Serializable {
      */
     @TableField(value = "dept_id")
     private String deptId;
+
+    /**
+     * 来源id
+     */
+    @TableField(value = "source_id")
+    private String sourceId;
 
     /**
      * 负责人id

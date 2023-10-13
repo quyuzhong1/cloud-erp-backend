@@ -299,6 +299,13 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField(value = "discount_amount")
     private BigDecimal discountAmount;
 
+    /**
+     * 总价税合计本位币
+     */
+    @TableField("all_amount_lc")
+    private BigDecimal allAmountLc;
+
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

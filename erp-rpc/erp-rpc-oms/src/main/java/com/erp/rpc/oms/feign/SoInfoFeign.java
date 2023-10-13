@@ -6,7 +6,6 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -24,6 +23,15 @@ public interface SoInfoFeign {
     @PostMapping("feign/soInfo/listSoDetailByIds")
     List<SoDetailEntity> listSoDetailByIds(@RequestBody List<String> ids);
 
+    /**
+     * 获取订单明细全量字段
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("feign/soInfo/listSoDetailByMainId")
+    List<SoDetailEntity> listSoDetailByMainId(@RequestBody String id);
+
     @PostMapping("feign/soInfo/listSoDetailByMainIds")
     List<SoDetailEntity> listSoDetailByMainIds(@RequestBody List<String> ids);
 
@@ -35,6 +43,7 @@ public interface SoInfoFeign {
 
     /**
      * 更改销售订单发货状态
+     *
      * @param paramList
      */
     @PostMapping("feign/soInfo/updateDeliveryStatus")
@@ -42,10 +51,11 @@ public interface SoInfoFeign {
 
     /**
      * 销售订单审核
-     * @Author Luo_WG
-     * @Date 2023/7/4 12:28
+     *
      * @param dto
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/7/4 12:28
      **/
     @PostMapping("feign/soInfo/approve")
     Boolean approve(@RequestBody BaseApproveParamDTO dto);

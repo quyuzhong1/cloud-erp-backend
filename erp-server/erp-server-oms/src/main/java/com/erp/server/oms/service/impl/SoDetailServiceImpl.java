@@ -115,7 +115,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     private ScmTaskFeign scmTaskFeign;
 
 
-
     /**
      * 根据退货单详情表id查询退货单
      *
@@ -368,6 +367,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Override
     public List<SoDetailEntity> listSoDetailByMainIds(List<String> ids) {
         return baseMapper.listSoDetailByMainIds(ids);
+    }
+
+    @Override
+    public List<SoDetailEntity> listSoDetailByMainId(String id) {
+        LambdaQueryWrapper<SoDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SoDetailEntity::getMainId, id);
+        queryWrapper.eq(SoDetailEntity::getIsDeleted, false);
+        return baseMapper.selectList(queryWrapper);
     }
 
 

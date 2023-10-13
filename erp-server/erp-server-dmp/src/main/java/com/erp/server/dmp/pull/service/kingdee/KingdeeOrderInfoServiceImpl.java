@@ -444,15 +444,15 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
             //商品状态 1：未付款 2：未发货 3：已发货 4：已作废
             switch (orderItemBean.getFDeliveryStatus()) {
                 case "C":
-                    dmpOrderItemEntity.setStatus(3);
+                    dmpOrderItemEntity.setStatus(String.valueOf(3));
                     break;
                 case "B":
-                    dmpOrderItemEntity.setStatus(2);
+                    dmpOrderItemEntity.setStatus(String.valueOf(2));
                 case "A":
-                    dmpOrderItemEntity.setStatus(2);
+                    dmpOrderItemEntity.setStatus(String.valueOf(2));
                     break;
                 default:
-                    dmpOrderItemEntity.setStatus(2);
+                    dmpOrderItemEntity.setStatus(String.valueOf(2));
                     break;
             }
             //商品仓库编号

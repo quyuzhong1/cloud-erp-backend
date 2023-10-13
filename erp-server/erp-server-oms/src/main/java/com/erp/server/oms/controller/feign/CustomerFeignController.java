@@ -155,4 +155,15 @@ public class CustomerFeignController {
     public CustomerInfoEntity getCustomerByName(@RequestBody String customerName) {
         return customerInfoService.getCustomerByName(customerName);
     }
+
+    /**
+     * 根据名称获取用户详情
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("/getCustomerById")
+    public CustomerInfoEntity getCustomerById(@RequestBody String id) {
+        return customerInfoService.getCustomerById(id);
+    }
 }
