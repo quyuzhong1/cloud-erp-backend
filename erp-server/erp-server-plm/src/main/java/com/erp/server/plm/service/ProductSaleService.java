@@ -90,4 +90,11 @@ public interface ProductSaleService extends IService<ProductSaleEntity> {
      * @return
      */
     List<SkuDTO.SalesDTO> listSkuSalesBySkuNos(List<String> skuNoList);
+
+    /**
+     * 批量修改产品销售信息
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    Boolean updateProductSaleBatch(List<ProductSaleEntity> list);
 }
