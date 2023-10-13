@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
@@ -134,12 +135,21 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
             //获取用户部门id
             SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(receiveUserId);
             //收料部门
-            if (ObjectUtil.isEmpty(departmentDTO)) {
+            if (ObjectUtil.isNotEmpty(departmentDTO)) {
                 resultMap.put("receiveDept", departmentDTO.getCode());
             } else {
                 resultMap.put("receiveDept", "");
             }
+            //收料员
+            FindUserDTO userByUserId = sysUserFeign.getUserByUserId(receiveUserId);
+            if (ObjectUtil.isNotEmpty(userByUserId)) {
+                resultMap.put("receiveUser", userByUserId.getCode());
+            } else {
+                resultMap.put("receiveUser", "");
+            }
+
         }
+
 
         //采购员
         String purchaseUserId = entity.getPurchaseUserId();
