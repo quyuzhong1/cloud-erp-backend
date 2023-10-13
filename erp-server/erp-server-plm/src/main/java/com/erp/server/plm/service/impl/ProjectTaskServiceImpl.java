@@ -4007,8 +4007,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             comment.setAttachUrlList(dto.getAttachUrlList());
             taskCommentList.add(comment);
         }
+        Integer approvalNoPassCode= TaskStateEnum.APPROVAL_NO_PASS.getCode();
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
-        boolean flag = this.updateTaskState(taskIdList, TaskStateEnum.APPROVAL_NO_PASS.getCode(), null, null);
+        boolean flag = this.updateTaskState(taskIdList, approvalNoPassCode, null, null);
         if (flag) {
             taskOperatorRecordService.batchSaveRecord(taskIdList, approvalIngCode, TaskStateEnum.APPROVAL_NO_PASS.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
             //操作日志
@@ -4017,6 +4018,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s],原因[%s]", TaskStateEnum.APPROVAL_ING.getName(), TaskStateEnum.APPROVAL_NO_PASS.getName(), dto.getComment())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
             });
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
+
+            list.forEach(t->t.setStatus(approvalNoPassCode));
         }
 
         taskCommentService.batchSaveTaskComment(taskCommentList);
