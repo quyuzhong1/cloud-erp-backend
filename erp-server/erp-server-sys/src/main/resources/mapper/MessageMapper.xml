@@ -78,6 +78,12 @@
         <if test="param.type != null and param.type != ''">
             AND m.type = #{param.type}
         </if>
+        <if test="param.application != null and param.application.size > 0">
+            AND m.application IN
+            <foreach collection="param.application" item="app" open="(" close=")" separator=",">
+                #{app}
+            </foreach>
+        </if>
         ORDER BY m.create_time DESC
     </select>
 </mapper>

@@ -9,6 +9,7 @@ import com.erp.model.sys.dto.MessageDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
 import com.erp.model.sys.enums.MessageTypeEnum;
+import com.erp.model.sys.enums.SysTypeEnum;
 import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.server.sys.mapper.MessageMapper;
 import com.erp.server.sys.service.CommonService;
@@ -24,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -91,6 +93,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setType(type);
         paramDTO.setUserId(userInfo.getUid());
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
         List<MessageEntity> list = baseMapper.list(paramDTO);
         for (MessageEntity messageEntity : list) {
             MessageDTO.NotReadMessageNumDetail notReadMessageNumDetail = new MessageDTO.NotReadMessageNumDetail();
