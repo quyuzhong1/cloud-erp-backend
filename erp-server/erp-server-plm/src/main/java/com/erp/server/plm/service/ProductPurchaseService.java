@@ -89,4 +89,11 @@ public interface ProductPurchaseService extends IService<ProductPurchaseEntity> 
      * @return
      */
     List<SkuPurchaseDTO.PurchaseInfo> getInfoBySkuIds(List<String> skuIds);
+
+    /**
+     * 批量修改产品采购信息
+     * @param list
+     * @return
+     */
+    Boolean updateProductDetailBatch(List<ProductPurchaseEntity> list);
 }
