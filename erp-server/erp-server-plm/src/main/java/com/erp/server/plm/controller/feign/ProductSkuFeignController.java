@@ -341,13 +341,33 @@ public class ProductSkuFeignController {
     }
 
     /**
+     * 批量修改产品销售信息
+     * @param list
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @PostMapping("/updateProductSaleBatch")
+    public Boolean updateProductSaleBatch(@RequestBody List<ProductSaleEntity> list) {
+        return productSaleService.updateProductSaleBatch(list);
+    }
+
+
+    /**
      * 根据skuId查询产品采购信息
      * @param skuIds
      * @return java.util.List<com.erp.model.plm.entity.ProductPurchaseEntity>
      **/
     @PostMapping("/listProductPurchaseBySkuId")
-    List<ProductPurchaseEntity> listProductPurchaseBySkuId(@RequestBody List<String> skuIds) {
+    public List<ProductPurchaseEntity> listProductPurchaseBySkuId(@RequestBody List<String> skuIds) {
         return productPurchaseService.listBySkuIds(skuIds);
     }
 
+    /**
+     * 根据skuId查询产品销售信息
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.entity.ProductSaleEntity>
+     **/
+    @PostMapping("/listProductSaleBySkuId")
+    public List<ProductSaleEntity> listProductSaleBySkuId(@RequestBody List<String> skuIds) {
+        return productSaleService.listBySkuIds(skuIds);
+    }
 }

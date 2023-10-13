@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -34,9 +35,13 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.FirstPlaceOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
@@ -1048,6 +1053,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
+        List<String> ids = list.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
         //意见
         String userName = commonService.getUserInfo().getUserName();
         String approveStatus = "";
@@ -1061,7 +1067,32 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             approveStatus = ApproveStatusEnum.REJECT.getStatus();
         }
         Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(approveStatus), userName);
+
+        if (dto.getType().equals(ApproveType.PASS)) {
+            // 填入首批上市时间
+            setFirstListingTime(ids);
+        }
         return result;
+    }
+
+    private void setFirstListingTime(List<String> ids) {
+        //填入首批上市时间
+        List<ListingTimeDTO> listingTimeList = baseMapper.listFirstListingTime(ids);
+        List<String> skuIds = listingTimeList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<ProductSaleEntity> productSaleEntities = plmTaskFeign.listProductSaleBySkuId(skuIds);
+        //获取到没有设置首批下单时间的sku
+        List<String> skuIdList = productSaleEntities.stream().filter(req -> req.getListingTime() != null).map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<ProductSaleEntity> ProductSaleEntityList = new ArrayList<>();
+        for (String skuId : skuIdList) {
+            ListingTimeDTO firstListingTimeDTO = listingTimeList.stream().filter(req -> req.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(firstListingTimeDTO)) {
+                ProductSaleEntity productSaleEntity = new ProductSaleEntity();
+                productSaleEntity.setId(skuId);
+                productSaleEntity.setListingTime(firstListingTimeDTO.getSoDate());
+                ProductSaleEntityList.add(productSaleEntity);
+            }
+        }
+        plmTaskFeign.updateProductSaleBatch(ProductSaleEntityList);
     }
 
     /**

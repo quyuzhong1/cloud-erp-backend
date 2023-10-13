@@ -373,7 +373,7 @@ public interface PlmTaskFeign {
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      **/
     @PostMapping("feign/product/updateProductDetailBatch")
-    Boolean updateProductDetailBatch(List<ProductDetailEntity> list);
+    Boolean updateProductDetailBatch(@RequestBody List<ProductDetailEntity> list);
 
     /**
      * 批量修改产品采购信息
@@ -381,7 +381,15 @@ public interface PlmTaskFeign {
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      **/
     @PostMapping("feign/product/updateProductPurchaseBatch")
-    Boolean updateProductPurchaseBatch(List<ProductPurchaseEntity> list);
+    Boolean updateProductPurchaseBatch(@RequestBody List<ProductPurchaseEntity> list);
+
+    /**
+     * 批量修改产品销售信息
+     * @param list
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @PostMapping("feign/product/updateProductSaleBatch")
+    Boolean updateProductSaleBatch(@RequestBody List<ProductSaleEntity> list);
 
     /**
      * 根据skuId查询产品采购信息
@@ -389,5 +397,13 @@ public interface PlmTaskFeign {
      * @return java.util.List<com.erp.model.plm.entity.ProductPurchaseEntity>
      **/
     @PostMapping("feign/product/listProductPurchaseBySkuId")
-    List<ProductPurchaseEntity> listProductPurchaseBySkuId(List<String> skuIds);
+    List<ProductPurchaseEntity> listProductPurchaseBySkuId(@RequestBody List<String> skuIds);
+
+    /**
+     * 根据skuId查询产品销售信息
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.entity.ProductSaleEntity>
+     **/
+    @PostMapping("feign/product/listProductSaleBySkuId")
+    List<ProductSaleEntity> listProductSaleBySkuId(@RequestBody List<String> skuIds);
 }

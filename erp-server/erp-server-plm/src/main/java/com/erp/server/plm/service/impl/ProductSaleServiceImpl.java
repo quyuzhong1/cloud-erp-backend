@@ -176,6 +176,11 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         }
         return list;
     }
+
+    @Override
+    public Boolean updateProductSaleBatch(List<ProductSaleEntity> list) {
+        return this.updateBatchById(list);
+    }
 }
 
 

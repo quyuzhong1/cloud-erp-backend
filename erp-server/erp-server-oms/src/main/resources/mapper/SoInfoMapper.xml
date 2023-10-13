@@ -478,5 +478,20 @@
         AND si.discount_amount>0
     </select>
 
+    <select id="listFirstListingTime" resultType="com.erp.model.oms.dto.ListingTimeDTO">
+        SELECT
+        min(si.bill_date) AS soDate,
+        sd.sku_id
+        FROM so_info si
+        INNER JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
+        WHERE sd.is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            AND si.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        GROUP BY sd.sku_id
+    </select>
 
 </mapper>
