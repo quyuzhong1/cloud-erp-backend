@@ -4699,7 +4699,7 @@
         where (o.dept_id &lt;&gt; '' AND o.dept_id IS NOT NULL)
         <if test="params.timeType!=null and params.timeType==0">
             <if test="params.startTime !=null">
-                o.platform_create_time &gt;= #{params.startTime}
+                AND o.platform_create_time &gt;= #{params.startTime}
             </if>
             <if test="params.endTime !=null">
                 AND o.platform_create_time &lt; #{params.endTime}
@@ -4801,7 +4801,7 @@
         where (o.charge_id &lt;&gt; '' AND o.charge_id IS NOT NULL)
         <if test="params.timeType!=null and params.timeType==0">
             <if test="params.startTime !=null">
-                o.platform_create_time &gt;= #{params.startTime}
+                AND o.platform_create_time &gt;= #{params.startTime}
             </if>
             <if test="params.endTime !=null">
                 AND o.platform_create_time &lt; #{params.endTime}
