@@ -759,7 +759,7 @@ public enum ApiError implements Serializable {
     SO_RETURN_RECEIVE_SKU_NOT_EXIST(99092 , "sku【{}】在退货签收单中不存在"),
     CURRENT_TARGET_WAREHOUSE_SAME(99039,"仓位移动当前仓和目的仓必须相同"),
     PURCHASE_SKU_NOT_EXIST(99092 , "sku【{}】在采购单中不存在"),
-    ERROR_INVENTORY_CLOSED(99093, "库存已关账不允许炒作【{}】之前单据"),
+    ERROR_INVENTORY_CLOSED(99093,"库存已关账不允许操作【{}】之前单据"),
 
     /**
      * OMS 错误
