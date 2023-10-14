@@ -10,7 +10,6 @@ import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.vo.CleanAmountAfterVO;
-import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -130,7 +129,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             //如果数据有变动需要更新数据库订单信息
             if (!dmpOrderInfoEntity.toString().equals(orderInfoEntity.toString())) {
                 orderInfoEntity.setId(dmpOrderInfoEntity.getId());
-                fillCustomerCode(orderInfoEntity);
                 updateById(orderInfoEntity);
             }
             orderInfoId = dmpOrderInfoEntity.getId();
@@ -141,7 +139,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             }
             // 修正状态同步
             orderInfoEntity.setCorrectionStatus(orderInfoEntity.getOrderStatus());
-            fillCustomerCode(orderInfoEntity);
             orderInfoId = add(orderInfoEntity);
         }
         if (StrUtil.isBlank(orderInfoId)) {
@@ -155,20 +152,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         itemList.stream().peek(entity -> entity.setOrderId(orderId)).collect(Collectors.toList());
         dmpOrderItemService.checkOrderItem(itemList, orderInfoEntity.getPlatformCreateTime().toLocalDate(), orderInfoEntity.getPlatformSign());
         return orderInfoId;
-    }
-
-    private void fillCustomerCode(DmpOrderInfoEntity orderInfoEntity) {
-        //如果客户编码不存在则进行获取
-        if (StringUtils.isNotEmpty(orderInfoEntity.getShopName()) && Objects.equals(orderInfoEntity.getShopNo(), "B2B")) {
-            try {
-                CustomerInfoEntity customerInfo = customerFeign.getCustomerByName(orderInfoEntity.getShopName());
-                if (Objects.nonNull(customerInfo)) {
-                    orderInfoEntity.setShopNo(customerInfo.getCode());
-                }
-            }catch (Exception e){
-                log.error("获取客户编码接口异常记录：{}", e);
-            }
-        }
     }
 
     /**

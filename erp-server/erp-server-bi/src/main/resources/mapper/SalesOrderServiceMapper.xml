@@ -176,7 +176,7 @@
             </if>
             <!-- 客户编码 -->
             <if test="params.customerCodes!=null and params.customerCodes.size>0">
-                AND o.customer_code IN
+                AND o.shop_no IN
                 <foreach collection="params.customerCodes" item="customerCode" open="(" separator="," close=")">
                     #{customerCode}
                 </foreach>

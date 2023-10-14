@@ -48,6 +48,11 @@ public class KingdeeOrderEntity  extends CleanBaseDTO {
     private String fCustId;
 
     /**
+     * 客户编码
+     */
+    @Alias("FCustId.FNumber")
+    private String customerCode;
+    /**
      * 销售部门id
      */
     @Alias("FSaleDeptId.FName")

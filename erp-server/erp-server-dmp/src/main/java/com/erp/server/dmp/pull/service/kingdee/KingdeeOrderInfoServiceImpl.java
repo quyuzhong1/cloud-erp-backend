@@ -203,7 +203,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         String filterStr = String.join(" and ",  queryFilters );
 
         String fieldKeys = "FID,FBillNo,FDate,FBillTypeId.FName,FBillTypeId.FNumber,FBillTypeId," +
-                "FDocumentStatus,FCustId.FName,FSaleDeptId.FName,FSalerId.FName,FReceiveAddress,FLinkMan,FLinkPhone," +
+                "FDocumentStatus,FCustId.FName,FCustId.FNumber,FSaleDeptId.FName,FSalerId.FName,FReceiveAddress,FLinkMan,FLinkPhone," +
                 "FApproverId.FName,FApproveDate,FCloseStatus,FCloseDate,FCancelStatus,FChangerId," +
                 "FReceiveId.FName,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId," +
                 "FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifierId.FName," +
@@ -279,11 +279,9 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         //买家姓名
         dmpOrderInfoEntity.setBuyerName(kingdeeOrderEntity.getFLinkMan());
         //店铺编号
-        dmpOrderInfoEntity.setShopNo("B2B");
+        dmpOrderInfoEntity.setShopNo(kingdeeOrderEntity.getCustomerCode());
         //店铺名称
         dmpOrderInfoEntity.setShopName(kingdeeOrderEntity.getFCustId());
-//        客户名称
-//        dmpOrderInfoEntity.setCustomerName(kingdeeOrderEntity.getFCustId());
         BigDecimal totalPrice = BigDecimal.ZERO;
         BigDecimal totalCost = BigDecimal.ZERO;
         BigDecimal orderFee = BigDecimal.ZERO;
