@@ -184,8 +184,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             dto.setDepartment(deptIds);
             //获取到结算汇率
             String settleRate = getSettleRate(dto.getSettleMethod());
-            LocalDateTime paramsEndTime = dto.getEndTime();
-            dto.setEndTime(paramsEndTime, 1);
+//            LocalDateTime paramsEndTime = dto.getEndTime();
+//            dto.setEndTime(paramsEndTime, 1);
             salePriceDistributionVOS = baseMapper.salePriceDistribution(dto, settleRate);
         }
         List<String> xAxisList = rangeVOS.stream().map(e -> {
@@ -256,7 +256,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
 
     private List<SalesPriceRangeVO> getRangeList(Integer rangeType) {
-        List<BiDictEntity> biDictEntities = 1 == rangeType ? biDictService.getByType(SaleContryTypeEnum.DOMESTIC.code)
+        List<BiDictEntity> biDictEntities = 1 == rangeType ? biDictService.listEntityByType(SaleContryTypeEnum.DOMESTIC.code)
                 : biDictService.getByType(SaleContryTypeEnum.ABROAD.code);
         List<SalesPriceRangeVO> rangeVOS = new ArrayList<>();
         if (CollectionUtils.isEmpty(biDictEntities)) {
