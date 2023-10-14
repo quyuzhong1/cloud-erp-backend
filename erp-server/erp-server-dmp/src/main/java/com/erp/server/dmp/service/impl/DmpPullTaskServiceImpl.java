@@ -13,12 +13,12 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
@@ -27,14 +27,16 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
+import com.erp.rpc.wms.feign.SoReturnInstockFeign;
 import com.erp.server.dmp.convert.DmpOrderConverter;
 import com.erp.server.dmp.mapper.DmpPullTaskMapper;
-import com.erp.server.dmp.service.DmpOrderInfoService;
-import com.erp.server.dmp.service.DmpPullTaskService;
-import com.erp.server.dmp.service.ProductDetailService;
+import com.erp.server.dmp.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -67,12 +69,21 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
     @Resource
+    private DmpDeliveryDetailInfoService dmpDeliveryDetailInfoService;
+    @Resource
+    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
+    @Resource
     private SysUserFeign sysUserFeign;
     @Resource
     private CustomerFeign customerFeign;
     @Resource
     private SoInfoFeign soInfoFeign;
-
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
+    @Resource
+    private SoReturnInstockFeign soReturnInstockFeign;
+    @Resource
+    private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
 
     @Resource
     private MQProducerService mqProducerService;
@@ -195,7 +206,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 //更新推送状态
                 this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), null);
             } catch (Exception e) {
-                log.error("处理订单广播异常：{}",e.getMessage());
+                log.error("处理B2B审核订单广播异常：{}", e.getMessage());
             }
         } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DISAPPROVE.getCode())) {
             //反审核
@@ -203,32 +214,133 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 dmpOrderInfoService.removeOrderByCode(Collections.singletonList(String.valueOf(code)));
                 //更新推送状态
                 this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), null);
-            }catch (Exception e){
-                log.error("处理订单广播异常：{}",e.getMessage());
+            } catch (Exception e) {
+                log.error("处理B2B审核订单广播异常：{}", e.getMessage());
             }
 
         } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_INVALID.getCode())) {
             //作废 不处理
             log.info("作废状态，直接忽略同步dmp订单操作");
-            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(String.valueOf(code));
-            if (Objects.nonNull(dmpOrderInfoEntity)){
-                dmpOrderInfoEntity.setOrderStatus(5);
+//            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(String.valueOf(code));
+//            if (Objects.nonNull(dmpOrderInfoEntity)) {
+//                dmpOrderInfoEntity.setOrderStatus(5);
+//            }
+        }
+        log.info("推送订单数据完成");
+
+    }
+
+    @Override
+    public void syncOmsOutStockToDmp(Map<String, Object> resultMap) {
+        //检查推送状态是否已完成，已完成则直接返回
+        Object dmpPullTaskId = resultMap.getOrDefault("dmpPullTaskId", null);
+        Object id = resultMap.getOrDefault("id", null);
+        Object code = resultMap.getOrDefault("code", null);
+        Object operate = resultMap.getOrDefault("operate", null);
+        if (Objects.isNull(dmpPullTaskId) || Objects.isNull(id) || Objects.isNull(code) || Objects.isNull(operate)) {
+            return;
+        }
+        DmpPullTaskEntity dmpPullTaskEntity = baseMapper.selectById(String.valueOf(dmpPullTaskId));
+        if (Objects.equals(dmpPullTaskEntity.getStatus(), SyncStatusEnum.SUCCESS_SYNC.getCode())) {
+            return;
+        }
+        //统一处理数据映射问题，并合并到 dmp_order_info
+        SoOutstockEntity entity = soOutstockFeign.getSoOutstockEntityById(String.valueOf(id));
+        if (Objects.isNull(entity)) {
+            return;
+        }
+        //根据操作类型进行操作
+        if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_APPROVE.getCode())) {
+            //审核
+            try {
+                DmpDeliveryDetailInfoEntity dmpOrderInfoEntity = outStockDataConvert(entity);
+                //订单入库
+                dmpDeliveryDetailInfoService.checkOrder(dmpOrderInfoEntity);
+                //更新推送状态
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), null);
+            } catch (Exception e) {
+                log.error("处理B2B出库订单广播异常：{}", e.getMessage());
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.FAILED_SYNC.getCode(), null);
             }
+        } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DISAPPROVE.getCode())) {
+            //反审核
+            try {
+                dmpDeliveryDetailInfoService.removeDeliveryByCodes(Collections.singletonList(String.valueOf(code)));
+                //更新推送状态
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), null);
+            } catch (Exception e) {
+                log.error("处理B2B出库订单广播异常：{}", e.getMessage());
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.FAILED_SYNC.getCode(), null);
+            }
+
+        } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_INVALID.getCode())) {
+            //作废 不处理
+            log.info("作废状态，直接忽略同步dmp订单操作");
+//            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(String.valueOf(code));
+//            if (Objects.nonNull(dmpOrderInfoEntity)) {
+//                dmpOrderInfoEntity.setOrderStatus(5);
+//            }
+        }
+        log.info("推送订单数据完成");
+
+    }
+
+    @Override
+    public void syncOmsReturnInstockToDmp(Map<String, Object> resultMap) {
+        //检查推送状态是否已完成，已完成则直接返回
+        Object dmpPullTaskId = resultMap.getOrDefault("dmpPullTaskId", null);
+        Object id = resultMap.getOrDefault("id", null);
+        Object code = resultMap.getOrDefault("code", null);
+        Object operate = resultMap.getOrDefault("operate", null);
+        if (Objects.isNull(dmpPullTaskId) || Objects.isNull(id) || Objects.isNull(code) || Objects.isNull(operate)) {
+            return;
+        }
+        DmpPullTaskEntity dmpPullTaskEntity = baseMapper.selectById(String.valueOf(dmpPullTaskId));
+        if (Objects.equals(dmpPullTaskEntity.getStatus(), SyncStatusEnum.SUCCESS_SYNC.getCode())) {
+            return;
+        }
+        //统一处理数据映射问题，并合并到 dmp_order_info
+        SoReturnInstockEntity entity = soReturnInstockFeign.getSoReturnInstockEntityById(String.valueOf(id));
+        if (Objects.isNull(entity)) {
+            return;
+        }
+        //根据操作类型进行操作
+        if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_APPROVE.getCode())) {
+            //审核
+            try {
+                DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = returnOrderDataConvert(entity);
+                //订单入库
+                dmpReturnOrderInfoService.checkOrder(dmpReturnOrderInfoEntity);
+                //更新推送状态
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), null);
+            } catch (Exception e) {
+                log.error("处理B2B退货入库订单广播异常：{}", e.getMessage());
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.FAILED_SYNC.getCode(), null);
+            }
+        } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DISAPPROVE.getCode())) {
+            //反审核
+            try {
+                dmpReturnOrderInfoService.removeReturnOrderByCode(Collections.singletonList(String.valueOf(code)));
+                //更新推送状态
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), null);
+            } catch (Exception e) {
+                log.error("处理B2B退货入库订单广播异常：{}", e.getMessage());
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.FAILED_SYNC.getCode(), null);
+            }
+
+        } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_INVALID.getCode())) {
+            //作废 不处理
+            log.info("作废状态，直接忽略同步dmp订单操作");
+//            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(String.valueOf(code));
+//            if (Objects.nonNull(dmpOrderInfoEntity)) {
+//                dmpOrderInfoEntity.setOrderStatus(5);
+//            }
         }
         log.info("推送订单数据完成");
 
     }
 
     private DmpOrderInfoEntity orderDataConvert(SoInfoEntity soInfoEntity) {
-//        //检查是否已存在订单信息
-//        LambdaQueryWrapper<DmpOrderInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-//        queryWrapper.eq(DmpOrderInfoEntity::getSalesRecordNumber, soInfoEntity.getCode());
-//        queryWrapper.eq(DmpOrderInfoEntity::getPlatformOrderId, soInfoEntity.getCode());
-//        queryWrapper.eq(DmpOrderInfoEntity::getPlatformSign, PlatformEnum.ERP_OMS.getName());
-//        DmpOrderInfoEntity old = dmpOrderInfoMapper.selectOne(queryWrapper);
-//        if (Objects.nonNull(old)) {
-//            dmpOrderInfoEntity.setId(old.getId());
-//        }
         DmpOrderInfoEntity dmpOrderInfoEntity = DmpOrderConverter.INSTANCE.soInfoToDmpOrder(soInfoEntity);
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByMainId(soInfoEntity.getId());
         SoDetailEntity detailEntity = soDetailEntities.stream().filter(soDetailEntity -> Objects.nonNull(soDetailEntity.getExchangeRate())).findFirst().orElse(null);
@@ -240,7 +352,6 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         }
         //订单业务字段设置
         if (Objects.nonNull(soInfoEntity.getInvalidStatus()) && soInfoEntity.getInvalidStatus()) {
-//            OrderStateEnum
             dmpOrderInfoEntity.setOrderStatus(5);
         } else {
             //默认待配货
@@ -276,8 +387,6 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         );
         //订单成本价
         dmpOrderInfoEntity.setOrderCost(orderCost);
-        //缺货订单
-//        dmpOrderInfoEntity.setHasGoods(0);
         dmpOrderInfoEntity.setCurrencyRate(exchangeRate);
         dmpOrderInfoEntity.setItemTotal(itemTotal);
         //先计算运费收入（原币）
@@ -292,8 +401,6 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         dmpOrderInfoEntity.setItemTotalOrigin(itemTotalOrigin);
         //商品总成本(原币)
         dmpOrderInfoEntity.setItemTotalCost(itemTotalCost);
-        //补贴金额
-//        dmpOrderInfoEntity.setSubsidyAmount(BigDecimal.ZERO);
         //国家字典
         if (Objects.nonNull(customerInfo) && StringUtils.isNotEmpty(customerInfo.getCountryId())) {
             try {
@@ -307,8 +414,6 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 log.error("erp-sys sysUserFeign.getCountryById {}异常：{}", customerInfo.getCountryId(), e.getMessage());
             }
         }
-        //平台标识
-//        dmpOrderInfoEntity.setPlatformSign(PlatformEnum.ERP_OMS.getName());
         //平台创建时间
         dmpOrderInfoEntity.setCreateTime(LocalDateTime.now());
         //部门名称
@@ -333,10 +438,6 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
             soDetailEntities.forEach(soDetailEntity -> {
                 DmpOrderItemEntity dmpOrderItemEntity = DmpOrderConverter.INSTANCE.soDetailToDmpOrderItem(soDetailEntity);
                 dmpOrderItemEntity.setOrderId(dmpOrderInfoEntity.getId());
-//                dmpOrderItemEntity.setItemId(soDetailEntity.getSkuNo());
-//                dmpOrderItemEntity.setPlatformSku(soDetailEntity.getSkuNo());
-//                dmpOrderItemEntity.setQuantity(soDetailEntity.getQty());
-//                dmpOrderItemEntity.setPlatformQuantity(soDetailEntity.getQty());
                 if (StringUtils.isNotEmpty(soDetailEntity.getSkuId())) {
                     ProductDetailEntity productDetail = productDetailService.getById(soDetailEntity.getSkuId());
                     if (Objects.nonNull(productDetail)) {
@@ -346,9 +447,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                     }
                 }
                 dmpOrderItemEntity.setCostPrice(Optional.ofNullable(soDetailEntity.getPurchasePrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
-//                dmpOrderItemEntity.setSellPriceOrigin(soDetailEntity.getPrice());
                 dmpOrderItemEntity.setSellPrice(Optional.ofNullable(soDetailEntity.getPrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
-//                dmpOrderItemEntity.setProductUnit("pcs");
                 dmpOrderItemEntity.setStockWarehouseId(soInfoEntity.getWarehouseId());
                 dmpOrderItemEntity.setAmountAfter(Optional.ofNullable(soDetailEntity.getTaxAmountBefore()).orElse(BigDecimal.ZERO).subtract(Optional.ofNullable(soDetailEntity.getDiscountAmount()).orElse(BigDecimal.ZERO)));
                 orderItemEntities.add(dmpOrderItemEntity);
@@ -356,6 +455,281 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         }
         dmpOrderInfoEntity.setItemList(orderItemEntities);
         return dmpOrderInfoEntity;
+    }
+
+    /**
+     * 销售出货单字段转换
+     *
+     * @param soOutstockEntity
+     * @return
+     */
+    private DmpDeliveryDetailInfoEntity outStockDataConvert(SoOutstockEntity soOutstockEntity) {
+//        DmpDeliveryDetailInfoEntity entity = DmpOrderConverter.INSTANCE.soOutstockToDmpDelivery(soOutstockEntity);
+        DmpDeliveryDetailInfoEntity entity = new DmpDeliveryDetailInfoEntity();
+        //原始订单
+        SoInfoEntity soInfoEntity;
+        List<SoDetailEntity> soDetailEntities;
+        DmpOrderInfoEntity dmpOrderInfoEntity;
+        BigDecimal exchangeRate;
+        try {
+            soInfoEntity = soInfoFeign.getSoInfoById(soOutstockEntity.getSoId());
+            if (Objects.isNull(soInfoEntity)) {
+                throw new ServiceException(ApiError.NO_PERMISSION.code, "获取原始订单异常:[" + soOutstockEntity.getSoId() + "]");
+            }
+            entity.setOrderNo(soInfoEntity.getCode());
+            entity.setManStreet(soInfoEntity.getReceiveAddress());
+            soDetailEntities = soInfoFeign.listSoDetailByMainId(soInfoEntity.getId());
+            if (CollectionUtil.isNotEmpty(soDetailEntities)){
+                SoDetailEntity detailEntity = soDetailEntities.stream().filter(soDetailEntity -> Objects.nonNull(soDetailEntity.getExchangeRate())).findFirst().orElse(null);
+                if (Optional.ofNullable(detailEntity).isPresent()) {
+                    exchangeRate = detailEntity.getExchangeRate();
+                } else {
+                    exchangeRate = BigDecimal.ONE;
+                }
+            }
+            //dmp同步订单
+            dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(soInfoEntity.getCode());
+            if (Objects.isNull(dmpOrderInfoEntity)){
+                log.error("请求erp-dmp dmpOrderInfoService.getOrderByPlatformOrderId 同步单不存在");
+            }else {
+                //订单更新
+                dmpOrderInfoEntity.setOrderStatus(3);
+                dmpOrderInfoEntity.setDeliveryTime(LocalDateTime.now());
+
+                entity.setCurrencyCode(dmpOrderInfoEntity.getCurrencyCode());
+                entity.setCurrencyRate(dmpOrderInfoEntity.getCurrencyRate());
+                entity.setShippingFee(dmpOrderInfoEntity.getShippingFee());
+                entity.setSubsidyAmount(dmpOrderInfoEntity.getSubsidyAmount());
+            }
+
+        } catch (Exception e) {
+            log.error("请求erp-oms soInfoFeign.getSoInfoById 异常:{}", e.getMessage());
+            throw new ServiceException(ApiError.NO_PERMISSION.code, "获取原始订单异常");
+        }
+
+        //发货通知单
+        try {
+            SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeFeign.getDeliveryNoticeBySourceId(soOutstockEntity.getSourceId());
+            entity.setLogisticsNo(soDeliveryNoticeEntity.getTrackNo());
+            entity.setCompanyId(soDeliveryNoticeEntity.getSalesDeptId());
+            entity.setCompanyName(soDeliveryNoticeEntity.getSalesOrgName());
+
+        }catch (Exception e){
+            log.error("请求erp-wms soDeliveryNoticeFeign.getDeliveryNoticeBySourceId 异常:{}", e.getMessage());
+        }
+        //获取销售出库单详情
+        List<SoOutstockDetailEntity> details = soOutstockFeign.getSoOutstockDetailByDetailId(soOutstockEntity.getId());
+
+
+        CustomerInfoEntity customerInfo = null;
+        try {
+            customerInfo = customerFeign.getCustomerById(soOutstockEntity.getCustomerId());
+            if (Objects.nonNull(customerInfo)) {
+                entity.setShopName(customerInfo.getName());
+                entity.setShopNo(customerInfo.getCode());
+                entity.setCustomerName(customerInfo.getName());
+                entity.setRemark(dmpOrderInfoEntity.getSellerMessage());
+            }
+        } catch (Exception e) {
+            log.error("请求erp-oms customerFeign.getCustomerById异常:{}", e.getMessage());
+        }
+
+        entity.setBillNo(soOutstockEntity.getCode());
+//        entity.setOrderNo(soInfoEntity.getCode());
+//        entity.setLogisticsNo(soDeliveryNoticeEntity.getTrackNo());
+//        entity.setCustomerName(customerInfo.getName());
+        entity.setPlatformName("B2B");
+//        entity.setShopNo(customerInfo.getCode());
+//        entity.setShopName(customerInfo.getName());
+        entity.setItemTotalCost(dmpOrderInfoEntity.getItemTotalCost());
+        entity.setOrderTotalCost(soOutstockEntity.getTotalDiscountAmount());
+        //国家字典
+        if (Objects.nonNull(customerInfo) && StringUtils.isNotEmpty(customerInfo.getCountryId())) {
+            try {
+                DictCountryEntity country = sysUserFeign.getCountryById(customerInfo.getCountryId());
+                if (Objects.nonNull(country)) {
+                    entity.setCountryNameCn(country.getNameCn());
+                    entity.setCountryNameEn(country.getNameEn());
+                }
+            } catch (Exception e) {
+                log.error("erp-sys sysUserFeign.getCountryById {}异常：{}", customerInfo.getCountryId(), e.getMessage());
+            }
+        }
+//        entity.setManStreet(soInfoEntity.getReceiveAddress());
+//        entity.setCurrencyCode(dmpOrderInfoEntity.getCurrencyCode());
+//        entity.setCurrencyRate(dmpOrderInfoEntity.getCurrencyRate());
+//        entity.setShippingFee(dmpOrderInfoEntity.getShippingFee());
+//        entity.setSubsidyAmount(dmpOrderInfoEntity.getSubsidyAmount());
+
+        //销售部门
+        if (StringUtils.isNotEmpty(soInfoEntity.getSalesDeptId())) {
+            try {
+                List<SysDepartmentEntity> dept = sysUserFeign.listDeptByIds(Collections.singletonList(soInfoEntity.getSalesDeptId()));
+                if (CollectionUtil.isNotEmpty(dept)) {
+                    entity.setSaleDeptName(dept.get(0).getName());
+                }
+            } catch (Exception e) {
+                log.error("erp-sys sysUserFeign.listDeptByIds {}异常：{}", soInfoEntity.getSalesDeptId(), e.getMessage());
+
+            }
+        }
+
+        entity.setSalesManId(soOutstockEntity.getSellerId());
+        entity.setSalesManName(soOutstockEntity.getSellerName());
+        entity.setStatus(1);
+        entity.setPlatformApproveTime(soOutstockEntity.getApproveTime());
+        entity.setPlatformCreateTime(soOutstockEntity.getCreateTime());
+        entity.setPlatformUpdateTime(soOutstockEntity.getUpdateTime());
+//        entity.setRemark(dmpOrderInfoEntity.getSellerMessage());
+//        entity.setCompanyId(soDeliveryNoticeEntity.getSalesDeptId());
+//        entity.setCompanyName(soDeliveryNoticeEntity.getSalesOrgName());
+        entity.setCreateTime(LocalDateTime.now());
+        entity.setPlatformSign(PlatformEnum.ERP_WMS.getName());
+        entity.setDeliveryDate(soOutstockEntity.getPlanDeliveryDate().atStartOfDay());
+        entity.setPlatformOrderId(soInfoEntity.getCode());
+        //订单明细
+        List<DmpDeliveryDetailItemEntity> orderItemEntities = new ArrayList<>(details.size());
+        //明细字段转换
+        if (CollectionUtil.isNotEmpty(details)) {
+            details.forEach(soDetailEntity -> {
+//                DmpDeliveryDetailItemEntity dmpOrderItemEntity = DmpOrderConverter.INSTANCE.soOutstockToDmpDeliveryItem(soDetailEntity);
+                DmpDeliveryDetailItemEntity dmpOrderItemEntity = new DmpDeliveryDetailItemEntity();
+                dmpOrderItemEntity.setDeliveryDetailId(entity.getId());
+                if (StringUtils.isNotEmpty(soDetailEntity.getSkuId())) {
+                    ProductDetailEntity productDetail = productDetailService.getById(soDetailEntity.getSkuId());
+                    if (Objects.nonNull(productDetail)) {
+                        dmpOrderItemEntity.setItemName(productDetail.getName());
+                        dmpOrderItemEntity.setItemId(productDetail.getProductId());
+                        dmpOrderItemEntity.setSpecifics(productDetail.getVariantProperty());
+                    }
+                }
+//                dmpOrderItemEntity.setCostPrice(Optional.ofNullable(soDetailEntity.getPurchasePrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
+//                dmpOrderItemEntity.setSellPrice(Optional.ofNullable(soDetailEntity.getPrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
+//                dmpOrderItemEntity.setStockWarehouseId(soInfoEntity.getWarehouseId());
+//                dmpOrderItemEntity.setAmountAfter(Optional.ofNullable(soDetailEntity.getTaxAmountBefore()).orElse(BigDecimal.ZERO).subtract(Optional.ofNullable(soDetailEntity.getDiscountAmount()).orElse(BigDecimal.ZERO)));
+                orderItemEntities.add(dmpOrderItemEntity);
+            });
+        }
+        entity.setDetails(orderItemEntities);
+        return entity;
+    }
+
+    /**
+     * 销售出货单字段转换
+     *
+     * @param soReturnInstockEntity
+     * @return
+     */
+    private DmpReturnOrderInfoEntity returnOrderDataConvert(SoReturnInstockEntity soReturnInstockEntity) {
+//        DmpDeliveryDetailInfoEntity entity = DmpOrderConverter.INSTANCE.soOutstockToDmpDelivery(soOutstockEntity);
+        DmpReturnOrderInfoEntity entity = new DmpReturnOrderInfoEntity();
+        //原始订单
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnInstockEntity.getSoId());
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByMainId(soInfoEntity.getId());
+        //发货通知单
+//        SoReturnInstockEntity soReturnInstockEntity = soReturnInstockFeign.getSoReturnInstockEntityById(soOutstockEntity.getId());
+        //dmp同步订单
+        DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(soInfoEntity.getCode());
+        //出货单
+        List<SoReturnInstockDetailEntity> details = soReturnInstockFeign.getSoReturnInstockDetailByMainId(soReturnInstockEntity.getId());
+        SoDetailEntity detailEntity = soDetailEntities.stream().filter(soDetailEntity -> Objects.nonNull(soDetailEntity.getExchangeRate())).findFirst().orElse(null);
+        BigDecimal exchangeRate;
+        if (Optional.ofNullable(detailEntity).isPresent()) {
+            exchangeRate = detailEntity.getExchangeRate();
+        } else {
+            exchangeRate = BigDecimal.ONE;
+        }
+        //订单更新
+        dmpOrderInfoEntity.setOrderStatus(3);
+        dmpOrderInfoEntity.setDeliveryTime(LocalDateTime.now());
+        CustomerInfoEntity customerInfo = null;
+        try {
+            customerInfo = customerFeign.getCustomerById(soReturnInstockEntity.getCustomerId());
+            if (Objects.nonNull(customerInfo)) {
+                entity.setShopName(customerInfo.getName());
+                entity.setShopNo(customerInfo.getCode());
+            }
+        } catch (Exception e) {
+            log.error("请求erp-oms customerFeign.getCustomerById异常:{}", e.getMessage());
+        }
+
+//        entity.setBillNo(soOutstockEntity.getCode());
+//        entity.setOrderNo(soInfoEntity.getCode());
+//        entity.setLogisticsNo(soDeliveryNoticeEntity.getTrackNo());
+//        entity.setCustomerName(customerInfo.getName());
+//        entity.setPlatformName("B2B");
+//        entity.setShopNo(customerInfo.getCode());
+//        entity.setShopName(customerInfo.getName());
+//        entity.setItemTotalCost(dmpOrderInfoEntity.getItemTotalCost());
+//        entity.setOrderTotalCost(soOutstockEntity.getTotalDiscountAmount());
+//        //国家字典
+//        if (Objects.nonNull(customerInfo) && StringUtils.isNotEmpty(customerInfo.getCountryId())) {
+//            try {
+//                DictCountryEntity country = sysUserFeign.getCountryById(customerInfo.getCountryId());
+//                if (Objects.nonNull(country)) {
+//                    entity.setCountryNameCn(country.getNameCn());
+//                    entity.setCountryNameEn(country.getNameEn());
+//                }
+//            } catch (Exception e) {
+//                log.error("erp-sys sysUserFeign.getCountryById {}异常：{}", customerInfo.getCountryId(), e.getMessage());
+//            }
+//        }
+//        entity.setManStreet(soInfoEntity.getReceiveAddress());
+//        entity.setCurrencyCode(dmpOrderInfoEntity.getCurrencyCode());
+//        entity.setCurrencyRate(dmpOrderInfoEntity.getCurrencyRate());
+//        entity.setShippingFee(dmpOrderInfoEntity.getShippingFee());
+//        entity.setSubsidyAmount(dmpOrderInfoEntity.getSubsidyAmount());
+//
+//        //销售部门
+//        if (StringUtils.isNotEmpty(soInfoEntity.getSalesDeptId())) {
+//            try {
+//                List<SysDepartmentEntity> dept = sysUserFeign.listDeptByIds(Collections.singletonList(soInfoEntity.getSalesDeptId()));
+//                if (CollectionUtil.isNotEmpty(dept)) {
+//                    entity.setSaleDeptName(dept.get(0).getName());
+//                }
+//            } catch (Exception e) {
+//                log.error("erp-sys sysUserFeign.listDeptByIds {}异常：{}", soInfoEntity.getSalesDeptId(), e.getMessage());
+//
+//            }
+//        }
+//
+//        entity.setSalesManId(soOutstockEntity.getSellerId());
+//        entity.setSalesManName(soOutstockEntity.getSellerName());
+//        entity.setStatus(1);
+//        entity.setPlatformApproveTime(soOutstockEntity.getApproveTime());
+//        entity.setPlatformCreateTime(soOutstockEntity.getCreateTime());
+//        entity.setPlatformUpdateTime(soOutstockEntity.getUpdateTime());
+//        entity.setRemark(dmpOrderInfoEntity.getSellerMessage());
+//        entity.setCompanyId(soDeliveryNoticeEntity.getSalesDeptId());
+//        entity.setCompanyName(soDeliveryNoticeEntity.getSalesOrgName());
+//        entity.setCreateTime(LocalDateTime.now());
+//        entity.setPlatformSign(PlatformEnum.ERP_WMS.getName());
+//        entity.setDeliveryDate(soOutstockEntity.getPlanDeliveryDate().atStartOfDay());
+//        entity.setPlatformOrderId(soInfoEntity.getCode());
+//        //订单明细
+//        List<DmpDeliveryDetailItemEntity> orderItemEntities = new ArrayList<>(details.size());
+//        //明细字段转换
+//        if (CollectionUtil.isNotEmpty(details)) {
+//            details.forEach(soDetailEntity -> {
+//                DmpDeliveryDetailItemEntity dmpOrderItemEntity = DmpOrderConverter.INSTANCE.soOutstockToDmpDeliveryItem(soDetailEntity);
+//                dmpOrderItemEntity.setDeliveryDetailId(entity.getId());
+//                if (StringUtils.isNotEmpty(soDetailEntity.getSkuId())) {
+//                    ProductDetailEntity productDetail = productDetailService.getById(soDetailEntity.getSkuId());
+//                    if (Objects.nonNull(productDetail)) {
+//                        dmpOrderItemEntity.setItemName(productDetail.getName());
+//                        dmpOrderItemEntity.setItemId(productDetail.getProductId());
+//                        dmpOrderItemEntity.setSpecifics(productDetail.getVariantProperty());
+//                    }
+//                }
+////                dmpOrderItemEntity.setCostPrice(Optional.ofNullable(soDetailEntity.getPurchasePrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
+////                dmpOrderItemEntity.setSellPrice(Optional.ofNullable(soDetailEntity.getPrice()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
+////                dmpOrderItemEntity.setStockWarehouseId(soInfoEntity.getWarehouseId());
+////                dmpOrderItemEntity.setAmountAfter(Optional.ofNullable(soDetailEntity.getTaxAmountBefore()).orElse(BigDecimal.ZERO).subtract(Optional.ofNullable(soDetailEntity.getDiscountAmount()).orElse(BigDecimal.ZERO)));
+//                orderItemEntities.add(dmpOrderItemEntity);
+//            });
+//        }
+//        entity.setDetails(orderItemEntities);
+        return entity;
     }
 
     @Override

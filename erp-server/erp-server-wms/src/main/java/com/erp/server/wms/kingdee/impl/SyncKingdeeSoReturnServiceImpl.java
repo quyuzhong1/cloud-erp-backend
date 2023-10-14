@@ -1,15 +1,19 @@
 package com.erp.server.wms.kingdee.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -21,6 +25,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.enums.ReturnReasonEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
@@ -76,10 +81,13 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
 
     @Resource
     private KingdeeFeign kingdeeFeign;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Override
     public void syncDataToKingdee(SoReturnInstockEntity entity, String operate) {
-
+        //推送同步中台dmp任务
+        String dmpPullTaskId = this.syncOrderToDmp(entity, operate);
         //更新同步状态为待同步
         soReturnInstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
 
@@ -109,6 +117,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         //获取币别信息
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(soInfoEntity.getCurrency()));
         Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("dmpPullTaskId", dmpPullTaskId);
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
@@ -260,5 +269,32 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             }
             return Boolean.TRUE;
         });
+    }
+
+    /**
+     * 推送订单到mq
+     *
+     * @param entity
+     * @param syncOperate
+     */
+    @Override
+    public String syncOrderToDmp(SoReturnInstockEntity entity, String syncOperate) {
+        DmpPullTaskFeignDTO dto = new DmpPullTaskFeignDTO()
+                .setMqData(JSON.toJSONString(entity))
+                .setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC)
+                .setMqTag(RocketMqTagEnum.KINGDEE_SO_RETURN_TAG.getName())
+                .setSourceCode(entity.getCode())
+                .setSourceId(entity.getId())
+                .setSourceType(SourceTypeEnum.SO_RETURN_INSTOCK.getCode())
+                .setSourcePlatformName(PlatformEnum.ERP_WMS.getDesc())
+                .setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc())
+                .setSyncOperate(syncOperate);
+        log.info("推送消息开始：{}", dto.toString());
+        //推送mq
+        try {
+            return dmpTaskFeign.savePullTask(dto);
+        }catch (Exception e){
+            throw new ServiceException(String.format("同步数据中台异常:%s",e.getMessage()));
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -13,6 +14,8 @@ import com.erp.server.dmp.pull.mapper.DmpReturnOrderInfoMapper;
 import com.erp.server.dmp.service.DmpOrderInfoService;
 import com.erp.server.dmp.service.DmpReturnOrderInfoService;
 import com.erp.server.dmp.service.DmpReturnOrderItemService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +26,7 @@ import java.util.stream.Collectors;
 /**
  * 退货订单服务
  */
+@Slf4j
 @Service
 public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInfoMapper, DmpReturnOrderInfoEntity>
     implements DmpReturnOrderInfoService {
@@ -152,6 +156,23 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
             updateWrapper.set(DmpReturnOrderInfoEntity::getRetryCount, dmpReturnOrderInfoEntity.getRetryCount() + 1);
             updateWrapper.eq(DmpReturnOrderInfoEntity::getId, dmpReturnOrderInfoEntity.getId());
             this.update(updateWrapper);
+        }
+    }
+
+    @Override
+    public void removeReturnOrderByCode(List<String> codes) {
+        //删除订单
+        LambdaQueryWrapper<DmpReturnOrderInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(DmpReturnOrderInfoEntity::getPlatformOrderId, codes);
+        List<DmpReturnOrderInfoEntity> list = baseMapper.selectList(queryWrapper);
+        log.info("删除 dmp_return_order_info 订单：{}", JSON.toJSONString(list));
+        if (CollectionUtils.isNotEmpty(list)) {
+            //删除明细记录
+            list.forEach(dmpReturnOrderInfoEntity -> {
+                List<DmpReturnOrderItemEntity> itemEntities = dmpReturnOrderItemService.getItemByMainId(dmpReturnOrderInfoEntity.getId());
+                dmpReturnOrderItemService.removeByIds(itemEntities.stream().map(DmpReturnOrderItemEntity::getId).collect(Collectors.toList()));
+                this.removeById(dmpReturnOrderInfoEntity.getId());
+            });
         }
     }
 }

@@ -45,35 +45,35 @@ public class MQConsumerBroadcastService {
     }
 
     /**
-     * 换货订单审核通过后同步dmp
+     * 销售出库单 outstock 同步dmp
      */
     @Service
-//    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_ORDER_TO_DMP_TOPIC,
-//            selectorExpression = "approved_order_to_dmp_tag",
-//            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-approved_order_to_dmp_consumer", messageModel = MessageModel.BROADCASTING)
-    public class ConsumerApprovedDeliveryOrderToDmp implements RocketMQListener<Map<String, Object>> {
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
+            selectorExpression = "kingdee_so_outstock_tag",
+            consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_OUTSTOCK, messageModel = MessageModel.BROADCASTING)
+    public class ConsumerApprovedOutStockToDmp implements RocketMQListener<Map<String, Object>> {
         @Override
         public void onMessage(Map<String, Object> resultMap) {
-            log.info("监听到订单审核通过同步任务回调：entity={}", JSONUtil.toJsonStr(resultMap));
+            log.info("监听到销售出库单通过同步任务回调：entity={}", JSONUtil.toJsonStr(resultMap));
             //处理订单同步
-            dmpPullTaskService.syncOmsOrderToDmp(resultMap);
+            dmpPullTaskService.syncOmsOutStockToDmp(resultMap);
         }
     }
 
 
     /**
-     * 退货订单审核通过后同步dmp
+     * 退货入库单 soReturnInstock 同步dmp
      */
     @Service
-//    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_ORDER_TO_DMP_TOPIC,
-//            selectorExpression = "approved_order_to_dmp_tag",
-//            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-approved_order_to_dmp_consumer", messageModel = MessageModel.BROADCASTING)
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
+            selectorExpression = "kingdee_so_return_tag",
+            consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_RETURN, messageModel = MessageModel.BROADCASTING)
     public class ConsumerApprovedReturnOrderToDmp implements RocketMQListener<Map<String, Object>> {
         @Override
         public void onMessage(Map<String, Object> resultMap) {
-            log.info("监听到订单审核通过同步任务回调：entity={}", JSONUtil.toJsonStr(resultMap));
+            log.info("监听到退货入库单通过同步任务回调：entity={}", JSONUtil.toJsonStr(resultMap));
             //处理订单同步
-            dmpPullTaskService.syncOmsOrderToDmp(resultMap);
+            dmpPullTaskService.syncOmsReturnInstockToDmp(resultMap);
         }
     }
 }

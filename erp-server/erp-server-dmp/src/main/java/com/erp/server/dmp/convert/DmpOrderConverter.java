@@ -1,9 +1,13 @@
 package com.erp.server.dmp.convert;
 
+import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
+import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -82,6 +86,30 @@ public interface DmpOrderConverter {
             @Mapping(target = "sourceItemId", source = "id"),
     })
     DmpOrderItemEntity soDetailToDmpOrderItem(SoDetailEntity soDetailEntity);
+
+//    @Mappings({
+//            @Mapping(target = "id", ignore = true),
+//            @Mapping(target = "itemId", source = "skuNo"),
+//            @Mapping(target = "platformSku", source = "skuNo"),
+//            @Mapping(target = "platformQuantity", source = "qty"),
+//            @Mapping(target = "sellPriceOrigin", source = "price"),
+//            @Mapping(target = "quantity", source = "qty"),
+//            @Mapping(target = "productUnit", constant = "pcs"),
+//            @Mapping(target = "isGift", expression = "java(DmpOrderConverter.getIsGift(soDetailEntity))"),
+//            @Mapping(target = "hasGoods", constant = "1"),
+//            @Mapping(target = "isCombo", constant = "2"),
+//            @Mapping(target = "itemRemark", source = "remark"),
+//            @Mapping(target = "status", constant = "2"),
+//            @Mapping(target = "stockGrid", source = "warehouseLocation"),
+//            @Mapping(target = "skuNo", source = "skuNo"),
+//            @Mapping(target = "erpOrderItemId", source = "id"),
+//            @Mapping(target = "currencyRate", source = "exchangeRate"),
+//            @Mapping(target = "cnySettleRate", source = "exchangeRate"),
+//            @Mapping(target = "sourceItemId", source = "id"),
+//    })
+    DmpDeliveryDetailInfoEntity soOutstockToDmpDelivery(SoOutstockEntity soOutstockEntity);
+
+    DmpDeliveryDetailItemEntity soOutstockToDmpDeliveryItem(SoOutstockDetailEntity detail);
 
     static int getIsGift(SoDetailEntity soDetailEntity) {
         if (Optional.ofNullable(soDetailEntity.getIsGift()).isPresent()) {

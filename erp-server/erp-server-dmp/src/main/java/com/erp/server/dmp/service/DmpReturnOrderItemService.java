@@ -69,4 +69,6 @@ public interface DmpReturnOrderItemService extends IService<DmpReturnOrderItemEn
      * @return java.util.List<com.erp.model.dmp.entity.DmpOrderItemEntity>
      **/
     List<DmpReturnOrderItemEntity> splitOrderItem(List<DmpReturnOrderItemEntity> itemEntityList, String platformSign);
+
+    List<DmpReturnOrderItemEntity> getItemByMainId(String mainId);
 }

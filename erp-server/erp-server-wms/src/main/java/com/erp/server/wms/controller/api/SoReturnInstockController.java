@@ -10,16 +10,25 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
+import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.service.SoReturnInstockService;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 销售退货入库单
@@ -32,7 +41,10 @@ public class SoReturnInstockController extends BaseController {
 
     @Resource
     private SoReturnInstockService soReturnInstockService;
-
+    @Resource
+    private MQProducerService mQProducerService;
+    @Resource
+    private SyncKingdeeSoReturnService syncKingdeeSoReturnService;
     /**
      * 列表查询
      * @Author Luo_WG
@@ -336,5 +348,30 @@ public class SoReturnInstockController extends BaseController {
     public ApiResult generateMachineInfo(@RequestBody @Validated  ValidList<SoReturnInstockDTO.GenerateMachineInfoDTO> list) {
         Boolean flag = soReturnInstockService.generateMachineInfo(list);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 订单监听测试方法
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("/testOrderPush")
+    public ApiResult testOrderPush(@RequestParam(value = "id") String id,@RequestParam(value = "operate") String operate) {
+        SoReturnInstockEntity soInfoEntity = soReturnInstockService.getById(id);
+//        soInfoService.syncOrderToDmp(soInfoEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        String dmpPullTaskId = syncKingdeeSoReturnService.syncOrderToDmp(soInfoEntity, operate);
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("id", id);
+        resultMap.put("dmpPullTaskId", dmpPullTaskId);
+        resultMap.put("code", soInfoEntity.getCode());
+        resultMap.put("operate", operate);
+        SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_RETURN_TAG.getName(),
+                resultMap, id);
+        if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
+            return success();
+        } else {
+            return failure();
+        }
     }
 }
