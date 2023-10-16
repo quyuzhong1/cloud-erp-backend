@@ -1228,7 +1228,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             } else {
                 // 转换成人民币销售金额
                 item.setExchangeRate(rate);
-                saleAmount = rate.multiply(saleAmount).setScale(4, BigDecimal.ROUND_HALF_UP);
+                saleAmount = MathUtil.multiply(rate, saleAmount, 2);
             }
             // 销售金额（本位币）
             item.setAmountLocalCurrency(saleAmount);
@@ -1239,7 +1239,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (Objects.isNull(item.getExchangeRate()) || item.getExchangeRate().compareTo(BigDecimal.ZERO) <= 0) {
                 item.setAllAmountLocalCurrency(BigDecimal.ZERO);
             } else {
-                item.setAllAmountLocalCurrency(item.getExchangeRate().multiply(taxAmount).setScale(4, BigDecimal.ROUND_HALF_UP));
+                item.setAllAmountLocalCurrency(MathUtil.multiply(item.getExchangeRate(), taxAmount, 2));
             }
         }
         SoUtils.updateSoDetailCost(item, purchasePrice);
