@@ -3868,4 +3868,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean updateProductDetailBatch(List<ProductDetailEntity> list) {
         return this.updateBatchById(list);
     }
+
+
 }

@@ -157,6 +157,11 @@ public class ProductSkuDTO extends PermissionsDTO {
     private List<String> skuList;
 
     /**
+     * 远程搜索sku
+     */
+    private String remoteSearchSku;
+
+    /**
      * spu集合
      */
     private List<String> spuList;
