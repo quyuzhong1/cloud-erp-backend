@@ -397,6 +397,8 @@
         FROM
         dmp_order_item AS doit
         LEFT JOIN dmp_order_info AS doi ON doit.order_id = doi.id
+        LEFT JOIN product_detail AS pd on doit.sku_no = pd.sku_no
+        LEFT JOIN product_info AS pi on pi.id = pd.product_id
         <where>
             doit.sell_price >= #{startValue}
             <if test="endValue != null and endValue != -1">
