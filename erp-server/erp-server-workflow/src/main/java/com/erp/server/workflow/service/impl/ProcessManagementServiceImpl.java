@@ -253,12 +253,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.ApproveResultDTO approveProcess(ProcessManagementDTO.ApproveDTO dto,Boolean isFirst) {
-        // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
-        if (null == processBusiness) {
-//             业务未绑定流程定义
-            return new ProcessManagementDTO.ApproveResultDTO(dto);
-        }
         List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
         if (CollectionUtil.isEmpty(processManagementList)) {
             // 业务未启动流程
@@ -302,7 +296,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 保存流程任务数据
         updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment());
         if(isFirst){
-            sameApproverAutoPass(dto, processBusiness.getProcessDefinitionId(),currentTask.getProcessInstanceId());
+
+            sameApproverAutoPass(dto, processManagementList.get(0).getProcessDefinitionId(),currentTask.getProcessInstanceId());
         }
         // 返回结果
         return new ProcessManagementDTO.ApproveResultDTO(currentTask.getProcessDefinitionId(), currentTask.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(),currentTask.getId(),currentTask.getName(), currentTask.getTaskDefinitionKey());
@@ -459,11 +454,11 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.BackResultDTO back(ProcessManagementDTO.BackDTO dto) {
         // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
-        if (null == processBusiness) {
-            // 业务未绑定流程定义
-            return new ProcessManagementDTO.BackResultDTO(dto);
-        }
+//        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
+//        if (null == processBusiness) {
+//            // 业务未绑定流程定义
+//            return new ProcessManagementDTO.BackResultDTO(dto);
+//        }
         List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
         if (CollectionUtil.isEmpty(processManagementList)) {
             // 业务未启动流程
@@ -576,11 +571,11 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.RevokeResultDTO revoke(ProcessManagementDTO.RevokeDTO dto) {
         // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
-        if (null == processBusiness) {
-            // 业务未绑定流程定义
-            return new ProcessManagementDTO.RevokeResultDTO(dto);
-        }
+//        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
+//        if (null == processBusiness) {
+//            // 业务未绑定流程定义
+//            return new ProcessManagementDTO.RevokeResultDTO(dto);
+//        }
         List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
         if (CollectionUtil.isEmpty(processManagementList)) {
             // 业务未启动流程
