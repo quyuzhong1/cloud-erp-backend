@@ -365,12 +365,7 @@
     <select id="salePriceDistribution" resultType="com.erp.model.bi.vo.SalePriceDistributionVO">
         SELECT
         doit.id,
-        <if test="params.rangeType == 1">
-            round(doit.sell_price,2) AS sellPrice,
-        </if>
-        <if test="params.rangeType == 2">
-            round(doit.sell_price_origin,2) AS sellPrice,
-        </if>
+        round(doit.sell_price,2) AS sellPrice,
         <if test="settleRate !=null and settleRate!=''">
             round((doit.amount_after * doit.${settleRate}),2) AS saleAmount,
         </if>
@@ -382,6 +377,31 @@
         dmp_order_item AS doit
         LEFT JOIN dmp_order_info AS doi ON doit.order_id = doi."id"
         <where>
+            <include refid="conditionSql"/>
+            <!--新品-->
+            <if test="params.newSign != null">
+                AND doit.new_sign = #{params.newSign}
+            </if>
+        </where>
+    </select>
+    <select id="countSalePriceDistribution" resultType="com.erp.model.bi.vo.SalePriceDistributionVO">
+        SELECT
+        sum(doit.quantity) AS salesQuantity,
+--         round(doit.sell_price,2) AS sellPrice,
+        <if test="settleRate !=null and settleRate!=''">
+            round(sum(doit.amount_after * doit.${settleRate}),2) AS saleAmount
+        </if>
+        <if test="settleRate ==null or settleRate==''">
+            round(sum(doit.amount_after * 1),2) AS saleAmount
+        </if>
+        FROM
+        dmp_order_item AS doit
+        LEFT JOIN dmp_order_info AS doi ON doit.order_id = doi.id
+        <where>
+            doit.sell_price >= #{startValue}
+            <if test="endValue != null and endValue != -1">
+                and doit.sell_price &lt; #{endValue}
+            </if>
             <include refid="conditionSql"/>
             <!--新品-->
             <if test="params.newSign != null">

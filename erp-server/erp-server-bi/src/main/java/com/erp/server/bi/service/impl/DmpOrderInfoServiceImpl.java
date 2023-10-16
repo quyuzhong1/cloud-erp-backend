@@ -170,7 +170,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         } else {
             dataType = dto.getDataType();
         }
-        List<SalePriceDistributionVO> salePriceDistributionVOS = null;
         if (Objects.nonNull(salesPriceRangeVO1) && StringUtils.isNotEmpty(salesPriceRangeVO1.getDeptId())) {
             //汇总组织下全部组织列表（包括本级和中间级）
             List<SysDepartmentTreeDTO> depts = sysUserFeign.getDeptByParentId(salesPriceRangeVO1.getDeptId());
@@ -183,10 +182,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             }
             dto.setDepartment(deptIds);
             //获取到结算汇率
-            String settleRate = getSettleRate(dto.getSettleMethod());
-//            LocalDateTime paramsEndTime = dto.getEndTime();
-//            dto.setEndTime(paramsEndTime, 1);
-            salePriceDistributionVOS = baseMapper.salePriceDistribution(dto, settleRate);
         }
         List<String> xAxisList = rangeVOS.stream().map(e -> {
             if (e.getEndValue() == -1) {
@@ -195,12 +190,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 return e.getStartValue() + "-" + e.getEndValue();
             }
         }).collect(Collectors.toList());
-        BigDecimal maxSellPrice;
-        if (CollectionUtils.isEmpty(salePriceDistributionVOS)) {
-            maxSellPrice = BigDecimal.ZERO;
-        } else {
-            maxSellPrice = salePriceDistributionVOS.stream().map(SalePriceDistributionVO::getSellPrice).max(BigDecimal::compareTo).get();
-        }
         ChartVO chart = new ChartVO();
         List<SeriesVO<Object>> seriesList = new ArrayList<>(10);
         SeriesVO series = new SeriesVO();
@@ -211,26 +200,19 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         }
         List<String> dataList = new ArrayList<>(rangeVOS.size());
         //根据区间进行汇总
-        List<SalePriceDistributionVO> finalSalePriceDistributionVOS = salePriceDistributionVOS;
         rangeVOS.forEach(salesPriceRangeVO -> {
             //防止最后范围统计不到最大单价
-            if (salesPriceRangeVO.getEndValue() == -1) {
-                salesPriceRangeVO.setEndValue(maxSellPrice.intValue() + 10);
-            }
-            if (CollectionUtils.isEmpty(finalSalePriceDistributionVOS)) {
-                dataList.add(BigDecimal.ZERO.stripTrailingZeros().toPlainString());
-            } else {
-                List<SalePriceDistributionVO> vos = finalSalePriceDistributionVOS.stream().filter(v -> Objects.nonNull(v.getSellPrice()))
-                        .filter(v -> (v.getSellPrice().intValue() >= salesPriceRangeVO.getStartValue()
-                                && v.getSellPrice().intValue() < salesPriceRangeVO.getEndValue())).collect(Collectors.toList());
+            String settleRate = getSettleRate(dto.getSettleMethod());
+            if (Objects.nonNull(salesPriceRangeVO.getStartValue()) && Objects.nonNull(salesPriceRangeVO.getEndValue()) ){
+                SalePriceDistributionVO vo =  baseMapper.countSalePriceDistribution(dto, settleRate,salesPriceRangeVO.getStartValue(),salesPriceRangeVO.getEndValue());
                 if (2 == dataType) {
-                    int count = vos.stream().mapToInt(SalePriceDistributionVO::getSalesQuantity).sum();
-                    dataList.add(String.valueOf(count));
+                    dataList.add(String.valueOf(vo.getSalesQuantity()));
                 } else {
-                    BigDecimal count = vos.stream().map(SalePriceDistributionVO::getSaleAmount).filter(saleAmount -> saleAmount.compareTo(BigDecimal.ZERO) != 0).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    dataList.add(count.stripTrailingZeros().toPlainString());
+                    dataList.add(vo.getSaleAmount().stripTrailingZeros().toPlainString());
                 }
             }
+
+//            }
         });
         series.setData(dataList);
         seriesList.add(series);

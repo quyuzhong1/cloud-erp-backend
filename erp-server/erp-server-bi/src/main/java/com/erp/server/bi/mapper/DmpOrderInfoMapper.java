@@ -69,6 +69,14 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
     List<SalePriceDistributionVO> salePriceDistribution(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
     /**
+     * 获取销售单价分布
+     *
+     * @param dto
+     * @return
+     */
+    SalePriceDistributionVO countSalePriceDistribution(@Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate,
+                                                       @Param("startValue") Integer startValue, @Param("endValue") Integer endValue );
+    /**
      * 根据不同维度统计销售量
      *
      * @param dto
