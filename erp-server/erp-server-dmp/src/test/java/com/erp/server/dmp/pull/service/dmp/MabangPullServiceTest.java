@@ -14,10 +14,12 @@ import com.common.business.dto.RequestDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.common.business.enums.PlatformApiEnum;
+import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.service.mabang.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
+import com.erp.server.dmp.utils.MabangApiUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -98,8 +100,8 @@ public class MabangPullServiceTest {
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId("30");
         jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(LocalDateTime.parse("2023-05-25 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        jobTaskDTO.setNextTime(LocalDateTime.parse("2023-05-26 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2023-10-09 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2023-10-09 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setDictPlatform("1");
         jobTaskDTO.setStatus(1);
         RequestDTO requestDTO = new RequestDTO();
@@ -122,15 +124,18 @@ public class MabangPullServiceTest {
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId("30");
         jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(LocalDateTime.parse("2022-11-10 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        jobTaskDTO.setNextTime(LocalDateTime.parse("2022-11-10 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2023-01-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2023-01-01 00:00:01", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setDictPlatform("1");
         jobTaskDTO.setStatus(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(apiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
         try {
-            orderService.pullDataSave(requestDTO);
+//            orderService.pullDataSave(requestDTO);
+            LocalDateTime nextTime = requestDTO.getJobTaskDTO().getNextTime();
+            List<OrderEntity> entityList = MabangApiUtils.queryHistorySalesList(requestDTO.getPlatformApiEnum().getTaskName(), nextTime);
+            System.out.println(JSONUtil.toJsonStr(entityList));
         }catch (Exception e) {
             e.printStackTrace();
         }
