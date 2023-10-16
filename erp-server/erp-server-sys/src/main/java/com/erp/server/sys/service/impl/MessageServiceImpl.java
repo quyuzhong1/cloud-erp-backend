@@ -157,7 +157,11 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     public MessageDTO.IsMessageDTO isMessage() {
         LoginUser userInfo = commonService.getUserInfo();
         String uid = userInfo.getUid();
-        List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(uid);
+        MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
+        paramDTO.setUserId(userInfo.getUid());
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
+
+        List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(paramDTO);
 
         List<String> typeList = messageEntities.stream().map(req -> MessageTypeEnum.getName(req.getType())).distinct().collect(Collectors.toList());
 
@@ -179,9 +183,12 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     @Override
     public Boolean closeMessageNotice() {
         LoginUser userInfo = commonService.getUserInfo();
-        String uid = userInfo.getUid();
-        List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(uid);
-        redisService.setCacheObject(RedisKeyUtil.getCloseMessageNoticeKey(uid), messageEntities.size(), RedisCacheConstants.EXPIRATION, TimeUnit.DAYS);
+        MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
+        paramDTO.setUserId(userInfo.getUid());
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
+
+        List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(paramDTO);
+        redisService.setCacheObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()), messageEntities.size(), RedisCacheConstants.EXPIRATION, TimeUnit.DAYS);
         return Boolean.TRUE;
     }
 

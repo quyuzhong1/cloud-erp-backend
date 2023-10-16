@@ -27,10 +27,10 @@ public interface MessageMapper extends BaseMapper<MessageEntity> {
      * 查询未读消息
      * @Author Luo_WG
      * @Date 2023/8/17 14:15
-     * @param userId
+     * @param param
      * @return java.util.List<com.erp.model.sys.entity.MessageEntity>
      **/
-    List<MessageEntity> listByNotReadMessage(@Param("userId") String userId);
+    List<MessageEntity> listByNotReadMessage(@Param("param") MessageDTO.PdaParamDTO param);
 
     /**
      * 条件查询消息信息
