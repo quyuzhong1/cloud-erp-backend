@@ -468,7 +468,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> skuIds = firstPlaceOrderList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<ProductPurchaseEntity> productPurchaseEntities = plmTaskFeign.listProductPurchaseBySkuId(skuIds);
         //获取到没有设置首批下单时间的sku
-        List<String> skuIdList = productPurchaseEntities.stream().filter(req -> req.getPlaceOrderTime() != null).map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<String> skuIdList = productPurchaseEntities.stream().filter(req -> req.getPlaceOrderTime() == null).map(req -> req.getSkuId()).collect(Collectors.toList());
         List<ProductPurchaseEntity> purchaseEntityList = new ArrayList<>();
         for (String skuId : skuIdList) {
             FirstPlaceOrderDTO firstPlaceOrderDTO = firstPlaceOrderList.stream().filter(req -> req.getSkuId().equals(skuId)).findFirst().orElse(null);
