@@ -10,14 +10,12 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
+import com.erp.model.wms.entity.MachineInfoEntity;
 import com.erp.model.wms.entity.MachineSubComponentsEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.MachineSubComponentsMapper;
-import com.erp.server.wms.service.MachineDetailService;
-import com.erp.server.wms.service.MachineSubComponentsService;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -50,6 +48,9 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
 
     @Resource
     private WarehouseService warehouseService;
+
+    @Resource
+    private MachineInfoService machineInfoService;
 
 
     @Override
@@ -158,13 +159,25 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
             throw new ServiceException(ApiError.ERROR_99002);
         }
 
+        MachineInfoEntity machineInfoEntity = machineInfoService.getById(mainId);
+        if (ObjectUtils.isEmpty(machineInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_99052);
+        }
+
         for (MachineSubComponentsEntity detail:newList) {
             //单位
             String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
             detail.setUnit(unit);
             //仓库名称
-            String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(detail.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse(null);
-            detail.setWarehouseName(warehouseName);
+            WarehouseEntity warehouseEntity = warehouseList.stream().filter(obj -> obj.getId().equals(detail.getWarehouseId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(warehouseEntity)) {
+                throw new ServiceException(ApiError.ERROR_99002);
+            }
+            //验证组织是否一致
+            if (!StringUtils.equals(machineInfoEntity.getInventoryOrgId(),warehouseEntity.getOrgId())) {
+                throw new ServiceException(ApiError.ERROR_MACHINE_WAREHOUSE_ORG_DIFF,detail.getSkuNo(),warehouseEntity.getName(),machineInfoEntity.getInventoryOrgName());
+            }
+            detail.setWarehouseName(warehouseEntity.getName());
 
             detail.setDetailId(detailId);
 
