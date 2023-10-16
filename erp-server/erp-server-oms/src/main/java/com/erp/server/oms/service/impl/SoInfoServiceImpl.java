@@ -1086,12 +1086,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             ListingTimeDTO firstListingTimeDTO = listingTimeList.stream().filter(req -> req.getSkuId().equals(skuId)).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(firstListingTimeDTO)) {
                 ProductSaleEntity productSaleEntity = new ProductSaleEntity();
-                productSaleEntity.setId(skuId);
+                productSaleEntity.setSkuId(skuId);
                 productSaleEntity.setListingTime(firstListingTimeDTO.getSoDate());
                 ProductSaleEntityList.add(productSaleEntity);
             }
         }
-        plmTaskFeign.updateProductSaleBatch(ProductSaleEntityList);
+        plmTaskFeign.updateProductSaleListingTimeBatch(ProductSaleEntityList);
     }
 
     /**
