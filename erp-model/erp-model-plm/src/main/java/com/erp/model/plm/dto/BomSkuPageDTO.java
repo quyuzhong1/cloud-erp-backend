@@ -26,6 +26,11 @@ public class BomSkuPageDTO {
         private List<String> skuNoList;
 
         /**
+         * 远程搜索sku
+         */
+        private String remoteSearchSku;
+
+        /**
          * 类目id
          */
         private List<String> categoryIdList;
