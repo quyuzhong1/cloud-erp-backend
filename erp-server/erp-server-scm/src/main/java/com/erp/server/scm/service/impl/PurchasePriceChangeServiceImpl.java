@@ -12,7 +12,6 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
@@ -724,9 +723,11 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
-        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
-        return Boolean.TRUE;
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(PurchasePriceChangeEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), PurchasePriceChangeEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
     }
 
     @Override
@@ -750,10 +751,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isNotEmpty(list)) {
             list.stream().forEach(obj -> {
                 obj.setApproveStatus(statusEnum);
-                //审核通过更新金蝶推送状态为待同步
-                if (ApproveStatusEnum.APPROVE.equals(statusEnum)) {
-                    obj.setSyncKingdeeStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
-                }
             });
             return this.updateBatchById(list);
         }

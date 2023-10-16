@@ -237,12 +237,14 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     void updatePhase(List<SupplierPhaseEntity> list);
 
     /**
+     * @param id
+     * @param syncKingdeeId
      * @return Boolean
      * @description: 同步金蝶状态
      * @author Will
      * @date: 2023/4/25 18:48
      */
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 根据供应商类型 获取对应供应商

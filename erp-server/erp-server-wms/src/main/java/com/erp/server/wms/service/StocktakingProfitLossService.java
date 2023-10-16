@@ -86,9 +86,11 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * 更改金蝶同步状态
      * @author yl
      * @date 2023-08-14 17:47
+     * @param id
+     * @param syncKingdeeId
      * @return void
      */
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 流程监听后

@@ -7,7 +7,6 @@ import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.vo.PagingVO;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.erp.model.sys.dto.*;
@@ -125,9 +124,11 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @description: 更新金蝶发送状态
      * @author Will
      * @date: 2023/4/10 14:24
+     * @param id
+     * @param syncKingdeeId
      * @return
      */
-    boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    boolean updateSyncKingdeeId(String id, String syncKingdeeId);
     /**
      * @description: 批量删除
      * @author Will

@@ -3,7 +3,6 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.MachineInfoDTO;
@@ -154,9 +153,11 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @description: 更新金蝶状态等信息
      * @author Will
      * @date: 2023/5/23 17:41
+     * @param id
+     * @param syncKingdeeId
      * @return Boolean
      */
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 根据来源类型和来源id查找

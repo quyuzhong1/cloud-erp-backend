@@ -181,9 +181,11 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * 修改金蝶同步状态
      * @Author Luo_WG
      * @Date 2023/4/24 15:29
+     * @param id
+     * @param syncKingdeeId
      * @return java.lang.Boolean
      **/
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id,String syncKingdeeId);
 
     
     /**

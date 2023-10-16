@@ -120,11 +120,7 @@ public class BiProductDetailEntity extends BaseEntity<BiProductDetailEntity> {
     @TableField("first_mass_product_date")
     private Date firstMassProductDate;
 
-    /**
-     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
-     */
-    @TableField("sync_kingdee_status")
-    private String syncKingdeeStatus;
+   
 
     /**
      * 同步时间
@@ -171,9 +167,9 @@ public class BiProductDetailEntity extends BaseEntity<BiProductDetailEntity> {
 
     public static final String FIRST_MASS_PRODUCT_DATE = "first_mass_product_date";
 
-    public static final String SYNC_KINGDEE_STATUS = "sync_kingdee_status";
+    
 
-    public static final String SYNC_KINGDEE_TIME = "sync_kingdee_time";
+    
 
     public static final String SYNC_KINGDEE_ID = "sync_kingdee_id";
 

@@ -9,9 +9,7 @@ import com.common.business.enums.SyncKingdeeOmsStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.GoodcangDTO;
-import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.entity.DmpWarehouseInboundItemEntity;
 import com.erp.server.dmp.entity.DmpWarehouseInboundRecordEntity;
@@ -110,7 +108,6 @@ public class DmpWarehouseInboundRecordServiceImpl extends SuperServiceImpl<DmpWa
         List<String> ids = Arrays.asList(saveId);
         OperatorResult submitResult = apiUtils.submit(ids);
         boolean submit = submitResult.isSuccessfully();
-        kingdeeCommonService.insertSyncLog(new PlatformEntity(PlatformEnum.KINGDEE), receivingCode, JSONUtil.toJsonStr(submitResult),"提交直接调拨单", ApiModuleTypeEnum.STOCK_OVERSEAS.getCode(), ApiSendStatusEnum.FAILURE.getCode());
         if(!submit){
             throw new RuntimeException("直接调拨单提交金碟失败");
         }
@@ -133,7 +130,6 @@ public class DmpWarehouseInboundRecordServiceImpl extends SuperServiceImpl<DmpWa
         List<String> ids = Arrays.asList(saveId);
         OperatorResult auditResult = apiUtils.auditById(ids);
         boolean audit = auditResult.isSuccessfully();
-        kingdeeCommonService.insertSyncLog(new PlatformEntity(PlatformEnum.KINGDEE), receivingCode, JSONUtil.toJsonStr(auditResult),"审核直接调拨单", ApiModuleTypeEnum.STOCK_OVERSEAS.getCode(), ApiSendStatusEnum.FAILURE.getCode());
 
         if(!audit){
             throw new RuntimeException("直接调拨单审核金碟失败");

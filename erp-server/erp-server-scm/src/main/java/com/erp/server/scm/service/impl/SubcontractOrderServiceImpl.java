@@ -458,8 +458,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         operateLogService.batchAddModuleOperateLog("反审核了一个委外订单【%s】", ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "反审核操作");
     }
 
-    @Transactional(rollbackFor = Exception.class)
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void delete(List<String> ids) {
        List<SubcontractOrderEntity> list = super.listByIds(ids);
        if (CollUtil.isEmpty(list)) {
@@ -471,9 +473,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
          throw new ServiceException(ApiError.ERROR_98009);
        }
 
-        //删除发送金蝶
-        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
-
        // 删除日志数据
        log.info("删除 开始删除委外订单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
        operateLogService.removeByBusinessIds(ids);
@@ -483,6 +482,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
        // 删除主单数据
        log.info("删除 开始删除委外订单主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
        super.removeByIds(ids);
+
+        //删除发送金蝶
+        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
     }
 
     /**
@@ -981,6 +983,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void invalid(List<String> ids, String remark) {
         List<SubcontractOrderEntity> list = super.listByIds(ids);
         if (CollUtil.isEmpty(list)) {
@@ -1102,11 +1105,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
-        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
-        return Boolean.TRUE;
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(SubcontractOrderEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), SubcontractOrderEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
     }
-
 
     /**
      * 根据bom skuId 获取数据

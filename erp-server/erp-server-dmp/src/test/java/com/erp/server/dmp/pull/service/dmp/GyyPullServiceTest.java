@@ -1,8 +1,8 @@
 package com.erp.server.dmp.pull.service.dmp;
 
-import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.RequestDTO;
-import com.common.business.enums.PlatformApiEnum;
+import com.erp.model.dmp.dto.JobTaskDTO;
+import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.service.gyy.GyyDeliveryDetailServiceImpl;
@@ -39,14 +39,14 @@ public class GyyPullServiceTest {
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_DELIVERY_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
-        jobTaskDTO.setPlatformApiId("7");
+        jobTaskDTO.setApiId(7);
         jobTaskDTO.setApiName("管易云查询订单列表");
-        jobTaskDTO.setId("32");
+        jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.now().minusHours(1));
         jobTaskDTO.setNextTime(LocalDateTime.now());
-        jobTaskDTO.setDictPlatform("1");
-        jobTaskDTO.setStatus(1);
+        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
@@ -63,14 +63,14 @@ public class GyyPullServiceTest {
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_HISTORY_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
-        jobTaskDTO.setPlatformApiId("7");
+        jobTaskDTO.setApiId(7);
         jobTaskDTO.setApiName("管易云查询订单列表");
-        jobTaskDTO.setId("32");
+        jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.of(2022, 4, 8, 8, 0));
         jobTaskDTO.setNextTime(LocalDateTime.of(2022, 4, 9, 8, 0));
-        jobTaskDTO.setDictPlatform("1");
-        jobTaskDTO.setStatus(1);
+        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
@@ -81,7 +81,6 @@ public class GyyPullServiceTest {
         }
     }
 
-
     /**
      * 近7天数据拉取
      */
@@ -91,14 +90,14 @@ public class GyyPullServiceTest {
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
-//        jobTaskDTO.setPlatformApiId("7");
+        jobTaskDTO.setApiId(7);
         jobTaskDTO.setApiName("管易云查询订单列表");
-//        jobTaskDTO.setId(32L);
+        jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.of(2023, 9, 25, 0, 0));
         jobTaskDTO.setNextTime(LocalDateTime.of(2023, 9, 26, 0, 0));
-//        jobTaskDTO.setDictPlatform("1");
-//        jobTaskDTO.setStatus(1);
+        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
@@ -115,14 +114,14 @@ public class GyyPullServiceTest {
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_REFUND_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
-        jobTaskDTO.setPlatformApiId("7");
+        jobTaskDTO.setApiId(7);
         jobTaskDTO.setApiName("管易云查询订单列表");
-        jobTaskDTO.setId("32");
+        jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.of(2023, 3, 26, 0, 0));
         jobTaskDTO.setNextTime(LocalDateTime.of(2023, 3, 26, 23, 0));
-        jobTaskDTO.setDictPlatform("1");
-        jobTaskDTO.setStatus(1);
+        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
@@ -140,14 +139,14 @@ public class GyyPullServiceTest {
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_RETURN_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
-        jobTaskDTO.setPlatformApiId("7");
+        jobTaskDTO.setApiId(7);
         jobTaskDTO.setApiName("管易云查询订单列表");
-        jobTaskDTO.setId("32");
+        jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.of(2022, 4, 8, 8, 0));
         jobTaskDTO.setNextTime(LocalDateTime.of(2022, 4, 8, 10, 0));
-        jobTaskDTO.setDictPlatform("1");
-        jobTaskDTO.setStatus(1);
+        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
@@ -164,14 +163,14 @@ public class GyyPullServiceTest {
         PlatformApiEnum platformApiEnum = PlatformApiEnum.SAL_OUTSTOCK;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
-        jobTaskDTO.setPlatformApiId("7");
+        jobTaskDTO.setApiId(7);
         jobTaskDTO.setApiName("管易云查询订单列表");
-        jobTaskDTO.setId("32");
+        jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.now().minusHours(1));
         jobTaskDTO.setNextTime(LocalDateTime.now());
-        jobTaskDTO.setDictPlatform("1");
-        jobTaskDTO.setStatus(1);
+        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
@@ -187,14 +186,14 @@ public class GyyPullServiceTest {
         KingdeeEccShopServiceImpl shopService = new KingdeeEccShopServiceImpl();
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode(PlatformApiEnum.ECC_SHOP.getTaskName());
-        jobTaskDTO.setPlatformApiId("5");
+        jobTaskDTO.setApiId(5);
         jobTaskDTO.setApiName("获取订单列表");
-        jobTaskDTO.setId("30");
+        jobTaskDTO.setId(30L);
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.parse("2021-01-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setNextTime(LocalDateTime.parse("2023-05-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        jobTaskDTO.setDictPlatform("1");
-        jobTaskDTO.setStatus(1);
+        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(PlatformApiEnum.ECC_SHOP);
         requestDTO.setJobTaskDTO(jobTaskDTO);

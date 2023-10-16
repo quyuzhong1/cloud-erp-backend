@@ -390,15 +390,19 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     /**
      * 更改金蝶同步状态
      *
+     * @param id
+     * @param syncKingdeeId
      * @return void
      * @author yl
      * @date 2023-08-14 17:47
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
-        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
-        return Boolean.TRUE;
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(StocktakingProfitLossEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), StocktakingProfitLossEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
     }
 
     /**
@@ -436,6 +440,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, StocktakingProfitLossEntity entity) {
         if (Objects.isNull(entity)) {
             return Boolean.FALSE;

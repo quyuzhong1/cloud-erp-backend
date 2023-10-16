@@ -148,6 +148,19 @@ public enum ApiError implements Serializable {
 
 
     /**
+     * DMP服务错误
+     * 80001开始
+     */
+    ERROR_NOT_EXIST_KINGDEE_FIELD(80001,"金蝶推送未配置同步字段"),
+    ERROR_NOT_EXIST_KINGDEE_DATA(80002,"查询无数据，无需处理"),
+    ERROR_ADD_KINGDEE_DATA(80003,"金蝶系统新增数据失败"),
+    ERROR_NOT_EXIST_KINGDEE_DETAIL_ID(80004,"未查询到子单据id"),
+    ERROR_NOT_EXIST_ADDRESS_OR_CONTRACT(80005,"地址编码或联系人编号是空，同步金蝶失败，请手动维护数据"),
+    ERROR_NOT_EXIST_PARENT_ASSISTANT_DATA(80006,"未找到上级辅助资料"),
+    ERROR_NOT_EXIST_DMP_PUSH_TASK(80007,"未找到中台推送任务"),
+
+
+    /**
      * 工作流错误 workflow
      * 从9040 开始  以端口号
      */

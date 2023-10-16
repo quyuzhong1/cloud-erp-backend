@@ -253,11 +253,13 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     /**
      * 更改销售订单金蝶推送的状态
      *
+     * @param id
+     * @param syncKingdeeId
      * @return
      * @author yl
      * @date 2023-05-31 14:20
      */
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 方法说明
@@ -381,7 +383,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      */
     List<SoInfoDTO.ListDTO> listRepairHistoryDb();
 
-    
+
     /**
      * 导出国内的spi 数据
      * @author yl

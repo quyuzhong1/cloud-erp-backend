@@ -1,7 +1,6 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.constant.BusinessNoConstant;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -189,8 +188,10 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
-        this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
-        return Boolean.TRUE;
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(CustomerContactEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), CustomerContactEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
     }
 }

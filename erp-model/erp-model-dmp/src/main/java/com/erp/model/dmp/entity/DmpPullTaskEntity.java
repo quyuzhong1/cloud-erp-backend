@@ -140,7 +140,7 @@ public class DmpPullTaskEntity extends BaseEntity<DmpPullTaskEntity> {
         this.retryTimes = 0;
     }
 
-    public DmpPullTaskEntity(DmpSyncTaskDTO dto) {
+    public DmpPullTaskEntity(DmpSyncTaskDTO.AddDTO dto) {
         this.targetPlatformName = dto.getTargetPlatformName();
         this.mqTopic = dto.getMqTopic();
         this.mqTag = dto.getMqTag();

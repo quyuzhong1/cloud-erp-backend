@@ -2,7 +2,6 @@ package com.erp.server.sys.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.erp.model.sys.dto.DepartmentDTO;
 import com.erp.model.sys.dto.DeptUserDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -92,14 +91,14 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
     SysDepartmentEntity getParentDepartmentById(String departmentId);
 
     /**
-     * @param kingdeeDTO
-     * @return Boolean
      * @description: 更新金蝶id、状态
      * @author Will
      * @date: 2023/5/4 9:57
+     * @param id
+     * @param syncKingdeeId
+     * @return Boolean
      */
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
-
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
     /**
      * @param codeList
      * @return List<SysDepartmentDTO>

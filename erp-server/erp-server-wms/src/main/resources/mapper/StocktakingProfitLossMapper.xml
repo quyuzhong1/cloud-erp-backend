@@ -18,20 +18,7 @@
         <result column="source_code" property="sourceCode"/>
         <result column="bill_type" property="billType"/>
     </resultMap>
-    <update id="updateSyncKingdeeStatus">
-        update stocktaking_profit_loss set
-        <if test="params.operate != null and params.operate != ''">
-            sync_operate = #{params.operate},
-        </if>
-        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
-            sync_kingdee_id = #{params.syncKingdeeId},
-        </if>
-        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
-            sync_kingdee_status = #{params.syncKingdeeStatus},
-        </if>
-        sync_kingdee_time = current_timestamp
-        where id = #{params.businessId}
-    </update>
+
 
     <select id="tabList" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$TabDTO">
         SELECT

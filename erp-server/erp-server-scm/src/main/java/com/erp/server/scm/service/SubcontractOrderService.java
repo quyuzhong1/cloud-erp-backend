@@ -3,7 +3,6 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -221,9 +220,11 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * 修改金蝶同步信息
      * @Author Luo_WG
      * @Date 2023/5/25 10:43
+     * @param id
+     * @param syncKingdeeId
      * @return java.lang.Boolean
      **/
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 根据bom skuId 获取数据

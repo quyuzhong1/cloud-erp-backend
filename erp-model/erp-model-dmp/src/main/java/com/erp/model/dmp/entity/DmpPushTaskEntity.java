@@ -1,19 +1,18 @@
 package com.erp.model.dmp.entity;
 
-import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.dto.DmpSyncTaskDTO;
-import com.common.business.dto.UniqueDto;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -28,6 +27,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("dmp_push_task")
+@AllArgsConstructor
+@NoArgsConstructor
 public class DmpPushTaskEntity extends BaseEntity<DmpPushTaskEntity> {
 
     /**
@@ -121,7 +122,7 @@ public class DmpPushTaskEntity extends BaseEntity<DmpPushTaskEntity> {
 
     public static final String RETRY_TIMES = "retry_times";
 
-    public static final String SYNC_OPERATE = "sync_operate";
+   
 
     public DmpPushTaskEntity(DmpPushTaskFeignDTO dto) {
         this.targetPlatformName = dto.getTargetPlatformName();
@@ -133,6 +134,7 @@ public class DmpPushTaskEntity extends BaseEntity<DmpPushTaskEntity> {
         this.sourceType = dto.getSourceType();
         this.sourceId = dto.getSourceId();
         this.sourceCode = dto.getSourceCode();
+        this.syncOperate = dto.getSyncOperate();
         this.retryTimes = 0;
     }
 

@@ -1,6 +1,5 @@
 package com.erp.server.oms.service;
 
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.erp.model.oms.dto.CustomerGroupDTO;
@@ -51,7 +50,9 @@ public interface CustomerGroupService extends SuperService<CustomerGroupEntity> 
      * 修改金蝶同步信息
      * @Author Luo_WG
      * @Date 2023/5/25 10:43
+     * @param id
+     * @param syncKingdeeId
      * @return java.lang.Boolean
      **/
-    Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO);
+    Boolean updateSyncKingdeeId(String id,String syncKingdeeId);
 }

@@ -1,6 +1,5 @@
 package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 
-import com.common.business.dto.base.PushSyncStatusDTO;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.plm.service.BasicCategoryService;
@@ -40,19 +39,17 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //金蝶id
         String syncKingdeeId = (String)params.get("kingdeeId");
 
-        PushSyncStatusDTO.KingdeeDTO syncKingdeeDTO = new PushSyncStatusDTO.KingdeeDTO(businessId,"",syncKingdeeId, status);
-
         //产品管理
         if (ApiModuleTypeEnum.PRODUCT_DETAIL.getCode().toString().equals(code)) {
-            productDetailService.updateSyncKingdeeStatus(syncKingdeeDTO);
+            productDetailService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
         //bom管理
         if (ApiModuleTypeEnum.BOM_INFO.getCode().toString().equals(code)) {
-            bomInfoService.updateSyncKingdeeStatus(syncKingdeeDTO);
+            bomInfoService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
         //产品管理
         if (ApiModuleTypeEnum.ONE_LEVEL_CATEGORY.getCode().toString().equals(code) || ApiModuleTypeEnum.SECOND_LEVEL_CATEGORY.getCode().toString().equals(code)) {
-            basicCategoryService.updateSyncKingdeeStatus(syncKingdeeDTO);
+            basicCategoryService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
     }
 }

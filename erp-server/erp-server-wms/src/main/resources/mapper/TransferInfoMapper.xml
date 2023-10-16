@@ -31,20 +31,7 @@
         <result column="approve_user_id" property="approveUserId" />
         <result column="remark" property="remark" />
     </resultMap>
-    <update id="updateSyncKingdeeStatus">
-        update transfer_info set
-        <if test="params.operate != null and params.operate != ''">
-            sync_operate = #{params.operate},
-        </if>
-        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
-            sync_kingdee_id = #{params.syncKingdeeId},
-        </if>
-        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
-            sync_kingdee_status = #{params.syncKingdeeStatus},
-        </if>
-        sync_kingdee_time = current_timestamp
-        where third_party_system != 'mb' and id = #{params.businessId}
-    </update>
+
     <select id="paging" resultType="com.erp.model.wms.dto.TransferInfoDTO$ListDTO">
         select
             ti.id,

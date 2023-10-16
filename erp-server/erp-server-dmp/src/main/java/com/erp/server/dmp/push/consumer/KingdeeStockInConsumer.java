@@ -1,13 +1,20 @@
 package com.erp.server.dmp.push.consumer;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncTaskIdDTO;
+import com.common.business.enums.SyncStatusEnum;
+import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
+import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.business.KingdeeStockInConsumerService;
+import com.erp.server.dmp.service.DmpPushTaskService;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
@@ -16,11 +23,10 @@ import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.Map;
 
 /**
  * 对接金蝶入库单
@@ -30,12 +36,16 @@ import java.util.*;
  **/
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_stock_in_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_STOCK_IN, consumeMode = ConsumeMode.ORDERLY)
-public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Object>> {
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
+        selectorExpression = "kingdee_purchase_stock_in_tag",
+        consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_STOCK_IN,
+        consumeMode = ConsumeMode.ORDERLY)
+public class KingdeeStockInConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
     @Resource
     private KingdeeStockInConsumerService kingdeeStockInConsumerService;
 
-
+    @Resource
+    private DmpPushTaskService dmpPushTaskService;
 
 
     public static void main(String[] args) {
@@ -116,14 +126,17 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
         }
     }
 
-    @Override
-    public void onMessage(Map<String, Object> map) {
-        try {
-            kingdeeStockInConsumerService.executeConsumer(map);
-        }catch (Exception e){
-            log.error("KingdeeStockInConsumer>>>onMessage>>>map ={}>>>e={}", map, e);
-        }
 
+    @Override
+    public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
+        dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
+    }
+
+    @Override
+    public ApiResult<?> handle(Object ext) {
+        Map<String, Object> map = JSONUtil.parseObj(ext);
+        kingdeeStockInConsumerService.executeConsumer(map);
+        return ApiResult.success();
     }
 
 }

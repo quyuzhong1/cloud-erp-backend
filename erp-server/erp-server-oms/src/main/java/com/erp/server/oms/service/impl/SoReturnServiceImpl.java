@@ -752,6 +752,13 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 count();
     }
 
+    @Override
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(SoReturnEntity::getId,id)
+                .set(StringUtils.isNotBlank(syncKingdeeId),SoReturnEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
+    }
 
     @Transactional(rollbackFor = Exception.class)
     @Override

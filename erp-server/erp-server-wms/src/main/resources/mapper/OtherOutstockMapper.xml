@@ -31,20 +31,7 @@
         <result column="approve_user_name" property="approveUserName" />
         <result column="approve_user_id" property="approveUserId" />
     </resultMap>
-    <update id="updateSyncKingdeeStatus">
-        update other_outstock set
-        <if test="params.operate != null and params.operate != ''">
-            sync_operate = #{params.operate},
-        </if>
-        <if test="params.syncKingdeeId != null and params.syncKingdeeId != ''">
-            sync_kingdee_id = #{params.syncKingdeeId},
-        </if>
-        <if test="params.syncKingdeeStatus != null and params.syncKingdeeStatus != ''">
-            sync_kingdee_status = #{params.syncKingdeeStatus},
-        </if>
-        sync_kingdee_time = current_timestamp
-        where id = #{params.businessId}
-    </update>
+
     <select id="paging" resultType="com.erp.model.wms.dto.OtherOutstockDTO$ListDTO">
         select
             oo.id,

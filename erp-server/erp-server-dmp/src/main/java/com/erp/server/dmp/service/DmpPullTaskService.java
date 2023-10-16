@@ -57,5 +57,5 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      * 统一发送MQ消息并保存任务
      * @param dto
      */
-    void sendMqAndSaveTask(DmpSyncTaskDTO dto);
+    void sendMqAndSaveTask(DmpSyncTaskDTO.AddDTO dto);
 }

@@ -146,28 +146,11 @@ public class MachineInfoEntity extends BaseEntity<MachineInfoEntity> {
     private String approveUserId;
 
     /**
-     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
-     */
-    @TableField("sync_kingdee_status")
-    private String syncKingdeeStatus;
-
-    /**
-     * 同步金蝶时间
-     */
-    @TableField("sync_kingdee_time")
-    private LocalDateTime syncKingdeeTime;
-
-    /**
      * 同步金蝶id
      */
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
-    /**
-     * 同步操作
-     */
-    @TableField("sync_operate")
-    private String syncOperate;
 
     /**
      * 来源id
@@ -234,13 +217,7 @@ public class MachineInfoEntity extends BaseEntity<MachineInfoEntity> {
 
     public static final String APPROVE_USER_ID = "approve_user_id";
 
-    public static final String SYNC_KINGDEE_STATUS = "sync_kingdee_status";
-
-    public static final String SYNC_KINGDEE_TIME = "sync_kingdee_time";
-
     public static final String SYNC_KINGDEE_ID = "sync_kingdee_id";
-
-    public static final String SYNC_OPERATE = "sync_operate";
 
     public static final String SOURCE_CODE = "source_code";
 

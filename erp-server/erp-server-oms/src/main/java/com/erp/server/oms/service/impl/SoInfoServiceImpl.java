@@ -1229,6 +1229,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean deleteByIds(List<String> ids) {
         List<SoInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -1243,8 +1244,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //检查能否删除
         checkRemove(ids);
 
-        //推送金蝶
-        list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+
 
         Boolean result = this.removeByIds(ids);
         if (result) {
@@ -1254,6 +1254,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "删除");
             //删除明细
             soDetailService.removeByMainIdList(ids);
+            //推送金蝶
+            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         }
 
         return result;
@@ -1271,6 +1273,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String remark) {
         List<SoInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = BillApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -1733,52 +1736,52 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     /**
      * 更改销售订单金蝶推送的状态
      *
+     * @param id
+     * @param syncKingdeeId
      * @return
      * @author yl
      * @date 2023-05-31 14:20
      */
     @Override
-    public Boolean updateSyncKingdeeStatus(PushSyncStatusDTO.KingdeeDTO kingdeeDTO) {
-        String id = kingdeeDTO.getBusinessId();
-        String syncKingdeeStatus = kingdeeDTO.getSyncKingdeeStatus();
-        String syncKingdeeId = kingdeeDTO.getSyncKingdeeId();
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         try {
             if (StringUtils.isEmpty(id)) {
                 return Boolean.TRUE;
             }
-            //同步成功
-            if (syncKingdeeStatus.equals(SyncStatusEnum.SUCCESS_SYNC.getCode())) {
-                KingdeeDTO dto = new KingdeeDTO();
-                dto.setId(syncKingdeeId);
-                dto.setNumber("");
-                dto.setKingdeePushModuleCode(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
-                JSONObject soJson = dmpTaskFeign.getByKingdeeId(dto);
-                List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(id);
-                List<SoDetailEntity> updateList = new ArrayList<>(10);
-                if (soJson != null) {
-                    List<Map<String, Object>> resultList = (List<Map<String, Object>>) soJson.get("SaleOrderEntry");
-                    if (CollectionUtils.isNotEmpty(resultList)) {
-                        for (int i = 0; i < resultList.size(); i++) {
-                            Map<String, Object> item = resultList.get(i);
-                            String KingdeeId = item.get("Id").toString();
-                            Map<String, Object> materialMap = (Map<String, Object>) item.get("MaterialId");
-                            String skuNo = materialMap.get("Number").toString();
-                            if (soDetailList.size() >= resultList.size()) {
-                                SoDetailEntity soDetail = soDetailList.get(i);
-                                if (soDetail.getSkuNo().equals(skuNo)) {
-                                    soDetail.setKingdeeDetailId(KingdeeId);
-                                    updateList.add(soDetail);
-                                }
+
+            KingdeeDTO dto = new KingdeeDTO();
+            dto.setId(syncKingdeeId);
+            dto.setNumber("");
+            dto.setKingdeePushModuleCode(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
+            JSONObject soJson = dmpTaskFeign.getByKingdeeId(dto);
+            List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(id);
+            List<SoDetailEntity> updateList = new ArrayList<>(10);
+            if (soJson != null) {
+                List<Map<String, Object>> resultList = (List<Map<String, Object>>) soJson.get("SaleOrderEntry");
+                if (CollectionUtils.isNotEmpty(resultList)) {
+                    for (int i = 0; i < resultList.size(); i++) {
+                        Map<String, Object> item = resultList.get(i);
+                        String KingdeeId = item.get("Id").toString();
+                        Map<String, Object> materialMap = (Map<String, Object>) item.get("MaterialId");
+                        String skuNo = materialMap.get("Number").toString();
+                        if (soDetailList.size() >= resultList.size()) {
+                            SoDetailEntity soDetail = soDetailList.get(i);
+                            if (soDetail.getSkuNo().equals(skuNo)) {
+                                soDetail.setKingdeeDetailId(KingdeeId);
+                                updateList.add(soDetail);
                             }
                         }
                     }
                 }
-                if (updateList.size() > 0) {
-                    soDetailService.updateBatchById(updateList);
-                }
             }
-            this.baseMapper.updateSyncKingdeeStatus(kingdeeDTO);
-            return Boolean.TRUE;
+            if (updateList.size() > 0) {
+                soDetailService.updateBatchById(updateList);
+            }
+
+            return this.lambdaUpdate()
+                    .eq(SoInfoEntity::getId, id)
+                    .set(StringUtils.isNotBlank(syncKingdeeId), SoInfoEntity::getSyncKingdeeId, syncKingdeeId)
+                    .update();
         } catch (Exception e) {
             log.error("同步状态出错>>>>{}", e);
         }
