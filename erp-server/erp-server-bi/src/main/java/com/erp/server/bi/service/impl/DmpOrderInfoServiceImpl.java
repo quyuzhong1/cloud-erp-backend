@@ -257,7 +257,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     private List<SalesPriceRangeVO> getRangeList(Integer rangeType) {
         List<BiDictEntity> biDictEntities = 1 == rangeType ? biDictService.listEntityByType(SaleContryTypeEnum.DOMESTIC.code)
-                : biDictService.getByType(SaleContryTypeEnum.ABROAD.code);
+                : biDictService.listEntityByType(SaleContryTypeEnum.ABROAD.code);
         List<SalesPriceRangeVO> rangeVOS = new ArrayList<>();
         if (CollectionUtils.isEmpty(biDictEntities)) {
             return getDefaultRangeList(rangeType);
