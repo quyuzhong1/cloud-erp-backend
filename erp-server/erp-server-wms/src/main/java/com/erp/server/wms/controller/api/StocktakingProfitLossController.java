@@ -63,7 +63,7 @@ public class StocktakingProfitLossController extends BaseController {
     }
 
     /**
-     * 创建
+     * 添加
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody StocktakingProfitLossDTO.AddDTO dto){
@@ -156,7 +156,11 @@ public class StocktakingProfitLossController extends BaseController {
     }
 
 
-
+    /**
+     * 审核
+     * @param dto
+     * @return
+     */
     @PostMapping("/approve")
 //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //            tableField = "create_user_id",

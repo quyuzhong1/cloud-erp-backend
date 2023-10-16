@@ -25,6 +25,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.mapper.SoChangeDetailMapper;
 import com.erp.server.oms.service.*;
+import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -480,24 +481,32 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         }
 
         List<String> mainIds = list.stream().map(SoChangeEntity::getId).collect(Collectors.toList());
+        //这个就是变更的详情
         List<SoChangeDetailEntity> soChangeDetailList = this.listDetailByMainIds(mainIds);
         if (CollectionUtils.isNotEmpty(soChangeDetailList)) {
             SoChangeTypeEnum deleteType = SoChangeTypeEnum.DELETE;
+            //终止
+            SoChangeTypeEnum terminate = SoChangeTypeEnum.TERMINATE;
+
+            //添加
+            SoChangeTypeEnum addType = SoChangeTypeEnum.ADD;
+
             List<String> deleteSoDetailIdList = soChangeDetailList.stream().filter(s -> s.getChangeType().equals(deleteType)).
                     map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
             soDetailService.removeByIds(deleteSoDetailIdList);
-            List<SoChangeDetailEntity> otherList = soChangeDetailList.stream().filter(s -> !s.getChangeType().equals(deleteType)).
+            //关闭的销售订单id
+            List<String> closeSoDetailIdList = soChangeDetailList.stream().filter(s -> s.getChangeType().equals(terminate)).
+                    map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
+            //关闭销售订单
+            soDetailService.closeSoDetailByIds(closeSoDetailIdList);
+            List<SoChangeTypeEnum> excludeList = Arrays.asList(deleteType, terminate);
+
+            List<SoChangeDetailEntity> otherList = soChangeDetailList.stream().filter(s -> !excludeList.contains(s.getChangeType())).
                     collect(Collectors.toList());
             List<SoDetailEntity> saveOrUpdateList = new ArrayList<>(otherList.size());
-            //终止
-            String terminate = SoChangeTypeEnum.TERMINATE.getCode();
-            Boolean close = Boolean.TRUE;
-            List<String> terminateSoDetailIds = new ArrayList<>(10);
-            //获取 数据库到所有的销售订单详情
-            List<SoDetailEntity> dbSoDetailList = soDetailService.listSoDetailByMainIds(soIds);
             for (SoChangeDetailEntity item : otherList) {
                 //变更类型
-                String changeType = item.getChangeType().getCode();
+                SoChangeTypeEnum changeType = item.getChangeType();
                 String soChangeId = item.getMainId();
                 String soId = list.stream().filter(l -> l.getId().equals(soChangeId)).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getSoId())).orElse("");
@@ -518,23 +527,20 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 soDetail.setIsGift(item.getIsGift());
                 soDetail.setIsReissue(item.getIsReissue());
                 soDetail.setRemark(item.getRemark());
-                soDetail.setId(soDetailId);
                 soDetail.setMainId(soId);
-                if (changeType.equals(terminate)) {
-                    soDetail.setIsClose(close);
-                    terminateSoDetailIds.add(soDetailId);
+                //添加的话id 为null
+                if (addType.equals(changeType)) {
+                    soDetail.setId(null);
                 } else {
-                    soDetail.setIsClose(Boolean.FALSE);
-
+                    soDetail.setId(soDetailId);
                 }
+
                 saveOrUpdateList.add(soDetail);
             }
-            //这个是添加或者修改的销售订单详情id
-            List<String> saveOrUpdateDetailIdList = saveOrUpdateList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
-            //这个是不存在的 但是也要家进去 从新分摊折扣
-            List<SoDetailEntity> notExistentList = dbSoDetailList.stream().
-                    filter(d -> !saveOrUpdateDetailIdList.contains(d.getId())).collect(Collectors.toList());
+
+
             if (CollUtil.isNotEmpty(saveOrUpdateList)) {
+                this.handleDetailAmountByChange(saveOrUpdateList, soInfoMap);
                 List<String> skuIdList = saveOrUpdateList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
                 List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
                 // 供应商id集合
@@ -557,8 +563,114 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             }
             soDetailService.saveOrUpdateBatch(saveOrUpdateList);
             //关闭关联单据的关闭状态
-            wmsTaskFeign.closeBySoDetailIds(terminateSoDetailIds);
+            wmsTaskFeign.closeBySoDetailIds(closeSoDetailIdList);
         }
+
+    }
+
+
+    /**
+     * 填充变更单的的金额信息
+     *
+     * @param saveOrUpdateList
+     * @param soInfoMap
+     * @return void
+     * @author yl
+     * @date 2023-10-16 16:05
+     */
+    public void handleDetailAmountByChange(List<SoDetailEntity> saveOrUpdateList, Map<String, SoInfoEntity> soInfoMap) {
+        if (CollectionUtils.isEmpty(saveOrUpdateList)) {
+            return;
+        }
+        //订单详情id
+        List<String> soDetailIdList = saveOrUpdateList.stream().filter(s -> StringUtils.isNotBlank(s.getId())).
+                map(SoDetailEntity::getId).collect(Collectors.toList());
+        //销售订单详情
+        List<SoDetailEntity> OldSoDetailList = CollectionUtils.isNotEmpty(soDetailIdList) ? soDetailService.listByIds(soDetailIdList) : Collections.emptyList();
+
+        BigDecimal bigDecimal100 = MathUtil.BigDecimal_100;
+
+        BigDecimal bigDecimal1 = MathUtil.BigDecimal_1;
+        //根据销售订单分组
+        Map<String, List<SoDetailEntity>> map = saveOrUpdateList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
+        for (Map.Entry<String, List<SoDetailEntity>> item : map.entrySet()) {
+            String soId = item.getKey();
+            SoInfoEntity soInfo = soInfoMap.getOrDefault(soId, null);
+            if (Objects.isNull(soInfo)) {
+                continue;
+            }
+
+            List<SoDetailEntity> soDetailList = item.getValue();
+            //是否含税
+            Boolean isTax = soInfo.getIsTax();
+            for (SoDetailEntity soDetail : soDetailList) {
+                //是否赠品
+                Boolean isGift = soDetail.getIsGift();
+                BigDecimal price = soDetail.getPrice();
+                //当是赠品的时候  单价为0
+                if (Objects.nonNull(isGift) && isGift) {
+                    price = BigDecimal.ZERO;
+                }
+                soDetail.setPrice(price);
+
+                //税率
+                BigDecimal taxRate = Objects.isNull(soDetail.getTaxRate()) ? BigDecimal.ZERO : soDetail.getTaxRate();
+                BigDecimal flagTaxRate = MathUtil.divide(taxRate, bigDecimal100);
+                //含税单价=销售单价*（税率+1）
+                BigDecimal multiplyTax = MathUtil.add(flagTaxRate, bigDecimal1);
+                //含税单价
+                BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+                soDetail.setTaxPrice(taxPrice);
+                String id = soDetail.getId();
+                //折扣额
+                BigDecimal discountAmount = BigDecimal.ZERO;
+                //现在的含税金额
+                BigDecimal taxAmountBefore = BigDecimal.ZERO;
+
+                //数量
+                Integer qty = soDetail.getQty();
+                //表示修改
+                if (StringUtils.isNotBlank(id)) {
+                    //旧销售订单
+                    SoDetailEntity oldSoDetail = OldSoDetailList.stream().filter(d -> id.equals(d.getId())).findFirst().orElse(null);
+                    if (Objects.nonNull(oldSoDetail)) {
+                        //旧折扣额
+                        BigDecimal oldDiscountAmount = oldSoDetail.getDiscountAmount();
+                        BigDecimal oldTaxAmountBefore = oldSoDetail.getTaxAmountBefore();
+                        //现在的含税金额
+                        taxAmountBefore = MathUtil.multiply(taxPrice, qty);
+
+                        BigDecimal divFlg = MathUtil.multiply(taxAmountBefore, oldDiscountAmount, 4);
+                        //折扣额=（含税单价*数量*原折扣额）/(原含税单价*原数量)
+                        discountAmount = MathUtil.divide(divFlg, oldTaxAmountBefore, 2, BigDecimal.ROUND_DOWN);
+                    }
+
+                }
+                soDetail.setTaxAmountBefore(taxAmountBefore);
+                soDetail.setDiscountAmount(discountAmount);
+
+                //税额
+                BigDecimal tax = BigDecimal.ZERO;
+                //含税 不含税就为0
+                if (isTax) {
+                    tax = SoUtils.getIncludeTax(taxAmountBefore, discountAmount, taxRate);
+                }
+                soDetail.setTax(tax);
+                // 价税合计（折扣后） 含税单价*数量-折扣额
+                BigDecimal taxAmount = MathUtil.subtract(taxAmountBefore, discountAmount);
+                soDetail.setTaxAmount(taxAmount);
+
+                //减的值
+                BigDecimal subNumber = MathUtil.add(tax, discountAmount);
+                // 销售金额（折扣后）=价税合计-折扣额-税额 ps:不含税的时候 含税金额=价税合计
+                BigDecimal amount = MathUtil.subtract(taxAmountBefore, subNumber);
+                soDetail.setAmount(amount);
+
+            }
+
+
+        }
+
 
     }
 
@@ -583,12 +695,12 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             //刪除
             String deleteCode = SoChangeTypeEnum.DELETE.getCode();
             List<SoChangeDetailDTO.AddDTO> notDeleteList = detailList.stream().filter(d -> !d.getChangeType().getCode().equals(deleteCode)).collect(Collectors.toList());
-            long qtyCount= notDeleteList.stream().filter(n->n.getQty()<=0).count();
-            if(qtyCount>0){
-              throw new ServiceException("销售数量不能小于0");
+            long qtyCount = notDeleteList.stream().filter(n -> n.getQty() <= 0).count();
+            if (qtyCount > 0) {
+                throw new ServiceException("销售数量不能小于0");
             }
-            long priceCount= notDeleteList.stream().filter(n->n.getPrice().compareTo(BigDecimal.ZERO)<=0).count();
-            if(priceCount>0){
+            long priceCount = notDeleteList.stream().filter(n -> n.getPrice().compareTo(BigDecimal.ZERO) <= 0).count();
+            if (priceCount > 0) {
                 throw new ServiceException("单价不能小于0");
             }
             List<SoChangeDetailDTO.AddDTO> deleteDetailList = detailList.stream().filter(d -> d.getChangeType().getCode().equals(deleteCode)).collect(Collectors.toList());

@@ -12,9 +12,11 @@ import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 销售订单工具类
@@ -231,7 +233,7 @@ public class SoUtils {
      * @author yl
      * @date 2023-10-11 14:25
      */
-    private static BigDecimal getIncludeTax(BigDecimal taxAmount, BigDecimal detailDiscountAmount, BigDecimal taxRate) {
+    public static BigDecimal getIncludeTax(BigDecimal taxAmount, BigDecimal detailDiscountAmount, BigDecimal taxRate) {
         BigDecimal diff = MathUtil.subtract(taxAmount, detailDiscountAmount);
         //除数
         BigDecimal divideNumber = MathUtil.add(taxRate, MathUtil.BigDecimal_100);
@@ -366,4 +368,6 @@ public class SoUtils {
             mainIds.add(id);
         }
     }
+
+
 }
