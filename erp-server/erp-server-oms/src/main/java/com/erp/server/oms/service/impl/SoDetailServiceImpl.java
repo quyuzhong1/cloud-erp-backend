@@ -1425,5 +1425,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
     }
 
+    @Override
+    public List<SoDetailDTO.TempUpdateDTO> listTemporaryUpdate() {
+        return baseMapper.listTemporaryUpdate();
+    }
+
 
 }
