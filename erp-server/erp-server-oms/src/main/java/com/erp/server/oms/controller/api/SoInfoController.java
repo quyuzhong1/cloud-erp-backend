@@ -19,6 +19,7 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import com.erp.server.oms.utils.SoUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +33,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 销售管理-销售订单
@@ -234,10 +236,11 @@ public class SoInfoController extends BaseController {
 
     /**
      * 更新明细备注
-     * @author Will
-     * @date: 2023/7/19 14:58
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2023/7/19 14:58
      */
     @PostMapping("/updateDetailRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -252,10 +255,11 @@ public class SoInfoController extends BaseController {
 
     /**
      * 更新备注
-     * @author Will
-     * @date: 2023/7/19 14:58
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2023/7/19 14:58
      */
     @PostMapping("/updateRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -267,7 +271,6 @@ public class SoInfoController extends BaseController {
         Boolean flag = soInfoService.updateRemark(dto);
         return flag == true ? success() : failure();
     }
-
 
 
     /**
@@ -408,7 +411,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/exportSoContractExcel")
     public ApiResult<SoInfoDTO.ExportPdfDTO> exportSoContractExcel(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
-        Boolean result = soInfoService.exportSoContractExcel(dto.getId(),response);
+        Boolean result = soInfoService.exportSoContractExcel(dto.getId(), response);
         return result ? success() : failure();
     }
 
@@ -422,7 +425,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/exportSoPI")
     public ApiResult exportSoPI(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
-        Boolean result = soInfoService.exportSoPI(dto.getId(),response);
+        Boolean result = soInfoService.exportSoPI(dto.getId(), response);
         return result ? success() : failure();
 
     }
@@ -487,6 +490,7 @@ public class SoInfoController extends BaseController {
 
     /**
      * 根据sku id和数量计算成本毛利
+     *
      * @param costParam
      * @return
      */
@@ -497,35 +501,38 @@ public class SoInfoController extends BaseController {
 
     /**
      * 补录销售订单毛利历史数据
+     *
      * @param startDate
      * @param endDate
      * @return
      */
     @GetMapping("/brushData")
-    public ApiResult<Void> getSkuCostProfit(@RequestParam(value = "startDate")String startDate,
-                                            @RequestParam(value = "endDate")String endDate) {
+    public ApiResult<Void> getSkuCostProfit(@RequestParam(value = "startDate") String startDate,
+                                            @RequestParam(value = "endDate") String endDate) {
         soInfoService.brushCostData(LocalDate.parse(startDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")),
                 LocalDate.parse(endDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-       return success();
+        return success();
     }
 
     /**
      * 补录销售订单毛利历史数据（根据id）
+     *
      * @param id
      * @return
      */
     @GetMapping("/brushById")
-    public ApiResult<Void> brushById(@RequestParam(value = "id")String id) {
+    public ApiResult<Void> brushById(@RequestParam(value = "id") String id) {
         soInfoService.brushCostData(id);
         return success();
     }
 
     /**
      * 打印
-     * @Author Luo_WG
-     * @Date 2023/7/13 10:44
+     *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
+     * @Author Luo_WG
+     * @Date 2023/7/13 10:44
      **/
     @PostMapping("/print")
     public ApiResult<List<SoInfoDTO.PrintDTO>> print(@RequestBody BaseIdsDTO.IdsDTO dto) {
@@ -534,19 +541,25 @@ public class SoInfoController extends BaseController {
     }
 
     /**
-     * 临时接口：修改未税单价
-     * @Author Luo_WG
-     * @Date 2023/7/13 10:44
-     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
-     **/
+     * 临时接口：添加折扣额 修复历史的数据销售额数据
+     *
+     * @param
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-10-13 9:06
+     */
     @PostMapping("/temporaryUpdate")
     public ApiResult temporaryUpdate() {
-        Boolean aBoolean = soInfoService.temporaryUpdate();
-        return aBoolean ? success() : failure();
+        List<String> errorList = soInfoService.temporaryUpdate();
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            return ApiResult.error(1,"以下订单出错: "+errorList.stream().collect(Collectors.joining(",")));
+        }
+        return ApiResult.success();
     }
 
     /**
      * 根据销售订单判断是否已经下推过有效发货通知单
+     *
      * @param id
      * @return com.common.core.controller.vo.ApiResult<Boolean>
      * @author zhangchunlin
@@ -560,6 +573,7 @@ public class SoInfoController extends BaseController {
 
     /**
      * 获取销售成本毛利信息
+     *
      * @param calCostProfitDTO
      * @return
      */

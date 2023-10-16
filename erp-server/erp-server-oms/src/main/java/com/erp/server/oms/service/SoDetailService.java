@@ -287,4 +287,12 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      */
     void updateDetailKingdeeId(String soId);
 
+    /**
+     * 销售变更单终止销售订单详情
+     * @author yl
+     * @date 2023-10-16 15:52
+     * @param closeSoDetailIdList
+     * @return void
+     */
+    void closeSoDetailByIds(List<String> closeSoDetailIdList);
 }

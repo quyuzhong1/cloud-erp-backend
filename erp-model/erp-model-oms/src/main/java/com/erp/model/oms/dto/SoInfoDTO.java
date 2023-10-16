@@ -280,6 +280,11 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal taxRate;
 
         /**
+         * 税额
+         */
+        private BigDecimal tax;
+
+        /**
          * 销售金额
          */
         private BigDecimal amount;

@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -445,7 +446,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2023-05-17 16:00
      */
     @Override
-    public void updateSoDetail(String mainId,Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList) {
+    public void updateSoDetail(String mainId, Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
@@ -485,7 +486,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setCurrencySymbol(symbol);
         }
         // 金额信息加上折扣额计算
-        SoUtils.handleDetailAmount(isTax,soInfoEntity.getDiscountAmount(), saveOrUpdateList);
+        SoUtils.handleDetailAmount(isTax, soInfoEntity.getDiscountAmount(), saveOrUpdateList);
         for (SoDetailEntity item : saveOrUpdateList) {
             // 计算毛利成本
             calCost(purchasePriceList, skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);
@@ -1069,13 +1070,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * 添加销售订单明细
      *
      * @param mainId detailList
-     * @param isTax 是否含税  true 是
+     * @param isTax  是否含税  true 是
      * @return
      * @author yl
      * @date 2023-05-16 9:32
      */
     @Override
-    public void addSoDetail(String mainId,Boolean isTax, List<SoDetailDTO.AddDTO> detailList) {
+    public void addSoDetail(String mainId, Boolean isTax, List<SoDetailDTO.AddDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
@@ -1119,7 +1120,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setCurrencySymbol(symbol);
         }
         // 金额折扣处理
-        SoUtils.handleDetailAmount(isTax,soInfoEntity.getDiscountAmount(), saveOrUpdateList);
+        SoUtils.handleDetailAmount(isTax, soInfoEntity.getDiscountAmount(), saveOrUpdateList);
         for (int i = 0; i < saveOrUpdateList.size(); i++) {
             SoDetailEntity item = saveOrUpdateList.get(i);
             // 计算毛利成本
@@ -1258,7 +1259,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 item.setAllAmountLocalCurrency(item.getExchangeRate().multiply(taxAmount).setScale(4, BigDecimal.ROUND_HALF_UP));
             }
         }
-        SoUtils.updateSoDetailCost(item, purchasePrice, saleAmount);
+        SoUtils.updateSoDetailCost(item, purchasePrice);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -1439,6 +1440,19 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             }
 
         }
+    }
+
+
+    @Override
+    public void closeSoDetailByIds(List<String> closeSoDetailIdList) {
+        if (CollectionUtils.isEmpty(closeSoDetailIdList)) {
+            return;
+        }
+        LambdaUpdateWrapper<SoDetailEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.set(SoDetailEntity::getIsClose, Boolean.TRUE);
+        updateWrapper.in(SoDetailEntity::getId, closeSoDetailIdList);
+        this.update(updateWrapper);
+
     }
 
 

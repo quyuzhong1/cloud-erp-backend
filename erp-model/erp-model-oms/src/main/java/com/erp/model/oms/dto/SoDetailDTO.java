@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -211,6 +212,11 @@ public class SoDetailDTO implements Serializable {
          * 税率
          */
         private BigDecimal taxRate;
+
+        /**
+         * 税额
+         */
+        private BigDecimal tax;
 
 
         /**
@@ -514,6 +520,104 @@ public class SoDetailDTO implements Serializable {
          * 价税合计(本位币)
          */
         private BigDecimal allAmountLocalCurrency;
+
+        /**
+         * 备注
+         */
+        @Size(max = 200, message = "备注最大200字符")
+        private String remark;
+    }
+
+
+    /**
+     * 临时修改数据 的参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TempUpdateDTO {
+
+        /**
+         * 详情id
+         */
+        private String id;
+
+        /**
+         * 销售订单id
+         */
+        private String soId;
+
+        /**
+         * 单价日期
+         */
+        private LocalDate BillDate;
+
+        /**
+         * 折扣总额
+         */
+        private BigDecimal discountAmount;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * 销售数量
+         */
+        private Integer qty;
+
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 是否赠品
+         */
+        private Boolean isGift;
+
+        /**
+         * 是否补发
+         */
+        private Boolean isReissue;
+
+        /**
+         * 是否关闭
+         */
+        private Boolean isClose;
+
+        /**
+         * 采购单价
+         */
+        private BigDecimal purchasePrice;
+
+        /**
+         * 销售总成本
+         */
+        private BigDecimal saleCost;
+
+        /**
+         * 销售毛利
+         */
+        private BigDecimal saleProfit;
+
+        /**
+         * 销售毛利率
+         */
+        private BigDecimal saleProfitRate;
+
+
 
         /**
          * 备注

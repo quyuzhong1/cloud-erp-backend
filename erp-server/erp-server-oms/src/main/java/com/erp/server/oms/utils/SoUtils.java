@@ -12,9 +12,11 @@ import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 销售订单工具类
@@ -45,13 +47,10 @@ public class SoUtils {
             costParam.setTaxRate(BigDecimal.ZERO);
         }
 
-        // 不含税销售额
-        // BigDecimal noTaxAmount = costParam.getSaleAmount().divide(BigDecimal.ONE.add(costParam.getTaxRate().divide(new BigDecimal("100"))), 4, BigDecimal.ROUND_HALF_UP);
-        // 销售毛利
-        // skuCostProfitResult.setSaleProfit(noTaxAmount.subtract(skuCostProfitResult.getSaleCost()).setScale(4, BigDecimal.ROUND_HALF_UP));
-        // 销售毛利
+        // 销售毛利=销售单价*数量
         BigDecimal saleAmount = costParam.getSaleAmount();
         BigDecimal saleCost = skuCostProfitResult.getSaleCost();
+
         BigDecimal saleProfit = saleAmount.subtract(saleCost).setScale(4, BigDecimal.ROUND_HALF_UP);
         skuCostProfitResult.setSaleProfit(saleProfit);
         // 销售毛利率
@@ -66,7 +65,7 @@ public class SoUtils {
      *
      * @param item
      */
-    public static void updateSoDetailCost(SoDetailEntity item, BigDecimal purchasePrice, BigDecimal saleAmount) {
+    public static void updateSoDetailCost(SoDetailEntity item, BigDecimal purchasePrice) {
         SkuCostProfitDTO.SkuCostProfitResult skuCostProfitResult = new SkuCostProfitDTO.SkuCostProfitResult();
         skuCostProfitResult.setSkuId(item.getSkuId());
         skuCostProfitResult.setPurchasePrice(BigDecimal.ZERO);
@@ -76,7 +75,9 @@ public class SoUtils {
 
         SkuCostProfitDTO.SkuCostProfitParam costParam = new SkuCostProfitDTO.SkuCostProfitParam();
         costParam.setSkuId(item.getSkuId());
-        // 转换币制后的金额
+        //该值应该为数量*单价*汇率
+        BigDecimal amount = MathUtil.multiply(item.getPrice(), item.getQty());
+        BigDecimal saleAmount = MathUtil.multiply(amount, item.getExchangeRate());
         costParam.setSaleAmount(saleAmount);
         costParam.setQty(item.getQty());
         costParam.setTaxRate(item.getTaxRate());
@@ -232,7 +233,7 @@ public class SoUtils {
      * @author yl
      * @date 2023-10-11 14:25
      */
-    private static BigDecimal getIncludeTax(BigDecimal taxAmount, BigDecimal detailDiscountAmount, BigDecimal taxRate) {
+    public static BigDecimal getIncludeTax(BigDecimal taxAmount, BigDecimal detailDiscountAmount, BigDecimal taxRate) {
         BigDecimal diff = MathUtil.subtract(taxAmount, detailDiscountAmount);
         //除数
         BigDecimal divideNumber = MathUtil.add(taxRate, MathUtil.BigDecimal_100);
@@ -367,4 +368,6 @@ public class SoUtils {
             mainIds.add(id);
         }
     }
+
+
 }
