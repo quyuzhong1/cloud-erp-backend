@@ -19,7 +19,6 @@ import java.util.Map;
 @Component
 public class WalmartSdkClientService {
 
-
     /**
      * 发送请求到沃尔玛
      * @param baseUrl
