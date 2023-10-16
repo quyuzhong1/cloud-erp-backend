@@ -174,10 +174,10 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             //汇总组织下全部组织列表（包括本级和中间级）
             List<SysDepartmentTreeDTO> depts = sysUserFeign.getDeptByParentId(salesPriceRangeVO1.getDeptId());
             List<String> deptIds;
-            if (CollectionUtils.isNotEmpty(depts)){
+            if (CollectionUtils.isNotEmpty(depts)) {
                 deptIds = depts.stream().map(SysDepartmentTreeDTO::getId).collect(Collectors.toList());
                 deptIds.add(salesPriceRangeVO1.getDeptId());
-            }else {
+            } else {
                 deptIds = Collections.singletonList(salesPriceRangeVO1.getDeptId());
             }
             dto.setDepartment(deptIds);
@@ -203,16 +203,23 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         rangeVOS.forEach(salesPriceRangeVO -> {
             //防止最后范围统计不到最大单价
             String settleRate = getSettleRate(dto.getSettleMethod());
-            if (Objects.nonNull(salesPriceRangeVO.getStartValue()) && Objects.nonNull(salesPriceRangeVO.getEndValue()) ){
-                SalePriceDistributionVO vo =  baseMapper.countSalePriceDistribution(dto, settleRate,salesPriceRangeVO.getStartValue(),salesPriceRangeVO.getEndValue());
+            if (Objects.nonNull(salesPriceRangeVO.getStartValue()) && Objects.nonNull(salesPriceRangeVO.getEndValue())) {
+                SalePriceDistributionVO vo = baseMapper.countSalePriceDistribution(dto, settleRate, salesPriceRangeVO.getStartValue(), salesPriceRangeVO.getEndValue());
                 if (2 == dataType) {
-                    dataList.add(String.valueOf(vo.getSalesQuantity()));
+                    if (Objects.isNull(vo) || Objects.isNull(vo.getSalesQuantity())) {
+                        dataList.add("0");
+                    } else {
+                        dataList.add(String.valueOf(vo.getSalesQuantity()));
+                    }
                 } else {
-                    dataList.add(vo.getSaleAmount().stripTrailingZeros().toPlainString());
+                    if (Objects.isNull(vo) || Objects.isNull(vo.getSaleAmount())) {
+                        dataList.add("0");
+                    } else {
+                        dataList.add(vo.getSaleAmount().stripTrailingZeros().toPlainString());
+                    }
+
                 }
             }
-
-//            }
         });
         series.setData(dataList);
         seriesList.add(series);
