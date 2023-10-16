@@ -1079,7 +1079,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> skuIds = listingTimeList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<ProductSaleEntity> productSaleEntities = plmTaskFeign.listProductSaleBySkuId(skuIds);
         //获取到没有设置首批下单时间的sku
-        List<String> skuIdList = productSaleEntities.stream().filter(req -> req.getListingTime() != null).map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<String> skuIdList = productSaleEntities.stream().filter(req -> req.getListingTime() == null).map(req -> req.getSkuId()).collect(Collectors.toList());
         List<ProductSaleEntity> ProductSaleEntityList = new ArrayList<>();
         for (String skuId : skuIdList) {
             ListingTimeDTO firstListingTimeDTO = listingTimeList.stream().filter(req -> req.getSkuId().equals(skuId)).findFirst().orElse(null);

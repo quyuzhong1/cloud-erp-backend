@@ -603,7 +603,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<String> skuIds = firstMassInstockList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIds);
         //获取到没有设置入库日期的sku
-        List<String> skuIdList = productDetailEntityList.stream().filter(req -> req.getFirstMassProductDate() != null).map(req -> req.getId()).collect(Collectors.toList());
+        List<String> skuIdList = productDetailEntityList.stream().filter(req -> req.getFirstMassProductDate() == null).map(req -> req.getId()).collect(Collectors.toList());
         List<ProductDetailEntity> skuEntityList = new ArrayList<>();
         for (String skuId : skuIdList) {
             FirstMassInstockDTO firstMassInstockDTO = firstMassInstockList.stream().filter(req -> req.getSkuId().equals(skuId)).findFirst().orElse(null);
