@@ -2,20 +2,12 @@ package com.erp.server.dmp.service.mq;
 
 import cn.hutool.json.JSONUtil;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.ApiModuleTypeEnum;
-import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.GoodcangDTO;
-import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.entity.DmpWarehouseInboundRecordEntity;
-import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.service.ApiPlmSyncLogService;
 import com.erp.server.dmp.service.DmpWarehouseInboundRecordService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
-import com.kingdee.bos.webapi.entity.SaveParam;
-import com.kingdee.bos.webapi.entity.SaveResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -23,7 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -32,8 +24,6 @@ public class StockMQConsumerService {
     @Resource
     private DmpWarehouseInboundRecordService dmpWarehouseInboundRecordService;
 
-    @Resource
-    private ApiPlmSyncLogService apiPlmSyncLogService;
 
     /**
      * rocketmq 监听第三方仓库存变更
@@ -58,7 +48,6 @@ public class StockMQConsumerService {
                 throw new RuntimeException(e);
             }finally {
                 // 写入日志 执行结果
-                apiPlmSyncLogService.insert(new ApiPlmSyncLogDTO(PlatformEnum.KINGDEE, ApiModuleTypeEnum.STOCK_OVERSEAS.getCode(),ext.getReceivingCode(),sendResult, msg,JSONUtil.toJsonStr(ext)));
             }
         }
         /**

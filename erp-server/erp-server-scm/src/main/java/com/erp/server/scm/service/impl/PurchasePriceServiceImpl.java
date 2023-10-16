@@ -64,7 +64,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -371,6 +370,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean deleteByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
@@ -389,6 +389,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             List<Pair<String, String>> pairList = purchasePriceList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             batchAddModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), pairList, "删除");
             attachmentService.deleteByBusinessIds(ids);
+            //删除同步金蝶
+            purchasePriceList.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
+
         }
         return result;
     }
@@ -714,13 +717,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
-                .in(PurchasePriceEntity::getId, ids)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchasePriceEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchasePriceEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .eq(PurchasePriceEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeId), PurchasePriceEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), PurchasePriceEntity::getSyncOperate,syncOperate)
                 .update();
     }
 
@@ -755,10 +755,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (CollectionUtils.isNotEmpty(list)) {
             list.stream().forEach(obj -> {
                 obj.setApproveStatus(statusEnum);
-                //审核通过更新金蝶推送状态为待同步
-                if (ApproveStatusEnum.APPROVE.equals(statusEnum)) {
-                    obj.setSyncKingdeeStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
-                }
             });
             return this.updateBatchById(list);
         }
@@ -923,6 +919,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids) {
         List<PurchasePriceEntity> list = this.listByIds(ids);
         long count = list.stream().filter(r -> !Objects.equals(ApproveStatusEnum.APPROVE, r.getApproveStatus())).count();

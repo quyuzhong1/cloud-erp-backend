@@ -8,11 +8,11 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -52,8 +52,6 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
 
         //模块类型
         Integer type = ApiModuleTypeEnum.PURCHASE_PRICE.getCode();
-        //业务id
-        String businessId = String.valueOf(map.get("id"));
 
         log.info("采购价目表开始推送金蝶 map = {}", JSONUtil.toJsonStr(map));
 
@@ -66,10 +64,57 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
 
         //操作项，分录禁用
         String operate = (String) map.get("operate");
+
+        /**
+         * 分录启用/禁用
+         */
         if (SyncOperateEnum.OPERATE_SUB_EFFECTIVE.getCode().equals(operate) || SyncOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getCode().equals(operate)) {
-            excuteOperation(platformEntity, apiUtils, map, operate);
-            return;
+            excuteOperation(apiUtils, map, operate);
         }
+        /**
+         * 反审核
+         */
+        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+            operateDisapprove(apiUtils,platformEntity, map,type);
+        }
+        /**
+         * 审核
+         */
+        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+            operateApprove(apiUtils,platformEntity, map,type);
+        }
+        /**
+         * 删除
+         */
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            operateDelete(apiUtils,platformEntity,map,operate);
+        }
+    }
+
+    /**
+     * 删除
+     */
+    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
+        //删除
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.PURCHASE_PRICE.getCode(),operate);
+        return;
+    }
+
+    /**
+     * 反审核
+     */
+    public void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //反审核
+        kingdeeCommonService.handleUnAudit(platformEntity, map, apiUtils, type);
+        return;
+    }
+
+    /**
+     * 审核
+     */
+    public void operateApprove (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //操作项，分录禁用
+        String operate = (String) map.get("operate");
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
@@ -78,10 +123,8 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
         if (CollectionUtils.isEmpty(json)) {
             log.error(ApiError.ERROR_97025.msg);
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "未配置同步字段", type, ApiSendStatusEnum.FAILURE.getCode());
-            return;
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_FIELD);
         }
-
         //判断金蝶系统是否已存在该数据
         SaveParam param = new SaveParam(json);
         JSONObject model;
@@ -94,33 +137,20 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
             Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
             if (isAdd) {
                 //禁用启用
-                JSONArray jsonArray = excuteOperation(platformEntity, apiUtils, map, operate);
+                JSONArray jsonArray = excuteOperation(apiUtils, map, operate);
                 //更新明细id
                 updateKingdeeDetailId(jsonArray);
             }
             return;
         }
-
         //查找到数据后，判断其审核状态
         String documentStatus = (String) model.get("DocumentStatus");
 
         String id = String.valueOf(model.get("Id"));
         Boolean flag = Boolean.FALSE;
-
-        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            //反审核
-            //审核中或已审核则要先反审
-            if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-                flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
-            } else {
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "已经反审核", type, ApiSendStatusEnum.SUCCESS.getCode());
-            }
-            return;
-        }
-
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            flag = kingdeeCommonService.unAudit(apiUtils, id);
         }
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
@@ -133,7 +163,7 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
             Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
             if (isAdd) {
                 //禁用启用
-                JSONArray jsonArray = excuteOperation(platformEntity, apiUtils, map, operate);
+                JSONArray jsonArray = excuteOperation(apiUtils, map, operate);
                 //更新明细id
                 updateKingdeeDetailId(jsonArray);
             }
@@ -142,9 +172,10 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
     }
 
 
-    /**
-     * 给修改json对象赋值ID
-     */
+
+        /**
+         * 给修改json对象赋值ID
+         */
     public void setQueryJSONObject(String id, KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, JSONObject json) {
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FId = '%s'", id));
@@ -154,8 +185,7 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
         if (CollectionUtils.isEmpty(queryList)) {
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), filterStr, "未查询到子单据id", type, ApiSendStatusEnum.FAILURE.getCode());
-            return;
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DETAIL_ID);
         }
         //主单据id
         KingdeeUtils.makeFieldJson(json, "FId", ".", id);
@@ -190,7 +220,7 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
     /**
      * 启用、禁用
      */
-    public JSONArray excuteOperation(PlatformEntity platformEntity, KingdeeApiUtils apiUtils, Map<String, Object> map, String operate) {
+    public JSONArray excuteOperation(KingdeeApiUtils apiUtils, Map<String, Object> map, String operate) {
 
         JSONArray list = JSONUtil.parseArray(map.get("list"));
         String id = (String) map.get("syncKingdeeId");
@@ -257,12 +287,12 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
         //禁用
         if (CollectionUtils.isNotEmpty(disabledList)) {
             log.info("禁用价目数据 ids = {}", JSONUtil.toJsonStr(disabledList));
-            excuteOperation(platformEntity, apiUtils, disabledList, id, SyncOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getName());
+            excuteOperation(apiUtils, disabledList, id, SyncOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getName());
         }
         //启用
         if (CollectionUtils.isNotEmpty(unDisabledList)) {
             log.info("启用价目数据 ids = {}", JSONUtil.toJsonStr(unDisabledList));
-            excuteOperation(platformEntity, apiUtils, unDisabledList, id, SyncOperateEnum.OPERATE_SUB_EFFECTIVE.getName());
+            excuteOperation(apiUtils, unDisabledList, id, SyncOperateEnum.OPERATE_SUB_EFFECTIVE.getName());
         }
         return list;
     }
@@ -276,7 +306,7 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
      * @author Will
      * @date: 2023/4/28 11:36
      */
-    public void excuteOperation(PlatformEntity platformEntity, KingdeeApiUtils apiUtils, List<String> list, String id, String operate) {
+    public void excuteOperation( KingdeeApiUtils apiUtils, List<String> list, String id, String operate) {
         JSONObject viewMap = new JSONObject(new LinkedHashMap<>());
         JSONObject newObj = new JSONObject();
         JSONArray pkEntryIds = new JSONArray();
@@ -284,19 +314,9 @@ public class KingdeePurchasePriceConsumerServiceImpl implements KingdeePurchaseP
         newObj.set("EntryIds", String.join(",", list));
         pkEntryIds.put(newObj);
         viewMap.set("PkEntryIds", pkEntryIds);
-
-        try {
-            //启用禁用
-            apiUtils.excuteOperation(operate, JSONUtil.toJsonStr(viewMap));
-        } catch (Exception e) {
-            log.info("启用、禁用价目数据失败 jsonStr = {},error = {}", JSONUtil.toJsonStr(viewMap), e.getMessage());
-            //新增失败时添加日志及定时任务
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, id, JSONUtil.toJsonStr(viewMap), e.getMessage(), ApiModuleTypeEnum.PURCHASE_PRICE.getCode(), ApiSendStatusEnum.FAILURE.getCode());
-            return;
-        }
+        //启用禁用
+        apiUtils.excuteOperation(operate, JSONUtil.toJsonStr(viewMap));
         log.info("启用、禁用价目数据成功 jsonStr = {}", JSONUtil.toJsonStr(viewMap));
-        //新增失败时添加日志及定时任务
-        kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, id, JSONUtil.toJsonStr(viewMap), "启禁用成功，operate = " + operate, ApiModuleTypeEnum.PURCHASE_PRICE.getCode(), ApiSendStatusEnum.SUCCESS.getCode());
     }
 
     /**

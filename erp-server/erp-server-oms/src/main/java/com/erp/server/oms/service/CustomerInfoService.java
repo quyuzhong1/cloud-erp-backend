@@ -254,14 +254,12 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * 修改金蝶同步信息
      *
      * @param id
-     * @param syncKingdeeStatus
      * @param syncKingdeeId
-     * @param syncOperate
      * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/5/25 10:43
      **/
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
 
     /**

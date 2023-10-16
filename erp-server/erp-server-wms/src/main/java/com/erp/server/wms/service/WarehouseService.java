@@ -181,10 +181,8 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @author Will
      * @date: 2023/4/26 19:26
      * @param id
-     * @param syncKingdeeStatus
-     * @param syncOperate
      */
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
+    Boolean updateSyncKingdeeId(String id,String syncKingdeeId);
 
     /**
      * 根据id获取仓库详情带缓存

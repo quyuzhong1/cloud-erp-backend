@@ -35,7 +35,10 @@ import com.erp.model.wms.dto.OtherInstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.OtherInstockDetailEntity;
+import com.erp.model.wms.entity.OtherInstockEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -300,6 +303,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         //根据ids查询
         List<OtherInstockEntity> list = getList(ids);
@@ -315,12 +319,15 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的其他入库单", commonService.getUserInfo().getUserName(), list.stream().map(OtherInstockEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.OTHER_INSTOCK.getCode(), pairList, "删除操作");
+        //发送金蝶
+        list.forEach(obj -> syncKingdeeOtherInstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         //删除主表数据
         return this.removeByIds(ids);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String reason) {
         //根据ids查询
         List<OtherInstockEntity> list = getList(ids);
@@ -352,6 +359,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
         //根据ids查询
@@ -391,6 +399,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids) {
         //根据ids查询
         List<OtherInstockEntity> list = getList(ids);
@@ -464,13 +473,10 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId,String operate) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return  this.lambdaUpdate()
                 .eq(OtherInstockEntity::getId,id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),OtherInstockEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),OtherInstockEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId),OtherInstockEntity::getSyncKingdeeId,syncKingdeeId)
-                .set(StringUtils.isNotBlank(operate),OtherInstockEntity::getSyncOperate,operate)
                 .update();
     }
 
@@ -634,7 +640,6 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 .set(OtherInstockEntity::getApproveUserName, userInfo.getUserName())
                 .set(OtherInstockEntity::getApproveStatus, approveStatus)
                 .set(OtherInstockEntity::getApproveTime, LocalDateTime.now())
-                .set(ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus),OtherInstockEntity::getSyncKingdeeStatus, SyncStatusEnum.TO_BE_SYNC.getCode())
                 .update();
     }
 

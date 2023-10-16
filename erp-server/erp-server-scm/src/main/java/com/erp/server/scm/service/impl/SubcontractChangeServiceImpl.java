@@ -368,13 +368,10 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
-                .in(SubcontractChangeEntity::getId, ids)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SubcontractChangeEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SubcontractChangeEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .eq(SubcontractChangeEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeId), SubcontractChangeEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), SubcontractChangeEntity::getSyncOperate, syncOperate)
                 .update();
     }
 

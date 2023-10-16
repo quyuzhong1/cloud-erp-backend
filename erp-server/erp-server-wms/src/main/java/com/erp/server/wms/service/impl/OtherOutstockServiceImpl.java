@@ -330,6 +330,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         //根据ids查询
         List<OtherOutstockEntity> list = getList(ids);
@@ -347,12 +348,15 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的其他出库单", commonService.getUserInfo().getUserName(), list.stream().map(OtherOutstockEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), pairList, "删除操作");
+        //发送金蝶
+        list.forEach(obj -> syncKingdeeOtherOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         //删除主表数据
         return this.removeByIds(ids);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String reason) {
         //根据ids查询
         List<OtherOutstockEntity> list = getList(ids);
@@ -384,6 +388,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
         //根据ids查询
@@ -424,6 +429,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids) {
         //根据ids查询
         List<OtherOutstockEntity> list = getList(ids);
@@ -497,13 +503,10 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId,String operate) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return  this.lambdaUpdate()
                 .eq(OtherOutstockEntity::getId,id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),OtherOutstockEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),OtherOutstockEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId),OtherOutstockEntity::getSyncKingdeeId,syncKingdeeId)
-                .set(StringUtils.isNotBlank(operate),OtherOutstockEntity::getSyncOperate,operate)
                 .update();
     }
 
@@ -656,7 +659,6 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 .set(OtherOutstockEntity::getApproveUserName, userInfo.getUserName())
                 .set(OtherOutstockEntity::getApproveStatus, approveStatus)
                 .set(OtherOutstockEntity::getApproveTime, LocalDateTime.now())
-                .set(ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus), OtherOutstockEntity::getSyncKingdeeStatus, SyncStatusEnum.TO_BE_SYNC.getCode())
                 .update();
     }
 

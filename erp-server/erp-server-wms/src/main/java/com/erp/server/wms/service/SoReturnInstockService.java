@@ -190,12 +190,10 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @Author Luo_WG
      * @date: 2023/5/23 17:41
      * @param id
-     * @param syncKingdeeStatus
      * @param syncKingdeeId
-     * @param operate
      * @return Boolean
      **/
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String operate);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
     /**
      * 根据主键删除

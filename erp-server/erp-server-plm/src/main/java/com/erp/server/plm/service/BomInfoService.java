@@ -93,7 +93,7 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
      * @date: 2023/3/9 10:04
      * @return Boolean
      */
-    Boolean updateSyncKingdeeStatus(String id ,String syncKingdeeStatus,String syncKingdeeId);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
     /**
      * @description: 分页查询显示组合SKU列表
      * @author Will

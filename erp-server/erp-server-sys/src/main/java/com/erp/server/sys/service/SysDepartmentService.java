@@ -85,12 +85,11 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
      * @description: 更新金蝶id、状态
      * @author Will
      * @date: 2023/5/4 9:57
-     * @param ids
-     * @param syncKingdeeStatus
+     * @param id
      * @param syncKingdeeId
      * @return Boolean
      */
-    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
     /**
      * @description: 根据编码查询部门
      * @author Will

@@ -415,7 +415,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param id
      * @param syncKingdeeStatus
      */
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId);
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 
 
 

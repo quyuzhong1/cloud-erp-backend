@@ -27,7 +27,9 @@ import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.StocktakingProfitLossDetailEntity;
+import com.erp.model.wms.entity.StocktakingProfitLossEntity;
+import com.erp.model.wms.entity.StocktakingTaskUserEntity;
 import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -392,22 +394,17 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      * 更改金蝶同步状态
      *
      * @param id
-     * @param syncKingdeeStatus
      * @param syncKingdeeId
-     * @param syncOperate
      * @return void
      * @author yl
      * @date 2023-08-14 17:47
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
                 .eq(StocktakingProfitLossEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), StocktakingProfitLossEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), StocktakingProfitLossEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId), StocktakingProfitLossEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), StocktakingProfitLossEntity::getSyncOperate, syncOperate)
                 .update();
     }
 
@@ -446,6 +443,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, StocktakingProfitLossEntity entity) {
         if (Objects.isNull(entity)) {
             return Boolean.FALSE;

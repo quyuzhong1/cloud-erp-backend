@@ -144,13 +144,11 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @description: 更新金蝶状态等信息
      * @author Will
      * @date: 2023/5/23 17:41
-     * @param ids
-     * @param syncKingdeeStatus
+     * @param id
      * @param syncKingdeeId
-     * @param operate
      * @return Boolean
      */
-    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId,String operate);
+    Boolean updateSyncKingdeeId(String id,String syncKingdeeId);
     /**
      * @description: 根据编码查询有效直接直接调拨单
      * @author Will

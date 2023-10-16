@@ -66,7 +66,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -469,6 +468,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean deleteByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return true;
@@ -501,6 +501,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             List<Pair<String, String>> pairList = supplierList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
 
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "删除");
+            //删除同步金蝶
+            supplierList.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         }
 
 
@@ -630,6 +632,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @date 2023-03-21 8:56
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean updateStatus(UpdateStateDTO dto) {
         String supplierId = dto.getId();
         SupplierEntity supplier = this.getById(supplierId);
@@ -679,6 +683,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @date 2023-03-23 10:26
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids) {
         List<SupplierEntity> list = this.listByIds(ids);
         //审核中
@@ -1029,13 +1035,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
-                .in(SupplierEntity::getId, ids)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SupplierEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SupplierEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .eq(SupplierEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeId), SupplierEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), SupplierEntity::getSyncOperate, syncOperate)
                 .update();
     }
 
@@ -1199,10 +1202,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (CollectionUtils.isNotEmpty(list)) {
             list.stream().forEach(obj -> {
                 obj.setApproveStatus(statusEnum);
-                //审核通过更新金蝶推送状态为待同步
-                if (ApproveStatusEnum.APPROVE.equals(statusEnum)) {
-                    obj.setSyncKingdeeStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
-                }
             });
             return this.updateBatchById(list);
         }

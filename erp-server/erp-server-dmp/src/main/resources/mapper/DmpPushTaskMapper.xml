@@ -41,5 +41,82 @@
         target_platform_name, mq_topic, mq_tag, mq_data, status, return_msg, last_sync_time, source_platform_name, source_type, source_id, source_code, retry_times, sync_operate
     </sql>
 
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpPushTaskDTO$ListDTO">
+        select
+            <include refid="Base_Column_List"></include>
+        from dmp_push_task
+        where is_deleted = false
+        <if test="params.sourceType != null and params.sourceType != '' ">
+            and source_type = #{params.sourceType}
+        </if>
+        <if test="params.sourceCode != null and params.sourceCode != '' ">
+            and source_code = #{params.sourceCode}
+        </if>
+        <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
+            and target_platform_name = #{params.targetPlatformName}
+        </if>
+        <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
+            and source_platform_name = #{params.sourcePlatformName}
+        </if>
+        <if test="params.status != null and params.status != '' ">
+            and status = #{params.status}
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by id desc
+    </select>
+
+    <!-- 根据状态分组查询数量 -->
+    <select id="listStatusCount" resultType="com.erp.model.dmp.dto.DmpPushTaskDTO$TabListDTO">
+        select
+            dpt.status as tabFlag,
+            count(dpt.id) as count
+        from dmp_push_task dpt
+        where dpt.is_deleted = false
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+        group by dpt.status
+    </select>
+
+    <!-- 导出查询 -->
+    <select id="listExportExcel" resultType="com.erp.model.dmp.dto.DmpPushTaskDTO$ListDTO">
+        select
+        <include refid="Base_Column_List"></include>
+        from dmp_push_task
+        where is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            and id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.ids == null or params.ids.size == 0">
+            <if test="params.sourceType != null and params.sourceType != '' ">
+                and source_type = #{params.sourceType}
+            </if>
+            <if test="params.sourceCode != null and params.sourceCode != '' ">
+                and source_code = #{params.sourceCode}
+            </if>
+            <if test="params.targetPlatformName != null and params.targetPlatformName != '' ">
+                and target_platform_name = #{params.targetPlatformName}
+            </if>
+            <if test="params.sourcePlatformName != null and params.sourcePlatformName != '' ">
+                and source_platform_name = #{params.sourcePlatformName}
+            </if>
+            <if test="params.status != null and params.status != '' ">
+                and status = #{params.status}
+            </if>
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by id desc
+    </select>
+
 
 </mapper>
