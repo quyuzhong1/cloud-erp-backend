@@ -47,8 +47,8 @@ public class RuleLogisticsEntity extends BaseEntity<RuleLogisticsEntity> {
     /**
     * 类型多个逗号分割
     */
-    @TableField("type")
-    private String type;
+    @TableField("mode_type")
+    private String modeType;
     /**
     * 物流供应商
     */

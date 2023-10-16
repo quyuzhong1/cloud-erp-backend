@@ -80,7 +80,7 @@ public class RuleDeliveryWarehouseController extends BaseController {
      * @date: 2023-08-28
      */
     @GetMapping("/view")
-    public ApiResult<RuleDeliveryWarehouseDTO.ViewDTO> update(@RequestParam("id") String id) {
+    public ApiResult<RuleDeliveryWarehouseDTO.ViewDTO> view(@RequestParam("id") String id) {
         RuleDeliveryWarehouseDTO.ViewDTO viewDTO = ruleDeliveryWarehouseService.view(id);
         return success(viewDTO);
     }
