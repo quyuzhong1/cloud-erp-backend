@@ -86,12 +86,5 @@ public interface SoDetailMapper extends BaseMapper<SoDetailEntity> {
      */
     List<SoDetailDTO.TypeCountDTO> listDeliveryCount(@Param("permissionSql") String permissionSql);
 
-    /**
-     * 获取到修复线上历史数据的临时参数
-     * @author yl
-     * @date 2023-10-16 9:50
-     * @param 
-     * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.TempUpdateDTO>
-     */
-    List<SoDetailDTO.TempUpdateDTO> listTemporaryUpdate();
+
 }

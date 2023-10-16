@@ -277,13 +277,5 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return void
      */
     void updateDetailKingdeeId(String soId);
-    
-    /**
-     * 获取到临时修复 销售订单的 dto
-     * @author yl
-     * @date 2023-10-16 9:47
-     * @param
-     * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.TempUpdateDTO>
-     */
-    List<SoDetailDTO.TempUpdateDTO> listTemporaryUpdate();
+
 }

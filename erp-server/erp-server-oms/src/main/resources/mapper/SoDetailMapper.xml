@@ -194,24 +194,4 @@
         </if>
         GROUP BY tt."type"
     </select>
-    <select id="listTemporaryUpdate" resultType="com.erp.model.oms.dto.SoDetailDTO$TempUpdateDTO">
-        SELECT
-            sod.id,
-            sod.main_id AS  soId,
-            sod.sku_id,
-            sod.qty,
-            sod.price,
-            sod.tax_rate,
-            sod.tax_rate,
-            sod.is_gift,
-            sod.is_reissue,
-            sod.is_close,
-            sod.exchange_rate,
-            so.bill_date,
-            so.discount_amount
-        FROM   so_detail sod
-        INNER JOIN so
-        ON so.id=sod.main_id
-        WHERE sod.is_deleted=FALSE
-    </select>
 </mapper>
