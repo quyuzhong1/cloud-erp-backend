@@ -3471,8 +3471,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<String> deptIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
         paramDTO.setDepartment(deptIds);
         List<TargetFinishDTO.ViewDTO> viewDTOS = biTargetStaffSettingService.listDeptTargetFinish(paramDTO);
-        dto.setStartTime(dto.getEndTime());
-        dto.setEndTime(dto.getEndTime().plusMonths(1));
+        LocalDateTime localDateTime = dto.getStartTime().minusMonths(1);
+        dto.setEndTime(dto.getStartTime());
+        dto.setStartTime(localDateTime);
         List<CompletionRateRankingDTO.PagingDTO> lastMonthList = baseMapper.deptCompletionRateRanking(dto, settleRate);
         for (CompletionRateRankingDTO.PagingDTO pagingDTO : list) {
             SysDepartmentDTO dept = deptList.stream().filter(u -> u.getId().equals(pagingDTO.getName())).findFirst().orElse(null);
