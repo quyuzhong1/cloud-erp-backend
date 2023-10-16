@@ -43,7 +43,7 @@
         disabled,
         remark,
         logistics_supplier,
-        type,
+        mode_type,
         mode,
         auto_get_track_no,
         create_user_name,
