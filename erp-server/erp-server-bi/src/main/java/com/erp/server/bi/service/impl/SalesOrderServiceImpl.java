@@ -3527,12 +3527,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         dto.setStartTime(localDateTime);
         List<CompletionRateRankingDTO.PagingDTO> lastMonthList = baseMapper.userCompletionRateRanking(dto, settleRate);
         for (CompletionRateRankingDTO.PagingDTO pagingDTO : list) {
-            FindUserDTO findUserDTO = userList.stream().filter(u -> u.getUserId().equals(pagingDTO.getName())).findFirst().orElse(null);
-            if (findUserDTO != null) {
-                pagingDTO.setName(findUserDTO.getUserName());
-            } else {
-                pagingDTO.setName("无");
-            }
+
             //计算本月完成率
             List<TargetFinishDTO.ViewDTO> targetFinishList = viewDTOS.stream().filter(req -> req.getTypeId().equals(pagingDTO.getName())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(targetFinishList)) {
@@ -3545,6 +3540,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             CompletionRateRankingDTO.PagingDTO lastPagingDTO = lastMonthList.stream().filter(req -> req.getName().equals(pagingDTO.getName())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(lastPagingDTO)) {
                 pagingDTO.setLastMonthRanking(lastPagingDTO.getRanking());
+            }
+            FindUserDTO findUserDTO = userList.stream().filter(u -> u.getUserId().equals(pagingDTO.getName())).findFirst().orElse(null);
+            if (findUserDTO != null) {
+                pagingDTO.setName(findUserDTO.getUserName());
+            } else {
+                pagingDTO.setName("无");
             }
         }
         return list;
