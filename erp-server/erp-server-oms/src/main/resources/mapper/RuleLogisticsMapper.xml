@@ -16,8 +16,7 @@
        <result column="priority" property="priority" />
        <result column="disabled" property="disabled" />
        <result column="remark" property="remark" />
-       <result column="type" property="type" />
-       <result column="logistics_supplier" property="logisticsSupplier" />
+
        <result column="mode" property="mode" />
        <result column="auto_get_track_no" property="autoGetTrackNo" />
     </resultMap>
@@ -42,7 +41,7 @@
         priority,
         disabled,
         remark,
-        logistics_supplier,
+        supplier,
         mode_type,
         mode,
         auto_get_track_no,
