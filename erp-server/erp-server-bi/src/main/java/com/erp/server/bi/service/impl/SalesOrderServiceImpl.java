@@ -3471,8 +3471,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<String> deptIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
         paramDTO.setDepartment(deptIds);
         List<TargetFinishDTO.ViewDTO> viewDTOS = biTargetStaffSettingService.listDeptTargetFinish(paramDTO);
-        dto.setStartTime(dto.getEndTime());
-        dto.setEndTime(dto.getEndTime().plusMonths(1));
+        LocalDateTime localDateTime = dto.getStartTime().minusMonths(1);
+        dto.setEndTime(dto.getStartTime());
+        dto.setStartTime(localDateTime);
         List<CompletionRateRankingDTO.PagingDTO> lastMonthList = baseMapper.deptCompletionRateRanking(dto, settleRate);
         for (CompletionRateRankingDTO.PagingDTO pagingDTO : list) {
             SysDepartmentDTO dept = deptList.stream().filter(u -> u.getId().equals(pagingDTO.getName())).findFirst().orElse(null);
@@ -3521,16 +3522,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<String> userIds = list.stream().map(req -> req.getName()).distinct().collect(Collectors.toList());
         paramDTO.setUserId(userIds);
         List<TargetFinishDTO.ViewDTO> viewDTOS = biTargetStaffSettingService.listUserTargetFinish(paramDTO);
-        dto.setStartTime(dto.getEndTime());
-        dto.setEndTime(dto.getEndTime().plusMonths(1));
+        LocalDateTime localDateTime = dto.getStartTime().minusMonths(1);
+        dto.setEndTime(dto.getStartTime());
+        dto.setStartTime(localDateTime);
         List<CompletionRateRankingDTO.PagingDTO> lastMonthList = baseMapper.userCompletionRateRanking(dto, settleRate);
         for (CompletionRateRankingDTO.PagingDTO pagingDTO : list) {
-            FindUserDTO findUserDTO = userList.stream().filter(u -> u.getUserId().equals(pagingDTO.getName())).findFirst().orElse(null);
-            if (findUserDTO != null) {
-                pagingDTO.setName(findUserDTO.getUserName());
-            } else {
-                pagingDTO.setName("无");
-            }
+
             //计算本月完成率
             List<TargetFinishDTO.ViewDTO> targetFinishList = viewDTOS.stream().filter(req -> req.getTypeId().equals(pagingDTO.getName())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(targetFinishList)) {
@@ -3543,6 +3540,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             CompletionRateRankingDTO.PagingDTO lastPagingDTO = lastMonthList.stream().filter(req -> req.getName().equals(pagingDTO.getName())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(lastPagingDTO)) {
                 pagingDTO.setLastMonthRanking(lastPagingDTO.getRanking());
+            }
+            FindUserDTO findUserDTO = userList.stream().filter(u -> u.getUserId().equals(pagingDTO.getName())).findFirst().orElse(null);
+            if (findUserDTO != null) {
+                pagingDTO.setName(findUserDTO.getUserName());
+            } else {
+                pagingDTO.setName("无");
             }
         }
         return list;
