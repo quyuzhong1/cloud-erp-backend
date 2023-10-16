@@ -331,23 +331,23 @@ public class ProductSkuFeignController {
     }
 
     /**
-     * 批量修改产品采购信息
+     * 批量修改产品采购信息首批下单日期
      * @param list
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      **/
-    @PostMapping("/updateProductPurchaseBatch")
-    public Boolean updateProductPurchaseBatch(@RequestBody List<ProductPurchaseEntity> list) {
-        return productPurchaseService.updateProductDetailBatch(list);
+    @PostMapping("/updateProductPlaceOrderTimeBatch")
+    public Boolean updateProductPlaceOrderTimeBatch(@RequestBody List<ProductPurchaseEntity> list) {
+        return productPurchaseService.updateProductPlaceOrderTimeBatch(list);
     }
 
     /**
-     * 批量修改产品销售信息
+     * 批量修改产品销售信息上市日期
      * @param list
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      **/
-    @PostMapping("/updateProductSaleBatch")
-    public Boolean updateProductSaleBatch(@RequestBody List<ProductSaleEntity> list) {
-        return productSaleService.updateProductSaleBatch(list);
+    @PostMapping("/updateProductSaleListingTimeBatch")
+    public Boolean updateProductSaleListingTimeBatch(@RequestBody List<ProductSaleEntity> list) {
+        return productSaleService.updateProductSaleListingTimeBatch(list);
     }
 
 

@@ -376,20 +376,20 @@ public interface PlmTaskFeign {
     Boolean updateProductDetailBatch(@RequestBody List<ProductDetailEntity> list);
 
     /**
-     * 批量修改产品采购信息
+     * 批量修改产品采购信息首批下单日期
      * @param list
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      **/
-    @PostMapping("feign/product/updateProductPurchaseBatch")
-    Boolean updateProductPurchaseBatch(@RequestBody List<ProductPurchaseEntity> list);
+    @PostMapping("feign/product/updateProductPlaceOrderTimeBatch")
+    Boolean updateProductPlaceOrderTimeBatch(@RequestBody List<ProductPurchaseEntity> list);
 
     /**
-     * 批量修改产品销售信息
+     * 批量修改产品销售信息上市日期
      * @param list
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      **/
-    @PostMapping("feign/product/updateProductSaleBatch")
-    Boolean updateProductSaleBatch(@RequestBody List<ProductSaleEntity> list);
+    @PostMapping("feign/product/updateProductSaleListingTimeBatch")
+    Boolean updateProductSaleListingTimeBatch(@RequestBody List<ProductSaleEntity> list);
 
     /**
      * 根据skuId查询产品采购信息
