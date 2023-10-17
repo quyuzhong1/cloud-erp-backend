@@ -61,8 +61,8 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         //获取所有消息通知
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
         List<MessageEntity> list = baseMapper.list(paramDTO);
-
         //获取已读的消息通知
         List<MessageUserReadEntity> messageUserReadEntities = messageUserReadService.listByUserId(uid);
         for (MessageTypeEnum typeEnum : MessageTypeEnum.values()) {
@@ -120,6 +120,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         //获取所有消息通知
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
         List<MessageEntity> list = baseMapper.list(paramDTO);
         readMessage(messageUserReadEntities, list);
         return Boolean.TRUE;
