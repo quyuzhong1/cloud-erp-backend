@@ -14,18 +14,23 @@ import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FilterUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.wms.dto.PdaWarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.WarehouseLocationMapper;
 import com.erp.server.wms.service.WarehouseLocationService;
+import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,6 +47,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private WarehouseService warehouseService;
 
     @Override
     public List<WarehouseLocationDTO.LocationListDTO> select(String warehouseId) {
@@ -229,5 +236,49 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 .stream()
                 .collect(Collectors.toMap(WarehouseLocationEntity::getCode, item -> areaMap.get(item.getParentId()), (e1, e2) -> e2));
         return locationAreaMap;
+    }
+
+    @Override
+    public List<PdaWarehouseLocationDTO.WarehouseAreaDTO> listWarehouseArea() {
+        List<WarehouseEntity> list = warehouseService.list();
+        List<WarehouseLocationEntity> warehouseAreaList = lambdaQuery().eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.AREA.getCode()).list();
+        List<PdaWarehouseLocationDTO.WarehouseAreaDTO> warehouseAreaDTOList = new ArrayList<>();
+        for (WarehouseEntity warehouseEntity : list) {
+            PdaWarehouseLocationDTO.WarehouseAreaDTO warehouseAreaDTO = new PdaWarehouseLocationDTO.WarehouseAreaDTO();
+            warehouseAreaDTO.setWarehouseId(warehouseEntity.getId());
+            warehouseAreaDTO.setWarehouseName(warehouseEntity.getName());
+            List<WarehouseLocationEntity> locationEntities = warehouseAreaList.stream().filter(req -> req.getWarehouseId().equals(warehouseEntity.getId())).collect(Collectors.toList());
+            List<PdaWarehouseLocationDTO.AreaDTO> areaList = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(locationEntities)) {
+                for (WarehouseLocationEntity locationEntity : locationEntities) {
+                    PdaWarehouseLocationDTO.AreaDTO areaDTO = new PdaWarehouseLocationDTO.AreaDTO();
+                    areaDTO.setAreaId(locationEntity.getId());
+                    areaDTO.setAreaName(locationEntity.getName());
+                    areaList.add(areaDTO);
+                }
+            }
+            warehouseAreaDTO.setAreaList(areaList);
+            warehouseAreaDTOList.add(warehouseAreaDTO);
+        }
+        return warehouseAreaDTOList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean addWarehouseLocation(PdaWarehouseLocationDTO.WarehouseLocationAddDTO dto) {
+        List<String> areaIdList = dto.getAreaIdList();
+        List<WarehouseLocationEntity> locationEntities = this.listByIds(areaIdList);
+        for (WarehouseLocationEntity locationEntity : locationEntities) {
+            // 新增仓位
+            WarehouseLocationEntity warehouseLocationEntity = new WarehouseLocationEntity();
+            warehouseLocationEntity.setWarehouseId(locationEntity.getWarehouseId());
+            warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
+            warehouseLocationEntity.setCode(dto.getWarehouseLocation());
+            warehouseLocationEntity.setName(dto.getWarehouseLocation());
+            warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
+            warehouseLocationEntity.setParentId(locationEntity.getId());
+            this.save(warehouseLocationEntity);
+        }
+        return Boolean.TRUE;
     }
 }
