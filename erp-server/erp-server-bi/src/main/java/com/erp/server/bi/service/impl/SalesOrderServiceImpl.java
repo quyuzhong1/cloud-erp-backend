@@ -3474,7 +3474,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime localDateTime = dto.getStartTime().minusMonths(1);
         dto.setEndTime(dto.getStartTime());
         dto.setStartTime(localDateTime);
-        List<CompletionRateRankingDTO.PagingDTO> lastMonthList = baseMapper.deptCompletionRateRanking(dto, settleRate);
+        List<CompletionRateRankingDTO.PagingDTO> lastMonthList = null;
+        if (CompletionRateRankingEnum.FINANCE_SALES_AMOUNT.getCode().equals(dto.getCompletionRateRankingType())) {
+            lastMonthList = biDataSourceCostService.deptCompletionRateRanking(dto, settleRate);
+        } else {
+            lastMonthList = baseMapper.deptCompletionRateRanking(dto, settleRate);
+        }
+
         for (CompletionRateRankingDTO.PagingDTO pagingDTO : list) {
             SysDepartmentDTO dept = deptList.stream().filter(u -> u.getId().equals(pagingDTO.getName())).findFirst().orElse(null);
             //计算本月完成率
@@ -3525,7 +3531,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime localDateTime = dto.getStartTime().minusMonths(1);
         dto.setEndTime(dto.getStartTime());
         dto.setStartTime(localDateTime);
-        List<CompletionRateRankingDTO.PagingDTO> lastMonthList = baseMapper.userCompletionRateRanking(dto, settleRate);
+        List<CompletionRateRankingDTO.PagingDTO> lastMonthList = null;
+        if (CompletionRateRankingEnum.FINANCE_SALES_AMOUNT.getCode().equals(dto.getCompletionRateRankingType())) {
+            lastMonthList = biDataSourceCostService.userCompletionRateRanking(dto, settleRate);
+        } else {
+            lastMonthList = baseMapper.userCompletionRateRanking(dto, settleRate);
+        }
+
         for (CompletionRateRankingDTO.PagingDTO pagingDTO : list) {
 
             //计算本月完成率
