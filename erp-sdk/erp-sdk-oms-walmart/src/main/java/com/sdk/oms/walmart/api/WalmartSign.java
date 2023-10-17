@@ -9,11 +9,9 @@ import java.security.Signature;
 import java.security.spec.PKCS8EncodedKeySpec;
 
 /**
- * 创建时间：2018年7月16日 下午8:03:09 项目名称：mabang-order-walmart
- * 
- * @author 牛凯凯
- * @version 1.0 描述：
- */
+ * @Author Luo_WG
+ * @Date 2023/10/17 14:12
+ **/
 public class WalmartSign {
 	private String consumerId = ""; // 8e8dd2f3-bfc5-4e14-bf68-69b136e421a1
 	private String baseUrl = "";
