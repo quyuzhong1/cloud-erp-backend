@@ -416,9 +416,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         log.info("采购订单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
 
         //调用审核流程
-//        approveProcess(list, baseApproveParamDTO);
-
-        approveEnd(baseApproveParamDTO, list);
+        approveProcess(list, baseApproveParamDTO);
 
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -449,16 +447,16 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             // 更新库存信息（生成入库预报）
-//            updateInventoryTransCore(list);
+            updateInventoryTransCore(list);
 
             // 填入首批下单时间
             setFirstPlaceOrder(ids);
 
             //审核通过发送金蝶
-//            list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             //同步到WMS
             List<PurchaseOrderEntity> toWmsList = this.getList(ids);
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
         }
         return Boolean.TRUE;
     }
