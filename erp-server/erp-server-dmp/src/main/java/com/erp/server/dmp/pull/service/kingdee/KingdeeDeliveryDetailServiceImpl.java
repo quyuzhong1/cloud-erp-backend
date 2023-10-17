@@ -124,7 +124,11 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
                 }
             }
         });
-
+        //判断是否需要推送MQ
+        KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
+        if (kingdeeApiUtils.needPushMQ(dto.getJobTaskDTO().getLastTime())){
+            return;
+        }
         // 构造订单结构
         List<DmpDeliveryDetailInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)

@@ -10,6 +10,12 @@ import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
 
 /**
  * <p>
@@ -47,4 +53,10 @@ public interface DmpPushTaskMapper extends BaseMapper<DmpPushTaskEntity> {
      * @return List<ListDTO>
      */
     List<DmpPushTaskDTO.ListDTO> listExportExcel(@Param("params") DmpPushTaskDTO.ParamDTO dto);
+     /* 根据条件查询数据
+     *
+     * @param params
+     * @return
+     */
+    DmpPushTaskEntity getEntityByCondition(@Param("params") DmpPushTaskEntity params);
 }

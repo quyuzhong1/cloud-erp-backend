@@ -358,7 +358,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
                 dmpOrderItemEntity.setSpecifics(detailsBean.getPlatformSkuName());
             }
             //商品状态 1：未付款 2：未发货 3：已发货 4：已作废
-            dmpOrderItemEntity.setStatus(orderState);
+            dmpOrderItemEntity.setStatus(String.valueOf(orderState));
             //商品仓位
             dmpOrderItemEntity.setStockGrid("");
             //sku

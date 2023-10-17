@@ -46,7 +46,6 @@ public class KingdeeOrderEntity  extends CleanBaseDTO {
      */
     @Alias("FCustId.FName")
     private String fCustId;
-
     /**
      * 客户编码
      */

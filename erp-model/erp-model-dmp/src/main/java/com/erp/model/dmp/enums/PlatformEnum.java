@@ -12,7 +12,10 @@ public enum PlatformEnum {
     GYY(2, "gyy", "管易云"),
     KINGDEE(3, "kingdee", "金蝶云星空"),
     KINGDEE_ECC(4, "kingdeeEcc", "金蝶云星空ECC"),
-    ERP(5, "erp", "自研ERP");
+    ERP(5, "erp", "自研ERP"),
+    ERP_OMS(6, "erp-oms", "自研ERP订单系统"),
+    ERP_DMP(7, "erp-dmp", "自研ERP数据中台系统"),
+    ERP_WMS(8, "erp-wms", "自研ERP仓储系统");
 
     private Integer code;
 
