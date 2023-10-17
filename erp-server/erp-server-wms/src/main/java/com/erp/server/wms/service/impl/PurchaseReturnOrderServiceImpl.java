@@ -249,6 +249,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             purchaseReturnOrderEntity.setPurchaseOrderId(purchaseOrderEntity.getId());
             purchaseReturnOrderEntity.setPurchaseOrderCode(purchaseOrderEntity.getCode());
 
+        } else {
+            purchaseReturnOrderEntity.setReturnMode(ReturnModeEnum.REPLENISHMENT.getCode());
         }
 
         //获取采购单供应商信息
@@ -320,7 +322,10 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
             purchaseReturnOrderEntity.setPurchaseOrderId(purchaseOrderEntity.getId());
             purchaseReturnOrderEntity.setPurchaseOrderCode(purchaseOrderEntity.getCode());
+        } else {
+            purchaseReturnOrderEntity.setReturnMode(ReturnModeEnum.REPLENISHMENT.getCode());
         }
+
 
         //获取采购单供应商信息
 //        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
@@ -1592,6 +1597,10 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 addDetailDTO.setRemark(detailEntity.getRemark());
                 addDetailDTO.setCurrency(detailEntity.getCurrency());
                 addDetailDTO.setCurrencySymbol(detailEntity.getCurrencySymbol());
+                //退货补货下推采购订单默认为赠品
+                if (ReturnModeEnum.REPLENISHMENT.getCode().equals(entity.getReturnMode())) {
+                    addDetailDTO.setIsGift(Boolean.TRUE);
+                }
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setDetails(addDetailList);
