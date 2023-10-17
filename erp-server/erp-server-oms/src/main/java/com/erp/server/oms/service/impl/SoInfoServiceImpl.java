@@ -2355,10 +2355,25 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoUtils.handleDetailAmount(calCostProfitDTO.getDiscountAmount(), soDetailList);
         for (int i = 0; i < soDetailList.size(); i++) {
             SoDetailEntity item = soDetailList.get(i);
+
+            //税率
+            BigDecimal taxRate = item.getTaxRate();
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+            //含税单价=销售单价*（税率+1）
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
+            //含税单价
+            BigDecimal taxPrice = MathUtil.multiply(item.getPrice(), multiplyTax);
+            item.setTaxPrice(taxPrice);
+
             // 计算毛利成本
             soDetailService.calCost(purchasePriceList, skuList, calCostProfitDTO.getBillDate(), item, Boolean.FALSE);
+            BigDecimal exchangeRate = item.getExchangeRate();
+            if (Objects.isNull(exchangeRate)) {
+                exchangeRate = MathUtil.BigDecimal_1;
+            }
             SoDetailDTO.CalDetailResultDTO result = new SoDetailDTO.CalDetailResultDTO();
             BeanMapper.copy(item, result);
+            result.setTaxPriceLc(MathUtil.multiply(taxPrice,exchangeRate));
             resultList.add(result);
         }
         return resultList;
@@ -2495,21 +2510,20 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             viewPi.setSkuNo(item.getSkuNo());
             Integer qty = item.getQty();
             viewPi.setQty(qty);
-            BigDecimal taxAmountBefore = MathUtil.multiply(taxPrice,qty);
+            BigDecimal taxAmountBefore = MathUtil.multiply(taxPrice, qty);
             viewPi.setAmount(taxAmountBefore);
             viewPi.setTaxPriceStr(symbol + taxPrice);
             viewPi.setAmountStr(symbol + taxAmountBefore);
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().orElse(null);
-            if(Objects.nonNull(skuVO)){
+            if (Objects.nonNull(skuVO)) {
                 viewPi.setModel(skuVO.getDeclareModel());
                 viewPi.setMaterials(skuVO.getMaterials());
                 viewPi.setProductName(skuVO.getSkuName());
-            }else{
+            } else {
                 viewPi.setModel("");
                 viewPi.setProductName("");
                 viewPi.setMaterials("");
             }
-
 
 
             i++;
