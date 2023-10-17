@@ -26,6 +26,7 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -611,5 +612,30 @@ public class SoInfoController extends BaseController {
         } else {
             return failure();
         }
+    }
+
+    /**
+     * 下载销售订单导入模板
+     *
+     * @return
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        soInfoService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入销售订单
+     *
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-10-17 10:28
+     */
+    @PostMapping("/importExcel")
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = soInfoService.importExcel(excelFile, response);
+        return result?success():failure();
     }
 }
