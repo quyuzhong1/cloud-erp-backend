@@ -61,6 +61,9 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.remoteSearchSku != null  and params.remoteSearchSku != ''">
+                AND pod.sku_no ILIKE concat('%',#{params.remoteSearchSku},'%')
+            </if>
         </where>
 
     </select>
