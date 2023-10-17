@@ -428,7 +428,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approveEnd(BaseApproveParamDTO dto, List<PurchaseOrderEntity> list) {
-        if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(list)) {
+        if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
         List<String> ids = list.stream().map(PurchaseOrderEntity::getId).collect(Collectors.toList());
