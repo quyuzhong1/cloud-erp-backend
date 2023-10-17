@@ -181,10 +181,7 @@
         sui.email,
         sui.head_icon,
         sui.code,
-        sui.sync_kingdee_status,
-        sui.sync_kingdee_time,
-        sui.sync_kingdee_id,
-        sui.sync_operate
+        sui.sync_kingdee_id
         from sys_user_info sui
         LEFT JOIN sys_department_user sdu on sui.uid = sdu.user_id
         where 1 = 1

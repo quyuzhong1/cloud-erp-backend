@@ -446,6 +446,14 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         return list;
     }
 
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(PurchaseChangeEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), PurchaseChangeEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
+    }
+
 
     /**
      * 处理数据id
