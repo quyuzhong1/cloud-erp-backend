@@ -15,6 +15,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -47,6 +48,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.scm.kingdee.SyncKingdeePurchaseChangeService;
 import com.erp.server.scm.mapper.PurchaseChangeMapper;
 import com.erp.server.scm.service.*;
 import com.google.common.collect.Lists;
@@ -113,6 +115,8 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     @Autowired
     private MQProducerService mQProducerService;
 
+    @Autowired
+    private SyncKingdeePurchaseChangeService syncKingdeePurchaseChangeService;
 
     @Override
     public PagingVO<PurchaseChangeDTO.ListDTO> paging(PagingDTO<PurchaseChangeDTO.SearchParamDTO> pagingDTO) {
@@ -288,6 +292,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
             // 更新库存信息
             updateInventoryTransCore(purchaseChangeDetailList, originPurchaseOrderDetailEntityList);
+
+            //推送金蝶
+            list.forEach(obj -> syncKingdeePurchaseChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         }
         //审核不通过
         if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
@@ -437,6 +444,14 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             list.add(resultDTO);
         }
         return list;
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(PurchaseChangeEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeId), PurchaseChangeEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
     }
 
 

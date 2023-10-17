@@ -163,6 +163,12 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
     @TableField("delivery_warehouse_name")
     private String deliveryWarehouseName;
 
+    /**
+     * 金蝶数据id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 
