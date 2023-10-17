@@ -212,10 +212,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cLogisticsService.add(addDTO.getLogisticsDTO(), soB2cEntity.getId());
         //新增买家信息
         soB2cReceiverService.add(addDTO.getReceiverDTO(), soB2cEntity.getId());
-        //新增财务信息
-        addSoB2cFinance(soB2cEntity);
         //新增明细
         soB2cDetailService.add(addDTO.getDetailList(), soB2cEntity.getId());
+        //新增财务信息
+        addSoB2cFinance(soB2cEntity);
         //新增订单分类
         if (CollectionUtils.isNotEmpty(addDTO.getCategoryIdList())) {
             List<SoB2cRefCategoryDTO.AddDTO> addList = addDTO.getCategoryIdList().stream().map(obj -> new SoB2cRefCategoryDTO.AddDTO(soB2cEntity.getId(), obj)).collect(Collectors.toList());
