@@ -249,8 +249,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             purchaseReturnOrderEntity.setPurchaseOrderId(purchaseOrderEntity.getId());
             purchaseReturnOrderEntity.setPurchaseOrderCode(purchaseOrderEntity.getCode());
 
-        } else {
-            purchaseReturnOrderEntity.setReturnMode(ReturnModeEnum.REPLENISHMENT.getCode());
         }
 
         //获取采购单供应商信息
@@ -322,8 +320,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
             purchaseReturnOrderEntity.setPurchaseOrderId(purchaseOrderEntity.getId());
             purchaseReturnOrderEntity.setPurchaseOrderCode(purchaseOrderEntity.getCode());
-        } else {
-            purchaseReturnOrderEntity.setReturnMode(ReturnModeEnum.REPLENISHMENT.getCode());
         }
 
 
