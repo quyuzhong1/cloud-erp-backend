@@ -1,10 +1,15 @@
 package com.erp.model.dmp.entity;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.dto.DmpSyncTaskDTO;
+import com.common.business.dto.UniqueDto;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
@@ -20,6 +25,7 @@ import java.time.LocalDateTime;
  * @since 2023-06-29
 */
 @Data
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("dmp_pull_task")
@@ -92,6 +98,12 @@ public class DmpPullTaskEntity extends BaseEntity<DmpPullTaskEntity> {
     @TableField("source_code")
     private String sourceCode;
 
+    /**
+     * 重试次数
+     */
+    @TableField("retry_times")
+    private Integer retryTimes;
+
 
     public static final String TARGET_PLATFORM_NAME = "target_platform_name";
 
@@ -114,6 +126,31 @@ public class DmpPullTaskEntity extends BaseEntity<DmpPullTaskEntity> {
     public static final String SOURCE_ID = "source_id";
 
     public static final String SOURCE_CODE = "source_code";
+
+    public <R extends UniqueDto> DmpPullTaskEntity(String platform, String business, String targetPlatform, String topic, String tag, R item) {
+        this.targetPlatformName = targetPlatform;
+        this.mqTopic = topic;
+        this.mqTag = tag;
+        this.mqData = JSONUtil.toJsonStr(item);
+        this.sourcePlatformName = platform;
+        this.sourceType = business;
+        this.sourceId = item.getUniqueId();
+        this.sourceCode = item.getUniqueId();
+        this.status = SyncStatusEnum.IN_SYNC.getCode();
+        this.retryTimes = 0;
+    }
+
+    public DmpPullTaskEntity(DmpSyncTaskDTO.AddDTO dto) {
+        this.targetPlatformName = dto.getTargetPlatformName();
+        this.mqTopic = dto.getMqTopic();
+        this.mqTag = dto.getMqTag();
+        this.mqData = dto.getMqData();
+        this.status = SyncStatusEnum.IN_SYNC.getCode();
+        this.sourcePlatformName = dto.getSourcePlatformName();
+        this.sourceType = dto.getSourceType();
+        this.sourceId = dto.getSourceId();
+        this.sourceCode = dto.getSourceCode();
+    }
 
     @Override
     public Serializable pkVal() {

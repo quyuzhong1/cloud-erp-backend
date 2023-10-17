@@ -133,7 +133,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 
         //同步成功
         DmpPushTaskDTO.TabListDTO success = new DmpPushTaskDTO.TabListDTO();
-        success.setTabFlag(SyncStatusEnum.SUCCESS_SYNC.getName());
+        success.setTabFlag(SyncStatusEnum.SUCCESS_SYNC.getCode());
         int successCount = countList.stream().filter(a -> a.getTabFlag().equals(success.getTabFlag())).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         success.setCount(successCount);
@@ -141,7 +141,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 
         //同步失败
         DmpPushTaskDTO.TabListDTO failed = new DmpPushTaskDTO.TabListDTO();
-        failed.setTabFlag(SyncStatusEnum.FAILED_SYNC.getName());
+        failed.setTabFlag(SyncStatusEnum.FAILED_SYNC.getCode());
         int failedCount = countList.stream().filter(a -> a.getTabFlag().equals(failed.getTabFlag())).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         failed.setCount(failedCount);
@@ -149,7 +149,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
 
         //同步中
         DmpPushTaskDTO.TabListDTO syncIng = new DmpPushTaskDTO.TabListDTO();
-        syncIng.setTabFlag(SyncStatusEnum.IN_SYNC.getName());
+        syncIng.setTabFlag(SyncStatusEnum.IN_SYNC.getCode());
         int syncIngCount = countList.stream().filter(a -> a.getTabFlag().equals(syncIng.getTabFlag())).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         syncIng.setCount(syncIngCount);
