@@ -362,7 +362,8 @@
             pad.dest_warehouse_id as warehouseId,
             pad.dest_warehouse_name as warehouseName,
             pad.apply_qty as qty,
-            pad.plan_delivery_date as planDeliveryDate
+            pad.plan_delivery_date as planDeliveryDate,
+            pad.remark
         from purchase_application pa
         left join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
         <where>
