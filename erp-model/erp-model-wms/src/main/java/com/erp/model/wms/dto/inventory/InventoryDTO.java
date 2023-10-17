@@ -1,8 +1,6 @@
 package com.erp.model.wms.dto.inventory;
 
-import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.business.dto.base.SortDTO;
-import com.common.core.utils.MathUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -574,6 +572,10 @@ public class InventoryDTO implements Serializable {
          */
         private String sourceCode;
 
+        /**
+         * 单据编号id
+         */
+        private String sourceId;
 
         /**
          * 操作类型编码
@@ -657,6 +659,11 @@ public class InventoryDTO implements Serializable {
          * 批次日期
          */
         private LocalDate instockBatchDate;
+
+        /**
+         * 金蝶同步状态
+         */
+        private String syncKingdeeStatusName;
 
     }
 

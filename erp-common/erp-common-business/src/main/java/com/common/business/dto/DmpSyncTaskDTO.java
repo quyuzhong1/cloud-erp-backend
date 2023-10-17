@@ -25,7 +25,6 @@ public class DmpSyncTaskDTO {
         /**
          * 来源单据类型
          */
-        @NotBlank(message = "来源单据类型不能为空")
         private String sourceType;
 
         /**
@@ -82,6 +81,11 @@ public class DmpSyncTaskDTO {
         @NotEmpty(message = "来源单据id不能为空")
         private List<String> sourceIdList;
 
+        public ListDTO(List<String> sourceIdList,String targetPlatformName,String sourcePlatformName) {
+            this.setTargetPlatformName(targetPlatformName);
+            this.setSourcePlatformName(sourcePlatformName);
+            this.sourceIdList = sourceIdList;
+        }
 
         public ListDTO(String sourceType,List<String> sourceIdList,String targetPlatformName,String sourcePlatformName) {
             this.setSourceType(sourceType);
