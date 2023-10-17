@@ -97,7 +97,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     public DmpPushTaskEntity getByParam(DmpSyncTaskDTO.OneDTO oneDTO) {
         DmpPushTaskEntity found = lambdaQuery()
                 .eq(DmpPushTaskEntity::getSourceId, oneDTO.getSourceId())
-                .eq(DmpPushTaskEntity::getSourceType, oneDTO.getSourceType())
+                .eq(StringUtils.isNotBlank(oneDTO.getSourceType()),DmpPushTaskEntity::getSourceType, oneDTO.getSourceType())
                 .eq(DmpPushTaskEntity::getSourcePlatformName, oneDTO.getSourcePlatformName())
                 .eq(DmpPushTaskEntity::getTargetPlatformName, oneDTO.getTargetPlatformName())
                 .eq(StringUtils.isNotBlank(oneDTO.getMqTopic()),DmpPushTaskEntity::getMqTopic, oneDTO.getMqTopic())
@@ -111,7 +111,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     public List<DmpPushTaskEntity> listByParam(DmpSyncTaskDTO.ListDTO listDTO) {
         List<DmpPushTaskEntity> list = lambdaQuery()
                 .in(DmpPushTaskEntity::getSourceId, listDTO.getSourceIdList())
-                .eq(DmpPushTaskEntity::getSourceType, listDTO.getSourceType())
+                .eq(StringUtils.isNotBlank(listDTO.getSourceType()), DmpPushTaskEntity::getSourceType, listDTO.getSourceType())
                 .eq(DmpPushTaskEntity::getSourcePlatformName, listDTO.getSourcePlatformName())
                 .eq(DmpPushTaskEntity::getTargetPlatformName, listDTO.getTargetPlatformName())
                 .eq(StringUtils.isNotBlank(listDTO.getMqTopic()), DmpPushTaskEntity::getMqTopic, listDTO.getMqTopic())
