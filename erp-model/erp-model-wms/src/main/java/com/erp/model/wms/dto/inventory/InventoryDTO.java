@@ -232,6 +232,16 @@ public class InventoryDTO implements Serializable {
          */
         private Integer waitqcQty;
 
+        /**
+         * 金蝶库存
+         */
+        private Integer kingdeeQty;
+
+        /**
+         * 库存差异
+         */
+        private Integer diffQty;
+
     }
 
     /**

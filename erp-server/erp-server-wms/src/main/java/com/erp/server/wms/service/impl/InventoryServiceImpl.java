@@ -8,14 +8,15 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.FieldConstant;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.erp.model.dmp.dto.DmpSyncKingdeeDTO;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CfgUserRangeDTO;
@@ -32,6 +33,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryAgeTitleEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpSyncFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.InventoryMapper;
@@ -82,8 +84,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Autowired
     private PlmTaskFeign plmTaskFeign;
 
-//    @Autowired
-//    private CommonService commonService;
+    @Autowired
+    private DmpSyncFeign dmpSyncFeign;
 
     @Autowired
     private WarehouseLocationService warehouseLocationService;
@@ -604,6 +606,20 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         // 此处优化，取最新的产品名称和产品图片，防止数据没同步过来，销售状态和SPU则不取最新的，防止查询和显示不一样
         List<String> skuIds = list.stream().map(InventoryDTO.PagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        //物料编码
+        List<String> skuNoList = skuList.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
+        //仓库
+        List<String> warehouseIdList = list.stream().map(InventoryDTO.PagingViewDTO::getWarehouseId).collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
+        List<String> warehouseCodeList = warehouseList.stream().map(WarehouseEntity::getKingdeeWarehouseCode).collect(Collectors.toList());
+        //组织
+        List<String> orgIdList = list.stream().map(InventoryDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+        List<String> orgCodeList = orgList.stream().map(BaseIdDTO.CodeDTO::getCode).collect(Collectors.toList());
+        //金蝶库存学习
+        List<Map<String, Object>> mapList = listKingdeeInventory(skuNoList, warehouseCodeList, orgCodeList);
+
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
@@ -627,8 +643,54 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
             // 销售状态名称
             data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));
+            //未查到金蝶库存
+            if (CollectionUtils.isEmpty(mapList)) {
+                log.info("未查到金蝶库存，skuNoList = {}，warehouseCodeList = {}，orgCodeList = {}",skuNoList,warehouseCodeList,orgCodeList);
+                return;
+            }
+            //仓库编码
+            String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(data.getWarehouseId())).findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse("");
+            //组织编码
+            String orgCode = orgList.stream().filter(obj -> obj.getId().equals(data.getOrgId())).findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
+            Object fQty = mapList.stream().filter(obj -> data.getSkuNo().equals(obj.get("FMaterialId.FNumber")) && warehouseCode.equals(obj.get("FStockId.FNumber")) && orgCode.equals(obj.get("FStockOrgId.FNumber")))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.get("FQty"))).orElse(null);
+            if (ObjectUtil.isNotEmpty(fQty)) {
+                //金蝶库存
+                data.setKingdeeQty(Integer.valueOf(MathUtil.valueOf(fQty).intValue()));
+                //库存差异
+                data.setDiffQty(data.getKingdeeQty() - data.getUsableQty() - data.getRealQty() - data.getFrozenQty() - data.getIntransitQty() - data.getWaitqcQty());
+            }
         });
     }
+
+    /**
+     * @description: 获取金蝶库存数据
+     * @author Will
+     * @date: 2023/10/17 18:24
+     * @param skuNoList
+     * @param warehouseCodeList
+     * @param orgCodeList
+     * @return List<Map<Object>>
+     */
+    private List<Map<String, Object>> listKingdeeInventory (List<String> skuNoList,List<String> warehouseCodeList,List<String> orgCodeList) {
+        DmpSyncKingdeeDTO.ParamDTO paramDTO = new DmpSyncKingdeeDTO.ParamDTO();
+        paramDTO.setFormId("STK_Inventory");
+        paramDTO.setFieldKeys("FMaterialId.FNumber,FStockId.FNumber,FStockOrgId.FNumber,FQty");
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(StrUtil.format(" FMaterialId.FNumber in ({})", skuNoList.stream().map(obj -> "'"+obj+"'").collect(Collectors.joining(","))));
+        queryFilters.add(StrUtil.format(" FStockId.FNumber in ({})", warehouseCodeList.stream().map(obj -> "'"+obj+"'").collect(Collectors.joining(","))));
+        queryFilters.add(StrUtil.format(" FStockOrgId.FNumber in ({})", orgCodeList.stream().map(obj -> "'"+obj+"'").collect(Collectors.joining(","))));
+        String filterStr = String.join(" and ", queryFilters);
+        paramDTO.setFilterString(filterStr);
+        paramDTO.setTopRowCount(5000);
+        paramDTO.setStartRow(MathUtil.ONE);
+        paramDTO.setLimit(5000);
+        List<Map<String, Object>> listData =  dmpSyncFeign.listKingdeeData(paramDTO);
+        return listData;
+    }
+
 
     private List<LinkedHashMap> fillInventoryAgePageData(List<LinkedHashMap> dataList, List<InventoryReportDTO.InventoryAgeRangeDTO> userRangeList) {
         List<LinkedHashMap> resultList = Lists.newArrayList();
