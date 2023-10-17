@@ -110,4 +110,15 @@ public class SoDeliveryNoticeFeignController {
     public SoDeliveryNoticeEntity getDeliveryNoticeBySourceId(@RequestParam(value = "id") String id) {
         return soDeliveryNoticeService.getById(id);
     }
+    /**
+     * 通过明细id获取通知记录详情
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("/getNoticeDetailById")
+    public SoDeliveryNoticeDetailEntity getNoticeDetailById(@RequestParam(value = "id") String id) {
+        return soDeliveryNoticeDetailService.getById(id);
+    }
+
 }

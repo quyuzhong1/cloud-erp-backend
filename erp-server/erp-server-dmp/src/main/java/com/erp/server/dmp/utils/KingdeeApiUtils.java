@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -612,8 +613,9 @@ public class KingdeeApiUtils {
 
     public boolean needPushMQ(LocalDateTime lastTime) {
         if (Objects.nonNull(SWITCH_TIME)) {
-            LocalDateTime dateTime = LocalDateTime.parse(SWITCH_TIME);
-            if (lastTime.isAfter(dateTime)) {
+            DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            LocalDateTime dateTime = LocalDateTime.parse(SWITCH_TIME, df);
+            if (Objects.nonNull(lastTime) && lastTime.isAfter(dateTime)) {
                 //使用下次调用时间进行判断是否在切换时间之后，在之后就停止调用
                 return true;
             }

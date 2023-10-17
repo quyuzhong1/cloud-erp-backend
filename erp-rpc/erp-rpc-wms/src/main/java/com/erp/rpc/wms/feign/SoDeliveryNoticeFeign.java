@@ -46,5 +46,13 @@ public interface SoDeliveryNoticeFeign {
      * @return
      */
     @PostMapping("feign/soDeliveryNotice/getDeliveryNoticeById")
-    public SoDeliveryNoticeEntity getDeliveryNoticeBySourceId(@RequestParam(value = "id") String id);
+    SoDeliveryNoticeEntity getDeliveryNoticeBySourceId(@RequestParam(value = "id") String id);
+    /**
+     * 通过源id获取通知记录
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("feign/soDeliveryNotice/getNoticeDetailById")
+    SoDeliveryNoticeDetailEntity getNoticeDetailById(@RequestParam(value = "id") String id);
 }

@@ -65,15 +65,15 @@ public class MQConsumerBroadcastService {
      * 退货入库单 soReturnInstock 同步dmp
      */
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
-            selectorExpression = "kingdee_so_return_tag",
-            consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_RETURN, messageModel = MessageModel.BROADCASTING)
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_ORDER_TO_DMP_TOPIC,
+            selectorExpression = "approved_order_to_dmp_tag",
+            consumerGroup = RocketMqConsumerGroup.SYNC_OMS_TO_DMP_ORDER, messageModel = MessageModel.BROADCASTING)
     public class ConsumerApprovedReturnOrderToDmp implements RocketMQListener<Map<String, Object>> {
         @Override
         public void onMessage(Map<String, Object> resultMap) {
             log.info("监听到退货入库单通过同步任务回调：entity={}", JSONUtil.toJsonStr(resultMap));
             //处理订单同步
-            dmpPullTaskService.syncOmsReturnInstockToDmp(resultMap);
+            dmpPullTaskService.syncOmsReturnToDmp(resultMap);
         }
     }
 }

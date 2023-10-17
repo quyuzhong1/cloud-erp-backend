@@ -7,12 +7,4 @@ public interface SyncKingdeeSoReturnService {
      * 推送金蝶
      */
     void syncDataToKingdee(SoReturnInstockEntity entity, String operate);
-
-    /**
-     * 推送订单到mq
-     *
-     * @param entity
-     * @param syncOperate
-     */
-    public String syncOrderToDmp(SoReturnInstockEntity entity, String syncOperate);
 }
