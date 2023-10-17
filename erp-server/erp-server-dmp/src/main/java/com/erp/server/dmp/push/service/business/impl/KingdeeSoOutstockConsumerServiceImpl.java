@@ -12,10 +12,10 @@ import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.server.dmp.push.service.business.KingdeeSoOutstockConsumerService;
-import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
+import com.erp.server.dmp.push.service.business.KingdeeSoOutstockConsumerService;
+import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -174,14 +174,4 @@ public class KingdeeSoOutstockConsumerServiceImpl implements KingdeeSoOutstockCo
         kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.SO_OUTSTOCK.getCode(),operate);
         return;
     }
-
-    /**
-     * 删除
-     */
-    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
-        //删除
-        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.SO_OUTSTOCK.getCode(),operate);
-        return;
-    }
-
 }
