@@ -1,0 +1,90 @@
+package com.erp.server.dmp.controller.api;
+
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.dto.DmpPullTaskDTO;
+import com.erp.server.dmp.service.DmpPullTaskService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+
+
+/**
+ * 中台同步任务表
+ *
+ * @author zhangchunlin
+ * @since 2023-06-29
+ */
+@RestController
+@RequestMapping("/dmpPullTask")
+public class DmpPullTaskController extends BaseController {
+
+    @Autowired
+    private DmpPullTaskService dmpPullTaskService;
+
+
+    /**
+     * 获取 tab列表
+     * @author Will
+     * @date: 2023/10/13 11:49
+     * @param dto
+     * @return ApiResult<List<TabListDTO>>
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<DmpPullTaskDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<DmpPullTaskDTO.TabListDTO> tabList = dmpPullTaskService.tabList(dto);
+        return success(tabList);
+    }
+
+    /**
+     * 分页查询
+     * @author Will
+     * @date: 2023/10/13 11:49
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<DmpPullTaskDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpPullTaskDTO.ParamDTO> dto) {
+        PagingVO<DmpPullTaskDTO.ListDTO> pagingVO = dmpPullTaskService.paging(dto);
+        return success(pagingVO);
+    }
+
+
+    /**
+     * 导出
+     * @author Will
+     * @date: 2023/10/13 15:34
+     * @param dto
+     * @param response
+     * @return ApiResult
+     */
+    @PostMapping(value = "/exportExcel")
+    public ApiResult exportExcel(@RequestBody DmpPullTaskDTO.ParamDTO dto, HttpServletResponse response) {
+        Boolean flag = dmpPullTaskService.exportExcel(dto, response);
+        return flag == true ? success() : failure();
+    }
+
+
+    /**
+     * 重新同步（批量同步）
+     * @author Will
+     * @date: 2023/10/13 15:34
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping(value = "/batchSync")
+    public ApiResult batchSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = dmpPullTaskService.batchSync(dto.getIds());
+        return flag == true ? success() : failure();
+    }
+}

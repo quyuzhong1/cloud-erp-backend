@@ -1,10 +1,15 @@
 package com.erp.server.dmp.service;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -58,4 +63,37 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      * @param dto
      */
     void sendMqAndSaveTask(DmpSyncTaskDTO.AddDTO dto);
+    /**
+     * @description: 列表tab
+     * @author Will
+     * @date: 2023/10/17 14:38
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<DmpPullTaskDTO.TabListDTO> tabList(PermissionsDTO dto);
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2023/10/17 14:38
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<DmpPullTaskDTO.ListDTO> paging(PagingDTO<DmpPullTaskDTO.ParamDTO> dto);
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2023/10/17 14:38
+     * @param dto
+     * @param response
+     * @return Boolean
+     */
+    Boolean exportExcel(DmpPullTaskDTO.ParamDTO dto, HttpServletResponse response);
+    /**
+     * @description: 批量同步
+     * @author Will
+     * @date: 2023/10/17 14:38
+     * @param ids
+     * @return Boolean
+     */
+    Boolean batchSync(List<String> ids);
 }

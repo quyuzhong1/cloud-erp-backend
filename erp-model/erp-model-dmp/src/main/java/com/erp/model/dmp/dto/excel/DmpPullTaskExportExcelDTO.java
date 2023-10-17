@@ -6,11 +6,11 @@ import lombok.Data;
 /**
  * @author Will
  * @version 1.0
- * @description: 中台同步推送任务表导出DTO
+ * @description: 中台同步拉取任务表导出DTO
  * @date 2023/10/13 15:40
  */
 @Data
-public class DmpPushTaskExportExcelDTO {
+public class DmpPullTaskExportExcelDTO {
 
     /**
      * 目标平台名称
@@ -62,9 +62,4 @@ public class DmpPushTaskExportExcelDTO {
     @ExcelProperty(value = "推送失败原因", index = 7)
     private String returnMsg;
 
-    /**
-     * 同步操作名称
-     */
-    @ExcelProperty(value = "同步操作名称", index = 8)
-    private String syncOperateName;
 }
