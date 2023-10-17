@@ -196,7 +196,13 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
             return;
         }
         //统一处理数据映射问题，并合并到 dmp_order_info
-        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(String.valueOf(id));
+        SoInfoEntity soInfoEntity = null;
+        try {
+            soInfoEntity = soInfoFeign.getSoInfoById(String.valueOf(id));
+        } catch (Exception e) {
+            log.error("请求erp-oms soInfoFeign.getSoInfoById 异常:{}", e.getMessage());
+            throw new ServiceException(ApiError.NO_PERMISSION.code, "获取原始订单异常");
+        }
         if (Objects.isNull(soInfoEntity)) {
             return;
         }
@@ -470,14 +476,15 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     private DmpDeliveryDetailInfoEntity outStockDataConvert(SoOutstockEntity soOutstockEntity) {
         DmpDeliveryDetailInfoEntity entity = DmpOrderConverter.INSTANCE.soOutstockToDmpDelivery(soOutstockEntity);
         //原始订单
-        SoInfoEntity soInfoEntity;
+        SoInfoEntity soInfoEntity = null;
         List<SoDetailEntity> soDetailEntities;
-        Map<String, SoDetailEntity> soDetailEntityMap = null;
         DmpOrderInfoEntity dmpOrderInfoEntity;
         BigDecimal exchangeRate;
-        entity.setDeliveryDate(Optional.of(soOutstockEntity.getActualDeliveryDate().atStartOfDay()).orElse(null));
+        entity.setDeliveryDate(Objects.nonNull(soOutstockEntity.getActualDeliveryDate()) ? soOutstockEntity.getActualDeliveryDate().atStartOfDay() : null);
         try {
-            soInfoEntity = soInfoFeign.getSoInfoById(soOutstockEntity.getSoId());
+            if (StringUtils.isNotEmpty(soOutstockEntity.getSoId())) {
+                soInfoEntity = soInfoFeign.getSoInfoById(soOutstockEntity.getSoId());
+            }
             if (Objects.isNull(soInfoEntity)) {
                 throw new ServiceException(ApiError.NO_PERMISSION.code, "获取原始订单异常:[" + soOutstockEntity.getSoId() + "]");
             }
@@ -487,7 +494,6 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
             entity.setRemark(soInfoEntity.getRemark());
             soDetailEntities = soInfoFeign.listSoDetailByMainId(soInfoEntity.getId());
             if (CollectionUtil.isNotEmpty(soDetailEntities)) {
-                soDetailEntityMap = soDetailEntities.stream().collect(Collectors.toMap(SoDetailEntity::getId, Function.identity()));
                 SoDetailEntity detailEntity = soDetailEntities.stream().filter(soDetailEntity -> Objects.nonNull(soDetailEntity.getExchangeRate())).findFirst().orElse(null);
                 if (Objects.nonNull(detailEntity) && Objects.nonNull(detailEntity.getExchangeRate())) {
                     exchangeRate = detailEntity.getExchangeRate();
@@ -502,8 +508,8 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
 //                    //运费收入（本位币）
 //                    entity.setShippingFee(soInfoEntity.getShippingFee().multiply(exchangeRate));
 //                } else {
-                    //运费收入（本位币）
-                    entity.setShippingFee(BigDecimal.ZERO);
+                //运费收入（本位币）
+                entity.setShippingFee(BigDecimal.ZERO);
 //                }
 
                 BigDecimal itemTotalCost = BigDecimal.ZERO;
@@ -590,13 +596,13 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
         if (CollectionUtil.isNotEmpty(details)) {
             //订单明细
             List<DmpDeliveryDetailItemEntity> orderItemEntities = new ArrayList<>(details.size());
-            Map<String, SoDetailEntity> finalSoDetailEntityMap = soDetailEntityMap;
+            SoInfoEntity finalSoInfoEntity = soInfoEntity;
             details.forEach(soDetailEntity -> {
                 DmpDeliveryDetailItemEntity dmpOrderItemEntity = DmpOrderConverter.INSTANCE.soOutstockToDmpDeliveryItem(soDetailEntity);
                 dmpOrderItemEntity.setDeliveryDetailId(entity.getId());
-                if (Objects.nonNull(soInfoEntity)){
-                    dmpOrderItemEntity.setSaleOrderNo(soInfoEntity.getId());
-                    dmpOrderItemEntity.setPlatformOrderId(soInfoEntity.getCode());
+                if (Objects.nonNull(finalSoInfoEntity)) {
+                    dmpOrderItemEntity.setSaleOrderNo(finalSoInfoEntity.getId());
+                    dmpOrderItemEntity.setPlatformOrderId(finalSoInfoEntity.getCode());
                 }
                 if (StringUtils.isNotEmpty(soDetailEntity.getSkuId())) {
                     ProductDetailEntity productDetail = productDetailService.getById(soDetailEntity.getSkuId());
@@ -651,11 +657,13 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     private DmpReturnOrderInfoEntity returnOrderDataConvert(SoReturnEntity soReturnEntity) {
         DmpReturnOrderInfoEntity entity = DmpOrderConverter.INSTANCE.soReturnOrderToDmpReturn(soReturnEntity);
         //原始订单
-        SoInfoEntity soInfoEntity;
+        SoInfoEntity soInfoEntity = null;
         Map<String, SoDetailEntity> soDetailEntityMap = null;
-        entity.setRefundTime(soReturnEntity.getBillDate().atStartOfDay());
+        entity.setRefundTime(Objects.nonNull(soReturnEntity.getBillDate()) ? soReturnEntity.getBillDate().atStartOfDay() : null);
         try {
-            soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
+            if (StringUtils.isNotEmpty(soReturnEntity.getSourceId())) {
+                soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
+            }
             if (Objects.nonNull(soInfoEntity)) {
                 entity.setPaidTime(Objects.nonNull(soInfoEntity.getReceiveDate()) ? soInfoEntity.getReceiveDate().atStartOfDay() : null);
                 entity.setOrderTime(soInfoEntity.getCreateTime());
@@ -667,9 +675,9 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                     soDetailEntityMap = soDetailEntities.stream().collect(Collectors.toMap(SoDetailEntity::getId, Function.identity()));
                     SoDetailEntity detailEntity = soDetailEntities.stream().filter(soDetailEntity -> Objects.nonNull(soDetailEntity.getExchangeRate())).findFirst().orElse(null);
                     BigDecimal exchangeRate;
-                    if (Objects.nonNull(detailEntity) && Objects.nonNull(detailEntity.getExchangeRate())){
+                    if (Objects.nonNull(detailEntity) && Objects.nonNull(detailEntity.getExchangeRate())) {
                         exchangeRate = detailEntity.getExchangeRate();
-                    }else {
+                    } else {
                         exchangeRate = BigDecimal.ONE;
                     }
                     entity.setCurrencyRate(exchangeRate);
@@ -749,9 +757,9 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                             dmpReturnOrderItemEntity.setAmountAfter(soDetail.getTaxAmount().divide(BigDecimal.valueOf(soDetail.getQty())).multiply(BigDecimal.valueOf(soReturnDetail.getReturnQty())));
                         }
                         dmpReturnOrderItemEntity.setCleanCostPrice(soDetail.getSaleCost());
-                        if (Objects.nonNull(soDetail.getIsGift()) && soDetail.getIsGift()){
+                        if (Objects.nonNull(soDetail.getIsGift()) && soDetail.getIsGift()) {
                             dmpReturnOrderItemEntity.setIsGift(1);
-                        }else {
+                        } else {
                             dmpReturnOrderItemEntity.setIsGift(2);
                         }
                     }
