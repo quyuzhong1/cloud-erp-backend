@@ -580,7 +580,7 @@ public class SoInfoController extends BaseController {
 
 
     /**
-     * 下载导入模板
+     * 下载销售订单导入模板
      *
      * @return
      */
