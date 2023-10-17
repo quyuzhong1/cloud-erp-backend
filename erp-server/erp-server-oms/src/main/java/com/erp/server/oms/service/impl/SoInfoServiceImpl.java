@@ -6,6 +6,7 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
+import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -34,6 +35,7 @@ import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -63,10 +65,12 @@ import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
+import com.erp.server.oms.listener.B2BSoExcelListener;
 import com.erp.server.oms.mapper.SoInfoMapper;
 import com.erp.server.oms.service.*;
 import com.erp.server.oms.utils.SoUtils;
@@ -2359,8 +2363,22 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoUtils.handleDetailAmount(count > 0, calCostProfitDTO.getDiscountAmount(), soDetailList);
         for (int i = 0; i < soDetailList.size(); i++) {
             SoDetailEntity item = soDetailList.get(i);
+
+            //税率
+            BigDecimal taxRate = item.getTaxRate();
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+            //含税单价=销售单价*（税率+1）
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
+            //含税单价
+            BigDecimal taxPrice = MathUtil.multiply(item.getPrice(), multiplyTax);
+            item.setTaxPrice(taxPrice);
+
             // 计算毛利成本
             soDetailService.calCost(purchasePriceList, skuList, calCostProfitDTO.getBillDate(), item, Boolean.FALSE);
+            BigDecimal exchangeRate = item.getExchangeRate();
+            if (Objects.isNull(exchangeRate)) {
+                exchangeRate = MathUtil.BigDecimal_1;
+            }
             SoDetailDTO.CalDetailResultDTO result = new SoDetailDTO.CalDetailResultDTO();
             BeanMapper.copy(item, result);
             result.setTaxPriceLc(MathUtil.multiply(taxPrice, exchangeRate));
@@ -2599,13 +2617,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
         List<String> keyList = new ArrayList<>(5);
         //收款方式
-        keyList.add(DictBasicEnum.RECEIVE_METHOD.getType());
+        keyList.add(DictBasicTypeEnum.RECEIVE_METHOD.getType());
         //收款条件
-        keyList.add(DictBasicEnum.COLLECTION_TERMS.getType());
+        keyList.add(DictBasicTypeEnum.COLLECTION_TERMS.getType());
         //交货方式
-        keyList.add(DictBasicEnum.DELIVERY_MODE.getType());
+        keyList.add(DictBasicTypeEnum.DELIVERY_MODE.getType());
         //贸易条款
-        keyList.add(DictBasicEnum.TRADE_TERM.getType());
+        keyList.add(DictBasicTypeEnum.TRADE_TERM.getType());
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
 
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();

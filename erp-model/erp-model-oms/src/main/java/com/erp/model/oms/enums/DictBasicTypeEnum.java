@@ -23,6 +23,8 @@ public enum DictBasicTypeEnum {
     SHOP_PLATFORM_COST("shopPlatformCost","店铺平台费率选项"),
     SHOP_VAT_COST("shopVATCost","店铺VAT费率选项"),
     SHOP_TRANSFER_COST("shopTransferCost","店铺转账费率选项"),
+    DELIVERY_MODE("deliveryMode",  "交货方式"),
+    TRADE_TERM("tradeTerm",  "贸易条款"),
 
     ;
 

@@ -1024,7 +1024,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
                 .eq(CustomerInfoEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeId), CustomerInfoEntity::getSyncKingdeeId, syncKingdeeId)
