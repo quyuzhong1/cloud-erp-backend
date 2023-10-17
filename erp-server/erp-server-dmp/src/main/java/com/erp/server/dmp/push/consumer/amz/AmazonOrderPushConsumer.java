@@ -33,7 +33,7 @@ public class AmazonOrderPushConsumer extends AbstractPlatformConsumerHandler<Dmp
 
     @Override
     public void updateSyncTaskStatus(String id, SyncStatusEnum statusEnum, String msg) {
-        dmpPushTaskService.updateStatus(id, statusEnum.getCode(), msg);
+        dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(id, statusEnum.getCode(), msg));
     }
 
     @Override
