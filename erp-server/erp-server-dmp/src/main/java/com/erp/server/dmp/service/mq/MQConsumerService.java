@@ -1,5 +1,6 @@
 package com.erp.server.dmp.service.mq;
 
+import com.erp.model.plm.entity.ProductDetailEntity;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -18,6 +19,7 @@ import com.erp.model.dmp.gyy.*;
 import com.erp.model.dmp.kingdee.*;
 import com.erp.model.dmp.mabang.*;
 import com.erp.model.plm.dto.NewProductDTO;
+import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
 import lombok.extern.slf4j.Slf4j;
