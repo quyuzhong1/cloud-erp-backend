@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SourcePlatformEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
@@ -82,7 +81,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             throw new ServiceException(ApiError.ERROR_98024);
         }
 
-        DmpPushTaskEntity purchasePriceTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PURCHASE_PRICE.getCode(), purchasePriceEntity.getId(), PlatformEnum.KINGDEE.getName(), SourcePlatformEnum.ERP_SCM.getCode()));
+        DmpPushTaskEntity purchasePriceTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PURCHASE_PRICE.getCode(), purchasePriceEntity.getId(), PlatformEnum.KINGDEE.getName(), PlatformEnum.ERP.getDesc()));
         if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(purchasePriceTask.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(purchasePriceTask.getStatus())) {
             log.error("采购价目未推送成功，不支持推送采购调价，采购价目单号【{}】",purchasePriceEntity.getCode());
             return;
@@ -191,7 +190,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
         dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
         dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_PURCHASE_PRICE_CHANGE_TAG.getName());
         dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        dmpSyncTaskDTO.setSourcePlatformName(SourcePlatformEnum.ERP_SCM.getCode());
+        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
         dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);

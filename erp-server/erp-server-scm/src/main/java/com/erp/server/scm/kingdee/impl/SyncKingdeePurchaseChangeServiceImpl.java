@@ -10,7 +10,6 @@ import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SourcePlatformEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SubcontractTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
@@ -88,7 +87,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
-        DmpPushTaskEntity purchaseOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderEntity.getId(), PlatformEnum.KINGDEE.getName(), SourcePlatformEnum.ERP_SCM.getCode()));
+        DmpPushTaskEntity purchaseOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderEntity.getId(), PlatformEnum.KINGDEE.getName(), PlatformEnum.ERP.getDesc()));
         if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(purchaseOrderTask.getStatus())  && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(purchaseOrderTask.getStatus())) {
             return;
         }
@@ -255,7 +254,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
         taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PURCHASE_CHANGE_TAG.getName());
         taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        taskFeignDTO.setSourcePlatformName(SourcePlatformEnum.ERP_SCM.getCode());
+        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
         dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);

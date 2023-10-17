@@ -3,7 +3,6 @@ package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.enums.SourcePlatformEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -117,7 +116,7 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
         taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
         taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_ASSISTANT_DATA_TAG.getName());
         taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        taskFeignDTO.setSourcePlatformName(SourcePlatformEnum.ERP_PLM.getCode());
+        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
         dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);

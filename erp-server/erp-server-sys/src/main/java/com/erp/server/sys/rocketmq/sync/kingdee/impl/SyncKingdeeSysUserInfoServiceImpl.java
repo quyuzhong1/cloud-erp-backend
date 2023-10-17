@@ -2,7 +2,6 @@ package com.erp.server.sys.rocketmq.sync.kingdee.impl;
 
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.enums.SourcePlatformEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.message.constant.RocketMqTopic;
@@ -92,7 +91,7 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
         dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
         dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SYS_USER_INFO_TAG.getName());
         dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        dmpSyncTaskDTO.setSourcePlatformName(SourcePlatformEnum.ERP_SYS.getCode());
+        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
         dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);

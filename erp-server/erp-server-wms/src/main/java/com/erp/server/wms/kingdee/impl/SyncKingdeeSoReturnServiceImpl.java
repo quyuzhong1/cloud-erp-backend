@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SourcePlatformEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.utils.MathUtil;
@@ -276,7 +275,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
         dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SO_RETURN_TAG.getName());
         dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        dmpSyncTaskDTO.setSourcePlatformName(SourcePlatformEnum.ERP_WMS.getCode());
+        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
         dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);

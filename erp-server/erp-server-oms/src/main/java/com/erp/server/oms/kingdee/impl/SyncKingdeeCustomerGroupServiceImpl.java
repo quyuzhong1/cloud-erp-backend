@@ -3,7 +3,6 @@ package com.erp.server.oms.kingdee.impl;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.enums.SourcePlatformEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -69,7 +68,7 @@ public class SyncKingdeeCustomerGroupServiceImpl implements SyncKingdeeCustomerG
         taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
         taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_CUSTOMER_GROUP_TAG.getName());
         taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        taskFeignDTO.setSourcePlatformName(SourcePlatformEnum.ERP_OMS.getCode());
+        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
         dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);

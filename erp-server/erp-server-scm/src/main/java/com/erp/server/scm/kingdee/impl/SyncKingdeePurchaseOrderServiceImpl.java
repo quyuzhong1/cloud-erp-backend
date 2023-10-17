@@ -11,7 +11,10 @@ import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SubcontractTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -96,7 +99,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
                 throw new ServiceException(ApiError.ERROR_98073);
             }
-            DmpPushTaskEntity subContractOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(), subcontractOrderEntity.getId(), PlatformEnum.KINGDEE.getName(), SourcePlatformEnum.ERP_SCM.getCode()));
+            DmpPushTaskEntity subContractOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(), subcontractOrderEntity.getId(), PlatformEnum.KINGDEE.getName(), PlatformEnum.ERP.getDesc()));
             if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(subContractOrderTask.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(subContractOrderTask.getStatus())) {
                 log.error("委外订单未推送成功，不支持推送采购订单，委外订单号【{}】",subcontractOrderEntity.getCode());
                 return;
@@ -108,7 +111,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             List<SubcontractChangeEntity> subcontractChangeList = subcontractChangeService.listBySourceIds(Arrays.asList(subcontractOrderEntity.getId()));
             if (CollectionUtils.isNotEmpty(subcontractChangeList)) {
                 List<String> subContractChangeIdList = subcontractChangeList.stream().map(SubcontractChangeEntity::getId).collect(Collectors.toList());
-                List<DmpPushTaskEntity> subContractChangeList = dmpMqFeign.listByParam(new DmpSyncTaskDTO.ListDTO(SourceTypeEnum.SUBCONTRACT_CHANGE.getCode(), subContractChangeIdList, PlatformEnum.KINGDEE.getName(), SourcePlatformEnum.ERP_SCM.getCode()));
+                List<DmpPushTaskEntity> subContractChangeList = dmpMqFeign.listByParam(new DmpSyncTaskDTO.ListDTO(SourceTypeEnum.SUBCONTRACT_CHANGE.getCode(), subContractChangeIdList, PlatformEnum.KINGDEE.getName(), PlatformEnum.ERP.getDesc()));
                 String changeCodes = subContractChangeList.stream().filter(obj -> !SyncStatusEnum.SUCCESS_SYNC.getCode().equals(obj.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(obj.getStatus())).map(DmpPushTaskEntity::getSourceCode).collect(Collectors.joining(","));
                 if (StringUtils.isNotBlank(changeCodes)) {
                     log.error("委外变更单未推送成功，不支持推送采购订单，委外变更单号【{}】",changeCodes);
@@ -266,7 +269,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
         taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PURCHASE_ORDER_TAG.getName());
         taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        taskFeignDTO.setSourcePlatformName(SourcePlatformEnum.ERP_SCM.getCode());
+        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         taskFeignDTO.setSyncOperate(operate);
         dmpMqFeign.sendMqAndSaveTask(taskFeignDTO);
