@@ -9,7 +9,10 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.OptChangeTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -86,7 +89,7 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
         if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_98073);
         }
-        DmpPushTaskEntity subContractOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(), subcontractOrderEntity.getId(), PlatformEnum.KINGDEE.getName(), SourcePlatformEnum.ERP_SCM.getCode()));
+        DmpPushTaskEntity subContractOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(), subcontractOrderEntity.getId(), PlatformEnum.KINGDEE.getName(), PlatformEnum.ERP.getDesc()));
         if (!SyncStatusEnum.SUCCESS_SYNC.getCode().equals(subContractOrderTask.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(subContractOrderTask.getStatus())) {
             log.error("委外订单未推送成功，不支持推送委外变更单，委外订单单号【{}】",subcontractOrderEntity.getCode());
             return;
@@ -244,7 +247,7 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
         dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
         dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SUBCONTRACT_CHANGE_TAG.getName());
         dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        dmpSyncTaskDTO.setSourcePlatformName(SourcePlatformEnum.ERP_SCM.getCode());
+        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskDTO.setSyncOperate(operate);
         dmpMqFeign.sendMqAndSaveTask(dmpSyncTaskDTO);
