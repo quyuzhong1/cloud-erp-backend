@@ -1,18 +1,32 @@
 package com.erp.sdk.oms.amz.spapi.handler;
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.JobTaskDTO;
+import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractOrderHandler;
-import com.common.business.dto.PlatformOrderDTO;
+import com.common.core.exception.ServiceException;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
+import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
+import com.erp.sdk.oms.amz.spapi.model.orders.Order;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 亚马逊订单处理器
@@ -26,23 +40,58 @@ import java.util.List;
 @BusinessType(BusinessTypeEnum.ORDER)
 public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrderDTO, PlatformOrderDTO> {
 
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+
     @Override
     public List<PlatformAmazonOrderDTO> download(JobTaskDTO data) {
-
-        // TODO: 亚马逊订单下载
-        System.out.println("data = " + data);
-        // 返回下载源数据
-        return null;
+        // 获取店铺信息
+        String shopId = data.getShopId();
+        ShopInfoEntity shop = shopInfoFeign.getShopInfoById(shopId);
+        if (null == shop) {
+            throw new ServiceException("未找到店铺信息:shopId=" + shopId);
+        }
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shop.getDictCountryCode());
+        // 亚马逊订单下载
+        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum);
+        String createdAfter = null;
+        String lastUpdatedAfter = null;
+        if (BusinessCommonConstants.hasProfile("prod")) {
+            // 正式环境请求
+            // 东八区转UTC时间
+            lastUpdatedAfter = data.getLastTime()
+                    .atZone(ZoneId.systemDefault())
+                    .toOffsetDateTime()
+                    .withOffsetSameInstant(ZoneOffset.UTC).toString();
+        } else {
+            // 其他环境请求
+            createdAfter = "TEST_CASE_200";
+        }
+        try {
+            // 发起请求
+            List<Order> orderList = api.getAllOrders(Collections.singletonList(marketplaceEnum.getMarketplaceId()),
+                    createdAfter,
+                    null, lastUpdatedAfter,
+                    null, null, null, null, null, null, 10,
+                    null, null, null, null, null, null);
+            // 返回下载源数据
+            return orderList.stream()
+                    .map(e-> new PlatformAmazonOrderDTO(e, shop))
+                    .collect(Collectors.toList());
+        } catch (ApiException e) {
+            throw new RuntimeException("请求亚马逊SP-APi订单失败,body=" + JSONUtil.toJsonStr(e));
+        }
     }
 
 
     @Override
     public List<PlatformOrderDTO> convert(List<PlatformAmazonOrderDTO> sourceDataList) {
-
-        // TODO: 亚马逊订单转换为发送mq数据
-        System.out.println("convert = " + sourceDataList);
+        //亚马逊订单转换为发送mq数据
         // 包含数据过滤数据 数据转换 数据合并拆分等操作
-        return null;
+        return sourceDataList.stream()
+                // 组装
+                .map(PlatformAmazonOrderDTO::convertDTO)
+                .collect(Collectors.toList());
     }
 
     @Override

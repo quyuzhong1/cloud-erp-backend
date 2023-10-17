@@ -11,37 +11,41 @@
  */
 
 
-package com.erp.server.oms.amz;
+package com.erp.server.dmp.amz;
 
 import cn.hutool.json.JSONUtil;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentials;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentialsProvider;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
 import com.erp.sdk.oms.amz.spapi.api.ListingsApi;
-import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.config.AmazonAuthorConfigDTO;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtil;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.listingsitems.Item;
-import com.erp.sdk.oms.amz.spapi.model.listingsitems.ListingsItemPatchRequest;
-import com.erp.sdk.oms.amz.spapi.model.listingsitems.ListingsItemPutRequest;
-import com.erp.sdk.oms.amz.spapi.model.listingsitems.ListingsItemSubmissionResponse;
-import org.junit.Ignore;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import com.erp.server.dmp.ErpServerDmpApplication;
+import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * API tests for ListingsApi
  */
-@Ignore
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@Profile("dev")
 public class ListingsApiTest {
 
-    private final ListingsApi api = amazonAuthorizationGrant(new AmazonAuthorConfigDTO());
+    private final ListingsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US);
 
-    public ListingsApi amazonAuthorizationGrant(AmazonAuthorConfigDTO authorConfigDTO) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = authorConfigDTO.buildAWSAuthenticationCredentials();
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = authorConfigDTO.buildLWAAuthorizationCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = authorConfigDTO.buildAWSAuthenticationCredentialsProvider();
+    public ListingsApi amazonAuthorizationGrant(AmazonMarketplaceEnum marketplaceEnum) {
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtil.buildLWAAuthorizationCredentials();
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentialsProvider();
         ListingsApi listingsApi = new ListingsApi.Builder()
                 .awsAuthenticationCredentials(awsAuthenticationCredentials)
                 .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
@@ -50,7 +54,7 @@ public class ListingsApiTest {
                 //北美，https://sellingpartnerapi-na.amazon.com
                 //欧洲，https://sellingpartnerapi-eu.amazon.com
                 //远东，https://sellingpartnerapi-fe.amazon.com
-                .endpoint(authorConfigDTO.getSpEndPoint())
+                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
                 .build();
         if (null == listingsApi) {
             throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
@@ -88,9 +92,9 @@ public class ListingsApiTest {
      */
     @Test
     public void getListingsItemTest() throws ApiException {
-        String sellerId = null;
-        String sku = null;
-        List<String> marketplaceIds = null;
+        String sellerId = "AZFY4CTNEDLZX";
+        String sku = "1963-US7";
+        List<String> marketplaceIds = Arrays.asList("A1AM78C64UM0Y8");;
         String issueLocale = null;
         List<String> includedData = null;
         Item response = api.getListingsItem(sellerId, sku, marketplaceIds, issueLocale, includedData);
@@ -108,17 +112,17 @@ public class ListingsApiTest {
      * @throws ApiException
      *          if the Api call fails
      */
-    @Test
-    public void patchListingsItemTest() throws ApiException {
-        String sellerId = null;
-        String sku = null;
-        List<String> marketplaceIds = null;
-        ListingsItemPatchRequest body = null;
-        String issueLocale = null;
-        ListingsItemSubmissionResponse response = api.patchListingsItem(sellerId, sku, marketplaceIds, body, issueLocale);
-
-        // TODO: test validations
-    }
+//    @Test
+//    public void patchListingsItemTest() throws ApiException {
+//        String sellerId = null;
+//        String sku = null;
+//        List<String> marketplaceIds = null;
+//        ListingsItemPatchRequest body = null;
+//        String issueLocale = null;
+//        ListingsItemSubmissionResponse response = api.patchListingsItem(sellerId, sku, marketplaceIds, body, issueLocale);
+//
+//        // TODO: test validations
+//    }
     
     /**
      * 
@@ -128,16 +132,16 @@ public class ListingsApiTest {
      * @throws ApiException
      *          if the Api call fails
      */
-    @Test
-    public void putListingsItemTest() throws ApiException {
-        String sellerId = null;
-        String sku = null;
-        List<String> marketplaceIds = null;
-        ListingsItemPutRequest body = null;
-        String issueLocale = null;
-        ListingsItemSubmissionResponse response = api.putListingsItem(sellerId, sku, marketplaceIds, body, issueLocale);
-
-        // TODO: test validations
-    }
+//    @Test
+//    public void putListingsItemTest() throws ApiException {
+//        String sellerId = null;
+//        String sku = null;
+//        List<String> marketplaceIds = null;
+//        ListingsItemPutRequest body = null;
+//        String issueLocale = null;
+//        ListingsItemSubmissionResponse response = api.putListingsItem(sellerId, sku, marketplaceIds, body, issueLocale);
+//
+//        // TODO: test validations
+//    }
     
 }

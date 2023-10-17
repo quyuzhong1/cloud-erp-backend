@@ -11,7 +11,7 @@
  */
 
 
-package com.erp.server.oms.amz;
+package com.erp.server.dmp.amz;
 
 import cn.hutool.json.JSONUtil;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentials;
@@ -19,10 +19,26 @@ import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredential
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.config.AmazonAuthorConfigDTO;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
-import org.junit.Ignore;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtil;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import com.erp.server.dmp.ErpServerDmpApplication;
+import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import com.erp.server.dmp.ErpServerDmpApplication;
+import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import com.erp.server.dmp.ErpServerDmpApplication;
+import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,16 +46,21 @@ import java.util.List;
 /**
  * API tests for OrdersV0Api
  */
-@Ignore
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@TestPropertySource("classpath:bootstrap-dev.yml")
+@Profile("dev")
 public class OrdersV0ApiTest {
 
-    private final OrdersV0Api api = amazonAuthorizationGrant(new AmazonAuthorConfigDTO());
 
-    public OrdersV0Api amazonAuthorizationGrant(AmazonAuthorConfigDTO authorConfigDTO) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = authorConfigDTO.buildAWSAuthenticationCredentials();
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = authorConfigDTO.buildLWAAuthorizationCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = authorConfigDTO.buildAWSAuthenticationCredentialsProvider();
-        OrdersV0Api ordersV0Api = new OrdersV0Api.Builder()
+    @Test
+    public void getOrderListTest() throws ApiException {
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.US;
+//        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum);
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtil.buildLWAAuthorizationCredentials();
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentialsProvider();
+        OrdersV0Api api = new OrdersV0Api.Builder()
                 .awsAuthenticationCredentials(awsAuthenticationCredentials)
                 .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
                 .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
@@ -47,26 +68,32 @@ public class OrdersV0ApiTest {
                 //北美，https://sellingpartnerapi-na.amazon.com
                 //欧洲，https://sellingpartnerapi-eu.amazon.com
                 //远东，https://sellingpartnerapi-fe.amazon.com
-                .endpoint(authorConfigDTO.getSpEndPoint())
+                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
+//                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpoints())
                 .build();
-        if (null == ordersV0Api) {
+        if (null == api) {
             throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
         }
-        return ordersV0Api;
-    }
 
-    @Test
-    public void getOrderListTest() throws ApiException {
         List<String> marketplaceIds = new ArrayList<>();
         marketplaceIds.add("ATVPDKIKX0DER");//根据国家确定
+//        marketplaceIds.add("A1AM78C64UM0Y8");//根据国家确定
 
         List<String> fulfillmentChannels = new ArrayList<>();
-        fulfillmentChannels.add("MFN");
+//        fulfillmentChannels.add("MFN");
         List<String> orderStatuses = new ArrayList<>();
-        orderStatuses.add("Unshipped");
+        String createdAfter = "TEST_CASE_200";
+        String lastUpdatedAfter = null;
+//        String createdAfter = null;
+//        String createdAfter = "2020-10-01T00:00:00";
+//        String createdBefore = "2023-10-16T00:00:00";
+//        String lastUpdatedAfter = "2023-10-15T00:00:00Z";
+//        String lastUpdatedAfter = "2023-10-15T16:30:19";
+//        String lastUpdatedAfter = "2023-10-15T08:46:35.707Z";
+//        orderStatuses.add("Unshipped");
         GetOrdersResponse response = api.getOrders(marketplaceIds,
-                "2023-01-01T00:00:00",
-                "2023-10-01T00:00:00", null,
+                createdAfter,
+                null, lastUpdatedAfter,
                 null, null, null, null, null, null, 10,
                 null, null, null, null, null, null);
         if (null == response) {
@@ -89,9 +116,11 @@ public class OrdersV0ApiTest {
      */
     @Test
     public void getOrderTest() throws ApiException {
-        String orderId = null;
+        String orderId = "TEST_CASE_200";
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
         GetOrderResponse response = api.getOrder(orderId);
-
+        System.out.println("根据ID查询订单");
+        System.out.println(JSONUtil.toJsonStr(response));
         // TODO: test validations
     }
     
@@ -106,6 +135,7 @@ public class OrdersV0ApiTest {
     @Test
     public void getOrderAddressTest() throws ApiException {
         String orderId = null;
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
         GetOrderAddressResponse response = api.getOrderAddress(orderId);
 
         // TODO: test validations
@@ -122,6 +152,7 @@ public class OrdersV0ApiTest {
     @Test
     public void getOrderBuyerInfoTest() throws ApiException {
         String orderId = null;
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
         GetOrderBuyerInfoResponse response = api.getOrderBuyerInfo(orderId);
 
         // TODO: test validations
@@ -139,6 +170,7 @@ public class OrdersV0ApiTest {
     public void getOrderItemsTest() throws ApiException {
         String orderId = null;
         String nextToken = null;
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
         GetOrderItemsResponse response = api.getOrderItems(orderId, nextToken);
 
         // TODO: test validations
@@ -156,6 +188,7 @@ public class OrdersV0ApiTest {
     public void getOrderItemsBuyerInfoTest() throws ApiException {
         String orderId = null;
         String nextToken = null;
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
         GetOrderItemsBuyerInfoResponse response = api.getOrderItemsBuyerInfo(orderId, nextToken);
 
         // TODO: test validations
@@ -172,6 +205,7 @@ public class OrdersV0ApiTest {
     @Test
     public void getOrderRegulatedInfoTest() throws ApiException {
         String orderId = null;
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
         GetOrderRegulatedInfoResponse response = api.getOrderRegulatedInfo(orderId);
 
         // TODO: test validations
@@ -204,6 +238,7 @@ public class OrdersV0ApiTest {
         String actualFulfillmentSupplySourceId = null;
         Boolean isISPU = null;
         String storeChainStoreId = null;
+        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
         GetOrdersResponse response = api.getOrders(marketplaceIds, createdAfter, createdBefore, lastUpdatedAfter, lastUpdatedBefore, orderStatuses, fulfillmentChannels, paymentMethods, buyerEmail, sellerOrderId, maxResultsPerPage, easyShipShipmentStatuses, nextToken, amazonOrderIds, actualFulfillmentSupplySourceId, isISPU, storeChainStoreId);
 
         // TODO: test validations
@@ -217,13 +252,14 @@ public class OrdersV0ApiTest {
      * @throws ApiException
      *          if the Api call fails
      */
-    @Test
-    public void updateVerificationStatusTest() throws ApiException {
-        String orderId = null;
-        UpdateVerificationStatusRequest payload = null;
-        api.updateVerificationStatus(orderId, payload);
-
-        // TODO: test validations
-    }
-    
+//    @Test
+//    public void updateVerificationStatusTest() throws ApiException {
+//        OrdersV0Api api = OrdersV0Api.initApi(AmazonMarketplaceEnum.US);
+//        String orderId = null;
+//        UpdateVerificationStatusRequest payload = null;
+//        api.updateVerificationStatus(orderId, payload);
+//
+//        // TODO: test validations
+//    }
+//
 }

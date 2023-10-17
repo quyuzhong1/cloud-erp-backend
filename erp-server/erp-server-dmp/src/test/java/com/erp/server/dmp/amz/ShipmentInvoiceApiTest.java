@@ -11,34 +11,45 @@
  */
 
 
-package com.erp.server.oms.amz;
+package com.erp.server.dmp.amz;
 
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentials;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentialsProvider;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
+import com.erp.sdk.oms.amz.spapi.api.ListingsRestrictionsApi;
 import com.erp.sdk.oms.amz.spapi.api.ShipmentInvoiceApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.config.AmazonAuthorConfigDTO;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtil;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
+import com.erp.sdk.oms.amz.spapi.model.listingsrestrictions.RestrictionList;
 import com.erp.sdk.oms.amz.spapi.model.shipmentinvoicing.GetInvoiceStatusResponse;
 import com.erp.sdk.oms.amz.spapi.model.shipmentinvoicing.GetShipmentDetailsResponse;
 import com.erp.sdk.oms.amz.spapi.model.shipmentinvoicing.SubmitInvoiceRequest;
 import com.erp.sdk.oms.amz.spapi.model.shipmentinvoicing.SubmitInvoiceResponse;
-import org.junit.Ignore;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import com.erp.server.dmp.ErpServerDmpApplication;
+import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.junit.Test;
+
+import java.util.List;
 
 
 /**
  * API tests for ShipmentInvoiceApi
  */
-@Ignore
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@Profile("dev")
 public class ShipmentInvoiceApiTest {
 
-    private final ShipmentInvoiceApi api = amazonAuthorizationGrant(new AmazonAuthorConfigDTO());
+    private final ShipmentInvoiceApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US);
 
-    public ShipmentInvoiceApi amazonAuthorizationGrant(AmazonAuthorConfigDTO authorConfigDTO) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = authorConfigDTO.buildAWSAuthenticationCredentials();
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = authorConfigDTO.buildLWAAuthorizationCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = authorConfigDTO.buildAWSAuthenticationCredentialsProvider();
+    public ShipmentInvoiceApi amazonAuthorizationGrant(AmazonMarketplaceEnum marketplaceEnum) {
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtil.buildLWAAuthorizationCredentials();
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentialsProvider();
         ShipmentInvoiceApi shipmentInvoiceApi = new ShipmentInvoiceApi.Builder()
                 .awsAuthenticationCredentials(awsAuthenticationCredentials)
                 .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
@@ -47,7 +58,7 @@ public class ShipmentInvoiceApiTest {
                 //北美，https://sellingpartnerapi-na.amazon.com
                 //欧洲，https://sellingpartnerapi-eu.amazon.com
                 //远东，https://sellingpartnerapi-fe.amazon.com
-                .endpoint(authorConfigDTO.getSpEndPoint())
+                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
                 .build();
         if (null == shipmentInvoiceApi) {
             throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
@@ -103,5 +114,37 @@ public class ShipmentInvoiceApiTest {
 
         // TODO: test validations
     }
-    
+
+    /**
+     * API tests for ListingsApi
+     */
+    @RunWith(SpringRunner.class)
+@SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@Profile("dev")
+    public static class ListingsRestrictionsApiTest {
+
+        private final ListingsRestrictionsApi api = new ListingsRestrictionsApi();
+
+
+        /**
+         *
+         *
+         * Returns listing restrictions for an item in the Amazon Catalog.   **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 5 | 10 |  The &#x60;x-amzn-RateLimit-Limit&#x60; response header returns the usage plan rate limits that were applied to the requested operation, when available. The table above indicates the default rate and burst values for this operation. Selling partners whose business demands require higher throughput may see higher rate and burst values then those shown here. For more information, see [Usage Plans and Rate Limits in the Selling Partner API](doc:usage-plans-and-rate-limits-in-the-sp-api).
+         *
+         * @throws ApiException
+         *          if the Api call fails
+         */
+        @Test
+        public void getListingsRestrictionsTest() throws ApiException {
+            String asin = null;
+            String sellerId = null;
+            List<String> marketplaceIds = null;
+            String conditionType = null;
+            String reasonLocale = null;
+            RestrictionList response = api.getListingsRestrictions(asin, sellerId, marketplaceIds, conditionType, reasonLocale);
+
+            // TODO: test validations
+        }
+
+    }
 }
