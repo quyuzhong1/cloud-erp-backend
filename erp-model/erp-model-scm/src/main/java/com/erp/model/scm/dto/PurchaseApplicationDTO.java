@@ -698,6 +698,11 @@ public class PurchaseApplicationDTO implements Serializable {
         private LocalDate planDeliveryDate;
 
         /**
+         * 明细备注
+         */
+        private String remark;
+
+        /**
          * 子集
          */
         private List<ViewChildGenerateSubcontractOrderDTO> childList;

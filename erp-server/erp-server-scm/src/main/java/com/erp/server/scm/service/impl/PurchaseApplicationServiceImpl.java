@@ -867,7 +867,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 //委外订单父级SKU
                 SubcontractOrderDetailDTO.AddDTO detail = BeanMapperUtils.map(SubcontractOrderDetailDTO.AddDTO.class, generateDetailDTO);
                 PurchaseApplicationDetailEntity purchaseApplicationDetailEntity = purchaseApplicationDetailList.stream().filter(obj -> obj.getId().equals(generateDetailDTO.getSourceDetailId())).findFirst().orElse(new PurchaseApplicationDetailEntity());
-                detail.setRemark(purchaseApplicationDetailEntity.getRemark());
                 detail.setIsUrgent(purchaseApplicationDetailEntity.getIsUrgent());
 
                 //委外订单子件SKU
