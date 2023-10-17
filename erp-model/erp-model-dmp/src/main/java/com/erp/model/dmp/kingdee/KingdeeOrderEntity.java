@@ -1,7 +1,7 @@
 package com.erp.model.dmp.kingdee;
 
 import cn.hutool.core.annotation.Alias;
-import com.erp.model.dmp.dto.CleanBaseDTO;
+import com.common.business.dto.CleanBaseDTO;
 import com.erp.model.dmp.kingdee.item.KingdeeOrderItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -46,7 +46,11 @@ public class KingdeeOrderEntity  extends CleanBaseDTO {
      */
     @Alias("FCustId.FName")
     private String fCustId;
-
+    /**
+     * 客户编码
+     */
+    @Alias("FCustId.FNumber")
+    private String customerCode;
     /**
      * 客户编码
      */

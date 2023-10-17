@@ -1,7 +1,7 @@
 package com.erp.model.dmp.mabang;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import com.erp.model.dmp.dto.CleanBaseDTO;
+import com.common.business.dto.CleanBaseDTO;
 import com.erp.model.dmp.mabang.item.DeliveryItemEntity;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;

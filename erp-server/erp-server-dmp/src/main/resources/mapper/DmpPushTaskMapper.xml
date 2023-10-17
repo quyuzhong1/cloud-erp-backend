@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpPushTaskMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpPushTaskEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="target_platform_name" property="targetPlatformName" />
+       <result column="mq_topic" property="mqTopic" />
+       <result column="mq_tag" property="mqTag" />
+       <result column="mq_data" property="mqData" />
+       <result column="status" property="status" />
+       <result column="return_msg" property="returnMsg" />
+       <result column="last_sync_time" property="lastSyncTime" />
+       <result column="source_platform_name" property="sourcePlatformName" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="retry_times" property="retryTimes" />
+       <result column="sync_operate" property="syncOperate" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        create_user_id,
+        create_user_name,
+        update_time,
+        update_user_id,
+        update_user_name,
+        version,
+        is_deleted,
+        target_platform_name, mq_topic, mq_tag, mq_data, status, return_msg, last_sync_time, source_platform_name, source_type, source_id, source_code, retry_times, sync_operate
+    </sql>
+
+    <select id="getEntityByCondition" resultType="com.erp.model.dmp.entity.DmpPushTaskEntity">
+        select <include refid="Base_Column_List"/>
+            from  dmp_push_task
+        <where>
+            <if test="params.sourceType != null and params.sourceType != ''">
+                and source_type = #{params.sourceType}
+            </if>
+            <if test="params.sourceId != null and params.sourceId != ''">
+                and source_id = #{params.sourceId}
+            </if>
+            <if test="params.sourcePlatformName != null and params.sourcePlatformName != ''">
+                and source_platform_name = #{params.sourcePlatformName}
+            </if>
+            <if test="params.targetPlatformName != null and params.targetPlatformName != ''">
+                and target_platform_name = #{params.targetPlatformName}
+            </if>
+            <if test="params.mqTopic != null and params.mqTopic != ''">
+                and mq_topic = #{params.mqTopic}
+            </if>
+            <if test="params.mqTag != null and params.mqTag != ''">
+                and mq_tag = #{params.mqTag}
+            </if>
+        </where>
+        limit 1
+    </select>
+</mapper>

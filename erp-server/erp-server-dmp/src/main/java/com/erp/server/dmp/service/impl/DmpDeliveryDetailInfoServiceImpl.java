@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -11,17 +12,16 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
-import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
-import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
+import com.common.business.dto.DmpSyncMqDTO;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.server.dmp.pull.mapper.DmpDeliveryDetailInfoMapper;
 import com.erp.server.dmp.service.DmpDeliveryDetailInfoService;
 import com.erp.server.dmp.service.DmpDeliveryDetailItemService;
-import com.erp.server.dmp.service.DmpSyncTaskService;
+import com.erp.server.dmp.service.DmpPullTaskService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
@@ -43,7 +43,7 @@ public class DmpDeliveryDetailInfoServiceImpl extends ServiceImpl<DmpDeliveryDet
     private DmpDeliveryDetailItemService dmpDeliveryDetailItemService;
 
     @Resource
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     @Resource
     private MQProducerService mqProducerService;
@@ -122,12 +122,12 @@ public class DmpDeliveryDetailInfoServiceImpl extends ServiceImpl<DmpDeliveryDet
         DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = getDeliveryDetailByBillNo(dmpDeliveryDetailInfoEntity);
         if (null != deliveryDetailInfoEntity) {
             //如果数据有变动需要更新数据库订单信息
-            if (!deliveryDetailInfoEntity.toString().equals(deliveryDetailInfoEntity.toString())) {
-                deliveryDetailInfoEntity.setId(dmpDeliveryDetailInfoEntity.getId());
-                updateById(deliveryDetailInfoEntity);
+            if (!deliveryDetailInfoEntity.toString().equals(dmpDeliveryDetailInfoEntity.toString())) {
+                dmpDeliveryDetailInfoEntity.setId(deliveryDetailInfoEntity.getId());
+                updateById(dmpDeliveryDetailInfoEntity);
                 deliveryDetailId = deliveryDetailInfoEntity.getId();
             } else {
-                return deliveryDetailId ;
+                return deliveryDetailInfoEntity.getId() ;
             }
         } else {
             deliveryDetailId = add(dmpDeliveryDetailInfoEntity);
@@ -160,7 +160,7 @@ public class DmpDeliveryDetailInfoServiceImpl extends ServiceImpl<DmpDeliveryDet
 
 
         //新增发送任务
-        DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
+        DmpPullTaskEntity dmpSyncTaskEntity = new DmpPullTaskEntity();
         dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
         dmpSyncTaskEntity.setSourceType(SourceTypeEnum.SAL_OUTSTOCK.getCode());
         dmpSyncTaskEntity.setSourceId(ext.getFId());
@@ -171,7 +171,7 @@ public class DmpDeliveryDetailInfoServiceImpl extends ServiceImpl<DmpDeliveryDet
         dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_KINGDEE_SO_OUTSTOCK_TAG.getName());
         String mqData = JSONObject.toJSONString(ext);
         dmpSyncTaskEntity.setMqData(mqData);
-        dmpSyncTaskService.saveOrUpdateDmpSyncTask(dmpSyncTaskEntity);
+        dmpPullTaskService.saveOrUpdateDmpSyncTask(dmpSyncTaskEntity);
         DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_KINGDEE_SO_OUTSTOCK_TAG.getName(),
                 dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
@@ -179,6 +179,23 @@ public class DmpDeliveryDetailInfoServiceImpl extends ServiceImpl<DmpDeliveryDet
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
 
+    }
+
+    @Override
+    public void removeDeliveryByCodes(List<String> codes) {
+        //删除订单
+        LambdaQueryWrapper<DmpDeliveryDetailInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(DmpDeliveryDetailInfoEntity::getPlatformOrderId, codes);
+        List<DmpDeliveryDetailInfoEntity> list = baseMapper.selectList(queryWrapper);
+        log.info("删除 dmp_delivery_detail_info 订单：{}", JSON.toJSONString(list));
+        if (CollectionUtils.isNotEmpty(list)) {
+            //删除明细记录
+            list.forEach(dmpDeliveryDetailInfoEntity -> {
+                List<DmpDeliveryDetailItemEntity> itemEntities = dmpDeliveryDetailItemService.getItemByMainId(dmpDeliveryDetailInfoEntity.getId());
+                dmpDeliveryDetailItemService.removeByIds(itemEntities.stream().map(DmpDeliveryDetailItemEntity::getId).collect(Collectors.toList()));
+                this.removeById(dmpDeliveryDetailInfoEntity.getId());
+            });
+        }
     }
 }
 

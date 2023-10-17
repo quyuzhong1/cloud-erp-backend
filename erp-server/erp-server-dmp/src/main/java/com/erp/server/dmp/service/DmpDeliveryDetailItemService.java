@@ -45,4 +45,11 @@ public interface DmpDeliveryDetailItemService extends IService<DmpDeliveryDetail
      * @return java.util.List<com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity>
      **/
     List<DmpDeliveryDetailItemEntity> splitOrderItem(List<DmpDeliveryDetailItemEntity> itemEntityList, String platformSign);
+
+    /**
+     * 根据主表获取明细列表
+     * @param mainId
+     * @return
+     */
+    List<DmpDeliveryDetailItemEntity> getItemByMainId(String mainId);
 }

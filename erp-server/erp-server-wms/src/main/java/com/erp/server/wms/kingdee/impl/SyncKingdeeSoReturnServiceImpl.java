@@ -21,6 +21,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.enums.ReturnReasonEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
 
 /**
  * 同步销售退货单到金蝶
+ *
  * @Author Luo_WG
  * @Date 2023/5/25 10:53
  **/
@@ -76,12 +78,13 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
 
     @Resource
     private KingdeeFeign kingdeeFeign;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Override
     public void syncDataToKingdee(SoReturnInstockEntity entity, String operate) {
-
         //更新同步状态为待同步
-        soReturnInstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(),"",operate);
+        soReturnInstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
 
         List<SoReturnInstockDetailEntity> returnInstockDetailEntities = soReturnInstockDetailService.listDetailByMainId(entity.getId());
 
@@ -158,7 +161,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             //仓管员编码
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getWarehouseKeeperId());
             if (ObjectUtils.isNotEmpty(findUserDTO)) {
-                resultMap.put("warehouseKeeperCode",findUserDTO.getCode());
+                resultMap.put("warehouseKeeperCode", findUserDTO.getCode());
             }
         }
 
@@ -189,11 +192,11 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
 
         resultMap.put("soKingdeeDetailIds", String.join(",", soKingdeeDetailIdList));
         //金蝶 FEntity:物料信息
-        List<Map<String,Object>> list = new ArrayList<>();
+        List<Map<String, Object>> list = new ArrayList<>();
         for (SoReturnInstockDetailEntity detailEntity : returnInstockDetailEntities) {
             SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            Map<String,Object> map = new HashMap<>();
+            Map<String, Object> map = new HashMap<>();
             //退货原因
             if (StringUtils.isNotBlank(detailEntity.getReturnReasonDict())) {
                 resultMap.put("returnReason", ReturnReasonEnum.getEnum(detailEntity.getReturnReasonDict()).getKingdeeCode());
@@ -256,7 +259,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_RETURN_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return soReturnInstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(),"", operate);
+                return soReturnInstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.IN_SYNC.getCode(), "", operate);
             }
             return Boolean.TRUE;
         });

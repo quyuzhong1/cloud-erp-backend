@@ -1,7 +1,6 @@
 package com.erp.server.oms.controller.api;
 
 
-import cn.hutool.core.collection.CollUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -9,29 +8,31 @@ import com.common.business.validator.AddGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.utils.MathUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
-import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
-import com.erp.server.oms.utils.SoUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 /**
  * 销售管理-销售订单
@@ -48,7 +49,10 @@ public class SoInfoController extends BaseController {
 
     @Resource
     private SoDetailService soDetailService;
-
+    @Resource
+    private SyncKingdeeSoService syncKingdeeSoService;
+    @Resource
+    private MQProducerService mQProducerService;
 
     /**
      * 获取 tab列表
@@ -234,10 +238,11 @@ public class SoInfoController extends BaseController {
 
     /**
      * 更新明细备注
-     * @author Will
-     * @date: 2023/7/19 14:58
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2023/7/19 14:58
      */
     @PostMapping("/updateDetailRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -252,10 +257,11 @@ public class SoInfoController extends BaseController {
 
     /**
      * 更新备注
-     * @author Will
-     * @date: 2023/7/19 14:58
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2023/7/19 14:58
      */
     @PostMapping("/updateRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -267,7 +273,6 @@ public class SoInfoController extends BaseController {
         Boolean flag = soInfoService.updateRemark(dto);
         return flag == true ? success() : failure();
     }
-
 
 
     /**
@@ -408,7 +413,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/exportSoContractExcel")
     public ApiResult<SoInfoDTO.ExportPdfDTO> exportSoContractExcel(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
-        Boolean result = soInfoService.exportSoContractExcel(dto.getId(),response);
+        Boolean result = soInfoService.exportSoContractExcel(dto.getId(), response);
         return result ? success() : failure();
     }
 
@@ -422,7 +427,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/exportSoPI")
     public ApiResult exportSoPI(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
-        Boolean result = soInfoService.exportSoPI(dto.getId(),response);
+        Boolean result = soInfoService.exportSoPI(dto.getId(), response);
         return result ? success() : failure();
 
     }
@@ -472,6 +477,7 @@ public class SoInfoController extends BaseController {
 
     /**
      * 根据sku id和数量计算成本毛利
+     *
      * @param costParam
      * @return
      */
@@ -482,35 +488,38 @@ public class SoInfoController extends BaseController {
 
     /**
      * 补录销售订单毛利历史数据
+     *
      * @param startDate
      * @param endDate
      * @return
      */
     @GetMapping("/brushData")
-    public ApiResult<Void> getSkuCostProfit(@RequestParam(value = "startDate")String startDate,
-                                            @RequestParam(value = "endDate")String endDate) {
+    public ApiResult<Void> getSkuCostProfit(@RequestParam(value = "startDate") String startDate,
+                                            @RequestParam(value = "endDate") String endDate) {
         soInfoService.brushCostData(LocalDate.parse(startDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")),
                 LocalDate.parse(endDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-       return success();
+        return success();
     }
 
     /**
      * 补录销售订单毛利历史数据（根据id）
+     *
      * @param id
      * @return
      */
     @GetMapping("/brushById")
-    public ApiResult<Void> brushById(@RequestParam(value = "id")String id) {
+    public ApiResult<Void> brushById(@RequestParam(value = "id") String id) {
         soInfoService.brushCostData(id);
         return success();
     }
 
     /**
      * 打印
-     * @Author Luo_WG
-     * @Date 2023/7/13 10:44
+     *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
+     * @Author Luo_WG
+     * @Date 2023/7/13 10:44
      **/
     @PostMapping("/print")
     public ApiResult<List<SoInfoDTO.PrintDTO>> print(@RequestBody BaseIdsDTO.IdsDTO dto) {
@@ -520,9 +529,10 @@ public class SoInfoController extends BaseController {
 
     /**
      * 临时接口：修改未税单价
+     *
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
      * @Author Luo_WG
      * @Date 2023/7/13 10:44
-     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
      **/
     @PostMapping("/temporaryUpdate")
     public ApiResult temporaryUpdate() {
@@ -532,6 +542,7 @@ public class SoInfoController extends BaseController {
 
     /**
      * 根据销售订单判断是否已经下推过有效发货通知单
+     *
      * @param id
      * @return com.common.core.controller.vo.ApiResult<Boolean>
      * @author zhangchunlin
@@ -545,6 +556,7 @@ public class SoInfoController extends BaseController {
 
     /**
      * 获取销售成本毛利信息
+     *
      * @param calCostProfitDTO
      * @return
      */
@@ -553,4 +565,28 @@ public class SoInfoController extends BaseController {
         return success(soInfoService.calSkuCostProfit(calCostProfitDTO));
     }
 
+    /**
+     * 订单监听测试方法
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("/testOrderPush")
+    public ApiResult testOrderPush(@RequestParam(value = "id") String id,@RequestParam(value = "operate") String operate) {
+        SoInfoEntity soInfoEntity = soInfoService.getById(id);
+//        soInfoService.syncOrderToDmp(soInfoEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        String dmpPullTaskId = syncKingdeeSoService.syncOrderToDmp(soInfoEntity, operate);
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("id", id);
+        resultMap.put("dmpPullTaskId", dmpPullTaskId);
+        resultMap.put("code", soInfoEntity.getCode());
+        resultMap.put("operate", operate);
+        SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_INFO_TAG.getName(),
+                resultMap, id);
+        if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
+            return success();
+        } else {
+            return failure();
+        }
+    }
 }

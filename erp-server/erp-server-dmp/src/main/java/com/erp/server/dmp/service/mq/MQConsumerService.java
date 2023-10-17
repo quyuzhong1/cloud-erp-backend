@@ -3,12 +3,12 @@ package com.erp.server.dmp.service.mq;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.dto.CleanBaseDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.dto.CleanBaseDTO;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.DmpTransferInfoDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.*;
@@ -18,8 +18,6 @@ import com.erp.model.dmp.gyy.*;
 import com.erp.model.dmp.kingdee.*;
 import com.erp.model.dmp.mabang.*;
 import com.erp.model.plm.dto.NewProductDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +65,7 @@ public class MQConsumerService {
     private MongoService mongoService;
 
     @Resource
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
 
     @Resource
     private MQProducerService mqProducerService;
@@ -388,7 +386,7 @@ public class MQConsumerService {
         public void onMessage(KingdeeReturnOrderEntity ext) {
             log.info("监听金蝶B2C销售退货信息消息：entity={}", JSONUtil.toJsonStr(ext));
             //新增发送任务
-            dmpSyncTaskService.syncKingdeeReturnOrderToWms(ext);
+            dmpPullTaskService.syncKingdeeReturnOrderToWms(ext);
         }
     }
 
@@ -403,10 +401,9 @@ public class MQConsumerService {
         @Override
         public void onMessage(DmpSyncMqDTO.ParamDTO paramDTO) {
             log.info("监听到DMP同步任务回调：entity={}", JSONUtil.toJsonStr(paramDTO));
-            dmpSyncTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
+            dmpPullTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
         }
     }
-
 
     private <T extends CleanBaseDTO> void finishClean(MapUtil mapUtil, OrderMongoDTO updateDto,String tableName, Class<T> clazz) {
         List<T> mongoData = mongoService.findMongoData(updateDto, 0, 0, tableName, clazz);

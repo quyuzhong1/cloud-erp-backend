@@ -1,11 +1,8 @@
 package com.erp.model.dmp.mabang;
 
-import com.erp.model.dmp.dto.CleanBaseDTO;
+import com.common.business.dto.CleanBaseDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
-
-import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor

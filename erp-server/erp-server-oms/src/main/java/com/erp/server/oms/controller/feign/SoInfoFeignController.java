@@ -1,13 +1,9 @@
 package com.erp.server.oms.controller.feign;
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.oms.entity.SkuMapingEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.server.oms.service.SoDetailService;
@@ -92,6 +88,16 @@ public class SoInfoFeignController extends BaseController {
         return soDetailService.listSoDetailByMainIds(ids);
     }
 
+    /**
+     * 获取订单明细全量字段
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("/listSoDetailByMainId")
+    List<SoDetailEntity> listSoDetailByMainId(@RequestBody String id){
+        return soDetailService.listSoDetailByMainId(id);
+    }
     /**
      * 根据主表id 获取对应基础信息
      *

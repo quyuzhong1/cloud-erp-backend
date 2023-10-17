@@ -2,26 +2,25 @@ package com.erp.server.dmp.controller.feign;
 
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.DmpPullTaskFeignDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.service.BiSettlementExchangeRateService;
-import com.erp.server.dmp.service.DmpShopInfoService;
-import com.erp.server.dmp.service.DmpSyncTaskService;
-import com.erp.server.dmp.service.PlatformService;
+import com.erp.server.dmp.service.*;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -45,7 +44,10 @@ public class DmpFeignController extends BaseController {
     private KingdeeCommonService kingdeeCommonService;
 
     @Resource
-    private DmpSyncTaskService dmpSyncTaskService;
+    private DmpPullTaskService dmpPullTaskService;
+    @Resource
+    private DmpOrderInfoService dmpOrderInfoService;
+
 
     @Resource
     private PlatformService platformService;
@@ -96,7 +98,7 @@ public class DmpFeignController extends BaseController {
      */
     @PostMapping("/updateSyncInfo")
     public void updateSyncInfo(@RequestBody DmpSyncMqDTO.ParamDTO paramDTO) {
-         dmpSyncTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
+         dmpPullTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
     }
     
     
@@ -134,8 +136,39 @@ public class DmpFeignController extends BaseController {
     public List<String> getKingdeeSourceCode(@RequestBody Map<String,Object> conditon){
         List<String> result=new ArrayList<>();
 
-        result = dmpSyncTaskService.listKingdeeCode(conditon);
+        result = dmpPullTaskService.listKingdeeCode(conditon);
 
         return result;
+    }
+
+    /**
+     * oms推送订单到中台记录推送记录并生成mq消息
+     * @param dto 查询过滤条件
+     *
+     * @return
+     */
+    @PostMapping("/send/mq/save/task")
+    public Boolean sendMqAndSaveTask(@RequestBody @Valid DmpPullTaskFeignDTO dto){
+        return dmpPullTaskService.sendMqAndSaveTask(dto);
+    }
+    /**
+     * oms推送订单到中台记录推送记录并生成mq消息
+     * @param dto 查询过滤条件
+     *
+     * @return
+     */
+    @PostMapping("/save/pull/task")
+    public String savePullTask(@RequestBody @Valid DmpPullTaskFeignDTO dto){
+        return dmpPullTaskService.savePullTask(dto);
+    }
+
+    /**
+     * 根据订单id删除订单
+     * @param ids
+     * @return
+     */
+    @PostMapping("/remove/orderByIds")
+    Boolean removeDmpOrderByIds(@RequestBody @Valid List<String> ids){
+        return dmpOrderInfoService.removeOrderByIds(ids);
     }
 }

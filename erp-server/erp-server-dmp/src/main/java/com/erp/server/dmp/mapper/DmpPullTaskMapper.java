@@ -1,5 +1,5 @@
 package com.erp.server.dmp.mapper;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
+import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 @Mapper
-public interface DmpSyncTaskMapper extends BaseMapper<DmpSyncTaskEntity> {
+public interface DmpPullTaskMapper extends BaseMapper<DmpPullTaskEntity> {
 
 
 }

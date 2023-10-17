@@ -3,8 +3,10 @@ package com.erp.model.dmp.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
@@ -22,8 +24,10 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("dmp_sync_task")
-public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
+@TableName("dmp_pull_task")
+@NoArgsConstructor
+@AllArgsConstructor
+public class DmpPullTaskEntity extends BaseEntity<DmpPullTaskEntity> {
 
 
     /**
@@ -92,6 +96,12 @@ public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
     @TableField("source_code")
     private String sourceCode;
 
+    /**
+     * 重试次数
+     */
+    @TableField("retry_times")
+    private Integer retryTimes;
+
 
     public static final String TARGET_PLATFORM_NAME = "target_platform_name";
 
@@ -114,6 +124,20 @@ public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
     public static final String SOURCE_ID = "source_id";
 
     public static final String SOURCE_CODE = "source_code";
+
+    public DmpPullTaskEntity(String targetPlatformName, String mqTopic, String mqTag, String mqData, String status,
+                             String sourcePlatformName, String sourceType, String sourceId, String sourceCode, int retryTimes) {
+    this.targetPlatformName = targetPlatformName;
+    this.mqTopic = mqTopic;
+    this.mqTag = mqTag;
+    this.mqData = mqData;
+    this.status = status;
+    this.sourcePlatformName = sourcePlatformName;
+    this.sourceType = sourceType;
+    this.sourceId = sourceId;
+    this.sourceCode = sourceCode;
+    this.retryTimes = retryTimes;
+    }
 
     @Override
     public Serializable pkVal() {

@@ -2,13 +2,18 @@ package com.erp.server.oms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
+import com.alibaba.fastjson.JSON;
+import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicEnum;
@@ -18,6 +23,7 @@ import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -75,6 +81,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Autowired
     private DictBasicService dictBasicService;
@@ -95,6 +103,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     @GlobalTransactional
     @Transactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(SoInfoEntity entity, String operate) {
+        //推送同步中台dmp任务
+        String dmpPullTaskId = this.syncOrderToDmp(entity, operate);
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -109,6 +119,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
         //业务id
         resultMap.put("id", id);
+        resultMap.put("dmpPullTaskId", dmpPullTaskId);
         //编码
         resultMap.put("code", entity.getCode());
 
@@ -308,5 +319,32 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             }
             return Boolean.TRUE;
         });
+    }
+
+    /**
+     * 推送订单到mq
+     *
+     * @param soInfoEntity
+     * @param syncOperate
+     */
+    @Override
+    public String syncOrderToDmp(SoInfoEntity soInfoEntity, String syncOperate) {
+        DmpPullTaskFeignDTO dto = new DmpPullTaskFeignDTO()
+                .setMqData(JSON.toJSONString(soInfoEntity))
+                .setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC)
+                .setMqTag(RocketMqTagEnum.KINGDEE_SO_INFO_TAG.getName())
+                .setSourceCode(soInfoEntity.getCode())
+                .setSourceId(soInfoEntity.getId())
+                .setSourceType(SourceTypeEnum.SO_INFO.getCode())
+                .setSourcePlatformName(PlatformEnum.ERP_OMS.getDesc())
+                .setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc())
+                .setSyncOperate(syncOperate);
+        log.info("推送消息开始：{}", dto.toString());
+        //推送mq
+        try {
+            return dmpTaskFeign.savePullTask(dto);
+        }catch (Exception e){
+            throw new ServiceException(String.format("同步数据中台异常:%s",e.getMessage()));
+        }
     }
 }

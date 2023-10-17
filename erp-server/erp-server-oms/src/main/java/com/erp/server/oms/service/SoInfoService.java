@@ -387,4 +387,11 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.ListDTO>
      */
     List<SoInfoDTO.ListDTO> listRepairHistoryDb();
+
+    /**
+     * 推送订单数据到mq
+     * @param soInfoEntity
+     * @param syncOperate
+     */
+    void syncOrderToDmp(SoInfoEntity soInfoEntity, String syncOperate);
 }

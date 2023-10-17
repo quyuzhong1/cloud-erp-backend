@@ -1,12 +1,11 @@
 package com.erp.model.dmp.gyy;
 
 
-import com.erp.model.dmp.dto.CleanBaseDTO;
+import com.common.business.dto.CleanBaseDTO;
 import com.erp.model.dmp.gyy.bean.RefundDetailsBean;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

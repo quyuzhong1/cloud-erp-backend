@@ -1,14 +1,19 @@
 package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.business.dto.DmpPullTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -107,10 +112,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     @Override
     public void syncDataToKingdee(SoOutstockEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
-
+        //推送同步中台dmp任务
+        String dmpPullTaskId = this.syncOrderToDmp(entity, operate);
         //更新同步状态为待同步
         soOutstockService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
-
         //获取销售出库单详情
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
         //销售单信息
@@ -138,7 +143,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getWarehouseId()));
         //员工岗位
         List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Arrays.asList(entity.getWarehouseKeeperId()));
-
+        resultMap.put("dmpPullTaskId", dmpPullTaskId);
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
@@ -303,5 +308,32 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             }
             return Boolean.TRUE;
         });
+    }
+
+    /**
+     * 推送订单到mq
+     *
+     * @param entity
+     * @param syncOperate
+     */
+    @Override
+    public String syncOrderToDmp(SoOutstockEntity entity, String syncOperate) {
+        DmpPullTaskFeignDTO dto = new DmpPullTaskFeignDTO()
+                .setMqData(JSON.toJSONString(entity))
+                .setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC)
+                .setMqTag(RocketMqTagEnum.KINGDEE_SO_OUTSTOCK_TAG.getName())
+                .setSourceCode(entity.getCode())
+                .setSourceId(entity.getId())
+                .setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode())
+                .setSourcePlatformName(PlatformEnum.ERP_WMS.getDesc())
+                .setTargetPlatformName(PlatformEnum.ERP_DMP.getDesc())
+                .setSyncOperate(syncOperate);
+        log.info("推送消息开始：{}", dto.toString());
+        //推送mq
+        try {
+            return dmpTaskFeign.savePullTask(dto);
+        }catch (Exception e){
+            throw new ServiceException(String.format("同步数据中台异常:%s",e.getMessage()));
+        }
     }
 }

@@ -9,7 +9,7 @@ import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.server.wms.rocketmq.sync.SyncFbaDeliveryService;
