@@ -1978,8 +1978,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //财务信息
         SoB2cFinanceEntity soB2cFinanceEntity = soB2cFinanceService.getByMainId(dto.getId());
-        if (ObjectUtils.isEmpty(soB2cFinanceEntity)) {
+        if (ObjectUtils.isEmpty(soB2cFinanceEntity) && !isAdd) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_FINANCE_NOT_EXIST);
+        } else {
+            soB2cFinanceEntity = new SoB2cFinanceEntity();
         }
 
         //店铺信息
@@ -2066,14 +2068,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //VAT税费,店铺计算
         financialInfoDTO.setVatCost(vatCost);
         //总利润,订单总金额+运费收入-商品成本-物流成本-平台费-转账费-包装辅料费-VAT税费
-        BigDecimal profit = financialInfoDTO.getAmount()
-                .add(financialInfoDTO.getShippingCost())
-                .subtract(financialInfoDTO.getItemCost())
-                .subtract(financialInfoDTO.getLogisticsCost())
-                .subtract(platformCost)
-                .subtract(paypalCost)
-                .subtract(financialInfoDTO.getAccessoriesCost())
-                .subtract(vatCost);
+        BigDecimal profit = ObjectUtil.defaultIfNull(financialInfoDTO.getAmount(),BigDecimal.ZERO)
+                .add(ObjectUtil.defaultIfNull(financialInfoDTO.getShippingCost(),BigDecimal.ZERO))
+                .subtract(ObjectUtil.defaultIfNull(financialInfoDTO.getItemCost(),BigDecimal.ZERO))
+                .subtract(ObjectUtil.defaultIfNull(financialInfoDTO.getLogisticsCost(),BigDecimal.ZERO))
+                .subtract(ObjectUtil.defaultIfNull(platformCost,BigDecimal.ZERO))
+                .subtract(ObjectUtil.defaultIfNull(paypalCost,BigDecimal.ZERO))
+                .subtract(ObjectUtil.defaultIfNull(financialInfoDTO.getAccessoriesCost(),BigDecimal.ZERO))
+                .subtract(ObjectUtil.defaultIfNull(vatCost,BigDecimal.ZERO));
         financialInfoDTO.setProfit(profit);
         //利润率,总利润/(订单总金额+运费收入)*100%
         BigDecimal itemCostProfitRate = MathUtil.divide(itemCost, MathUtil.add(financialInfoDTO.getAmount(), financialInfoDTO.getShippingCost())).multiply(MathUtil.BigDecimal_100);
