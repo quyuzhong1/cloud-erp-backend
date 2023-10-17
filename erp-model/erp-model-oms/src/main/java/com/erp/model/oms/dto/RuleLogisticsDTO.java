@@ -154,7 +154,7 @@ public class RuleLogisticsDTO implements Serializable {
         /**
          * 物流供应商
          */
-        private String logisticsSupplier;
+        private String supplier;
 
         /**
          * 物流方式
@@ -235,14 +235,14 @@ public class RuleLogisticsDTO implements Serializable {
          */
         @NotBlank(message = "类型不能为空")
         @Size(max = 50, message = "类型多个逗号分割最大长度不能超过50位")
-        private String moduleType;
+        private String modeType;
 
         /**
          * 物流供应商
          */
         @NotBlank(message = "物流供应商不能为空")
         @Size(max = 255, message = "物流供应商最大长度不能超过255位")
-        private String logisticsSupplier;
+        private String supplier;
 
         /**
          * 物流方式

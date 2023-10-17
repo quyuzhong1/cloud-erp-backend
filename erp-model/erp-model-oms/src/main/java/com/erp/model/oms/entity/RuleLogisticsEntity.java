@@ -52,8 +52,8 @@ public class RuleLogisticsEntity extends BaseEntity<RuleLogisticsEntity> {
     /**
     * 物流供应商
     */
-    @TableField("logistics_supplier")
-    private String logisticsSupplier;
+    @TableField("supplier")
+    private String supplier;
     /**
     * 物流方式
     */
