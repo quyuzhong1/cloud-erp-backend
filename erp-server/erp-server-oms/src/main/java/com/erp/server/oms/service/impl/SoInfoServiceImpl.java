@@ -6,6 +6,7 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -32,21 +33,20 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.FirstPlaceOrderDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -61,10 +61,12 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
+import com.erp.server.oms.listener.B2BSoExcelListener;
 import com.erp.server.oms.mapper.SoInfoMapper;
 import com.erp.server.oms.service.*;
 import com.erp.server.oms.utils.SoUtils;
@@ -74,14 +76,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -147,6 +155,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
+    private KingdeeFeign kingdeeFeign;
 
 
     @Value("${so.contract.company}")
@@ -2373,7 +2384,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             SoDetailDTO.CalDetailResultDTO result = new SoDetailDTO.CalDetailResultDTO();
             BeanMapper.copy(item, result);
-            result.setTaxPriceLc(MathUtil.multiply(taxPrice,exchangeRate));
+            result.setTaxPriceLc(MathUtil.multiply(taxPrice, exchangeRate));
             resultList.add(result);
         }
         return resultList;
@@ -2547,6 +2558,94 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             new ExcelPrintUtils().patchExport(viewPiList, soPi, response, sb.toString(), excelPath);
         } catch (IOException e) {
             log.error("销售单国内发票导出出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+
+    }
+
+
+    /**
+     * 下载b2b 导入模板
+     *
+     * @param response
+     * @return void
+     * @author yl
+     * @date 2023-10-17 10:26
+     */
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/b2bsoExport.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("b2b 销售订单导入 downloadTemplate  出错了 e>>>>>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+
+    /**
+     * 导入销售订单
+     *
+     * @param excelFile
+     * @param response
+     * @return void
+     * @author yl
+     * @date 2023-10-17 10:34
+     */
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //仓库
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
+        //组织
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Lists.newArrayList());
+        //币别
+        List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
+        List<String> keyList = new ArrayList<>(5);
+        //收款方式
+        keyList.add(DictBasicEnum.RECEIVE_METHOD.getType());
+        //收款条件
+        keyList.add(DictBasicEnum.COLLECTION_TERMS.getType());
+        //交货方式
+        keyList.add(DictBasicEnum.DELIVERY_MODE.getType());
+        //贸易条款
+        keyList.add(DictBasicEnum.TRADE_TERM.getType());
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+
+        B2BSoExcelListener excelListenerUtil = new B2BSoExcelListener(warehouseList, orgList,
+                currencyList, dictBasicList, kingdeeFeign, deptList,
+                bankAccountService, customerInfoService, customerAddressService,
+                skuList, userList, this);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), B2BSoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("销售订单导入错误！==={}", e);
+            return Boolean.FALSE;
+
+        }
+        List<B2BSoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "销售订单错误信息";
+            ExcelUtil.export(fileName, "error", errorList, B2BSoImportExcelDTO.class, response);
             return Boolean.FALSE;
         }
         return Boolean.TRUE;

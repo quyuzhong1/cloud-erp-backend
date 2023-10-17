@@ -10,6 +10,7 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
@@ -398,4 +399,23 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean exportSoDomesticPI(String id, HttpServletResponse response);
+
+    /**
+     * 下载b2b 导入模板
+     * @author yl
+     * @date 2023-10-17 10:26
+     * @param response
+     * @return void
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 导入销售订单
+     * @author yl
+     * @date 2023-10-17 10:34
+     * @param excelFile
+     * @param response
+     * @return void
+     */
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 }

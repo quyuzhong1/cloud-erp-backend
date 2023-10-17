@@ -1371,6 +1371,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         return list;
     }
 
+    @Override
+    public CustomerInfoEntity getByName(String customerName) {
+
+        return this.lambdaQuery().eq(CustomerInfoEntity::getName,customerName).last("LIMIT 1").one();
+    }
+
     /**
      * 客户联系人信息
      *

@@ -22,6 +22,7 @@ import com.erp.server.oms.utils.SoUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -234,10 +235,11 @@ public class SoInfoController extends BaseController {
 
     /**
      * 更新明细备注
-     * @author Will
-     * @date: 2023/7/19 14:58
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2023/7/19 14:58
      */
     @PostMapping("/updateDetailRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -252,10 +254,11 @@ public class SoInfoController extends BaseController {
 
     /**
      * 更新备注
-     * @author Will
-     * @date: 2023/7/19 14:58
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2023/7/19 14:58
      */
     @PostMapping("/updateRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -267,7 +270,6 @@ public class SoInfoController extends BaseController {
         Boolean flag = soInfoService.updateRemark(dto);
         return flag == true ? success() : failure();
     }
-
 
 
     /**
@@ -408,7 +410,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/exportSoContractExcel")
     public ApiResult<SoInfoDTO.ExportPdfDTO> exportSoContractExcel(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
-        Boolean result = soInfoService.exportSoContractExcel(dto.getId(),response);
+        Boolean result = soInfoService.exportSoContractExcel(dto.getId(), response);
         return result ? success() : failure();
     }
 
@@ -422,22 +424,23 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/exportSoPI")
     public ApiResult exportSoPI(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
-        Boolean result = soInfoService.exportSoPI(dto.getId(),response);
+        Boolean result = soInfoService.exportSoPI(dto.getId(), response);
         return result ? success() : failure();
 
     }
 
     /**
      * 导出销售订单国内PI
-     * @author yl
-     * @date 2023-10-12 14:39
+     *
      * @param dto
      * @param response
      * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-10-12 14:39
      */
     @PostMapping("/exportSoDomesticPI")
     public ApiResult exportSoDomesticPI(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
-        Boolean result = soInfoService.exportSoDomesticPI(dto.getId(),response);
+        Boolean result = soInfoService.exportSoDomesticPI(dto.getId(), response);
         return result ? success() : failure();
 
     }
@@ -487,6 +490,7 @@ public class SoInfoController extends BaseController {
 
     /**
      * 根据sku id和数量计算成本毛利
+     *
      * @param costParam
      * @return
      */
@@ -497,35 +501,38 @@ public class SoInfoController extends BaseController {
 
     /**
      * 补录销售订单毛利历史数据
+     *
      * @param startDate
      * @param endDate
      * @return
      */
     @GetMapping("/brushData")
-    public ApiResult<Void> getSkuCostProfit(@RequestParam(value = "startDate")String startDate,
-                                            @RequestParam(value = "endDate")String endDate) {
+    public ApiResult<Void> getSkuCostProfit(@RequestParam(value = "startDate") String startDate,
+                                            @RequestParam(value = "endDate") String endDate) {
         soInfoService.brushCostData(LocalDate.parse(startDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")),
                 LocalDate.parse(endDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-       return success();
+        return success();
     }
 
     /**
      * 补录销售订单毛利历史数据（根据id）
+     *
      * @param id
      * @return
      */
     @GetMapping("/brushById")
-    public ApiResult<Void> brushById(@RequestParam(value = "id")String id) {
+    public ApiResult<Void> brushById(@RequestParam(value = "id") String id) {
         soInfoService.brushCostData(id);
         return success();
     }
 
     /**
      * 打印
-     * @Author Luo_WG
-     * @Date 2023/7/13 10:44
+     *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
+     * @Author Luo_WG
+     * @Date 2023/7/13 10:44
      **/
     @PostMapping("/print")
     public ApiResult<List<SoInfoDTO.PrintDTO>> print(@RequestBody BaseIdsDTO.IdsDTO dto) {
@@ -535,9 +542,10 @@ public class SoInfoController extends BaseController {
 
     /**
      * 临时接口：修改未税单价
+     *
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
      * @Author Luo_WG
      * @Date 2023/7/13 10:44
-     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
      **/
     @PostMapping("/temporaryUpdate")
     public ApiResult temporaryUpdate() {
@@ -547,6 +555,7 @@ public class SoInfoController extends BaseController {
 
     /**
      * 根据销售订单判断是否已经下推过有效发货通知单
+     *
      * @param id
      * @return com.common.core.controller.vo.ApiResult<Boolean>
      * @author zhangchunlin
@@ -560,12 +569,39 @@ public class SoInfoController extends BaseController {
 
     /**
      * 获取销售成本毛利信息
+     *
      * @param calCostProfitDTO
      * @return
      */
     @PostMapping("/calSkuCostProfit")
     public ApiResult<List<SoDetailDTO.CalDetailResultDTO>> calSkuCostProfit(@RequestBody @Validated SoInfoDTO.CalCostProfitDTO calCostProfitDTO) {
         return success(soInfoService.calSkuCostProfit(calCostProfitDTO));
+    }
+
+
+    /**
+     * 下载导入模板
+     *
+     * @return
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        soInfoService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入销售订单
+     *
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-10-17 10:28
+     */
+    @PostMapping("/importExcel")
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = soInfoService.importExcel(excelFile, response);
+        return result?success():failure();
     }
 
 }
