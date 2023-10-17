@@ -77,7 +77,7 @@ public class DmpSyncTaskJob {
         recordEntityList.sort(Comparator.comparing(DmpPullTaskEntity::getUpdateTime));
         for (DmpPullTaskEntity recordEntity : recordEntityList) {
             try {
-               // 发送推送同步任务消息
+                // 发送推送同步任务消息
                 DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(recordEntity.getId(), recordEntity.getMqData());
                 SendResult result = mqProducerService.syncClassMsg(recordEntity.getMqTopic(), recordEntity.getMqTag(),
                         dmpSyncMqDTO, recordEntity.getSourceId());

@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.SplitSkuDTO;
 import com.erp.model.dmp.entity.DmpBomEntity;
-import com.erp.model.dmp.entity.DmpRefundItemEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -199,6 +198,13 @@ public class DmpReturnOrderItemServiceImpl extends ServiceImpl<DmpReturnOrderIte
             }
         }
         return itemListAll;
+    }
+
+    @Override
+    public List<DmpReturnOrderItemEntity> getItemByMainId(String mainId) {
+        return this.lambdaQuery().eq(DmpReturnOrderItemEntity::getReturnOrderId, mainId)
+                .eq(DmpReturnOrderItemEntity::getIsDeleted,false)
+                .list();
     }
 }
 

@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<<<<<<<< HEAD:erp-server/erp-server-dmp/src/main/resources/mapper/CfgAppClientMapper.xml
 <mapper namespace="com.erp.server.dmp.mapper.CfgAppClientMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.CfgAppClientEntity">
+========
+<mapper namespace="com.erp.server.dmp.mapper.DmpPullTaskMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpPullTaskEntity">
+>>>>>>>> ad19c067c41e9cde970ca7a52f6808750581bb79:erp-server/erp-server-dmp/src/main/resources/mapper/DmpPullTaskMapper.xml
        <result column="id" property="id" />
        <result column="create_user_id" property="createUserId" />
        <result column="create_user_name" property="createUserName" />

@@ -121,6 +121,10 @@ public class RocketMqConsumerGroup {
      * 销售退货单
      */
     public static final String SYNC_KINGDEE_SO_RETURN = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_return";
+    /**
+     * 订单 oms推送到dmp
+     */
+    public static final String SYNC_OMS_RETURN_TO_DMP_ORDER = "${spring.cloud.nacos.discovery.namespace}-approved_order_to_dmp_consumer";
 
     /**
      * 委外订单

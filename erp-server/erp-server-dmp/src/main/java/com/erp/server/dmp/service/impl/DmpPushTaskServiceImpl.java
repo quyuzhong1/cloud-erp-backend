@@ -71,7 +71,6 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
     }
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
@@ -80,6 +79,18 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         updateWrapper.set(DmpPushTaskEntity::getLastSyncTime, LocalDateTime.now());
         updateWrapper.set(DmpPushTaskEntity::getStatus, paramDTO.getSyncStatus());
         updateWrapper.set(StrUtil.isNotBlank(paramDTO.getResponseMsg()), DmpPushTaskEntity::getReturnMsg, paramDTO.getResponseMsg());
+        updateWrapper.set(DmpPushTaskEntity::getUpdateTime, LocalDateTime.now());
+        this.update(updateWrapper);
+
+    }
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateStatus(String id, String status, String msg) {
+        LambdaUpdateWrapper<DmpPushTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(DmpPushTaskEntity::getId, id);
+        updateWrapper.set(DmpPushTaskEntity::getLastSyncTime, LocalDateTime.now());
+        updateWrapper.set(DmpPushTaskEntity::getStatus, status);
+        updateWrapper.set(StrUtil.isNotBlank(msg), DmpPushTaskEntity::getReturnMsg, msg);
         updateWrapper.set(DmpPushTaskEntity::getUpdateTime, LocalDateTime.now());
         this.update(updateWrapper);
 

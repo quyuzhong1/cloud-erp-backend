@@ -1,6 +1,5 @@
 package com.erp.server.wms.kingdee;
 
-import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 
 public interface SyncKingdeeSoReturnService {

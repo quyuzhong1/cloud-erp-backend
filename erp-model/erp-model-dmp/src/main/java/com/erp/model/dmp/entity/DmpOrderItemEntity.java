@@ -122,7 +122,7 @@ public class DmpOrderItemEntity implements Serializable {
      * 商品状态 1：未付款 2：未发货 3：已发货 4：已作废
      */
     @TableField(value = "status")
-    private Integer status;
+    private String status;
 
     /**
      * 商品仓位
@@ -185,6 +185,12 @@ public class DmpOrderItemEntity implements Serializable {
     private BigDecimal currencyRate;
 
     /**
+     * cny-结算汇率
+     */
+    @TableField(value = "cny_settle_rate")
+    private BigDecimal cnySettleRate;
+
+    /**
      * 新品标识 1为新品 0 为非新品
      */
     @TableField(value = "new_sign")
@@ -221,6 +227,12 @@ public class DmpOrderItemEntity implements Serializable {
      */
     @TableField(value = "is_split_sku")
     private Integer isSplitSku;
+
+    /**
+     * 来源明细id
+     */
+    @TableField(value = "source_item_id")
+    private String sourceItemId;
 
 
     @TableField(exist = false)

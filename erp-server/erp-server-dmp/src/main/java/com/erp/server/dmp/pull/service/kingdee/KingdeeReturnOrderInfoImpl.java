@@ -109,6 +109,11 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             log.warn("金蝶退货订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
             return;
         }
+        //判断是否需要推送MQ
+        KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
+        if (kingdeeApiUtils.needPushMQ(dto.getJobTaskDTO().getLastTime())){
+            return;
+        }
         // 构造订单结构
         List<DmpReturnOrderInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)

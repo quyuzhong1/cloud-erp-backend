@@ -12,6 +12,9 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.common.business.service.SuperService;
 
 /**
  * <p>
@@ -94,4 +97,9 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @return Boolean
      */
     Boolean batchSync(List<String> ids);
+     /* @param id
+     * @param status
+     * @param msg
+     */
+    void updateStatus(String id, String status, String msg);
 }

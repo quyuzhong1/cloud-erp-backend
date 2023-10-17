@@ -89,6 +89,16 @@ public class SoInfoFeignController extends BaseController {
     }
 
     /**
+     * 获取订单明细全量字段
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("/listSoDetailByMainId")
+    List<SoDetailEntity> listSoDetailByMainId(@RequestBody String id){
+        return soDetailService.listSoDetailByMainId(id);
+    }
+    /**
      * 根据主表id 获取对应基础信息
      *
      * @param id
