@@ -21,7 +21,7 @@ public class RocketMqTopic {
     /**
      * 同步内部订单到dmp topic
      */
-    public static final String SYNC_ORDER_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_order_to_dmp_topic";
+    public static final String SYNC_RETURN_ORDER_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_return_order_to_dmp_topic";
 
     /**
      * 推送数据到金蝶

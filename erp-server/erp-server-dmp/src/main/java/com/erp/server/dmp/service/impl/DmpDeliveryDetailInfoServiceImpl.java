@@ -122,12 +122,12 @@ public class DmpDeliveryDetailInfoServiceImpl extends ServiceImpl<DmpDeliveryDet
         DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = getDeliveryDetailByBillNo(dmpDeliveryDetailInfoEntity);
         if (null != deliveryDetailInfoEntity) {
             //如果数据有变动需要更新数据库订单信息
-            if (!deliveryDetailInfoEntity.toString().equals(deliveryDetailInfoEntity.toString())) {
-                deliveryDetailInfoEntity.setId(dmpDeliveryDetailInfoEntity.getId());
-                updateById(deliveryDetailInfoEntity);
+            if (!deliveryDetailInfoEntity.toString().equals(dmpDeliveryDetailInfoEntity.toString())) {
+                dmpDeliveryDetailInfoEntity.setId(deliveryDetailInfoEntity.getId());
+                updateById(dmpDeliveryDetailInfoEntity);
                 deliveryDetailId = deliveryDetailInfoEntity.getId();
             } else {
-                return deliveryDetailId ;
+                return deliveryDetailInfoEntity.getId() ;
             }
         } else {
             deliveryDetailId = add(dmpDeliveryDetailInfoEntity);

@@ -316,7 +316,7 @@ public enum RocketMqTagEnum {
     /**
      * 订单审核通过后同步dmp
      */
-    APPROVED_ORDER_TO_DMP_TAG(2010, RocketMqTagEnum.SYNC_DMP,"approved_order_to_dmp_tag"),
+    APPROVED_RETURN_ORDER_TO_DMP_TAG(2010, RocketMqTagEnum.SYNC_DMP,"approved_return_order_to_dmp_tag"),
     //-----------------------------plm数据更新编码从3001开始---------------------------------------------------------------
     /**
      * 修改上市时间

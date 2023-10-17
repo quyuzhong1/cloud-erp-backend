@@ -490,7 +490,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         resultMap.put("operate", operate);
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_ORDER_TO_DMP_TOPIC, RocketMqTagEnum.APPROVED_ORDER_TO_DMP_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
+            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_RETURN_ORDER_TO_DMP_TOPIC, RocketMqTagEnum.APPROVED_RETURN_ORDER_TO_DMP_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 log.error("soReturn.syncDataToDmp 推送MQ失败 :" + resultMap.get("id"));
             }
@@ -508,8 +508,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     public String syncOrderToDmp(SoReturnEntity entity, String syncOperate) {
         DmpPullTaskFeignDTO dto = new DmpPullTaskFeignDTO()
                 .setMqData(JSON.toJSONString(entity))
-                .setMqTopic(RocketMqTopic.SYNC_ORDER_TO_DMP_TOPIC)
-                .setMqTag(RocketMqTagEnum.APPROVED_ORDER_TO_DMP_TAG.getName())
+                .setMqTopic(RocketMqTopic.SYNC_RETURN_ORDER_TO_DMP_TOPIC)
+                .setMqTag(RocketMqTagEnum.APPROVED_RETURN_ORDER_TO_DMP_TAG.getName())
                 .setSourceCode(entity.getCode())
                 .setSourceId(entity.getId())
                 .setSourceType(SourceTypeEnum.SO_RETURN.getCode())

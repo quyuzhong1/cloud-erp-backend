@@ -390,7 +390,7 @@ public class SoReturnController extends BaseController {
         resultMap.put("dmpPullTaskId", dmpPullTaskId);
         resultMap.put("code", soInfoEntity.getCode());
         resultMap.put("operate", operate);
-        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.SYNC_ORDER_TO_DMP_TOPIC, RocketMqTagEnum.APPROVED_ORDER_TO_DMP_TAG.getName(),
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.SYNC_RETURN_ORDER_TO_DMP_TOPIC, RocketMqTagEnum.APPROVED_RETURN_ORDER_TO_DMP_TAG.getName(),
                 resultMap, id);
         if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
             return success();

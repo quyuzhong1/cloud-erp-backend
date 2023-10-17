@@ -208,7 +208,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 //订单入库
                 dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);
                 //更新推送状态
-                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), null);
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
             } catch (Exception e) {
                 log.error("处理B2B审核订单广播异常：{}", e.getMessage());
             }
@@ -217,7 +217,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
             try {
                 dmpOrderInfoService.removeOrderByCode(Collections.singletonList(String.valueOf(code)));
                 //更新推送状态
-                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), null);
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
             } catch (Exception e) {
                 log.error("处理B2B审核订单广播异常：{}", e.getMessage());
             }
@@ -235,7 +235,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     }
 
     @Override
-    public void syncOmsOutStockToDmp(Map<String, Object> resultMap) {
+    public void syncWmsOutStockToDmp(Map<String, Object> resultMap) {
         //检查推送状态是否已完成，已完成则直接返回
         Object dmpPullTaskId = resultMap.getOrDefault("dmpPullTaskId", null);
         Object id = resultMap.getOrDefault("id", null);
@@ -261,20 +261,20 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 //订单入库
                 dmpDeliveryDetailInfoService.checkOrder(dmpOrderInfoEntity);
                 //更新推送状态
-                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), null);
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
             } catch (Exception e) {
                 log.error("处理B2B出库订单广播异常：{}", e.getMessage());
-                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.FAILED_SYNC.getCode(), null);
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.FAILED_SYNC.getCode(), e.getMessage());
             }
         } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_DISAPPROVE.getCode())) {
             //反审核
             try {
                 dmpDeliveryDetailInfoService.removeDeliveryByCodes(Collections.singletonList(String.valueOf(code)));
                 //更新推送状态
-                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), null);
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
             } catch (Exception e) {
                 log.error("处理B2B出库订单广播异常：{}", e.getMessage());
-                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.FAILED_SYNC.getCode(), null);
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.FAILED_SYNC.getCode(), e.getMessage());
             }
 
         } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_INVALID.getCode())) {
@@ -316,7 +316,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
                 //订单入库
                 dmpReturnOrderInfoService.checkOrder(dmpReturnOrderInfoEntity);
                 //更新推送状态
-                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), null);
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
             } catch (Exception e) {
                 log.error("处理B2B退货入库订单广播异常：{}", e.getMessage());
                 this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.FAILED_SYNC.getCode(), e.getMessage());
@@ -326,10 +326,10 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
             try {
                 dmpReturnOrderInfoService.removeReturnOrderByCode(Collections.singletonList(String.valueOf(code)));
                 //更新推送状态
-                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), null);
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
             } catch (Exception e) {
                 log.error("处理B2B退货入库订单广播异常：{}", e.getMessage());
-                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.FAILED_SYNC.getCode(), null);
+                this.updateSyncInfo(String.valueOf(dmpPullTaskId), SyncStatusEnum.FAILED_SYNC.getCode(), e.getMessage());
             }
 
         } else if (Objects.equals(String.valueOf(operate), SyncOperateEnum.OPERATE_INVALID.getCode())) {

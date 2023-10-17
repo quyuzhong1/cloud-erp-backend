@@ -67,7 +67,7 @@ public interface DmpPullTaskService extends SuperService<DmpPullTaskEntity> {
      *
      * @param resultMap
      */
-    void syncOmsOutStockToDmp(Map<String, Object> resultMap);
+    void syncWmsOutStockToDmp(Map<String, Object> resultMap);
     /**
      * 处理oms推送入库订单审核消息
      *
