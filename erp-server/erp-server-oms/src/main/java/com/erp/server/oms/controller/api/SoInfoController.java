@@ -23,6 +23,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -437,6 +438,8 @@ public class SoInfoController extends BaseController {
      * @param dto
      * @param response
      * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-10-12 14:39
      */
     @PostMapping("/exportSoDomesticPI")
     public ApiResult exportSoDomesticPI(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
@@ -531,8 +534,6 @@ public class SoInfoController extends BaseController {
      *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
-     * @Author Luo_WG
-     * @Date 2023/7/13 10:44
      **/
     @PostMapping("/print")
     public ApiResult<List<SoInfoDTO.PrintDTO>> print(@RequestBody BaseIdsDTO.IdsDTO dto) {
@@ -541,20 +542,16 @@ public class SoInfoController extends BaseController {
     }
 
     /**
-     * 临时接口：添加折扣额 修复历史的数据销售额数据
+     * 临时接口：修改未税单价
      *
-     * @param
-     * @return com.common.core.controller.vo.ApiResult
-     * @author yl
-     * @date 2023-10-13 9:06
-     */
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
+     * @Author Luo_WG
+     * @Date 2023/7/13 10:44
+     **/
     @PostMapping("/temporaryUpdate")
     public ApiResult temporaryUpdate() {
-        List<String> errorList = soInfoService.temporaryUpdate();
-        if (CollectionUtils.isNotEmpty(errorList)) {
-            return ApiResult.error(1,"以下订单出错: "+errorList.stream().collect(Collectors.joining(",")));
-        }
-        return ApiResult.success();
+        Boolean aBoolean = soInfoService.temporaryUpdate();
+        return aBoolean ? success() : failure();
     }
 
     /**
@@ -580,6 +577,32 @@ public class SoInfoController extends BaseController {
     @PostMapping("/calSkuCostProfit")
     public ApiResult<List<SoDetailDTO.CalDetailResultDTO>> calSkuCostProfit(@RequestBody @Validated SoInfoDTO.CalCostProfitDTO calCostProfitDTO) {
         return success(soInfoService.calSkuCostProfit(calCostProfitDTO));
+    }
+
+
+    /**
+     * 下载销售订单导入模板
+     *
+     * @return
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        soInfoService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入销售订单
+     *
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-10-17 10:28
+     */
+    @PostMapping("/importExcel")
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = soInfoService.importExcel(excelFile, response);
+        return result?success():failure();
     }
 
 }

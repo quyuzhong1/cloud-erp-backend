@@ -1296,6 +1296,11 @@ public class SoDetailDTO implements Serializable {
         private BigDecimal taxPrice;
 
         /**
+         * 含税单价本位币
+         */
+        private BigDecimal taxPriceLc;
+
+        /**
          * 是否赠品
          */
         private Boolean isGift;

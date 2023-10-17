@@ -783,6 +783,15 @@ public enum ApiError implements Serializable {
 
 
 
+    ERROR_INVENTORY_CLOSED(99093, "库存已关账不允许炒作【{}】之前单据"),
+    ERROR_MACHINE_WAREHOUSE_ORG_DIFF(99094, "加工单子件【{}】仓库【{}】不属于库存组织【{}】"),
+
+
+
+
+
+
+
 
     /**
      * OMS 错误
@@ -908,8 +917,6 @@ public enum ApiError implements Serializable {
 
 
 
-
-    ERROR_SO_RECEIVE_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误"),

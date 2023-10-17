@@ -135,4 +135,11 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return
      */
     List<FirstPlaceOrderDTO> listFirstPlaceOrderDate(@Param("ids") List<String> ids);
+
+    /**
+     * 获取首批采购日期
+     * @param ids
+     * @return
+     */
+    List<FirstPlaceOrderDTO> listFirstPlaceOrderDate(@Param("ids") List<String> ids);
 }

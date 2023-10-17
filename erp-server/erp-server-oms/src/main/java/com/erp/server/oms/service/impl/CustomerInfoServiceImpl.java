@@ -1024,7 +1024,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     }
 
     @Override
-    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
         return this.lambdaUpdate()
                 .eq(CustomerInfoEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeId), CustomerInfoEntity::getSyncKingdeeId, syncKingdeeId)
@@ -1394,6 +1394,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         queryWrapper.eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public CustomerInfoEntity getByName(String customerName) {
+
+        return this.lambdaQuery().eq(CustomerInfoEntity::getName,customerName).last("LIMIT 1").one();
     }
 
     /**
