@@ -71,6 +71,13 @@ public class StocktakingProfitLossDTO implements Serializable {
          */
         private LocalDate billDate;
 
+        /**
+         * 库存组织
+         */
+        private String inventoryOrgId;
+
+        private List<String> userIdList;
+
         private List<StocktakingProfitLossDetailDTO.AddDTO> detailList;
 
     }
@@ -238,7 +245,6 @@ public class StocktakingProfitLossDTO implements Serializable {
     }
 
 
-
     /**
      * 导出数据
      */
@@ -356,7 +362,6 @@ public class StocktakingProfitLossDTO implements Serializable {
         private Integer diffQty;
 
     }
-
 
 
     /**
