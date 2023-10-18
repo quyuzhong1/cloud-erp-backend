@@ -268,6 +268,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     public Boolean addWarehouseLocation(PdaWarehouseLocationDTO.WarehouseLocationAddDTO dto) {
         List<String> areaIdList = dto.getAreaIdList();
         List<WarehouseLocationEntity> locationEntities = this.listByIds(areaIdList);
+
         for (WarehouseLocationEntity locationEntity : locationEntities) {
             // 新增仓位
             WarehouseLocationEntity warehouseLocationEntity = new WarehouseLocationEntity();
@@ -277,7 +278,10 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             warehouseLocationEntity.setName(dto.getWarehouseLocation());
             warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
             warehouseLocationEntity.setParentId(locationEntity.getId());
-            this.save(warehouseLocationEntity);
+            if (!locationEntity.getCode().equals(dto.getWarehouseLocation())) {
+                this.save(warehouseLocationEntity);
+            }
+
         }
         return Boolean.TRUE;
     }
