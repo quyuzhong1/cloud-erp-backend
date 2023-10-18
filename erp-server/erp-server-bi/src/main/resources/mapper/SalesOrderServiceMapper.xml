@@ -4671,8 +4671,8 @@
         </if>
         FROM
         dmp_order_item i
-        LEFT JOIN dmp_order_info o AND o.source_platform = 'B2B'
-        ON i.order_id = o.id
+        LEFT JOIN dmp_order_info o
+        ON i.order_id = o.id AND o.source_platform = 'B2B'
         LEFT JOIN product_detail pd
         ON pd.sku_no=i.sku_no
         LEFT JOIN product_info pi
