@@ -71,6 +71,11 @@ public class ShopSysUserAuthDTO implements Serializable {
          * 店铺名称
          */
         private String shopName;
+
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
     }
 
     /**
