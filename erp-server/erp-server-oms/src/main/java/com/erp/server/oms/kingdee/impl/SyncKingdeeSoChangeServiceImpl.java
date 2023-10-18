@@ -9,10 +9,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.SoChangeDetailEntity;
-import com.erp.model.oms.entity.SoChangeEntity;
-import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
@@ -99,7 +96,8 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         }
         String soId = entity.getSoId();
         SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
-        if (Objects.isNull(soInfo)) {
+        SoInfoEntity soInfoEntity = soInfoService.getById(soId);
+        if (Objects.isNull(soInfo) || Objects.isNull(soInfoEntity)) {
             return;
         }
         //更新同步状态为待同步
@@ -145,6 +143,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         //销售订单号
         resultMap.put("soCode", soInfo.getCode());
         resultMap.put("soId", soInfo.getId());
+        resultMap.put("discountAmount", soInfoEntity.getDiscountAmount());
         //单据类型
         resultMap.put("orderType", "XSDDBGD01_SYS");
         //单据日期
@@ -281,22 +280,22 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             String result = dmpTaskFeign.createkingdeeSoChange(map);
             log.info("json======{}", result);
             JSONObject json = JSONUtil.parseObj(result);
-            Boolean isSuccess = (Boolean) json.getOrDefault("IsSuccess",Boolean.FALSE);
+            Boolean isSuccess = (Boolean) json.getOrDefault("IsSuccess", Boolean.FALSE);
             List<SoChangeDetailEntity> updateList = new ArrayList<>(10);
             //如果成功了
             if (isSuccess) {
-                List<JSONObject> dataList = (List<JSONObject>) json.getOrDefault("Datas",new ArrayList<>());
+                List<JSONObject> dataList = (List<JSONObject>) json.getOrDefault("Datas", new ArrayList<>());
                 if (CollectionUtils.isNotEmpty(dataList)) {
                     JSONObject dataJson = dataList.get(0);
                     String syncKingdeeId = dataJson.get("FID").toString();
                     entity.setSyncKingdeeId(syncKingdeeId);
-                    List<JSONObject> detailList = (List<JSONObject>) dataJson.getOrDefault("SaleOrderEntry",new ArrayList<>());
+                    List<JSONObject> detailList = (List<JSONObject>) dataJson.getOrDefault("SaleOrderEntry", new ArrayList<>());
                     for (int i = 0; i < detailList.size(); i++) {
                         if (soDetailList.size() >= detailList.size()) {
                             JSONObject detailJson = detailList.get(i);
                             SoDetailEntity soDetail = soDetailList.get(i);
                             String soDetailId = soDetail.getId();
-                            String KingdeeDetailId = String.valueOf(detailJson.getOrDefault("FEntryID",""));
+                            String KingdeeDetailId = String.valueOf(detailJson.getOrDefault("FEntryID", ""));
                             SoChangeDetailEntity soChangeDetail = details.stream().filter(d -> d.getSoDetailId().equals(soDetailId)).
                                     findFirst().orElse(null);
                             if (soChangeDetail != null) {

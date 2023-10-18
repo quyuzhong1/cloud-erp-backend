@@ -582,15 +582,6 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         if (CollectionUtils.isEmpty(saveOrUpdateList)) {
             return;
         }
-        //订单详情id
-        List<String> soDetailIdList = saveOrUpdateList.stream().filter(s -> StringUtils.isNotBlank(s.getId())).
-                map(SoDetailEntity::getId).collect(Collectors.toList());
-        //销售订单详情
-        List<SoDetailEntity> OldSoDetailList = CollectionUtils.isNotEmpty(soDetailIdList) ? soDetailService.listByIds(soDetailIdList) : Collections.emptyList();
-
-        BigDecimal bigDecimal100 = MathUtil.BigDecimal_100;
-
-        BigDecimal bigDecimal1 = MathUtil.BigDecimal_1;
         //根据销售订单分组
         Map<String, List<SoDetailEntity>> map = saveOrUpdateList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
         for (Map.Entry<String, List<SoDetailEntity>> item : map.entrySet()) {
@@ -603,72 +594,10 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             List<SoDetailEntity> soDetailList = item.getValue();
             //是否含税
             Boolean isTax = soInfo.getIsTax();
-            for (SoDetailEntity soDetail : soDetailList) {
-                //是否赠品
-                Boolean isGift = soDetail.getIsGift();
-                BigDecimal price = soDetail.getPrice();
-                //当是赠品的时候  单价为0
-                if (Objects.nonNull(isGift) && isGift) {
-                    price = BigDecimal.ZERO;
-                }
-                soDetail.setPrice(price);
+            //折扣总额
+            BigDecimal discountAmount = soInfo.getDiscountAmount();
 
-                //税率
-                BigDecimal taxRate = Objects.isNull(soDetail.getTaxRate()) ? BigDecimal.ZERO : soDetail.getTaxRate();
-                BigDecimal flagTaxRate = MathUtil.divide(taxRate, bigDecimal100);
-                //含税单价=销售单价*（税率+1）
-                BigDecimal multiplyTax = MathUtil.add(flagTaxRate, bigDecimal1);
-                //含税单价
-                BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
-                soDetail.setTaxPrice(taxPrice);
-                String id = soDetail.getId();
-                //折扣额
-                BigDecimal discountAmount = BigDecimal.ZERO;
-                //现在的含税金额
-                BigDecimal taxAmountBefore = BigDecimal.ZERO;
-
-                //数量
-                Integer qty = soDetail.getQty();
-                //表示修改
-                if (StringUtils.isNotBlank(id)) {
-                    //旧销售订单
-                    SoDetailEntity oldSoDetail = OldSoDetailList.stream().filter(d -> id.equals(d.getId())).findFirst().orElse(null);
-                    if (Objects.nonNull(oldSoDetail)) {
-                        //旧折扣额
-                        BigDecimal oldDiscountAmount = oldSoDetail.getDiscountAmount();
-                        BigDecimal oldTaxAmountBefore = oldSoDetail.getTaxAmountBefore();
-                        //现在的含税金额
-                        taxAmountBefore = MathUtil.multiply(taxPrice, qty);
-
-                        BigDecimal divFlg = MathUtil.multiply(taxAmountBefore, oldDiscountAmount, 4);
-                        //折扣额=（含税单价*数量*原折扣额）/(原含税单价*原数量)
-                        discountAmount = MathUtil.divide(divFlg, oldTaxAmountBefore, 2, BigDecimal.ROUND_DOWN);
-                    }
-
-                }
-                soDetail.setTaxAmountBefore(taxAmountBefore);
-                soDetail.setDiscountAmount(discountAmount);
-
-                //税额
-                BigDecimal tax = BigDecimal.ZERO;
-                //含税 不含税就为0
-                if (isTax) {
-                    tax = SoUtils.getIncludeTax(taxAmountBefore, discountAmount, taxRate);
-                }
-                soDetail.setTax(tax);
-                // 价税合计（折扣后） 含税单价*数量-折扣额
-                BigDecimal taxAmount = MathUtil.subtract(taxAmountBefore, discountAmount);
-                soDetail.setTaxAmount(taxAmount);
-
-                //减的值
-                BigDecimal subNumber = MathUtil.add(tax, discountAmount);
-                // 销售金额（折扣后）=价税合计-折扣额-税额 ps:不含税的时候 含税金额=价税合计
-                BigDecimal amount = MathUtil.subtract(taxAmountBefore, subNumber);
-                soDetail.setAmount(amount);
-
-            }
-
-
+            SoUtils.handleDetailAmount(isTax,discountAmount,soDetailList);
         }
 
 
@@ -680,6 +609,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         }
         return this.lambdaQuery().in(SoChangeDetailEntity::getMainId, mainIds).list();
     }
+
 
     /**
      * 检查对应的变更类型
