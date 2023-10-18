@@ -1593,10 +1593,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 addDetailDTO.setRemark(detailEntity.getRemark());
                 addDetailDTO.setCurrency(detailEntity.getCurrency());
                 addDetailDTO.setCurrencySymbol(detailEntity.getCurrencySymbol());
-                //退货补货下推采购订单默认为赠品
-                if (ReturnModeEnum.REPLENISHMENT.getCode().equals(entity.getReturnMode())) {
-                    addDetailDTO.setIsGift(Boolean.TRUE);
-                }
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setDetails(addDetailList);
