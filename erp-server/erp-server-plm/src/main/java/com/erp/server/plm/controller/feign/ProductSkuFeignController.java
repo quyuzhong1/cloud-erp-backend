@@ -359,6 +359,9 @@ public class ProductSkuFeignController {
      **/
     @PostMapping("/listProductPurchaseBySkuId")
     public List<ProductPurchaseEntity> listProductPurchaseBySkuId(@RequestBody List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
         return productPurchaseService.listBySkuIds(skuIds);
     }
 
@@ -369,6 +372,9 @@ public class ProductSkuFeignController {
      **/
     @PostMapping("/listProductSaleBySkuId")
     public List<ProductSaleEntity> listProductSaleBySkuId(@RequestBody List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
         return productSaleService.listBySkuIds(skuIds);
     }
 }
