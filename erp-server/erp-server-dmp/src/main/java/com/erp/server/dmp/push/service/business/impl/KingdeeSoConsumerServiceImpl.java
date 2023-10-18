@@ -1,6 +1,7 @@
 package com.erp.server.dmp.push.service.business.impl;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ErpServerModuleEnum;
@@ -20,6 +21,7 @@ import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
+import com.kingdee.bos.webapi.entity.SaveResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,36 +83,39 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
         try {
             model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
         } catch (Exception e) {
-            //更新数据
-            Boolean flag = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
-            if (!flag) {
+            //未查找到数据，新增数据
+            SaveResult save;
+            try {
+                JSONObject firstJson = json;
+                firstJson.set("FSaleOrderFinance.FAllDisCount", BigDecimal.ZERO);
+                SaveParam paramFirst = new SaveParam(firstJson);
+                save = apiUtils.save(paramFirst);
+            } catch (Exception ex) {
+                //新增失败时添加日志及定时任务
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(json), JSONUtil.toJsonStr(ex), type, ApiSendStatusEnum.FAILURE.getCode());
                 sendWarnMsg(businessId);
+                return;
             }
+            //新增成功后编辑折扣额
+            String id = save.getResult().getId();
+            //主单据id
+            KingdeeUtils.makeFieldJson(json, "FID", ".", id);
+            String allKey = "FSaleOrderFinance.FAllDisCount";
+            ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.split(",")).collect(Collectors.toList());
+            param.setNeedUpDateFields(apiFieldList);
+            //更新数据
+            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
             return;
+
         }
 
         //查找到数据后，判断其审核状态
         String documentStatus = (String) model.get("DocumentStatus");
         String id = String.valueOf(model.get("Id"));
-
-        KingdeeUtils.makeFieldJson(json,"FID",".",id);
-        StringBuffer allUpdateKey = FastJsonUtil.getAllKey(json);
-        ArrayList<String> apiUpdateFieldList = (ArrayList)Arrays.stream(allUpdateKey.toString().split(",")).collect(Collectors.toList());
-        param.setNeedUpDateFields(apiUpdateFieldList);
-
-        //整单折扣
-     //   BigDecimal discountAmount = (BigDecimal) map.getOrDefault("discountAmount", BigDecimal.ZERO);
-        //更新数据
-        Boolean flag = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
-        if (!flag) {
-            sendWarnMsg(businessId);
-        }
-
-
+        Boolean flag = Boolean.FALSE;
         //操作项
         String operate = (String) map.get("operate");
         if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-
             //作废
             kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
             return;
