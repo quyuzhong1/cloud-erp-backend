@@ -21,11 +21,13 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
+import com.erp.model.scm.dto.excel.PurchasePriceChangeExportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
@@ -48,6 +50,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -738,6 +741,36 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         purchasePriceChangeDetailService.updateDetailRemark(ids,remark);
         return Boolean.TRUE;
     }
+
+    @Override
+    public void export(PurchasePriceChangeDTO.ExportDTO dto, HttpServletResponse response) {
+
+        //搜索类型
+        String searchType = dto.getSearchType();
+
+        List<String> statusList = new ArrayList<>(1);
+        //待我审核
+        if (SearchType.WAIT_APPROVE.equals(searchType)) {
+            statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+            //需要审核的业务ids
+            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
+            if (CollectionUtils.isEmpty(businessIds)) {
+                throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            }
+            dto.setIdList(businessIds);
+        }
+        //获取导出数据
+        List<PurchasePriceChangeDTO.PagingViewDTO> viewList = baseMapper.listExport(dto, statusList);
+        List<PurchasePriceChangeExportExcelDTO> resultList = new ArrayList<>(viewList.size());
+
+        String fileName = "采购调价数据";
+        try {
+            ExcelUtil.export(fileName, "采购调价数据", resultList, PurchasePriceChangeExportExcelDTO.class, response);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
+
     /**
      * 修改状态
      *

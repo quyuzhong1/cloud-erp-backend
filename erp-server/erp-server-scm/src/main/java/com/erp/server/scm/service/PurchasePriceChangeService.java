@@ -8,6 +8,7 @@ import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -143,4 +144,12 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @return Boolean
      */
     Boolean updateDetailRemark(List<String> ids, String remark);
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/10/18 16:30
+     * @param dto
+     * @param response
+     */
+    void export(PurchasePriceChangeDTO.ExportDTO dto, HttpServletResponse response);
 }
