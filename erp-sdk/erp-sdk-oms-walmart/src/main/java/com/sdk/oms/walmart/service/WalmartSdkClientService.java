@@ -36,7 +36,7 @@ public class WalmartSdkClientService {
         String accessToken = "eyJraWQiOiI4OTljZWU0ZS00NTAwLTRjYTItOTNmMC0wYzExMDZmOWZlNWEiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiZGlyIn0..wRtEqEa_aYmM6b6j.zF5tkLMqHZipx9bdnmN1HwHGii7kThcYgiEAJfFWKFAwSPXlUNymw-JLeK2_sC_Ye9oqKMXcumzcrzfO1b4_JxqA7LOlB2HSSO0fkYGrdSIpmLSj9KiibJWwnoUyRzKoZQdwRzWeSswW-oDqo4sFB2JbCTfB9xMURP-52N42w7ffgr-GpxNx6cXTdvlSSxGaARpYdi1YJARaRbNuwE7q1qHBUCnswsF7eeQ1hlM7LJMGUmvFyI7q0iK2BmblzPRGKz18hdMqFUzVosigbGYY_3KLHIgguwmA9D3W0zRMmUttbiRzHLPTJI1hiF_RK2uLwekWo8Jqw0dFuezyfUYcejB-7DeSBsNZ1dbxbI3oYFSMMvV9SylCU-Ba9BiR4KIe8SWy3i9W1jFns-t2nbVdsES_DpcPsd0eYPnqQDErOgXMv6e_OXHXss_89l2HlAYr0zgDJNcguedXVMR7P8unbQNozYtz6XuyBLLfA1WR3l_z0uKv92V3XxE6lCKXwd8wg2jCzxtWVc6rdtyBJbByRMsFU-kPMb804qZH-y3fprSbjgo_eKzC1w7rXavdw4Q-jp_EXDKyu_JS_L1UT1pTOyfNQMBfku0xl-dA2CdHmjYueNPaJdAo3_G89op9MOwB-xVV8lBkFKdusRZgnuRAuPSLTnymVRcvInIjABCzNsExLo-ed5Y1YAsO4SSm.ni2ViUuzj6teOJfP88c43A";
         WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
 //        WalmartTokenDTO s = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
-        String s = walmartSdkClientService.sendWalmartGet(baseUrl, clientId, clientSecret, accessToken);
+        String s = walmartSdkClientService.sendWalmartGet(baseUrl, clientId, clientSecret, accessToken, null);
         System.out.println(s);
     }
 
@@ -76,9 +76,10 @@ public class WalmartSdkClientService {
      * @param clientId 账户id
      * @param clientSecret 账户秘钥
      * @param accessToken 短令牌
+     * @param paramMap 查询参数
      * @return java.lang.String
      */
-    public String sendWalmartGet(String baseUrl, String clientId,String clientSecret, String accessToken) {
+    public String sendWalmartGet(String baseUrl, String clientId,String clientSecret, String accessToken, HashMap<String, Object> paramMap) {
         Map<String, String> headers = new HashMap<String, String>();
         String consumerId = UUID.randomUUID().toString();
         headers.put("Content-Type", WalmartStaticKey.accept_json);
@@ -87,7 +88,7 @@ public class WalmartSdkClientService {
         headers.put("Accept", WalmartStaticKey.accept_json);
         headers.put("Authorization", "Basic "+Base64.encodeBase64String(getclient(clientId, clientSecret).getBytes()));
         headers.put("WM_SEC.ACCESS_TOKEN", accessToken);
-        String bodyStr = OkHttpUtils.doGet(baseUrl, null, headers);
+        String bodyStr = OkHttpUtils.doGet(baseUrl, paramMap, headers);
         return bodyStr;
     }
 

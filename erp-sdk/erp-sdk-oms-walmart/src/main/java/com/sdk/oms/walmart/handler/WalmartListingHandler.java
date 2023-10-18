@@ -16,6 +16,7 @@ import com.sdk.oms.walmart.api.WalmartStaticKey;
 import com.sdk.oms.walmart.dto.PlatformWalmartListingDTO;
 import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
 import com.sdk.oms.walmart.dto.WalmartTokenDTO;
+import com.sdk.oms.walmart.dto.walmart.ItemResponseBean;
 import com.sdk.oms.walmart.dto.walmart.WalmartItemDTO;
 import com.sdk.oms.walmart.service.WalmartSdkClientService;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -57,13 +59,9 @@ public class WalmartListingHandler extends AbstractProductHandler<PlatformWalmar
         WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(baseUrl, tokenDTO.getClientId(), tokenDTO.getClientSecret());
 
         baseUrl = WalmartStaticKey.baseUrl + data.getApiCode();
-        //拉取数据
-        String date = walmartSdkClientService.sendWalmartGet(baseUrl, tokenDTO.getClientId(), tokenDTO.getClientSecret(), walmartTokenDTO.getAccessToken());
-        WalmartItemDTO walmartItemDTO = JSONUtil.toBean(date, WalmartItemDTO.class);
 
-        if (CollectionUtils.isEmpty(walmartItemDTO.getItemResponse())) {
-            return Collections.emptyList();
-        }
+        List<ItemResponseBean> itemResponseList = new ArrayList<>();
+
         //请求参数
         HashMap<String, Object> paramMap = new HashMap<>();
         //每次最多获取50条
@@ -71,15 +69,27 @@ public class WalmartListingHandler extends AbstractProductHandler<PlatformWalmar
         //当前页数
         Integer pageNo = 0;
         //总页数
-        Integer pageCount = (walmartItemDTO.getTotalItems() + pageSize - 1) / pageSize;
+        Integer pageCount = 1;
 
-
-        paramMap.put("pageSize", pageSize);
-
+        paramMap.put("nextCursor", pageNo);
+        paramMap.put("limit", pageSize);
         while(pageNo < pageCount){
 
+            //拉取数据
+            String date = walmartSdkClientService.sendWalmartGet(baseUrl, tokenDTO.getClientId(), tokenDTO.getClientSecret(), walmartTokenDTO.getAccessToken(), paramMap);
+
+            WalmartItemDTO walmartItemDTO = JSONUtil.toBean(date, WalmartItemDTO.class);
+
+            pageCount = (walmartItemDTO.getTotalItems() + pageSize - 1) / pageSize;
+
+            pageNo++;
+
+            itemResponseList.addAll(walmartItemDTO.getItemResponse());
         }
-        walmartItemDTO.getTotalItems();
+
+        if (CollectionUtils.isEmpty(itemResponseList)) {
+            return Collections.emptyList();
+        }
 
 /*        // 返回下载源数据
         return products.values().stream()
