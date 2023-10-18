@@ -1,8 +1,8 @@
 package com.erp.server.dmp.service.impl;
 
 import com.erp.model.dmp.dto.DmpSyncKingdeeDTO;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.service.DmpSyncFeignService;
-import com.erp.server.dmp.utils.KingdeeApiUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
