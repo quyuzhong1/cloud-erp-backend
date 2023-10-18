@@ -763,6 +763,20 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceChangeDTO.PagingViewDTO> viewList = baseMapper.listExport(dto, statusList);
         List<PurchasePriceChangeExportExcelDTO> resultList = new ArrayList<>(viewList.size());
 
+        List<String> skuIds = viewList.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        for (PurchasePriceChangeDTO.PagingViewDTO item : viewList) {
+            PurchasePriceChangeExportExcelDTO excelDTO = new PurchasePriceChangeExportExcelDTO();
+            BeanMapper.copy(item, excelDTO);
+            SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
+            excelDTO.setProductName(skuVO.getSkuName());
+            ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
+            excelDTO.setApproveStatusName(approveStatusEnum.getName());
+            Integer minQty = item.getMinQty();
+            Integer maxQty = item.getMaxQty();
+            excelDTO.setQtySection(minQty + "-" + maxQty);
+            resultList.add(excelDTO);
+        }
         String fileName = "采购调价数据";
         try {
             ExcelUtil.export(fileName, "采购调价数据", resultList, PurchasePriceChangeExportExcelDTO.class, response);
