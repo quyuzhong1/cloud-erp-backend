@@ -452,4 +452,14 @@ public class PurchasePriceChangeDTO implements Serializable {
          */
         private List<String> createUserIdList;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO  extends PagingParamDTO{
+
+        /**
+         * 主键id集合
+         */
+        private List<String> ids;
+    }
 }
