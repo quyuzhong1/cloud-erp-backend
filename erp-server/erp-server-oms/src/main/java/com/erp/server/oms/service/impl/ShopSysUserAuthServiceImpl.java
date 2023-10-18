@@ -153,23 +153,19 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                 if (CollectionUtils.isEmpty(shopInfoList)) {
                     continue;
                 }
-                //非禁用店铺
-                List<ShopInfoEntity> unDisableList = shopInfoList.stream().filter(obj -> !obj.getDisabled()).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(unDisableList)) {
-                    continue;
-                }
                 for (ShopInfoEntity shopInfoEntity : shopInfoList) {
                     ShopSysUserAuthDTO.ViewShopDTO viewShopDTO = new ShopSysUserAuthDTO.ViewShopDTO();
                     viewShopDTO.setShopId(shopInfoEntity.getId());
                     viewShopDTO.setShopName(shopInfoEntity.getName());
                     viewShopDTO.setDictPlatform(shopInfoEntity.getDictPlatform());
+                    viewShopDTO.setDisabled(shopInfoEntity.getDisabled());
                     detailList.add(viewShopDTO);
                 }
             } else {
                 //选择指定
                 for (ShopSysUserAuthEntity shopSysUserAuthEntity : value) {
                     //店铺信息
-                    ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(shopSysUserAuthEntity.getShopId()) && !obj.getDisabled()).findFirst().orElse(null);
+                    ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(shopSysUserAuthEntity.getShopId())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(shopInfoEntity)) {
                         throw new ServiceException(ApiError.ERROR_92058);
                     }
@@ -177,6 +173,7 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                     viewShopDTO.setShopId(shopSysUserAuthEntity.getShopId());
                     viewShopDTO.setShopName(shopInfoEntity.getName());
                     viewShopDTO.setDictPlatform(shopInfoEntity.getDictPlatform());
+                    viewShopDTO.setDisabled(shopInfoEntity.getDisabled());
                     detailList.add(viewShopDTO);
                 }
             }
