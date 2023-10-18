@@ -1,5 +1,6 @@
 package com.sdk.oms.walmart.handler;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
@@ -15,6 +16,7 @@ import com.sdk.oms.walmart.api.WalmartStaticKey;
 import com.sdk.oms.walmart.dto.PlatformWalmartListingDTO;
 import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
 import com.sdk.oms.walmart.dto.WalmartTokenDTO;
+import com.sdk.oms.walmart.dto.walmart.WalmartItemDTO;
 import com.sdk.oms.walmart.service.WalmartSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -22,6 +24,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,17 +59,32 @@ public class WalmartListingHandler extends AbstractProductHandler<PlatformWalmar
         baseUrl = WalmartStaticKey.baseUrl + data.getApiCode();
         //拉取数据
         String date = walmartSdkClientService.sendWalmartGet(baseUrl, tokenDTO.getClientId(), tokenDTO.getClientSecret(), walmartTokenDTO.getAccessToken());
-/*
-        WalmartTokenDTO tokenDTO = JSONUtil.toBean(date, WalmartTokenDTO.class);
+        WalmartItemDTO walmartItemDTO = JSONUtil.toBean(date, WalmartItemDTO.class);
 
-        if (CollectionUtils.isEmpty(products.values())) {
+        if (CollectionUtils.isEmpty(walmartItemDTO.getItemResponse())) {
             return Collections.emptyList();
         }
-        // 返回下载源数据
+        //请求参数
+        HashMap<String, Object> paramMap = new HashMap<>();
+        //每次最多获取50条
+        Integer pageSize = 50;
+        //当前页数
+        Integer pageNo = 0;
+        //总页数
+        Integer pageCount = (walmartItemDTO.getTotalItems() + pageSize - 1) / pageSize;
+
+
+        paramMap.put("pageSize", pageSize);
+
+        while(pageNo < pageCount){
+
+        }
+        walmartItemDTO.getTotalItems();
+
+/*        // 返回下载源数据
         return products.values().stream()
                 .map(e -> new PlatformShopifyListingDTO(e, data))
-                .collect(Collectors.toList());
-        */
+                .collect(Collectors.toList());*/
         return null;
     }
 
