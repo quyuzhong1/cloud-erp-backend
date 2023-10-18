@@ -401,7 +401,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //删除操作日志
         moduleOperateLogService.removeByBusinessIds(ids);
         //采购订单删除
-        list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+        list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         return Boolean.TRUE;
     }
 
