@@ -394,6 +394,16 @@ public class ShopDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class PlatformDTO {
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class ListTreeDTO {
 
         /**

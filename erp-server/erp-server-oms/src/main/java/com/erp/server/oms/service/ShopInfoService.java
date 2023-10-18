@@ -143,4 +143,11 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return
      */
     Boolean checkShopIsAuthorize(String id);
+    /**
+     * @description: 获取已授权店铺
+     * @author Will
+     * @date: 2023/10/18 10:05
+     * @return List<ShopInfoEntity>
+     */
+    List<ShopInfoEntity> listAuth(ShopDTO.PlatformDTO platformDTO);
 }

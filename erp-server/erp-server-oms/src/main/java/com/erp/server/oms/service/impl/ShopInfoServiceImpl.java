@@ -13,8 +13,8 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -25,6 +25,7 @@ import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.ShopDTO;
+import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopAuthEntity;
@@ -32,17 +33,13 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.DictBasicValueEnum;
-import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.ShopInfoMapper;
-import com.erp.server.oms.service.CustomerB2cService;
-import com.erp.server.oms.service.DictBasicService;
-import com.erp.server.oms.service.ShopAuthService;
-import com.erp.server.oms.service.ShopInfoService;
+import com.erp.server.oms.service.*;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.service.ShopSdkServer;
@@ -95,6 +92,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Resource
     private RedisUtil redisUtil;
 
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private ShopSysUserAuthService shopSysUserAuthService;
 
     /**
      * 添加店铺
@@ -689,6 +691,24 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
         String authStatus = shopInfo.getAuthStatus();
         return AuthStatusEnum.ALREADY.getCode().equals(authStatus);
+    }
+
+    @Override
+    public List<ShopInfoEntity> listAuth(ShopDTO.PlatformDTO platformDTO) {
+        LoginUser userInfo = commonService.getUserInfo();
+        List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
+        if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
+            return Collections.EMPTY_LIST;
+        }
+        ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
+        List<String> shopIdList ;
+        if (StringUtils.isNotBlank(platformDTO.getDictPlatform())) {
+            shopIdList = viewDTO.getDetailList().stream().filter(obj -> obj.getDictPlatform().equals(platformDTO.getDictPlatform())).map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
+        } else {
+            shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
+        }
+
+        return this.listByIds(shopIdList);
     }
 
     /**

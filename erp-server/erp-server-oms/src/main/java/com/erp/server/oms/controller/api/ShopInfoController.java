@@ -114,6 +114,18 @@ public class ShopInfoController extends BaseController {
         List<ShopInfoEntity> list = shopInfoService.list();
         return success(list);
     }
+    
+    /**
+     * 获取已授权店铺
+     * @author Will
+     * @date: 2023/10/18 10:00
+     * @return ApiResult<List<ShopInfoEntity>>
+     */
+    @PostMapping("/listAuth")
+    public ApiResult<List<ShopInfoEntity>> listAuth(@RequestBody ShopDTO.PlatformDTO platformDTO) {
+        List<ShopInfoEntity> list = shopInfoService.listAuth(platformDTO);
+        return success(list);
+    }
 
     /**
      * 获取店铺列表(树状级联)
