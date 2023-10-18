@@ -4673,11 +4673,11 @@
         </if>
         FROM
         dmp_order_item i
-        LEFT JOIN dmp_order_info o
+        LEFT JOIN dmp_order_info o AND o.source_platform = 'B2B'
         ON i.order_id = o.id
-        INNER JOIN product_detail pd
+        LEFT JOIN product_detail pd
         ON pd.sku_no=i.sku_no
-        INNER JOIN product_info pi
+        LEFT JOIN product_info pi
         ON pi.id=pd.product_id AND pi.is_deleted=FALSE
         <include refid="joinCondition"/>
     </select>
