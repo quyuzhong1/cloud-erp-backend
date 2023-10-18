@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -91,7 +92,20 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
         //查找到数据后，判断其审核状态
         String documentStatus = (String) model.get("DocumentStatus");
         String id = String.valueOf(model.get("Id"));
-        Boolean flag = Boolean.FALSE;
+
+        KingdeeUtils.makeFieldJson(json,"FID",".",id);
+        StringBuffer allUpdateKey = FastJsonUtil.getAllKey(json);
+        ArrayList<String> apiUpdateFieldList = (ArrayList)Arrays.stream(allUpdateKey.toString().split(",")).collect(Collectors.toList());
+        param.setNeedUpDateFields(apiUpdateFieldList);
+
+        //整单折扣
+     //   BigDecimal discountAmount = (BigDecimal) map.getOrDefault("discountAmount", BigDecimal.ZERO);
+        //更新数据
+        Boolean flag = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+        if (!flag) {
+            sendWarnMsg(businessId);
+        }
+
 
         //操作项
         String operate = (String) map.get("operate");
@@ -105,7 +119,7 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
             //审核中或已审核则要先反审
             if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
                 flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
-            }else{
+            } else {
                 kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "已经反审核", type, ApiSendStatusEnum.SUCCESS.getCode());
             }
             return;

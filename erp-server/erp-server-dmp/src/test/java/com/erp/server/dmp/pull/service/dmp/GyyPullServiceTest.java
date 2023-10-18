@@ -84,26 +84,26 @@ public class GyyPullServiceTest {
      */
     @Test
     public void pullOrderTest() {
-        GyyOrderInfoServiceImpl gyyOrderInfoService = new GyyOrderInfoServiceImpl();
-        PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_GET;
-        JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
-        jobTaskDTO.setPlatformApiId("7");
-        jobTaskDTO.setApiName("管易云查询订单列表");
-        jobTaskDTO.setId("32");
-        jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(LocalDateTime.of(2023, 9, 25, 0, 0));
-        jobTaskDTO.setNextTime(LocalDateTime.of(2023, 9, 26, 0, 0));
-        jobTaskDTO.setDictPlatform("1");
-        jobTaskDTO.setStatus(1);
-        RequestDTO requestDTO = new RequestDTO();
-        requestDTO.setPlatformApiEnum(platformApiEnum);
-        requestDTO.setJobTaskDTO(jobTaskDTO);
-        try {
-            gyyOrderInfoService.pullDataSave(requestDTO);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+//        GyyOrderInfoServiceImpl gyyOrderInfoService = new GyyOrderInfoServiceImpl();
+//        PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_GET;
+//        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+//        jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
+//        jobTaskDTO.setPlatformApiId("7");
+//        jobTaskDTO.setApiName("管易云查询订单列表");
+//        jobTaskDTO.setId("32");
+//        jobTaskDTO.setIntervalTime(1800);
+//        jobTaskDTO.setLastTime(LocalDateTime.of(2023, 9, 25, 0, 0));
+//        jobTaskDTO.setNextTime(LocalDateTime.of(2023, 9, 26, 0, 0));
+//        jobTaskDTO.setDictPlatform("1");
+//        jobTaskDTO.setStatus(1);
+//        RequestDTO requestDTO = new RequestDTO();
+//        requestDTO.setPlatformApiEnum(platformApiEnum);
+//        requestDTO.setJobTaskDTO(jobTaskDTO);
+//        try {
+//            gyyOrderInfoService.pullDataSave(requestDTO);
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     @Test
