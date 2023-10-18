@@ -1195,6 +1195,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         data.setApproveStatusName(data.getApproveStatus().getName());
         data.setBillStatusName(SoB2cBillStatusEnum.getName(data.getBillStatus()));
+        //平台信息
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        if (CollectionUtils.isNotEmpty(dictList)) {
+            String name = dictList.stream().filter(obj -> obj.getValue().equals(data.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            data.setDictPlatformName(name);
+        }
     }
 
     /**

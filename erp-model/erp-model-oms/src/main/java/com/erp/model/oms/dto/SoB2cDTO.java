@@ -394,6 +394,11 @@ public class SoB2cDTO implements Serializable {
         private String approveStatusName;
 
         /**
+         * 平台名称
+         */
+        private String dictPlatformName;
+
+        /**
          * 订单状态
          */
         private String billStatus;

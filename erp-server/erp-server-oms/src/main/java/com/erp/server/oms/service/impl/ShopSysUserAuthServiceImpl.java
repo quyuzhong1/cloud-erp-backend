@@ -169,7 +169,7 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                 //选择指定
                 for (ShopSysUserAuthEntity shopSysUserAuthEntity : value) {
                     //店铺信息
-                    ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(shopSysUserAuthEntity.getShopId())).findFirst().orElse(null);
+                    ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(shopSysUserAuthEntity.getShopId()) && !obj.getDisabled()).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(shopInfoEntity)) {
                         throw new ServiceException(ApiError.ERROR_92058);
                     }
