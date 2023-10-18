@@ -160,7 +160,11 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
             }
         }
         //反审核
-        Boolean unAudit = kingdeeCommonService.unAudit(apiUtils, id);
+        Boolean unAudit = Boolean.TRUE;
+        if (!KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
+            //反审核
+             unAudit = kingdeeCommonService.unAudit(apiUtils, id);
+        }
         return unAudit;
     }
 
