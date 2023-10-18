@@ -12,6 +12,7 @@ import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.PlatformEntity;
+import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
@@ -55,10 +56,8 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
 
         //模块类型
         Integer type = ApiModuleTypeEnum.SO_INFO.getCode();
-        //业务id
-        String businessId = String.valueOf(map.get("id"));
-        //业务编码
-        String code = (String) map.get("code");
+        //操作项
+        String operate = (String) map.get("operate");
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
@@ -130,8 +129,7 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
         if (CollectionUtils.isEmpty(json)) {
             log.error(ApiError.ERROR_97025.msg);
             //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "未配置同步字段", type, ApiSendStatusEnum.FAILURE.getCode());
-            return;
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_FIELD);
         }
 
         //判断金蝶系统是否已存在该数据
@@ -149,7 +147,6 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
                 save = apiUtils.save(paramFirst);
             } catch (Exception ex) {
                 //新增失败时添加日志及定时任务
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(json), JSONUtil.toJsonStr(ex), type, ApiSendStatusEnum.FAILURE.getCode());
                 sendWarnMsg(businessId);
                 return;
             }
@@ -171,23 +168,6 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
         String id = String.valueOf(model.get("Id"));
         Boolean flag = Boolean.FALSE;
 
-        //操作项
-        String operate = (String) map.get("operate");
-        if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-
-            //作废
-            kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, operate);
-            return;
-        }
-        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            //审核中或已审核则要先反审
-            if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-                flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
-            }else{
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, "", "已经反审核", type, ApiSendStatusEnum.SUCCESS.getCode());
-            }
-            return;
-        }
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             flag = kingdeeCommonService.unAudit(apiUtils,id);
