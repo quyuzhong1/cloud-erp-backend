@@ -12,5 +12,5 @@ public class WalmartStaticKey {
 	public static String accept_json = "application/json";
 	public static String accept_xml = "application/xml";
 	public static String accept_application = "application/x-www-form-urlencoded";
-	public static String baseUrl = "https://marketplace.walmartapis.com/v3/token";
+	public static String baseUrl = "https://marketplace.walmartapis.com/v3/";
 }
