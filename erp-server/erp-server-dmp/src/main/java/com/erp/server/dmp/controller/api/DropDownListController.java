@@ -31,8 +31,9 @@ public class DropDownListController extends BaseController {
 
     /**
      * 获取对应字典数据
-     *  apiModuleType  来源类型
+     *  sourceType  来源类型
      *  syncStatus 同步状态
+     *  platform 来源平台
      * @return
      */
     @GetMapping("/dict/list")

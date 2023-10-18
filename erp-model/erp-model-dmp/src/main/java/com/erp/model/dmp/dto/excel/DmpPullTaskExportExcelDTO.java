@@ -13,16 +13,16 @@ import lombok.Data;
 public class DmpPullTaskExportExcelDTO {
 
     /**
+     * 来源平台名称
+     */
+    @ExcelProperty(value = "来源平台名称", index = 1)
+    private String sourcePlatformName;
+
+    /**
      * 目标平台名称
      */
     @ExcelProperty(value = "目标平台名称", index = 0)
     private String targetPlatformName;
-
-    /**
-     * 来源系统名称
-     */
-    @ExcelProperty(value = "来源系统名称", index = 1)
-    private String sourcePlatformName;
 
     /**
      * 来源类型名称
