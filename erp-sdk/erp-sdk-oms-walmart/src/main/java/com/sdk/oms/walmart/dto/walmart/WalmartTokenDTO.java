@@ -1,4 +1,4 @@
-package com.sdk.oms.walmart.dto;
+package com.sdk.oms.walmart.dto.walmart;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;

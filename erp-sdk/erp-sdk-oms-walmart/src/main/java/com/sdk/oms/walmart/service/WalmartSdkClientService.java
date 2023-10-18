@@ -2,7 +2,6 @@ package com.sdk.oms.walmart.service;
 
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
@@ -11,7 +10,7 @@ import com.common.core.utils.OkHttpUtils;
 import com.common.core.utils.UUID;
 import com.sdk.oms.walmart.api.WalmartStaticKey;
 import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
-import com.sdk.oms.walmart.dto.WalmartTokenDTO;
+import com.sdk.oms.walmart.dto.walmart.WalmartTokenDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.stereotype.Component;
@@ -30,13 +29,26 @@ import java.util.Map;
 public class WalmartSdkClientService {
 
     public static void main(String[] args) {
-        String baseUrl = "https://marketplace.walmartapis.com/v3/items";
+        String baseUrl = "https://marketplace.walmartapis.com/v3/";
         String clientId = "2434a35c-7c42-4420-9618-0c179b68a8c2";
         String clientSecret = "AMW5lbVFqG2DMP4DuLezhSkbk4u0JLGUjdFlsrl_p0sagsBkYPPiQhRbEvkE4a6k6KXNKhB--RGlqPKIfhUoV28";
-        String accessToken = "eyJraWQiOiI4OTljZWU0ZS00NTAwLTRjYTItOTNmMC0wYzExMDZmOWZlNWEiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiZGlyIn0..wRtEqEa_aYmM6b6j.zF5tkLMqHZipx9bdnmN1HwHGii7kThcYgiEAJfFWKFAwSPXlUNymw-JLeK2_sC_Ye9oqKMXcumzcrzfO1b4_JxqA7LOlB2HSSO0fkYGrdSIpmLSj9KiibJWwnoUyRzKoZQdwRzWeSswW-oDqo4sFB2JbCTfB9xMURP-52N42w7ffgr-GpxNx6cXTdvlSSxGaARpYdi1YJARaRbNuwE7q1qHBUCnswsF7eeQ1hlM7LJMGUmvFyI7q0iK2BmblzPRGKz18hdMqFUzVosigbGYY_3KLHIgguwmA9D3W0zRMmUttbiRzHLPTJI1hiF_RK2uLwekWo8Jqw0dFuezyfUYcejB-7DeSBsNZ1dbxbI3oYFSMMvV9SylCU-Ba9BiR4KIe8SWy3i9W1jFns-t2nbVdsES_DpcPsd0eYPnqQDErOgXMv6e_OXHXss_89l2HlAYr0zgDJNcguedXVMR7P8unbQNozYtz6XuyBLLfA1WR3l_z0uKv92V3XxE6lCKXwd8wg2jCzxtWVc6rdtyBJbByRMsFU-kPMb804qZH-y3fprSbjgo_eKzC1w7rXavdw4Q-jp_EXDKyu_JS_L1UT1pTOyfNQMBfku0xl-dA2CdHmjYueNPaJdAo3_G89op9MOwB-xVV8lBkFKdusRZgnuRAuPSLTnymVRcvInIjABCzNsExLo-ed5Y1YAsO4SSm.ni2ViUuzj6teOJfP88c43A";
+        //获取令牌
+        baseUrl = WalmartStaticKey.baseUrl + "token";
+
+
         WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
+        WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
+        //请求参数
+        HashMap<String, Object> paramMap = new HashMap<>();
+        Integer pageSize = 1;
+        //当前页数
+        Integer pageNo = 0;
+
+        paramMap.put("offset", 1);
+        paramMap.put("limit", pageSize);
 //        WalmartTokenDTO s = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
-        String s = walmartSdkClientService.sendWalmartGet(baseUrl, clientId, clientSecret, accessToken, null);
+        baseUrl = WalmartStaticKey.baseUrl + "items";
+        String s = walmartSdkClientService.sendWalmartGet(baseUrl, clientId, clientSecret, walmartTokenDTO.getAccessToken(), paramMap);
         System.out.println(s);
     }
 

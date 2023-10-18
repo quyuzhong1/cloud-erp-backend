@@ -21,4 +21,5 @@ import org.springframework.stereotype.Component;
 @PlatformType(PlatformDictEnum.WALMART)
 @BusinessType(BusinessTypeEnum.PRODUCT)
 public class WalmartOrderHandler {
+
 }

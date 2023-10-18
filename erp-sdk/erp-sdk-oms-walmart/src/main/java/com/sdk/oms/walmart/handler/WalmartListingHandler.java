@@ -1,6 +1,5 @@
 package com.sdk.oms.walmart.handler;
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
@@ -11,11 +10,10 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractProductHandler;
-import com.common.core.utils.UUID;
 import com.sdk.oms.walmart.api.WalmartStaticKey;
 import com.sdk.oms.walmart.dto.PlatformWalmartListingDTO;
 import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
-import com.sdk.oms.walmart.dto.WalmartTokenDTO;
+import com.sdk.oms.walmart.dto.walmart.WalmartTokenDTO;
 import com.sdk.oms.walmart.dto.walmart.ItemResponseBean;
 import com.sdk.oms.walmart.dto.walmart.WalmartItemDTO;
 import com.sdk.oms.walmart.service.WalmartSdkClientService;
@@ -64,22 +62,24 @@ public class WalmartListingHandler extends AbstractProductHandler<PlatformWalmar
 
         //请求参数
         HashMap<String, Object> paramMap = new HashMap<>();
-        //每次最多获取50条
-        Integer pageSize = 50;
+        //每次最多获取200条
+        Integer pageSize = 200;
         //当前页数
         Integer pageNo = 0;
         //总页数
         Integer pageCount = 1;
 
-        paramMap.put("nextCursor", pageNo);
+        paramMap.put("offset", pageNo);
         paramMap.put("limit", pageSize);
-        while(pageNo < pageCount){
+        while(pageNo < pageCount) {
 
             //拉取数据
             String date = walmartSdkClientService.sendWalmartGet(baseUrl, tokenDTO.getClientId(), tokenDTO.getClientSecret(), walmartTokenDTO.getAccessToken(), paramMap);
 
             WalmartItemDTO walmartItemDTO = JSONUtil.toBean(date, WalmartItemDTO.class);
-
+            if (CollectionUtils.isEmpty(walmartItemDTO.getItemResponse())) {
+                break;
+            }
             pageCount = (walmartItemDTO.getTotalItems() + pageSize - 1) / pageSize;
 
             pageNo++;
@@ -91,30 +91,24 @@ public class WalmartListingHandler extends AbstractProductHandler<PlatformWalmar
             return Collections.emptyList();
         }
 
-/*        // 返回下载源数据
-        return products.values().stream()
-                .map(e -> new PlatformShopifyListingDTO(e, data))
-                .collect(Collectors.toList());*/
-        return null;
+        // 返回下载源数据
+        return itemResponseList.stream()
+                .map(e -> new PlatformWalmartListingDTO(e, data))
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<PlatformProductDTO> convert(List<PlatformWalmartListingDTO> sourceDataList) {
-       /* // Shopify商品转换为发送mq数据
+        // Shopify商品转换为发送mq数据
         // 包含数据过滤数据 数据转换 数据合并拆分等操作
         return sourceDataList.stream()
-                // 已发布并售卖中
-                .filter(e -> e.getShopifyProduct().isPublished() && "active".equalsIgnoreCase(e.getShopifyProduct().getStatus()))
                 // 组装
-                .map(PlatformShopifyListingDTO::convertDTO)
-                .flatMap(List::stream).collect(Collectors.toList());*/
-        return null;
+                .map(PlatformWalmartListingDTO::convertDTO).collect(Collectors.toList());
     }
 
     @Override
     public String getTargetPlatform() {
-        return PlatformDictEnum.SHOPIFY.getCode();
+        return PlatformDictEnum.WALMART.getCode();
     }
-
 
 }

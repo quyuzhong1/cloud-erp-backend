@@ -17,6 +17,8 @@ public class ItemResponseBean {
      * unpublishedReasons : {"reason":["Your item is unpublished because the end date has passed. To republish your item, re-ingest the item with a new start and end date."]}
      * lifecycleStatus : RETIRED
      * condition : New
+     * variantGroupId : DroneLen01
+     * variantGroupInfo : {"isPrimary":false,"groupingAttributes":[{"name":"size","value":"Anamorphic Lens"}]}
      */
 
     @SerializedName("mart")
@@ -45,6 +47,10 @@ public class ItemResponseBean {
     private String lifecycleStatus;
     @SerializedName("condition")
     private String condition;
+    @SerializedName("variantGroupId")
+    private String variantGroupId;
+    @SerializedName("variantGroupInfo")
+    private VariantGroupInfoBean variantGroupInfo;
 
     public String getMart() {
         return mart;
@@ -148,5 +154,21 @@ public class ItemResponseBean {
 
     public void setCondition(String condition) {
         this.condition = condition;
+    }
+
+    public String getVariantGroupId() {
+        return variantGroupId;
+    }
+
+    public void setVariantGroupId(String variantGroupId) {
+        this.variantGroupId = variantGroupId;
+    }
+
+    public VariantGroupInfoBean getVariantGroupInfo() {
+        return variantGroupInfo;
+    }
+
+    public void setVariantGroupInfo(VariantGroupInfoBean variantGroupInfo) {
+        this.variantGroupInfo = variantGroupInfo;
     }
 }
