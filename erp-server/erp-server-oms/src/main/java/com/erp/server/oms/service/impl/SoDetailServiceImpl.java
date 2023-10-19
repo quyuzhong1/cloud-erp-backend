@@ -516,7 +516,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.SO.getCode(), mainId, "", "");
             }
         }
-
+        BigDecimal allAmountLc = saveOrUpdateList.stream().map(SoDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
+        soInfoEntity.setAllAmountLc(allAmountLc);
+        soInfoService.updateById(soInfoEntity);
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
 
@@ -1134,6 +1136,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             // 计算毛利成本
             calCost(purchasePriceList, skuList, soInfoEntity.getBillDate(), item, Boolean.FALSE);
         }
+        BigDecimal allAmountLc = saveOrUpdateList.stream().map(SoDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
+        soInfoEntity.setAllAmountLc(allAmountLc);
+        soInfoService.updateById(soInfoEntity);
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
 

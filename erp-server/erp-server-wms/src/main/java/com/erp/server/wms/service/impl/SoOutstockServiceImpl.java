@@ -1692,4 +1692,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
 
     }
+
+    @Override
+    public List<SoOutstockEntity> listByTrackNo(String trackNo) {
+        if (StringUtils.isBlank(trackNo)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(SoOutstockEntity::getInvalidStatus,Boolean.FALSE).
+                like(SoOutstockEntity::getTrackNo,trackNo).list();
+    }
 }

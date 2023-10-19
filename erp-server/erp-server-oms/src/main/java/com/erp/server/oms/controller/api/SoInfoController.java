@@ -19,7 +19,6 @@ import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
-import com.erp.server.oms.utils.SoUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -439,15 +438,16 @@ public class SoInfoController extends BaseController {
 
     /**
      * 导出销售订单国内PI
-     * @author yl
-     * @date 2023-10-12 14:39
+     *
      * @param dto
      * @param response
      * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-10-12 14:39
      */
     @PostMapping("/exportSoDomesticPI")
     public ApiResult exportSoDomesticPI(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
-        Boolean result = soInfoService.exportSoDomesticPI(dto.getId(),response);
+        Boolean result = soInfoService.exportSoDomesticPI(dto.getId(), response);
         return result ? success() : failure();
 
     }

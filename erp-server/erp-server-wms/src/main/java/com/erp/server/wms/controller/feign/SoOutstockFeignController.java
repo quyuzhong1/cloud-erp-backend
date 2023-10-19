@@ -95,4 +95,17 @@ public class SoOutstockFeignController {
     List<SoOutstockDetailDTO.DeliveryQtyDTO> listDetailBySoDetailIds(@RequestBody List<String> soDetailIds) {
         return soOutstockDetailService.listDetailBySoDetailIds(soDetailIds);
     }
+
+     /**
+      * 根据任务单号获取销售出库信息
+      * @author yl
+      * @date 2023-10-19 15:46
+      * @param trackNo
+      * @return java.util.List<com.erp.model.wms.dto.SoOutstockDetailDTO.DeliveryQtyDTO>
+      */
+      
+    @PostMapping("/listByTrackNo")
+    List<SoOutstockEntity> listByTrackNo(@RequestBody String trackNo) {
+        return soOutstockService.listByTrackNo(trackNo);
+    }
 }

@@ -763,6 +763,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         }
         //获取导出数据
         List<PurchasePriceChangeDTO.PagingViewDTO> viewList = baseMapper.listExport(dto, statusList);
+        if (CollectionUtils.isEmpty(viewList)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+
         List<PurchasePriceChangeExportExcelDTO> resultList = new ArrayList<>(viewList.size());
 
         List<String> skuIds = viewList.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
@@ -794,7 +798,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 if (priceDetailEntity != null) {
                     excelDTO.setOldTaxPrice(priceDetailEntity.getTaxPrice());
                     if (priceDetailEntity.getTaxRate() != null) {
-                        excelDTO.setOldTaxRate(priceDetailEntity.getTaxRate());
+                        excelDTO.setOldTaxRate(priceDetailEntity.getTaxRate().multiply(MathUtil.BigDecimal_100));
                     }
                 }
             }

@@ -268,7 +268,6 @@ public class SoUtils {
         headMap.put("receiveAccountName", "收款账号");
         headMap.put("receiveMethodName", "收款方式");
         headMap.put("receiveDate", "收款日期");
-        headMap.put("receiveAmount", "收款金额");
         headMap.put("tradeTermName", "贸易条款");
         headMap.put("discountAmount", "折扣总额");
         headMap.put("receiverName", "收货人");
@@ -289,12 +288,16 @@ public class SoUtils {
         headMap.put("unit", "单位");
         headMap.put("amount", "销售金额");
         headMap.put("price", "销售单价");
+        headMap.put("priceLc", "销售单价（本位币）");
         headMap.put("taxRate", "税率");
         headMap.put("taxPrice", "含税单价");
+        headMap.put("taxPriceLc", "含税单价（本位币）");
         headMap.put("taxAmount", "价税合计");
         headMap.put("exchangeRate", "汇率");
         headMap.put("amountLocalCurrency", "销售金额（本位币）");
         headMap.put("allAmountLocalCurrency", "价税合计（本位币）");
+        headMap.put("allAmountLc", "总价税合计（本位币）");
+        headMap.put("receiveAmount", "收款金额");
         headMap.put("detailDiscountAmount", "折扣额");
         headMap.put("taxAmountBefore", "价税合计(折前)");
         headMap.put("isGift", "是否赠品");
@@ -363,6 +366,7 @@ public class SoUtils {
                 data.put("shippingFee", "");
                 data.put("receiveAmount", "");
                 data.put("discountAmount", "");
+                data.put("allAmountLc", "");
                 continue;
             }
             mainIds.add(id);

@@ -1,6 +1,8 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
@@ -87,7 +89,26 @@ public class StocktakingProfitLossEntity extends BaseEntity<StocktakingProfitLos
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
-    
+
+    /**
+     * 库存组织
+     */
+    @TableField("inventory_org_id")
+    private String inventoryOrgId;
+
+    /**
+     * 库存组织名
+     */
+    @TableField("inventory_org_name")
+    private String inventoryOrgName;
+
+
+
+    /**
+     * 同步操作
+     */
+    @TableField("sync_operate")
+    private String syncOperate;
 
 
     public static final String CODE = "code";
