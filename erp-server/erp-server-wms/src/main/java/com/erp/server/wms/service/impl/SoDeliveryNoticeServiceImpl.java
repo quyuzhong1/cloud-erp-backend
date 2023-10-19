@@ -981,15 +981,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return soDeliveryNoticeList;
     }
 
-    @Override
-    public SoDeliveryNoticeEntity getDeliveryNoticeBySourceId(String sourceId) {
-        if (StringUtils.isEmpty(sourceId)){
-            return null;
-        }
-        return this.lambdaQuery().eq(SoDeliveryNoticeEntity::getSourceId, sourceId).eq(SoDeliveryNoticeEntity::getIsDeleted, false)
-                .last("limit 1").one();
-    }
-
     /**
      * 根据来源ids 获取数据
      *
