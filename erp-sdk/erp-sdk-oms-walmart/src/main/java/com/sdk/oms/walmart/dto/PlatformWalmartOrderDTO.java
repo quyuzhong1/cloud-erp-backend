@@ -3,7 +3,9 @@ package com.sdk.oms.walmart.dto;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.sdk.oms.walmart.dto.walmart.item.ItemResponseBean;
 import com.sdk.oms.walmart.dto.walmart.order.ItemBean;
 import com.sdk.oms.walmart.dto.walmart.order.OrderBean;
@@ -28,11 +30,14 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
 
     private OrderBean orderBean;
 
+    private WalmartShopInfoDTO walmartShopInfoDTO;
+
     /**
      * 初始化
      */
-    public PlatformWalmartOrderDTO(OrderBean orderBean, JobTaskDTO dto) {
+    public PlatformWalmartOrderDTO(OrderBean orderBean, JobTaskDTO dto, WalmartShopInfoDTO walmartShopInfoDTO) {
         this.orderBean = orderBean;
+        this.walmartShopInfoDTO = walmartShopInfoDTO;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
         this.setUniqueId(orderBean.getCustomerOrderId());
@@ -55,6 +60,9 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         //获取原始订单信息
         OrderBean orderBean = dto.getOrderBean();
 
+        //店铺信息
+        WalmartShopInfoDTO walmartShopInfoDTO = dto.getWalmartShopInfoDTO();
+
         //设置对应关系
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
 
@@ -64,6 +72,12 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         //销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.WALMART.getCode());
 
+        // 店铺ID
+        orderDTO.setShopId(walmartShopInfoDTO.getId());
+
+        // 付款状态（待付款、已付款）
+        orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+
         //付款时间
         Instant instant = Instant.ofEpochMilli(orderBean.getOrderDate());
         ZoneId zone = ZoneId.systemDefault();
@@ -72,10 +86,33 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         // 订单状态，详情金额汇总
         fieldHandler(orderBean.getOrderLines().getOrderLine(), orderDTO);
 
+        // 是否拦截
+        orderDTO.setIsIntercept(false);
+
+        // 拦截备注
+        orderDTO.setInterceptRemark("");
+
+        // 来源类型
+        orderDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
+
+        // 来源id
+        orderDTO.setSourceId(orderBean.getPurchaseOrderId());
+
+        // 来源编码
+        orderDTO.setSourceCode("");
+
+        // 标签json
+        orderDTO.setLabelJson("{}");
+
+        // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
+        orderDTO.setAbnormalType("");
+
+        // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
+        orderDTO.setSyncKingdeeStatus("0");
+
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(orderBean);
         orderDTO.setDetails(details);
-
         return orderDTO;
     }
 
@@ -139,6 +176,7 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         detailDTO.setWarehouseOrgName("");
         // 库位
         detailDTO.setWarehouseLocation("");
+
         return detailDTO;
     }
 
@@ -194,7 +232,11 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
             currency = orderLineBean.getCharges().getCharge().stream().map(req -> req.getChargeAmount().getCurrency()).findFirst().orElse("");
             orderDTO.setCurrency(currency);
         }
+        //订单金额
         orderDTO.setAmount(amount);
+
+        // 付款金额
+        orderDTO.setPayAmount(amount);
     }
 
 }

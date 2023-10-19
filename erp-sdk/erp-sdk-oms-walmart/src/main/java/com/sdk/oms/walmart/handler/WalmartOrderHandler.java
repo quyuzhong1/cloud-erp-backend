@@ -51,15 +51,15 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
     @Override
     public List<PlatformWalmartOrderDTO> download(JobTaskDTO data) {
         //  根据店铺ID获取授权
-        WalmartShopInfoDTO tokenDTO = WalmartSdkClientService.getTokenByShopId(data.getShopId());
-        if (null == tokenDTO){
+        WalmartShopInfoDTO shopInfoDTO = WalmartSdkClientService.getTokenByShopId(data.getShopId());
+        if (null == shopInfoDTO){
             log.error("[Walmart产品下载]从缓存中获取Walmart token 失败: shopId={}", data.getShopId());
             return Collections.emptyList();
         }
         //获取令牌
         String baseUrl = WalmartStaticKey.baseUrl + "token";
 
-        WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(baseUrl, tokenDTO.getClientId(), tokenDTO.getClientSecret());
+        WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(baseUrl, shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret());
 
         baseUrl = WalmartStaticKey.baseUrl + data.getApiCode();
 
@@ -90,7 +90,7 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
                 sb.append(nextCursor);
             }
             //拉取数据
-            String date = walmartSdkClientService.sendWalmartGet(baseUrl, tokenDTO.getClientId(), tokenDTO.getClientSecret(), walmartTokenDTO.getAccessToken(), paramMap);
+            String date = walmartSdkClientService.sendWalmartGet(baseUrl, shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret(), walmartTokenDTO.getAccessToken(), paramMap);
 
             WalmartOrderDTO walmartOrderDTO = JSONUtil.toBean(date, WalmartOrderDTO.class);
             if (CollectionUtils.isEmpty(walmartOrderDTO.getList().getElements().getOrder())) {
@@ -108,7 +108,7 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
 
         // 返回下载源数据
         return orderBeanList.stream()
-                .map(e -> new PlatformWalmartOrderDTO(e, data))
+                .map(e -> new PlatformWalmartOrderDTO(e, data, shopInfoDTO))
                 .collect(Collectors.toList());
     }
 
