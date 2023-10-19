@@ -33,7 +33,6 @@ import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -1051,5 +1050,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SoDeliveryNoticeDetailDTO.View> soDeliveryNoticeDetailDTOS = BeanMapper.copyList(generateSoOutstockViewDTOS, SoDeliveryNoticeDetailDTO.View.class);
         view.setDetailList(soDeliveryNoticeDetailDTOS);
         return view;
+    }
+
+
+    @Override
+    public SoDeliveryNoticeEntity getDeliveryNoticeBySourceId(String sourceId) {
+        if (StringUtils.isEmpty(sourceId)){
+            return null;
+        }
+        return this.lambdaQuery().eq(SoDeliveryNoticeEntity::getSourceId, sourceId).eq(SoDeliveryNoticeEntity::getIsDeleted, false)
+                .last("limit 1").one();
     }
 }
