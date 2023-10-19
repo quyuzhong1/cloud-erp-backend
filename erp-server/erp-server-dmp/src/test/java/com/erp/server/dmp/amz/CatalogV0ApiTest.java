@@ -22,7 +22,7 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.GetCatalogItemResponse;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.ListCatalogCategoriesResponse;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.ListCatalogItemsResponse;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtil;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,12 +39,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 @Profile("dev")
 public class CatalogV0ApiTest {
 
-    private final CatalogV0Api api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US);
-
     public CatalogV0Api amazonAuthorizationGrant(AmazonMarketplaceEnum marketplaceEnum) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtil.buildLWAAuthorizationCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentialsProvider();
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
         CatalogV0Api catalogApi = new CatalogV0Api.Builder()
                 .awsAuthenticationCredentials(awsAuthenticationCredentials)
                 .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
@@ -70,6 +68,7 @@ public class CatalogV0ApiTest {
     public void getCatalogItemTest() throws ApiException {
         String marketplaceId = "A1AM78C64UM0Y8";
         String asin = null;
+        CatalogV0Api api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US);
         GetCatalogItemResponse response = api.getCatalogItem(marketplaceId, asin);
         System.out.println("CatalogItemV0");
         System.out.println(JSONUtil.toJsonStr(response));
@@ -86,6 +85,7 @@ public class CatalogV0ApiTest {
         String marketplaceId = null;
         String ASIN = null;
         String sellerSKU = null;
+        CatalogV0Api api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US);
         ListCatalogCategoriesResponse response = api.listCatalogCategories(marketplaceId, ASIN, sellerSKU);
         // TODO: test validations
     }
@@ -97,7 +97,7 @@ public class CatalogV0ApiTest {
      */
     @Test
     public void listCatalogItemsTest() throws ApiException {
-        String marketplaceId = null;
+        String marketplaceId = AmazonMarketplaceEnum.US.getMarketplaceId();
         String query = null;
         String queryContextId = null;
         String sellerSKU = null;
@@ -105,7 +105,10 @@ public class CatalogV0ApiTest {
         String EAN = null;
         String ISBN = null;
         String JAN = null;
+        CatalogV0Api api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US);
         ListCatalogItemsResponse response = api.listCatalogItems(marketplaceId, query, queryContextId, sellerSKU, UPC, EAN, ISBN, JAN);
         // TODO: test validations
+        System.out.println("listCatalogItemsTest");
+        System.out.println(JSONUtil.toJsonStr(response));
     }
 }

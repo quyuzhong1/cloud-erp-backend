@@ -27,11 +27,11 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
 
     private Order order;
 
-    private ShopInfoEntity shopInfoEntity;
+    private String shopId;
 
     public PlatformAmazonOrderDTO(Order order, ShopInfoEntity shopInfoEntity) {
         this.order = order;
-        this.shopInfoEntity = shopInfoEntity;
+        this.shopId = shopInfoEntity.getId();
     }
 
     /**
@@ -40,8 +40,6 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
     public static PlatformOrderDTO convertDTO(PlatformAmazonOrderDTO dto) {
         // 原订单信息
         Order sourceOrder = dto.getOrder();
-        // 本ERP店铺信息
-        ShopInfoEntity shopInfoDTO = dto.getShopInfoEntity();
 
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
         // 订单日期
@@ -52,7 +50,7 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         // 销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
         // 店铺ID
-        orderDTO.setShopId(shopInfoDTO.getId());
+        orderDTO.setShopId(dto.getShopId());
         // 作废状态（false未作废，true已作废）
         orderDTO.setInvalidStatus(false);
         // 作废类型（manual手动作废，automatic自动作废）

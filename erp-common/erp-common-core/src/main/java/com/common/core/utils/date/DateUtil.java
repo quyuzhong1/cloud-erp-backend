@@ -6,6 +6,9 @@ import org.apache.commons.lang3.StringUtils;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
@@ -440,5 +443,40 @@ public class DateUtil {
         calendar.setTime(date);
         calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) - n);
         return new SimpleDateFormat(fmtReturn).format(calendar.getTime());
+    }
+
+    /**
+     * 东八区时间转UTC时间
+     * @param localDateTime 东八区时间
+     * @return java.time.OffsetDateTime UTC时间
+     */
+    public static OffsetDateTime plus8SameUtcOffset(LocalDateTime localDateTime){
+        return localDateTime
+                .atZone(ZoneId.systemDefault())
+                .toOffsetDateTime()
+                .withOffsetSameInstant(ZoneOffset.UTC);
+    }
+
+    /**
+     * UTC时间转东八区时间
+     * @param localDateTime UTC时间
+     * @return java.time.LocalDateTime 东八区时间
+     */
+    public static LocalDateTime utcSamePlus8(LocalDateTime localDateTime) {
+        return localDateTime
+                .atZone(ZoneOffset.UTC)
+                .withZoneSameInstant(ZoneId.systemDefault())
+                .toLocalDateTime();
+    }
+
+    /**
+     * UTC时间转东八区时间
+     * @param localDateTime 东八区时间
+     * @return java.time.LocalDateTime UTC时间
+     */
+    public static LocalDateTime plus8SameUtc(LocalDateTime localDateTime) {
+        return localDateTime.atZone(ZoneId.systemDefault())
+                .withZoneSameInstant(ZoneOffset.UTC)
+                .toLocalDateTime();
     }
 }

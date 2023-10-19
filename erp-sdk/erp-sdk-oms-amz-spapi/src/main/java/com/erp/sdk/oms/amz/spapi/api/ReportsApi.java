@@ -15,8 +15,11 @@ package com.erp.sdk.oms.amz.spapi.api;
 
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
 import com.erp.sdk.oms.amz.spapi.client.*;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.*;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.google.gson.reflect.TypeToken;
+import lombok.Getter;
 import okhttp3.Call;
 import okhttp3.Interceptor;
 import okhttp3.Response;
@@ -29,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Getter
 public class ReportsApi {
     private ApiClient apiClient;
 
@@ -38,10 +42,6 @@ public class ReportsApi {
 
     public ReportsApi(ApiClient apiClient) {
         this.apiClient = apiClient;
-    }
-
-    public ApiClient getApiClient() {
-        return apiClient;
     }
 
     public void setApiClient(ApiClient apiClient) {
@@ -83,14 +83,11 @@ public class ReportsApi {
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
-                @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
-                    return originalResponse.newBuilder()
-                    .body(new ProgressResponseBody(originalResponse.body(), progressListener))
-                    .build();
-                }
+            apiClient.getHttpClient().networkInterceptors().add(chain -> {
+                Response originalResponse = chain.proceed(chain.request());
+                return originalResponse.newBuilder()
+                .body(new ProgressResponseBody(originalResponse.body(), progressListener))
+                .build();
             });
         }
 
@@ -148,19 +145,9 @@ public class ReportsApi {
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
 
         if (callback != null) {
-            progressListener = new ProgressResponseBody.ProgressListener() {
-                @Override
-                public void update(long bytesRead, long contentLength, boolean done) {
-                    callback.onDownloadProgress(bytesRead, contentLength, done);
-                }
-            };
+            progressListener = callback::onDownloadProgress;
 
-            progressRequestListener = new ProgressRequestBody.ProgressRequestListener() {
-                @Override
-                public void onRequestProgress(long bytesWritten, long contentLength, boolean done) {
-                    callback.onUploadProgress(bytesWritten, contentLength, done);
-                }
-            };
+            progressRequestListener = callback::onUploadProgress;
         }
 
         Call call = cancelReportValidateBeforeCall(reportId, progressListener, progressRequestListener);
@@ -1264,5 +1251,28 @@ public class ReportsApi {
                 .setBasePath(endpoint)
                 .setRateLimiter(rateLimitConfiguration));
         }
+    }
+
+    /**
+     * 初始化Api
+     */
+    public static ReportsApi initApi(AmazonMarketplaceEnum marketplaceEnum) {
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
+        ReportsApi reportsApi = new ReportsApi.Builder()
+                .awsAuthenticationCredentials(awsAuthenticationCredentials)
+                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
+                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
+                //注意，这里的endpoint分北美，欧洲，远东三个地域，每个区域的链接是不一样的
+                //北美，https://sellingpartnerapi-na.amazon.com
+                //欧洲，https://sellingpartnerapi-eu.amazon.com
+                //远东，https://sellingpartnerapi-fe.amazon.com
+                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
+                .build();
+        if (null == reportsApi) {
+            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
+        }
+        return reportsApi;
     }
 }

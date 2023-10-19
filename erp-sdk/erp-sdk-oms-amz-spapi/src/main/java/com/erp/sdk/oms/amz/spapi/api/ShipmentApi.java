@@ -18,10 +18,8 @@ import com.erp.sdk.oms.amz.spapi.client.*;
 import com.erp.sdk.oms.amz.spapi.model.orders.UpdateShipmentStatusRequest;
 import lombok.Getter;
 import okhttp3.Call;
-import okhttp3.Interceptor;
 import okhttp3.Response;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -79,14 +77,11 @@ public class ShipmentApi {
         localVarHeaderParams.put("Content-Type", localVarContentType);
 
         if(progressListener != null) {
-            apiClient.getHttpClient().networkInterceptors().add(new Interceptor() {
-                @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(chain.request());
-                    return originalResponse.newBuilder()
-                    .body(new ProgressResponseBody(originalResponse.body(), progressListener))
-                    .build();
-                }
+            apiClient.getHttpClient().networkInterceptors().add(chain -> {
+                Response originalResponse = chain.proceed(chain.request());
+                return originalResponse.newBuilder()
+                .body(new ProgressResponseBody(originalResponse.body(), progressListener))
+                .build();
             });
         }
 

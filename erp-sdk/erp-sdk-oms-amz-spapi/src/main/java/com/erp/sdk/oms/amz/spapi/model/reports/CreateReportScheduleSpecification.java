@@ -19,7 +19,6 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-import java.time.OffsetDateTime;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -123,7 +122,7 @@ public class CreateReportScheduleSpecification {
     private PeriodEnum period = null;
 
     @SerializedName("nextReportCreationTime")
-    private OffsetDateTime nextReportCreationTime = null;
+    private String nextReportCreationTime = null;
 
     public CreateReportScheduleSpecification reportType(String reportType) {
         this.reportType = reportType;
@@ -206,7 +205,7 @@ public class CreateReportScheduleSpecification {
         this.period = period;
     }
 
-    public CreateReportScheduleSpecification nextReportCreationTime(OffsetDateTime nextReportCreationTime) {
+    public CreateReportScheduleSpecification nextReportCreationTime(String nextReportCreationTime) {
         this.nextReportCreationTime = nextReportCreationTime;
         return this;
     }
@@ -217,11 +216,11 @@ public class CreateReportScheduleSpecification {
      * @return nextReportCreationTime
      **/
 
-    public OffsetDateTime getNextReportCreationTime() {
+    public String getNextReportCreationTime() {
         return nextReportCreationTime;
     }
 
-    public void setNextReportCreationTime(OffsetDateTime nextReportCreationTime) {
+    public void setNextReportCreationTime(String nextReportCreationTime) {
         this.nextReportCreationTime = nextReportCreationTime;
     }
 

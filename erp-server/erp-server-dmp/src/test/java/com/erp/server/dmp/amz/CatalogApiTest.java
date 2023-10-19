@@ -22,7 +22,7 @@ import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.ItemSearchResults;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtil;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,9 +44,9 @@ public class CatalogApiTest {
     private final CatalogApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US);
 
     public CatalogApi amazonAuthorizationGrant(AmazonMarketplaceEnum marketplaceEnum) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtil.buildLWAAuthorizationCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentialsProvider();
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
         CatalogApi catalogApi = new CatalogApi.Builder()
                 .awsAuthenticationCredentials(awsAuthenticationCredentials)
                 .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
@@ -99,7 +99,8 @@ public class CatalogApiTest {
         String identifiersType = "SKU";
         List<String> includedData = null;
         String locale = null;
-        String sellerId = "AZFY4CTNEDLZX";
+//        String sellerId = "AZFY4CTNEDLZX";
+        String sellerId = null;
         List<String> keywords = null;
         List<String> brandNames = null;
         List<String> classificationIds = null;

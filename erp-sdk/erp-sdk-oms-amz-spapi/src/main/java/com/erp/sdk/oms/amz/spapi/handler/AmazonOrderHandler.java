@@ -12,6 +12,7 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractOrderHandler;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
@@ -22,8 +23,6 @@ import com.erp.sdk.oms.amz.spapi.model.orders.Order;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -59,10 +58,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         if (BusinessCommonConstants.hasProfile("prod")) {
             // 正式环境请求
             // 东八区转UTC时间
-            lastUpdatedAfter = data.getLastTime()
-                    .atZone(ZoneId.systemDefault())
-                    .toOffsetDateTime()
-                    .withOffsetSameInstant(ZoneOffset.UTC).toString();
+            lastUpdatedAfter = DateUtil.plus8SameUtcOffset(data.getLastTime()).toString();
         } else {
             // 其他环境请求
             createdAfter = "TEST_CASE_200";

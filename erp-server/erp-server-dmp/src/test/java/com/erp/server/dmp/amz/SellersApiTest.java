@@ -1,15 +1,9 @@
 
 package com.erp.server.dmp.amz;
 
-import cn.hutool.json.JSONUtil;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentials;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentialsProvider;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfiguration;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.api.SellersApi;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtil;
-import com.erp.sdk.oms.amz.spapi.model.sellers.GetMarketplaceParticipationsResponse;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import com.erp.server.dmp.ErpServerDmpApplication;
@@ -34,7 +28,7 @@ public class SellersApiTest {
      */
     @Test
     public void getSellerTest() throws ApiException {
-        AmazonSpApiConfigUtil configDTO = new AmazonSpApiConfigUtil();
+        AmazonSpApiConfigUtils configDTO = new AmazonSpApiConfigUtils();
 //        AWSAuthenticationCredentials awsAuthenticationCredentials = configDTO.buildAWSAuthenticationCredentials();
 //        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = configDTO.buildAWSAuthenticationCredentialsProvider();
 //        LWAAuthorizationCredentials lwaAuthorizationCredentials = configDTO.buildLWAAuthorizationCredentials();

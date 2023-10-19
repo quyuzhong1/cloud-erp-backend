@@ -17,7 +17,7 @@ import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
 import com.erp.sdk.oms.amz.spapi.client.*;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtil;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -1278,9 +1278,9 @@ public class OrdersV0Api {
      * 初始化Api
      */
     public static OrdersV0Api initApi(AmazonMarketplaceEnum marketplaceEnum) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtil.buildLWAAuthorizationCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentialsProvider();
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
         OrdersV0Api ordersV0Api = new OrdersV0Api.Builder()
                 .awsAuthenticationCredentials(awsAuthenticationCredentials)
                 .lwaAuthorizationCredentials(lwaAuthorizationCredentials)

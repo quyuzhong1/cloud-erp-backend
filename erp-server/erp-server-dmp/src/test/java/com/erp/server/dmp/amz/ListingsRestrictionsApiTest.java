@@ -18,7 +18,7 @@ import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredential
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
 import com.erp.sdk.oms.amz.spapi.api.ListingsRestrictionsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtil;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.listingsrestrictions.RestrictionList;
 import org.junit.runner.RunWith;
@@ -41,9 +41,9 @@ public class ListingsRestrictionsApiTest {
     private final ListingsRestrictionsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US);
 
     public ListingsRestrictionsApi amazonAuthorizationGrant(AmazonMarketplaceEnum marketplaceEnum) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtil.buildLWAAuthorizationCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentialsProvider();
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
         ListingsRestrictionsApi listingsRestrictionsApi = new ListingsRestrictionsApi.Builder()
                 .awsAuthenticationCredentials(awsAuthenticationCredentials)
                 .lwaAuthorizationCredentials(lwaAuthorizationCredentials)

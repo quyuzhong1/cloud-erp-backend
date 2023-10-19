@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  */
 @Data
 @Component
-public class AmazonSpApiConfigUtil {
+public class AmazonSpApiConfigUtils {
 
     /**
      * AWS访问密钥编码
@@ -56,37 +56,37 @@ public class AmazonSpApiConfigUtil {
 
     @Value("${openApi.amazon.accessKeyId:}")
     public void setAccessKeyId(String accessKeyId) {
-        AmazonSpApiConfigUtil.accessKeyId = accessKeyId;
+        AmazonSpApiConfigUtils.accessKeyId = accessKeyId;
     }
 
     @Value("${openApi.amazon.secretKey:}")
     public void setSecretKey(String secretKey) {
-        AmazonSpApiConfigUtil.secretKey = secretKey;
+        AmazonSpApiConfigUtils.secretKey = secretKey;
     }
 
     @Value("${openApi.amazon.roleArn:}")
     public void setRoleArn(String roleArn) {
-        AmazonSpApiConfigUtil.roleArn = roleArn;
+        AmazonSpApiConfigUtils.roleArn = roleArn;
     }
 
     @Value("${openApi.amazon.clientId:}")
     public void setClientId(String clientId) {
-        AmazonSpApiConfigUtil.clientId = clientId;
+        AmazonSpApiConfigUtils.clientId = clientId;
     }
 
     @Value("${openApi.amazon.clientSecret:}")
     public void setClientSecret(String clientSecret) {
-        AmazonSpApiConfigUtil.clientSecret = clientSecret;
+        AmazonSpApiConfigUtils.clientSecret = clientSecret;
     }
 
     @Value("${openApi.amazon.refreshToken:}")
     public void setRefreshToken(String refreshToken) {
-        AmazonSpApiConfigUtil.refreshToken = refreshToken;
+        AmazonSpApiConfigUtils.refreshToken = refreshToken;
     }
 
     @Value("${openApi.amazon.lwaEndpoint:}")
     public void setLwaEndpoint(String lwaEndpoint) {
-        AmazonSpApiConfigUtil.lwaEndpoint = lwaEndpoint;
+        AmazonSpApiConfigUtils.lwaEndpoint = lwaEndpoint;
     }
 
 //    public AmazonSpApiConfigUtil AmazonSpApiConfigUtil(AwsMarketplaceEnum marketplaceEnum) {
@@ -109,9 +109,9 @@ public class AmazonSpApiConfigUtil {
         //region分北美，欧洲，远东三个AWS区域
         return AWSAuthenticationCredentials.builder()
                 //注册成为开发者时生成的AWS访问密钥ID
-                .accessKeyId(AmazonSpApiConfigUtil.accessKeyId)
+                .accessKeyId(AmazonSpApiConfigUtils.accessKeyId)
                 //注册成为开发者时生成的AWS访问密钥
-                .secretKey(AmazonSpApiConfigUtil.secretKey)
+                .secretKey(AmazonSpApiConfigUtils.secretKey)
                 //注意，这里的region分北美(us-east-1)，欧洲(eu-west-1)，远东(us-west-2)
                 .region(endpointsEnum.getRegion())
                 .build();
@@ -123,7 +123,7 @@ public class AmazonSpApiConfigUtil {
     public static AWSAuthenticationCredentialsProvider buildAWSAuthenticationCredentialsProvider() {
         return AWSAuthenticationCredentialsProvider.builder()
                 //创建IAM职权的时候会生成这个ARN
-                .roleArn(AmazonSpApiConfigUtil.roleArn)
+                .roleArn(AmazonSpApiConfigUtils.roleArn)
                 //唯一值，可以使用UUID
                 .roleSessionName(UUID.randomUUID().toString())
                 .build();
@@ -135,13 +135,13 @@ public class AmazonSpApiConfigUtil {
     public static LWAAuthorizationCredentials buildLWAAuthorizationCredentials() {
         return LWAAuthorizationCredentials.builder()
                 //查看开发者信息的时候可看到LWA的客户端编码
-                .clientId(AmazonSpApiConfigUtil.clientId)
+                .clientId(AmazonSpApiConfigUtils.clientId)
                 //查看开发者信息的时候可看到LWA的客户端秘钥
-                .clientSecret(AmazonSpApiConfigUtil.clientSecret)
+                .clientSecret(AmazonSpApiConfigUtils.clientSecret)
                 //根据上面的客户端编码和客户端秘钥请求客户端令牌
-                .refreshToken(AmazonSpApiConfigUtil.refreshToken)
+                .refreshToken(AmazonSpApiConfigUtils.refreshToken)
                 //"https://api.amazon.com/auth/o2/token"
-                .endpoint(AmazonSpApiConfigUtil.lwaEndpoint)
+                .endpoint(AmazonSpApiConfigUtils.lwaEndpoint)
                 .build();
     }
 

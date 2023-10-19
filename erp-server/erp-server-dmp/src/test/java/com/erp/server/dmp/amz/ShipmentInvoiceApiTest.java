@@ -19,7 +19,7 @@ import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials
 import com.erp.sdk.oms.amz.spapi.api.ListingsRestrictionsApi;
 import com.erp.sdk.oms.amz.spapi.api.ShipmentInvoiceApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtil;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.listingsrestrictions.RestrictionList;
 import com.erp.sdk.oms.amz.spapi.model.shipmentinvoicing.GetInvoiceStatusResponse;
@@ -47,9 +47,9 @@ public class ShipmentInvoiceApiTest {
     private final ShipmentInvoiceApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US);
 
     public ShipmentInvoiceApi amazonAuthorizationGrant(AmazonMarketplaceEnum marketplaceEnum) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtil.buildLWAAuthorizationCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentialsProvider();
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
         ShipmentInvoiceApi shipmentInvoiceApi = new ShipmentInvoiceApi.Builder()
                 .awsAuthenticationCredentials(awsAuthenticationCredentials)
                 .lwaAuthorizationCredentials(lwaAuthorizationCredentials)

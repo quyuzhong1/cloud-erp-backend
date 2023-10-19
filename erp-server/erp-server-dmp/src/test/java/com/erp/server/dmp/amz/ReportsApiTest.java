@@ -19,7 +19,8 @@ import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredential
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtil;
+import com.erp.sdk.oms.amz.spapi.client.JSON;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.*;
 import org.junit.runner.RunWith;
@@ -29,7 +30,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.junit.Test;
 
+import javax.annotation.Resource;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,12 +44,10 @@ import java.util.List;
 @Profile("dev")
 public class ReportsApiTest {
 
-    private final ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US);
-
-    public ReportsApi amazonAuthorizationGrant(AmazonMarketplaceEnum marketplaceEnum) {
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtil.buildLWAAuthorizationCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentialsProvider();
+    public ReportsApi amazonAuthorizationGrant(AmazonMarketplaceEnum marketplaceEnum, boolean isSandbox) {
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
         ReportsApi reportApi = new ReportsApi.Builder()
                 .awsAuthenticationCredentials(awsAuthenticationCredentials)
                 .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
@@ -55,7 +56,7 @@ public class ReportsApiTest {
                 //北美，https://sellingpartnerapi-na.amazon.com
                 //欧洲，https://sellingpartnerapi-eu.amazon.com
                 //远东，https://sellingpartnerapi-fe.amazon.com
-                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
+                .endpoint(isSandbox ? marketplaceEnum.getEndpointsEnum().getEndpointsByProfile() : marketplaceEnum.getEndpointsEnum().getEndpoints())
                 .build();
         if (null == reportApi) {
             throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
@@ -74,6 +75,7 @@ public class ReportsApiTest {
     @Test
     public void cancelReportTest() throws ApiException {
         String reportId = null;
+        ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, true);
         api.cancelReport(reportId);
 
         // TODO: test validations
@@ -89,7 +91,9 @@ public class ReportsApiTest {
      */
     @Test
     public void cancelReportScheduleTest() throws ApiException {
-        String reportScheduleId = null;
+        // 正式环境参数
+        String reportScheduleId = "50003019648";
+        ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, false);
         api.cancelReportSchedule(reportScheduleId);
 
         // TODO: test validations
@@ -107,7 +111,9 @@ public class ReportsApiTest {
     public void createReportTest() throws ApiException {
         CreateReportSpecification body = new CreateReportSpecification();
         body.setReportType("GET_MERCHANT_LISTINGS_DATA");
+//        body.setReportType("GET_MERCHANT_LISTINGS_ALL_DATA");
         body.setMarketplaceIds(Arrays.asList("A1AM78C64UM0Y8"));
+        ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, true);
         CreateReportResponse response = api.createReport(body);
         System.out.println("创建报告");
         System.out.println(JSONUtil.toJsonStr(response));
@@ -126,11 +132,22 @@ public class ReportsApiTest {
     @Test
     public void createReportScheduleTest() throws ApiException {
         CreateReportScheduleSpecification body = new CreateReportScheduleSpecification();
+        // 正式环境参数
         body.setReportType("GET_MERCHANT_LISTINGS_DATA");
         body.setMarketplaceIds(Arrays.asList("A1AM78C64UM0Y8"));
+        body.setNextReportCreationTime("2023-10-18T03:00:00.000Z");
+        body.setPeriod(CreateReportScheduleSpecification.PeriodEnum.PT1H);
+        // 沙箱参数
+//        body.setReportType("FEE_DISCOUNTS_REPORT");
+//        body.setPeriod(CreateReportScheduleSpecification.PeriodEnum.PT5M);
+//        String time = "2019-12-10T20:11:24.000Z";
+//        body.setNextReportCreationTime(time);
+//        body.setMarketplaceIds(Arrays.asList("A1PA6795UKMFR9","ATVPDKIKX0DER"));
+        ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, false);
         CreateReportScheduleResponse response = api.createReportSchedule(body);
         System.out.println("创建自动更新报告");
         System.out.println(JSONUtil.toJsonStr(response));
+        // {"reportScheduleId":"50002019648"}
         // TODO: test validations
     }
     
@@ -144,8 +161,11 @@ public class ReportsApiTest {
      */
     @Test
     public void getReportTest() throws ApiException {
-//        String reportId = "716008019646";
+        // 沙箱环境参数
         String reportId = "ID323";
+        // 正式环境参数
+//        String reportId = "716008019646";
+        ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, true);
         Report response = api.getReport(reportId);
         System.out.println("获取报告");
         System.out.println(JSONUtil.toJsonStr(response));
@@ -165,6 +185,7 @@ public class ReportsApiTest {
     public void getReportDocumentTest() throws ApiException {
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.584baa05-f1b8-4d53-88fc-5c5b32051236.T2SXAUMO86QN6T.300";
         String reportDocumentId = "0356cf79-b8b0-4226-b4b9-0ee058ea5760";
+        ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, false);
         ReportDocument response = api.getReportDocument(reportDocumentId);
 
         System.out.println("报告文档");
@@ -182,9 +203,16 @@ public class ReportsApiTest {
      */
     @Test
     public void getReportScheduleTest() throws ApiException {
-        String reportScheduleId = null;
+        // 沙箱参数
+//        String reportScheduleId = "ID323";
+        // 正式环境参数
+        String reportScheduleId = "50002019648";
+        ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, false);
         ReportSchedule response = api.getReportSchedule(reportScheduleId);
-
+        System.out.println("getReportScheduleTest");
+        System.out.println(JSONUtil.toJsonStr(response));
+        // {"reportScheduleId":"ReportScheduleId1","reportType":"FEE_DISCOUNTS_REPORT","period":"PT5M","nextReportCreationTime":1576158440677}
+        // {"reportScheduleId":"50002019648","reportType":"GET_MERCHANT_LISTINGS_DATA","marketplaceIds":["A1AM78C64UM0Y8"],"period":"PT1H","nextReportCreationTime":"2023-10-18T10:45:00+00:00"}
         // TODO: test validations
     }
     
@@ -198,9 +226,12 @@ public class ReportsApiTest {
      */
     @Test
     public void getReportSchedulesTest() throws ApiException {
-        List<String> reportTypes = null;
+        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
+        ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, false);
         ReportScheduleList response = api.getReportSchedules(reportTypes);
-
+        System.out.println("getReportSchedulesTest");
+        System.out.println(JSON.toJsonStr(response));
+        // {"reportSchedules":[{"reportScheduleId":"50003019648","reportType":"GET_MERCHANT_LISTINGS_DATA","marketplaceIds":["A1AM78C64UM0Y8"],"period":"PT1H","nextReportCreationTime":"2023-10-18T04:06:25Z"}]}
         // TODO: test validations
     }
     
@@ -214,15 +245,18 @@ public class ReportsApiTest {
      */
     @Test
     public void getReportsTest() throws ApiException {
-        List<String> reportTypes = null;
+        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
         List<String> processingStatuses = null;
         List<String> marketplaceIds = null;
         Integer pageSize = null;
         OffsetDateTime createdSince = null;
         OffsetDateTime createdUntil = null;
         String nextToken = null;
+        ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, false);
         GetReportsResponse response = api.getReports(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);
-
+        System.out.println("getReportsTest");
+        System.out.println(JSONUtil.toJsonStr(response));
+        System.out.println(JSON.toJsonStr(response));
         // TODO: test validations
     }
     

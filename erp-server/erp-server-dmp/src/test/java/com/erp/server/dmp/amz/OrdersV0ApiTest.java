@@ -21,24 +21,14 @@ import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.*;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtil;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import com.erp.server.dmp.ErpServerDmpApplication;
-import org.springframework.context.annotation.Profile;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import com.erp.server.dmp.ErpServerDmpApplication;
-import org.springframework.context.annotation.Profile;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,9 +47,9 @@ public class OrdersV0ApiTest {
     public void getOrderListTest() throws ApiException {
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.US;
 //        OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum);
-        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
-        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtil.buildLWAAuthorizationCredentials();
-        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtil.buildAWSAuthenticationCredentialsProvider();
+        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
         OrdersV0Api api = new OrdersV0Api.Builder()
                 .awsAuthenticationCredentials(awsAuthenticationCredentials)
                 .lwaAuthorizationCredentials(lwaAuthorizationCredentials)

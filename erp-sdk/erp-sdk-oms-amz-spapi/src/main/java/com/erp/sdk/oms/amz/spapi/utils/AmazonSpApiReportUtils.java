@@ -28,13 +28,8 @@ public class AmazonSpApiReportUtils {
     /**
      * 下载并转换库存报告
      */
-    public static List<ListingCsvReportEntity> downloadAndParseListing(String url) {
-        String csvContent = "";
-        try {
-            csvContent = download(url);
-        } catch (IOException e) {
-            throw new ServiceException("[Amazon SP-APi] report download error, msg=" + e.getMessage());
-        }
+    public static List<ListingCsvReportEntity> downloadAndParseListing(String url) throws IOException {
+        String csvContent  = download(url);
         CSVReader reader = parseCSV(csvContent);
         // 转换bean
         return toBean(reader, ListingCsvReportEntity.class);
@@ -110,7 +105,7 @@ public class AmazonSpApiReportUtils {
         return sb.toString();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception{
         String url = "https://d34o8swod1owfl.cloudfront.net/Report_47700__GET_MERCHANT_LISTINGS_ALL_DATA_.txt";
         List<ListingCsvReportEntity> list = downloadAndParseListing(url);
         System.out.println(JSONUtil.toJsonStr(list));
