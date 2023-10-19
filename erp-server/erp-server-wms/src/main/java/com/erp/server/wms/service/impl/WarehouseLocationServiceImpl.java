@@ -267,21 +267,21 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Transactional(rollbackFor = Exception.class)
     public Boolean addWarehouseLocation(PdaWarehouseLocationDTO.WarehouseLocationAddDTO dto) {
         List<String> areaIdList = dto.getAreaIdList();
-        List<WarehouseLocationEntity> locationEntities = this.listByIds(areaIdList);
-
-        for (WarehouseLocationEntity locationEntity : locationEntities) {
+        List<WarehouseLocationEntity> areaEntities = this.listByIds(areaIdList);
+        List<WarehouseLocationEntity> warehouseLocationList = lambdaQuery().in(WarehouseLocationEntity::getParentId, areaIdList).list();
+        for (WarehouseLocationEntity area : areaEntities) {
             // 新增仓位
             WarehouseLocationEntity warehouseLocationEntity = new WarehouseLocationEntity();
-            warehouseLocationEntity.setWarehouseId(locationEntity.getWarehouseId());
+            warehouseLocationEntity.setWarehouseId(area.getWarehouseId());
             warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
             warehouseLocationEntity.setCode(dto.getWarehouseLocation());
             warehouseLocationEntity.setName(dto.getWarehouseLocation());
             warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
-            warehouseLocationEntity.setParentId(locationEntity.getId());
-            if (!locationEntity.getCode().equals(dto.getWarehouseLocation())) {
+            warehouseLocationEntity.setParentId(area.getId());
+            List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationList.stream().filter(req -> req.getParentId().equals(area.getId()) && req.getCode().equals(dto.getWarehouseLocation())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(warehouseLocationEntities)) {
                 this.save(warehouseLocationEntity);
             }
-
         }
         return Boolean.TRUE;
     }
