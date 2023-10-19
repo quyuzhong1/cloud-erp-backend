@@ -118,10 +118,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         List<CfgApiFieldMapValueEntity> cfgApiFieldMapValueList = cfgApiFieldMapValueService.listByFieldMapIds(fieldMapIds);
 
         //正常级别数据
-        List<CfgApiFieldMapDTO> mainList = mapList.stream().filter(obj -> ApiGroupTypeEnum.NORMAL.getCode().equals(obj.getGroupType())).collect(Collectors.toList());
+        List<CfgApiFieldMapDTO> mainList = mapList.stream().filter(obj -> ApiGroupTypeEnum.NORMAL.getCode().equals(obj.getGroupType()) || ApiGroupTypeEnum.PARENT.getCode().equals(obj.getGroupType())).collect(Collectors.toList());
 
-        //父级数据（存在子级）
-        List<CfgApiFieldMapDTO> parentList = mapList.stream().filter(obj -> ApiGroupTypeEnum.PARENT.getCode().equals(obj.getGroupType())).collect(Collectors.toList());
 
         //无值直接返回
         if (CollectionUtils.isEmpty(mainList)) {
@@ -129,11 +127,15 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
         //给常规参数填充数据
         for (CfgApiFieldMapDTO cfgApiFieldMapDTO : mainList) {
-            formatJsonObject(cfgApiFieldMapDTO, json, map, cfgApiFieldMapValueList);
-        }
-        //给集合父项填充数据
-        if (CollectionUtils.isNotEmpty(parentList)) {
-            handleJsonDetail(parentList, mapList, map, cfgApiFieldMapValueList, json, "");
+            //常规参数填充数据
+            if (ApiGroupTypeEnum.NORMAL.getCode().equals(cfgApiFieldMapDTO.getGroupType())) {
+                formatJsonObject(cfgApiFieldMapDTO, json, map, cfgApiFieldMapValueList);
+                continue;
+            }
+            //集合项填充数据
+            if (ApiGroupTypeEnum.PARENT.getCode().equals(cfgApiFieldMapDTO.getGroupType())) {
+                handleJsonDetail(cfgApiFieldMapDTO, mapList, map, cfgApiFieldMapValueList, json);
+            }
         }
         return json;
     }
@@ -619,52 +621,48 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
 
     /**
-     * @param parentList              所有1级（数据结果为集合）数据
+     * @param parentMap              1级（数据结果为集合）数据
      * @param mapList
      * @param map                     来源数据值
      * @param cfgApiFieldMapValueList 值映射数据
      * @param json                    当前级别json
-     * @param parentId                上级id
      * @description:
      * @author Will
      * @date: 2023/5/30 11:35
      */
-    private void handleJsonDetail(List<CfgApiFieldMapDTO> parentList, List<CfgApiFieldMapDTO> mapList, Map<String, Object> map, List<CfgApiFieldMapValueEntity> cfgApiFieldMapValueList, JSONObject json, String parentId) {
-        List<CfgApiFieldMapDTO> levelList = parentList.stream().filter(obj -> obj.getParentId().equals(parentId)).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(levelList)) {
+    private void handleJsonDetail(CfgApiFieldMapDTO parentMap, List<CfgApiFieldMapDTO> mapList, Map<String, Object> map, List<CfgApiFieldMapValueEntity> cfgApiFieldMapValueList, JSONObject json) {
+        CfgApiFieldMapDTO cfgApiFieldMapDTO = mapList.stream().filter(obj -> obj.getId().equals(parentMap.getId())).findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(parentMap)) {
             return;
         }
-        for (CfgApiFieldMapDTO cfgApiFieldMapDTO : levelList) {
-            String apiField = cfgApiFieldMapDTO.getApiField();
-            //业务系统传参
-            JSONArray JsonArray = JSONUtil.parseArray(JSONUtil.toJsonStr(map.get(cfgApiFieldMapDTO.getSelfField())));
-            List<Map<String, Object>> listMap = JsonArray.stream().map(BeanUtil::beanToMap).collect(Collectors.toList());
-            //集合子项参数配置
-            List<CfgApiFieldMapDTO> childList = mapList.stream().filter(obj -> obj.getParentId().equals(cfgApiFieldMapDTO.getId())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(childList)) {
-                continue;
-            }
-            //json集合
-            JSONArray jsonArray = new JSONArray();
-            if (CollectionUtils.isNotEmpty(listMap)) {
-                for (Map<String, Object> fieldMap : listMap) {
-                    JSONObject detailJson = new JSONObject(new LinkedHashMap());
-                    //给集合填充数据
-                    for (CfgApiFieldMapDTO child : childList) {
-
-                        //下级明细处理集合数据
-                        if (ApiGroupTypeEnum.PARENT.getCode().equals(child.getGroupType())) {
-                            handleJsonDetail(parentList, mapList, fieldMap, cfgApiFieldMapValueList, detailJson, cfgApiFieldMapDTO.getId());
-                        }
-                        //下级明细数据填充
-                        formatJsonObject(child, detailJson, fieldMap, cfgApiFieldMapValueList);
-                    }
-                    jsonArray.add(detailJson);
-                }
-            }
-            KingdeeUtils.makeFieldJson(json, apiField, ".", jsonArray);
-
+        String apiField = cfgApiFieldMapDTO.getApiField();
+        //业务系统传参
+        JSONArray JsonArray = JSONUtil.parseArray(JSONUtil.toJsonStr(map.get(cfgApiFieldMapDTO.getSelfField())));
+        List<Map<String, Object>> listMap = JsonArray.stream().map(BeanUtil::beanToMap).collect(Collectors.toList());
+        //集合子项参数配置
+        List<CfgApiFieldMapDTO> childList = mapList.stream().filter(obj -> obj.getParentId().equals(cfgApiFieldMapDTO.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(childList)) {
+            return;
         }
+        //json集合
+        JSONArray jsonArray = new JSONArray();
+        if (CollectionUtils.isNotEmpty(listMap)) {
+            for (Map<String, Object> fieldMap : listMap) {
+                JSONObject detailJson = new JSONObject(new LinkedHashMap());
+                //给集合填充数据
+                for (CfgApiFieldMapDTO child : childList) {
+
+                    //下级明细处理集合数据
+                    if (ApiGroupTypeEnum.PARENT.getCode().equals(child.getGroupType())) {
+                        handleJsonDetail(child, mapList, fieldMap, cfgApiFieldMapValueList, detailJson);
+                    }
+                    //下级明细数据填充
+                    formatJsonObject(child, detailJson, fieldMap, cfgApiFieldMapValueList);
+                }
+                jsonArray.add(detailJson);
+            }
+        }
+        KingdeeUtils.makeFieldJson(json, apiField, ".", jsonArray);
     }
 
     /**
