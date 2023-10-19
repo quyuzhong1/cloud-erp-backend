@@ -48,6 +48,7 @@
         CASE WHEN pv.release_type = 0 THEN '升级通知' ELSE '系统通知' END AS releaseType
         FROM pda_version pv
         WHERE pv.is_deleted = FALSE
+        ORDER BY pv.create_time DESC
     </select>
 
     <select id="getPdaVersion" resultType="com.erp.model.sys.entity.PdaVersionEntity">

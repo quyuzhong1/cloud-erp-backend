@@ -414,7 +414,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
         List<SoDeliveryNoticeEntity> soDeliveryNoticeEntityList = this.listByIds(ids);
@@ -463,7 +462,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
@@ -504,7 +502,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids) {
         List<SoDeliveryNoticeEntity> deliveryNoticeEntityList = this.listByIds(ids);
@@ -687,7 +684,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
      * @date 2023-05-23 11:31
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateSoDeliverySave(List<String> idList) {
         if (CollectionUtils.isEmpty(idList)) {
