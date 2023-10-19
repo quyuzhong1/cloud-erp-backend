@@ -40,10 +40,7 @@ public class WalmartSdkClientService {
         WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
         //请求参数
         HashMap<String, Object> paramMap = new HashMap<>();
-        Integer pageSize = 1;
-        //当前页数
-        Integer pageNo = 1;
-        paramMap.put("offset", pageNo);
+        Integer pageSize = 200;
         paramMap.put("limit", pageSize);
         paramMap.put("lastModifiedStartDate", "2022-01-01T00:00:00");
         paramMap.put("lastModifiedEndDate", "2024-10-07T00:00:00");

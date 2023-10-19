@@ -1,11 +1,11 @@
-package com.sdk.oms.walmart.dto.walmart;
+package com.sdk.oms.walmart.dto.walmart.order;
 
 import com.google.gson.annotations.SerializedName;
 
-public class PriceBean {
+public class TaxAmountBean {
     /**
      * currency : USD
-     * amount : 638.99
+     * amount : 3.11
      */
 
     @SerializedName("currency")

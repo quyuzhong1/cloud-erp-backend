@@ -1,4 +1,4 @@
-package com.sdk.oms.walmart.dto.walmart;
+package com.sdk.oms.walmart.dto.walmart.item;
 
 import com.google.gson.annotations.SerializedName;
 

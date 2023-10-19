@@ -1,6 +1,7 @@
 package com.sdk.oms.walmart.dto.walmart;
 
 import com.google.gson.annotations.SerializedName;
+import com.sdk.oms.walmart.dto.walmart.item.ItemResponseBean;
 
 import java.util.List;
 

@@ -6,13 +6,12 @@ import com.common.business.dto.CleanBaseDTO;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.PlatformDictEnum;
-import com.sdk.oms.walmart.dto.walmart.GroupingAttributesBean;
-import com.sdk.oms.walmart.dto.walmart.ItemResponseBean;
-import com.sdk.oms.walmart.dto.walmart.VariantGroupInfoBean;
+import com.sdk.oms.walmart.dto.walmart.item.GroupingAttributesBean;
+import com.sdk.oms.walmart.dto.walmart.item.ItemResponseBean;
+import com.sdk.oms.walmart.dto.walmart.item.VariantGroupInfoBean;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;

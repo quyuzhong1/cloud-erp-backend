@@ -12,10 +12,9 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractOrderHandler;
 import com.sdk.oms.walmart.api.WalmartStaticKey;
-import com.sdk.oms.walmart.dto.PlatformWalmartListingDTO;
 import com.sdk.oms.walmart.dto.PlatformWalmartOrderDTO;
 import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
-import com.sdk.oms.walmart.dto.walmart.ItemResponseBean;
+import com.sdk.oms.walmart.dto.walmart.item.ItemResponseBean;
 import com.sdk.oms.walmart.dto.walmart.WalmartItemDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartTokenDTO;
 import com.sdk.oms.walmart.service.WalmartSdkClientService;
@@ -23,14 +22,12 @@ import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 沃尔玛订单信息

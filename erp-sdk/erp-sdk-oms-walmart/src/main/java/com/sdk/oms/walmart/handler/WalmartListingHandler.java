@@ -14,7 +14,7 @@ import com.sdk.oms.walmart.api.WalmartStaticKey;
 import com.sdk.oms.walmart.dto.PlatformWalmartListingDTO;
 import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartTokenDTO;
-import com.sdk.oms.walmart.dto.walmart.ItemResponseBean;
+import com.sdk.oms.walmart.dto.walmart.item.ItemResponseBean;
 import com.sdk.oms.walmart.dto.walmart.WalmartItemDTO;
 import com.sdk.oms.walmart.service.WalmartSdkClientService;
 import lombok.extern.slf4j.Slf4j;
