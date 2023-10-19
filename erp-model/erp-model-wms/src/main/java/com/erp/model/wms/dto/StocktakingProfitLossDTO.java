@@ -71,6 +71,13 @@ public class StocktakingProfitLossDTO implements Serializable {
          */
         private LocalDate billDate;
 
+        /**
+         * 库存组织
+         */
+        private String inventoryOrgId;
+
+        private List<String> userIdList;
+
         private List<StocktakingProfitLossDetailDTO.AddDTO> detailList;
 
     }
@@ -96,6 +103,11 @@ public class StocktakingProfitLossDTO implements Serializable {
          * skuId
          */
         private List<String> skuNoList;
+
+        /**
+         * 单据审核状态集合
+         */
+        private List<ApproveStatusEnum> approveStatusList;
 
 
         /**
