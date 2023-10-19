@@ -38,4 +38,13 @@ public class PullAmazonJob {
         });
     }
 
+    /**
+     * 拉取亚马逊报表任务
+     */
+    @XxlJob("amazonReportExecute")
+    public void reportExecute() {
+
+    }
+
+
 }

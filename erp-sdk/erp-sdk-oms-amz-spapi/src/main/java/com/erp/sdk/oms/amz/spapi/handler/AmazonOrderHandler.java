@@ -66,10 +66,8 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         try {
             // 发起请求
             List<Order> orderList = api.getAllOrders(Collections.singletonList(marketplaceEnum.getMarketplaceId()),
-                    createdAfter,
-                    null, lastUpdatedAfter,
-                    null, null, null, null, null, null, 10,
-                    null, null, null, null, null, null);
+                    createdAfter, null, lastUpdatedAfter, null, null, null, null, null, null, 10,
+                    null, null, null, null, null, null, null, null, null,null, null);
             // 返回下载源数据
             return orderList.stream()
                     .map(e-> new PlatformAmazonOrderDTO(e, shop))

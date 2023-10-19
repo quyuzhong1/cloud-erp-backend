@@ -3,6 +3,7 @@ package com.erp.sdk.oms.amz.spapi.utils;
 import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.sdk.oms.amz.spapi.csv.ListingCsvReportEntity;
+import com.erp.sdk.oms.amz.spapi.documents.DownloadHelper;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
@@ -11,6 +12,8 @@ import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
+import org.apache.poi.ooxml.util.DocumentHelper;
+import org.springframework.beans.factory.xml.DocumentLoader;
 
 import java.io.*;
 import java.util.List;
