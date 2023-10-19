@@ -637,6 +637,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST(98106,"sku【{}】在采购单中未找到"),
     ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST(98106,"sku【{}】在采购收货单中未找到"),
     ERROR_SOOUTSTOCK_DETAIL_SKU_NOT_EXIST(98107,"SKU【{}】在发货通知单中未找到"),
+    ERROR_INVENTORY_ORG_NOT_FOUND(98108,"库存组织不存在"),
 
 
 

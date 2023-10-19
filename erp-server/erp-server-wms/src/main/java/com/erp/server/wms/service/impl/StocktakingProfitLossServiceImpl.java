@@ -7,10 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
@@ -26,6 +23,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.BillTypeEnum;
@@ -33,6 +31,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.kingdee.SyncKingdeeStocktakingLossService;
@@ -46,6 +45,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.hibernate.validator.constraints.EAN;
+import org.springframework.asm.Handle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,6 +80,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     @Resource
     private ProductDetailService productDetailService;
 
+    @Resource
+    private InventoryService inventoryService;
+
 
     @Autowired
     private CommonService commonService;
@@ -98,6 +102,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
 
     /**
@@ -510,6 +517,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     public String add(StocktakingProfitLossDTO.AddDTO dto) {
         StocktakingProfitLossEntity entity = new StocktakingProfitLossEntity();
         BeanMapper.copy(dto, entity);
+        handleDb(dto.getDetailList(), entity);
         String id = IdWorker.getIdStr();
         entity.setId(id);
         BillTypeEnum billType = dto.getBillType();
@@ -540,6 +548,51 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             return id;
         }
         return "";
+    }
+
+    /**
+     * 检查数据
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2023-10-19 10:33
+     */
+    private void handleDb(List<StocktakingProfitLossDetailDTO.AddDTO> detailList, StocktakingProfitLossEntity entity) {
+        //库存组织id
+        String inventoryOrgId = entity.getInventoryOrgId();
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inventoryOrgId));
+        if (CollectionUtils.isEmpty(orgList)) {
+            throw new ServiceException(ApiError.ERROR_INVENTORY_ORG_NOT_FOUND);
+        }
+        entity.setInventoryOrgName(orgList.get(0).getName());
+        //sku id
+        List<String> skuIdList = detailList.stream().map(StocktakingProfitLossDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+        //仓库集合
+        List<String> warehouseIdList = detailList.stream().map(StocktakingProfitLossDetailDTO.AddDTO::getWarehouseId).collect(Collectors.toList());
+
+        //库位集合
+        List<String> warehouseLocationList = detailList.stream().map(StocktakingProfitLossDetailDTO.AddDTO::getWarehouseLocation).collect(Collectors.toList());
+
+        //组织
+        List<String> orgIdList = Arrays.asList(inventoryOrgId);
+        InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
+        param.setOrgIdList(orgIdList);
+        param.setSkuIdList(skuIdList);
+        param.setWarehouseIdList(warehouseIdList);
+        param.setWarehouseLocationList(warehouseLocationList);
+        //库存信息
+        List<InventoryEntity> inventoryList = inventoryService.listInventoryByParam(param);
+
+        for (StocktakingProfitLossDetailDTO.AddDTO item : detailList) {
+            String skuId = item.getSkuId();
+            String warehouseId = item.getWarehouseId();
+            String warehouseLocation = item.getWarehouseLocation();
+
+
+        }
+
+
     }
 
     /**
