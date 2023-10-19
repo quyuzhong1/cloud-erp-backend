@@ -671,6 +671,14 @@ public class SoInfoDTO implements Serializable {
          * 客户订单号
          */
         private String customerOrderNo;
+
+
+        /**
+         * 运单号
+         */
+        private String trackNo;
+
+
     }
 
 
@@ -1216,7 +1224,6 @@ public class SoInfoDTO implements Serializable {
          * 客户邮箱
          */
         private String email;
-
 
 
         /**

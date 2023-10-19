@@ -22,15 +22,15 @@ import java.util.List;
 @Mapper
 public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
 
-    IPage<SoInfoDTO.PagingViewDTO> paging(Page query, @Param("params") SoInfoDTO.PagingParamDTO params,@Param("detailIdList") List<String> paramDetailIds );
+    IPage<SoInfoDTO.PagingViewDTO> paging(Page query, @Param("params") SoInfoDTO.PagingParamDTO params,@Param("detailIdList") List<String> paramDetailIds,@Param("soIdList")List<String> soIdList );
 
     /**
      * 查询所有总数
      */
-    SoInfoDTO.PagingTotalDTO pagingTotal(@Param("params") SoInfoDTO.PagingParamDTO params,@Param("detailIdList") List<String> paramDetailIds );
+    SoInfoDTO.PagingTotalDTO pagingTotal(@Param("params") SoInfoDTO.PagingParamDTO params,@Param("detailIdList") List<String> paramDetailIds,@Param("soIdList")List<String> soIdList );
 
 
-    List<SoInfoDTO.PagingViewDTO> listExport(@Param("params") SoInfoDTO.ExportDTO dto,@Param("detailIdList") List<String> paramDetailIds);
+    List<SoInfoDTO.PagingViewDTO> listExport(@Param("params") SoInfoDTO.ExportDTO dto,@Param("detailIdList") List<String> paramDetailIds,@Param("soIdList")List<String> soIdList);
     /**
      * @description: 下推备货申请单数据显示
      * @author Will
