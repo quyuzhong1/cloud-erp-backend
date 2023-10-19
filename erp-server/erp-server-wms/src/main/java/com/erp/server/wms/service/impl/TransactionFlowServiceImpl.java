@@ -5,7 +5,6 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -419,12 +418,12 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             if(Objects.nonNull(sysAccountingCompanyEntity)) {
                 data.setOrgName(sysAccountingCompanyEntity.getCompanyName());
             }
-            String statusName = "";
             if (CollectionUtils.isNotEmpty(pushTaskList)) {
                 String status = pushTaskList.stream().filter(obj -> obj.getSourceId().equals(data.getSourceId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getStatus())).orElse("");
-                 statusName = SyncStatusEnum.getNameByCode(status);
+                String statusName = SyncStatusEnum.getNameByCode(status);
+                data.setSyncKingdeeStatus(status);
+                data.setSyncKingdeeStatusName(statusName);
             }
-            data.setSyncKingdeeStatusName(StringUtils.isBlank(statusName) ? SyncStatusEnum.TO_BE_SYNC.getName() : statusName);
             InventorySourceTypeEnum inventorySourceType = InventorySourceTypeEnum.getByCode(data.getSourceType());
             data.setSourceTypeName(Optional.ofNullable(inventorySourceType).map(InventorySourceTypeEnum::getName).orElse(""));
             InventoryOperationModeEnum inventoryOperationMode = InventoryOperationModeEnum.getByCode(data.getOperationMode());

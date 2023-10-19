@@ -663,6 +663,11 @@ public class InventoryDTO implements Serializable {
         /**
          * 金蝶同步状态
          */
+        private String syncKingdeeStatus;
+
+        /**
+         * 金蝶同步状态名称
+         */
         private String syncKingdeeStatusName;
 
     }
