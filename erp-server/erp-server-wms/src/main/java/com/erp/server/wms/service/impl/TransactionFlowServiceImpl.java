@@ -406,7 +406,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
 
         List<String> sourceIdList = dataList.stream().map(InventoryDTO.InOutStockTransFlowPagingViewDTO::getSourceId).distinct().collect(Collectors.toList());
-        DmpSyncTaskDTO.ListDTO listDTO = new DmpSyncTaskDTO.ListDTO(sourceIdList, PlatformEnum.KINGDEE.getName(), PlatformEnum.ERP.getName());
+        DmpSyncTaskDTO.ListDTO listDTO = new DmpSyncTaskDTO.ListDTO(sourceIdList, PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc());
         List<DmpPushTaskEntity> pushTaskList = dmpMqFeign.listByParam(listDTO);
         dataList.stream().forEach(data->{
             if(skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
