@@ -98,7 +98,8 @@
         sb2cl.code as logisticsCode,
         sb2cr.customer_id as buyerId,
         sb2cr.name as buyerName,
-        sb2cr.country_name as countryName
+        sb2cr.country_name as countryName,
+        sb2c.create_time
     </sql>
 
     <!-- 列表分页查询 -->
@@ -210,7 +211,6 @@
             </if>
 
         </where>
-        ORDER BY sb2c.create_time DESC,sb2c.id DESC
     </select>
 
     <!-- 列表数量查询 -->
