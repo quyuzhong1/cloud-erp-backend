@@ -102,17 +102,7 @@ public class StocktakingProfitLossEntity extends BaseEntity<StocktakingProfitLos
     @TableField("inventory_org_name")
     private String inventoryOrgName;
 
-    /**
-     * 库存组织
-     */
-    @TableField("inventory_org_id")
-    private String inventoryOrgId;
 
-    /**
-     * 库存组织名
-     */
-    @TableField("inventory_org_name")
-    private String inventoryOrgName;
 
     /**
      * 同步操作

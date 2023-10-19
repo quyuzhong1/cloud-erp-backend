@@ -66,6 +66,4 @@ public interface SoOutstockFeign {
     @PostMapping("feign/soOutstock/getSoOutstockDetailByDetailId")
     public List<SoOutstockDetailEntity> getSoOutstockDetailByDetailId(@RequestParam(value = "id") String id);
 
-    @PostMapping("feign/soOutstock/listByTrackNo")
-    List<SoOutstockEntity> listByTrackNo(String trackNo);
 }
