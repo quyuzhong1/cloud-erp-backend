@@ -765,6 +765,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setApproveUserName("");
                 item.setRequireDate(null);
                 item.setAllAmountLc(null);
+                item.setReceiveAmount(null);
                 item.setRemark("");
                 item.setCustomerOrderNo("");
             }
@@ -820,7 +821,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //id
         String id = dto.getId();
         String currency = dto.getCurrency();
-        if(StringUtils.isBlank(currency)){
+        if (StringUtils.isBlank(currency)) {
             throw new ServiceException("币别不能空");
         }
         Boolean isFirst = false;
@@ -2499,7 +2500,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         soPi.setCode(soInfo.getCode());
         soPi.setBillDate(soInfo.getCreateTime().toLocalDate());
 
-
+        soPi.setRemark(soInfo.getRemark());
         //客户id
         String customerId = soInfo.getCustomerId();
         String receiveCondition = soInfo.getReceiveCondition();
