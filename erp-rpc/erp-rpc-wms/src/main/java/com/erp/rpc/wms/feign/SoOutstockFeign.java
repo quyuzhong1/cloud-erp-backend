@@ -46,6 +46,8 @@ public interface SoOutstockFeign {
     @PostMapping("feign/soOutstock/listDetailBySoDetailIds")
     List<SoOutstockDetailDTO.DeliveryQtyDTO> listDetailBySoDetailIds(List<String> soDetailIds);
 
+    @PostMapping("feign/soOutstock/listByTrackNo")
+    List<SoOutstockEntity> listByTrackNo(String trackNo);
     /**
      * 获取销售出货单
      *

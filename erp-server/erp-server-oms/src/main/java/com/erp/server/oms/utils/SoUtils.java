@@ -268,7 +268,6 @@ public class SoUtils {
         headMap.put("receiveAccountName", "收款账号");
         headMap.put("receiveMethodName", "收款方式");
         headMap.put("receiveDate", "收款日期");
-        headMap.put("receiveAmount", "收款金额");
         headMap.put("tradeTermName", "贸易条款");
         headMap.put("discountAmount", "折扣总额");
         headMap.put("receiverName", "收货人");
@@ -367,6 +366,7 @@ public class SoUtils {
                 data.put("shippingFee", "");
                 data.put("receiveAmount", "");
                 data.put("discountAmount", "");
+                data.put("allAmountLc", "");
                 continue;
             }
             mainIds.add(id);
