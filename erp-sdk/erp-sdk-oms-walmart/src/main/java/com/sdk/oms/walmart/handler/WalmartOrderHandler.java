@@ -12,11 +12,14 @@ import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractOrderHandler;
 import com.sdk.oms.walmart.api.WalmartStaticKey;
+import com.sdk.oms.walmart.dto.PlatformWalmartListingDTO;
 import com.sdk.oms.walmart.dto.PlatformWalmartOrderDTO;
 import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
+import com.sdk.oms.walmart.dto.walmart.WalmartOrderDTO;
 import com.sdk.oms.walmart.dto.walmart.item.ItemResponseBean;
 import com.sdk.oms.walmart.dto.walmart.WalmartItemDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartTokenDTO;
+import com.sdk.oms.walmart.dto.walmart.order.OrderBean;
 import com.sdk.oms.walmart.service.WalmartSdkClientService;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 沃尔玛订单信息
@@ -59,16 +63,10 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
 
         baseUrl = WalmartStaticKey.baseUrl + data.getApiCode();
 
-        List<ItemResponseBean> itemResponseList = new ArrayList<>();
+        List<OrderBean> orderBeanList = new ArrayList<>();
 
         //请求参数
         HashMap<String, Object> paramMap = new HashMap<>();
-        //每次最多获取200条
-        Integer pageSize = 200;
-        //当前页数
-        Integer pageNo = 0;
-        //总页数
-        Integer pageCount = 1;
 
         String nextCursor = "";
 
@@ -94,37 +92,36 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
             //拉取数据
             String date = walmartSdkClientService.sendWalmartGet(baseUrl, tokenDTO.getClientId(), tokenDTO.getClientSecret(), walmartTokenDTO.getAccessToken(), paramMap);
 
-
-
-            WalmartItemDTO walmartItemDTO = JSONUtil.toBean(date, WalmartItemDTO.class);
-            if (CollectionUtils.isEmpty(walmartItemDTO.getItemResponse())) {
+            WalmartOrderDTO walmartOrderDTO = JSONUtil.toBean(date, WalmartOrderDTO.class);
+            if (CollectionUtils.isEmpty(walmartOrderDTO.getList().getElements().getOrder())) {
                 break;
             }
-            pageCount = (walmartItemDTO.getTotalItems() + pageSize - 1) / pageSize;
 
-            pageNo++;
+            orderBeanList.addAll(walmartOrderDTO.getList().getElements().getOrder());
 
-            itemResponseList.addAll(walmartItemDTO.getItemResponse());
+            nextCursor = walmartOrderDTO.getList().getMeta().getNextCursor();//下一页
         }
 
-        if (CollectionUtils.isEmpty(itemResponseList)) {
+        if (CollectionUtils.isEmpty(orderBeanList)) {
             return Collections.emptyList();
         }
 
         // 返回下载源数据
-      /*  return itemResponseList.stream()
-                .map(e -> new PlatformWalmartListingDTO(e, data))
-                .collect(Collectors.toList());*/
-        return null;
+        return orderBeanList.stream()
+                .map(e -> new PlatformWalmartOrderDTO(e, data))
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<PlatformOrderDTO> convert(List<PlatformWalmartOrderDTO> sourceDataList) {
-        return null;
+        // 包含数据过滤数据 数据转换 数据合并拆分等操作
+        return sourceDataList.stream()
+                // 组装
+                .map(PlatformWalmartOrderDTO::convertDTO).collect(Collectors.toList());
     }
 
     @Override
     public String getTargetPlatform() {
-        return null;
+        return PlatformDictEnum.WALMART.getCode();
     }
 }
