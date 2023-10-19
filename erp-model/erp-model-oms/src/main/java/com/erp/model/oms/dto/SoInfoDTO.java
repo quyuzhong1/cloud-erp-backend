@@ -525,6 +525,34 @@ public class SoInfoDTO implements Serializable {
          */
         private String customerOrderNo;
 
+
+        /**
+         * 运单号
+         */
+        private List<String> trackNoList;
+
+        /**
+         * 运单号 导出用到
+         */
+        private String trackNoStr;
+
+        /**
+         * 总价税合计（本位币）
+         */
+        private BigDecimal allAmountLc;
+
+        /**
+         * 销售单价(本位币)
+         */
+        private BigDecimal priceLc;
+
+        /**
+         * 含税单价(本位币)
+         */
+        private BigDecimal taxPriceLc;
+
+
+
     }
 
     /**
@@ -645,7 +673,6 @@ public class SoInfoDTO implements Serializable {
          * 客户订单号
          */
         private String customerOrderNo;
-
     }
 
 
@@ -1120,9 +1147,16 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal discountAmount;
 
         /**
+         * 总价税合计（本位币）
+         */
+        private BigDecimal allAmountLc;
+
+
+        /**
          * 客户订单号
          */
         private String customerOrderNo;
+
 
 
         /**
@@ -1153,6 +1187,26 @@ public class SoInfoDTO implements Serializable {
 
 
         /**
+         * 销售员
+         */
+        private String sellerName;
+
+        /**
+         * 销售员电话
+         */
+        private String sellerMobile;
+
+        /**
+         * 销售员邮箱
+         */
+        private String sellerEmail;
+
+        /**
+         * 客户订单好
+         */
+        private String customerOrderNo;
+
+        /**
          * 客户名称
          */
         private String customerName;
@@ -1168,11 +1222,18 @@ public class SoInfoDTO implements Serializable {
          */
         private String email;
 
+
+
         /**
          * 客户电话
          */
         private String telNumber;
 
+
+        /**
+         * 收货人
+         */
+        private String receiverName;
 
         /**
          * 收款条件
@@ -1184,6 +1245,15 @@ public class SoInfoDTO implements Serializable {
          */
         private String receiveConditionStr;
 
+        /**
+         * 销售组织
+         */
+        private String salesOrgName;
+
+        /**
+         * 订单备注
+         */
+        private String remark;
 
         /**
          * 运费
@@ -1225,6 +1295,12 @@ public class SoInfoDTO implements Serializable {
          * 总费用
          */
         private String totalFeeStr;
+
+
+        /**
+         * 贸易条款
+         */
+        private String tradeTerm;
 
 
     }

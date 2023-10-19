@@ -51,6 +51,19 @@ public class BankAccountServiceImpl extends SuperServiceImpl<BankAccountMapper, 
         return lambdaQuery().eq(BankAccountEntity::getOrgId, orgId).eq(BankAccountEntity::getBankAccountNo, bankAccountNo).list();
     }
 
+    /**
+     * 根据组织id和银行名称获取到收款账户信息
+     * @param orgId
+     * @param accountName
+     * @return
+     */
+    @Override
+    public BankAccountEntity findByOrgIdAndAccountName(String orgId, String accountName) {
+        return lambdaQuery().eq(BankAccountEntity::getOrgId, orgId).eq(BankAccountEntity::getAccountName, accountName).
+                last("LIMIT 1").one();
+
+    }
+
 
     /**
      * 导入金蝶银行账号信息

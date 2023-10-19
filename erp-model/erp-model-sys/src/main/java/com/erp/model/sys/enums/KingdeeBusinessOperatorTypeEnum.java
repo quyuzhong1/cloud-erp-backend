@@ -8,7 +8,7 @@ package com.erp.model.sys.enums;
  */
 public enum KingdeeBusinessOperatorTypeEnum {
 
-    YSY("XSY", "销售员"),
+    XSY("XSY", "销售员"),
     CGY("CGY", "采购员"),
     WHY("WHY", "仓管员"),
     ;

@@ -45,6 +45,12 @@ public class MessageEntity extends BaseEntity<MessageEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+    * 应用类型：PDA、PC
+    */
+    @TableField("application")
+    private String application;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

@@ -103,6 +103,18 @@ public class StocktakingProfitLossEntity extends BaseEntity<StocktakingProfitLos
     private String syncKingdeeId;
 
     /**
+     * 库存组织
+     */
+    @TableField("inventory_org_id")
+    private String inventoryOrgId;
+
+    /**
+     * 库存组织名
+     */
+    @TableField("inventory_org_name")
+    private String inventoryOrgName;
+
+    /**
      * 同步操作
      */
     @TableField("sync_operate")

@@ -49,4 +49,16 @@ public enum BillTypeEnum implements EnumMessage {
         }
         return "";
     }
+
+    public static String getCodeByName(String name) {
+        if (StringUtils.isBlank(name)) {
+            return "";
+        }
+        for (BillTypeEnum billTypeEnum : BillTypeEnum.values()) {
+            if (name.trim().equals(billTypeEnum.getName())) {
+                return billTypeEnum.getCode();
+            }
+        }
+        return "";
+    }
 }

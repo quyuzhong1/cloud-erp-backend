@@ -23,7 +23,6 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname SoChangeDTO
-
  * @Date 2023-05-11 9:58
  * @Created by yl
  */
@@ -88,6 +87,12 @@ public class SoChangeDTO implements Serializable {
          * 销售订单id
          */
         private String soId;
+
+
+        /**
+         * 收货国家名
+         */
+        private String countryName;
 
 
         /**
@@ -502,7 +507,6 @@ public class SoChangeDTO implements Serializable {
         private String currency;
 
 
-
         /**
          * 币种
          */
@@ -513,7 +517,6 @@ public class SoChangeDTO implements Serializable {
          * true 是
          */
         private Boolean isTax;
-
 
 
         /**
@@ -726,8 +729,6 @@ public class SoChangeDTO implements Serializable {
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
-
-
 
 
     }

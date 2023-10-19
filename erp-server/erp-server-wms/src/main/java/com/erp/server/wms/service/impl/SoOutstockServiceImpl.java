@@ -36,6 +36,7 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -219,7 +220,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoOutstockDetailDTO.AddDTO> addDetailList = dto.getDetailList();
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSCK, BusinessNoTypeEnum.CODE_XSCK.getCode()));
         soOutstock.setCode(code);
-
+        soOutstock.setSalesDeptId(soInfo.getSalesDeptId());
         soOutstock.setWarehouseOrgId(soInfo.getWarehouseOrgId());
         soOutstock.setWarehouseOrgName(soInfo.getWarehouseOrgName());
         //仓库id
@@ -300,7 +301,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(rejectStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus), "",null);
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus), "", null);
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
@@ -430,7 +431,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             approveStatus = ApproveStatusEnum.REJECT;
             content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
         }
-        Boolean result = this.updateApproveStatus(list, approveStatus, userName,LocalDateTime.now());
+        Boolean result = this.updateApproveStatus(list, approveStatus, userName, LocalDateTime.now());
         if (result) {
             //处理对应数据
             if (isPass) {
@@ -598,9 +599,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoOutstockEntity> list = this.listByIds(ids);
         //审核通过
         //待提交
-        if(!isPushKingDee){
+        if (!isPushKingDee) {
             list = list.stream().filter(x -> ApproveStatusEnum.APPROVE.equals(x.getApproveStatus())).collect(Collectors.toList());
-        }else {
+        } else {
             long count = list.stream().filter(s -> !ApproveStatusEnum.APPROVE.equals(s.getApproveStatus())).count();
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_98014);
@@ -608,7 +609,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> ApproveStatusEnum.APPROVE.equals(s.getApproveStatus())).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.WAIT_SUBMIT, "",null);
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.WAIT_SUBMIT, "", null);
         //反审核
         if (result) {
             //反审核
@@ -618,7 +619,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //添加日志
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.SO_OUT_STOCK.getCode(), rejectPairList, "状态变更");
-            if(isPushKingDee){
+            if (isPushKingDee) {
                 //审核通过发送金蝶
                 list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
             }
@@ -644,7 +645,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //TODO 撤销流程
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "",null);
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "", null);
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("销售出库单【%s】取消流程", ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "取消流程操作");
         return result;
@@ -819,6 +820,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //客户信息
         List<String> customerIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getCustomerId).collect(Collectors.toList());
         List<CustomerInfoEntity> customerList = customerFeign.listCustomerByIds(customerIdList);
+        //部门id集合
+        List<String> deptIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSalesDeptId).collect(Collectors.toList());
+        List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(deptIdList);
 
         // 国家
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
@@ -830,6 +834,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
             String soId = item.getSoId();
+            //部门id
+            String salesDeptId = item.getSalesDeptId();
+            String salesDeptName = deptList.stream().filter(d -> d.getId().equals(salesDeptId)).
+                    map(SysDepartmentEntity::getName).findFirst().orElse("");
+            item.setSalesDeptName(salesDeptName);
             String sourceType = item.getSourceType();
             String sourceCode = soDeliveryNotice.equals(sourceType) ? item.getSourceCode() : "";
             item.setSourceCode(sourceCode);
@@ -909,20 +918,25 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         //发货通知单
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
-
+        //部门id集合
+        List<String> deptIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSalesDeptId).collect(Collectors.toList());
+        List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(deptIdList);
         //客户信息
         List<String> customerIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getCustomerId).collect(Collectors.toList());
         List<CustomerInfoEntity> customerList = customerFeign.listCustomerByIds(customerIdList);
-
         // 国家
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
-
         for (SoOutstockDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
             String soId = item.getSoId();
             String sourceType = item.getSourceType();
             String sourceCode = soDeliveryNotice.equals(sourceType) ? item.getSourceCode() : "";
+            //部门id
+            String salesDeptId = item.getSalesDeptId();
+            String salesDeptName = deptList.stream().filter(d -> d.getId().equals(salesDeptId)).
+                    map(SysDepartmentEntity::getName).findFirst().orElse("");
+            item.setSalesDeptName(salesDeptName);
             item.setSourceCode(sourceCode);
             SoInfoDTO.CustomerDTO soInfo = soCustomerList.stream().filter(s -> s.getId().equals(soId)).findFirst().orElse(new SoInfoDTO.CustomerDTO());
             item.setOrderTypeName(soInfo.getOrderTypeName());
@@ -1038,6 +1052,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setOrderType(soInfo.getOrderType());
         soOutstock.setWarehouseOrgId(soInfo.getWarehouseOrgId());
         soOutstock.setWarehouseOrgName(soInfo.getWarehouseOrgName());
+        soOutstock.setSalesDeptId(soInfo.getSalesDeptId());
 
         //仓库id
         String warehouseId = dto.getWarehouseId();
@@ -1321,7 +1336,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @param statusEnum
      * @return
      */
-    private Boolean updateApproveStatus(List<SoOutstockEntity> list, ApproveStatusEnum statusEnum, String approveUserName,LocalDateTime approveTime) {
+    private Boolean updateApproveStatus(List<SoOutstockEntity> list, ApproveStatusEnum statusEnum, String approveUserName, LocalDateTime approveTime) {
         if (CollectionUtils.isNotEmpty(list)) {
             for (SoOutstockEntity item : list) {
                 item.setApproveStatus(statusEnum);
@@ -1465,15 +1480,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     /**
      * 金蝶同步到系统
-     * @author yl
-     * @date 2023-07-21 14:44
+     *
      * @param soOutstock 销售出库单
      * @param detailList 销售出库详情
-     * @param flagId  已存在的flagId
+     * @param flagId     已存在的flagId
      * @return void
+     * @author yl
+     * @date 2023-07-21 14:44
      */
     @Override
-    @Transactional(rollbackFor = Exception.class,propagation = Propagation.REQUIRES_NEW)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     public void handleKingdeeToErp(SoOutstockEntity soOutstock, List<SoOutstockDetailEntity> detailList, String flagId) {
         if (StringUtils.isNotBlank(flagId)) {
             //回滚库存
@@ -1491,12 +1507,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
 
     /**
+     * @param params
      * @description: 处理国家字段
      * @author Will
      * @date: 2023/7/24 14:01
-     * @param params
      */
-    private void handleCountryIdList (SoOutstockDTO.PagingParamDTO params) {
+    private void handleCountryIdList(SoOutstockDTO.PagingParamDTO params) {
         if (CollectionUtils.isNotEmpty(params.getCountryIdList())) {
             List<CustomerInfoEntity> customerList = customerFeign.listByCountryIdList(params.getCountryIdList());
             if (CollectionUtils.isEmpty(customerList)) {

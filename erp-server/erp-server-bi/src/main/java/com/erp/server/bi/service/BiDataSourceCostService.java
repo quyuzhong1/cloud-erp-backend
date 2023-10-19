@@ -7,8 +7,10 @@ import com.common.business.vo.SeriesVO;
 import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.CompletionRateRankingDTO;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.vo.*;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -183,4 +185,21 @@ public interface BiDataSourceCostService
      * @return
      */
     List<DateCostVO> sumByDateAndCostType(BiFilterDTO dto, List<String> dictValues);
+
+
+    /**
+     * 部门销售额排行榜
+     * @param dto
+     * @param settleRate
+     * @return
+     */
+    List<CompletionRateRankingDTO.PagingDTO> deptCompletionRateRanking(@Param("params") CompletionRateRankingDTO.SearchDTO dto, @Param("settleRate") String settleRate);
+
+    /**
+     * 用户销售额排行榜
+     * @param dto
+     * @param settleRate
+     * @return
+     */
+    List<CompletionRateRankingDTO.PagingDTO> userCompletionRateRanking(@Param("params") CompletionRateRankingDTO.SearchDTO dto, @Param("settleRate") String settleRate);
 }

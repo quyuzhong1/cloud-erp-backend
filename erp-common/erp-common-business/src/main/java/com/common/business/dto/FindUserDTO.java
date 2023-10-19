@@ -7,7 +7,6 @@ import java.io.Serializable;
 
 /**
  * @Classname FindUserDTO
-
  * @Date 2022-10-08 11:22
  * @Created by yl
  */
@@ -44,6 +43,11 @@ public class FindUserDTO implements Serializable {
      * 电话
      */
     private String mobile;
+
+    /**
+     * 邮箱
+     */
+    private String email;
 
     /**
      * 是否自己

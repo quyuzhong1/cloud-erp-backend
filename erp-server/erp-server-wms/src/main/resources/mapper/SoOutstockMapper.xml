@@ -30,6 +30,7 @@
         so.seller_name,
         so.customer_id,
         so.bill_date,
+        so.sales_dept_id,
         so.customer_order_no,
         sod.sku_id,
         sod.sku_no,
@@ -58,6 +59,10 @@
         </if>
         <if test="params.orderType !=null and params.orderType!=''">
             AND so.order_type =#{params.orderType}
+        </if>
+
+        <if test="params.salesDeptId !=null and params.salesDeptId!=''">
+            AND so.sales_dept_id =#{params.salesDeptId}
         </if>
         <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
             AND so.approve_status IN
@@ -148,6 +153,7 @@
            so.seller_name,
            so.customer_id,
            so.bill_date,
+           so.sales_dept_id,
            so.customer_order_no,
            sod.sku_id,
            sod.sku_no,
@@ -184,6 +190,9 @@
                 </if>
                 <if test="params.orderType !=null and params.orderType!=''">
                     AND so.order_type =#{params.orderType}
+                </if>
+                <if test="params.salesDeptId !=null and params.salesDeptId!=''">
+                    AND so.sales_dept_id =#{params.salesDeptId}
                 </if>
                 <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
                     AND so.approve_status IN

@@ -61,6 +61,13 @@
         <if test="params.sourceCode!=null and params.sourceCode!=''">
             AND spl.source_code ILIKE concat('%', #{params.sourceCode} ,'%')
         </if>
+        <!--审核状态-->
+        <if test="params.approveStatusList!=null and params.approveStatusList.size>0">
+            AND spl.approve_status IN
+            <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
+                #{approveStatus}
+            </foreach>
+        </if>
         <if test="params.billTypeList!=null and params.billTypeList.size>0">
             AND spl.bill_type IN
             <foreach collection="params.billTypeList" item="billType" open="(" separator="," close=")">

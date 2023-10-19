@@ -44,7 +44,8 @@
         pv.force,
         pv.url,
         pv.type,
-        pv.upgrade_time
+        pv.upgrade_time,
+        CASE WHEN pv.release_type = 0 THEN '升级通知' ELSE '系统通知' END AS releaseType
         FROM pda_version pv
         WHERE pv.is_deleted = FALSE
     </select>
@@ -69,7 +70,7 @@
         FROM pda_version pv
         WHERE pv.is_deleted = FALSE
         AND now() >= pv.upgrade_time
-        AND pv.upgrade_time IN (SELECT MAX(upgrade_time) FROM pda_version)
+        AND pv.upgrade_time IN (SELECT MAX(upgrade_time) FROM pda_version WHERE release_type = 0)
 		AND NOT EXISTS (
 		    SELECT
 			    pusv.id

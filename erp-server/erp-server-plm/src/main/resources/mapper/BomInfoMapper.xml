@@ -153,6 +153,9 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.remoteSearchSku != null  and params.remoteSearchSku != ''">
+                AND pd.sku_no ILIKE concat('%',#{params.remoteSearchSku},'%')
+            </if>
             <if test="params.categoryIdList !=null and params.categoryIdList.size>0">
                 and pi.category_id in
                 <foreach collection="params.categoryIdList" item="item" open="(" separator="," close=")">

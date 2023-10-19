@@ -210,6 +210,18 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
         }
         return resultList;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateProductPlaceOrderTimeBatch(List<ProductPurchaseEntity> list) {
+        for (ProductPurchaseEntity purchaseEntity : list) {
+            lambdaUpdate()
+                    .set(ProductPurchaseEntity::getPlaceOrderTime, purchaseEntity.getPlaceOrderTime())
+                    .eq(ProductPurchaseEntity::getSkuId, purchaseEntity.getSkuId())
+                    .update();
+        }
+        return Boolean.TRUE;
+    }
 }
 
 

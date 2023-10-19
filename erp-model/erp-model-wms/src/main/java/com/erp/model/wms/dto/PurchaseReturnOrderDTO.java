@@ -681,6 +681,11 @@ public class PurchaseReturnOrderDTO {
          */
         private String returnOrderSource;
 
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
+
     }
 
     /**

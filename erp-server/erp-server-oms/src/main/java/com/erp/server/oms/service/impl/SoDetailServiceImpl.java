@@ -115,7 +115,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     private ScmTaskFeign scmTaskFeign;
 
 
-
     /**
      * 根据退货单详情表id查询退货单
      *
@@ -345,13 +344,22 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //单价
             BigDecimal price = item.getPrice();
+            //汇率
+            BigDecimal exchangeRate = item.getExchangeRate();
+            if (Objects.isNull(exchangeRate)) {
+                exchangeRate = MathUtil.BigDecimal_1;
+            }
+            //销售单价(本位币)
+            item.setPriceLc(MathUtil.multiply(price, exchangeRate));
+
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             item.setTaxPrice(taxPrice);
-            // BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
-            // item.setTaxAmount(taxAmount);
+            //含税单价(本位币)
+            item.setTaxPriceLc(MathUtil.multiply(taxPrice, exchangeRate));
+
             //历史价格
             SoDetailDTO.SkuHistoryPriceDTO skuHistoryPrice = skuPriceHistoryList.stream().
                     filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
@@ -1049,6 +1057,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     }
 
+    @Override
+    public List<SoDetailEntity> listBaseByMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoDetailEntity::getMainId, mainIdList).list();
+    }
+
     /**
      * 添加销售订单明细
      *
@@ -1222,6 +1238,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         item.setAmountLocalCurrency(saleAmount);
         item.setAllAmountLocalCurrency(taxAmount);
+
+
         if (Objects.nonNull(saleAmount) &&
                 saleAmount.compareTo(BigDecimal.ZERO) >= 0 &&
                 !Objects.equals(item.getCurrency(), "CNY")) {

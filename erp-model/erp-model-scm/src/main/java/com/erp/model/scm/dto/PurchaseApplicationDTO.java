@@ -478,6 +478,10 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         private LocalDate planDeliveryDate;
 
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
     }
 
     @Data
@@ -571,6 +575,10 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         private String purchaseUserId;
 
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
     }
 
     @Data
@@ -688,6 +696,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * 预计交货日期
          */
         private LocalDate planDeliveryDate;
+
+        /**
+         * 明细备注
+         */
+        private String remark;
 
         /**
          * 付款条件
