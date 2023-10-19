@@ -2,6 +2,8 @@ package com.sdk.oms.walmart.dto.walmart.order;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.math.BigDecimal;
+
 public class ChargeAmountBean {
     /**
      * currency : USD
@@ -11,7 +13,7 @@ public class ChargeAmountBean {
     @SerializedName("currency")
     private String currency;
     @SerializedName("amount")
-    private double amount;
+    private BigDecimal amount;
 
     public String getCurrency() {
         return currency;
@@ -21,11 +23,11 @@ public class ChargeAmountBean {
         this.currency = currency;
     }
 
-    public double getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(double amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 }

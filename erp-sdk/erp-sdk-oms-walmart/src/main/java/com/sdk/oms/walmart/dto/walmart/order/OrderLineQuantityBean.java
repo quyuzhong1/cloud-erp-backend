@@ -11,7 +11,7 @@ public class OrderLineQuantityBean {
     @SerializedName("unitOfMeasurement")
     private String unitOfMeasurement;
     @SerializedName("amount")
-    private String amount;
+    private Integer amount;
 
     public String getUnitOfMeasurement() {
         return unitOfMeasurement;
@@ -21,11 +21,11 @@ public class OrderLineQuantityBean {
         this.unitOfMeasurement = unitOfMeasurement;
     }
 
-    public String getAmount() {
+    public Integer getAmount() {
         return amount;
     }
 
-    public void setAmount(String amount) {
+    public void setAmount(Integer amount) {
         this.amount = amount;
     }
 }
