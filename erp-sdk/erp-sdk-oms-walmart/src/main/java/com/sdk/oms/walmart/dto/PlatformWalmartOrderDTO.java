@@ -72,6 +72,10 @@ public class PlatformWalmartOrderDTO extends CleanBaseDTO {
         // 订单状态，详情金额汇总
         fieldHandler(orderBean.getOrderLines().getOrderLine(), orderDTO);
 
+        // 订单明细
+        List<PlatformOrderDetailDTO> details = parseDetailDto(orderBean);
+        orderDTO.setDetails(details);
+
         return orderDTO;
     }
 
