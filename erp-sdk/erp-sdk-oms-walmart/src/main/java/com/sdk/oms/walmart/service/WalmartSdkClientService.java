@@ -43,11 +43,10 @@ public class WalmartSdkClientService {
         Integer pageSize = 200;
         paramMap.put("limit", pageSize);
         paramMap.put("lastModifiedStartDate", "2023-09-01T00:00:00");
-        paramMap.put("lastModifiedEndDate", "2022-01-27T00:00:00");
+        paramMap.put("lastModifiedEndDate", "2023-10-27T00:00:00");
         paramMap.put("createdStartDate", "2023-09-01T00:00:00");
         paramMap.put("createdEndDate", "2023-10-27T00:00:00");
-        paramMap.put("status", "Delivered,Shipped,Created");
-
+        paramMap.put("status", "Acknowledged,Shipped,Delivered,Cancelled");
         paramMap.put("productInfo", "true");
 //        WalmartTokenDTO s = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
         baseUrl = WalmartStaticKey.baseUrl + "orders";

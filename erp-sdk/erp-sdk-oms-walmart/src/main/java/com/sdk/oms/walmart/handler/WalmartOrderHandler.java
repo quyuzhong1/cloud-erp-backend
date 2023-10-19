@@ -84,6 +84,7 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
                 sb.append(data.getLastTime());
                 sb.append("&createdEndDate=");
                 sb.append(data.getNextTime());
+                sb.append("&status=Acknowledged,Shipped,Delivered,Cancelled");
                 sb.append("&limit=200&productInfo=true");
             } else {
                 sb.append(baseUrl);
