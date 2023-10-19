@@ -64,52 +64,66 @@ public class PurchasePriceChangeExportExcelDTO implements Serializable {
     private String qtySection;
 
     /**
+     * 调整前含税单价
+     */
+    @ColumnWidth(10)
+    @ExcelProperty(value = "调整前含税单价", index = 6)
+    private BigDecimal oldTaxPrice;
+
+    /**
      * 调整后含税单价
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "调整后含税单价", index = 6)
-    private String taxPrice;
+    @ExcelProperty(value = "调整后含税单价", index = 7)
+    private BigDecimal taxPrice;
 
     /**
-     * 税率
+     * 调整前税率
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "税率(%)", index = 7)
+    @ExcelProperty(value = "调价前税率(%)", index = 8)
+    private BigDecimal oldTaxRate;
+
+    /**
+     * 调整后税率
+     */
+    @ColumnWidth(10)
+    @ExcelProperty(value = "调整后税率(%)", index = 9)
     private BigDecimal taxRate;
 
     /**
      * 采购组织名
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "采购组织", index = 8)
+    @ExcelProperty(value = "采购组织", index = 10)
     private String purchaseOrgName;
 
     /**
      * 生效时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "生效时间", index = 9)
+    @ExcelProperty(value = "生效时间", index = 11)
     private LocalDate effectiveDate;
 
     /**
      * 明细备注
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "明细备注", index = 10)
+    @ExcelProperty(value = "明细备注", index = 12)
     private String detailRemark;
 
     /**
      * 创建人
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "创建人", index = 11)
+    @ExcelProperty(value = "创建人", index = 13)
     private String createUserName;
 
     /**
      * 创建时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "创建时间", index = 12,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 14,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 
 

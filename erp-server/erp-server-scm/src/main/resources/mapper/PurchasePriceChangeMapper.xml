@@ -109,6 +109,7 @@
         SELECT
             pp.id,
             ppd.id AS changeDetailId,
+            ppd.purchase_price_detail_id,
             pp.code,
             pp.create_user_id AS createUserId,
             pp.create_user_name AS createUserName,

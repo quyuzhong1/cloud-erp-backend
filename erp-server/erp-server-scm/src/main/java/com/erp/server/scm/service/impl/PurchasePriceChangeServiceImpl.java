@@ -22,6 +22,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
@@ -31,6 +32,7 @@ import com.erp.model.scm.dto.excel.PurchasePriceChangeExportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
+import com.erp.model.scm.entity.PurchasePriceHistoryEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -765,11 +767,37 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
         List<String> skuIds = viewList.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        //采购价目详情表id
+        List<String> purchasePriceDetailIds = viewList.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getPurchasePriceDetailId).collect(Collectors.toList());
+        //历史的
+        List<PurchasePriceHistoryEntity> historyList = purchasePriceHistoryService.getHistoryByDetailIds(purchasePriceDetailIds);
+        //获取到对应的价目明细
+        List<PurchasePriceDetailEntity> purchasePriceDetailList = purchasePriceDetailService.listByIds(purchasePriceDetailIds);
+
         for (PurchasePriceChangeDTO.PagingViewDTO item : viewList) {
             PurchasePriceChangeExportExcelDTO excelDTO = new PurchasePriceChangeExportExcelDTO();
             BeanMapper.copy(item, excelDTO);
+            //sku信息
             SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
             excelDTO.setProductName(skuVO.getSkuName());
+            //历史报价
+            PurchasePriceHistoryEntity historyEntity = historyList.stream().filter(h -> h.getPriceDetailId().equals(item.getPurchasePriceDetailId())).findFirst().orElse(null);
+            //现有报价
+            PurchasePriceDetailEntity priceDetailEntity = purchasePriceDetailList.stream().filter(p -> p.getId().equals(item.getPurchasePriceDetailId())).findFirst().orElse(null);
+            if (historyEntity != null) {
+                excelDTO.setOldTaxPrice(historyEntity.getTaxPrice());
+                if (historyEntity.getTaxRate() != null) {
+                    excelDTO.setOldTaxRate(historyEntity.getTaxRate().multiply(MathUtil.BigDecimal_100));
+                }
+            } else {
+                if (priceDetailEntity != null) {
+                    excelDTO.setOldTaxPrice(priceDetailEntity.getTaxPrice());
+                    if (priceDetailEntity.getTaxRate() != null) {
+                        excelDTO.setOldTaxRate(priceDetailEntity.getTaxRate());
+                    }
+                }
+            }
             ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
             excelDTO.setApproveStatusName(approveStatusEnum.getName());
             Integer minQty = item.getMinQty();

@@ -248,6 +248,10 @@ public class PurchasePriceChangeDTO implements Serializable {
          */
         private String changeDetailId;
 
+        /**
+         * 价目明细id
+         */
+        private String purchasePriceDetailId;
 
         /**
          * code
