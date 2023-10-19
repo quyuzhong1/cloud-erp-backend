@@ -1408,11 +1408,10 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         if (CollectionUtils.isNotEmpty(addressList)) {
             CustomerAddressDTO.ViewDTO viewDTO = addressList.stream().filter(obj -> obj.getIsDefault() && !obj.getDisabled()).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(viewDTO)) {
-                viewReceiveDataDTO.setEmail(viewDTO.getEmail());
-                viewReceiveDataDTO.setTelNumber(viewDTO.getTelNumber());
+                viewReceiveDataDTO.setReceiverName(viewDTO.getPerson());
+                viewReceiveDataDTO.setReceiverTelNumber(viewDTO.getTelNumber());
                 viewReceiveDataDTO.setFirstAddress(viewDTO.getAddress());
                 viewReceiveDataDTO.setSecondAddress(viewDTO.getAddress());
-
             }
         }
         //联系人
@@ -1420,8 +1419,8 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         if (CollectionUtils.isNotEmpty(contactList)) {
             CustomerContactDTO.ViewDTO viewDTO = contactList.stream().filter(obj -> obj.getIsDefault() && !obj.getDisabled()).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(viewDTO)) {
-                viewReceiveDataDTO.setReceiverName(viewDTO.getPerson());
-                viewReceiveDataDTO.setReceiverTelNumber(viewDTO.getTelNumber());
+                viewReceiveDataDTO.setEmail(viewDTO.getEmail());
+                viewReceiveDataDTO.setTelNumber(viewDTO.getTelNumber());
             }
         }
 
