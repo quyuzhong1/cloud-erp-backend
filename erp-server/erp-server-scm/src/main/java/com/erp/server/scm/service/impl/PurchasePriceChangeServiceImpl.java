@@ -798,7 +798,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 if (priceDetailEntity != null) {
                     excelDTO.setOldTaxPrice(priceDetailEntity.getTaxPrice());
                     if (priceDetailEntity.getTaxRate() != null) {
-                        excelDTO.setOldTaxRate(priceDetailEntity.getTaxRate());
+                        excelDTO.setOldTaxRate(priceDetailEntity.getTaxRate().multiply(MathUtil.BigDecimal_100));
                     }
                 }
             }
