@@ -138,6 +138,11 @@ public class WarehouseDTO implements Serializable {
     public static class ListDTO {
 
         /**
+         * code
+         */
+        private String kingdeeWarehouseCode;
+
+        /**
          * id
          */
         private String id;

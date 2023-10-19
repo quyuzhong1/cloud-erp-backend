@@ -90,6 +90,9 @@
         <if test="params.no != null  and params.no != ''">
             AND (pi.spu_no ILIKE concat('%',#{params.no},'%') OR pd.sku_no ILIKE concat('%',#{params.no},'%') OR pd.name ILIKE concat('%', #{params.no},'%'))
         </if>
+        <if test="params.remoteSearchSku != null  and params.remoteSearchSku != ''">
+            AND pd.sku_no ILIKE concat('%',#{params.remoteSearchSku},'%')
+        </if>
         <if test="params.productId != null and params.productId != ''  ">
             AND pd.product_id = #{params.productId}
         </if>

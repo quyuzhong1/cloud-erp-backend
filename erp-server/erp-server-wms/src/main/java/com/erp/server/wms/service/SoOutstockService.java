@@ -333,4 +333,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return void
      */
     void tempRepairHistoryDb();
+
+    /**
+     * 根据运单号模糊查询销售出库信息
+     * @author yl
+     * @date 2023-10-19 15:48
+     * @param trackNo
+     * @return java.util.List<com.erp.model.wms.entity.SoOutstockEntity>
+     */
+    List<SoOutstockEntity> listByTrackNo(String trackNo);
 }

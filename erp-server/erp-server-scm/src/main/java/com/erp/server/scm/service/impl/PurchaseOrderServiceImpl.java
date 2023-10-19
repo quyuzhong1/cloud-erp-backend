@@ -31,6 +31,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
@@ -39,6 +40,7 @@ import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.enums.SysDictBasicEnum;
+import com.erp.model.wms.dto.FirstMassInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
@@ -414,7 +416,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         log.info("采购订单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
 
         //调用审核流程
-        approveProcess(list, baseApproveParamDTO);
+//        approveProcess(list, baseApproveParamDTO);
+
+        approveEnd(baseApproveParamDTO, list);
 
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -426,7 +430,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approveEnd(BaseApproveParamDTO dto, List<PurchaseOrderEntity> list) {
-        if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(list)) {
+        if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
         List<String> ids = list.stream().map(PurchaseOrderEntity::getId).collect(Collectors.toList());
@@ -446,6 +450,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (dto.getType().equals(ApproveType.PASS)) {
             // 更新库存信息（生成入库预报）
             updateInventoryTransCore(list);
+
+            // 填入首批下单时间
+            setFirstPlaceOrder(ids);
+
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
             //同步到WMS
@@ -453,6 +461,27 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
         }
         return Boolean.TRUE;
+    }
+
+
+    private void setFirstPlaceOrder(List<String> ids) {
+        //填入首批下单时间
+        List<FirstPlaceOrderDTO> firstPlaceOrderList = baseMapper.listFirstPlaceOrderDate(ids);
+        List<String> skuIds = firstPlaceOrderList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<ProductPurchaseEntity> productPurchaseEntities = plmTaskFeign.listProductPurchaseBySkuId(skuIds);
+        //获取到没有设置首批下单时间的sku
+        List<String> skuIdList = productPurchaseEntities.stream().filter(req -> req.getPlaceOrderTime() == null).map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<ProductPurchaseEntity> purchaseEntityList = new ArrayList<>();
+        for (String skuId : skuIdList) {
+            FirstPlaceOrderDTO firstPlaceOrderDTO = firstPlaceOrderList.stream().filter(req -> req.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(firstPlaceOrderDTO)) {
+                ProductPurchaseEntity purchaseEntity = new ProductPurchaseEntity();
+                purchaseEntity.setSkuId(skuId);
+                purchaseEntity.setPlaceOrderTime(firstPlaceOrderDTO.getPurchaseDate());
+                purchaseEntityList.add(purchaseEntity);
+            }
+        }
+        plmTaskFeign.updateProductPlaceOrderTimeBatch(purchaseEntityList);
     }
 
     @Override

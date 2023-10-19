@@ -41,6 +41,7 @@ public class SyncKingdeeReturnOrderCustomer implements RocketMQListener<DmpSyncM
             paramDTO.setSyncStatus(SyncStatusEnum.FAILED_SYNC.getCode());
             paramDTO.setResponseMsg(e.getMessage());
             dmpTaskFeign.updateSyncInfo(paramDTO);
+            return;
         }
         //同步成功
         paramDTO.setSyncStatus(SyncStatusEnum.SUCCESS_SYNC.getCode());

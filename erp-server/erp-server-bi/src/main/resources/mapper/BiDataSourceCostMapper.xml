@@ -170,4 +170,115 @@
         GROUP BY bdsc.month,cost_type
         ORDER BY bdsc.month
     </select>
+
+
+    <!--部门销售额排行榜-->
+    <select id="deptCompletionRateRanking" resultType="com.erp.model.bi.dto.CompletionRateRankingDTO$PagingDTO">
+        SELECT
+        ROW_NUMBER() over(ORDER bY round(SUM (bdscd.cost_value * 1),2) DESC ) AS ranking,
+        round(SUM (bdscd.cost_value * 1),2) AS monthSales,
+        CASE WHEN bdsc.dept_id IS NULL OR bdsc.dept_id = '' THEN '无' ELSE bdsc.dept_id END AS name
+        FROM bi_data_source_cost AS bdsc
+        LEFT JOIN bi_data_source_cost_detail AS bdscd ON bdsc.id = bdscd.cost_id
+        WHERE bdscd.cost_type IS NOT NULL
+        AND bdscd.cost_type = 'cost_mainBusinessIncome'
+        <if test="null != params.startTime">
+            AND bdsc.month >= #{params.startTime}
+        </if>
+        <if test="null != params.endTime">
+            AND bdsc.month <![CDATA[ <= ]]> #{params.endTime}
+        </if>
+        <if test="params.department!=null and params.department.size>0">
+            AND bdsc.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
+        <if test="params.platform!=null and params.platform.size>0">
+            AND bdsc.platform_name IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+        <if test="params.site!=null and params.site.size>0">
+            AND bdsc.site IN
+            <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                #{site}
+            </foreach>
+        </if>
+
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND bdsc.shop_name IN
+            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                #{shopNo}
+            </foreach>
+        </if>
+
+        <if test="params.userId!=null and params.userId.size>0">
+            AND bdsc.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            #{params.permissionSql}
+        </if>
+        GROUP BY name
+        ORDER BY monthSales DESC
+    </select>
+
+    <!--用户销售额排行榜-->
+    <select id="userCompletionRateRanking" resultType="com.erp.model.bi.dto.CompletionRateRankingDTO$PagingDTO">
+        SELECT
+        ROW_NUMBER() over(ORDER bY round(SUM (bdscd.cost_value * 1),2) DESC ) AS ranking,
+        round(SUM (bdscd.cost_value * 1),2) AS monthSales,
+        CASE WHEN bdsc.charge_id IS NULL OR bdsc.charge_id = '' THEN '无' ELSE bdsc.charge_id END AS name
+        FROM bi_data_source_cost AS bdsc
+        LEFT JOIN bi_data_source_cost_detail AS bdscd ON bdsc.id = bdscd.cost_id
+        WHERE bdscd.cost_type IS NOT NULL
+        AND bdscd.cost_type = 'cost_mainBusinessIncome'
+        <if test="null != params.startTime">
+            AND bdsc.month >= #{params.startTime}
+        </if>
+        <if test="null != params.endTime">
+            AND bdsc.month <![CDATA[ <= ]]> #{params.endTime}
+        </if>
+        <if test="params.department!=null and params.department.size>0">
+            AND bdsc.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
+        <if test="params.platform!=null and params.platform.size>0">
+            AND bdsc.platform_name IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+        <if test="params.site!=null and params.site.size>0">
+            AND bdsc.site IN
+            <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                #{site}
+            </foreach>
+        </if>
+
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND bdsc.shop_name IN
+            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                #{shopNo}
+            </foreach>
+        </if>
+
+        <if test="params.userId!=null and params.userId.size>0">
+            AND bdsc.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            #{params.permissionSql}
+        </if>
+        GROUP BY name
+        ORDER BY monthSales DESC
+    </select>
 </mapper>

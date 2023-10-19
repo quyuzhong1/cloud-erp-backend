@@ -681,6 +681,11 @@ public class TransferOutDTO implements Serializable {
          * sku编码
          */
         private List<String> skuNoList;
+
+        /**
+         * 远程搜索sku
+         */
+        private String remoteSearchSku;
     }
 
     /**

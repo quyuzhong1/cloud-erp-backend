@@ -66,6 +66,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void syncKingdeeReturnOrderToSoReturn(KingdeeReturnOrderEntity kingdeeReturnOrderEntity) {

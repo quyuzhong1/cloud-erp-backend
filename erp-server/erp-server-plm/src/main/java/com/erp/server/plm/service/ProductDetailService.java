@@ -583,4 +583,11 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return com.erp.model.plm.dto.PdaProductDetailDTO.View
      **/
     PdaProductDetailDTO.View pdaProductView(String skuNo);
+
+    /**
+     * 批量修改产品信息
+     * @param list
+     * @return java.lang.Boolean
+     */
+    Boolean updateProductDetailBatch(List<ProductDetailEntity> list);
 }

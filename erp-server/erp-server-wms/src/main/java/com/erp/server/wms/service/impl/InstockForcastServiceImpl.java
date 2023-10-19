@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -18,7 +19,6 @@ import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.server.wms.mapper.InstockForcastMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -255,7 +256,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             // 获取原采购订单明细的收货信息
             List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(Lists.newArrayList(purchaseOrderDetailId));
             // 原采购订单入库明细id
-            List<String> receiveDetailIds = CollUtil.isNotEmpty(receiveDetailList) ? receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getId).collect(Collectors.toList()) : null;
+            List<String> receiveDetailIds = CollUtil.isNotEmpty(receiveDetailList) ? receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getId).collect(Collectors.toList()) : new ArrayList<>();
             // 获取原采购订单明细的入库信息
             List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailByPodIds(Lists.newArrayList(purchaseOrderDetailId));
             // 获取原退货单明细的退货信息

@@ -17,10 +17,12 @@
         si.create_user_name,
         si.create_time,
         si.warehouse_id,
+        si.receive_amount,
         si.id,sod.id AS detailId,
         si.approve_user_name,
         si.approve_time,
         si.sales_dept_id,
+        si.all_amount_lc,
         si.remark,
         si.customer_order_no,
         sod.sku_id,
@@ -46,6 +48,12 @@
             AND sod.sku_no IN
             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
                 #{skuNo}
+            </foreach>
+        </if>
+        <if test="soIdList !=null and soIdList.size>0">
+            AND si.id IN
+            <foreach collection="soIdList" item="soId" open="(" separator="," close=")">
+                #{soId}
             </foreach>
         </if>
         <if test="params.code !=null and params.code!=''">
@@ -150,6 +158,12 @@
                 #{skuNo}
             </foreach>
         </if>
+        <if test="soIdList !=null and soIdList.size>0">
+            AND si.id IN
+            <foreach collection="soIdList" item="soId" open="(" separator="," close=")">
+                #{soId}
+            </foreach>
+        </if>
         <if test="params.code !=null and params.code!=''">
             AND si.code ILIKE concat('%', #{params.code} ,'%')
         </if>
@@ -248,6 +262,7 @@
             si.create_time,
             si.warehouse_id,
             si.sales_dept_id,
+            si.all_amount_lc,
             si.id,
             sod.id AS detailId,
             si.approve_user_name,
@@ -315,6 +330,12 @@
                     AND sod.sku_no IN
                     <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
                         #{skuNo}
+                    </foreach>
+                </if>
+                <if test="soIdList !=null and soIdList.size>0">
+                    AND si.id IN
+                    <foreach collection="soIdList" item="soId" open="(" separator="," close=")">
+                        #{soId}
                     </foreach>
                 </if>
                 <if test="params.code !=null and params.code!=''">
@@ -489,5 +510,20 @@
         AND si.discount_amount>0
     </select>
 
+    <select id="listFirstListingTime" resultType="com.erp.model.oms.dto.ListingTimeDTO">
+        SELECT
+        min(si.bill_date) AS soDate,
+        sd.sku_id
+        FROM so_info si
+        INNER JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
+        WHERE sd.is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            AND si.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        GROUP BY sd.sku_id
+    </select>
 
 </mapper>

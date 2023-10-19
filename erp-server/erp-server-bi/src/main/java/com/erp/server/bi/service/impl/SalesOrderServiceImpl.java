@@ -19,10 +19,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.*;
-import com.erp.model.bi.enums.DataSourceCostEnum;
-import com.erp.model.bi.enums.DateSalesTrendSearchTypeEnum;
-import com.erp.model.bi.enums.MetricsEnum;
-import com.erp.model.bi.enums.TargetMetricsSearchTypeEnum;
+import com.erp.model.bi.enums.*;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
@@ -3460,7 +3457,14 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime startTime = dto.getStartTime();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        List<CompletionRateRankingDTO.PagingDTO> list = baseMapper.deptCompletionRateRanking(dto, settleRate);
+        List<CompletionRateRankingDTO.PagingDTO> list = new ArrayList<>();
+
+        if (CompletionRateRankingEnum.FINANCE_SALES_AMOUNT.getCode().equals(dto.getCompletionRateRankingType())) {
+            list = biDataSourceCostService.deptCompletionRateRanking(dto, settleRate);
+        } else {
+            list = baseMapper.deptCompletionRateRanking(dto, settleRate);
+        }
+
         TargetFinishDTO.ParamDTO paramDTO = new TargetFinishDTO.ParamDTO();
         paramDTO.setYear(dto.getStartTime().getYear() + "");
         paramDTO.setMetrics(MetricsEnum.SALES_AMOUNT.getCode());
@@ -3505,7 +3509,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime startTime = dto.getStartTime();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        List<CompletionRateRankingDTO.PagingDTO> list = baseMapper.userCompletionRateRanking(dto, settleRate);
+        List<CompletionRateRankingDTO.PagingDTO> list = new ArrayList<>();
+        if (CompletionRateRankingEnum.FINANCE_SALES_AMOUNT.getCode().equals(dto.getCompletionRateRankingType())) {
+            list = biDataSourceCostService.userCompletionRateRanking(dto, settleRate);
+        } else {
+            list = baseMapper.userCompletionRateRanking(dto, settleRate);
+        }
         TargetFinishDTO.ParamDTO paramDTO = new TargetFinishDTO.ParamDTO();
         paramDTO.setYear(dto.getStartTime().getYear() + "");
         paramDTO.setMetrics(MetricsEnum.SALES_AMOUNT.getCode());

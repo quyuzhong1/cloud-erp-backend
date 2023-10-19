@@ -33,6 +33,12 @@ public class PdaVersionEntity extends BaseEntity<PdaVersionEntity> {
     private String type;
 
     /**
+    * 通知类型：1 系统通知  0 升级通知
+    */
+    @TableField("release_type")
+    private String releaseType;
+
+    /**
     * pda版本
     */
     @TableField("pda_version")

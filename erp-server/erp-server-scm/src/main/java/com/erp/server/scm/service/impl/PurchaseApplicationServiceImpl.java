@@ -376,6 +376,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             dto.setSupplierName(skuPurchase.getSupplierName());
             //预计交货日期
             dto.setPlanDeliveryDate(entity.getPlanDeliveryDate());
+            dto.setDetailRemark(entity.getRemark());
             PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO  = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
             searchDTO.setSkuId(entity.getSkuId());
             searchDTO.setSkuNo(entity.getSkuNo());
@@ -517,6 +518,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 addDetailDTO.setIsGift(generatePurchaseOrderDTO.getIsGift());
                 addDetailDTO.setPurchaseApplicationId(generatePurchaseOrderDTO.getId());
                 addDetailDTO.setPurchaseApplicationDetailId(generatePurchaseOrderDTO.getPurchaseApplicationDetailId());
+                addDetailDTO.setRemark(generatePurchaseOrderDTO.getDetailRemark());
                 details.add(addDetailDTO);
             }
             addDTO.setDetails(details);
@@ -874,8 +876,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 }
                 //委外订单父级SKU
                 SubcontractOrderDetailDTO.AddDTO detail = BeanMapperUtils.map(SubcontractOrderDetailDTO.AddDTO.class, generateDetailDTO);
-                Boolean isUrgent = purchaseApplicationDetailList.stream().filter(obj -> obj.getId().equals(generateDetailDTO.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getIsUrgent())).orElse(null);
-                detail.setIsUrgent(isUrgent);
+                PurchaseApplicationDetailEntity purchaseApplicationDetailEntity = purchaseApplicationDetailList.stream().filter(obj -> obj.getId().equals(generateDetailDTO.getSourceDetailId())).findFirst().orElse(new PurchaseApplicationDetailEntity());
+                detail.setIsUrgent(purchaseApplicationDetailEntity.getIsUrgent());
 
                 //委外订单子件SKU
                 List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> generateChildList = generateDetailDTO.getChildList();
