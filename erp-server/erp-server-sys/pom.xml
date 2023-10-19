@@ -49,6 +49,11 @@
             <scope>compile</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-rpc-plm</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <!--sdk-->
         <dependency>
             <groupId>com.cloud.erp</groupId>

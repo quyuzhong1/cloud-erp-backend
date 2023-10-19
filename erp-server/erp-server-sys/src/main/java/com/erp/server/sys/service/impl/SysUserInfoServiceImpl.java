@@ -2,6 +2,7 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -39,6 +40,7 @@ import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.rpc.auth.feign.AuthFeign;
 import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.mapper.SysDepartmentMapper;
@@ -108,6 +110,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Resource
     private ShopSysUserAuthFeign shopSysUserAuthFeign;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
 
 
@@ -164,6 +169,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
+        //用户名
+        String userName = entity.getUserName();
         //验证用户信息
         checkUserInfo(sysUserInfoDTO);
         entity.setRealName(sysUserInfoDTO.getRealName());
@@ -177,7 +184,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             //同步金蝶员工数据
             syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_UPDATE.getCode());
         }
-
+        //更新plm任务列表任务负责人名称
+        if (!StrUtil.equals(sysUserInfoDTO.getUserName(),userName)) {
+            plmTaskFeign.updateProjectTaskChargeName(sysUserInfoDTO);
+        }
     }
 
     /**
