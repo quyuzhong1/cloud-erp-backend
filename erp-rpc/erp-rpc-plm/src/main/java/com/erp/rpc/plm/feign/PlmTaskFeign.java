@@ -9,6 +9,7 @@ import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -375,4 +376,13 @@ public interface PlmTaskFeign {
      */
     @PostMapping("/feign/productPack/backFillPackaging")
     void backFillPackaging(@RequestBody List<ProductPackDTO>  productPackList);
+
+    /**
+     * @description: 更新任务列表负责人名称
+     * @author Will
+     * @date: 2023/10/19 11:06
+     * @param sysUserInfoDTO
+     */
+    @PostMapping("/feign/projectTask/updateProjectTaskChargeName")
+    void updateProjectTaskChargeName(SysUserInfoDTO sysUserInfoDTO);
 }

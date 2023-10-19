@@ -33,6 +33,7 @@ import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
 import com.erp.model.sys.dto.SysCalendarDTO;
+import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.sys.vo.SysCalendarListVO;
@@ -4130,6 +4131,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             return approveRecordShowList;
         }
         return approveRecordShowList;
+    }
+
+    @Override
+    public void updateProjectTaskChargeName(SysUserInfoDTO sysUserInfoDTO) {
+        if (StringUtils.isBlank(sysUserInfoDTO.getUid()) || StringUtils.isBlank(sysUserInfoDTO.getUserName())) {
+            return;
+        }
+        lambdaUpdate().eq(ProjectTaskEntity::getChargeId,sysUserInfoDTO.getUid())
+                .set(ProjectTaskEntity::getChargeName,sysUserInfoDTO.getUserName())
+                .update();
     }
 
 
