@@ -289,12 +289,16 @@ public class SoUtils {
         headMap.put("unit", "单位");
         headMap.put("amount", "销售金额");
         headMap.put("price", "销售单价");
+        headMap.put("priceLc", "销售单价（本位币）");
         headMap.put("taxRate", "税率");
         headMap.put("taxPrice", "含税单价");
+        headMap.put("taxPriceLc", "含税单价（本位币）");
         headMap.put("taxAmount", "价税合计");
         headMap.put("exchangeRate", "汇率");
         headMap.put("amountLocalCurrency", "销售金额（本位币）");
         headMap.put("allAmountLocalCurrency", "价税合计（本位币）");
+        headMap.put("allAmountLc", "总价税合计（本位币）");
+        headMap.put("receiveAmount", "收款金额");
         headMap.put("detailDiscountAmount", "折扣额");
         headMap.put("taxAmountBefore", "价税合计(折前)");
         headMap.put("isGift", "是否赠品");

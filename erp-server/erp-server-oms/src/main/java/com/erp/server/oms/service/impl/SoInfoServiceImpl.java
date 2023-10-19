@@ -326,21 +326,22 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String isNullReceiveDateCode = isNullReceiveDateList.stream().collect(Collectors.joining(","));
             throw new ServiceException(isNullReceiveDateCode + " 销售订单 收款日期不能为空");
         }
+        BigDecimal zeroFlag = BigDecimal.ZERO;
         //收款金额为空的
-        List<String> isNullReceiveAmountList = list.stream().filter(s -> Objects.isNull(s.getReceiveAmount())).map(SoInfoEntity::getCode).
+        List<String> isNullReceiveAmountList = list.stream().filter(s -> Objects.isNull(s.getReceiveAmount()) || zeroFlag.compareTo(s.getReceiveAmount()) == 0).map(SoInfoEntity::getCode).
                 collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(isNullReceiveAmountList)) {
             String isNullReceiveAmountCode = isNullReceiveAmountList.stream().collect(Collectors.joining(","));
-            throw new ServiceException(isNullReceiveAmountCode + " 销售订单 收款金额不能为空");
+            throw new ServiceException(isNullReceiveAmountCode + " 销售订单 收款金额不能为空或者为零");
         }
         List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainIdList(ids);
         //这个是 单价为空的集合
-        List<SoDetailEntity> isNullPriceList = soDetailList.stream().filter(s -> Objects.isNull(s.getPrice())).collect(Collectors.toList());
+        List<SoDetailEntity> isNullPriceList = soDetailList.stream().filter(s -> !s.getIsGift() && zeroFlag.compareTo(s.getPrice()) == 0).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(isNullPriceList)) {
             List<String> soIdList = isNullPriceList.stream().map(SoDetailEntity::getMainId).collect(Collectors.toList());
             String isNullPriceCode = list.stream().filter(s -> soIdList.contains(s.getId())).
                     map(SoInfoEntity::getCode).distinct().collect(Collectors.joining(","));
-            throw new ServiceException(isNullPriceCode + " 销售订单 销售单价不能为空");
+            throw new ServiceException(isNullPriceCode + " 销售订单 销售单价不能为空或者为零");
         }
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -531,6 +532,21 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoInfoDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        //运单号
+        String trackNo = params.getTrackNo();
+        List<String> soIdList = new ArrayList<>();
+        if (StringUtils.isNotBlank(trackNo)) {
+            /**
+             * 销售出库单
+             */
+            List<SoOutstockEntity> soOutstockList = soOutstockFeign.listByTrackNo(trackNo);
+            soIdList = soOutstockList.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(soIdList)) {
+                return new PagingVO<>(new Page<>());
+            }
+        }
+
+
         List<String> paramDetailIds = soDetailService.listParamDetailIdsBySearchType(params.getSearchType());
         if (Objects.isNull(paramDetailIds)) {
             paramDetailIds = Collections.emptyList();
@@ -539,7 +555,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 return new PagingVO<>(new Page<>());
             }
         }
-        IPage pageData = baseMapper.paging(query, params, paramDetailIds);
+        IPage pageData = baseMapper.paging(query, params, paramDetailIds, soIdList);
         List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
@@ -754,6 +770,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setCreateUserName("");
                 item.setApproveUserName("");
                 item.setRequireDate(null);
+                item.setAllAmountLc(null);
                 item.setRemark("");
                 item.setCustomerOrderNo("");
             }
@@ -768,6 +785,21 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         List<String> paramDetailIds = soDetailService.listParamDetailIdsBySearchType(dto.getSearchType());
 
+        //运单号
+        String trackNo = dto.getTrackNo();
+        List<String> soIdList = new ArrayList<>();
+        if (StringUtils.isNotBlank(trackNo)) {
+            /**
+             * 销售出库单
+             */
+            List<SoOutstockEntity> soOutstockList = soOutstockFeign.listByTrackNo(trackNo);
+            soIdList = soOutstockList.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(soIdList)) {
+                SoInfoDTO.PagingTotalDTO pagingTotalDTO = new SoInfoDTO.PagingTotalDTO(MathUtil.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+                return pagingTotalDTO;
+            }
+        }
+
         if (Objects.isNull(paramDetailIds)) {
             paramDetailIds = Collections.emptyList();
         } else {
@@ -776,7 +808,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 return pagingTotalDTO;
             }
         }
-        SoInfoDTO.PagingTotalDTO pagingTotalDTO = baseMapper.pagingTotal(dto, paramDetailIds);
+        SoInfoDTO.PagingTotalDTO pagingTotalDTO = baseMapper.pagingTotal(dto, paramDetailIds, soIdList);
         return pagingTotalDTO;
     }
 
@@ -793,6 +825,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public String draft(SoInfoDTO.AddDTO dto) {
         //id
         String id = dto.getId();
+        String currency = dto.getCurrency();
+        if(StringUtils.isBlank(currency)){
+            throw new ServiceException("币别不能空");
+        }
         Boolean isFirst = false;
         if (StringUtils.isNotBlank(id)) {
             SoInfoEntity soInfo = this.getById(id);
@@ -1328,6 +1364,21 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     public Boolean exportExcel(SoInfoDTO.ExportDTO dto, HttpServletResponse response) {
+        //运单号
+        String trackNo = dto.getTrackNo();
+        List<String> soIdList = new ArrayList<>();
+        if (StringUtils.isNotBlank(trackNo)) {
+            /**
+             * 销售出库单
+             */
+            List<SoOutstockEntity> soOutstockList = soOutstockFeign.listByTrackNo(trackNo);
+            soIdList = soOutstockList.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(soIdList)) {
+                throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            }
+        }
+
+
         List<String> paramDetailIds = soDetailService.listParamDetailIdsBySearchType(dto.getSearchType());
         if (Objects.isNull(paramDetailIds)) {
             paramDetailIds = Collections.emptyList();
@@ -1337,7 +1388,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
         }
         //获取导出数据
-        List<SoInfoDTO.PagingViewDTO> list = baseMapper.listExport(dto, paramDetailIds);
+        List<SoInfoDTO.PagingViewDTO> list = baseMapper.listExport(dto, paramDetailIds, soIdList);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
