@@ -42,12 +42,18 @@ public class WalmartSdkClientService {
         HashMap<String, Object> paramMap = new HashMap<>();
         Integer pageSize = 1;
         //当前页数
-        Integer pageNo = 0;
-
-        paramMap.put("offset", 1);
+        Integer pageNo = 1;
+        paramMap.put("offset", pageNo);
         paramMap.put("limit", pageSize);
+        paramMap.put("lastModifiedStartDate", "2022-01-01T00:00:00");
+        paramMap.put("lastModifiedEndDate", "2024-10-07T00:00:00");
+        paramMap.put("createdStartDate", "2022-01-01T00:00:00");
+        paramMap.put("createdEndDate", "2024-10-07T00:00:00");
+        paramMap.put("status", "");
+
+        paramMap.put("productInfo", "true");
 //        WalmartTokenDTO s = walmartSdkClientService.sendWalmartPostToken(baseUrl, clientId, clientSecret);
-        baseUrl = WalmartStaticKey.baseUrl + "items";
+        baseUrl = WalmartStaticKey.baseUrl + "orders";
         String s = walmartSdkClientService.sendWalmartGet(baseUrl, clientId, clientSecret, walmartTokenDTO.getAccessToken(), paramMap);
         System.out.println(s);
     }

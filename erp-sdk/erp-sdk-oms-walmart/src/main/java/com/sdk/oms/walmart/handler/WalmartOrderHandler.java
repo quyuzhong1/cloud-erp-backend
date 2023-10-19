@@ -19,9 +19,11 @@ import com.sdk.oms.walmart.dto.walmart.ItemResponseBean;
 import com.sdk.oms.walmart.dto.walmart.WalmartItemDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartTokenDTO;
 import com.sdk.oms.walmart.service.WalmartSdkClientService;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -71,12 +73,31 @@ public class WalmartOrderHandler extends AbstractOrderHandler<PlatformWalmartOrd
         //总页数
         Integer pageCount = 1;
 
-        paramMap.put("offset", pageNo);
-        paramMap.put("limit", pageSize);
-        while(pageNo < pageCount) {
+        String nextCursor = "";
 
+        StringBuffer sb = new StringBuffer();
+        //获取新创建的订单
+        while(true) {
+            sb.setLength(0);
+            sb.append(baseUrl);
+            if (StringUtil.isBlank(nextCursor)) {
+                sb.append("?lastModifiedStartDate=");
+                sb.append(data.getLastTime());
+                sb.append("&lastModifiedEndDate=");
+                sb.append(data.getNextTime());
+                sb.append("&createdStartDate=");
+                sb.append(data.getLastTime());
+                sb.append("&createdEndDate=");
+                sb.append(data.getNextTime());
+                sb.append("&limit=200&productInfo=true");
+            } else {
+                sb.append(baseUrl);
+                sb.append(nextCursor);
+            }
             //拉取数据
             String date = walmartSdkClientService.sendWalmartGet(baseUrl, tokenDTO.getClientId(), tokenDTO.getClientSecret(), walmartTokenDTO.getAccessToken(), paramMap);
+
+
 
             WalmartItemDTO walmartItemDTO = JSONUtil.toBean(date, WalmartItemDTO.class);
             if (CollectionUtils.isEmpty(walmartItemDTO.getItemResponse())) {
