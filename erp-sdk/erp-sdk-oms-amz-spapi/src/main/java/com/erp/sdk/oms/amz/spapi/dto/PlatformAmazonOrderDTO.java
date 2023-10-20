@@ -5,7 +5,9 @@ import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.sdk.oms.amz.spapi.model.orders.Money;
 import com.erp.sdk.oms.amz.spapi.model.orders.Order;
+import com.erp.sdk.oms.amz.spapi.model.orders.OrderItem;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -37,7 +39,7 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
     /**
      * 转换目标实体:PlatformProductDTO
      */
-    public static PlatformOrderDTO convertDTO(PlatformAmazonOrderDTO dto) {
+    public static PlatformOrderDTO convertDTO(PlatformAmazonOrderDTO dto, Boolean isSendMq) {
         // 原订单信息
         Order sourceOrder = dto.getOrder();
 
@@ -102,8 +104,59 @@ public class PlatformAmazonOrderDTO extends CleanBaseDTO {
         orderDTO.setAbnormalType("");
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
-        // 订单明细其他任务拉取
+        // 数据下载状态:
+        // 0=详情数据需要更新(不发送MQ)
+        // 1=详情数据已更新(发送MQ)
+        orderDTO.setDownloadStatus(isSendMq ? 1 : 0);
         return orderDTO;
     }
 
+    /**
+     * 转换明细
+     */
+    public static PlatformOrderDetailDTO intPlatformOrderDetailDTO(OrderItem item) {
+        PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
+        // 图片URL
+        detailDTO.setImageUrl("");
+        // skuId
+        detailDTO.setSkuId("");
+        // skuNo
+        detailDTO.setSkuNo("");
+        // 卖家sku编号
+        detailDTO.setSellerSkuNo("");
+        // 平台sku编号
+        detailDTO.setPlatformSkuNo(item.getSellerSKU());
+        // 库存sku编号
+        detailDTO.setWarehouseName("");
+        // 仓库名称
+        // 库存是否扣除
+        detailDTO.setWarehouseId("");
+        // 数量
+        detailDTO.setQty(item.getQuantityOrdered());
+        // 单价
+        Money itemPrice = item.getItemPrice();
+        detailDTO.setPrice(new BigDecimal(itemPrice.getAmount()));
+        // 金额
+        BigDecimal amount = detailDTO.getPrice().multiply(BigDecimal.valueOf(item.getQuantityOrdered()));
+        detailDTO.setAmount(amount);
+        // 币别（原币）
+        detailDTO.setCurrency(itemPrice.getCurrencyCode());
+        // 汇率
+        detailDTO.setExchangeRate(BigDecimal.ONE);
+        // 建议售价（本位币）
+        detailDTO.setAdvicePrice(BigDecimal.ZERO);
+        // 含税成本（本位币）
+        detailDTO.setTaxCost(BigDecimal.ZERO);
+        // 来源明细id
+        detailDTO.setSourceDetailId(item.getOrderItemId());
+        // 标签json
+        detailDTO.setLabelJson("");
+        // 库存组织id
+        detailDTO.setWarehouseOrgId("");
+        // 库存组织名称
+        detailDTO.setWarehouseOrgName("");
+        // 库位
+        detailDTO.setWarehouseLocation("");
+        return detailDTO;
+    }
 }

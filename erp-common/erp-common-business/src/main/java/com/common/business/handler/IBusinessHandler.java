@@ -27,4 +27,10 @@ public interface IBusinessHandler<T extends CleanBaseDTO,R extends UniqueDto> {
      * 是否发送MQ
      */
     Boolean getIsSendMq();
+
+    /**
+     * 下载详情数据
+     */
+    R downloadDetail(R dto);
+
 }

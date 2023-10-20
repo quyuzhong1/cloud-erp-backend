@@ -1,9 +1,6 @@
 package com.common.business.handler;
 
-import com.common.business.dto.CleanBaseDTO;
-import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformDataDTO;
-import com.common.business.dto.UniqueDto;
+import com.common.business.dto.*;
 
 import java.util.List;
 
@@ -38,8 +35,15 @@ public abstract class AbstractOrderHandler<T extends CleanBaseDTO, R extends Uni
      * true=发送
      * false=不发送（有其他详情需要额外拉取）
      */
-    @Override
+
     public Boolean getIsSendMq() {
         return Boolean.TRUE;
+    }
+
+    /**
+     * 下载详情数据
+     */
+    public PlatformOrderDTO downloadDetail(PlatformOrderDTO dto){
+        return dto;
     }
 }

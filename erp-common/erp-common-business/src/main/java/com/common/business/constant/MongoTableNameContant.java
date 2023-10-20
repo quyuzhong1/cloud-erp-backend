@@ -148,6 +148,16 @@ public interface MongoTableNameContant {
      */
     String ORIGINAL_MABANG_DELIVERY = "original_mabang_fba_delivery";
 
+    // 亚马逊数据库表名
+    /**
+     * 亚马逊订单表
+     */
+    String THIRD_SYSTEM_AMAZON_ORDER = "third_system_Amazon_order";
+
+    /**
+     * 亚马逊订单表
+     */
+    String THIRD_SYSTEM_AMAZON_PRODUCT = "third_system_Amazon_product";
 
     /**
      * 根据任务 key 获取表名
