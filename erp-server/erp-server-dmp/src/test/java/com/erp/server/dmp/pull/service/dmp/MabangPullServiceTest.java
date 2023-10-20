@@ -14,26 +14,17 @@ import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
-import com.erp.model.dmp.vo.ParamHeaderVO;
 import com.erp.server.dmp.ErpServerDmpApplication;
-import com.erp.server.dmp.pull.service.gyy.GyyDeliveryDetailServiceImpl;
-import com.erp.server.dmp.pull.service.gyy.GyyOrderInfoServiceImpl;
-import com.erp.server.dmp.pull.service.kingdee.KingdeeEccShopServiceImpl;
 import com.erp.server.dmp.pull.service.mabang.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.push.service.kingdee.impl.KingdeeCommonServiceImpl;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
-import com.erp.server.dmp.utils.MabangApiUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
-import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -84,7 +75,7 @@ public class MabangPullServiceTest {
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
         SaveParam param = new SaveParam(json);
 //        kingdeeCommonService.queryGroupInfo(apiUtils, map.get("Ids").toString());
-        kingdeeCommonService.customerGroupDelete(apiUtils, platformEntity, map, type);
+        kingdeeCommonService.customerGroupDelete(apiUtils, (String)map.get("syncKingdeeId"));
 
 
 //        Boolean aBoolean = kingdeeCommonService.customerGroupSaveOrUpdate(platformEntity, map, apiUtils, json, param, type);

@@ -3,12 +3,12 @@ package com.erp.server.dmp.push.service.business.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.business.KingdeeCustomerGroupConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
@@ -53,9 +53,55 @@ public class KingdeeCustomerGroupConsumerServiceImpl implements KingdeeCustomerG
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_CUSTOMER.getCode());
 
+        //操作项
+        String operate = (String) map.get("operate");
+
+        /**
+         * 审核
+         */
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            operateDelete(apiUtils, map);
+        } else {
+            operateApprove(apiUtils,platformEntity, map,type);
+        }
+
+    }
+
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2023/9/26 10:35
+     * @param apiUtils
+     * @param map
+     */
+    public void operateDelete(KingdeeApiUtils apiUtils,Map<String, Object> map) {
+        JSONObject model;
+        try {
+            model = kingdeeCommonService.queryGroupInfo(apiUtils, (String) map.get("syncKingdeeId"), String.valueOf(map.get("groupName")));
+        } catch (Exception e) {
+            //未查到则直接返回
+            return;
+        }
+        String id = String.valueOf(model.get("FID"));
+        //删除
+        kingdeeCommonService.customerGroupDelete(apiUtils,id);
+        return;
+    }
+
+
+    /**
+     * @description: 审核
+     * @author Will
+     * @date: 2023/9/26 10:30
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     */
+    public void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
-
         //未配置发送字段
         if (CollectionUtils.isEmpty(json)) {
             log.error(ApiError.ERROR_97025.msg);
@@ -80,9 +126,7 @@ public class KingdeeCustomerGroupConsumerServiceImpl implements KingdeeCustomerG
         param.setNeedUpDateFields(apiFieldList);
         //更新数据
         kingdeeCommonService.customerGroupSaveOrUpdate(platformEntity, map, apiUtils, json, param, type);
-
     }
-
 
 
 }

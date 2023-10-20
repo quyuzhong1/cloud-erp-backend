@@ -14,6 +14,7 @@ import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -220,7 +221,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             //同步状态名称
             listDTO.setStatusName(SyncStatusEnum.getNameByCode(listDTO.getStatus()));
             //同步操作名称
-            listDTO.setSyncOperateName(SyncStatusEnum.getNameByCode(listDTO.getSyncOperate()));
+            listDTO.setSyncOperateName(SyncOperateEnum.getNameByCode(listDTO.getSyncOperate()));
         }
     }
 
