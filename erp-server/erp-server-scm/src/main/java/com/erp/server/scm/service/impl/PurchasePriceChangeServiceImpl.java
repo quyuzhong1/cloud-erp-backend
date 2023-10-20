@@ -158,7 +158,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         String orgId = dto.getPurchaseOrgId();
 
         //判断是否能通过
-        Boolean isPass = getIsPass(dto.getPurchasePriceChangeDetailList());
+        //Boolean isPass = getIsPass(dto.getPurchasePriceChangeDetailList());
 
         //获取组织
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
@@ -179,7 +179,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             //添加价格变更明细
             purchasePriceChangeDetailService.addPriceChangeDetail(id, dto.getPurchasePriceChangeDetailList());
 
-            if (isPass) {
+        /*    if (isPass) {
                 //提交
                 Boolean isSubmit = this.submitApprove(Arrays.asList(changeEntity.getId()), Boolean.FALSE);
                 if (isSubmit) {
@@ -189,7 +189,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                     paramDTO.setType(ScmConstant.PASS);
                     this.approve(paramDTO);
                 }
-            }
+            }*/
 
             //添加日志
             String content = String.format("新增了一个{%s}-采购调价-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
