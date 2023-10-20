@@ -114,8 +114,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Resource
     private ShopSysUserAuthFeign shopSysUserAuthFeign;
 
-    @Resource
-    private PlmTaskFeign plmTaskFeign;
+
 
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
 
