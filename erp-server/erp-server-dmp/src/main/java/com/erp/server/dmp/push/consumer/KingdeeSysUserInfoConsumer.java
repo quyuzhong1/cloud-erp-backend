@@ -1,6 +1,5 @@
 package com.erp.server.dmp.push.consumer;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
@@ -10,11 +9,11 @@ import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.push.service.business.KingdeeSysUserInfoConsumerService;
 import com.erp.server.dmp.service.DmpPushTaskService;
-import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +30,8 @@ import java.util.Map;
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
         selectorExpression = "kingdee_sys_user_info_tag",
-        consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SYS_USER_INFO)
+        consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SYS_USER_INFO,
+        consumeMode = ConsumeMode.ORDERLY)
 public class KingdeeSysUserInfoConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
