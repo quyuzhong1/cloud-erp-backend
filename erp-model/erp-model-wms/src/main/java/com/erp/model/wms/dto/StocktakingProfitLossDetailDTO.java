@@ -162,4 +162,68 @@ public class StocktakingProfitLossDetailDTO implements Serializable {
 
 
     }
+
+
+    /**
+     * 分页数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
+
+
+       private String id;
+
+        /**
+         * skuid
+         */
+        @NotBlank(message = "sku不能为空")
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库不能为空")
+        private String warehouseId;
+
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
+
+        /**
+         * 盘点数量
+         */
+        @NotNull (message = "盘点数量不能为空")
+        private Integer qty;
+
+        /**
+         * 可用数量
+         */
+        private Integer usableQty;
+
+        /**
+         * 冻结数量
+         */
+        private Integer frozenQty;
+
+
+        /**
+         * 差异数量
+         */
+        private Integer diffQty;
+
+
+
+
+    }
 }

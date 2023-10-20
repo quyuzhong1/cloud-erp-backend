@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.server.wms.service.InventoryTransCoreService;
+import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.StocktakingProfitLossService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -45,7 +46,6 @@ public class StocktakingProfitLossController extends BaseController {
     private StocktakingProfitLossService stocktakingProfitLossService;
 
 
-
     /**
      * 获取 tab列表
      *
@@ -63,12 +63,22 @@ public class StocktakingProfitLossController extends BaseController {
     }
 
     /**
-     * 创建
+     * 添加
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody StocktakingProfitLossDTO.AddDTO dto){
+    public ApiResult add(@RequestBody StocktakingProfitLossDTO.AddDTO dto) {
         String id = stocktakingProfitLossService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
+    }
+
+
+    /**
+     * 修改
+     */
+    @PostMapping("/update")
+    public ApiResult add(@RequestBody StocktakingProfitLossDTO.UpdateDTO dto) {
+
+        return success();
     }
 
 
@@ -139,8 +149,8 @@ public class StocktakingProfitLossController extends BaseController {
             BatchResultDTO submit;
             try {
                 submit = stocktakingProfitLossService.submit(id);
-            }catch (Exception e){
-                log.error("盘盈盘亏单 提交审核失败>>>>{}",e);
+            } catch (Exception e) {
+                log.error("盘盈盘亏单 提交审核失败>>>>{}", e);
                 StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "盘盈盘亏单不存在, 提交失败");
@@ -153,6 +163,31 @@ public class StocktakingProfitLossController extends BaseController {
         }
 
         return success(resultDTOS);
+    }
+
+
+    /**
+     * 保存并提交
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/addAndSubmit")
+    public ApiResult addAndSubmit(@RequestBody @Validated StocktakingProfitLossDTO.AddDTO dto) {
+
+        return  success() ;
+    }
+
+    /**
+     * 修改并提交
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/updateAndSubmit")
+    public ApiResult updateAndSubmit(@RequestBody @Validated StocktakingProfitLossDTO.UpdateDTO dto) {
+
+        return  success() ;
     }
 
 
@@ -170,9 +205,9 @@ public class StocktakingProfitLossController extends BaseController {
         for (String id : ids) {
             BatchResultDTO submit;
             try {
-                submit = stocktakingProfitLossService.approve(id,new  ApproveOneDTO(id, dto.getType(),dto.getComment()));
-            }catch (Exception e){
-                log.error("盘盈盘亏单 审核失败>>>>{}",e);
+                submit = stocktakingProfitLossService.approve(id, new ApproveOneDTO(id, dto.getType(), dto.getComment()));
+            } catch (Exception e) {
+                log.error("盘盈盘亏单 审核失败>>>>{}", e);
                 StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "盘盈盘亏单不存在, 提交失败");
@@ -186,7 +221,6 @@ public class StocktakingProfitLossController extends BaseController {
 
         return success(resultDTOS);
     }
-
 
 
     /**
@@ -209,8 +243,8 @@ public class StocktakingProfitLossController extends BaseController {
             BatchResultDTO submit;
             try {
                 submit = stocktakingProfitLossService.cancelProcess(id);
-            }catch (Exception e){
-                log.error("盘盈盘亏单 撤销流程失败>>>>{}",e);
+            } catch (Exception e) {
+                log.error("盘盈盘亏单 撤销流程失败>>>>{}", e);
                 StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "盘盈盘亏单不存在, 提交失败");
@@ -223,5 +257,19 @@ public class StocktakingProfitLossController extends BaseController {
         }
 
         return success(resultDTOS);
+    }
+
+
+    /**
+     * 删除盘盈盘亏单
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+
+        return success(resultDTOS) ;
     }
 }

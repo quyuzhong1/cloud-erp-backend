@@ -80,8 +80,55 @@ public class StocktakingProfitLossDTO implements Serializable {
         @NotBlank(message = "库存组织不能为空")
         private String inventoryOrgId;
 
-        private List<String> userIdList;
 
+        /**
+         * 盘点人
+         */
+        private List<String> stocktakingUserIdList;
+
+        /**
+         * 详情
+         */
+        @Valid
+        private List<StocktakingProfitLossDetailDTO.AddDTO> detailList;
+
+    }
+
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
+
+        @NotBlank(message = "盘盈盘亏单不能为空")
+        private String id;
+
+
+
+        /**
+         * 单据类型
+         */
+        @NotNull(message = "单据类型不能为空")
+        private BillTypeEnum billType;
+
+
+
+        /**
+         * 库存组织
+         */
+        @NotBlank(message = "库存组织不能为空")
+        private String inventoryOrgId;
+
+
+        /**
+         * 盘点人
+         */
+        private List<String> stocktakingUserIdList;
+
+        /**
+         * 详情
+         */
         @Valid
         private List<StocktakingProfitLossDetailDTO.AddDTO> detailList;
 
