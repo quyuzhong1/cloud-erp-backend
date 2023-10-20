@@ -211,8 +211,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                                 .or().eq(DmpOrderInfoEntity::getDeptId, "")
                                 .or().eq(DmpOrderInfoEntity::getSite, "")
                 )
-                .orderByAsc(DmpOrderInfoEntity::getRetryCount)
-                .orderByAsc(DmpOrderInfoEntity::getId)
+                .orderByAsc(DmpOrderInfoEntity::getRetryCount,DmpOrderInfoEntity::getId)
                 .last("limit " + pageSize)
                 .list();
         if (CollectionUtil.isEmpty(list)) {

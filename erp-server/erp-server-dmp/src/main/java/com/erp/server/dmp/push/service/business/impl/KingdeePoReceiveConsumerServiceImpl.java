@@ -101,6 +101,12 @@ public class KingdeePoReceiveConsumerServiceImpl implements KingdeePoReceiveCons
         if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
             operateApprove(apiUtils, platformEntity, map, model, json, type);
         }
+        /**
+         * 删除
+         */
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            operateDelete(apiUtils,platformEntity,map,operate);
+        }
     }
 
     public void operateInvalid(KingdeeApiUtils apiUtils,Map<String, Object> map) {
@@ -144,5 +150,20 @@ public class KingdeePoReceiveConsumerServiceImpl implements KingdeePoReceiveCons
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
         }
+    }
+
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2023/9/26 11:49
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param operate
+     */
+    public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
+        //删除
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.PO_RECEIVE.getCode(),operate);
+        return;
     }
 }
