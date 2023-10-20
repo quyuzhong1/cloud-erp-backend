@@ -65,6 +65,50 @@ public class InventoryDTO implements Serializable {
     }
 
     /**
+     * 即时库存查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO extends SortDTO {
+
+
+        /**
+         * sku编码
+         */
+        private List<String> skuNoList;
+
+
+        /**
+         * skuId集合
+         */
+        private List<String> skuIdList;
+
+
+
+
+        /**
+         * 仓库id集合
+         */
+        private List<String> warehouseIdList;
+
+
+        /**
+         * 库位集合
+         */
+        private List<String> warehouseLocationList;
+
+
+
+        /**
+         * 库存组织集合
+         */
+        private List<String> orgIdList;
+
+
+
+    }
+
+    /**
      * 即时库存勾选导出
      */
     @Data

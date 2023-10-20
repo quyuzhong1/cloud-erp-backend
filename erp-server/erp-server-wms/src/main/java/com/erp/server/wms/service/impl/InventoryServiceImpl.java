@@ -884,4 +884,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         pdaInventorySearch.setWarehouseDTOList(warehouseDTOList);
         return pdaInventorySearch;
     }
+
+    @Override
+    public List<InventoryEntity> listInventoryByParam(InventoryDTO.ParamDTO dto) {
+        return baseMapper.listByParam(dto);
+    }
 }

@@ -652,6 +652,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST(98106,"sku【{}】在采购单中未找到"),
     ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST(98106,"sku【{}】在采购收货单中未找到"),
     ERROR_SOOUTSTOCK_DETAIL_SKU_NOT_EXIST(98107,"SKU【{}】在发货通知单中未找到"),
+    ERROR_INVENTORY_ORG_NOT_FOUND(98108,"库存组织不存在"),
 
 
 
@@ -776,6 +777,10 @@ public enum ApiError implements Serializable {
     PURCHASE_SKU_NOT_EXIST(99092 , "sku【{}】在采购单中不存在"),
     ERROR_INVENTORY_CLOSED(99093,"库存已关账不允许操作【{}】之前单据"),
     ERROR_MACHINE_WAREHOUSE_ORG_DIFF(99094, "加工单子件【{}】仓库【{}】不属于库存组织【{}】"),
+    ERROR_DIFF_QTY_NOT_ZERO(99094,"盘点差异数量不能为0"),
+    ERROR_PROFIT_DIFF_GREATER_ZERO(99096,"盘盈单差异数量必须大于0"),
+    ERROR_LOSS_DIFF_LESS_ZERO(99097,"盘亏单差异数量必须小于0"),
+    ERROR_ORG_WAREHOUSE_MISMATCHING(99098,"仓库组织不匹配"),
 
 
 

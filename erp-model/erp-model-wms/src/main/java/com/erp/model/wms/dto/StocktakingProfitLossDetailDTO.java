@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -108,6 +110,7 @@ public class StocktakingProfitLossDetailDTO implements Serializable {
         /**
          * skuid
          */
+        @NotBlank(message = "sku不能为空")
         private String skuId;
 
         /**
@@ -119,12 +122,15 @@ public class StocktakingProfitLossDetailDTO implements Serializable {
 
         /**
          * 仓库id
+         *  http://172.16.100.11:3002/project/92/interface/api/17485
          */
+        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
 
 
         /**
          * 库位
+         * http://172.16.100.11:3002/project/92/interface/api/13858
          */
         private String warehouseLocation;
 
@@ -132,6 +138,7 @@ public class StocktakingProfitLossDetailDTO implements Serializable {
         /**
          * 盘点数量
          */
+        @NotNull (message = "盘点数量不能为空")
         private Integer qty;
 
         /**
@@ -154,6 +161,70 @@ public class StocktakingProfitLossDetailDTO implements Serializable {
          * 来源详情id
          */
         private String sourceDetailId;
+
+
+    }
+
+
+    /**
+     * 分页数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
+
+
+       private String id;
+
+        /**
+         * skuid
+         */
+        @NotBlank(message = "sku不能为空")
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库不能为空")
+        private String warehouseId;
+
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
+
+        /**
+         * 盘点数量
+         */
+        @NotNull (message = "盘点数量不能为空")
+        private Integer qty;
+
+        /**
+         * 可用数量
+         */
+        private Integer usableQty;
+
+        /**
+         * 冻结数量
+         */
+        private Integer frozenQty;
+
+
+        /**
+         * 差异数量
+         */
+        private Integer diffQty;
+
+
 
 
     }

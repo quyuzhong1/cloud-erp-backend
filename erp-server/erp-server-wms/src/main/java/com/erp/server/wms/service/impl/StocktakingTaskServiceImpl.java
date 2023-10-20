@@ -176,7 +176,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         //获取到详情
         List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listBaseByMainIds(idList);
         //盘点人信息
-        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseByTaskIds(idList);
+        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(idList);
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(idList);
         for (StocktakingTaskDTO.PagingViewDTO item : list) {
             String id = item.getId();
@@ -199,7 +199,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             StocktakingStatusEnum stocktakingStatus = item.getStocktakingStatus();
             item.setStocktakingStatusName(Objects.nonNull(stocktakingStatus) ? stocktakingStatus.getName() : "");
             //盘点人
-            String stocktakingUserName = taskUserList.stream().filter(t -> id.equals(t.getStocktakingTaskId())).
+            String stocktakingUserName = taskUserList.stream().filter(t -> id.equals(t.getSourceId())).
                     map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
             item.setStocktakingUserName(stocktakingUserName);
 
@@ -342,9 +342,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         view.setStocktakingStatusName(stocktakingStatus.getName());
 
         //盘点人信息
-        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseByTaskIds(Arrays.asList(id));
+        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(Arrays.asList(id));
         //盘点人
-        String stocktakingUserName = taskUserList.stream().filter(t -> id.equals(t.getStocktakingTaskId())).
+        String stocktakingUserName = taskUserList.stream().filter(t -> id.equals(t.getSourceId())).
                 map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
         view.setStocktakingUserName(stocktakingUserName);
         //获取到对应的详情

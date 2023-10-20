@@ -525,6 +525,11 @@ public class SoInfoDTO implements Serializable {
          */
         private String platformSkuNo;
 
+        /**
+         * 客户订单号
+         */
+        private String customerOrderNo;
+
 
         /**
          * 运单号
@@ -551,10 +556,7 @@ public class SoInfoDTO implements Serializable {
          */
         private BigDecimal taxPriceLc;
 
-        /**
-         * 客户订单号
-         */
-        private String customerOrderNo;
+
 
     }
 
@@ -1167,6 +1169,9 @@ public class SoInfoDTO implements Serializable {
          * 客户订单号
          */
         private String customerOrderNo;
+
+
+
         /**
          * 订单产品详情
          */

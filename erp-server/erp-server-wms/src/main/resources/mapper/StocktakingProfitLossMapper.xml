@@ -50,10 +50,16 @@
             AND spl.bill_type=#{billType}
         </if>
         <if test="sourceIdList!=null and sourceIdList.size>0">
-            AND spl.source_id IN
-            <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
-                #{sourceId}
-            </foreach>
+            AND (spl.source_id IN
+                <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
+                    #{sourceId}
+                </foreach>
+                OR
+                spl.id IN
+                <foreach collection="sourceIdList" item="sourceId" open="(" separator="," close=")">
+                    #{sourceId}
+                </foreach>
+                )
         </if>
         <!--code-->
         <if test="params.code!=null and params.code!=''">

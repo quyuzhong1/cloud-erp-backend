@@ -39,6 +39,7 @@ import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.rpc.auth.feign.AuthFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.sdk.fs.service.FsService;
@@ -106,6 +107,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Resource
     private ShopSysUserAuthFeign shopSysUserAuthFeign;

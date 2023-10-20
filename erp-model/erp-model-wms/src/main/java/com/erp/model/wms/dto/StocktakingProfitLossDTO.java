@@ -9,7 +9,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -63,7 +65,9 @@ public class StocktakingProfitLossDTO implements Serializable {
 
         /**
          * 单据类型
+         * 来源 http://172.16.100.11:3002/project/92/interface/api/7186  key=stocktakingProfitLossType
          */
+        @NotNull(message = "单据类型不能为空")
         private BillTypeEnum billType;
 
         /**
@@ -74,11 +78,60 @@ public class StocktakingProfitLossDTO implements Serializable {
         /**
          * 库存组织
          */
+        @NotBlank(message = "库存组织不能为空")
         private String inventoryOrgId;
 
-        private List<String> userIdList;
 
+        /**
+         * 盘点人
+         */
+        private List<String> stocktakingUserIdList;
+
+        /**
+         * 详情
+         */
+        @Valid
         private List<StocktakingProfitLossDetailDTO.AddDTO> detailList;
+
+    }
+
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
+
+        @NotBlank(message = "盘盈盘亏单不能为空")
+        private String id;
+
+
+
+        /**
+         * 单据类型
+         */
+        @NotNull(message = "单据类型不能为空")
+        private BillTypeEnum billType;
+
+
+
+        /**
+         * 库存组织
+         */
+        @NotBlank(message = "库存组织不能为空")
+        private String inventoryOrgId;
+
+
+        /**
+         * 盘点人
+         */
+        private List<String> stocktakingUserIdList;
+
+        /**
+         * 详情
+         */
+        @Valid
+        private List<StocktakingProfitLossDetailDTO.UpdateDTO> detailList;
 
     }
 
