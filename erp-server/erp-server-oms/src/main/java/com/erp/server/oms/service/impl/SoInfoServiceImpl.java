@@ -632,7 +632,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setOrderTypeName(BillTypeEnum.getName(type));
             String soId = item.getId();
             //运单号集合
-            List<String> trackNoList = soOutstockList.stream().filter(s -> s.getSoId().equals(soId)).
+            List<String> trackNoList = soOutstockList.stream().filter(s -> s.getSoId().equals(soId)&&StringUtils.isNotBlank(s.getTrackNo())).
                     map(SoOutstockEntity::getTrackNo).collect(Collectors.toList());
             item.setTrackNoList(trackNoList);
             item.setTrackNoStr(trackNoList.stream().collect(Collectors.joining(",")));
