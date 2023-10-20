@@ -57,13 +57,12 @@ public class KingdeeAssistantDataDetailConsumerServiceImpl implements KingdeeAss
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA_DETAIL.getCode());
 
-        //map中设置父级id
-        setPid(apiUtils, map);
-
         /**
          * 审核
          */
         if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+            //map中设置父级id
+            setPid(apiUtils, map);
             operateApprove(apiUtils,platformEntity, map,type);
         }
 
