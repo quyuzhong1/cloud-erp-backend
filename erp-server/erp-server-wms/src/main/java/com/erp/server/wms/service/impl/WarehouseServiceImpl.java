@@ -387,7 +387,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             throw new ServiceException(ApiError.ERROR_98009);
         }
         //审核通过后发送金蝶
-        list.forEach(obj -> syncKingdeeWarehouseService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+        list.forEach(obj -> syncKingdeeWarehouseService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         return this.removeByIds(ids);
     }
 
