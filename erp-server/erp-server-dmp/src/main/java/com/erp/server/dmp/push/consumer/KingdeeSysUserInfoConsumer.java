@@ -15,6 +15,7 @@ import com.erp.server.dmp.push.service.business.KingdeeSysUserInfoConsumerServic
 import com.erp.server.dmp.service.DmpPushTaskService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +32,8 @@ import java.util.Map;
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
         selectorExpression = "kingdee_sys_user_info_tag",
-        consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SYS_USER_INFO)
+        consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SYS_USER_INFO,
+        consumeMode = ConsumeMode.ORDERLY)
 public class KingdeeSysUserInfoConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
