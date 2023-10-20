@@ -110,8 +110,8 @@ public class SysLogRecordServiceImpl extends SuperServiceImpl<LogRecordMapper, S
             return;
         }
         // 属性赋值
-        for(SysLogRecordDTO.ListDTO data : list) {
-            // TODO 其他如需要显示名称的字段赋值
-        }
+        // 其他如需要显示名称的字段赋值
+        list.forEach(SysLogRecordDTO.ListDTO::setActionNameByAction);
+
     }
 }

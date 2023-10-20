@@ -6,6 +6,7 @@ import com.common.core.enums.LogStatusEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -178,6 +179,11 @@ public class SysLogRecordDTO implements Serializable {
         private String action;
 
         /**
+         * 操作类型名称
+         */
+        private String actionName;
+
+        /**
          * 操作路径
          */
         private String path;
@@ -241,6 +247,22 @@ public class SysLogRecordDTO implements Serializable {
          * 创建人名称
          */
         private String createUserName;
+
+        /**
+         * 通过Action设置操作类型名称
+         */
+        public void setActionNameByAction() {
+            if (StringUtils.isBlank(this.action)){
+                this.setActionName("");
+                return;
+            }
+            LogActionEnum actionEnum = LogActionEnum.getByCode(this.action);
+            if (null == actionEnum){
+                this.setActionName("");
+                return;
+            }
+            this.setActionName(actionEnum.getName());
+        }
     }
 
 }

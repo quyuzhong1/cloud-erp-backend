@@ -54,7 +54,7 @@
         FROM sys_log_record as slr
         WHERE slr.is_deleted=FALSE
         <if test="params.systemModule != null ">
-            and slr.system_module = #{params.systemModule}
+            and slr.system_module like concat('%',#{params.systemModule},'%')
         </if>
         <if test="params.recordIdList != null and params.recordIdList.size > 0">
             AND slr.record_id IN
