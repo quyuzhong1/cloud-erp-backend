@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -15,6 +16,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.sdk.oms.amz.spapi.handler.AmazonListingHandler;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonOrderHandler;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.thread.PlatformDataThread;
@@ -50,16 +52,15 @@ public class PullAmazonJob {
     private MongoService mongoService;
 
     @Resource
+    private BusinessServiceImpl businessService;
+
+    @Resource
     private AmazonOrderHandler amazonOrderHandler;
 
     @Resource
-    private DmpPullTaskService dmpPullTaskService;
+    private AmazonListingHandler amazonListingHandler;
 
-    @Resource
-    private MQProducerService<PlatformOrderDTO> mqProducerService;
 
-    @Resource
-    private BusinessServiceImpl businessService;
 
     /**
      * 拉取亚马逊任务
@@ -119,4 +120,42 @@ public class PullAmazonJob {
     }
 
 
+    /**
+     * 拉取亚马逊商品详情任务
+     */
+    @XxlJob("amazonProductDetailDownload")
+    public ReturnT<String> amazonProductDetail() {
+        Integer size = 1000;
+        String jobParamStr = XxlJobHelper.getJobParam();
+        if (StrUtil.isNotBlank(jobParamStr)) {
+            JSONObject jobParam = JSON.parseObject(jobParamStr);
+            size = jobParam.getInteger("size");
+        }
+        XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务开始,size={}", size);
+        // 根据状态查询未下载数据
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByDownloadStatus(0);
+        List<PlatformProductDTO> orderEntityList = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.THIRD_SYSTEM_AMAZON_PRODUCT, PlatformProductDTO.class);
+        if (CollectionUtil.isEmpty(orderEntityList)) {
+            XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务结束,无需要更新的信息");
+            return ReturnT.SUCCESS;
+        }
+        orderEntityList.forEach(dto -> {
+            try {
+                // 下载和处理详情
+                PlatformProductDTO newDto = amazonListingHandler.downloadDetail(dto);
+                String category = PlatformCategoryEnum.OMS.getCode();
+                String platform = PlatformDictEnum.AMAZON.getCode();
+                String business = BusinessTypeEnum.PRODUCT.getCode();
+                newDto.setDownloadStatus(1);
+                newDto.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
+                businessService.pullDetailProcess(newDto, category, platform, business);
+            } catch (Exception e) {
+                XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail，uniqueId={}, error={}",
+                        dto.getUniqueId(),
+                        e.getMessage());
+            }
+        });
+        XxlJobHelper.log("[拉取亚马逊商品详情任务] amazonProductDetail 任务结束");
+        return ReturnT.SUCCESS;
+    }
 }

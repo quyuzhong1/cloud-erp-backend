@@ -61,7 +61,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         // 亚马逊商品下载
         // TODO 查询当前店铺是否有最新生成的报告文档ID
         String reportDocumentId = "";
-        if (StringUtils.isBlank(reportDocumentId)){
+        if (StringUtils.isBlank(reportDocumentId)) {
             return Collections.emptyList();
         }
 
@@ -69,7 +69,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum);
         try {
             // 根据报告文档ID获取商品报告链接
-            ReportDocument reportDocument  = reportsApi.getReportDocument(reportDocumentId);
+            ReportDocument reportDocument = reportsApi.getReportDocument(reportDocumentId);
 
             // 报告链接
             String url = reportDocument.getUrl();
@@ -78,7 +78,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
 
             // 返回下载源数据
             return listingReoprtList.stream()
-                    .map(e-> new PlatformAmazonListingDTO(e, shop))
+                    .map(e -> new PlatformAmazonListingDTO(e, shop))
                     .collect(Collectors.toList());
         } catch (ApiException | IOException e) {
             throw new ServiceException("[Amazon SP-APi] 下载listing失败" + e);
@@ -99,5 +99,21 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
     @Override
     public String getTargetPlatform() {
         return PlatformDictEnum.AMAZON.getCode();
+    }
+
+    @Override
+    public PlatformProductDTO downloadDetail(PlatformProductDTO dto) {
+        // 产品规格信息
+        String productSpec = "";
+        // 包装信息
+        String packing = "";
+        // TODO
+
+        // 产品规格信息
+        dto.setProductSpec(productSpec);
+        // 产品包装信息
+        dto.setProductPacking(packing);
+
+        return dto;
     }
 }

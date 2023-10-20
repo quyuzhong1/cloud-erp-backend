@@ -85,5 +85,10 @@ public class PlatformProductDTO extends UniqueDto {
      * 0 详情数据需要更新
      * 1 详情数据已更新
      */
-    private Integer downloadStatus = 1;
+    private Integer downloadStatus;
+
+    /**
+     * 数据下载时间
+     */
+    private String downloadTime;
 }
