@@ -362,4 +362,21 @@
         </if>
         ORDER BY psi.create_time desc
     </select>
+
+    <select id="listFirstMassInstock" resultType="com.erp.model.wms.dto.FirstMassInstockDTO">
+        SELECT
+            min(pi.stock_in_date) AS firstMassProductDate,
+            pid.sku_id
+        FROM po_instock pi
+        INNER JOIN po_instock_detail pid ON pi.id = pid.main_id AND pi.is_deleted = FALSE
+        WHERE pid.is_deleted = FALSE
+        AND pi.is_first_mass_product = TRUE
+        <if test="ids != null and ids.size > 0">
+            AND pi.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        GROUP BY pid.sku_id
+    </select>
 </mapper>

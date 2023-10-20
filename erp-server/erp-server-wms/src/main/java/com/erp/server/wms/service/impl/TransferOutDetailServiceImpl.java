@@ -134,9 +134,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
     @Override
     public List<TransferOutDTO.ChooseListDTO> listChoose(TransferOutDTO.SearchParamDTO param, TransferOutEntity transferOutEntity) {
         // 从分步式调入单的来源id查询分步式调出单明细
-        List<TransferOutDetailEntity> transferOutDetailList = lambdaQuery().eq(TransferOutDetailEntity::getMainId, param.getSourceId())
-                .in(CollectionUtils.isNotEmpty(param.getSkuNoList()),TransferOutDetailEntity::getSkuNo,param.getSkuNoList())
-                .list();
+        List<TransferOutDetailEntity> transferOutDetailList = baseMapper.listTransferOutDetailByParam(param);
         if (CollUtil.isEmpty(transferOutDetailList)) {
             return Collections.EMPTY_LIST;
         }

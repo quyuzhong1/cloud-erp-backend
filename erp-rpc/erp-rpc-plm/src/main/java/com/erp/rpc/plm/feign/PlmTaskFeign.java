@@ -2,10 +2,7 @@ package com.erp.rpc.plm.feign;
 
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.BasicCategoryEntity;
-import com.erp.model.plm.entity.BomInfoEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -370,6 +367,46 @@ public interface PlmTaskFeign {
      */
     @GetMapping("feign/product/parentCategory")
     BasicCategoryDTO getParent(Map<String, String> categoryParams);
+
+    /**
+     * 批量修改产品信息
+     * @param list
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @PostMapping("feign/product/updateProductDetailBatch")
+    Boolean updateProductDetailBatch(@RequestBody List<ProductDetailEntity> list);
+
+    /**
+     * 批量修改产品采购信息首批下单日期
+     * @param list
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @PostMapping("feign/product/updateProductPlaceOrderTimeBatch")
+    Boolean updateProductPlaceOrderTimeBatch(@RequestBody List<ProductPurchaseEntity> list);
+
+    /**
+     * 批量修改产品销售信息上市日期
+     * @param list
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @PostMapping("feign/product/updateProductSaleListingTimeBatch")
+    Boolean updateProductSaleListingTimeBatch(@RequestBody List<ProductSaleEntity> list);
+
+    /**
+     * 根据skuId查询产品采购信息
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.entity.ProductPurchaseEntity>
+     **/
+    @PostMapping("feign/product/listProductPurchaseBySkuId")
+    List<ProductPurchaseEntity> listProductPurchaseBySkuId(@RequestBody List<String> skuIds);
+
+    /**
+     * 根据skuId查询产品销售信息
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.entity.ProductSaleEntity>
+     **/
+    @PostMapping("feign/product/listProductSaleBySkuId")
+    List<ProductSaleEntity> listProductSaleBySkuId(@RequestBody List<String> skuIds);
 
     /**
      * 回填产品包装信息

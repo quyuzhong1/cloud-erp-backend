@@ -41,6 +41,14 @@ public interface BankAccountService extends SuperService<BankAccountEntity> {
     List<BankAccountEntity> findByOrgIdAndAccountNo(String orgId, String bankAccountNo);
 
     /**
+     * 根据组织id和银行名称获取到收款账户信息
+     * @param orgId
+     * @param accountName
+     * @return
+     */
+    BankAccountEntity findByOrgIdAndAccountName(String orgId, String accountName);
+
+    /**
      * 导入金蝶银行账号信息
      * @author yl
      * @date 2023-07-19 10:04

@@ -322,6 +322,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             purchaseReturnOrderEntity.setPurchaseOrderCode(purchaseOrderEntity.getCode());
         }
 
+
         //获取采购单供应商信息
 //        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
         if (StringUtils.isNotBlank(dto.getPurchaseUserId())) {

@@ -15,6 +15,7 @@ import com.erp.model.plm.dto.ProductSaleShowDTO;
 import com.erp.model.plm.dto.SkuDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.enums.ProductSalesPlatformEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
@@ -175,6 +176,17 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
             item.setSaleStateName(saleStateName);
         }
         return list;
+    }
+
+    @Override
+    public Boolean updateProductSaleListingTimeBatch(List<ProductSaleEntity> list) {
+        for (ProductSaleEntity productSaleEntity : list) {
+            lambdaUpdate()
+                    .set(ProductSaleEntity::getListingTime, productSaleEntity.getListingTime())
+                    .eq(ProductSaleEntity::getSkuId, productSaleEntity.getSkuId())
+                    .update();
+        }
+        return Boolean.TRUE;
     }
 }
 

@@ -454,6 +454,12 @@ public class SupplierDTO implements Serializable {
 
 
         /**
+         * 供应商 code
+         */
+        private String code;
+
+
+        /**
          * 分类id集合
          */
         private List<String> categoryIdList;

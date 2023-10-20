@@ -6,6 +6,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.ProductVO;
@@ -316,5 +317,63 @@ public class ProductSkuFeignController {
             return Collections.emptyList();
         }
         return productRefLabelService.getLabelListByIds(null, null, skuIds);
+    }
+
+
+    /**
+     * 批量修改产品信息
+     * @param list
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @PostMapping("/updateProductDetailBatch")
+    public Boolean updateProductDetailBatch(@RequestBody List<ProductDetailEntity> list) {
+        return productDetailService.updateProductDetailBatch(list);
+    }
+
+    /**
+     * 批量修改产品采购信息首批下单日期
+     * @param list
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @PostMapping("/updateProductPlaceOrderTimeBatch")
+    public Boolean updateProductPlaceOrderTimeBatch(@RequestBody List<ProductPurchaseEntity> list) {
+        return productPurchaseService.updateProductPlaceOrderTimeBatch(list);
+    }
+
+    /**
+     * 批量修改产品销售信息上市日期
+     * @param list
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @PostMapping("/updateProductSaleListingTimeBatch")
+    public Boolean updateProductSaleListingTimeBatch(@RequestBody List<ProductSaleEntity> list) {
+        return productSaleService.updateProductSaleListingTimeBatch(list);
+    }
+
+
+    /**
+     * 根据skuId查询产品采购信息
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.entity.ProductPurchaseEntity>
+     **/
+    @PostMapping("/listProductPurchaseBySkuId")
+    public List<ProductPurchaseEntity> listProductPurchaseBySkuId(@RequestBody List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
+        return productPurchaseService.listBySkuIds(skuIds);
+    }
+
+    /**
+     * 根据skuId查询产品销售信息
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.entity.ProductSaleEntity>
+     **/
+    @PostMapping("/listProductSaleBySkuId")
+    public List<ProductSaleEntity> listProductSaleBySkuId(@RequestBody List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
+        return productSaleService.listBySkuIds(skuIds);
     }
 }

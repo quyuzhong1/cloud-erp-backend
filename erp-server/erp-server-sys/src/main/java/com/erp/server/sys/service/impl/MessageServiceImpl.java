@@ -9,6 +9,7 @@ import com.erp.model.sys.dto.MessageDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
 import com.erp.model.sys.enums.MessageTypeEnum;
+import com.erp.model.sys.enums.SysTypeEnum;
 import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.server.sys.mapper.MessageMapper;
 import com.erp.server.sys.service.CommonService;
@@ -24,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -59,8 +61,8 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         //获取所有消息通知
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
         List<MessageEntity> list = baseMapper.list(paramDTO);
-
         //获取已读的消息通知
         List<MessageUserReadEntity> messageUserReadEntities = messageUserReadService.listByUserId(uid);
         for (MessageTypeEnum typeEnum : MessageTypeEnum.values()) {
@@ -91,6 +93,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setType(type);
         paramDTO.setUserId(userInfo.getUid());
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
         List<MessageEntity> list = baseMapper.list(paramDTO);
         for (MessageEntity messageEntity : list) {
             MessageDTO.NotReadMessageNumDetail notReadMessageNumDetail = new MessageDTO.NotReadMessageNumDetail();
@@ -117,6 +120,7 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         //获取所有消息通知
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
         List<MessageEntity> list = baseMapper.list(paramDTO);
         readMessage(messageUserReadEntities, list);
         return Boolean.TRUE;
@@ -154,7 +158,11 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     public MessageDTO.IsMessageDTO isMessage() {
         LoginUser userInfo = commonService.getUserInfo();
         String uid = userInfo.getUid();
-        List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(uid);
+        MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
+        paramDTO.setUserId(userInfo.getUid());
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
+
+        List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(paramDTO);
 
         List<String> typeList = messageEntities.stream().map(req -> MessageTypeEnum.getName(req.getType())).distinct().collect(Collectors.toList());
 
@@ -176,9 +184,12 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     @Override
     public Boolean closeMessageNotice() {
         LoginUser userInfo = commonService.getUserInfo();
-        String uid = userInfo.getUid();
-        List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(uid);
-        redisService.setCacheObject(RedisKeyUtil.getCloseMessageNoticeKey(uid), messageEntities.size(), RedisCacheConstants.EXPIRATION, TimeUnit.DAYS);
+        MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
+        paramDTO.setUserId(userInfo.getUid());
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
+
+        List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(paramDTO);
+        redisService.setCacheObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()), messageEntities.size(), RedisCacheConstants.EXPIRATION, TimeUnit.DAYS);
         return Boolean.TRUE;
     }
 

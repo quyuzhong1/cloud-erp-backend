@@ -155,6 +155,15 @@ public class SoOutstockDTO implements Serializable {
         private String sellerName;
 
         /**
+         * 销售员部门id
+         */
+        private String salesDeptId;
+
+        /**
+         * 销售员部门名
+         */
+        private String salesDeptName;
+        /**
          * 仓库id
          */
         private String warehouseId;
@@ -332,6 +341,11 @@ public class SoOutstockDTO implements Serializable {
         private List<String> sellerIdList;
 
         /**
+         * 销售部门
+         */
+        private String salesDeptId;
+
+        /**
          * 出库日期
          */
         private List<LocalDate> actualDeliveryDateList;
@@ -440,6 +454,8 @@ public class SoOutstockDTO implements Serializable {
          * 销售员
          */
         private String sellerId;
+
+
 
         /**
          * 客户订单号
@@ -939,6 +955,8 @@ public class SoOutstockDTO implements Serializable {
          */
         @NotNull(message = "出库日期不能为空")
         private LocalDate billDate;
+
+
 
         /**
          * 客户订单号

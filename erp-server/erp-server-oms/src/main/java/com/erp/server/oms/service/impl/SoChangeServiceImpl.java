@@ -36,6 +36,7 @@ import com.erp.model.oms.enums.CustomerAddressTypeEnum;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -237,7 +238,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         }
 
         String checkResult = sb.toString();
-        if(StringUtils.isNotBlank(checkResult)){
+        if (StringUtils.isNotBlank(checkResult)) {
             throw new ServiceException(checkResult);
         }
     }
@@ -343,6 +344,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
     /**
      * 验证销售变更单
+     *
      * @param soId
      * @param receiveAddressId
      * @param addressType
@@ -545,7 +547,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
         //客户id
         List<String> customerIdList = list.stream().map(SoChangeDTO.PagingViewDTO::getCustomerId).collect(Collectors.toList());
+        //客户
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIdList) ? customerInfoService.listByIds(customerIdList) : Collections.emptyList();
+        // 国家列表
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+
         List<String> flagList = new ArrayList<>();
         for (SoChangeDTO.PagingViewDTO item : list) {
             boolean contains = flagList.contains(item.getId());
@@ -553,6 +559,8 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             item.setOrderTypeName(orderType.getName());
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
+            //客户id
+            String customerId = item.getCustomerId();
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
@@ -562,9 +570,20 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             Boolean invalidStatus = item.getInvalidStatus();
             String invalidStatusName = invalidStatus != null && invalidStatus ? "已作废" : "未作废";
             item.setInvalidStatusName(invalidStatusName);
-            String customerName = customerList.stream().filter(c -> c.getId().equals(item.getCustomerId())).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            item.setCustomerName(customerName);
+            CustomerInfoEntity customerInfo = customerList.stream().filter(c -> c.getId().
+                    equals(item.getCustomerId())).findFirst().orElse(null);
+            if (Objects.nonNull(customerInfo)) {
+                //国家id
+                String countryId = customerInfo.getCountryId();
+                String countryName = countryList.stream().filter(obj -> obj.getId().equals(countryId)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                item.setCountryName(countryName);
+                item.setCustomerName(customerInfo.getName());
+            } else {
+                item.setCustomerName("");
+                item.setCountryName("");
+            }
+
             String skuId = item.getSkuId();
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
             if (sku != null) {

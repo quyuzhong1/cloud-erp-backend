@@ -250,7 +250,6 @@ public class StocktakingProfitLossDTO implements Serializable {
     }
 
 
-
     /**
      * 导出数据
      */
@@ -368,7 +367,6 @@ public class StocktakingProfitLossDTO implements Serializable {
         private Integer diffQty;
 
     }
-
 
 
     /**

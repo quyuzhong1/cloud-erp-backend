@@ -4682,12 +4682,14 @@
     <!--部门销售额排行榜-->
     <select id="deptCompletionRateRanking" resultType="com.erp.model.bi.dto.CompletionRateRankingDTO$PagingDTO">
         SELECT
-        ROW_NUMBER() over(ORDER bY round(SUM (i.amount_after * 1),2) DESC ) AS ranking,
+
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS monthSales,
+            ROW_NUMBER() over(ORDER bY round(SUM (i.amount_after * i.${settleRate}),2) DESC ) AS ranking,
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS monthSales,
+            ROW_NUMBER() over(ORDER bY round(SUM (i.amount_after * 1),2) DESC ) AS ranking,
         </if>
         CASE WHEN o.dept_id IS NULL OR o.dept_id = '' THEN '无' ELSE o.dept_id END AS name
         FROM dmp_order_item i
@@ -4778,18 +4780,20 @@
             </if>
         </where>
         GROUP BY name
-        ORDER BY monthSales
+        ORDER BY monthSales DESC
     </select>
 
     <!--用户销售额排行榜-->
     <select id="userCompletionRateRanking" resultType="com.erp.model.bi.dto.CompletionRateRankingDTO$PagingDTO">
         SELECT
-        ROW_NUMBER() over(ORDER bY round(SUM (i.amount_after * 1),2) DESC ) AS ranking,
+
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS monthSales,
+            ROW_NUMBER() over(ORDER bY round(SUM (i.amount_after * i.${settleRate}),2) DESC ) AS ranking,
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS monthSales,
+            ROW_NUMBER() over(ORDER bY round(SUM (i.amount_after * 1),2) DESC ) AS ranking,
         </if>
         CASE WHEN o.charge_id IS NULL OR o.charge_id = '' THEN '无' ELSE o.charge_id END AS name
         FROM dmp_order_item i
@@ -4880,7 +4884,7 @@
             </if>
         </where>
         GROUP BY name
-        ORDER BY monthSales
+        ORDER BY monthSales DESC
     </select>
     <!--获取净销售额-->
     <select id="netSalesAmount" resultType="java.math.BigDecimal">

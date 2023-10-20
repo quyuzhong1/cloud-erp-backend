@@ -30,7 +30,7 @@ public class DictControllerDTO {
 
         public DictDropDownDTO(BasicDictEntity entity) {
             this.code = entity.getValue();
-            this.name = entity.getValue();
+            this.name = entity.getName();
         }
     }
 }

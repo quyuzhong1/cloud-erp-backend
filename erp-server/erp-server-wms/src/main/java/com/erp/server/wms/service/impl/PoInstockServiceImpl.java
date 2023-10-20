@@ -583,6 +583,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             // 更新库存（需区分有无收货单）
             updateInventoryTransCore(list);
 
+            //填入产品首批量产入库时间
+            setFirstMassInstock(ids);
+
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
@@ -595,6 +598,26 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购入库单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "审核操作");
 
+    }
+
+    private void setFirstMassInstock(List<String> ids) {
+        //填入产品首批量产入库时间
+        List<FirstMassInstockDTO> firstMassInstockList = baseMapper.listFirstMassInstock(ids);
+        List<String> skuIds = firstMassInstockList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIds);
+        //获取到没有设置入库日期的sku
+        List<String> skuIdList = productDetailEntityList.stream().filter(req -> req.getFirstMassProductDate() == null).map(req -> req.getId()).collect(Collectors.toList());
+        List<ProductDetailEntity> skuEntityList = new ArrayList<>();
+        for (String skuId : skuIdList) {
+            FirstMassInstockDTO firstMassInstockDTO = firstMassInstockList.stream().filter(req -> req.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(firstMassInstockDTO)) {
+                ProductDetailEntity skuEntity = new ProductDetailEntity();
+                skuEntity.setId(skuId);
+                skuEntity.setFirstMassProductDate(firstMassInstockDTO.getFirstMassProductDate());
+                skuEntityList.add(skuEntity);
+            }
+        }
+        plmTaskFeign.updateProductDetailBatch(skuEntityList);
     }
 
     @Override

@@ -23,4 +23,41 @@
         </where>
     </select>
 
+    <select id="listTransferOutDetailByParam" resultType="com.erp.model.wms.entity.TransferOutDetailEntity">
+        select
+            tod.id,
+            tod.create_user_id,
+            tod.create_user_name,
+            tod.create_time,
+            tod.update_user_id,
+            tod.update_user_name,
+            tod.update_time,
+            tod.version,
+            tod.is_deleted,
+            tod.main_id,
+            tod.sku_id,
+            tod.sku_no,
+            tod.qty,
+            tod.out_warehouse_location,
+            tod.remark,
+            tod.source_detail_id,
+            tod.unit
+        from transfer_out tot
+        inner join transfer_out_detail tod on tot.id = tod.main_id and tod.is_deleted = false
+        WHERE tot.is_deleted = false
+        and tot.invalid_status = false
+        <if test="param.remoteSearchSku != null  and param.remoteSearchSku != ''">
+            AND tod.sku_no ILIKE concat('%',#{param.remoteSearchSku},'%')
+        </if>
+        <if test="param.skuNoList != null  and param.skuNoList != ''">
+            AND tod.sku_no IN
+            <foreach collection="param.skuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.sourceId != null  and param.sourceId != ''">
+            AND tod.main_id = #{param.sourceId}
+        </if>
+    </select>
+
 </mapper>
