@@ -59,9 +59,6 @@
                 #{item}
             </foreach>
         </if>
-        <if test="params.systemModule != null ">
-            and slr.system_module like concat('%',#{params.systemModule},'%')
-        </if>
         <if test="params.recordIdList != null and params.recordIdList.size > 0">
             AND slr.record_id IN
             <foreach collection="params.recordIdList" item="item" open="(" separator="," close=")">
@@ -75,10 +72,12 @@
             </foreach>
         </if>
         <if test="params.createTimeList !=null and params.createTimeList.size>0">
-            AND slr.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
-            INTERVAL '1
-            DAY' ) > slr.create_time
+            AND slr.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 SECOND') > slr.create_time
         </if>
+        <if test="params.systemModule != null and params.systemModule != ''">
+            AND slr.system_module ILIKE concat('%', #{params.systemModule}::text,'%')
+        </if>
+
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
