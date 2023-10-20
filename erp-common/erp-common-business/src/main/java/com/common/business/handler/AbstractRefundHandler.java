@@ -32,4 +32,13 @@ public abstract class AbstractRefundHandler<T extends CleanBaseDTO,R extends Uni
      */
     abstract List<R> convert(List<T> sourceDataList);
 
+    /**
+     * 是否发送MQ
+     * true=发送
+     * false=不发送（有其他详情需要额外拉取）
+     */
+    @Override
+    public Boolean getIsSendMq() {
+        return Boolean.TRUE;
+    }
 }

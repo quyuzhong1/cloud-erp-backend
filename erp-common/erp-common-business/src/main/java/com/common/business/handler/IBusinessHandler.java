@@ -22,4 +22,9 @@ public interface IBusinessHandler<T extends CleanBaseDTO,R extends UniqueDto> {
      * @return
      */
     String getTargetPlatform();
+
+    /**
+     * 是否发送MQ
+     */
+    Boolean getIsSendMq();
 }

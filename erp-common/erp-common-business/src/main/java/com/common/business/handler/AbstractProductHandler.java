@@ -32,4 +32,14 @@ public abstract class AbstractProductHandler<T extends CleanBaseDTO,R extends Un
      */
     public abstract List<R> convert(List<T> sourceDataList);
 
+    /**
+     * 是否发送MQ
+     * true=发送
+     * false=不发送（有其他详情需要额外拉取）
+     */
+    @Override
+    public Boolean getIsSendMq() {
+        return Boolean.TRUE;
+    }
+
 }

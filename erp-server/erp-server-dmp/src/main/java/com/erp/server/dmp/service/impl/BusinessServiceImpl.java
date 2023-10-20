@@ -65,15 +65,16 @@ public class BusinessServiceImpl {
         if (handler != null) {
             PlatformDataDTO<T, R> platformData = handler.pullHandle(data);
             String targetPlatform = handler.getTargetPlatform();
+            Boolean isSendMq = handler.getIsSendMq();
             // 保存mongo 并发送mq
-            List<R> toMqList = compareAndSaveMongo(category, platform, business, targetPlatform, platformData, RocketMqTopic.PLATFORM_PULL_DATA_TOPIC);
+            List<R> toMqList = compareAndSaveMongo(isSendMq, category, platform, business, targetPlatform, platformData, RocketMqTopic.PLATFORM_PULL_DATA_TOPIC);
         } else {
             // Handle the case when no handler is found
             throw new RuntimeException("No handler found for category: " + category + ", platform: " + platform + ", business: " + business);
         }
     }
 
-    private <R extends UniqueDto, T extends CleanBaseDTO> List<R> compareAndSaveMongo(String category, String platform, String business,String targetPlatform, PlatformDataDTO<T, R> platformData, String topic) {
+    private <R extends UniqueDto, T extends CleanBaseDTO> List<R> compareAndSaveMongo(Boolean isSendMq, String category, String platform, String business,String targetPlatform, PlatformDataDTO<T, R> platformData, String topic) {
         // 保存数据到mongodb 并推送到mq
         List<T> sourceData = platformData.getSourceData();
         if(CollectionUtil.isEmpty(sourceData)){
@@ -107,6 +108,10 @@ public class BusinessServiceImpl {
         }
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, tableName);
+        }
+        // 不发送MQ
+        if (!isSendMq){
+            return pushToMqList;
         }
         List<R> targetData = platformData.getTargetData();
         for (R targetDatum : targetData) {
