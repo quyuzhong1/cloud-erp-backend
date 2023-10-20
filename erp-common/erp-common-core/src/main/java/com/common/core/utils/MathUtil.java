@@ -342,6 +342,26 @@ public class MathUtil {
     }
 
     /**
+     * 除法
+     *
+     * @param d1
+     * @param d2
+     * @param scale
+     * @return
+     */
+    public BigDecimal divide(BigDecimal d1, BigDecimal d2, int scale,int roundingMode) {
+        if (d2 == null||d2.compareTo(BigDecimal.ZERO)==0) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal newd1 = d1;
+        if (newd1 == null) {
+            newd1 = BigDecimal.ZERO;
+        }
+        return newd1.divide(d2, scale, roundingMode);
+
+    }
+
+    /**
      * 除法（默认保留两位小数）
      *
      * @param d1

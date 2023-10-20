@@ -56,7 +56,7 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @author yl
      * @date 2023-05-16 9:32
      */
-    void addSoDetail(String mainId, List<SoDetailDTO.AddDTO> detailList);
+    void addSoDetail(String mainId,Boolean isTax, List<SoDetailDTO.AddDTO> detailList);
 
     /**
      * 添加详情按钮-列表查询
@@ -125,11 +125,12 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      *
      * @param mainId
      * @param detailList
+     * @param isTax 是否含税
      * @return void
      * @author yl
      * @date 2023-05-17 16:00
      */
-    void updateSoDetail(String mainId, List<SoDetailDTO.UpdateDTO> detailList);
+    void updateSoDetail(String mainId,Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList);
 
     /**
      * 根据主表ids 删除数据
@@ -286,4 +287,12 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      */
     void updateDetailKingdeeId(String soId);
 
+    /**
+     * 销售变更单终止销售订单详情
+     * @author yl
+     * @date 2023-10-16 15:52
+     * @param closeSoDetailIdList
+     * @return void
+     */
+    void closeSoDetailByIds(List<String> closeSoDetailIdList);
 }

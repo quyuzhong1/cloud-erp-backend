@@ -336,7 +336,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      */
     Boolean exportSoContractExcel(String id, HttpServletResponse response);
 
-    Boolean temporaryUpdate();
+    List<String> temporaryUpdate();
 
     /**
      * @description: 更新明细备注
