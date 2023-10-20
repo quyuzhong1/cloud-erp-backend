@@ -298,6 +298,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             msg = "修改数据";
         }
         log.info("msg>>>>>{}，param>>>>>>>{}",msg,param);
+        log.info("json>>>>>{}",json);
+
         SaveResult save = apiUtils.save(param);
         if (!save.isSuccessfully()) {
             throw new ServiceException(ApiError.ERROR_ADD_KINGDEE_DATA);
