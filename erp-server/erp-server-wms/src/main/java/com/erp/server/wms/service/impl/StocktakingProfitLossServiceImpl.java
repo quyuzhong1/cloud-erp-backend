@@ -96,6 +96,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     @Resource
     private WarehouseService warehouseService;
 
+
     @Resource
     private SyncKingdeeStocktakingProfitService syncKingdeeStocktakingProfitService;
 
@@ -165,12 +166,12 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         }
         //盘点人
         String stocktakingUserId = params.getStocktakingUserId();
-        List<String> taskIdList = new ArrayList<>();
+        List<String> sourceIdList = new ArrayList<>();
         if (StringUtils.isNotBlank(stocktakingUserId)) {
             List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listByUserIds(Arrays.asList(stocktakingUserId));
-            taskIdList = taskUserList.stream().map(StocktakingTaskUserEntity::getStocktakingTaskId).collect(Collectors.toList());
+            sourceIdList = taskUserList.stream().map(StocktakingTaskUserEntity::getSourceId).collect(Collectors.toList());
         }
-        IPage pageData = baseMapper.paging(query, params, billType, taskIdList);
+        IPage pageData = baseMapper.paging(query, params, billType, sourceIdList);
         List<StocktakingProfitLossDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
@@ -201,9 +202,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         view.setApproveStatusName(approveStatus.getName());
         String sourceId = view.getSourceId();
         //盘点人信息
-        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseByTaskIds(Arrays.asList(sourceId));
+        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(Arrays.asList(sourceId, id));
         //盘点人
-        String stocktakingUserName = taskUserList.stream().filter(t -> sourceId.equals(t.getStocktakingTaskId())).
+        String stocktakingUserName = taskUserList.stream().filter(t -> sourceId.equals(t.getSourceId()) || id.equals(t.getSourceId())).
                 map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
         view.setStocktakingUserName(stocktakingUserName);
         List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Arrays.asList(id));
@@ -235,27 +236,31 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         }
         //盘点人
         String stocktakingUserId = params.getStocktakingUserId();
-        List<String> taskIdList = new ArrayList<>();
+        List<String> sourceIds = new ArrayList<>();
         if (StringUtils.isNotBlank(stocktakingUserId)) {
             List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listByUserIds(Arrays.asList(stocktakingUserId));
-            taskIdList = taskUserList.stream().map(StocktakingTaskUserEntity::getStocktakingTaskId).collect(Collectors.toList());
+            sourceIds = taskUserList.stream().map(StocktakingTaskUserEntity::getSourceId).collect(Collectors.toList());
         }
         //获取导出数据
-        List<StocktakingProfitLossDTO.ExportViewDTO> list = baseMapper.listExport(params, billType, taskIdList);
+        List<StocktakingProfitLossDTO.ExportViewDTO> list = baseMapper.listExport(params, billType, sourceIds);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
         List<String> sourceIdList = list.stream().map(StocktakingProfitLossDTO.ExportViewDTO::getSourceId).collect(Collectors.toList());
+        List<String> idList = list.stream().map(StocktakingProfitLossDTO.ExportViewDTO::getId).collect(Collectors.toList());
+        sourceIdList.addAll(idList);
         //盘点人信息
-        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseByTaskIds(sourceIdList);
+        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(sourceIdList);
         List<String> skuIdList = list.stream().map(StocktakingProfitLossDTO.ExportViewDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
         //填充数据
         for (StocktakingProfitLossDTO.ExportViewDTO item : list) {
             BillTypeEnum type = item.getBillType();
             item.setBillTypeName(type.getName());
+            String sourceId = item.getSourceId();
+            String id = item.getId();
             //盘点人
-            String stocktakingUserName = taskUserList.stream().filter(t -> item.getSourceId().equals(t.getStocktakingTaskId())).
+            String stocktakingUserName = taskUserList.stream().filter(t -> sourceId.equals(t.getSourceId()) || id.equals(t.getSourceId())).
                     map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
             item.setStocktakingUserName(stocktakingUserName);
             String skuId = item.getSkuId();
@@ -548,6 +553,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             addDetailList.add(detail);
         }
         if (this.save(entity) && stocktakingProfitLossDetailService.saveBatch(addDetailList)) {
+            stocktakingTaskUserService.addTaskUser(id, SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), dto.getStocktakingUserIdList());
             return id;
         }
         return "";
@@ -580,7 +586,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
         for (WarehouseEntity item : warehouseList) {
             String orgId = item.getOrgId();
-            if(!inventoryOrgId.equals(orgId)){
+            if (!inventoryOrgId.equals(orgId)) {
                 throw new ServiceException(ApiError.ERROR_ORG_WAREHOUSE_MISMATCHING);
             }
 
@@ -650,16 +656,14 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String addAndSubmit(StocktakingProfitLossDTO.AddDTO dto) {
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void addAndSubmit(StocktakingProfitLossDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        BatchResultDTO result = this.submit(id);
-        if (result.getSuccess()) {
-            return id;
-        }
-        return "";
+        this.submit(id);
+
     }
 
     /**
@@ -784,9 +788,16 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      * @date 2023-08-11 9:56
      */
     private void fillDb(List<StocktakingProfitLossDTO.PagingViewDTO> list) {
-        List<String> sourceIdList = list.stream().map(StocktakingProfitLossDTO.PagingViewDTO::getSourceId).collect(Collectors.toList());
+        List<String> sourceIdList = new ArrayList<>(10);
+        for (StocktakingProfitLossDTO.PagingViewDTO item : list) {
+            sourceIdList.add(item.getId());
+            String sourceId = item.getSourceId();
+            if (StringUtils.isNotBlank(sourceId)) {
+                sourceIdList.add(sourceId);
+            }
+        }
         //盘点人信息
-        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseByTaskIds(sourceIdList);
+        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(sourceIdList);
 
         List<String> idList = list.stream().map(StocktakingProfitLossDTO.PagingViewDTO::getId).collect(Collectors.toList());
 
@@ -801,7 +812,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             BillTypeEnum billType = item.getBillType();
             item.setBillTypeName(billType.getName());
             //盘点人
-            String stocktakingUserName = taskUserList.stream().filter(t -> sourceId.equals(t.getStocktakingTaskId())).
+            String stocktakingUserName = taskUserList.stream().filter(t -> sourceId.equals(t.getSourceId()) || id.equals(t.getSourceId())).
                     map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
             item.setStocktakingUserName(stocktakingUserName);
 

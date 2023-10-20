@@ -121,7 +121,7 @@ public interface StocktakingProfitLossService extends SuperService<StocktakingPr
      * @param dto
      * @return java.lang.Boolean
      */
-    String addAndSubmit(StocktakingProfitLossDTO.AddDTO dto);
+    void addAndSubmit(StocktakingProfitLossDTO.AddDTO dto);
 
     /**
      * 批量保存提交

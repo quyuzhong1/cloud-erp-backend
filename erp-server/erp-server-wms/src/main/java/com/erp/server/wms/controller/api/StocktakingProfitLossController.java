@@ -76,6 +76,12 @@ public class StocktakingProfitLossController extends BaseController {
      * 修改
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingProfitLoss:update",
+            serviceClass = StocktakingProfitLossService.class,
+            keyIdName = "id"
+    )
     public ApiResult add(@RequestBody StocktakingProfitLossDTO.UpdateDTO dto) {
 
         return success();
@@ -136,12 +142,12 @@ public class StocktakingProfitLossController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingProfitLoss:submit",
-//            serviceClass = StocktakingProfitLossService.class,
-//            keyIdName = "ids"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingProfitLoss:submit",
+            serviceClass = StocktakingProfitLossService.class,
+            keyIdName = "ids"
+    )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
@@ -174,7 +180,7 @@ public class StocktakingProfitLossController extends BaseController {
      */
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated StocktakingProfitLossDTO.AddDTO dto) {
-
+        stocktakingProfitLossService.addAndSubmit(dto);
         return  success() ;
     }
 

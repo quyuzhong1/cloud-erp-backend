@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
@@ -42,17 +43,17 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
     /**
      * 获取盘点人信息
      *
-     * @param taskIdList
+     * @param sourceIdList
      * @return java.util.List<com.erp.model.wms.entity.StocktakingTaskUserEntity>
      * @author yl
      * @date 2023-08-08 12:16
      */
     @Override
-    public List<StocktakingTaskUserEntity> listBaseByTaskIds(List<String> taskIdList) {
-        if (CollectionUtils.isEmpty(taskIdList)) {
+    public List<StocktakingTaskUserEntity> listBaseBySourceIdList(List<String> sourceIdList) {
+        if (CollectionUtils.isEmpty(sourceIdList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(StocktakingTaskUserEntity::getStocktakingTaskId, taskIdList).list();
+        return this.lambdaQuery().in(StocktakingTaskUserEntity::getSourceId, sourceIdList).list();
     }
 
     @Override
@@ -63,14 +64,17 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
         List<String> taskIdList = Arrays.asList(taskEntity.getId());
         String moduleType = ModuleTypeEnum.STOCKTAKING_TASK.getCode();
         //第一步先删除
-        this.removeByTaskIds(taskIdList);
+        this.removeBySourceIdList(taskIdList);
         List<StocktakingTaskUserEntity> addList = new ArrayList<>(10);
         String taskId = taskEntity.getId();
         String code = taskEntity.getCode();
         List<String> userNameList = new ArrayList<>();
+        //盘点任务
+        String stocktakingTask = SourceTypeEnum.STOCKTAKING_TASK.getCode();
         for (String userId : userIdList) {
             StocktakingTaskUserEntity taskUserEntity = new StocktakingTaskUserEntity();
-            taskUserEntity.setStocktakingTaskId(taskId);
+            taskUserEntity.setSourceId(taskId);
+            taskUserEntity.setSourceType(stocktakingTask);
             taskUserEntity.setUserId(userId);
             String userName = userList.stream().filter(u -> u.getUserId().equals(userId)).
                     map(FindUserDTO::getUserName).findFirst().orElse("");
@@ -111,10 +115,39 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
         return this.lambdaQuery().in(StocktakingTaskUserEntity::getUserId, userIdList).list();
     }
 
-    public void removeByTaskIds(List<String> taskIdList) {
-        if (CollectionUtils.isNotEmpty(taskIdList)) {
+    /**
+     * 添加盘点人
+     *
+     * @param sourceId
+     * @param sourceType
+     * @param stocktakingUserIdList
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-10-20 10:02
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean addTaskUser(String sourceId, String sourceType, List<String> stocktakingUserIdList) {
+        //第一步先删除
+        this.removeBySourceIdList(Arrays.asList(sourceId));
+        List<StocktakingTaskUserEntity> addList = new ArrayList<>(10);
+        for (String userId : stocktakingUserIdList) {
+            StocktakingTaskUserEntity taskUserEntity = new StocktakingTaskUserEntity();
+            taskUserEntity.setSourceId(sourceId);
+            taskUserEntity.setSourceType(sourceType);
+            taskUserEntity.setUserId(userId);
+            addList.add(taskUserEntity);
+        }
+        if (CollectionUtils.isNotEmpty(addList)) {
+            return this.saveBatch(addList);
+        }
+        return Boolean.FALSE;
+    }
+
+    public void removeBySourceIdList(List<String> sourceIdList) {
+        if (CollectionUtils.isNotEmpty(sourceIdList)) {
             LambdaQueryWrapper<StocktakingTaskUserEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.in(StocktakingTaskUserEntity::getStocktakingTaskId, taskIdList);
+            queryWrapper.in(StocktakingTaskUserEntity::getSourceId, sourceIdList);
             this.remove(queryWrapper);
         }
     }
