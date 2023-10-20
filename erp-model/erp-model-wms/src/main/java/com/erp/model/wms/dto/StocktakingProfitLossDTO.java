@@ -9,7 +9,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -64,6 +66,7 @@ public class StocktakingProfitLossDTO implements Serializable {
         /**
          * 单据类型
          */
+        @NotNull(message = "单据类型不能为空")
         private BillTypeEnum billType;
 
         /**
@@ -74,10 +77,12 @@ public class StocktakingProfitLossDTO implements Serializable {
         /**
          * 库存组织
          */
+        @NotBlank(message = "库存组织不能为空")
         private String inventoryOrgId;
 
         private List<String> userIdList;
 
+        @Valid
         private List<StocktakingProfitLossDetailDTO.AddDTO> detailList;
 
     }

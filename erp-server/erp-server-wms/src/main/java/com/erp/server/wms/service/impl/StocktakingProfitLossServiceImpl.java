@@ -94,6 +94,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     private OperateLogService operateLogService;
 
     @Resource
+    private WarehouseService warehouseService;
+
+    @Resource
     private SyncKingdeeStocktakingProfitService syncKingdeeStocktakingProfitService;
 
     @Resource
@@ -565,11 +568,23 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if (CollectionUtils.isEmpty(orgList)) {
             throw new ServiceException(ApiError.ERROR_INVENTORY_ORG_NOT_FOUND);
         }
+        BillTypeEnum billType = entity.getBillType();
+        //是否盘盈单
+        Boolean isProfit = BillTypeEnum.PROFIT.equals(billType);
         entity.setInventoryOrgName(orgList.get(0).getName());
         //sku id
         List<String> skuIdList = detailList.stream().map(StocktakingProfitLossDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         //仓库集合
         List<String> warehouseIdList = detailList.stream().map(StocktakingProfitLossDetailDTO.AddDTO::getWarehouseId).collect(Collectors.toList());
+
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
+        for (WarehouseEntity item : warehouseList) {
+            String orgId = item.getOrgId();
+            if(!inventoryOrgId.equals(orgId)){
+                throw new ServiceException(ApiError.ERROR_ORG_WAREHOUSE_MISMATCHING);
+            }
+
+        }
 
         //库位集合
         List<String> warehouseLocationList = detailList.stream().map(StocktakingProfitLossDetailDTO.AddDTO::getWarehouseLocation).collect(Collectors.toList());
@@ -582,14 +597,44 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         param.setWarehouseIdList(warehouseIdList);
         param.setWarehouseLocationList(warehouseLocationList);
         //库存信息
-        List<InventoryEntity> inventoryList = inventoryService.listInventoryByParam(param);
-
+        List<InventoryEntity> inventoryInfoList = inventoryService.listInventoryByParam(param);
+        //可用库存
+        String usable = InventoryStatusEnum.USABLE.getCode();
+        String frozen = InventoryStatusEnum.FROZEN.getCode();
         for (StocktakingProfitLossDetailDTO.AddDTO item : detailList) {
             String skuId = item.getSkuId();
             String warehouseId = item.getWarehouseId();
             String warehouseLocation = item.getWarehouseLocation();
+            List<InventoryEntity> inventoryList = inventoryInfoList.stream().filter(i -> i.getSkuId().equals(skuId) &&
+                    i.getWarehouseId().equals(warehouseId) && i.getWarehouseLocation().equals(warehouseLocation)).collect(Collectors.toList());
 
+            Integer qty = item.getQty();
+            //可用数库存
+            Integer usableQty = inventoryList.stream().filter(i -> usable.equals(i.getDictInventoryStatus())).
+                    map(InventoryEntity::getQty).findFirst().orElse(0);
 
+            //冻结库存
+            Integer frozenQty = inventoryList.stream().filter(i -> frozen.equals(i.getDictInventoryStatus())).
+                    map(InventoryEntity::getQty).findFirst().orElse(0);
+            Integer diffQty = qty - usableQty - frozenQty;
+            if (diffQty.equals(0)) {
+                throw new ServiceException(ApiError.ERROR_DIFF_QTY_NOT_ZERO);
+            }
+            //是盘盈
+            if (isProfit) {
+                if (diffQty < 0) {
+                    throw new ServiceException(ApiError.ERROR_PROFIT_DIFF_GREATER_ZERO);
+                }
+            } else {
+                //盘亏单
+                if (diffQty > 0) {
+                    throw new ServiceException(ApiError.ERROR_LOSS_DIFF_LESS_ZERO);
+                }
+            }
+
+            item.setFrozenQty(frozenQty);
+            item.setUsableQty(usableQty);
+            item.setDiffQty(diffQty);
         }
 
 
