@@ -34,7 +34,7 @@ public class MQConsumerBroadcastService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
             selectorExpression = "kingdee_so_info_tag",
-            consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_INFO, messageModel = MessageModel.BROADCASTING)
+            consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_INFO1, messageModel = MessageModel.BROADCASTING)
     public class ConsumerApprovedOrderToDmp implements RocketMQListener<Map<String, Object>> {
         @Override
         public void onMessage(Map<String, Object> resultMap) {

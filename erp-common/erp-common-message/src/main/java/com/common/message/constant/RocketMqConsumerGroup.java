@@ -108,6 +108,11 @@ public class RocketMqConsumerGroup {
     public static final String SYNC_KINGDEE_SO_INFO = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_info";
 
     /**
+     * 销售订单
+     */
+    public static final String SYNC_KINGDEE_SO_INFO1 = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_info1";
+
+    /**
      * 销售订单变更
      */
     public static final String SYNC_KINGDEE_SO_CHANGE = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_change";
