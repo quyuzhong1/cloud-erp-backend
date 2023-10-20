@@ -45,7 +45,7 @@ public enum SourceTypeEnum {
     OTHER_OUTSTOCK("otherOutstock", "其他出库","other_outstock"),
     WAREHOUSE("warehouse", "仓库","warehouse"),
 
-    STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘赢盘亏单","stocktaking_profit_loss"),
+    STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘盈盘亏单","stocktaking_profit_loss"),
 
 
 

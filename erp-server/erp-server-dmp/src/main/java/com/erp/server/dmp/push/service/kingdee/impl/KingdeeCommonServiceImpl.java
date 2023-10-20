@@ -261,9 +261,9 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void customerGroupDelete(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type) {
+    public void customerGroupDelete(KingdeeApiUtils apiUtils,String syncKingdeeId) {
         //删除客户分组
-        apiUtils.customerGroupDelete(String.valueOf(map.get("id")));
+        apiUtils.customerGroupDelete(syncKingdeeId);
     }
 
     @Override

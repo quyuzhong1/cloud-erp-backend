@@ -188,14 +188,12 @@ public interface KingdeeCommonService {
      * 删除客户分组
      *
      * @param apiUtils
-     * @param platformEntity
-     * @param map
-     * @param type
+     * @param syncKingdeeId
      * @return void
      * @Author Luo_WG
      * @Date 2023/5/26 15:32
      **/
-    void customerGroupDelete(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type);
+    void customerGroupDelete(KingdeeApiUtils apiUtils, String syncKingdeeId);
 
     /**
      * 客户分组新增或修改

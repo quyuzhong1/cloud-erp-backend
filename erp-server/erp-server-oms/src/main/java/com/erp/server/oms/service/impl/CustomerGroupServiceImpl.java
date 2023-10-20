@@ -67,6 +67,8 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
             throw new ServiceException(ApiError.ERROR_92002);
         }
         List<CustomerGroupEntity> batchGroupList = BeanMapper.copyList(groupList, CustomerGroupEntity.class);
+
+        List<CustomerGroupEntity> removeList = dbList.stream().filter(obj -> deleteIdList.contains(obj.getId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
         }
@@ -77,7 +79,8 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
         boolean flag = this.saveOrUpdateBatch(batchGroupList);
         //审核通过发送金蝶
         batchGroupList.forEach(obj -> syncKingdeeCustomerGroupService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
-
+        //删除
+        removeList.forEach(obj -> syncKingdeeCustomerGroupService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_DELETE.getCode()));
         return flag;
 
     }
