@@ -300,12 +300,12 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
                             JSONObject detailJson = detailList.get(i);
                             SoDetailEntity soDetail = soDetailList.get(i);
                             String soDetailId = soDetail.getId();
-                            String KingdeeDetailId = String.valueOf(detailJson.getOrDefault("FEntryID", ""));
+                        String KingdeeDetailId = String.valueOf(detailJson.getOrDefault("FEntryID", ""));
                             SoChangeDetailEntity soChangeDetail = details.stream().filter(d -> d.getSoDetailId().equals(soDetailId)).
                                     findFirst().orElse(null);
                             if (soChangeDetail != null) {
-                                soChangeDetail.setKingdeeDetailId(KingdeeDetailId);
-                                updateList.add(soChangeDetail);
+                        soChangeDetail.setKingdeeDetailId(KingdeeDetailId);
+                        updateList.add(soChangeDetail);
                             }
                         }
                     }
