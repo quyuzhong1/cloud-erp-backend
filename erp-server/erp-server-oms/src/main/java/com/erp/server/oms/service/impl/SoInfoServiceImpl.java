@@ -74,6 +74,7 @@ import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -279,7 +280,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 dto.getDetailList().stream().forEach(detail -> detail.setCurrency(dto.getCurrency()));
             }
             //添加明细
-            soDetailService.addSoDetail(id, dto.getDetailList());
+            soDetailService.addSoDetail(id, dto.getIsTax(), dto.getDetailList());
 
             // 保存附件
             TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
@@ -885,7 +886,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 dto.getDetailList().stream().forEach(detail -> detail.setCurrency(dto.getCurrency()));
             }
             //添加明细
-            soDetailService.addSoDetail(id, dto.getDetailList());
+            soDetailService.addSoDetail(id, dto.getIsTax(), dto.getDetailList());
 
             // 保存附件
             TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
@@ -994,7 +995,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 dto.getDetailList().stream().forEach(detail -> detail.setCurrency(dto.getCurrency()));
             }
             //修改 订单详情
-            soDetailService.updateSoDetail(id, dto.getDetailList());
+            soDetailService.updateSoDetail(id, dto.getIsTax(), dto.getDetailList());
             return id;
         }
         return "";
@@ -2336,36 +2337,27 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return Boolean.TRUE;
     }
 
-    @Transactional
-    @Override
-    public Boolean temporaryUpdate() {
-        List<SoDetailEntity> list = soDetailService.list();
-        for (SoDetailEntity soDetailEntity : list) {
-            SkuCostProfitDTO.SkuCostProfitParam skuCostProfitParam = new SkuCostProfitDTO.SkuCostProfitParam();
-            skuCostProfitParam.setSaleAmount(soDetailEntity.getAmount());
-            skuCostProfitParam.setQty(soDetailEntity.getQty());
-            skuCostProfitParam.setTaxRate(soDetailEntity.getTaxRate());
-            skuCostProfitParam.setSkuId(soDetailEntity.getSkuId());
-            skuCostProfitParam.setCurrency(soDetailEntity.getCurrency());
 
-            SoInfoEntity soInfoEntity = getById(soDetailEntity.getMainId());
-            skuCostProfitParam.setBillDate(soInfoEntity.getBillDate());
-            SkuCostProfitDTO.SkuCostProfitResult skuCostProfit = this.getSkuCostProfitt(skuCostProfitParam);
-            //税率
-            BigDecimal taxRate = soDetailEntity.getTaxRate();
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-            //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(soDetailEntity.getPrice(), multiplyTax);
-            BigDecimal taxAmount = MathUtil.multiply(taxPrice, soDetailEntity.getQty());
-            soDetailService.lambdaUpdate()
-                    .set(SoDetailEntity::getPurchasePrice, skuCostProfit.getPurchasePrice())
-                    .set(SoDetailEntity::getAmountLocalCurrency, skuCostProfit.getSaleProfitRate() == BigDecimal.ZERO ? soDetailEntity.getAmount() : soDetailEntity.getAmount().multiply(skuCostProfit.getExchangeRate()))
-                    .set(SoDetailEntity::getAllAmountLocalCurrency, skuCostProfit.getSaleProfitRate() == BigDecimal.ZERO ? taxAmount : taxAmount.multiply(skuCostProfit.getExchangeRate()))
-                    .eq(SoDetailEntity::getId, soDetailEntity.getId()).update();
+    @Override
+    public List<String> temporaryUpdate() {
+        List<SoInfoEntity> soList = this.list();
+        List<String> errorList = Lists.newArrayList();
+        for (SoInfoEntity so : soList) {
+            try {
+                String soId = so.getId();
+                Boolean isTax = so.getIsTax();
+                //总折扣额
+                BigDecimal discountAmount = so.getDiscountAmount();
+                List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(soId);
+                // 金额折扣处理
+                SoUtils.handleDetailAmount(isTax, discountAmount, soDetailList);
+                soDetailService.updateBatchById(soDetailList);
+            } catch (Exception e) {
+                errorList.add(so.getId());
+            }
         }
-        return Boolean.TRUE;
+
+        return errorList;
     }
 
     @Override
@@ -2415,8 +2407,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
         }
         List<SoDetailEntity> soDetailList = BeanMapper.copyList(detailList, SoDetailEntity.class);
+        //是否含税
+        long count = soDetailList.stream().filter(s -> Objects.isNull(s.getTaxRate()) || (Objects.nonNull(s.getTaxRate()) &&
+                s.getTaxRate().compareTo(BigDecimal.ZERO) == 0)).count();
+
         // 金额折扣处理
-        SoUtils.handleDetailAmount(calCostProfitDTO.getDiscountAmount(), soDetailList);
+        SoUtils.handleDetailAmount(count > 0, calCostProfitDTO.getDiscountAmount(), soDetailList);
         for (int i = 0; i < soDetailList.size(); i++) {
             SoDetailEntity item = soDetailList.get(i);
 

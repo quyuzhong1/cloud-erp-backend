@@ -12,9 +12,11 @@ import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 销售订单工具类
@@ -45,13 +47,10 @@ public class SoUtils {
             costParam.setTaxRate(BigDecimal.ZERO);
         }
 
-        // 不含税销售额
-        // BigDecimal noTaxAmount = costParam.getSaleAmount().divide(BigDecimal.ONE.add(costParam.getTaxRate().divide(new BigDecimal("100"))), 4, BigDecimal.ROUND_HALF_UP);
-        // 销售毛利
-        // skuCostProfitResult.setSaleProfit(noTaxAmount.subtract(skuCostProfitResult.getSaleCost()).setScale(4, BigDecimal.ROUND_HALF_UP));
-        // 销售毛利
+        // 销售毛利=销售单价*数量
         BigDecimal saleAmount = costParam.getSaleAmount();
         BigDecimal saleCost = skuCostProfitResult.getSaleCost();
+
         BigDecimal saleProfit = saleAmount.subtract(saleCost).setScale(4, BigDecimal.ROUND_HALF_UP);
         skuCostProfitResult.setSaleProfit(saleProfit);
         // 销售毛利率
@@ -66,7 +65,7 @@ public class SoUtils {
      *
      * @param item
      */
-    public static void updateSoDetailCost(SoDetailEntity item, BigDecimal purchasePrice, BigDecimal saleAmount) {
+    public static void updateSoDetailCost(SoDetailEntity item, BigDecimal purchasePrice) {
         SkuCostProfitDTO.SkuCostProfitResult skuCostProfitResult = new SkuCostProfitDTO.SkuCostProfitResult();
         skuCostProfitResult.setSkuId(item.getSkuId());
         skuCostProfitResult.setPurchasePrice(BigDecimal.ZERO);
@@ -76,7 +75,9 @@ public class SoUtils {
 
         SkuCostProfitDTO.SkuCostProfitParam costParam = new SkuCostProfitDTO.SkuCostProfitParam();
         costParam.setSkuId(item.getSkuId());
-        // 转换币制后的金额
+        //该值应该为数量*单价*汇率
+        BigDecimal amount = MathUtil.multiply(item.getPrice(), item.getQty());
+        BigDecimal saleAmount = MathUtil.multiply(amount, item.getExchangeRate());
         costParam.setSaleAmount(saleAmount);
         costParam.setQty(item.getQty());
         costParam.setTaxRate(item.getTaxRate());
@@ -95,8 +96,9 @@ public class SoUtils {
      *
      * @param discountAmount
      * @param saveOrUpdateList
+     * @param isTax            是否含税
      */
-    public static void handleDetailAmount(BigDecimal discountAmount, List<SoDetailEntity> saveOrUpdateList) {
+    public static void handleDetailAmount(Boolean isTax, BigDecimal discountAmount, List<SoDetailEntity> saveOrUpdateList) {
         // 折扣总额
         discountAmount = Objects.nonNull(discountAmount) ? discountAmount : BigDecimal.ZERO;
         // 总的价税合计（折前）
@@ -170,46 +172,74 @@ public class SoUtils {
 
             //含税金额（折扣前）
             BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
-            item.setTaxAmountBefore(taxAmount);
+            BigDecimal taxAmountBefore = MathUtil.multiply(taxPrice, qty);
+            item.setTaxAmountBefore(taxAmountBefore);
             item.setAmount(amount);
 
-            // 折扣比例
-            BigDecimal taxAmountRate;
+            //折扣额=折扣总额*含税金额（折扣前）/总的价税合计（折前）
             BigDecimal detailDiscountAmount = BigDecimal.ZERO;
             if (Objects.nonNull(discountAmount) && totalTaxAmountBefore.compareTo(BigDecimal.ZERO) == 1) {
-                taxAmountRate = taxAmount.divide(totalTaxAmountBefore, 10, BigDecimal.ROUND_HALF_UP);
-                detailDiscountAmount = discountAmount.multiply(taxAmountRate).setScale(2, BigDecimal.ROUND_DOWN);
-                log.warn("销售订单明细第【{}】条数据，价税合计（折扣前）比例【{}】，折扣额【{}】", (i + 1), taxAmountRate, detailDiscountAmount);
+                BigDecimal discountFlag = MathUtil.multiply(discountAmount, taxAmount);
+                detailDiscountAmount = MathUtil.divide(discountFlag, totalTaxAmountBefore, 2, BigDecimal.ROUND_DOWN);
+                log.warn("销售订单明细第【{}】条数据，价税合计（折扣前）比例【{}】，折扣额【{}】", (i + 1), detailDiscountAmount);
             }
-            totalDiscountAmount = totalDiscountAmount.add(detailDiscountAmount).setScale(2, BigDecimal.ROUND_DOWN);
+            //折扣总额
+            totalDiscountAmount = MathUtil.add(totalDiscountAmount, detailDiscountAmount);
             // 最后一行非赠品，判断是否明细折扣额汇总是否等于总的折扣额
             if (i == lastNoGiftIndex) {
                 log.warn("销售订单明细汇总折扣额【{}】，总折扣额【{}】", totalDiscountAmount, discountAmount);
+                //折扣总额大于 折扣相加的和
                 if (discountAmount.compareTo(totalDiscountAmount) == 1) {
-                    BigDecimal diff = discountAmount.subtract(totalDiscountAmount).setScale(2, BigDecimal.ROUND_DOWN);
-                    detailDiscountAmount = detailDiscountAmount.add(diff).setScale(2, BigDecimal.ROUND_DOWN);
+                    BigDecimal diff = MathUtil.subtract(discountAmount, totalDiscountAmount);
+                    detailDiscountAmount = MathUtil.add(detailDiscountAmount, diff);
                 }
             }
             item.setDiscountAmount(detailDiscountAmount);
-            // 价税合计（折扣后）
-            taxAmount = taxAmount.subtract(detailDiscountAmount).setScale(4, BigDecimal.ROUND_HALF_UP);
+            // 价税合计（折扣后） 含税单价*数量-折扣额
+            taxAmount = MathUtil.subtract(taxAmount, detailDiscountAmount);
             item.setTaxAmount(taxAmount);
-            // 销售金额（折扣后）
-            amount = amount.subtract(detailDiscountAmount).setScale(4, BigDecimal.ROUND_HALF_UP);
+            //税额
+            BigDecimal tax = BigDecimal.ZERO;
+            //含税 不含税就为0
+            if (isTax) {
+                tax = getIncludeTax(taxAmountBefore, detailDiscountAmount, taxRate);
+            }
+            item.setTax(tax);
+            //减的值
+            BigDecimal subNumber = MathUtil.add(tax, detailDiscountAmount);
+            // 销售金额（折扣后）=价税合计-折扣额-税额 ps:不含税的时候 含税金额=价税合计
+            amount = MathUtil.subtract(taxAmountBefore, subNumber);
             item.setAmount(amount);
             // 折扣金额不可大于价税合计（折扣前）
             if (Objects.nonNull(detailDiscountAmount) && detailDiscountAmount.compareTo(item.getTaxAmountBefore()) == 1) {
                 log.warn("销售订单第【{}】行明细价税合计（折扣前）【{}】，折扣额【{}】", (i + 1), item.getTaxAmountBefore(), detailDiscountAmount);
-                // throw new ServiceException(StrUtil.format("销售订单明细第{}行折扣金额【{}】不可大于价税合计（折前））【{}】", ( i + 1), detailDiscountAmount, item.getTaxAmountBefore()));
-                // throw new ServiceException("销售订单折扣金额不可大于价税合计（折前））");
             }
         }
         // 折扣金额不可大于价税合计（折扣前）
         if (Objects.nonNull(discountAmount) && discountAmount.compareTo(totalTaxAmountBefore) == 1) {
             log.warn("销售订单明细汇总价税合计（折扣前）【{}】，总折扣额【{}】", totalTaxAmountBefore, discountAmount);
             throw new ServiceException("折扣金额不可大于价税合计（折前）");
-            // throw new ServiceException(StrUtil.format("折扣金额【{}】不可大于价税合计（折前）【{}】", discountAmount, totalTaxAmountBefore));
         }
+    }
+
+
+    /**
+     * 获取到含税 的税额 =含税金额[含税单价*数量]-折扣额/100+税率） *税率
+     *
+     * @param taxAmount            这个就是含税金额 含税单价*数量
+     * @param detailDiscountAmount 这个是折扣额
+     * @param taxRate              这个是税率 12% 就是12
+     * @return java.math.BigDecimal
+     * @author yl
+     * @date 2023-10-11 14:25
+     */
+    public static BigDecimal getIncludeTax(BigDecimal taxAmount, BigDecimal detailDiscountAmount, BigDecimal taxRate) {
+        BigDecimal diff = MathUtil.subtract(taxAmount, detailDiscountAmount);
+        //除数
+        BigDecimal divideNumber = MathUtil.add(taxRate, MathUtil.BigDecimal_100);
+        //除的结果
+        BigDecimal divideResult = MathUtil.divide(diff, divideNumber, 8, BigDecimal.ROUND_HALF_UP);
+        return MathUtil.multiply(divideResult, taxRate);
     }
 
 
@@ -298,7 +328,7 @@ public class SoUtils {
         convertData.put("createTime", LocalDateTimeUtil.format(item.getCreateTime(), "yyyy-MM-dd HH:mm:ss"));
         // 汇率
         if (Objects.nonNull(item.getExchangeRate())) {
-            if(item.getExchangeRate().compareTo(BigDecimal.ZERO) == 0) {
+            if (item.getExchangeRate().compareTo(BigDecimal.ZERO) == 0) {
                 convertData.put("exchangeRate", "");
             } else {
                 convertData.put("exchangeRate", " " + StrUtils.null2EmptyWithTrim(item.getExchangeRate()));
@@ -324,11 +354,12 @@ public class SoUtils {
 
     /**
      * 导出隐藏主单列
+     *
      * @param dataList
      */
     public static void hideForExport(List<LinkedHashMap<String, Object>> dataList) {
         Set<String> mainIds = Sets.newHashSet();
-        for(LinkedHashMap<String, Object> data : dataList) {
+        for (LinkedHashMap<String, Object> data : dataList) {
             String id = StrUtils.null2EmptyWithTrim(data.get("id"));
             if (mainIds.contains(id)) {
                 data.put("bankServiceFee", "");
@@ -341,4 +372,6 @@ public class SoUtils {
             mainIds.add(id);
         }
     }
+
+
 }

@@ -48,7 +48,7 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
      */
     @TableField("platform_sku_no")
     private String platformSkuNo;
- /**
+    /**
      * 销售数量
      */
     @TableField("qty")
@@ -75,16 +75,17 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     private BigDecimal taxRate;
 
     /**
-     * 销售金额
+     * 销售金额 （折后）
+     * 销售金额= 含税单价*数量-折扣-税额
      */
     @TableField("amount")
     private BigDecimal amount;
 
-   /**
-    * 金额含税（折扣后）
-    */
-   @TableField("tax_amount")
-   private BigDecimal taxAmount;
+    /**
+     * 金额含税（折扣后）
+     */
+    @TableField("tax_amount")
+    private BigDecimal taxAmount;
 
     /**
      * 币种
@@ -172,6 +173,14 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
      */
     @TableField(value = "discount_amount")
     private BigDecimal discountAmount;
+
+    /**
+     * 税额
+     *  不含税 税额=（单价*数量-折扣额）* (税率/100) ps (税率/100) 为1 因为税率为100
+     *  含税 税额=（（含税单价*数量-折扣额）/(100+税率)）*税率
+     */
+    @TableField(value = "tax")
+    private BigDecimal tax;
 
     /**
      * 含税的销售金额（折扣前）
