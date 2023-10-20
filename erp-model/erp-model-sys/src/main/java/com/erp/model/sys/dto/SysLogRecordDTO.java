@@ -159,7 +159,7 @@ public class SysLogRecordDTO implements Serializable {
         /**
          * 创建时间列表
          */
-        private List<LocalDate> createTimeList;
+        private List<LocalDateTime> createTimeList;
 
         /**
          * 创建人id列表
