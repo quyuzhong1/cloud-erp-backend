@@ -122,6 +122,7 @@ public class StocktakingProfitLossDetailDTO implements Serializable {
 
         /**
          * 仓库id
+         *  http://172.16.100.11:3002/project/92/interface/api/17485
          */
         @NotBlank(message = "仓库不能为空")
         private String warehouseId;
@@ -129,6 +130,7 @@ public class StocktakingProfitLossDetailDTO implements Serializable {
 
         /**
          * 库位
+         * http://172.16.100.11:3002/project/92/interface/api/13858
          */
         private String warehouseLocation;
 

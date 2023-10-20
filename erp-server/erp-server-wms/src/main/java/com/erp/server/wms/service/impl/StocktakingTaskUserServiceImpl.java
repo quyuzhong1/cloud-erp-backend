@@ -144,6 +144,11 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
         return Boolean.FALSE;
     }
 
+    @Override
+    public void removeBySourceId(String sourceId) {
+        this.removeBySourceIdList(Arrays.asList(sourceId));
+    }
+
     public void removeBySourceIdList(List<String> sourceIdList) {
         if (CollectionUtils.isNotEmpty(sourceIdList)) {
             LambdaQueryWrapper<StocktakingTaskUserEntity> queryWrapper = new LambdaQueryWrapper<>();

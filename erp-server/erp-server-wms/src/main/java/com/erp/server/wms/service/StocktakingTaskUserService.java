@@ -47,4 +47,13 @@ public interface StocktakingTaskUserService extends SuperService<StocktakingTask
      * @return java.lang.Boolean
      */
     Boolean addTaskUser(String sourceId,String sourceType,List<String> stocktakingUserIdList);
+
+    /**
+     * 删除盘点人根据来源id
+     * @author yl
+     * @date 2023-10-20 14:25
+     * @param sourceId
+     * @return void
+     */
+    void removeBySourceId(String sourceId);
 }

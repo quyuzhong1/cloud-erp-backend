@@ -83,8 +83,8 @@ public class StocktakingProfitLossController extends BaseController {
             keyIdName = "id"
     )
     public ApiResult add(@RequestBody StocktakingProfitLossDTO.UpdateDTO dto) {
-
-        return success();
+        String id = stocktakingProfitLossService.update(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
 
@@ -181,7 +181,7 @@ public class StocktakingProfitLossController extends BaseController {
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated StocktakingProfitLossDTO.AddDTO dto) {
         stocktakingProfitLossService.addAndSubmit(dto);
-        return  success() ;
+        return success();
     }
 
     /**
@@ -192,19 +192,18 @@ public class StocktakingProfitLossController extends BaseController {
      */
     @PostMapping("/updateAndSubmit")
     public ApiResult updateAndSubmit(@RequestBody @Validated StocktakingProfitLossDTO.UpdateDTO dto) {
-
-        return  success() ;
+        stocktakingProfitLossService.updateAndSubmit(dto);
+        return success();
     }
 
 
-
     @PostMapping("/approve")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingProfitLoss:approve",
-//            serviceClass = StocktakingProfitLossService.class,
-//            keyIdName = "ids"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingProfitLoss:approve",
+            serviceClass = StocktakingProfitLossService.class,
+            keyIdName = "ids"
+    )
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
@@ -236,12 +235,12 @@ public class StocktakingProfitLossController extends BaseController {
      * @return
      */
     @PostMapping("/cancelProcess")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingProfitLoss:cancelProcess",
-//            serviceClass = StocktakingProfitLossService.class,
-//            keyIdName = "ids"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingProfitLoss:cancelProcess",
+            serviceClass = StocktakingProfitLossService.class,
+            keyIdName = "ids"
+    )
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
@@ -273,9 +272,31 @@ public class StocktakingProfitLossController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:stocktakingProfitLoss:delete",
+            serviceClass = StocktakingProfitLossService.class,
+            keyIdName = "ids"
+    )
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = stocktakingProfitLossService.delete(id);
+            } catch (Exception e) {
+                log.error("盘盈盘亏单删除失败===>{}", e);
+                StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(id);
+                if(Objects.isNull(entity)){
+                    deleteResult = BatchResultDTO.fail(id, id, "盘盈盘亏单不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
 
-        return success(resultDTOS) ;
+        return success(resultDTOS);
     }
 }

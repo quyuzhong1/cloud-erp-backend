@@ -65,6 +65,7 @@ public class StocktakingProfitLossDTO implements Serializable {
 
         /**
          * 单据类型
+         * 来源 http://172.16.100.11:3002/project/92/interface/api/7186  key=stocktakingProfitLossType
          */
         @NotNull(message = "单据类型不能为空")
         private BillTypeEnum billType;
@@ -130,7 +131,7 @@ public class StocktakingProfitLossDTO implements Serializable {
          * 详情
          */
         @Valid
-        private List<StocktakingProfitLossDetailDTO.AddDTO> detailList;
+        private List<StocktakingProfitLossDetailDTO.UpdateDTO> detailList;
 
     }
 

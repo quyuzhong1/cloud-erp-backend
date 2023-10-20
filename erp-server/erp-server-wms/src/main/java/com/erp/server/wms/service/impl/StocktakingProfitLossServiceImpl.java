@@ -53,6 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -528,6 +529,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         handleDb(dto.getDetailList(), entity);
         String id = IdWorker.getIdStr();
         entity.setId(id);
+        if(Objects.isNull(entity.getBillDate())){
+            entity.setBillDate(LocalDate.now());
+        }
         BillTypeEnum billType = dto.getBillType();
         BusinessNoTypeEnum businessNoType = BusinessNoTypeEnum.STOCKTAKING_PROFIT;
         //盘亏单
@@ -558,6 +562,38 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         }
         return "";
     }
+
+    /**
+     * 修改盘盈盘亏单
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String update(StocktakingProfitLossDTO.UpdateDTO dto) {
+        StocktakingProfitLossEntity old = super.getById(dto.getId());
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "盘盈盘亏单"));
+        // 待提交和审核不通过允许修改
+        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_1029);
+        }
+        StocktakingProfitLossEntity entity = new StocktakingProfitLossEntity();
+        BeanMapper.copy(dto, entity);
+        if(Objects.isNull(entity.getBillDate())){
+            entity.setBillDate(LocalDate.now());
+        }
+        List<StocktakingProfitLossDetailDTO.UpdateDTO> detailList = dto.getDetailList();
+        handleUpdateDb(detailList, entity);
+        Boolean updateResult = this.updateById(entity);
+        if (updateResult) {
+            stocktakingTaskUserService.addTaskUser(entity.getId(), SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), dto.getStocktakingUserIdList());
+            stocktakingProfitLossDetailService.updateInfo(entity.getId(), detailList);
+            return dto.getId();
+        }
+        return "";
+    }
+
 
     /**
      * 检查数据
@@ -643,7 +679,91 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             item.setDiffQty(diffQty);
         }
 
+    }
 
+    /**
+     * 处理修改的数据
+     *
+     * @param detailList
+     * @param entity
+     * @return void
+     * @author yl
+     * @date 2023-10-20 12:03
+     */
+    public void handleUpdateDb(List<StocktakingProfitLossDetailDTO.UpdateDTO> detailList, StocktakingProfitLossEntity entity) {
+        //库存组织id
+        String inventoryOrgId = entity.getInventoryOrgId();
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inventoryOrgId));
+        if (CollectionUtils.isEmpty(orgList)) {
+            throw new ServiceException(ApiError.ERROR_INVENTORY_ORG_NOT_FOUND);
+        }
+        BillTypeEnum billType = entity.getBillType();
+        //是否盘盈单
+        Boolean isProfit = BillTypeEnum.PROFIT.equals(billType);
+        entity.setInventoryOrgName(orgList.get(0).getName());
+        //sku id
+        List<String> skuIdList = detailList.stream().map(StocktakingProfitLossDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+        //仓库集合
+        List<String> warehouseIdList = detailList.stream().map(StocktakingProfitLossDetailDTO.UpdateDTO::getWarehouseId).collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
+        for (WarehouseEntity item : warehouseList) {
+            String orgId = item.getOrgId();
+            if (!inventoryOrgId.equals(orgId)) {
+                throw new ServiceException(ApiError.ERROR_ORG_WAREHOUSE_MISMATCHING);
+            }
+
+        }
+
+        //库位集合
+        List<String> warehouseLocationList = detailList.stream().map(StocktakingProfitLossDetailDTO.UpdateDTO::getWarehouseLocation).collect(Collectors.toList());
+
+        //组织
+        List<String> orgIdList = Arrays.asList(inventoryOrgId);
+        InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
+        param.setOrgIdList(orgIdList);
+        param.setSkuIdList(skuIdList);
+        param.setWarehouseIdList(warehouseIdList);
+        param.setWarehouseLocationList(warehouseLocationList);
+        //库存信息
+        List<InventoryEntity> inventoryInfoList = inventoryService.listInventoryByParam(param);
+        //可用库存
+        String usable = InventoryStatusEnum.USABLE.getCode();
+        String frozen = InventoryStatusEnum.FROZEN.getCode();
+        for (StocktakingProfitLossDetailDTO.UpdateDTO item : detailList) {
+            String skuId = item.getSkuId();
+            String warehouseId = item.getWarehouseId();
+            String warehouseLocation = item.getWarehouseLocation();
+            List<InventoryEntity> inventoryList = inventoryInfoList.stream().filter(i -> i.getSkuId().equals(skuId) &&
+                    i.getWarehouseId().equals(warehouseId) && i.getWarehouseLocation().equals(warehouseLocation)).collect(Collectors.toList());
+
+            Integer qty = item.getQty();
+            //可用数库存
+            Integer usableQty = inventoryList.stream().filter(i -> usable.equals(i.getDictInventoryStatus())).
+                    map(InventoryEntity::getQty).findFirst().orElse(0);
+
+            //冻结库存
+            Integer frozenQty = inventoryList.stream().filter(i -> frozen.equals(i.getDictInventoryStatus())).
+                    map(InventoryEntity::getQty).findFirst().orElse(0);
+            Integer diffQty = qty - usableQty - frozenQty;
+            if (diffQty.equals(0)) {
+                throw new ServiceException(ApiError.ERROR_DIFF_QTY_NOT_ZERO);
+            }
+            //是盘盈
+            if (isProfit) {
+                if (diffQty < 0) {
+                    throw new ServiceException(ApiError.ERROR_PROFIT_DIFF_GREATER_ZERO);
+                }
+            } else {
+                //盘亏单
+                if (diffQty > 0) {
+                    throw new ServiceException(ApiError.ERROR_LOSS_DIFF_LESS_ZERO);
+                }
+            }
+
+            item.setFrozenQty(frozenQty);
+            item.setUsableQty(usableQty);
+            item.setDiffQty(diffQty);
+        }
     }
 
     /**
@@ -724,6 +844,39 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         return this.lambdaQuery().eq(StocktakingProfitLossEntity::getSourceId, sourceId).
                 eq(StocktakingProfitLossEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING).
                 list();
+
+    }
+
+    /**
+     * 修改并提交
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2023-10-20 14:11
+     */
+    @Override
+    public void updateAndSubmit(StocktakingProfitLossDTO.UpdateDTO dto) {
+        // 修改
+        this.update(dto);
+        // 提交
+        this.submit(dto.getId());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO delete(String id) {
+        StocktakingProfitLossEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到盘盈盘亏单数据"));
+        // 只有待提交数据允许删除
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98032);
+        }
+        this.removeById(id);
+        // 删除明细数据
+        stocktakingProfitLossDetailService.removeByMainId(id);
+        // 删除盘点人
+        stocktakingTaskUserService.removeBySourceId(id);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
 
     }
 
