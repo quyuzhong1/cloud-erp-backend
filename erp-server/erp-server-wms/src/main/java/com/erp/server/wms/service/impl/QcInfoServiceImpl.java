@@ -553,7 +553,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         BeanMapper.copy(dto, bill);
 
         //处理相关数据
-        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceCode(), dto.getSourceId());
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
         if (StringUtils.isBlank(code)) {
             code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
             bill.setCode(code);
