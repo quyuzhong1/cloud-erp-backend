@@ -4,6 +4,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 
@@ -72,20 +73,12 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      */
     Boolean updateShopInfoById(ShopInfoEntity shopInfoEntity);
 
-
-
-
     /**
      * 店铺授权
-     *
-     * @param code
-     * @param hmac
-     * @param host
-     * @param shop
-     * @param timestamp
+     * @param dto
      * @return
      */
-    Boolean shopAuthorize(String code, String hmac, String host, String shop, String timestamp);
+    Boolean shopAuthorize(ShopAuthorizeDTO dto);
 
     /**
      * 取消授权
@@ -96,7 +89,15 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      */
     Boolean cancelAuthorize(String id);
 
-
+    /**
+     * 根据域名来查询
+     *
+     * @param shopDomain
+     * @return com.erp.model.oms.entity.ShopInfoEntity
+     * @author yl
+     * @date 2023-08-29 18:08
+     */
+    ShopInfoEntity getByDomain(String shopDomain);
 
     /**
      * 店铺账号下拉

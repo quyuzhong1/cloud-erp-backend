@@ -10,10 +10,12 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -252,13 +254,8 @@ public class ShopInfoController extends BaseController {
      * @return
      */
     @GetMapping("/shopAuthorize")
-    public ApiResult shopAuthorize(@RequestParam("code") String code,
-                                   @RequestParam("hmac") String hmac,
-                                   @RequestParam("host") String host,
-                                   @RequestParam("shop") String shop,
-                                   @RequestParam("timestamp") String timestamp
-    ) {
-        Boolean result = shopInfoService.shopAuthorize(code, hmac, host, shop, timestamp);
+    public ApiResult shopAuthorize(@RequestBody @Validated ShopAuthorizeDTO dto) {
+        Boolean result = shopInfoService.shopAuthorize(dto);
         return result ? success() : failure();
     }
 
