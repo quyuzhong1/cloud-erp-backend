@@ -973,7 +973,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         String code = bill.getCode();
         BeanMapper.copy(dto, bill);
         //处理相关数据
-        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceCode(), dto.getSourceId());
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
         bill.setId(id);
         bill.setQcFinishTime(LocalDateTime.now());
         QcBillStatusEnum exemption = QcBillStatusEnum.getByCode(QcBillStatusEnum.EXEMPTION.getCode());
