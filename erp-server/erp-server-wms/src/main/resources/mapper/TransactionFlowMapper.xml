@@ -76,7 +76,7 @@
         WHERE
             t.is_deleted = false
         <!--暂时不显示盘盈盘亏的单据-->
-        and t.dict_biz_type in ('00','02','03','04','05','07','08','09','11','12','13','14','17','18','19','20','23','24','26','15','16')
+        and t.dict_biz_type in ('00','02','03','04','05','07','08','09','11','12','13','14','17','18','19','20','23','24','26','15','16','27','29','30')
         <if test="params.skuNoList != null and params.skuNoList.size != ''">
             and t.sku_no in
             <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
@@ -162,7 +162,7 @@
         WHERE
         t.is_deleted = false
         <!--暂时不显示盘盈盘亏的单据-->
-        and t.dict_biz_type in ('02','03','04','05','07','08','09','11','12','17','18','19','20','23','24','26','15','16')
+        and t.dict_biz_type in ('02','03','04','05','07','08','09','11','12','17','18','19','20','23','24','26','15','16','27','29','30')
         <if test="params.ids != null and params.ids.size != ''">
             and t.id in
             <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
@@ -244,7 +244,7 @@
         sum(case when tf.dict_biz_type in ('16') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
         return_materiel_qty, -- 退料入库
 
-        sum(case when tf.dict_biz_type in('04','05') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
+        sum(case when tf.dict_biz_type in('04','05','27','29','30') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
         purchase_return_qty, -- 采购退货出库
         sum(case when tf.dict_biz_type in('07') and tf.dict_inventory_status = 'usable' and ((tf.operation_mode in ('approve', 'amend') and tf.qty <![CDATA[<]]> 0) or (tf.operation_mode = 'unApprove' and tf.qty > 0) )  then tf.qty -- 直接调拨单（新增）当前仓可用减少；
         when tf.dict_biz_type in('26','08') and tf.dict_inventory_status = 'frozen' then tf.qty else 0 end) as -- 直接调拨单（调拨申请单下推），分布式调拨调出当前仓冻结减少
@@ -317,7 +317,7 @@
         sum(case when tf.dict_biz_type in ('16') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
         return_materiel_qty, -- 退料入库
 
-        sum(case when tf.dict_biz_type in('04','05') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
+        sum(case when tf.dict_biz_type in('04','05','27','29','30') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
         purchase_return_qty, -- 采购退货出库
         sum(case when tf.dict_biz_type in('07') and tf.dict_inventory_status = 'usable' and ((tf.operation_mode in ('approve', 'amend') and tf.qty <![CDATA[<]]> 0) or (tf.operation_mode = 'unApprove' and tf.qty > 0) )  then tf.qty
         when tf.dict_biz_type in('26','08') and tf.dict_inventory_status = 'frozen' and ((tf.operation_mode in ('approve', 'amend') and tf.qty <![CDATA[<]]> 0) or (tf.operation_mode = 'unApprove' and tf.qty > 0) )  then tf.qty else 0 end) as
