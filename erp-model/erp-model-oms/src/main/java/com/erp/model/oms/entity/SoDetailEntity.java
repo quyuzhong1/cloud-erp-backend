@@ -42,13 +42,13 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField("sku_no")
     private String skuNo;
 
-
     /**
      * 平台sku no
      */
     @TableField("platform_sku_no")
     private String platformSkuNo;
- /**
+
+    /**
      * 销售数量
      */
     @TableField("qty")
@@ -128,9 +128,6 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField("kingdee_detail_id")
     private String kingdeeDetailId;
 
-    @TableField(exist = false)
-    private String approveStatus;
-
     /**
      * 采购单价
      */
@@ -179,14 +176,21 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField(value = "tax_amount_before")
     private BigDecimal taxAmountBefore;
 
+    /**
+     * 汇率
+     */
+    @TableField(value = "exchange_rate")
+    private BigDecimal exchangeRate;
+
+
+    @TableField(exist = false)
+    private String approveStatus;
+
     @TableField(exist = false)
     private Integer index;
 
     @TableField(exist = false)
     private BigDecimal taxPrice;
-
-    @TableField(value = "exchange_rate")
-    private BigDecimal exchangeRate;
 
     public static final String MAIN_ID = "main_id";
 
