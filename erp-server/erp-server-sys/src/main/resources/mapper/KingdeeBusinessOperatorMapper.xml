@@ -17,7 +17,7 @@
         ON kup.user_id = kbo.erp_user_id
         AND kup.is_deleted = FALSE
         WHERE kbo.kingdee_type = #{params.type}
-        <if test="params.orgCode != null and params.orgCode != '' ">
+        <if test="orgCode != null and orgCode != '' ">
             AND kbo.kingdee_org_code = #{orgCode} AND kup.use_org_code = #{orgCode}
         </if>
     </select>
