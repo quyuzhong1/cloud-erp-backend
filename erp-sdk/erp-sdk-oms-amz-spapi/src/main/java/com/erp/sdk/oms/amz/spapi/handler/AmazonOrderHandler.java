@@ -1,6 +1,7 @@
 package com.erp.sdk.oms.amz.spapi.handler;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -107,7 +108,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
     }
 
     @Override
-    public PlatformOrderDTO downloadDetail(PlatformOrderDTO dto) {
+    public PlatformOrderDTO downloadDetail(PlatformOrderDTO dto, JSONObject extendObj) {
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
         if (null == shopInfoEntity){
             throw new ServiceException("未找到店铺详情:"+ dto.getShopId());

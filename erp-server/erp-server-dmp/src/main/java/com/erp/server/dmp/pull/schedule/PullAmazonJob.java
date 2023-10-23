@@ -2,7 +2,6 @@ package com.erp.server.dmp.pull.schedule;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
@@ -11,23 +10,19 @@ import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.core.utils.MapUtil;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.service.mq.MQProducerService;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.entity.DmpPullTaskEntity;
+import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonListingHandler;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonOrderHandler;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.thread.PlatformDataThread;
-import com.erp.server.dmp.service.DmpPullTaskService;
+import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
@@ -55,11 +50,13 @@ public class PullAmazonJob {
     private BusinessServiceImpl businessService;
 
     @Resource
+    private PlatformApiTaskService platformApiTaskService;
+
+    @Resource
     private AmazonOrderHandler amazonOrderHandler;
 
     @Resource
     private AmazonListingHandler amazonListingHandler;
-
 
 
     /**
@@ -102,7 +99,7 @@ public class PullAmazonJob {
         orderEntityList.forEach(dto -> {
             try {
                 // 下载和处理详情
-                PlatformOrderDTO newDto = amazonOrderHandler.downloadDetail(dto);
+                PlatformOrderDTO newDto = amazonOrderHandler.downloadDetail(dto, null);
                 String category = PlatformCategoryEnum.OMS.getCode();
                 String platform = PlatformDictEnum.AMAZON.getCode();
                 String business = BusinessTypeEnum.ORDER.getCode();
@@ -141,8 +138,14 @@ public class PullAmazonJob {
         }
         orderEntityList.forEach(dto -> {
             try {
+                PlatformApiTaskEntity taskEntity = platformApiTaskService.getById(dto.getDmpSyncTaskId());
+                if (null == taskEntity) {
+                    throw new ServiceException("未找到对应platform_api_task任务，id=" + dto.getDmpSyncTaskId());
+                }
+                JSONObject extendObj = new JSONObject();
+                extendObj.put("shopId", taskEntity.getShopId());
                 // 下载和处理详情
-                PlatformProductDTO newDto = amazonListingHandler.downloadDetail(dto);
+                PlatformProductDTO newDto = amazonListingHandler.downloadDetail(dto, extendObj);
                 String category = PlatformCategoryEnum.OMS.getCode();
                 String platform = PlatformDictEnum.AMAZON.getCode();
                 String business = BusinessTypeEnum.PRODUCT.getCode();

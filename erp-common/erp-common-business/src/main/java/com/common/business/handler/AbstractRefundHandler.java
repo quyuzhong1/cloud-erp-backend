@@ -1,9 +1,7 @@
 package com.common.business.handler;
 
-import com.common.business.dto.CleanBaseDTO;
-import com.common.business.dto.JobTaskDTO;
-import com.common.business.dto.PlatformDataDTO;
-import com.common.business.dto.UniqueDto;
+import com.alibaba.fastjson.JSONObject;
+import com.common.business.dto.*;
 
 import java.util.List;
 
@@ -44,7 +42,7 @@ public abstract class AbstractRefundHandler<T extends CleanBaseDTO,R extends Uni
     /**
      * 下载详情数据
      */
-    public R downloadDetail(R dto) {
+    public R downloadDetail(R dto, JSONObject extendObj) {
         return dto;
     }
 }

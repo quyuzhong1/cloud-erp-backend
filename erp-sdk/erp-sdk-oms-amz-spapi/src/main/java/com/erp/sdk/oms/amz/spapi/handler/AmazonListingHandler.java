@@ -1,6 +1,10 @@
 package com.erp.sdk.oms.amz.spapi.handler;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
@@ -9,19 +13,22 @@ import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.handler.AbstractOrderHandler;
 import com.common.business.handler.AbstractProductHandler;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.sdk.oms.amz.spapi.api.CatalogApi;
-import com.erp.sdk.oms.amz.spapi.api.CatalogV0Api;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.csv.ListingCsvReportEntity;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonIncludedDataEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
+import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
+import com.erp.sdk.oms.amz.spapi.model.catalogitems.ItemAttributes;
+import com.erp.sdk.oms.amz.spapi.model.catalogitems.ItemDimensions;
+import com.erp.sdk.oms.amz.spapi.model.catalogitems.ItemDimensionsByMarketplace;
+import com.erp.sdk.oms.amz.spapi.model.orders.OrderItemList;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import org.apache.commons.lang.StringUtils;
@@ -29,8 +36,10 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -102,13 +111,45 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
     }
 
     @Override
-    public PlatformProductDTO downloadDetail(PlatformProductDTO dto) {
+    public PlatformProductDTO downloadDetail(PlatformProductDTO dto, JSONObject extendObj) {
+        String shopId = extendObj.getString("shopId");
+        // 获取店铺信息
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
+        if (null == shopInfoEntity) {
+            throw new ServiceException("未找到店铺详情:" + shopId);
+        }
+        AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoEntity.getDictCountryCode());
+
         // 产品规格信息
         String productSpec = "";
         // 包装信息
         String packing = "";
-        // TODO
-
+        try {
+            // 查询商品详情
+            CatalogApi catalogApi = CatalogApi.initApi(marketPlaceEnum);
+            String asin = dto.getPlatformProductNo();
+            List<String> marketplaceIds = Collections.singletonList(marketPlaceEnum.getMarketplaceId());
+            List<String> includedData = AmazonIncludedDataEnum.getAllWithoutVendor();
+            Item response = catalogApi.getCatalogItem(asin, marketplaceIds, includedData, null);
+            ItemAttributes attributes = response.getAttributes();
+            if (null != attributes) {
+                Map<String, Object> tempMap = BeanUtil.beanToMap(attributes);
+                if (!tempMap.isEmpty()) {
+                    productSpec = tempMap.entrySet().stream()
+                            .map(e -> StrUtil.format("{}:{}", e.getKey(), e.getValue().toString()))
+                            .collect(Collectors.joining(","));
+                }
+            }
+            ItemDimensions dimensions = response.getDimensions();
+            if (null != dimensions) {
+                packing = dimensions.stream()
+                        .map(ItemDimensionsByMarketplace::combineStr)
+                        .filter(StringUtils::isNotBlank)
+                        .collect(Collectors.joining(","));
+            }
+        } catch (ApiException e) {
+            throw new ServiceException("[Amazon SP-APi] 下载listing失败" + e);
+        }
         // 产品规格信息
         dto.setProductSpec(productSpec);
         // 产品包装信息

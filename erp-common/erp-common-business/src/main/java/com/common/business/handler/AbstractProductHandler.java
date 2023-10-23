@@ -1,5 +1,6 @@
 package com.common.business.handler;
 
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.*;
 
 import java.util.List;
@@ -41,7 +42,7 @@ public abstract class AbstractProductHandler<T extends CleanBaseDTO,R extends Un
     /**
      * 下载详情数据
      */
-    public R downloadDetail(R dto) {
+    public R downloadDetail(R dto, JSONObject extendObj) {
         return dto;
     }
 
