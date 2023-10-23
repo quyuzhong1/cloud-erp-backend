@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -58,6 +59,24 @@ public class ShopAuthController extends BaseController {
         return success();
     }
 
+    /**
+     * 获取虾皮授权链接
+     *
+     * @return
+     */
+    @GetMapping("/getShopeeAuthUrl")
+    public ApiResult getShopeeAuthUrl(@SpringQueryMap String id) {
+        return success(shopAuthService.getShopeeCodeUrl(id));
+    }
 
-
+    /**
+     * 获取虾皮授权链接
+     *
+     * @return
+     */
+    @GetMapping("/getProductAll")
+    public ApiResult getProductAll() {
+        shopAuthService.getProductAll();
+        return success();
+    }
 }

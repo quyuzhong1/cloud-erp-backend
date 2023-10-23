@@ -10,12 +10,14 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.ShopAuthDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -114,12 +116,13 @@ public class ShopInfoController extends BaseController {
         List<ShopInfoEntity> list = shopInfoService.list();
         return success(list);
     }
-    
+
     /**
      * 获取已授权店铺
+     *
+     * @return ApiResult<List < ShopInfoEntity>>
      * @author Will
      * @date: 2023/10/18 10:00
-     * @return ApiResult<List<ShopInfoEntity>>
      */
     @PostMapping("/listAuth")
     public ApiResult<List<ShopInfoEntity>> listAuth(@RequestBody ShopDTO.PlatformDTO platformDTO) {
@@ -282,6 +285,18 @@ public class ShopInfoController extends BaseController {
     @PostMapping("/cancelAuthorize")
     public ApiResult cancelAuthorize(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = shopInfoService.cancelAuthorize(dto.getId());
+        return result ? success() : failure();
+    }
+
+    /**
+     * 获取虾皮授权回调
+     *
+     * @param dto
+     * @return
+     */
+    @GetMapping("/getShopeeReturn")
+    public ApiResult getShopeeReturn(@SpringQueryMap ShopAuthDTO.ReturnDTO dto) {
+        Boolean result = shopInfoService.getShopeeReturn(dto);
         return result ? success() : failure();
     }
 }
