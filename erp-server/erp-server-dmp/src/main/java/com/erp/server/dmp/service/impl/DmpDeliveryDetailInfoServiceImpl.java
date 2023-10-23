@@ -155,6 +155,7 @@ public class DmpDeliveryDetailInfoServiceImpl extends ServiceImpl<DmpDeliveryDet
     public DmpDeliveryDetailInfoEntity getByPlatformOrderId(String platformOrderId) {
         LambdaQueryWrapper<DmpDeliveryDetailInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpDeliveryDetailInfoEntity::getPlatformOrderId, platformOrderId);
+        lambdaQueryWrapper.last("LIMIT 1");
         return this.getOne(lambdaQueryWrapper);
     }
 
