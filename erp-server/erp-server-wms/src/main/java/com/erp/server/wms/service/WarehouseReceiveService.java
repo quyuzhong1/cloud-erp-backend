@@ -301,4 +301,12 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return java.lang.Boolean
      **/
     Boolean updateSyncKingdeeStatus(String id ,String syncKingdeeStatus,String syncKingdeeId, String syncOperate);
+
+    /**
+     *更改金蝶同步状态
+     * @param id
+     * @param syncKingdeeId
+     * @return java.lang.Boolean
+     **/
+    Boolean updateSyncKingdeeId(String id, String syncKingdeeId);
 }

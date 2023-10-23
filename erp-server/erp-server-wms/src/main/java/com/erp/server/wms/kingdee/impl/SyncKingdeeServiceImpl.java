@@ -53,6 +53,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private StocktakingProfitLossService stocktakingProfitLossService;
 
+    @Resource
+    private WarehouseReceiveService warehouseReceiveService;
+
 
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
@@ -116,6 +119,10 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //盘亏单
         if (ApiModuleTypeEnum.STOCKTAKING_LOSS.getCode().toString().equals(code)) {
             stocktakingProfitLossService.updateSyncKingdeeId(businessId,syncKingdeeId);
+        }
+        //采购收货单
+        if (ApiModuleTypeEnum.PO_RECEIVE.getCode().toString().equals(code)) {
+            warehouseReceiveService.updateSyncKingdeeId(businessId,syncKingdeeId);
         }
     }
 }
