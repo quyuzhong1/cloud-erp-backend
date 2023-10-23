@@ -160,6 +160,11 @@ public interface MongoTableNameContant {
     String THIRD_SYSTEM_AMAZON_PRODUCT = "third_system_Amazon_product";
 
     /**
+     * 亚马逊报表表
+     */
+    String THIRD_SYSTEM_AMAZON_REPORT = "third_system_Amazon_report";
+
+    /**
      * 根据任务 key 获取表名
      * @param key
      * @return

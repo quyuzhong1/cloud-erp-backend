@@ -249,8 +249,8 @@ public class ReportsApiTest {
         List<String> processingStatuses = null;
         List<String> marketplaceIds = null;
         Integer pageSize = null;
-        OffsetDateTime createdSince = null;
-        OffsetDateTime createdUntil = null;
+        String createdSince = null;
+        String createdUntil = null;
         String nextToken = null;
         ReportsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US, false);
         GetReportsResponse response = api.getReports(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);

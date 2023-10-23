@@ -16,6 +16,8 @@ package com.erp.sdk.oms.amz.spapi.api;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
 import com.erp.sdk.oms.amz.spapi.client.*;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
+import com.erp.sdk.oms.amz.spapi.model.orders.GetOrderItemsResponse;
+import com.erp.sdk.oms.amz.spapi.model.orders.OrderItemList;
 import com.erp.sdk.oms.amz.spapi.model.reports.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.google.gson.reflect.TypeToken;
@@ -23,7 +25,7 @@ import lombok.Getter;
 import okhttp3.Call;
 import okhttp3.Interceptor;
 import okhttp3.Response;
-import java.time.OffsetDateTime;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -1021,7 +1023,7 @@ public class ReportsApi {
      * @return Call to execute
      * @throws ApiException If fail to serialize the request body object
      */
-    public Call getReportsCall(List<String> reportTypes, List<String> processingStatuses, List<String> marketplaceIds, Integer pageSize, OffsetDateTime createdSince, OffsetDateTime createdUntil, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    public Call getReportsCall(List<String> reportTypes, List<String> processingStatuses, List<String> marketplaceIds, Integer pageSize, String createdSince, String createdUntil, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
         Object localVarPostBody = null;
 
         // create path and map variables
@@ -1077,7 +1079,7 @@ public class ReportsApi {
     }
 
     @SuppressWarnings("rawtypes")
-    private Call getReportsValidateBeforeCall(List<String> reportTypes, List<String> processingStatuses, List<String> marketplaceIds, Integer pageSize, OffsetDateTime createdSince, OffsetDateTime createdUntil, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    private Call getReportsValidateBeforeCall(List<String> reportTypes, List<String> processingStatuses, List<String> marketplaceIds, Integer pageSize, String createdSince, String createdUntil, String nextToken, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
         
 
         Call call = getReportsCall(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken, progressListener, progressRequestListener);
@@ -1098,9 +1100,35 @@ public class ReportsApi {
      * @return GetReportsResponse
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      */
-    public GetReportsResponse getReports(List<String> reportTypes, List<String> processingStatuses, List<String> marketplaceIds, Integer pageSize, OffsetDateTime createdSince, OffsetDateTime createdUntil, String nextToken) throws ApiException {
+    public GetReportsResponse getReports(List<String> reportTypes, List<String> processingStatuses, List<String> marketplaceIds, Integer pageSize, String createdSince, String createdUntil, String nextToken) throws ApiException {
         ApiResponse<GetReportsResponse> resp = getReportsWithHttpInfo(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);
         return resp.getData();
+    }
+
+
+    /**
+     *
+     * Returns report details for the reports that match the filters that you specify.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 0.0222 | 10 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
+     * @param reportTypes A list of report types used to filter reports. When reportTypes is provided, the other filter parameters (processingStatuses, marketplaceIds, createdSince, createdUntil) and pageSize may also be provided. Either reportTypes or nextToken is required. (optional)
+     * @param processingStatuses A list of processing statuses used to filter reports. (optional)
+     * @param marketplaceIds A list of marketplace identifiers used to filter reports. The reports returned will match at least one of the marketplaces that you specify. (optional)
+     * @param pageSize The maximum number of reports to return in a single call. (optional, default to 10)
+     * @param createdSince The earliest report creation date and time for reports to include in the response, in ISO 8601 date time format. The default is 90 days ago. Reports are retained for a maximum of 90 days. (optional)
+     * @param createdUntil The latest report creation date and time for reports to include in the response, in ISO 8601 date time format. The default is now. (optional)
+     * @param nextToken A string token returned in the response to your previous request. nextToken is returned when the number of results exceeds the specified pageSize value. To get the next page of results, call the getReports operation and include this token as the only parameter. Specifying nextToken with any other parameters will cause the request to fail. (optional)
+     * @return GetReportsResponse
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     */
+    public ReportList getAllReports(List<String> reportTypes, List<String> processingStatuses, List<String> marketplaceIds, Integer pageSize, String createdSince, String createdUntil, String nextToken) throws ApiException {
+        GetReportsResponse resp = getReports(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);
+        ReportList resultList = resp.getReports();
+        String currentNextToken = resp.getNextToken();
+        while (StringUtils.isNotBlank(currentNextToken)) {
+            GetReportsResponse currentResp = getReports(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, currentNextToken);
+            resultList.addAll(currentResp.getReports());
+            currentNextToken = currentResp.getNextToken();
+        }
+        return resultList;
     }
 
     /**
@@ -1116,7 +1144,7 @@ public class ReportsApi {
      * @return ApiResponse&lt;GetReportsResponse&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      */
-    public ApiResponse<GetReportsResponse> getReportsWithHttpInfo(List<String> reportTypes, List<String> processingStatuses, List<String> marketplaceIds, Integer pageSize, OffsetDateTime createdSince, OffsetDateTime createdUntil, String nextToken) throws ApiException {
+    public ApiResponse<GetReportsResponse> getReportsWithHttpInfo(List<String> reportTypes, List<String> processingStatuses, List<String> marketplaceIds, Integer pageSize, String createdSince, String createdUntil, String nextToken) throws ApiException {
         Call call = getReportsValidateBeforeCall(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken, null, null);
         Type localVarReturnType = new TypeToken<GetReportsResponse>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
@@ -1136,7 +1164,7 @@ public class ReportsApi {
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
      */
-    public Call getReportsAsync(List<String> reportTypes, List<String> processingStatuses, List<String> marketplaceIds, Integer pageSize, OffsetDateTime createdSince, OffsetDateTime createdUntil, String nextToken, final ApiCallback<GetReportsResponse> callback) throws ApiException {
+    public Call getReportsAsync(List<String> reportTypes, List<String> processingStatuses, List<String> marketplaceIds, Integer pageSize, String createdSince, String createdUntil, String nextToken, final ApiCallback<GetReportsResponse> callback) throws ApiException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;

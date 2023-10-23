@@ -2,18 +2,21 @@ package com.erp.sdk.oms.amz.spapi.handler;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractProductHandler;
+import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -32,14 +35,15 @@ import com.erp.sdk.oms.amz.spapi.model.orders.OrderItemList;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -56,8 +60,11 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private RedisTemplate<String, String> template;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<PlatformAmazonListingDTO> download(JobTaskDTO data) {
         // 获取店铺信息
         String shopId = data.getShopId();
@@ -68,30 +75,27 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shop.getDictCountryCode());
 
         // 亚马逊商品下载
-        // TODO 查询当前店铺是否有最新生成的报告文档ID
-        String reportDocumentId = "";
-        if (StringUtils.isBlank(reportDocumentId)) {
+        // 查询当前店铺是否有最新生成的报告文档url
+        String key = StrUtil.format(RedisCacheConstants.REDIS_AMAZON_REPORT_DOCUMENT_URL, marketplaceEnum.getMarketplaceId());
+        // 报表文档信息消费者
+        String reportDocumentUrl = template.opsForValue().get(key);
+        if(ObjectUtils.isEmpty(reportDocumentUrl)) {
             return Collections.emptyList();
         }
-
-        // 初始化api
-        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum);
+        List<PlatformAmazonListingDTO> resultList;
         try {
-            // 根据报告文档ID获取商品报告链接
-            ReportDocument reportDocument = reportsApi.getReportDocument(reportDocumentId);
-
-            // 报告链接
-            String url = reportDocument.getUrl();
             // 下载报告信息
-            List<ListingCsvReportEntity> listingReoprtList = AmazonSpApiReportUtils.downloadAndParseListing(url);
+            List<ListingCsvReportEntity> listingReoprtList = AmazonSpApiReportUtils.downloadAndParseListing(reportDocumentUrl);
 
             // 返回下载源数据
-            return listingReoprtList.stream()
+            resultList = listingReoprtList.stream()
                     .map(e -> new PlatformAmazonListingDTO(e, shop))
                     .collect(Collectors.toList());
-        } catch (ApiException | IOException e) {
+        } catch (Exception e) {
             throw new ServiceException("[Amazon SP-APi] 下载listing失败" + e);
         }
+        template.opsForList().rightPop(key);
+        return resultList;
     }
 
 

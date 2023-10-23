@@ -75,4 +75,13 @@ public enum AmazonMarketplaceEnum {
     }
 
 
+    /**
+     * 通过marketPlaceId查找枚举
+     */
+    public static AmazonMarketplaceEnum getByMarketplaceId(String marketPlaceId) {
+        return Stream.of(AmazonMarketplaceEnum.values())
+                .filter(e -> e.getMarketplaceId().equalsIgnoreCase(marketPlaceId))
+                .findFirst()
+                .orElse(null);
+    }
 }

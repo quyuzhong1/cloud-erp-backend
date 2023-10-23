@@ -62,6 +62,7 @@ public class BusinessServiceImpl {
         IBusinessHandler<T,R> handler = (IBusinessHandler<T,R>) registry.getHandler(category, platform, business);
         if (handler != null) {
             PlatformDataDTO<T, R> platformData = handler.pullHandle(data);
+
             String targetPlatform = handler.getTargetPlatform();
             Boolean isSendMq = handler.getIsSendMq();
             // 保存mongo 并发送mq
@@ -70,6 +71,7 @@ public class BusinessServiceImpl {
             // Handle the case when no handler is found
             throw new RuntimeException("No handler found for category: " + category + ", platform: " + platform + ", business: " + business);
         }
+
     }
 
     private <R extends UniqueDto, T extends CleanBaseDTO> List<R> compareAndSaveMongo(Boolean isSendMq, String category, String platform, String business,String targetPlatform, PlatformDataDTO<T, R> platformData, String topic) {

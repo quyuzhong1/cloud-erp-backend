@@ -1,0 +1,82 @@
+package com.erp.model.dmp;
+
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
+
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@Accessors(chain = true)
+@NoArgsConstructor
+public class AmazonReportMongoDTO {
+
+    @Panno(findType = PannoEnum.IN, field = "marketplaceIds")
+    private List<String> marketplaceIds;
+
+    @Panno(findType = PannoEnum.EQ, field = "reportId")
+    private String reportId;
+
+    @Panno(findType = PannoEnum.EQ, field = "reportType")
+    private String reportType;
+
+    @Panno(findType = PannoEnum.EQ, field = "dataStartTime")
+    private String dataStartTime;
+
+    @Panno(findType = PannoEnum.EQ, field = "dataEndTime")
+    private String dataEndTime;
+
+    @Panno(findType = PannoEnum.EQ, field = "reportScheduleId")
+    private String reportScheduleId;
+
+    @Panno(findType = PannoEnum.EQ, field = "createdTime")
+    private String createdTime;
+
+    @Panno(findType = PannoEnum.EQ, field = "processingStatus")
+    private String processingStatus;
+
+    @Panno(findType = PannoEnum.EQ, field = "processingStartTime")
+    private String processingStartTime;
+
+    @Panno(findType = PannoEnum.EQ, field = "processingEndTime")
+    private String processingEndTime;
+
+    @Panno(findType = PannoEnum.EQ, field = "reportDocumentId")
+    private String reportDocumentId;
+
+    @Panno(findType = PannoEnum.EQ, field = "reportDocumentUrl")
+    private String reportDocumentUrl;
+
+    /**
+     * 报告链接状态: 0=待获取，1=已获取
+     */
+    @Panno(findType = PannoEnum.EQ, field = "reportDocumentUrlStatus")
+    private Integer reportDocumentUrlStatus;
+
+    /**
+     * 报告取消状态: 0=为取消，1=已取消
+     */
+    @Panno(findType = PannoEnum.EQ, field = "reportCancelStatus")
+    private Integer reportCancelStatus;
+
+    public AmazonReportMongoDTO(String reportId) {
+        this.reportId = reportId;
+    }
+
+    public static AmazonReportMongoDTO getReportId(String reportId) {
+        AmazonReportMongoDTO reportMongoDTO = new AmazonReportMongoDTO();
+        reportMongoDTO.setReportId(reportId);
+        return reportMongoDTO;
+    }
+
+    public static AmazonReportMongoDTO getReportDocumentUrlStatus(Integer status) {
+        AmazonReportMongoDTO reportMongoDTO = new AmazonReportMongoDTO();
+        reportMongoDTO.setReportDocumentUrlStatus(status);
+        return reportMongoDTO;
+    }
+
+}
