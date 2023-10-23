@@ -17,10 +17,6 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -841,10 +837,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         //销售通知订单
         List<String> sourceDetailIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSourceDetailId).collect(Collectors.toList());
-        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(sourceDetailIdList);
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listByIds(sourceDetailIdList);
         //销售明细
-        List<String> soDeliveryNoticeDetailIdList = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
-        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(soDeliveryNoticeDetailIdList);
+        List<String> soDetailIdList = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(soDetailIdList);
 
 
         for (SoOutstockDTO.PagingViewDTO item : list) {
