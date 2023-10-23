@@ -440,7 +440,7 @@ public class LocalDateUtil {
         BigDecimal hour = new BigDecimal(hourStr);
         int intValue = hour.intValue();
         LocalDateTime result = null;
-        if(intValue > 0){
+        if(intValue >= 0){
             result = startTime.plusHours(intValue);
         }
         BigDecimal remainder = hour.remainder(BigDecimal.ONE);
