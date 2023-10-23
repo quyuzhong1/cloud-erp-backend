@@ -2402,4 +2402,21 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         qcResultService.updateQcSampleResult(dto.getIds(), dto.getQcSampleResult());
     }
 
+    @Override
+    public void repairQcInfoSourceCode() {
+        List<QcInfoEntity> list = this.list();
+        for (QcInfoEntity qcInfoEntity : list) {
+            if (SourceTypeEnum.PO_RECEIVE.getCode().equals(qcInfoEntity.getSourceType())) {
+                WarehouseReceiveEntity info = warehouseReceiveService.getById(qcInfoEntity.getSourceId());
+                lambdaUpdate().set(QcInfoEntity::getSourceCode, info.getCode()).eq(QcInfoEntity::getId, qcInfoEntity.getId()).update();
+            } else if (SourceTypeEnum.PURCHASE_ORDER.getCode().equals(qcInfoEntity.getSourceType())) {
+                PurchaseOrderEntity info = scmTaskFeign.getPurchaseOrderById(qcInfoEntity.getSourceId());
+                lambdaUpdate().set(QcInfoEntity::getSourceCode, info.getCode()).eq(QcInfoEntity::getId, qcInfoEntity.getId()).update();
+            } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(qcInfoEntity.getSourceType())) {
+                SoReturnReceiveEntity info = soReturnReceiveService.getById(qcInfoEntity.getSourceId());
+                lambdaUpdate().set(QcInfoEntity::getSourceCode, info.getCode()).eq(QcInfoEntity::getId, qcInfoEntity.getId()).update();
+            }
+        }
+
+    }
 }

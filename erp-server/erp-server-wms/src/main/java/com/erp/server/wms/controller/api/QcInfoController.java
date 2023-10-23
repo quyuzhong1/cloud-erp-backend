@@ -6,13 +6,17 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.SoReturnReceiveEntity;
+import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import com.erp.server.wms.service.QcInfoService;
 import com.erp.server.wms.service.QcResultService;
 import org.springframework.validation.annotation.Validated;
@@ -382,6 +386,18 @@ public class QcInfoController extends BaseController {
             keyIdName = "id")
     public ApiResult<Void> reQcSample(@RequestBody @Validated() QcInfoDTO.ReQcDTO dto) {
         qcInfoService.reQcSample(dto);
+        return success();
+    }
+
+    /**
+     * TODO 临时接口，修复质检的来源单号
+     * @Author Luo_WG
+     * @Date 2023/10/23 10:45
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
+     **/
+    @PostMapping("/repairQcInfoSourceCode")
+    public ApiResult<Void> repairQcInfoSourceCode() {
+        qcInfoService.repairQcInfoSourceCode();
         return success();
     }
 
