@@ -32,6 +32,11 @@ public class InventoryDTO implements Serializable {
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
 
+        /**
+         * 产品名称
+         */
+        private String productName;
+
 
         /**
          * sku编码
